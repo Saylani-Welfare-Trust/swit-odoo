@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+        
+        <record id="medical_equipment_location" model="stock.location">
+            <field name="name">Virtual ME Location</field>
+            <field name="usage">transit</field>
+            <field name="location_id" ref="__custom__.wh" />
+        </record>
+    
+    </data>
+
+</odoo>

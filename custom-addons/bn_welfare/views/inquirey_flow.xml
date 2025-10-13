@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+<record id="disbursement_request_view_" model="ir.ui.view">
+    <field name="name">disbursement.request.view.form</field>
+    <field name="model">disbursement.request</field>
+    <field name="inherit_id" ref="bn_welfare.disbursement_request_view_form"/>
+    <field name="arch" type="xml">
+        <!-- Add portal sync buttons to header -->
+        <xpath expr="//header" position="inside">
+            <button name="action_sync_with_sadqa_portal" string="Sync with Portal" type="object" class="oe_highlight" 
+                    invisible="is_synced or state not in ('approved', 'disbursed')"/>
+            <button name="action_check_portal_status" string="Check Portal Status" type="object" 
+                    invisible="state not in ('approved', 'disbursed')"/>
+            <button name="action_force_resync" string="Re-sync with Portal" type="object" class="btn-warning" 
+                    invisible="not is_synced or state not in ('approved', 'disbursed')"/>
+        </xpath>
+
+        <!-- Add portal status section after title -->
+        <xpath expr="//div[@class='oe_title']" position="after">
+            <group string="Sadqa Jaria Portal Integration" invisible="not is_synced">
+                <group string="Portal Status">
+                    <field name="portal_sync_status" widget="statusbar" 
+                           statusbar_visible="not_synced,syncing,synced,error" readonly="1"/>
+                </group>
+                <group string="Portal References">
+                    <field name="is_synced" readonly="1"/>
+                    <field name="sync_date" readonly="1"/>
+                    <field name="portal_application_id" readonly="1"/>
+                    <field name="portal_donee_id" readonly="1"/>
+                    <field name="portal_last_sync_message" readonly="1"/>
+                </group>
+            </group>
+        </xpath>
+
+        <!-- Add portal sync details page to notebook -->
+        <xpath expr="//page[@name='family_member']" position="after">
+            <page name="portal_sync_details" string="Portal Sync Details" invisible="not is_synced">
+                <group>
+                    <group string="Sync Information">
+                        <field name="portal_sync_status" widget="statusbar" 
+                               statusbar_visible="not_synced,syncing,synced,error" readonly="1"/>
+                        <field name="is_synced" string="Synced to Portal" readonly="1"/>
+                        <field name="sync_date" string="Last Sync Date" readonly="1"/>
+                        <field name="portal_last_sync_message" string="Last Sync Message" readonly="1"/>
+                    </group>
+                    <group string="Portal References">
+                        <field name="portal_application_id" string="Portal Application ID" readonly="1"/>
+                        <field name="portal_donee_id" string="Portal Donee ID" readonly="1"/>
+                        <field name="portal_review_notes" string="Portal Review Notes" readonly="1"/>
+                    </group>
+                </group>
+                
+                <div class="alert alert-info" role="alert" invisible="portal_sync_status != 'synced'">
+                    <strong>✅ Successfully Synced:</strong> This disbursement request has been successfully synchronized with Sadqa Jaria Portal.
+                </div>
+                
+                <div class="alert alert-warning" role="alert" invisible="portal_sync_status != 'error'">
+                    <strong>⚠️ Sync Error:</strong> There was an issue syncing with the portal. Please check the last sync message and try again.
+                </div>
+                
+                <div class="alert alert-info" role="alert" invisible="portal_sync_status != 'syncing'">
+                    <strong>🔄 Syncing in Progress:</strong> The sync operation is currently in progress.
+                </div>
+            </page>
+        </xpath>
+
+       
+        
+    </field>
+</record>
+
+</odoo>

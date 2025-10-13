@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--To show popup when clicking on cheuque_number control button-->
+<templates id="template" xml:space="preserve">
+    <t t-name="Chequepopup" owl="1">
+        <div class="popup popup-textinput chequeorder" style="max-width: 1000px;">
+                <div class="modal-header">
+                    <h4 class="modal-title"><t t-esc="props.title" /></h4>
+                </div>
+                
+                <div class="input-group" style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <input type="text" class="form-control" placeholder="Search Cheque Number..." t-ref="search-input" t-on-keyup="searchTasks" style="max-width: 200px; margin-right: 10px;" />
+                    <button class="btn btn-outline-primary" t-on-click="searchTasks">Search</button>
+                </div>
+
+
+                <div class="pagination-container" style="display: flex; justify-content: space-between; margin-top: 10px;">
+                       <button class="btn btn-secondary" t-on-click="prevPage" >Previous</button>
+
+                         <span>Page <t t-esc="state.currentPage" /> of <t t-esc="Math.ceil(state.totalRecords / state.limit)" /></span>
+   
+                       
+                        <button class="btn btn-secondary" t-on-click="nextPage" 
+                                 t-att-disabled="state.currentPage * state.limit >= state.totalRecords">Next</button>
+
+                </div>
+                
+                <div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">  
+                <table class="table py-fin-data-table">
+                            <thead>
+                            </thead>
+                            <tr>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                OrderRef
+                                </td>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Date
+                                </td>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Customer
+                                </td>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Receipt Number
+                                </td>
+                                
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Bank Name
+                                </td>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Cheque Number
+                                </td>
+                                <td colspan="6" style="text-align: left; font-weight: bold;">
+                                Cheque Status
+                                </td>
+                                                                
+
+
+                            </tr>
+
+
+                            <tbody>
+                            <t t-if="state.chequeorder">
+                                <t t-foreach="state.chequeorder" t-as="order" t-key="order['id']">
+                                    <tr>
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['name']"/>
+                                        </td>
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['date']"/>
+                                        </td>
+
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['customer']"/>
+                                        </td>
+
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['ref']"/>
+                                        </td>
+
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['bankname']"/>
+                                        </td>
+
+
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['cheuque_number']"/>
+                                        </td>
+
+                                        <td colspan="6" style="text-align: left; font-weight: bold;">
+                                            <t t-esc="order['status']"/>
+                                        </td>
+                                        
+                                        <!-- <t t-if="order['status'] == 'Pending'">
+                                        <td colspan="2" style=" font-weight: bold;">
+                                            <button class="btn btn-success btn-sm me-2 btn_edit" t-on-click="() => this.ClearChque(order['id'])">Clear Cheque</button>
+                                        </td>
+                                        </t>
+                                        
+                                        <t t-if="order['status'] == 'Pending'">
+                                        
+                                        <td colspan="2" style=" font-weight: bold;">
+                                            <button class="btn btn-primary btn-sm me-2 btn_edit" t-on-click="() => this.Bouncecheque(order['id'])">Bounce Cheque</button>
+                                       
+                                        </td>
+                                        </t> -->
+
+                                        <t t-if="order['status'] == 'Bounce'">
+                                        
+                                        <td colspan="2" style=" font-weight: bold;">
+                                            <button class="btn btn-warning btn-sm me-2 btn_edit" t-on-click="() => this.Redeposite(order['id'])">Redeposite</button>
+                                       
+                                        </td>
+                                        </t>
+
+                                        <t t-if="order['status'] == 'Bounce'">
+                                        
+                                        <td colspan="2" style=" font-weight: bold;">
+                                            <button class="btn btn-danger btn-sm me-2 btn_edit" t-on-click="() => this.Cancelledcheque(order['id'])">Cancelled</button>
+                                       
+                                        </td>
+                                        </t>
+
+                                          
+                                        
+                                    </tr>
+                                </t>
+                    
+                    
+                            </t>
+
+                    
+                    
+                    
+                    
+                    
+                            <t t-else="">
+                                <tr>
+                                    <td colspan="6">
+                                        <p style="text-align: center">No data found!!!</p>
+                                    </td>
+                                </tr>
+                            </t>
+                            </tbody>
+
+
+                    </table>
+
+                </div>
+
+            <div class="footer footer-flex modal-footer">
+                    
+                <div class="button cancel btn btn-lg btn-secondary"
+                     t-on-click="cancel">
+                        <t t-esc="props.cancelText"/>
+                    </div>
+                </div>
+        </div>
+    </t>
+</templates>

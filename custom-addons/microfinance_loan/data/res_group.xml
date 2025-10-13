@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="group_mfd_hod" model="res.groups">
+            <field name="name">HOD MicroFinance</field>
+<!--            <field name="category_id" ref="base.module_microfinance_loan"/>-->
+        </record>
+
+        <record id="group_mfd_member" model="res.groups">
+            <field name="name">Member MicroFinance</field>
+<!--            <field name="category_id" ref="base.module_microfinance_loan"/>-->
+        </record>
+
+        <record id="group_mfd_recovery" model="res.groups">
+            <field name="name">Microfinance Recovery</field>
+<!--            <field name="category_id" ref="base.module_microfinance_loan"/>-->
+        </record>
+
+        <record id="group_mfd_pir_cheque_approval" model="res.groups">
+            <field name="name">Cheque Approval Microfinance</field>
+<!--            <field name="category_id" ref="base.module_microfinance_loan"/>-->
+        </record>
+
+        <record id="group_mfd_write_off_approval_1" model="res.groups">
+            <field name="name">Write Off Approval 1</field>
+        </record>
+
+        <record id="group_mfd_write_off_approval_2" model="res.groups">
+            <field name="name">Write Off Approval 2</field>
+        </record>
+
+    </data>
+</odoo>

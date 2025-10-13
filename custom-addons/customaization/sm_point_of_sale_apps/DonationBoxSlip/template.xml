@@ -1,0 +1,161 @@
+<odoo>
+    <template id="donationbox_slip_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="mt-5 clearfix">
+                        <div class="page" style="font-family: 'Times New Roman', serif; color: #333;">
+                            <!-- Certificate Header -->
+                            <div class="text-center mb-4" style="border-bottom: 3px solid #99ca3c; padding-bottom: 20px;">
+                                <h2 class="fw-bold" style="color: #99ca3c; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">
+                                    DONATION BOX CERTIFICATE
+                                </h2>
+                                <p style="font-size: 16px; color: #666; margin-top: 10px;">
+                                    This certificate acknowledges the collection from donation box
+                                </p>
+                            </div>
+
+                            <!-- Certificate Body -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <!-- Basic Information -->
+                                    <div class="mb-4" style="background-color: #f8f9fa; padding: 20px; border-left: 5px solid #99ca3c;">
+                                        <h4 class="fw-bold mb-3" style="color: #99ca3c;">Certificate Information</h4>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="mb-2">
+                                                    <t t-import="datetime"/>
+                                                    <span class="fw-bold" style="color: #333;">Certificate Date:</span>
+                                                    <span style="margin-left: 10px;">
+                                                        <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/>
+                                                    </span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <span class="fw-bold" style="color: #333;">DonationBox Number:</span>
+                                                    <span style="margin-left: 10px;">
+                                                        <t t-esc="o.box_no"/>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="mb-2">
+                                                    <span class="fw-bold" style="color: #333;">Issued On :</span>
+                                                    <span style="margin-left: 10px;">
+                                                        <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
+                                                    </span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <span class="fw-bold" style="color: #333;">Returned On:</span>
+                                                    <span style="margin-left: 10px;">
+                                                        <t t-esc="o.returned_on"/>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Donation Box Details -->
+                                    <div class="mb-4">
+                                        <h4 class="fw-bold mb-3" style="color: #99ca3c;">Donation Box Details</h4>
+                                        <table class="table table-bordered" style="border: 2px solid #99ca3c;">
+                                            <thead style="background-color: #99ca3c; color: white;">
+                                                <tr>
+                                                    <th class="text-center" style="font-weight: bold;">Category</th>
+                                                    <th class="text-center" style="font-weight: bold;">Registration</th>
+                                                    <!-- <th class="text-center" style="font-weight: bold;">Product</th>
+                                                    <th class="text-center" style="font-weight: bold;">Branch</th> -->
+                                                    <th class="text-center" style="font-weight: bold;">Amount Collected</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="background-color: #f8f9fa;">
+                                                    <td class="text-center" style="padding: 12px;">
+                                                        <t t-esc="o.product_id.name"/>
+                                                    </td>
+                                                    <td class="text-center" style="padding: 12px;">
+                                                        <t t-esc="o.donation_box_id.name"/>
+                                                    </td>
+                                                    <!-- <td class="text-center" style="padding: 12px;">
+                                                        <t t-esc="o.product_id.name"/>
+                                                    </td>
+                                                    <td class="text-center" style="padding: 12px;">
+                                                        <t t-if="o.collection_point.title() != 'Bank'">
+                                                            <t t-esc="o.branch_id.name"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            N/A
+                                                        </t>
+                                                    </td> -->
+                                                    <td class="text-center fw-bold" style="padding: 12px; color: #99ca3c; font-size: 16px;">
+                                                        <t t-esc="o.donation_amount"/>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Installation Information -->
+                                    <!-- <t t-if="o.donationbox_request_id.donee_id"> -->
+                                        <div class="mb-4" style="background-color: #f8f9fa; padding: 20px; border-left: 5px solid #99ca3c;">
+                                            <h4 class="fw-bold mb-3" style="color: #99ca3c;">Installation Information</h4>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <span class="fw-bold" style="color: #333;">Installer Name:</span>
+                                                        <span style="margin-left: 10px;">
+                                                            <t t-esc="o.installer_id.name"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <span class="fw-bold" style="color: #333;">Installation Date</span>
+                                                        <span style="margin-left: 10px;">
+                                                            <t t-esc="o.installation_date"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <span class="fw-bold" style="color: #333;">Installation Category</span>
+                                                        <span style="margin-left: 10px;">
+                                                            <t t-esc="o.installation_category_id.name"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <!-- </t> -->
+
+                                    <!-- Certificate Footer -->
+                                    <div class="mt-5 text-center" style="border-top: 2px solid #99ca3c; padding-top: 20px;">
+                                        <p style="font-size: 14px; color: #666; font-style: italic;">
+                                            This certificate is digitally generated and serves as an official acknowledgment of the donation box collection.
+                                        </p>
+                                        <div class="mt-4">
+                                            <div style="display: inline-block; border-top: 2px solid #333; width: 200px; text-align: center; padding-top: 5px;">
+                                                <p class="mb-0" style="font-size: 12px; color: #666;">Authorized Signature</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="donationbox_slip_report_action" model="ir.actions.report">
+        <field name="name">DonationBox Slip</field>
+        <field name="model">key.issuance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sm_point_of_sale_apps.donationbox_slip_template</field>
+        <field name="report_file">sm_point_of_sale_apps.donationbox_slip_template</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'DonationBox Slip'</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,50 @@
+<odoo>
+  <!-- Livestock Stock Form View -->
+  <record id="view_livestock_stock_form" model="ir.ui.view">
+    <field name="model">livestock.stock</field>
+    <field name="arch" type="xml">
+      <form string="Livestock Stock">
+        <sheet>
+          <group>
+            <field name="monthly_id"/>
+            <field name="category"/>
+          </group>
+          <group>
+            <field name="total_animals" readonly="1"/>
+            <field name="distributed_animals"/>
+            <field name="available_animals" readonly="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Livestock Stock Tree View -->
+  <record id="view_livestock_stock_tree" model="ir.ui.view">
+    <field name="model">livestock.stock</field>
+    <field name="arch" type="xml">
+      <tree string="Livestock Stock">
+        <field name="monthly_id"/>
+        <field name="category"/>
+        <field name="total_animals"/>
+        <field name="distributed_animals"/>
+        <field name="available_animals"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- Action to open Livestock Stock -->
+  <record id="action_livestock_stock" model="ir.actions.act_window">
+    <field name="name">Livestock Stock</field>
+    <field name="res_model">livestock.stock</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Manage how many animals are distributed versus allocated.
+      </p>
+    </field>
+  </record>
+
+  <!-- Menu Integration -->
+
+</odoo>

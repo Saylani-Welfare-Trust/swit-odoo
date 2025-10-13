@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="hr_shift_allocation_wizard" model="ir.ui.view">
+            <field name="name">allocation.wizard.form</field>
+            <field name="model">allocation.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet> 
+                        <group>
+                            <field name="shift_id" required='1'/>
+                        </group>
+                        <group colspan='5' col='4'>
+                            <field name="date_from" required='1'/>
+                            <field name="date_to" required='1'/>
+                        </group>
+                         <group>
+                            <field name="week_ids">
+                                <tree editable="bottom">
+                                    <field name="week_id" required="1"/>
+                                    <field name="week_selection_ids" widget="many2many_tags" required="1"/>
+                                    <field name="wizard_id" invisible="1"/>
+                                </tree>
+                            </field>
+                            <field name="employee_ids" widget="many2many_tags" required='1'/>
+                            <field name="description"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="bulk_allocation" string="Create" type="object" class="oe_highlight"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>    
+                </form>
+            </field>
+        </record>
+
+        <record id="shift_allocation_wizard" model="ir.actions.act_window">
+            <field name="name">Create Bulk Shift Allocations</field>
+            <field name="res_model">allocation.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="binding_model_id" ref="hr.model_hr_employee"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem 
+            id="menu_shift_allocation_wizard"
+            action="shift_allocation_wizard"
+            parent="pways_shift_schedule_management.main_menu_shift_allocation"
+            name="Create Bulk Shift Allocations"
+            groups="hr.group_hr_manager,hr.group_hr_user"
+            sequence="20"/>
+
+    </data>
+</odoo> 

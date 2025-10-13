@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sm_donation_box_donation_box_registration_view_form_inherit_bn_key_management" model="ir.ui.view">
+        <field name="name">sm.donation.box.donation.box.registration.view.form.inherit.bn.key.management</field>
+        <field name="model">donation.box.registration</field>
+        <field name="inherit_id" ref="sm_donation_box.donation_box_registration_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='sub_zone_id']" position="after">
+                <field name="key_location_id" string="Key Group" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="state == 'installed'" invisible="state not in ['installed', 'approved']" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <data>
+        <record id="advance_donation_customer_tree" model="ir.ui.view">
+            <field name="name">advance.donation.customer.tree</field>
+            <field name="model">adv.don.customer</field>
+            <field name="arch" type="xml">
+                <tree default_order="create_date desc">
+                    <field name="sequence"/>
+                    <field name="name"/>
+                    <field name="email"/>
+                    <field name="phone_no"/>
+                </tree>
+            </field>
+        </record>
+    </data>
+
+    <data>
+        <record id="advance_donation_customer_form" model="ir.ui.view">
+            <field name="name">advance.donation.customer.form</field>
+            <field name="model">adv.don.customer</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="sequence" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="email"/>
+                                <field name="address"/>
+                                <field name="phone_no"/>
+                                <field name="cnic" placeholder="xxxxx-xxxxxxx-x" required="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+
+    <record id="action_adv_don_customer_reg" model="ir.actions.act_window">
+        <field name="name">Customer Registration</field>
+        <field name="res_model">adv.don.customer</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="hr_day_of_week_tree_view" model="ir.ui.view">
+        <field name="name">hr.day.of.week.tree.view</field>
+        <field name="model">hr.day.of.week</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="date"/>
+                <field name="week_id"/>
+                <field name="user_id"/>
+                <field name="shift_id"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="hr_day_of_week_form_view" model="ir.ui.view">
+        <field name="name">hr.day.of.week.form.view</field>
+        <field name="model">hr.day.of.week</field>
+        <field name="arch" type="xml">
+            <form string="Employee Details">
+                <sheet>  
+                    <group>
+                        <group>
+                            <field name="employee_id" required='1'/>
+                            <field name="date" required='1'/>
+                            <field name="shift_allocation_id" required='1'/>
+                            <field name='department_id'/>
+                            <field name="create_date"/>
+                            
+                        </group>
+                        <group> 
+                            <field name="week_id" required='1'/>
+                            <field name="company_id"/>
+                            <field name="week_selection_id" required='1'/>
+                            <field name="shift_id" required='1'/>
+                            <field name="user_id" required='1'/>
+                        </group> 
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="weekoff_view_calendar_week" model="ir.ui.view">
+        <field name="name">hr.day.of.week.calendar.view</field>
+        <field name="model">hr.day.of.week</field>
+        <field eval="2" name="priority"/>
+        <field name="arch" type="xml">
+           <calendar date_start="date" string="Employee Weekoff" mode="month" color="shift_id"  event_limit="100">
+                <field name="name"/>
+                <field name="shift_id" filters="1"/>
+                <field name="employee_id" filters="1"/>
+                <field name="department_id" filters="1"/>
+                <field name="job_id" filters="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_view_of_hr_day_of_week" model="ir.actions.act_window">
+        <field name="name">Employee Weekoffs</field>
+        <field name="res_model">hr.day.of.week</field>
+        <field name="view_mode">calendar,tree,form</field>
+    </record>
+
+    <menuitem
+        id="menu_hr_day_of_week"
+        name="Employee Weekoffs"
+        action="action_view_of_hr_day_of_week"
+        parent="pways_shift_schedule_management.main_menu_shift_allocation"
+        sequence="6"
+        />
+</odoo>

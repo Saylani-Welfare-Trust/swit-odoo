@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+
+        <record id="mfd_loan_request_tree" model="ir.ui.view">
+            <field name="name">mfd.loan.request.tree</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="arch" type="xml">
+                <tree default_order="create_date desc">
+                    <header>
+                        <button name="compute_recovery_doc" string="Compute Recovery Loans" type="object" class="oe_highlight"/>
+                    </header>
+                    <field name="currency_id" column_invisible="True"/>
+                    <field name="name"/>
+                    <field name="customer_id"/>
+                    <field name="asset_type"/>
+                    <field name="amount"/>
+                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state in ('done', 'paid')"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="mfd_loan_request_form" model="ir.ui.view">
+            <field name="name">mfd.loan.request.form</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_to_approve" invisible="state != 'draft'" string="Move to HOD" type="object" class="oe_highlight"/>
+                        <button name="action_mem_approve" invisible="state != 'to_approve'" string="Move to Member" type="object" groups="microfinance_loan.group_mfd_hod" class="oe_highlight"/>
+                        <button name="action_approved" invisible="state != 'mem_approve'" string="Approve" type="object" groups="microfinance_loan.group_mfd_member" class="oe_highlight"/>
+                        <button name="action_rejected" invisible="state != 'to_approve'" string="Reject" type="object" groups="microfinance_loan.group_mfd_hod"/>
+                        <button name="action_rejected" invisible="state != 'mem_approve'" string="Reject" type="object" groups="microfinance_loan.group_mfd_member"/>
+                        <button name="action_revert" invisible="state != 'to_approve'" string="Revert" type="object" groups="microfinance_loan.group_mfd_hod"/>
+                        <button name="action_revert" invisible="state != 'mem_approve'" string="Revert" type="object" groups="microfinance_loan.group_mfd_member"/>
+                        <button name="action_proceed" invisible="state != 'approved'" string="Proceed" type="object" class="oe_highlight"/>
+                        <button name="print_sd_slip" invisible="asset_type == 'cash' or state != 'approved'" string="SD Slip" type="object" class="oe_highlight"/>
+                        <button name="print_mfd_slip" invisible="state not in ('waiting_delivery', 'paid')" string="Receipt" type="object" class="oe_highlight"/>
+                        <button name="action_done" invisible="state != 'waiting_delivery'" string="Move to Done" type="object" class="oe_highlight"/>
+                        <button name="action_in_recovery" string="Send For Recovery" type="object" class="oe_highlight"/>
+<!--                        <button name="action_in_recovery" invisible="state != 'done' or initiate_recovery == False" string="Send For Recovery" type="object" class="oe_highlight"/>-->
+                        <field name="state" widget="statusbar" statusbar_visible="draft,to_approve,mem_approve,approved,waiting_delivery,done,rejected"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" title="In Recovery" bg_color="text-bg-warning" invisible="state != 'in_recovery'"/>
+                        <widget name="web_ribbon" title="Paid" invisible="state != 'paid'"/>
+                        <widget name="web_ribbon" title="Temp Recovered" invisible="state != 'recovered'"/>
+                        <widget name="web_ribbon" title="Fully Recovered" invisible="state != 'fully_recovered'"/>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="recovery_id" invisible="1"/>
+                                <field name="application_ids_domain" invisible="1"/>
+                                <field name="product_ids_domain" invisible="1"/>
+                                <field name="scheme_id" readonly="state != 'draft'" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                <field name="application_id" readonly="state != 'draft'" required="1" domain="[('id', 'in', application_ids_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                <field name="asset_type" widget="radio" readonly="1" force_save="1"/>
+                                <field name="customer_id" required="True" readonly="state != 'draft'" domain="[('is_microfinance','=',True), ('state','=','register')]" context="{'form_view_ref': 'microfinance_loan.mfd_loan_customer_form'}"/>
+                                <field name="product_id" invisible="asset_type == 'cash'" required="True" readonly="state != 'draft'" domain="[('id', 'in', product_ids_domain)]" options="{'no_create': True, 'no_edit': True}"/>
+                                <field name="amount" required="True" readonly="state == 'draft' and asset_type != 'cash' or state != 'draft'" force_save="1"/>
+                                <field name="security_deposit" readonly="1" force_save="1" invisible="asset_type == 'cash'"/>
+                                <field name="donor_contribution" readonly="state != 'draft'" invisible="asset_type == 'cash'"/>
+                                <field name="total_amount" readonly="True" force_save="1"/>
+                                <field name="old_system_record" string="Old System ID" readonly="state != 'draft'"/>
+                                <field name="currency_id" readonly="state != 'draft'" required="1" invisible="1"/>
+                            </group>
+                            <group>
+                                <field name="installment_type" readonly="1" force_save="1" required="1"/>
+                                <field name="installment_amount" readonly="asset_type != 'cash' and state == 'draft' or state != 'draft'" required="1" force_save="1"/>
+                                <field name="installment_period" required="True" force_save="1" readonly="True"/>
+                                <field name="disbursement_date" required="state == 'waiting_delivery'" readonly="state not in ('approved', 'waiting_delivery')" invisible="state not in ('approved', 'waiting_delivery', 'done', 'in_recovery', 'recovered')"/>
+                                <field name="warehouse_loc_id" required="True" domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]" invisible="state not in ('waiting_delivery', 'done', 'in_recovery', 'recovered') or asset_type != 'movable_asset' or product_id == False" force_save="1" readonly="state in ('done','rejected', 'in_recovery', 'recovered') and asset_availability == 'not_available' or state in ('done','rejected', 'in_recovery', 'recovered')"/>
+                                <field name="asset_availability" required="True" invisible="asset_type != 'movable_asset' or product_id == False or state in ('draft', 'to_approve', 'done','rejected', 'in_recovery', 'recovered')" force_save="1" readonly="True"/>
+                                <field name="attachment_name" invisible="1"/>
+                                <field name="attachment_id" filename="attachment_name" readonly="state != 'draft'" required="1"/>
+                                <field name="frc_name" invisible="1"/>
+                                <field name="frc_id" filename="frc_name" readonly="state != 'draft'" required="1"/>
+                                <field name="electricity_bill_name" invisible="1"/>
+                                <field name="electricity_bill_id" filename="electricity_bill_name" readonly="state != 'draft'" required="1"/>
+                                <field name="gas_bill_name" invisible="1"/>
+                                <field name="gas_bill_id" filename="gas_bill_name" readonly="state != 'draft'" required="1"/>
+                                <field name="family_cnic_name" invisible="1"/>
+                                <field name="family_cnic_id" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
+                                <field name="sd_slip_id" readonly="state != 'approved'" domain="[('doc_type', '=', 'sec_dep'),('status', '=', 'paid'), ('loan_id', '=', id)]" required="state == 'waiting_delivery'" invisible="asset_type == 'cash' or state in ('draft','to_approve','mem_approve','rejected')" options="{'no_create': True, 'no_edit': True}"/>
+                                <field name="is_revert" invisible="1"/>
+                                <field name="hod_remarks" invisible="state not in ('to_approve','rejected')" readonly="state in ('draft','mem_approve','rejected')"/>
+                                <field name="mem_remarks" invisible="state not in ('to_approve','mem_approve','rejected')" readonly="state in ('draft','to_approve','rejected')"/>
+                                <field name="hod_remarks" invisible="state == 'draft' and is_revert == False or state != 'draft'" readonly="1"/>
+                                <field name="mem_remarks" invisible="state == 'draft' and is_revert == False or state != 'draft'" readonly="1"/>
+                                <field name="initiate_recovery" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Installments" invisible="state not in ('done', 'paid', 'in_recovery', 'recovered', 'fully_recovered', 'right_of_approval', 'right_of_approval_2', 'right_of_granted')">
+                                <field name="loan_reqeust_lines" readonly="True">
+                                    <tree editable="bottom">
+                                        <field name="loan_state" readonly="1" column_invisible="True"/>
+                                        <field name="currency_id" column_invisible="True" readonly="1"/>
+                                        <field name="loan_request_id" readonly="1"/>
+                                        <field name="installment_id" readonly="1"/>
+                                        <field name="due_date" readonly="1"/>
+                                        <field name="amount" readonly="1" sum="Total"/>
+                                        <field name="paid_amount" sum="Total"/>
+                                        <field name="remaining_amount" force_save="1" readonly="1" sum="Total"/>
+                                        <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+                            <page string="Post Dated Cheques" readonly="True" invisible="state not in ('done', 'paid', 'in_recovery', 'recovered', 'fully_recovered', 'right_of_approval', 'right_of_approval_2', 'right_of_granted')">
+                                <header>
+                                    <button name="download_pdc_template" string="Template" type="object" class="oe_highlight"/>
+                                    <button name="upload_cheques" string="Upload" type="object" class="oe_highlight"/>
+                                </header>
+                                <group>
+                                    <group>
+                                        <field name="pdc_attachment_name" invisible="1"/>
+                                        <field name="pdc_attachment_id" filename="pdc_attachment_name"/>
+                                    </group>
+                                    <group>
+                                    </group>
+                                </group>
+                                <field name="loan_reqeust_lines" >
+                                    <tree editable="bottom" create="false" >
+                                        <field name="installment_id" readonly="1"/>
+                                        <field name="cheque_no"/>
+                                        <field name="mfd_bank_id" domain="[('is_active', '=', True)]" options="{'no_create': True, 'no_edit': True}"/>
+                                        <field name="cheque_amount"/>
+                                        <field name="cheque_date"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+                            <!-- <page string="Guarantor Information">
+                                <group string="Person 1" priority="1">
+                                    <group>
+                                        <field name="person1_name"/>
+                                        <field name="person1_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person1_address"/>
+                                        <field name="person1_attachment_name" invisible="1"/>
+                                        <field name="person1_attachment_id" filename="person1_attachment_name" readonly="state != 'draft'" required="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="person1_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person1_occupation"/>
+                                        <field name="person1_relation"/>
+                                    </group>
+                                </group>
+                                <group string="Person 2" priority="2">
+                                    <group>
+                                        <field name="person2_name"/>
+                                        <field name="person2_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person2_address"/>
+                                        <field name="person2_attachment_name" invisible="1"/>
+                                        <field name="person2_attachment_id" filename="person2_attachment_name" readonly="state != 'draft'" required="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="person2_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person2_occupation"/>
+                                        <field name="person2_relation"/>
+                                    </group>
+                                </group>
+                                <group string="Person 3" priority="3">
+                                    <group>
+                                        <field name="person3_name"/>
+                                        <field name="person3_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person3_address"/>
+                                        <field name="person3_attachment_name" invisible="1"/>
+                                        <field name="person3_attachment_id" filename="person3_attachment_name" readonly="state != 'draft'" required="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="person3_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person3_occupation"/>
+                                        <field name="person3_relation"/>
+                                    </group>
+                                </group>
+                            </page> -->
+
+                            <page name="employment_info" string="Employment Information">
+                                <group>
+                                    <group name="employment_info_col_1">
+                                        <field name="company_name" />
+                                        <field name="company_address" />
+                                        <field name="company_phone_no" />
+                                    </group>
+                                    <group name="employment_info_col_2">
+                                        <field name="designation" />
+                                        <field name="duration_of_service" />
+                                        <field name="monthly_salary" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="education_info" string="Education Information">
+                                <field name="microfinance_qualification_ids">
+                                    <tree editable="bottom">
+                                        <field name="examination" />
+                                        <field name="school_uni_center" />
+                                        <field name="board" />
+                                        <field name="percentage" />
+                                        <field name="year" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="house_ownership_residency_details" string="House Ownership / Residency Details">
+                                <group>
+                                    <group name="house_ownership_residency_details_col_1">
+                                        <field name="residence_type" />
+                                        <field name="home_phone_no" />
+                                        <field name="rental_shared_duration" />
+                                        <field name="electricity_bill" />
+                                        <field name="gas_bill" />
+                                    </group>
+                                    <group name="house_ownership_residency_details_col_2">
+                                        <field name="landlord_owner" />
+                                        <field name="cnic_no_landlord" />
+                                        <field name="mobile_no_landlord" />
+                                        <field name="home_other_info" />
+                                        <field name="per_month_rent" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="other_finance" string="Other Finance">
+                                <group>
+                                    <group name="other_finance_col_1">
+                                        <field name="monthly_income" />
+                                        <field name="bank_account" />
+                                        <field name="bank_name" invisible="bank_account == 'no'" />
+                                        <field name="account_no" invisible="bank_account == 'no'" />
+                                    </group>
+                                    <group name="other_finance_col_2">
+                                        <field name="monthly_household_expense" />
+                                        <field name="other_loan" />
+                                        <field name="institute_name" invisible="other_loan == 'no'" />
+                                        <field name="outstanding_amount" invisible="other_loan == 'no'" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="other_information" string="Other Information">
+                                <group>
+                                    <group name="other_information_col_1">
+                                        <field name="aid_from_other_organization" />
+                                        <field name="details_1" />
+                                    </group>
+                                    <group name="other_information_col_2">
+                                        <field name="have_applied_swit" />
+                                        <field name="details_2" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="request_details" string="Request Details">
+                                <group>
+                                    <group name="request_details_col_1">
+                                        <field name="loan_request_amount" />
+                                        <field name="security_offered" />
+                                    </group>
+                                    <group name="request_details_col_2">
+                                        <field name="loan_tenure_expected" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="guarantor_information" string="Guarantor Information">
+                                <field name="guarantor_information_ids">
+                                    <tree editable="bottom">
+                                        <field name="name" />
+                                        <field name="father_spouse_name" />
+                                        <field name="cnic_no" />
+                                        <field name="relation" />
+                                        <field name="address" />
+                                        <field name="mobile" />
+                                        <field name="landline_no" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="family_member" string="Family Details">
+                                <group>
+                                    <group name="family_member_col_1">
+                                        <field name="dependent_person" />
+                                    </group>
+                                    <group name="family_member_col_2">
+                                        <field name="household_member" />
+                                    </group>
+                                </group>
+                                <field name="family_information_ids">
+                                    <tree editable="bottom">
+                                        <field name="complete_name" />
+                                        <field name="age" />
+                                        <field name="relation" />
+                                        <field name="cnic_bform" />
+                                        <field name="education" />
+                                        <field name="monthly_income" />
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_search_mfd_loan_request" model="ir.ui.view">
+            <field name="name">view.search.mfd.loan.request</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="customer_id"/>
+                    <field name="state"/>
+                    <field name="asset_type"/>
+                    <field name="cnic"/>
+                    <field name="initiate_recovery"/>
+                    <filter name="unpaid_loans_filter" string="Unpaid Loans" domain="[('initiate_recovery', '=', True)]"/>
+                    <filter name="unpaid_loans_filter" string="Employee Loans" domain="[('is_employee', '=', True)]"/>
+                </search>
+            </field>
+        </record>
+
+
+        <record id="action_mfd_loan_request" model="ir.actions.act_window">
+            <field name="name">Loan Requests</field>
+            <field name="res_model">mfd.loan.request</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="handle_register_order_form" model="ir.ui.view">
+            <field name="name">handle.registered.order.wizard.form</field>
+            <field name="model">handle.registered.order</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="barcode" />
+                    </group>
+
+                    <footer>
+                        <button string="Process" name="process_barcode" type="object" class="oe_highlight" data-hotkey="q"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+</odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="welfare_menu"
+        web_icon="bn_welfare,static/description/icon.png"
+        name="Welfare"
+        sequence="7"/>
+
+    <menuitem
+        id="disbursement_request_menu"
+        name="Disbursement Request"
+        action="disbursement_request_action"
+        parent="welfare_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="configuration_menu"
+        name="Configuration"
+        parent="welfare_menu"
+        sequence="10"/>
+
+    <menuitem id="menu_mfd_customer_reg"
+        name="Customers Registration"
+        parent="configuration_menu"
+        action="bn_profile_search.search_record_welfare_action"/>
+    
+    <menuitem id="menu_mfd_customer"
+        name="Customers"
+        parent="configuration_menu"
+        action="bn_profile_management.master_donee_action"/>
+
+    <menuitem
+        id="disbursement_type_menu"
+        name="Application Type"
+        action="disbursement_type_action"
+        parent="configuration_menu"
+        sequence="1"/>
+    
+    <menuitem
+        id="disbursement_category_menu"
+        name="Disbursement Category"
+        action="disbursement_category_action"
+        parent="configuration_menu"
+        sequence="2"/>
+
+</odoo>

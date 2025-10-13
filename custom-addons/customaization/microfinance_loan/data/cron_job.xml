@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="daily_recovery_cron" model="ir.cron">
+        <field name="name">Daily Recovery Check</field>
+        <field name="model_id" ref="model_mfd_loan_request"/>
+        <field name="state">code</field>
+        <field name="code">model.compute_recovery_doc()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+<!--        <field name="next_call">2024-12-18 00:00:00</field>-->
+        <field name="numbercall">-1</field>
+    </record>
+</odoo>

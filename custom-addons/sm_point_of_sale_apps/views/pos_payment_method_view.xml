@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="pos_payment_method_form_view_inherit" model="ir.ui.view">
+            <field name="name">pos.payment.method.form.view.inherit</field>
+            <field name="model">pos.payment.method</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="before">
+                    <field name="stock_in" />
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

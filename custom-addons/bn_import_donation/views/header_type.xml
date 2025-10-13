@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="header_type_tree_view" model="ir.ui.view">
+        <field name="name">header.type.tree.view</field>
+        <field name="model">header.type</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Bank">
+                <field name="name" string="Name" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="header_type_form_view" model="ir.ui.view">
+        <field name="name">header.type.form.view</field>
+        <field name="model">header.type</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Bank">
+                <sheet>
+                    <group>
+                        <field name="name" string="Name" />
+
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <record id="header_type_action" model="ir.actions.act_window">
+        <field name="name">Header Type</field>
+        <field name="res_model">header.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <menuitem
+        id="header_type_menu"
+        name="Header Type"
+        action="header_type_action"
+        parent="bn_import_donation.configuration_menu"
+        sequence="2" />
+
+</odoo>
+        

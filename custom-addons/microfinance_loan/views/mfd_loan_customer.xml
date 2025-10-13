@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="mfd_loan_customer_tree" model="ir.ui.view">
+            <field name="name">mfd.loan.request.tree</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <tree default_order="create_date desc">
+                    <field name="sequence"/>
+                    <field name="name"/>
+                    <field name="phone_no"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="mfd_loan_customer_form" model="ir.ui.view">
+            <field name="name">mfd.loan.request.form</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="o_employee_avatar m-0 p-0">
+                            <field name="customer_image" force_save="1" widget="image" class="oe_avatar m-0" options="{'zoom': true, 'zoom_delay': 1000}"/>
+                        </div>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="sequence" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="category" invisible="1"/>
+                                <field name="is_mfd_customer" invisible="1"/>
+                                <field name="name" required="1"/>
+                                <field name="father_name"/>
+                                <field name="address"/>
+                                <field name="dob" required="1"/>
+                                <field name="user_gender" required="1"/>
+                                <field name="driving_license" required="1"/>
+                            </group>
+                            <group>
+                                <field name="phone_no" placeholder="03xx-xxxxxxx"/>
+                                <field name="martial_status" required="1"/>
+                                <field name="cnic" placeholder="xxxxx-xxxxxxx-x" required="1"/>
+                                <field name="domicile"/>
+                                <field name="is_employee"/>
+                                <field name="employee_id" invisible="is_employee == False" required="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Personal Information">
+                                <group string="Home Information" priority="1">
+                                    <group>
+                                        <field name="rental_duration"/>
+                                        <field name="house_electricity_bill"/>
+                                        <field name="dependent_person"/>
+                                    </group>
+                                    <group>
+                                        <field name="monthly_expenses"/>
+                                        <field name="monthly_income"/>
+                                    </group>
+                                </group>
+                                <group string="Owner's Information" priority="3">
+                                    <field name="owner_name"/>
+                                    <field name="onwer_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                    <field name="onwer_phone" placeholder="03xx-xxxxxxx"/>
+                                    <field name="other_owner_info"/>
+                                </group>
+                                <group string="Office Information" priority="4">
+                                    <group>
+                                        <field name="office_id"/>
+                                        <field name="office_name"/>
+                                        <field name="office_designation"/>
+                                        <field name="office_supervisor"/>
+                                    </group>
+                                    <group>
+                                        <field name="shift_type"/>
+                                        <field name="office_monthly_income"/>
+                                        <field name="office_total_income"/>
+                                    </group>
+                                </group>
+                                <group string="Any Other Person Income Details" priority="2">
+                                    <field name="other_person_name"/>
+                                    <field name="other_person_occupation"/>
+                                    <field name="other_person_income"/>
+                                </group>
+                                <group string="Other Home Income Information" priority="5">
+                                    <field name="other_home_information"/>
+                                </group>
+                                <group string="Any Other Personal Problem" priority="6">
+                                    <field name="other_personal_problem"/>
+                                </group>
+                            </page>
+                            <page string="Guarantor Information">
+                                <group string="Person 1" priority="1">
+                                    <group>
+                                        <field name="person1_name"/>
+                                        <field name="person1_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person1_address"/>
+                                    </group>
+                                    <group>
+                                        <field name="person1_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person1_occupation"/>
+                                        <field name="person1_relation"/>
+                                    </group>
+                                </group>
+                                <group string="Person 2" priority="2">
+                                    <group>
+                                        <field name="person2_name"/>
+                                        <field name="person2_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person2_address"/>
+                                    </group>
+                                    <group>
+                                        <field name="person2_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person2_occupation"/>
+                                        <field name="person2_relation"/>
+                                    </group>
+                                </group>
+                                <group string="Person 3" priority="3">
+                                    <group>
+                                        <field name="person3_name"/>
+                                        <field name="person3_cnic" placeholder="xxxxx-xxxxxxx-x"/>
+                                        <field name="person3_address"/>
+                                    </group>
+                                    <group>
+                                        <field name="person3_phone" placeholder="03xx-xxxxxxx"/>
+                                        <field name="person3_occupation"/>
+                                        <field name="person3_relation"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="For Office Use">
+                                <group>
+                                    <field name="application_date"/>
+                                    <field name="application_no"/>
+                                    <field name="receiver_name"/>
+                                    <field name="interview"/>
+                                    <field name="interview_date"/>
+                                    <field name="duration"/>
+                                    <field name="having_account"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_mfd_customer_reg" model="ir.actions.act_window">
+            <field name="name">Customer Registration</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_microfinance','=',True), ('state','=','register')]</field>
+            <field name="context">{
+                'default_is_mfd_customer': 1,
+                'default_category': 'microfinance_loans'
+                }</field>
+            <field name="view_ids"
+                   eval="[(5, 0, 0),
+                          (0, 0, {'view_mode': 'tree', 'view_id': ref('mfd_loan_customer_tree')}),
+                          (0, 0, {'view_mode': 'form', 'view_id': ref('mfd_loan_customer_form')})]"/>
+        </record>
+
+    </data>
+</odoo>

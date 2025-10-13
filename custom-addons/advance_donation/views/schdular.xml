@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="create_advance_donation_entries" model="ir.cron">
+        <field name="name">Advance Donation</field>
+        <field name="model_id" ref="model_advance_donation"/>
+        <field name="state">code</field>
+        <field name="code">model.create_advance_donation_entry()</field>
+        <field name='interval_number'>1</field>
+        <field name='interval_type'>days</field>
+        <field name="numbercall">-1</field>
+        <field name="priority">3</field>
+    </record>
+
+
+</odoo>

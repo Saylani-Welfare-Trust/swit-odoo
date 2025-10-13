@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="sub_category_tree_view" model="ir.ui.view">
+        <field name="name">shift.type.tree.view</field>
+        <field name="model">shift.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="work_hours"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sub_category_form_view" model="ir.ui.view">
+        <field name="name">shift.typeform.view</field>
+        <field name="model">shift.type</field>
+        <field name="arch" type="xml">
+            <form string="Shift Type">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" required='1' /></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="work_hours"/>
+                        </group>
+
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sub_type" model="ir.actions.act_window">
+        <field name="name">Shift Type</field>
+        <field name="res_model">shift.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="menu_config_shift_allocation"
+        name="Shift Scheduling"
+        parent="sm_donation_box.menu_configuration"
+        sequence="150"/>
+
+    <menuitem
+        id="menu_sub_type"
+        name="Shift Type"
+        action="action_sub_type"
+        parent="pways_shift_schedule_management.menu_config_shift_allocation"
+        groups="hr.group_hr_manager,hr.group_hr_user"
+        sequence="20"/>
+</odoo>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_view_form_inherit_shift" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit.shift</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="coach_id" position="after">
+                <field name="shift_id"/>
+            </field>
+            <xpath expr="//page[last()]" position="after">
+                <page string="Shift Allocations">
+                    <field name="shift_allocation_ids">
+                        <tree editable="0">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="shift_id"/>
+                        </tree>
+                    </field>
+                </page>
+                <page string="Workdays">
+                    <field name="dayofallocation_ids">
+                        <tree editable="0">
+                            <field name="date"/>
+                            <field name="shift_id"/>
+                        </tree>
+                    </field>
+                </page>
+                <page string="Weekends">
+                    <field name="dayofweek_ids">
+                        <tree editable="0">
+                            <field name="week_id"/>
+                            <field name="date"/>
+                            <field name="shift_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

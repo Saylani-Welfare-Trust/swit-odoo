@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_welfare_application_form" model="ir.actions.report">
+        <field name="name">Welfare Application Form</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">bn_profile_management.welfare_application_form</field>
+        <field name="report_file">bn_profile_management.welfare_application_form</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="binding_model_id" ref="model_res_partner"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="welfare_application_form">
+        <t t-call="web.html_container">
+            <div style="margin-top: 10px;">
+                <button style="background-color: #714B67;border-color: #714B67;" type="button" class="btn btn-primary" title="Print Client" onclick="PrintClient()">Print Client</button>
+            </div>
+            <script>
+                function PrintClient() {
+                    var receiptHtml = $('.print').html();
+                    var w = window.open();
+                    if(w) {
+                        $('link[rel="stylesheet"]').each(function() {
+                            w.document.head.appendChild(this.cloneNode(true));
+                        });
+                        var styleElement = document.querySelector('style');
+                        if (styleElement) {
+                            var style = document.createElement('style');
+                            style.innerHTML = styleElement.innerHTML;
+                            w.document.head.appendChild(style);
+                        }
+
+                        w.document.write(receiptHtml);
+                        w.document.close();
+                        w.onload = function() {
+                            w.print();
+                            w.close();
+                        };
+                    }
+                }
+                document.addEventListener('DOMContentLoaded', function() {
+                    var print = document.querySelectorAll('.o_control_panel_main_buttons');
+                    console.log(print);
+
+                    if (print.length > 0) {
+                        print.forEach(function(el) {
+                            el.style.setProperty('display', 'none', 'important');
+                        });
+                    }
+                });
+            </script>
+            <div class="print">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"/>
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
+                <link rel="stylesheet" href="/bn_profile_management/static/src/css/style.css"/>
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <head>
+                            <div style="text-align: center;">
+                                <h2>سیلانی ویلفیئر فارم</h2>
+                                <p>یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                            </div>
+                            <hr/>
+                        </head>
+                        <br/>
+                        <section name="print_detail">
+                            <div class="row">
+                                <div class="col-3">
+                                    <span>Application No. : </span>
+                                </div>
+                                <div class="col-3">
+                                    <t t-esc="docs.welfare_ids[-1].name"/>
+                                </div>
+                                <div class="col-3">
+                                    <span>Master Donee No. : </span>
+                                </div>
+                                <div class="col-3">
+                                    <t t-esc="docs.barcode"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <span>Donee Name : </span>
+                                </div>
+                                <div class="col-3">
+                                    <t t-esc="docs.name"/>
+                                </div>
+                                <div class="col-3">
+                                    <span>Donee CNIC : </span>
+                                </div>
+                                <div class="col-3">
+                                    <t t-esc="docs.cnic_no"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <span>Father Name : </span>
+                                </div>
+                                <div class="col-3">
+                                    <t t-esc="docs.father_name"/>
+                                </div>
+                            </div>
+                        </section>
+                        <br/>
+                        <div class="page">
+                            <!-- Header -->
+
+
+                            <!-- Important Notes Section -->
+                            <div style="border: 1px solid black; padding: 10px;">
+                                <h4 style="text-align:center; background-color: black; color: white; padding: 5px;">
+                                    اہم ہدایات
+                                </h4>
+                                <p style="text-align: center;">یاد رہے! دین اسلام کے مال دار افراد کو زکوٰۃ و خیرات کے
+                                    ذریعے مستحق افراد تک پہنچانے
+                                    کا حکم دیا گیا ہے تاکہ مستحق افراد اس فرم سے اپنی ضروریات کو پورا کر سکیں۔ سلیانی
+                                    ویلفیئر بغیر بطور فیس یہ مدد پہنچانے کا کام کر رہی ہے، اگر آپ بھی یہ نیکی کا کام
+                                    کرنا چاہتے ہیں تو۔
+                                </p>
+
+                                <p style="text-align: center; border: 2px solid black; padding: 10px; border-radius: 20px;
+                                display: inline-block;
+                                background-color: #f8f8f8;
+                                font-family: 'Jameel Noori Nastaleeq', Arial, sans-serif;
+                                text-align: right;
+                                direction: rtl;
+                                line-height: 1.8;">
+                                    <span style="font-weight: bold;">نوٹ:</span>
+                                    نام، دستخط دیے گئے تمام کالم ٹھیک طور پر مکمل کریں۔ ہماری انفارمی ٹیم تصدیق کرنے کے
+                                    لیے آپ کے دیے گئے پتہ پر جائے گی۔ اگر فراہم کردہ معلومات میں کوئی بھی غلطی ہوئی تو
+                                    ادارہ آپ کے خلاف قانونی کارروائی کرنے کا حق محفوظ رکھتا ہے۔
+                                </p>
+                            </div>
+                            <div style="
+                                border: 2px solid black;
+                                padding: 15px;
+                                border-radius: 20px;
+                                background-color: #f8f8f8;
+                                font-family: 'Jameel Noori Nastaleeq', Arial, sans-serif;
+                                text-align: right;
+                                direction: rtl;
+                                line-height: 2;
+                                font-size: 20px;
+                                position: relative;
+                            ">
+                                <span style="
+                                    background-color: black;
+                                    color: white;
+                                    display: inline-block;
+                                    padding: 5px 15px;
+                                    font-size: 22px;
+                                    font-weight: bold;
+                                    border-radius: 5px;
+                                    position: absolute;
+                                    right: 10px;
+                                    top: -15px;
+                                ">
+                                    محترم سائلین کو اہم تنبیہ فرمائیں
+                                </span>
+                                <p style="margin-top: 30px;">
+                                    اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق ماررہے ہیں۔
+                                    یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کو یہ رقم / مدد ادارے سے
+                                    وصول کی اس کا نقصان آپ کو یہ ہو سکتا ہے ۔ (مشاہدے کی بات ہے ) کہ آپ کسی بھی تکلیف
+                                    میں مبتلا ہو سکتے ہیں، بیماری ، ایکسیڈینٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی
+                                    ایسی آفت جس کا آپ تصور نہیں کر سکتے، بلا کی طرح آپ پر نازل
+                                    ہو سکتی ہے اور جس سے آپ بے سکون ہو جائینگے (الامان والحفیظ) ۔ اللہ عزوجل ہم سب کی
+                                    مدد فرمائے ہر مسلمان کی پریشانیاں دور کریے۔ (آمین) سیلانی ویلفیئر ان شاء اللہ عزوجل
+                                    آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے، اللہ عزوجل سیلانی ویلفیئر کو
+                                    بھی مستحقین تک ان کی لاتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ
+                                    قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں امید ہے کہ آپ ان پر عمل کرینگے اور
+                                    ہمارے اسٹاف کے ساتھ تعاون کرینگے۔
+                                </p>
+                            </div>
+
+                            <!-- Personal Information Table -->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">ملازمت کی تفصیلات / کاروباری معلومات
+                                </h4>
+                                <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="3">
+                                            :کمپنی کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            کمپنی کا پتہ:
+                                        </th>
+
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ تنخواہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            نوکری کا دورانیہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            عہدہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            کمپنی کا فون نمبر :
+                                        </th>
+
+                                    </tr>
+
+                                </table>
+                            </div>
+                            <!-- تعلیم کی تفصیلات -->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center;">تعلیم کی تفصیلات</h4>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            سال:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ادارہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            تعلیم:
+                                        </th>
+
+                                    </tr>
+
+                                </table>
+                            </div>
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">مکان کی ملکیت / رہائش کی تفصیلات</h4>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">:رینٹل / مشترکہ دورانیہ
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :فون نمبر
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :رہائش کی قسم
+                                        </th>
+
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">مالک مکان کا نام:
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            6 ماہ کا مجموعی گیس کابل ( ٹوٹل ):
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            6 ماہ کا مجموعی بجلی کا بل ( ٹوٹل ) :
+                                        </th>
+
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ کرایه:
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            دیگر معلومات / مالک مکان کا پتہ:
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            مالک مکان کا موبائل نمبر:
+                                        </th>
+
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            مالک مکان کا شناختی کارڈ نمبر :
+                                        </th>
+
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--     فیملی ممبرز کی تفصیل-->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">فیملی ممبرز کی تفصیل</h4>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">تفصیلات کے ساتھ انحصار کرنے والوں کی تعداد:
+                                        </th>
+                                    </tr>
+
+                                </table>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ آمدنی
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            تعلیم
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            شناختی کارڈ/ بے فارم:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            رشتہ
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            عمر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            مکمل نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            نمبر شمار
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--     فیملی ممبرز کی تفصیل-->
+                            <div style="margin-top:20px;">
+
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">تفصیلات کے ساتھ گھر کے ارکان کو کمان:
+                                        </th>
+                                    </tr>
+
+                                </table>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ آمدنی
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            تعلیم
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            شناختی کارڈ/ بے فارم:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            رشتہ
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            عمر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            مکمل نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            نمبر شمار
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"></th>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--     دیگر مالی معلومات-->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">دیگر مالی معلومات</h4>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            اکاؤنٹ نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            بینک کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            <input type="checkbox">yes</input>
+                                            <input type="checkbox">No</input>
+                                            :بینک اکاؤنٹ
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ گھر یلو اخراجات:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            ماہانہ آمدنی
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            بقایہ رقم
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="3">ادارے کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            <input type="checkbox">yes</input>
+                                            <input type="checkbox">No</input>:کوئی اور قرض
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--   دیگر معلومات-->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">دیگر معلوماتت</h4>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :ڈرائیونگ لائسنس نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :تفصیلات
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            <input type="checkbox">yes</input>
+                                            <input type="checkbox">No</input>
+                                            :کیا آپ نے بھی سیلانی ویلفیئر انٹرنیشنل
+                                            ٹرسٹ میں اپلائی کیا ہے
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            <input type="checkbox">yes</input>
+                                            <input type="checkbox">No</input>:کسی دوسری تنظیم سے امداد
+                                        </th>
+                                    </tr>
+
+                                </table>
+                            </div>
+                            <!--   تفصیلات کی درخواست کریں-->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">تفصیلات کی درخواست کریں</h4>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :مداد کی قسم متوقع ہے
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :کفالت / مدد کی مدت متوقع
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--   گارنٹر کی تفصیلات-->
+                            <div style="margin-top:20px;">
+                                <h4 style="text-align: center; margin-top:10px;">گارنٹر کی تفصیلات</h4>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :شناختی کارڈ نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :والد / شریک حیات کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :2ضامن نمبر
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">درخواست گزار کے ساتھ تعلق
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">پتہ
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :موبائل نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :موبائل نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">:لینڈ لائن نمبر
+                                        </th>
+                                    </tr>
+                                </table>
+                                <table style="width: 100%; border-collapse: collapse; margin-top:10px;">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :شناختی کارڈ نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :والد / شریک حیات کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :2ضامن نمبر
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">درخواست گزار کے ساتھ تعلق
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">پتہ
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :موبائل نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;">
+                                            :موبائل نمبر
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px; text-align: right; font-size:12px;"
+                                            colspan="2">:لینڈ لائن نمبر
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="margin-top:50px; text-align: center;">
+                                <h4 style="text-align: center; border: 2px solid black; padding: 10px; border-radius: 20px;
+                                display: inline-block;">آفس کے استعمال کے لئے
+                                </h4>
+                                <div style="direction: rtl; text-align: right; font-family: 'Noto Naskh Arabic', sans-serif;">
+                                    <span>فارم نمبر:_____________________</span>
+
+                                    <span>وصول کنندہ:____________________________________</span>
+
+                                    <span>دستخط:_________________________</span>
+
+                                    <span>انٹرویو:</span>
+                                    <span style="display: inline-block; margin-right: 10px;">
+                                        <input type="checkbox">ہاں</input>
+                                        <input type="checkbox">نہیں</input>
+                                    </span>
+                                    <span>انٹرویو کی تاریخ: ______________________</span>
+                                    <br />
+                                    <span style="direction: rtl;">تاثرات:
+                                        ___________________________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        __________________________________________________________________________________________________________________________________________________________________
+                                    </span>
+                                    <br/>
+                                    <span>انٹرویو کا نتیجہ:</span>
+                                    <span style="display: inline-block; margin-right: 10px;">
+                                        <input type="checkbox">ہاں</input>
+                                        <input type="checkbox">نہیں</input>
+                                    </span>
+
+                                    <span>رقم: _____________________________________</span>
+                                    <span>ماہانہ قسط: ________________________________________</span>
+                                    <span>ادائیگی کی تاریخ: __________________________________</span>
+                                    <br/>
+                                    <br/>
+                                    <span>دستخط انچارج: ______________________________________________________________</span>
+                                    <span>دستخط ہیڈ آفس ڈیپارٹمنٹ: _________________________________________________________________</span>
+
+                                </div>
+
+                            </div>
+                            <!--       ٹرسٹی اپرول اور تاثرات-->
+                            <div>
+                                <div style="margin-top:50px; text-align: right;">
+                                    <h4 style="text-align: center; background-color: black; color: white;
+                                        padding: 10px 20px; border-radius: 20px; display: inline-block;">
+                                        ٹرسٹی اپرول اور تاثرات
+                                    </h4>
+                                </div>
+                                <div style="direction:rtl; margin-top:10px; text-align: right;">
+                                    <span>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                    </span>
+                                    <br/>
+                                </div>
+                                <br/>
+                                <div style="direction:rtl; text-align:left; padding-left:134px;">
+                                    <span>دستخط:______________________</span>
+                                </div>
+                            </div>
+                            <!--       ٹرسٹی اپرول اور تاثرات-->
+                            <div>
+                                <div style="margin-top:50px; text-align: right;">
+                                    <h4 style="text-align: center; background-color: black; color: white;
+                                        padding: 10px 20px; border-radius: 20px; display: inline-block;">
+                                        ٹرسٹی اپرول اور تاثرات
+                                    </h4>
+                                </div>
+                                <div style="direction:rtl; margin-top:10px; text-align: right;">
+                                    <span>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                        <br/>
+                                        _______________________________________________________________________________________________________________________________________________
+                                    </span>
+                                    <br/>
+                                </div>
+                                <br/>
+                                <div style="direction:rtl; text-align:left; padding-left:134px;">
+                                    <span>دستخط:______________________</span>
+                                </div>
+                            </div>
+                            <div style="margin-top:30px; direction:rtl; text-align:right; ">
+
+                                <h2 style="text-align: center; background-color: black; color: white;
+                                padding: 10px 20px; border-radius: 20px; display: inline-block; margin">
+                                    برکتیں حاصل کرنے کے کچھ روحانی ذرائع
+                                </h2>
+
+                                <div style="margin-top: 20px;">
+                                    <input type="checkbox" style="margin-right: 40px;"/>
+                                    <span>نماز پنجگانہ اور قرآن کی تلاوت کا معمول ہے ؟ (اگر نہیں تو فوری شروع کیجئے)
+                                    </span>
+                                    <input type="checkbox" style="margin-right: 10px;"/>
+                                    <span>کم از کم ہفتہ وار دینی بیانات اور دروس کو پڑھنے کا معمول ہے۔ (اگر نہیں تو فوری
+                                        شروع کیجئے)
+                                    </span>
+                                </div>
+
+
+                            </div>
+                                <div class="page-break"></div>
+                                <div style="margin-top: 20px;">
+                                    <p style="text-align: center;
+                                display: inline-block;
+                                line-height: 3;
+                                font-family: 'Jameel Noori Nastaleeq', Arial, sans-serif;
+                                text-align: right;
+                                direction: rtl;
+                                ">
+                                        <span style="font-weight: bold; background-color:black; padding: 10px 20px; border-radius: 20px; color:white; margin-left:10px; margin-bottom:1px;">
+                                            نوٹ:
+                                        </span>
+                                        برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
+                                    </p>
+                                </div>
+
+                            <div style="margin-top: 20px;">
+                                    <p style="text-align: center;
+                                display: inline-block;
+                                line-height: 3;
+                                font-family: 'Jameel Noori Nastaleeq', Arial, sans-serif;
+                                text-align: right;
+                                direction: rtl;
+                                ">
+                                        <span style="font-weight: bold; background-color:black; padding: 10px 20px; border-radius: 20px; color:white; margin-left:10px; margin-bottom:1px;">
+                                            حلف نامہ:
+                                        </span>
+                                        میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کی کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
+                                    </p>
+                                </div>
+
+
+                            <div style="margin-top:50px; direction: rtl; text-align: right; font-family: 'Noto Naskh Arabic', sans-serif;">
+                                    <span style="margin-right:20px;">دستخط درخواست گزارن: _________________</span>
+                                    <span >دستخط درخواست وصول کننده : _________________</span>
+                                    <span >دستخط شعبه ذمه دارن: _________________</span>
+                            </div>
+
+
+
+                        </div>
+
+                    </t>
+                </t>
+            </div>
+        </t>
+    </template>
+
+</odoo>

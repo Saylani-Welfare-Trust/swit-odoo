@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="import_donation_wizard_view_form" model="ir.ui.view">
+            <field name="name">import.donation.wizard.view.form</field>
+            <field name="model">import.donation.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Deposit">
+                    <group>
+                        <group>
+                            <field name="start_date" />
+                        </group>
+                        <group>
+                            <field name="end_date" />
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="action_import_donation_wizard" string="Import" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <record id="import_donation_wizard_action" model="ir.actions.act_window">
+            <field name="name">Import Donation Data</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">import.donation.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="sm_rest_api.import_donation_wizard_view_form"/>
+            <field name="target">new</field>
+        </record>
+        <menuitem
+            id="import_donation_data_menu"
+            name="Donation Import Data"
+            parent="sm_rest_api.import_donation_rest_api_data_menu"
+            action="sm_rest_api.import_donation_wizard_action"
+            sequence="2"
+        />
+    </data>
+    
+</odoo>
+
+

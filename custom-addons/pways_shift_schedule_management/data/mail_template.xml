@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="email_template_shift_send" model="mail.template">
+            <field name="name">Shift Allocation</field>
+            <field name="email_from">{{ object.env.user.email_formatted }}</field>
+            <field name="email_to">{{ object.employee_id.work_email }}</field>
+            <field name="subject">Shift allocated {{ object.name }} starting from "{{ object.date_from }}" TO "{{ object.date_to }}". </field>
+            <field name="model_id" ref="pways_shift_schedule_management.model_shift_allocation"/>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p> Mr <span t-esc="object.employee_id.name"/> your next working shift is allocated  its starting from "<span t-esc="object.date_from"/>" TO "<span t-esc="object.date_to"/>" . shift scheduling is attached with this mail. please find in attachment. </p>
+                </div>
+            </field>
+            <field name="report_template_id" ref="pways_shift_schedule_management.action_report_employee_shift_details"/>
+            <field name="report_name">{{ (object.employee_id.name or '') }}</field>
+        </record>
+    </data>
+    <data>
+        <record id="shift_change_request_send_employee" model="mail.template">
+            <field name="name">Shift Day Change Request</field>
+            <field name="email_from">{{ object.env.user.email_formatted }}</field>
+            <field name="email_to">{{ object.employee_id.work_email }}</field>
+            <field name="subject">Shift allocated "{{ object.name }}".</field>
+            <field name="model_id" ref="pways_shift_schedule_management.model_hr_shift_request"/>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p> Mr <span t-esc="object.employee_id.name"/> Your request number <span t-esc="object.name"/> for change shift has been approved . For requested dates, your working shift schedule at <b><span t-esc="object.shift_id.name"/></b> which starts from <span t-esc="object.shift_id.time_from"/> to <span t-esc="object.shift_id.time_too"/>. </p> 
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

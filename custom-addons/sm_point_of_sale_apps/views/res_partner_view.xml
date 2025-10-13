@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="res_partner_tree_view_inherit" model="ir.ui.view">
+            <field name="name">res.partner.tree.view.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='display_name']" position="before">
+                    <field name="serial_number" />
+                </xpath>
+                <xpath expr="//field[@name='phone']" position="after">
+                    <field name="category" />
+                    <field name="reference_number" />
+                    <field name="cnic_no" />
+                </xpath>
+            </field>
+        </record>
+        <record id="res_partner_form_view_inherit" model="ir.ui.view">
+            <field name="name">res.partner.form.view.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet/div[hasclass('oe_title')]" position="after">
+                    <div class="oe_title mb24" style="display: none;">
+                        <h1>
+                            <field name="serial_number" invisible="serial_number == False" />
+                        </h1>
+                    </div>
+                </xpath>
+                <xpath expr="//form/sheet/group/group[1]/field[@name='vat']" position="after">
+                    <field name="category" />
+                    <field name="reference_number" />
+                    <field name="cnic_no" />
+                    <field name="donation_type" />
+                    <field name="amount" invisible="donation_type == 'in_kind'" />
+                    <field name="bank_name" invisible="donation_type != 'cheque'" />
+                    <field name="cheque_number" invisible="donation_type != 'cheque'" />
+                    <field name="branch_id" />
+                </xpath>
+            </field>
+        </record>
+        <record id="view_res_partner_filter_inherit" model="ir.ui.view">
+            <field name="name">res.partner.select.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search" position="replace">
+                    <search string="Search Partner">
+                        <field name="name" filter_domain="['|', '|', '|', '|', ('complete_name', 'ilike', self), ('ref', '=', self), ('email', 'ilike', self), ('vat', 'ilike', self), ('company_registry', 'ilike', self)]"/>
+                        <field name="parent_id" domain="[('is_company', '=', True)]" operator="child_of"/>
+                        <field name="email" filter_domain="[('email', 'ilike', self)]"/>
+                        <field name="phone" filter_domain="['|', ('phone', 'ilike', self), ('mobile', 'ilike', self)]"/>
+                        <field name="category_id" string="Tag" operator="child_of"/>
+                        <field name="user_id"/>
+                        <field name="category" />
+                        <separator/>
+                        <filter string="Individuals" name="type_person" domain="[('is_company', '=', False)]"/>
+                        <filter string="Companies" name="type_company" domain="[('is_company', '=', True)]"/>
+                        <separator/>
+                        <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                        <separator/>
+                        <group expand="0" name="group_by" string="Group By">
+                            <filter name="salesperson" string="Salesperson" domain="[]" context="{'group_by' : 'user_id'}"/>
+                            <filter name="group_company" string="Company" context="{'group_by': 'parent_id'}"/>
+                            <filter name="group_country" string="Country" context="{'group_by': 'country_id'}"/>
+                            <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                        </group>
+                    </search>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

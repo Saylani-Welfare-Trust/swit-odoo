@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+        <!-- t-on-click="() => this.props.onClickSaleOrder(props.order)" -->
+    <t t-name="pos_enhancement.RecurringOrderRow">
+        <div class="order-row"
+        t-on-click="print"
+        t-att-class="{ highlight: highlighted }">
+            <div class="col name p-2">
+                <div t-if="ui.isSmall">Order</div>
+                <div><t t-esc="name"/></div>
+            </div>
+            <div class="col partner p-2">
+                <div t-if="ui.isSmall">Donee</div>
+                <div><t t-esc="partner"/></div>
+            </div>
+            <div class="col registrar p-2">
+                <div t-if="ui.isSmall">Registar</div>
+                <div><t t-esc="registrar"/></div>
+            </div>
+            <div class="col disbursment p-2">
+                <div t-if="ui.isSmall">Disbursment Type</div>
+                <div><t t-esc="disbursment_type"/></div>
+            </div>
+            <div class="col transaction p-2">
+                <div t-if="ui.isSmall">Transacton Type</div>
+                <div><t t-esc="transaction_type"/></div>
+            </div>
+            <div class="col date p-2">
+                <div t-if="ui.isSmall">Date</div>
+                <div><t t-esc="date"/></div>
+            </div>
+
+        </div>
+    </t>
+
+</templates>

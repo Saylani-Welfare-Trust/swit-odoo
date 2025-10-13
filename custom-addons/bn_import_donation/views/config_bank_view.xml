@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sm_config_bank_config_bank_form_view_inherit_bn_import_donation" model="ir.ui.view">
+        <field name="name">sm.config.bank.config.bank.form.inherit</field>
+        <field name="model">config.bank</field>
+        <field name="inherit_id" ref="sm_config_bank.config_bank_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='config_header']//field[@name='name']" position="after">
+                <field name="header_type_id" string="Header Type" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

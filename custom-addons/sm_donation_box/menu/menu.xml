@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <menuitem
+            id="menu_donation_box"
+            name="Donation Box"
+            groups="sm_donation_box.donation_box_menu_group"
+            web_icon="sm_donation_box,static/description/icon.png"
+            sequence="8"
+        />
+        <menuitem
+            id="menu_dnb_installation"
+            name="DNB Registration/Installation"
+            action="sm_donation_box.donation_box_registration_action"
+            parent="sm_donation_box.menu_donation_box"
+            sequence="3"
+        />
+        <menuitem
+            id="menu_donation_box_complain"
+            name="Complain Center"
+            action="sm_donation_box.donation_box_complain_action"
+            parent="sm_donation_box.menu_donation_box"
+            sequence="4"
+        />
+        <menuitem
+            id="menu_configuration"
+            name="Configuration"
+            groups="sm_donation_box.donation_box_configuration_group"
+            parent="sm_donation_box.menu_donation_box"
+            sequence="10"
+        />
+        <menuitem
+            id="menu_master_setup"
+            name="Master Setup"
+            parent="sm_donation_box.menu_configuration"
+            sequence="1"
+        />
+        <menuitem
+            id="menu_sub_zone"
+            name="Sub Zone"
+            parent="sm_donation_box.menu_master_setup"
+            action="bn_master_setups.sub_zone_action"
+            sequence="3"
+        />
+        <menuitem
+            id="menu_installation_category"
+            name="Installation Category"
+            parent="sm_donation_box.menu_master_setup"
+            action="bn_master_setups.installation_category_action"
+            sequence="4"
+        />
+        <!-- <menuitem
+            id="menu_donation_box_gl_account"
+            name="GL Account"
+            parent="sm_donation_box.menu_master_setup"
+            action="sm_donation_box.donation_box_gl_account_action"
+            sequence="5"
+        /> -->
+    </data>
+</odoo>

@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="donation_authorization_tree_view" model="ir.ui.view">
+            <field name="name">donation.authorization.tree.view</field>
+            <field name="model">donation.authorization</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Donation Authorization" editable="bottom" create="false" edit="true" delete="false">
+                    <field name="url" />
+                    <field name="client_id" />
+                    <field name="client_secret" />
+                </tree>
+            </field>
+        </record>
+        <record id="donation_authorization_form_view" model="ir.ui.view">
+            <field name="name">donation.authorization.form.view</field>
+            <field name="model">donation.authorization</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Donation Authorization" create="false" edit="true" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="url" />
+                            </group>
+                            <group>
+                                <field name="client_id" />
+                            </group>
+                            <group>
+                                <field name="client_secret" />
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_donation_authorization" model="ir.actions.act_window">
+            <field name="name">Donation Authorization</field>
+            <field name="res_model">donation.authorization</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem
+            id="import_donation_rest_api_data_menu"
+            name="Donation API"
+            parent="bn_import_donation.import_donation_root_menu"
+            sequence="6"
+        />
+        <menuitem
+            id="menu_donation_authorization"
+            name="Donation Authorization"
+            parent="sm_rest_api.import_donation_rest_api_data_menu"
+            sequence="1"
+            action="sm_rest_api.action_donation_authorization"
+        />
+    </data>
+</odoo>

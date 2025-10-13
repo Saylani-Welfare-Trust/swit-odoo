@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="confirm_search_view_form" model="ir.ui.view">
+        <field name="name">confirm.search.view.form</field>
+        <field name="model">confirm.search</field>
+        <field name="arch" type="xml">
+            <form string="">
+                <sheet>
+                    <h2>Are you sure? You want to proceed with this action?</h2>
+                    <h4>You have made following selection:</h4>
+
+                    <br/>
+
+                    <group>
+                        <group name="confirm_search_col_1">
+                            <field name="search_type" readonly="1" />
+                            
+                            <field name="person_type" readonly="1" />
+                        </group>
+                        <group name="confirm_search_col_2">
+                            <field name="registration_id" invisible="search_type != 'registration_id'" readonly="1" />
+                            <label for="mobile_no"/>
+                            <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="phone_code_id" readonly="1"/> <field style="width: 70% !important;" name="mobile_no" readonly="1" invisible="search_type != 'mobile_no'"/></div>
+                            <field name="cnic_no" invisible="search_type != 'cnic_no'" readonly="1" />
+                            
+                            <field name="donee_registration_type" invisible="person_type != 'donee'" readonly="1" />
+                            
+                            <!-- <field name="welfare_application_type" invisible="donee_registration_type != 'welfare'" readonly="1" />
+                            <field name="microfinance_application_type" invisible="donee_registration_type != 'microfinance'" readonly="1" /> -->
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" type="object" string="Search"
+                            class="oe_highlight"/>
+                    <button special="cancel" string="Cancel" class="oe_highlight"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

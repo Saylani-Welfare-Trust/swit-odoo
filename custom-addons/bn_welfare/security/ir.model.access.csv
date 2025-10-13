@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_disbursement_type,access.disbursement.type,bn_welfare.model_disbursement_type,,1,1,1,1
+access_disbursement_category,access.disbursement.category,bn_welfare.model_disbursement_category,,1,1,1,1
+access_disbursement_request,access.disbursement.request,bn_welfare.model_disbursement_request,,1,1,1,1
+access_welfare_account_configuration,access.welfare.account.configuration,bn_welfare.model_welfare_account_configuration,,1,1,1,1
+access_disbursement_bank,access.disbursement.bank,bn_welfare.model_disbursement_bank,,1,1,1,1
+access_recurring_disbursement_request,access.recurring.disbursement.request,bn_welfare.model_recurring_disbursement_request,,1,1,1,1
+access_disbursement_request_line,access.disbursement.request.line,bn_welfare.model_disbursement_request_line,,1,1,1,1

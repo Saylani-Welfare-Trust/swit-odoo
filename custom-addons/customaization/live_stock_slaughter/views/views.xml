@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+
+    <record id="view_live_stock_slaughter_transfer_wizard" model="ir.ui.view">
+        <field name="name">live.stock.slaughter.transfer.wizard.form</field>
+        <field name="model">live.stock.slaughter.transfer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Transfer from Slaughter Stock">
+                <group>
+                    <field name="slaughter_id" readonly="1"/>
+                    <field name="dest_location_id"/>
+                </group>
+                <footer>
+                    <button string="Transfer" type="object" name="action_do_transfer" class="oe_highlight"/>
+                    <button string="Cancel" class="btn-default" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <!-- Tree View -->
+    <record id="view_live_stock_slaughter_tree" model="ir.ui.view">
+        <field name="name">live_stock_slaughter.tree</field>
+        <field name="model">live_stock_slaughter.live_stock_slaughter</field>
+        <field name="arch" type="xml">
+            <tree string="Live Stock Slaughter">
+                <field name="product"/>
+                <field name="product_code"/>
+                <field name="quantity"/>
+                <field name="price"/>
+                <field name="state"/>
+                <field name="origin"/>
+               
+                
+                
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_live_stock_slaughter_form" model="ir.ui.view">
+        <field name="name">live_stock_slaughter.form</field>
+        <field name="model">live_stock_slaughter.live_stock_slaughter</field>
+        <field name="arch" type="xml">
+            <form string="Live Stock Slaughter">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="not_received,received"/>
+
+                    <button name="action_confirm"
+                            string="Confirm"
+                            type="object"
+                            class="btn-primary"
+                            invisible="confirm_hide != False"/>
+
+                    <button name="action_cutting"
+                            string="Send to Cutting"
+                            type="object"
+                            class="btn-primary"
+                            invisible="cutting_hide != False"/>
+
+                    <button name="action_open_transfer_wizard"
+                            type="object"
+                            string="Transfer"
+                            invisible="transfer_bool != False"
+                            class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="product"/>
+                        <!--                        <field name="product_code"/>-->
+                        <field name="quantity"/>
+                        <field name="donee"/>
+                        <field name="pos_name"/>
+                        <field name="price"/>
+                        <field name="transfer_location" readonly="1"/>
+
+                        <field name="qr_code" widget="image" options="{'preview_image': 'qr_code'}"/>
+                        <field name="ext_url" readonly="1"/>
+                        <field name="confirm_hide" invisible="1"/>
+                        <field name="cutting_hide" invisible="1"/>
+                        <field name="origin"/>
+                        <field name="transfer_bool" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to Open the Views -->
+    <record id="action_live_stock_slaughter" model="ir.actions.act_window">
+        <field name="name">Live Stock Slaughter</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">live_stock_slaughter.live_stock_slaughter</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_location_form_2" model="ir.actions.act_window">
+        <field name="name">Locations</field>
+        <field name="res_model">stock.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="stock.view_location_tree2"/>
+        <field name="search_view_id" ref="stock.view_location_search"/>
+        <field name="domain">[('name', 'ilike', 'slaughter')]</field>  <!-- Domain added here -->
+        <field name="context">{'search_default_in_location':1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new location
+            </p>
+            <p>
+                Define your locations to reflect your warehouse structure and
+                organization. Odoo is able to manage physical locations
+                (warehouses, shelves, bin, etc), partner locations (customers,
+                vendors) and virtual locations which are the counterpart of
+                the stock operations like the manufacturing orders
+                consumptions, inventories, etc.
+            </p>
+            <p>
+                Every stock operation in Odoo moves the products from one
+                location to another one. For instance, if you receive products
+                from a vendor, Odoo will move products from the Vendor
+                location to the Stock location. Each report can be performed on
+                physical, partner or virtual locations.
+            </p>
+        </field>
+    </record>
+    <record id="action_location_form_cutting" model="ir.actions.act_window">
+        <field name="name">Locations</field>
+        <field name="res_model">stock.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="stock.view_location_tree2"/>
+        <field name="search_view_id" ref="stock.view_location_search"/>
+        <field name="domain">[('name', 'ilike', 'cutting')]</field>  <!-- Domain added here -->
+        <field name="context">{'search_default_in_location':1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new location
+            </p>
+            <p>
+                Define your locations to reflect your warehouse structure and
+                organization. Odoo is able to manage physical locations
+                (warehouses, shelves, bin, etc), partner locations (customers,
+                vendors) and virtual locations which are the counterpart of
+                the stock operations like the manufacturing orders
+                consumptions, inventories, etc.
+            </p>
+            <p>
+                Every stock operation in Odoo moves the products from one
+                location to another one. For instance, if you receive products
+                from a vendor, Odoo will move products from the Vendor
+                location to the Stock location. Each report can be performed on
+                physical, partner or virtual locations.
+            </p>
+        </field>
+    </record>
+
+
+    <!-- Menu Item -->
+    <menuitem id="menu_live_stock_slaughter_root" name="Live Stock Slaughter"/>
+    <menuitem id="menu_live_stock_cutting_root" name="Live Stock Cutting"/>
+    <menuitem id="menu_meat_root" name="Meat Department"/>
+    <menuitem id="menu_goat_root" name="Goat Department"/>
+
+
+    <menuitem id="menu_live_stock_slaughter"
+              name="Live Stock Slaughter"
+              parent="menu_live_stock_slaughter_root"
+              action="action_live_stock_slaughter"
+              sequence="5"/>
+    <menuitem id="menu_live_stock_requisition"
+              name="Requisition"
+              parent="menu_live_stock_slaughter_root"
+              action="action_live_stock_requisition"
+              sequence="10"/>
+
+    <menuitem id="menu_live_stock_slaughter_stock"
+              name="Stock"
+              parent="menu_live_stock_slaughter_root"
+              action="action_location_form_2"
+              sequence="15"/>
+
+
+    <menuitem id="menu_livestock_stock"
+              name="Stock &amp; Distribution"
+              parent="menu_live_stock_slaughter_root"
+              action="action_livestock_stock"/>
+
+
+    <menuitem id="menu_livestock_configurations"
+              name="Configurations"
+              parent="menu_live_stock_slaughter_root"
+              />
+
+
+    <menuitem id="menu_product_parent" name="By Product Master" parent="menu_livestock_configurations"
+              action="action_product_parent"/>
+
+
+
+    <!--    Cutting#################################################################################################-->
+
+    <menuitem id="menu_live_stock_slaughter_cutting"
+              name="Cutting Department"
+              parent="menu_live_stock_cutting_root"
+              action="action_live_stock_slaughter_cutting"
+              sequence="5"/>
+
+
+    <menuitem id="menu_live_stock_slaughter_cutting_material"
+              name="Cutting Material"
+              parent="menu_live_stock_cutting_root"
+              action="action_live_stock_slaughter_cutting_material"
+              sequence="10"/>
+
+    <menuitem id="menu_kitchen_transfer"
+              name="Kitchen Transfer"
+              parent="menu_live_stock_cutting_root"
+              action="action_swt_kitchen_transfer"
+              sequence="15"/>
+
+    <menuitem id="menu_live_stock_slaughter_stock_cutting"
+              name="Stock"
+              parent="menu_live_stock_cutting_root"
+              action="action_location_form_cutting"
+              sequence="20"/>
+
+
+
+
+
+
+    <!--    meat########################################"###################################################################3-->
+
+
+    <record id="action_location_form_meat" model="ir.actions.act_window">
+        <field name="name">Locations</field>
+        <field name="res_model">stock.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="stock.view_location_tree2"/>
+        <field name="search_view_id" ref="stock.view_location_search"/>
+        <field name="domain">[('name', 'ilike', 'meat')]</field>  <!-- Domain added here -->
+        <field name="context">{'search_default_in_location':1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new location
+            </p>
+            <p>
+                Define your locations to reflect your warehouse structure and
+                organization. Odoo is able to manage physical locations
+                (warehouses, shelves, bin, etc), partner locations (customers,
+                vendors) and virtual locations which are the counterpart of
+                the stock operations like the manufacturing orders
+                consumptions, inventories, etc.
+            </p>
+            <p>
+                Every stock operation in Odoo moves the products from one
+                location to another one. For instance, if you receive products
+                from a vendor, Odoo will move products from the Vendor
+                location to the Stock location. Each report can be performed on
+                physical, partner or virtual locations.
+            </p>
+        </field>
+    </record>
+
+
+    <menuitem id="menu_meat_dept"
+              name="Meat Department"
+              parent="menu_meat_root"
+              action="action_swt_meat_dept"
+              sequence="5"/>
+
+    <menuitem id="menu_meat_dept_prod_pack"
+              name="Product Packaging"
+              parent="menu_meat_root"
+              action="product.action_packaging_view"
+              sequence="10"/>
+    <menuitem id="menu_meat_dept_package_type"
+              name="Package Types"
+              parent="menu_meat_root"
+              action="stock.action_package_type_view"
+              sequence="15"/>
+
+    <menuitem id="menu_meat_dept_stock"
+              name="Stock"
+              parent="menu_meat_root"
+              action="action_location_form_meat"
+              sequence="25"/>
+
+    <menuitem id="menu_meatrequisition"
+              name="Requisition"
+              parent="menu_meat_root"
+              action="action_meat_requisition"
+              sequence="20"/>
+
+
+    <!--    goat########################################"###################################################################3-->
+
+
+    <record id="action_location_form_goat" model="ir.actions.act_window">
+        <field name="name">Locations</field>
+        <field name="res_model">stock.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="stock.view_location_tree2"/>
+        <field name="search_view_id" ref="stock.view_location_search"/>
+        <field name="domain">[('name', 'ilike', 'goat')]</field>  <!-- Domain added here -->
+        <field name="context">{'search_default_in_location':1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new location
+            </p>
+            <p>
+                Define your locations to reflect your warehouse structure and
+                organization. Odoo is able to manage physical locations
+                (warehouses, shelves, bin, etc), partner locations (customers,
+                vendors) and virtual locations which are the counterpart of
+                the stock operations like the manufacturing orders
+                consumptions, inventories, etc.
+            </p>
+            <p>
+                Every stock operation in Odoo moves the products from one
+                location to another one. For instance, if you receive products
+                from a vendor, Odoo will move products from the Vendor
+                location to the Stock location. Each report can be performed on
+                physical, partner or virtual locations.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_goat_dept"
+              name="Goat Department"
+              parent="menu_goat_root"
+              action="action_swt_goat_dept"
+              sequence="5"/>
+
+
+    <menuitem id="menu_goat_dept_stock"
+              name="Stock"
+              parent="menu_goat_root"
+              action="action_location_form_goat"
+              sequence="20"/>
+
+    <!--    #######################################################-->
+    <menuitem id="menu_raw_meat_root" name="Meat Management"/>
+    <menuitem id="menu_raw_meat_monthly"
+              name="Monthly Requirements"
+              parent="menu_raw_meat_root"
+              action="action_raw_meat_monthly"/>
+    <menuitem id="menu_branch_livestock_request"
+              name="Branch LiveStock Requests"
+              parent="menu_raw_meat_root"
+              action="action_branch_livestock_request"/>
+
+
+</odoo>

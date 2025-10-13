@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- New Enhanced Closing Popup Component -->
+    <t t-name="CustomClosingPopup" owl="1">
+        <div class="popup close-pos-popup">
+            <div class="modal-header">
+                <h4 class="modal-title">Closing Session</h4>
+                <div class="total-orders fw-bolder">
+                    Total <t t-esc="props.orders_details.quantity"/> orders:
+                    <span class="amount" t-esc="env.utils.formatCurrency(props.orders_details.amount)"/>
+                </div>
+            </div>
+            <main class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="payment-methods-overview overflow-auto">
+                    <table class="text-start">
+                        <thead>
+                            <tr class="text-dark">
+                                <th>Payment Method</th>
+                                <th>Expected</th>
+                                <th>Difference</th>
+                                <th class="text-start">Count</th>
+                                <th>Slip No.</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <t t-if="pos.config.cash_control">
+                            <tbody>
+                                <tr>
+                                    <td t-esc="props.default_cash_details.name"/>
+                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.amount)"/>
+                                    <td t-esc="env.utils.formatCurrency(getDifference(props.default_cash_details.id))"
+                                        t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getDifference(props.default_cash_details.id))}"/>
+                                    <td>
+                                        <Input tModel="[state.payments[props.default_cash_details.id], 'counted']"
+                                            callback.bind="(value) =>  this.setManualCashInput(value)"
+                                            isValid.bind="env.utils.isValidFloat"/>
+                                    </td>
+                                    <td/>
+                                    <td/>
+                                    <td/>
+                                </tr>
+                            </tbody>
+                            <tbody class="cash-overview border-start small text-muted">
+                                <tr>
+                                    <td><span t-esc="pos.company.restricted_category" /> Amount</td>
+                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.restricted)"/>
+                                    <td/>
+                                    <td/>
+                                    <td>
+                                        <input class="form-control" placeholder="Slip No."
+                                            t-model="state.newLines[props.default_cash_details.id].restricted.ref"/>
+                                    </td>
+                                    <td>
+                                        <input class="form-control" placeholder="Amount"
+                                            t-model="state.newLines[props.default_cash_details.id].restricted.amount"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-secondary" 
+                                            t-on-click="() => handleAddLine(props.default_cash_details.id, 'restricted')">➕</button>
+                                    </td>
+                                </tr>
+
+                                <tr t-foreach="state.lines[props.default_cash_details.id].restricted || []" t-as="line" t-key="line.id">
+                                    <td/>
+                                    <td/>
+                                    <td/>
+                                    <td/>
+                                    <td class="text-start"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center"><button class="btn btn-danger" 
+                                        t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, 'restricted')">❌</button></td>
+                                </tr>
+
+                                <tr>
+                                    <td><span t-esc="pos.company.unrestricted_category" /> Amount</td>
+                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.unrestricted)"/>
+                                    <td/>
+                                    <td/>
+                                    <td>
+                                        <input class="form-control" placeholder="Slip No."
+                                            t-model="state.newLines[props.default_cash_details.id].unrestricted.ref"/>
+                                    </td>
+                                    <td>
+                                        <input class="form-control" placeholder="Amount"
+                                            t-model="state.newLines[props.default_cash_details.id].unrestricted.amount"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-secondary" 
+                                            t-on-click="() => handleAddLine(props.default_cash_details.id, 'unrestricted')">➕</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr t-foreach="state.lines[props.default_cash_details.id].unrestricted || []" t-as="line" t-key="line.id">
+                                    <td/>
+                                    <td/>
+                                    <td/>
+                                    <td/>
+                                    <td class="text-start"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center"><button class="btn btn-danger" 
+                                        t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, 'unrestricted')">❌</button></td>
+                                </tr>
+                            </tbody>
+                            <tbody class="cash-overview border-start small text-muted">
+                                <tr>
+                                    <td>Opening</td>
+                                    <td class="align-top" t-esc="env.utils.formatCurrency(props.default_cash_details.opening)"/>
+                                </tr>
+                                <tr t-foreach="props.default_cash_details.moves" t-as="move" t-key="move_index">
+                                    <td>
+                                        <div class="flex d-flex flex-row">
+                                            <div class="cash-sign me-1" t-esc="move.amount &lt; 0 ? '-' : '+'"/>
+                                            <t t-esc="move.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="align-top" t-esc="env.utils.formatCurrency(Math.abs(move.amount))"/>
+                                </tr>
+                                <tr t-if="props.default_cash_details.payment_amount">
+                                    <td>
+                                        <div class="flex d-flex flex-row">
+                                            <div class="cash-sign me-1" t-esc="props.default_cash_details.payment_amount &lt; 0 ? '-' : '+'"/>
+                                            Payments in <t t-esc="props.default_cash_details.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="align-top" t-esc="env.utils.formatCurrency(Math.abs(props.default_cash_details.payment_amount))"/>
+                                </tr>
+                            </tbody>
+                        </t>
+                        <t t-if="props.other_payment_methods.length > 0">
+                            <t t-foreach="props.other_payment_methods" t-as="pm" t-key="pm.id">
+                                <tbody>
+                                    <tr>
+                                        <td t-esc="pm.name"/>
+                                        <td t-esc="env.utils.formatCurrency(pm.amount)"/>
+                                        <t t-set="_showDiff" t-value="pm.type === 'bank' and pm.number !== 0" />
+                                        <td t-if="_showDiff" t-esc="env.utils.formatCurrency(getDifference(pm.id))"
+                                            t-att-class="{'warning text-danger fw-bolder': getDifference(pm.id)}"/>
+                                        <td t-if="_showDiff">
+                                            <Input tModel="[state.payments[pm.id], 'counted']"
+                                                isValid.bind="env.utils.isValidFloat" />
+                                        </td>
+                                        <td/>
+                                        <td/>
+                                        <td/>
+                                    </tr>
+                                </tbody>
+
+                                <tbody class="cash-overview border-start small text-muted">
+                                    <tr>
+                                        <td><span t-esc="pos.company.restricted_category" /> Amount</td>
+                                        <td t-esc="env.utils.formatCurrency(pm.breakdown.restricted)"/>
+                                        <td/>
+                                        <td/>
+                                        <td>
+                                            <input class="form-control" placeholder="Slip No."
+                                                t-model="state.newLines[pm.id].restricted.ref"/>
+                                        </td>
+                                        <td>
+                                            <input class="form-control" placeholder="Amount"
+                                                t-model="state.newLines[pm.id].restricted.amount"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-secondary" 
+                                                t-on-click="() => handleAddLine(pm.id, 'restricted')">➕</button>
+                                        </td>
+                                    </tr>
+
+                                    <tr t-foreach="state.lines[pm.id].restricted || []" t-as="line" t-key="line.id">
+                                        <td/>
+                                        <td/>
+                                        <td/>
+                                        <td/>
+                                        <td class="text-start"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center"><button class="btn btn-danger" 
+                                            t-on-click="() => handleRemoveLine(pm.id, line.id, 'restricted')">❌</button></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><span t-esc="pos.company.unrestricted_category" /> Amount</td>
+                                        <td t-esc="env.utils.formatCurrency(pm.breakdown.unrestricted)"/>
+                                        <td/>
+                                        <td/>
+                                        <td>
+                                            <input class="form-control" placeholder="Slip No."
+                                                t-model="state.newLines[pm.id].unrestricted.ref"/>
+                                        </td>
+                                        <td>
+                                            <input class="form-control" placeholder="Amount"
+                                                t-model="state.newLines[pm.id].unrestricted.amount"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-secondary" 
+                                                t-on-click="() => handleAddLine(pm.id, 'unrestricted')">➕</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr t-foreach="state.lines[pm.id].unrestricted || []" t-as="line" t-key="line.id">
+                                        <td/>
+                                        <td/>
+                                        <td/>
+                                        <td/>
+                                        <td class="text-start"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center"><button class="btn btn-danger" 
+                                            t-on-click="() => handleRemoveLine(pm.id, line.id, 'unrestricted')">❌</button></td>
+                                    </tr>
+                                </tbody>
+                            </t>
+                        </t>
+                    </table>
+                </div>
+                
+
+                <div class="notes-container d-flex flex-column flex-sm-row gap-3 border-top mt-3 pt-3">
+                    <div class="opening-notes-container d-flex flex-column flex-grow-1 align-items-start" t-if="props.opening_notes" >
+                        <label class="form-label" for="props.opening_notes">Opening note</label>
+                        <textarea class="opening-notes form-control" id="props.opening_notes" readonly="readonly">
+                            <t t-esc="props.opening_notes"/>
+                        </textarea>
+                    </div>
+                    <div class="closing-notes-container d-flex flex-column flex-grow-1 align-items-start">
+                        <label class="form-label" for="closingNotes">Closing note</label>
+                        <textarea class="closing-notes form-control" id="closingNotes" placeholder="Add a closing note..." t-model="state.notes"/>
+                    </div>
+                </div>
+            </main>
+            <footer class="footer modal-footer justify-content-between">
+                <div class="modal-footer-left d-flex gap-2">
+                    <button class="button highlight btn btn-lg btn-primary" t-att-disabled="!canConfirm()" t-on-click="confirm">Close Session</button>
+                    <button class="button btn btn-lg btn-secondary" t-att-disabled="!canCancel()" t-on-click="cancel">Discard</button>
+                </div>
+                <div class="modal-footer-right d-flex gap-2">
+                    <button class="button icon btn btn-lg btn-secondary"
+                        t-on-click="downloadSalesReport"
+                        title="Download a report with all the sales of the current PoS Session">
+                            Daily Sale
+                            <i class="fa fa-download" role="img"/>
+                    </button>
+                    <button t-if="hardwareProxy.printer" class="button icon btn btn-lg btn-secondary">
+                        <SaleDetailsButton/>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </t>
+
+</templates>

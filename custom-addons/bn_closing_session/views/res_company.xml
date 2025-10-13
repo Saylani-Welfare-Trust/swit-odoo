@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_company_form_inherit_bn_closing_session" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.closing.session</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='currency_id']" position="after">
+                <field name="account_default_pos_receivable_account_id" />
+                <field name="account_default_pos_restricted_receivable_account_id" />
+                <field name="account_default_pos_unrestricted_receivable_account_id" />
+                <field name="restricted_category" />
+                <field name="unrestricted_category" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="walk_in_donor_sequence" model="ir.sequence">
+            <field name="name">Walk-In Donor</field>
+            <field name="code">walk_in_donor</field>
+            <field name="prefix">WID/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="premium_individual_donor_sequence" model="ir.sequence">
+            <field name="name">Premium Individual Donor</field>
+            <field name="code">premium_individual_donor</field>
+            <field name="prefix">PID/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="premium_corporate_donor_sequence" model="ir.sequence">
+            <field name="name">Premium Corporate Donor</field>
+            <field name="code">premium_corporate_donor</field>
+            <field name="prefix">PCD/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="donation_box_sequence" model="ir.sequence">
+            <field name="name">Donation Box</field>
+            <field name="code">donation_box</field>
+            <field name="prefix">DWIP/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="online_sequence" model="ir.sequence">
+            <field name="name">Online</field>
+            <field name="code">online</field>
+            <field name="prefix">O/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="student_sequence" model="ir.sequence">
+            <field name="name">Student</field>
+            <field name="code">student</field>
+            <field name="prefix">S/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="microfinance_loans_sequence" model="ir.sequence">
+            <field name="name">Microfinance Loans</field>
+            <field name="code">microfinance_loans</field>
+            <field name="prefix">ML/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="employees_sequence" model="ir.sequence">
+            <field name="name">Employees</field>
+            <field name="code">employees</field>
+            <field name="prefix">E/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="medical_patients_sequence" model="ir.sequence">
+            <field name="name">Medical Patients</field>
+            <field name="code">medical_patients</field>
+            <field name="prefix">MP/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="medical_equipment_sequence" model="ir.sequence">
+            <field name="name">Medical Equipment</field>
+            <field name="code">medical_equipment</field>
+            <field name="prefix">ME/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="donors_of_associated_companies_sequence" model="ir.sequence">
+            <field name="name">Donors Of Associated Companies</field>
+            <field name="code">donors_of_associated_companies</field>
+            <field name="prefix">DOAC/</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="donation_by_home_sequence" model="ir.sequence">
+            <field name="name">Donation By Home Service</field>
+            <field name="code">donation_by_home</field>
+            <field name="prefix">DBHS/</field>
+            <field name="padding">6</field>
+        </record>
+    </data>
+</odoo>

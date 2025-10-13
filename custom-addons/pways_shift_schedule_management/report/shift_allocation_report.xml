@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_employee_shift">
+            <t t-call="web.html_container">
+                <t t-call="web.basic_layout">
+                    <div class="oe_structure"/>
+                        <t t-foreach="docs" t-as="o">
+                            <div class="page">
+                                <div>
+                                    <div class="text-center"> 
+                                        <span style="font-size:30px;"><b>Shift Allocation</b></span>
+                                    </div>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span>Employee:</span>
+                                        <span t-esc="o.employee_id.name"/><br/>
+                                        <span>Shift: </span>
+                                        <span t-esc="o.shift_id.name"/><br/>
+                                        <span>Time: </span>
+                                        <span t-esc="o.shift_id.time_from"/> To <span t-esc="o.shift_id.time_too"/>.<br/>
+                                    </div>
+                                    <div class="col-6">
+                                        <span>Start Date: </span>
+                                        <span t-esc="o.date_from"/><br/>
+                                        <span>End Date: </span>
+                                        <span t-esc="o.date_to"/><br/>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-center"> 
+                                        <span style="font-size:20px;"><b>Weekends</b></span>
+                                    </div>
+                                </div>
+                                <br/>
+                                <table class="table table-sm table-bordered" style="width:100%">
+                                    <thead style="font-size:13px;">
+                                        <tr>
+                                            <th><strong>Date</strong></th>
+                                            <th><strong>Day</strong></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-size:13px;">
+                                        <tr t-foreach="o.dayofweek_ids" t-as="line">
+                                            <td>
+                                                <span t-esc="line.date"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-esc="line.week_id.name"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div>
+                                    <div class="text-center"> 
+                                        <span style="font-size:20px;"><b>Working Days</b></span>
+                                    </div>
+                                </div>
+                                <br/>
+                                <table class="table table-sm table-bordered" style="width:100%">
+                                    <thead style="font-size:13px;">
+                                        <tr>
+                                            <th><strong>Date</strong></th>
+                                            <th><strong>Shift</strong></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-size:13px;">
+                                        <tr t-foreach="o.dayofallocation_ids" t-as="line">
+                                            <td>
+                                                <span t-esc="line.date"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-esc="line.shift_id.name"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

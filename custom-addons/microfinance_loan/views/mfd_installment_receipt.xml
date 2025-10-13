@@ -1,0 +1,92 @@
+<odoo>
+    <data>
+
+        <record id="view_mfd_installment_receipt_tree" model="ir.ui.view">
+            <field name="name">view.mfd.installment.receipt.tree</field>
+            <field name="model">mfd.installment.receipt</field>
+            <field name="arch" type="xml">
+                <tree default_order="create_date desc" create="0" edit="0">
+                    <field name="currency_id" column_invisible="True"/>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="partner_id"/>
+                    <field name="loan_id"/>
+                    <field name="amount"/>
+                    <field name="payment_type"/>
+                    <field name="status" widget="badge" decoration-info="status == 'draft'" decoration-success="status == 'paid'"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_mfd_installment_receipt_form" model="ir.ui.view">
+            <field name="name">view.mfd.installment.receipt.form</field>
+            <field name="model">mfd.installment.receipt</field>
+            <field name="arch" type="xml">
+                <form create="0">
+                    <header>
+                        <button name="action_pending" string="Deposit Cheque" type="object" class="oe_highlight" invisible="status == 'draft' and payment_type == 'cash' or status != 'draft'"/>
+                        <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="status != 'draft' or payment_type == 'cheque'"/>
+                        <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="status != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
+                        <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="status != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
+                        <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="status != 'bounced'"/>
+                        <button name="print_receipt" string="Print Receipt" type="object" class="oe_highlight" invisible="status != 'paid'"/>
+                        <field name="status" widget="statusbar" statusbar_visible="draft,paid"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" title="Paid" invisible="status != 'paid'"/>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="status" invisible="1"/>
+                                <field name="doc_type" required="1" readonly="status != 'draft'"/>
+                                <field name="payment_type" widget="radio" readonly="status != 'draft'"/>
+                                <field name="loan_id" options="{'no_create': True, 'no_edit': True}" required="True" readonly="status != 'draft'"/>
+                                <field name="partner_id" required="1" readonly="1" domain="[('is_microfinance','=',True), ('state','=','register')]" force_save="1" context="{'form_view_ref': 'microfinance_loan.mfd_loan_customer_form'}"/>
+                                <field name="cnic"/>
+                                <field name="amount" required="True" readonly="status != 'draft' or doc_type == 'sec_dep'" force_save="1"/>
+                                <field name="date" required="True" readonly="status != 'draft'"/>
+                            </group>
+                            <group>
+                                <field name="mfd_bank_id" domain="[('is_active', '=', True)]" options="{'no_create': True, 'no_edit': True}" readonly="status != 'draft'" invisible="payment_type == 'cash'" required="1"/>
+                                <field name="cheque_number" readonly="status != 'draft'" invisible="payment_type == 'cash'" required="1"/>
+                                <field name="cheque_date" readonly="status != 'draft'" invisible="payment_type == 'cash'" required="1"/>
+                                <field name="bounced_reason" invisible="status not in ('pending', 'bounced')" readonly="status != 'pending'"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_search_mfd_installment_receipt" model="ir.ui.view">
+            <field name="name">view.mfd.installment.receipt</field>
+            <field name="model">mfd.installment.receipt</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="loan_id"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="payment_type"/>
+                    <field name="status"/>
+                    <field name="cnic"/>
+                    <filter name="today_payments_filter" string="Today Payments" domain="[('date', '=', context_today())]"/>
+                     <filter name="today_pdc_filter" string="Today PDCs" domain="[('cheque_date', '=', context_today()), ('is_pdc', '=', True)]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_mfd_installment_receipt" model="ir.actions.act_window">
+            <field name="name">Installment Receipts</field>
+            <field name="res_model">mfd.installment.receipt</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+    </data>
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="pos_enhancement.Many2manyFieldTags">
+        <div class="tags-container d-flex" style="position:relative; background-color:white;" t-ref="tagInput">
+            <div id="tags">
+            <t t-foreach="currentOrder.analytic_account_ids" t-as="tag" t-key="tag.id">
+                <div class="tag">
+                <span style="white-space:nowrap;"><t t-esc="tag.name" /></span>
+                <span class="close" t-on-click="()=>this.removeTag(tag)">×</span>
+                </div>
+            </t>
+            <input
+            class="tag-input"
+            type="text"
+            placeholder="Add a tag and press Enter"
+            t-on-focus="(ev)=>this.toggleOptionStatus(ev)"
+            t-on-input="(ev)=>this.search(ev)"
+            t-model="state.inputValue"
+            />
+            </div>
+        </div>
+        
+        <div t-if="state.showOptions" t-attf-style="position:absolute; z-index:100;background-color:white; width: #{option_container_width}px;">
+            <t t-foreach="state.searched_tags" t-as="account" t-key="account.id">
+
+                <div 
+                    class="tags-option"
+                    t-on-click="(ev)=>this.addTag(ev,account.id)"
+                > <t t-esc="account.name"/></div>
+            </t>
+        </div>
+    </t>
+
+
+</templates>

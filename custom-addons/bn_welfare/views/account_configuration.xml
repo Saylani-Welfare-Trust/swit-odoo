@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="welfare_account_configuration_view_tree" model="ir.ui.view">
+        <field name="name">welfare.account.configuration.view.tree</field>
+        <field name="model">welfare.account.configuration</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="account_id" string="Account" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="welfare_account_configuration_view_form" model="ir.ui.view">
+        <field name="name">welfare.account.configuration.view.form</field>
+        <field name="model">welfare.account.configuration</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" class="oe_inline" required="1" /></h1>
+                    </div>
+                    <group>
+                        <group name="welfare_account_configuration_col_1">
+                            <field name="account_id" string="Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="welfare_account_configuration_view_search" model="ir.ui.view">
+        <field name="name">welfare.account.configuration.view.search</field>
+        <field name="model">welfare.account.configuration</field>
+        <field name="arch" type="xml">
+            <search>
+                <group expand="0" string="Group By">
+                    <filter name="group_welfare_account_configuration" string="GL Account" context="{'group_by': 'account_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="welfare_account_configuration_action" model="ir.actions.act_window">
+        <field name="name">Account Configuration</field>
+        <field name="res_model">welfare.account.configuration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_welfare_account_configuration': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new Account Configuration
+            </p>
+        </field>
+    </record>
+
+</odoo>

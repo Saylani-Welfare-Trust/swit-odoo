@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="medical_equipment_view_tree" model="ir.ui.view">
+        <field name="name">medical.equipment.view.tree</field>
+        <field name="model">medical.equipment</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" default_order="create_date desc">
+                <field name="name"/>
+                <field name="donor_id"/>
+                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['payment_received', 'payment_return', 'validate']" decoration-success="state == 'return'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="medical_equipment_view_form" model="ir.ui.view">
+        <field name="name">medical.equipment.view.form</field>
+        <field name="model">medical.equipment</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <header>
+                    <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'payment_received'" />
+                    <button string="Return" name="action_return" type="object" invisible="state != 'payment_return'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, payment_received, validate, payment_return, return" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_show_picking" type="object" class="oe_stat_button" icon="fa-truck" />
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Request No." />
+                        <h1><field name="name" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="medical_equipment_col_1">
+                            <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="picking_id" invisible="1" readonly="1"/>
+                        </group>
+                        <group name="medical_equipment_col_2">
+                            <field name="mobile" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Items">
+                            <field name="medical_equipment_line_ids" readonly="1">
+                                <tree editable="bottom">
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>
+                                    <field name="quantity"/>
+                                    <field name="amount" readonly="1"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="amount" readonly="1"/>
+                                <field name="total_amount" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="medical_equipment_action" model="ir.actions.act_window">
+        <field name="name">Medical Equipment</field>
+        <field name="res_model">medical.equipment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for a new record...
+            </p>
+        </field>
+    </record>
+
+    <record id="donaiton_box_operation_action" model="ir.actions.act_window">
+        <field name="name">Medical Equipment Operation</field>
+        <field name="res_model">stock.picking.type</field>
+        <field name="view_mode">kanban</field>
+        <field name="domain">[('name', '=', 'Medical Equipment')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for an operation to occur...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="medical_equipment_menu"
+        web_icon="bn_medical_equipment,static/description/icon.png"
+        groups="bn_medical_equipment.medical_equipment_menu_group"
+        name="Medical Equipment"
+        sequence="6"/>
+
+    <menuitem
+        id="provisional_order_menu"
+        name="Provisional Orders"
+        action="medical_equipment_action"
+        parent="medical_equipment_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="medical_equipment_operation_menu"
+        name="Operations"
+        action="donaiton_box_operation_action"
+        parent="medical_equipment_menu"
+        sequence="1"/>
+
+</odoo>

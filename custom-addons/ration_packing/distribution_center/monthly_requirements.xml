@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+
+        <record id="view_distribution_monthly_req_tree" model="ir.ui.view">
+            <field name="name">distribution.monthly.req.tree</field>
+            <field name="model">distribution.monthly.req</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="month"/>
+                    <field name="year"/>
+                    <field name="center_id"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="view_distribution_monthly_req_form" model="ir.ui.view">
+            <field name="name">distribution.monthly.req.form</field>
+            <field name="model">distribution.monthly.req</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="Send to Ration Packing" type="object" name="action_confirm"
+                                class="oe_highlight"/>
+
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="month"/>
+                            <field name="year"/>
+                            <field name="center_id"/>
+                        </group>
+                        <field name="line_ids">
+                            <tree editable="bottom">
+                                                                <field name="date"/>
+                                <field name="donee"/>
+                                <field name="name"/>
+                                <field name="category_idd"/>
+                                <field name="disbursement_type_ids" widget="many2many_tags"/>
+                                <field name="product" widget="many2many_tags"/>
+                            </tree>
+                        </field>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record model="ir.actions.act_window" id="action_distribution_monthly_req">
+            <field name="name">Monthly Requirements</field>
+            <field name="res_model">distribution.monthly.req</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+    </data>
+</odoo>

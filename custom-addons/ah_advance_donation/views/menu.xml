@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+
+        <menuitem id="main_menu_advance_donation"
+              name="Advance Donation"
+              parent="bn_import_donation.import_donation_root_menu"/>
+
+        <menuitem id="menu_advance_donation"
+              name="Advance Donation"
+              parent="main_menu_advance_donation"
+              action="action_ah_advance_donation"/>
+
+        <menuitem id="menu_advance_donation_receipt"
+              name="Donation Receipt"
+              parent="main_menu_advance_donation"
+              action="action_advance_donation_receipt"/>
+
+        <menuitem id="menu_advance_donation_customer"
+              name="Customer Registration"
+              parent="main_menu_advance_donation"
+              action="action_adv_don_customer_reg"/>
+
+        <menuitem id="menu_adv_don_configuration"
+              name="Configuration"
+              parent="main_menu_advance_donation"/>
+
+        <menuitem id="menu_advance_donation_category"
+              name="Category"
+              parent="menu_adv_don_configuration"
+              action="action_adv_don_category"/>
+
+        <menuitem id="menu_adv_don_account_conf"
+              name="Account"
+              parent="menu_adv_don_configuration"
+              action="action_advance_donation_account"/>
+
+    </data>
+</odoo>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="rider_shift_wizard_view_form" model="ir.ui.view">
+        <field name="name">rider.shift.wizard.view.form</field>
+        <field name="model">rider.shift.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="rider_shift_wizard_line_ids">
+                        <tree editable="bottom" create="0">
+                            <field name="rider_id" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="date" readonly="1" />
+                            <field name="day" readonly="1" />
+                            <field name="shop_name" readonly="1" />
+                            <field name="box_no" readonly="1" />
+                            <field name="box_location_name" string="Box Location" readonly="1" />
+                            <field name="contact_person" string="Contact Person" readonly="1" />
+                            <field name="contact_number" string="Contact Number" readonly="1" />
+                            <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                            <field name="submission_time" readonly="1" />
+                            <field name="state" widget="badge" decoration-info="state == 'donation_collected'"  decoration-success="state in ['donation_submit', 'paid']" readonly="1" />
+                            
+                            <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['donation_collected', 'donation_submit', 'paid']" />
+                            <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['donation_not_collected', 'donation_submit', 'paid']" />
+                        </tree>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_check_shift" type="object" string="Check Shift" class="oe_highlight"/>
+                    <button special="cancel" string="Cancel" class="oe_highlight"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <record id="rider_shift_wizard_action" model="ir.actions.act_window">
+        <field name="name">Rider Schedule</field>
+        <field name="res_model">rider.shift.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="rider_shift_wizard_menu"
+        name="Schedule"
+        action="rider_shift_wizard_action"
+        groups="bn_rider_shift.rider_schedule_menu_group"
+        parent="bn_rider_shift.rider_shift_root_menu"
+        sequence="1"/>
+
+</odoo>

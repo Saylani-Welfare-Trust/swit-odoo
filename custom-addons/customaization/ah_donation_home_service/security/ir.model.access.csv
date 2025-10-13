@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_donation_home_service,donation.home.service,model_donation_home_service,base.group_user,1,1,1,1
+access_donation_home_service_line,donation.home.service.line,model_donation_home_service_line,base.group_user,1,1,1,1
+
+access_dhs_account_configuration,dhs.account.configuration,model_dhs_account_configuration,base.group_user,1,1,1,1
+access_dhs_product_configuration,dhs.product.conf,model_dhs_product_conf,base.group_user,1,1,1,1
+
+
+
+
+

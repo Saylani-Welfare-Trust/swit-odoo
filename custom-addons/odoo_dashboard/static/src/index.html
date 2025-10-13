@@ -1,0 +1,179 @@
+<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Odoo Backup Dashboard</title>
+<meta http-equiv='refresh' content='300'>
+<style>
+  body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+  h1, h2 { color: #007bff; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background-color: #eee; }
+  </style></head><body>
+<h1>🛡️ Odoo R2 Backup Dashboard</h1>
+<label>Filter by date: <input type='date' id='dateFilter' onchange='filterTable()'></label>
+<button onclick='exportTableToCSV()' style='margin-left: 20px;'>📤 Export to CSV</button>
+<table id='backupTable'>
+<thead><tr><th>Timestamp</th><th>Filename</th><th>Size (Bytes)</th><th>Status</th></tr></thead><tbody>
+<tr><td>2025-09-29 07:09:12</td><td>swit_uat_db_22mar_20250929_070001.zip</td><td>2517351083</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-09-30 00:09:09</td><td>swit_uat_db_22mar_20250929_190001.zip</td><td>2596865395</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-09-29 19:18:29</td><td>swit_uat_db_22mar_20250929_190001.zip</td><td>2598079681</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-09-30 12:09:13</td><td>swit_uat_db_22mar_20250930_070001.zip</td><td>2606536936</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-09-30 07:23:19</td><td>swit_uat_db_22mar_20250930_070001.zip</td><td>2607641785</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-01 00:07:32</td><td>swit_uat_db_22mar_20250930_190001.zip</td><td>2663923178</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-09-30 19:26:44</td><td>swit_uat_db_22mar_20250930_190001.zip</td><td>2665139012</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-01 12:10:33</td><td>swit_uat_db_22mar_20251001_070001.zip</td><td>2690971336</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-01 07:16:58</td><td>swit_uat_db_22mar_20251001_070001.zip</td><td>2692163056</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-02 00:12:14</td><td>swit_uat_db_22mar_20251001_190001.zip</td><td>2868359646</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-01 19:16:33</td><td>swit_uat_db_22mar_20251001_190001.zip</td><td>2869737023</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-02 12:15:08</td><td>swit_uat_db_22mar_20251002_070001.zip</td><td>2880894874</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-02 07:21:39</td><td>swit_uat_db_22mar_20251002_070001.zip</td><td>2882273960</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-03 00:07:23</td><td>swit_uat_db_22mar_20251002_190001.zip</td><td>2892421397</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-02 19:22:04</td><td>swit_uat_db_22mar_20251002_190001.zip</td><td>2893814372</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-03 12:07:19</td><td>swit_uat_db_22mar_20251003_070001.zip</td><td>2896140023</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-03 07:12:01</td><td>swit_uat_db_22mar_20251003_070001.zip</td><td>2897526315</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-04 00:07:45</td><td>swit_uat_db_22mar_20251003_190001.zip</td><td>2920328046</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-03 19:13:03</td><td>swit_uat_db_22mar_20251003_190001.zip</td><td>2921712439</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-04 12:08:40</td><td>swit_uat_db_22mar_20251004_070001.zip</td><td>2927937621</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-04 07:14:11</td><td>swit_uat_db_22mar_20251004_070001.zip</td><td>2929219813</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 00:15:03</td><td>swit_uat_db_22mar_20251004_190001.zip</td><td>2961532893</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-04 19:25:11</td><td>swit_uat_db_22mar_20251004_190001.zip</td><td>2962899144</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 12:13:41</td><td>swit_uat_db_22mar_20251005_070001.zip</td><td>2962464179</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 07:21:25</td><td>swit_uat_db_22mar_20251005_070001.zip</td><td>2963822823</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:07:41</td><td>swit_uat_db_22mar_20251005_190001.zip</td><td>2966812380</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 19:16:08</td><td>swit_uat_db_22mar_20251005_190001.zip</td><td>2968172731</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 12:07:44</td><td>swit_uat_db_22mar_20251006_070001.zip</td><td>2979125825</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-06 07:11:43</td><td>swit_uat_db_22mar_20251006_070001.zip</td><td>2980489780</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 19:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-07 00:08:03</td><td>swit_uat_db_22mar_20251006_190001.zip</td><td>2999779068</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-06 19:11:05</td><td>swit_uat_db_22mar_20251006_190001.zip</td><td>3001133751</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 19:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-07 12:27:07</td><td>swit_uat_db_22mar_20251007_070001.zip</td><td>3005979161</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-07 07:34:50</td><td>swit_uat_db_22mar_20251007_070001.zip</td><td>3009964129</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 19:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-08 00:20:53</td><td>swit_uat_db_22mar_20251007_190002.zip</td><td>3065260698</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-07 19:45:33</td><td>swit_uat_db_22mar_20251007_190002.zip</td><td>0</td><td style='color:red;'>Failure,download_error</td></tr>
+<tr><td>2025-10-08 12:19:11</td><td>swit_uat_db_22mar_20251008_070001.zip</td><td>3092813049</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-08 07:54:30</td><td>swit_uat_db_22mar_20251008_070001.zip</td><td>0</td><td style='color:red;'>Failure,download_error</td></tr>
+<tr><td>2025-10-09 00:19:51</td><td>swit_uat_db_22mar_20251008_190001.zip</td><td>3167511716</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-06 00:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-08 19:31:02</td><td>swit_uat_db_22mar_20251008_190001.zip</td><td>3168945917</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-05 19:17:53</td><td>odoo_DB/swit_uat_db_22mar_20251005_190002.zip</td><td>2968172731</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-07 19:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-09 12:18:13</td><td>swit_uat_db_22mar_20251009_070001.zip</td><td>3178167895</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-09 07:33:09</td><td>swit_uat_db_22mar_20251009_070001.zip</td><td>3179494566</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-07 19:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 00:11:19</td><td>swit_uat_db_22mar_20251009_190001.zip</td><td>3194917391</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-09 19:21:51</td><td>swit_uat_db_22mar_20251009_190001.zip</td><td>3196350182</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-07 19:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 12:14:30</td><td>swit_uat_db_22mar_20251010_070001.zip</td><td>3203079751</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 07:49:35</td><td>swit_uat_db_22mar_20251010_070001.zip</td><td>3220403146</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-07 19:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 00:20:25</td><td>swit_uat_db_22mar_20251010_190001.zip</td><td>3285045910</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-08 00:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 19:32:02</td><td>swit_uat_db_22mar_20251010_190001.zip</td><td>3286564678</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-07 19:30:30</td><td>odoo_DB/swit_uat_db_22mar_20251007_190001.zip</td><td>3066660962</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 12:08:24</td><td>swit_uat_db_22mar_20251011_070001.zip</td><td>3289653094</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 07:13:48</td><td>swit_uat_db_22mar_20251011_070001.zip</td><td>3291161206</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 00:15:12</td><td>swit_uat_db_22mar_20251011_190001.zip</td><td>3303719779</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 00:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 19:27:21</td><td>swit_uat_db_22mar_20251011_190001.zip</td><td>3305239860</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 19:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 12:14:26</td><td>swit_uat_db_22mar_20251012_070001.zip</td><td>3307361243</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 00:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 07:28:30</td><td>swit_uat_db_22mar_20251012_070001.zip</td><td>3309152089</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 19:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-13 00:08:47</td><td>swit_uat_db_22mar_20251012_190001.zip</td><td>3324789309</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 00:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 19:12:43</td><td>swit_uat_db_22mar_20251012_190001.zip</td><td>3326306245</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 19:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-13 12:09:13</td><td>swit_uat_db_22mar_20251013_070001.zip</td><td>3327860257</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 12:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-12 00:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-13 07:16:02</td><td>swit_uat_db_22mar_20251013_070001.zip</td><td>3329360052</td><td style='color:red;'>Success,uploaded</td></tr>
+<tr><td>2025-10-10 07:19:15</td><td>odoo_DB/swit_uat_db_22mar_20251010_070002.zip</td><td>3204510199</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-11 19:14:41</td><td>odoo_DB/swit_uat_db_22mar_20251011_190002.zip</td><td>3305239860</td><td style='color:green;'>Success</td></tr>
+<tr><td>2025-10-13 07:15:34</td><td>odoo_DB/swit_uat_db_22mar_20251013_070002.zip</td><td>3329360052</td><td style='color:green;'>Success</td></tr>
+
+</tbody></table>
+<h2>📊 Backup Size Over Time</h2><canvas id='sizeChart' height='100'></canvas>
+<h2>✅ Success vs ❌ Failure</h2><canvas id='pieChart' height='100'></canvas>
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+<script>
+  function filterTable() {
+    const filter = document.getElementById('dateFilter').value;
+    const rows = document.querySelectorAll('#backupTable tbody tr');
+    rows.forEach(row => {
+      const date = row.cells[0].innerText.split(' ')[0];
+      row.style.display = filter === '' || date === filter ? '' : 'none';
+    });
+  }
+
+  function exportTableToCSV() {
+    const rows = document.querySelectorAll('#backupTable tr');
+    let csv = '';
+    rows.forEach(row => {
+      const cols = row.querySelectorAll('th, td');
+      const rowData = Array.from(cols).map(col => ' + col.innerText + ').join(',');
+      csv += rowData + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'odoo_backup_data.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  const labels = ["2025-09-29 07:09:12" "2025-09-30 00:09:09" "2025-09-29 19:18:29" "2025-09-30 12:09:13" "2025-09-30 07:23:19" "2025-10-01 00:07:32" "2025-09-30 19:26:44" "2025-10-01 12:10:33" "2025-10-01 07:16:58" "2025-10-02 00:12:14" "2025-10-01 19:16:33" "2025-10-02 12:15:08" "2025-10-02 07:21:39" "2025-10-03 00:07:23" "2025-10-02 19:22:04" "2025-10-03 12:07:19" "2025-10-03 07:12:01" "2025-10-04 00:07:45" "2025-10-03 19:13:03" "2025-10-04 12:08:40" "2025-10-04 07:14:11" "2025-10-05 00:15:03" "2025-10-04 19:25:11" "2025-10-05 12:13:41" "2025-10-05 07:21:25" "2025-10-06 00:07:41" "2025-10-05 19:16:08" "2025-10-06 12:07:44" "2025-10-06 00:17:53" "2025-10-06 07:11:43" "2025-10-05 19:17:53" "2025-10-07 00:08:03" "2025-10-06 00:17:53" "2025-10-06 19:11:05" "2025-10-05 19:17:53" "2025-10-07 12:27:07" "2025-10-06 00:17:53" "2025-10-07 07:34:50" "2025-10-05 19:17:53" "2025-10-08 00:20:53" "2025-10-06 00:17:53" "2025-10-07 19:45:33" "2025-10-08 12:19:11" "2025-10-06 00:17:53" "2025-10-08 00:30:30" "2025-10-08 07:54:30" "2025-10-09 00:19:51" "2025-10-06 00:17:53" "2025-10-08 00:30:30" "2025-10-08 19:31:02" "2025-10-05 19:17:53" "2025-10-07 19:30:30" "2025-10-09 12:18:13" "2025-10-08 00:30:30" "2025-10-09 07:33:09" "2025-10-07 19:30:30" "2025-10-10 00:11:19" "2025-10-08 00:30:30" "2025-10-09 19:21:51" "2025-10-07 19:30:30" "2025-10-10 12:14:30" "2025-10-08 00:30:30" "2025-10-10 07:49:35" "2025-10-07 19:30:30" "2025-10-10 07:19:15" "2025-10-11 00:20:25" "2025-10-08 00:30:30" "2025-10-10 12:19:15" "2025-10-10 19:32:02" "2025-10-07 19:30:30" "2025-10-10 07:19:15" "2025-10-11 12:08:24" "2025-10-10 12:19:15" "2025-10-11 07:13:48" "2025-10-10 07:19:15" "2025-10-12 00:15:12" "2025-10-10 12:19:15" "2025-10-12 00:14:41" "2025-10-11 19:27:21" "2025-10-10 07:19:15" "2025-10-11 19:14:41" "2025-10-12 12:14:26" "2025-10-10 12:19:15" "2025-10-12 00:14:41" "2025-10-12 07:28:30" "2025-10-10 07:19:15" "2025-10-11 19:14:41" "2025-10-13 00:08:47" "2025-10-10 12:19:15" "2025-10-12 00:14:41" "2025-10-12 19:12:43" "2025-10-10 07:19:15" "2025-10-11 19:14:41" "2025-10-13 12:09:13" "2025-10-10 12:19:15" "2025-10-12 00:14:41" "2025-10-13 07:16:02" "2025-10-10 07:19:15" "2025-10-11 19:14:41" "2025-10-13 07:15:34"];
+  const sizes = [2517351083 2596865395 2598079681 2606536936 2607641785 2663923178 2665139012 2690971336 2692163056 2868359646 2869737023 2880894874 2882273960 2892421397 2893814372 2896140023 2897526315 2920328046 2921712439 2927937621 2929219813 2961532893 2962899144 2962464179 2963822823 2966812380 2968172731 2979125825 2968172731 2980489780 2968172731 2999779068 2968172731 3001133751 2968172731 3005979161 2968172731 3009964129 2968172731 3065260698 2968172731 0 3092813049 2968172731 3066660962 0 3167511716 2968172731 3066660962 3168945917 2968172731 3066660962 3178167895 3066660962 3179494566 3066660962 3194917391 3066660962 3196350182 3066660962 3203079751 3066660962 3220403146 3066660962 3204510199 3285045910 3066660962 3204510199 3286564678 3066660962 3204510199 3289653094 3204510199 3291161206 3204510199 3303719779 3204510199 3305239860 3305239860 3204510199 3305239860 3307361243 3204510199 3305239860 3309152089 3204510199 3305239860 3324789309 3204510199 3305239860 3326306245 3204510199 3305239860 3327860257 3204510199 3305239860 3329360052 3204510199 3305239860 3329360052];
+
+  new Chart(document.getElementById('sizeChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Backup Size (Bytes)',
+        data: sizes,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+      labels: ['Success', 'Failure'],
+      datasets: [{
+        data: [43, 58],
+        backgroundColor: ['green', 'red']
+      }]
+    }
+  });
+  </script></body></html>

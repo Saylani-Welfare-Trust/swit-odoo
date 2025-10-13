@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_profile_management_custom_donee_res_partner_view_form_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">bn.profile.management.custom.donee.res.partner.view.form.inherit.bn.welfare</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.custom_donee_res_partner_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='donee_type']" position="after">
+                <field name="disbursement_type_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not is_welfare" string="Disbursement Type"  readonly="1" />
+                <!-- <field name="disbursement_type_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not is_welfare" required="is_welfare" string="Disbursement Type"  readonly="state in ['print_info', 'register', 'change_request']" /> -->
+            </xpath>
+
+            <xpath expr="//page[@name='welfare_details']" position="inside">
+                <field name="welfare_ids" readonly="1">
+                    <tree>
+                        <field name="name" />
+                        <field name="donee_id" string="Donee" />
+                        <field name="disbursement_date" string="Date" />
+                        <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'disbursed'" decoration-warning="state == 'draft'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="bn_profile_management_view_partner_form_inherit_contacts_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">bn.profile.management.res.partner.view.form.inherit.bn.welfare</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.view_partner_form_inherit_contacts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='donee_type']" position="after">
+                <field name="disbursement_type_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not is_welfare" string="Disbursement Type"  readonly="1" />
+                <!-- <field name="disbursement_type_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not is_welfare" required="is_welfare" string="Disbursement Type"  readonly="1" /> -->
+            </xpath>
+
+            <xpath expr="//page[@name='welfare_details']" position="inside">
+                <field name="welfare_ids" readonly="1">
+                    <tree>
+                        <field name="name" />
+                        <field name="donee_id" string="Donee" />
+                        <field name="disbursement_date" string="Date" />
+                        <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'disbursed'" decoration-warning="state == 'draft'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_profile_management_custom_donee_res_partner_view_form_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">bn.profile.management.custom.donee.res.partner.view.form.inherit.bn.welfare</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.custom_donee_res_partner_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='city']" position="replace">
+                <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state in ['print_info', 'register']" />
+            </xpath>
+            <xpath expr="//field[@name='cnic_no']" position="after">
+                <field name="cnic_expiration_date" invisible="cnic == 'no' or donee_type == 'institute'" required="cnic == 'yes' and donee_type == 'individual'" readonly="state in ['print_info', 'register', 'change_request']" />
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="bn_profile_management_custom_donor_res_partner_view_form_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">bn.profile.management.custom.donor.res.partner.view.form.inherit.bn.welfare</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.custom_donor_res_partner_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='city']" position="replace">
+                <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state in ['print_info', 'register']" />
+            </xpath>
+            <xpath expr="//field[@name='cnic_no']" position="after">
+                <field name="cnic_expiration_date" readonly="state in ['print_info', 'register']" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

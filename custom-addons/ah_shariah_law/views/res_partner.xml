@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="ah_shariah_law_res_partner_view_tree" model="ir.ui.view">
+            <field name="name">ah.shariah.law.res.partner.view.tree</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="mobile" widget="phone" />
+                    <field name="cnic_no" />
+                    <field name="email"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="ah_shariah_law_res_partner_view_form" model="ir.ui.view">
+            <field name="name">ah.shariah.law.res.partner.view.form</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="Reset to Draft" name="action_draft" type="object" invisible="state in ['draft', 'under_review']" />
+                        <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state in ['register', 'reject']" />
+
+                        <field name="state" widget="statusbar" statusbar_visible="draft, register"/>
+                    </header>
+                    <sheet>
+                        <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'avatar_128'}"/>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" class="oe_inline" readonly="state == 'register'" required="1" /></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="cnic_no" required="1" />
+                                <field name="mobile" widget="phone"/>
+                                <field name="email" widget="email"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_shariah_law_res_partner" model="ir.actions.act_window">
+            <field name="name">Eligible Person</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_shariah_law', '=', True)]</field>
+            <field name="context">{'default_is_shariah_law': True}</field>
+            <field name="view_ids"
+                eval="[(5, 0, 0),
+                        (0, 0, {'view_mode': 'tree', 'view_id': ref('ah_shariah_law.ah_shariah_law_res_partner_view_tree')}),
+                        (0, 0, {'view_mode': 'form', 'view_id': ref('ah_shariah_law.ah_shariah_law_res_partner_view_form')})]"/>
+        </record>
+
+    </data>
+</odoo>

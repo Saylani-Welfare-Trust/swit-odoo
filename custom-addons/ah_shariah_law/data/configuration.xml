@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="True">
+
+        <!--        Transfer To        -->
+
+        <record id="debit_account_transfer_to" model="shariah.law.chart.of.account">
+            <field name="name">Debit Account</field>
+            <field name="account_type">transfer_to</field>
+        </record>
+
+         <record id="credit_account_transfer_to" model="shariah.law.chart.of.account">
+            <field name="name">Credit Account</field>
+            <field name="account_type">transfer_to</field>
+        </record>
+
+        <!--        Transfer From        -->
+
+        <record id="debit_account_transfer_back" model="shariah.law.chart.of.account">
+            <field name="name">Debit Account</field>
+            <field name="account_type">transfer_back</field>
+        </record>
+
+         <record id="credit_account_transfer_back" model="shariah.law.chart.of.account">
+            <field name="name">Credit Account</field>
+            <field name="account_type">transfer_back</field>
+        </record>
+
+    </data>
+</odoo>

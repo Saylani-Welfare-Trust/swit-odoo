@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="rider_shift_view_tree" model="ir.ui.view">
+        <field name="name">rider.shift.view.tree</field>
+        <field name="model">rider.shift</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="rider_id" string="Rider" />
+                <field name="start_date" />
+                <field name="end_date" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="rider_shift_view_form" model="ir.ui.view">
+        <field name="name">rider.shift.view.form</field>
+        <field name="model">rider.shift</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Generate Lines" name="action_generate_lines" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rider_id" />
+                        <h1><field name="rider_id"  domain="[('category_ids', 'in', [1])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" string="Rider" /></h1>
+                    </div>
+                    <group>
+                        <group name="rider_shift_col_1">
+                            <field name="start_date" required="1" />
+                        </group>
+                        <group name="rider_shift_col_2">
+                            <field name="end_date" required="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="schedule_day" string="Schedule Days">
+                            <field name="schedule_day_ids">
+                                <tree editable="bottom" create="0">
+                                    <field name="date" readonly="1" />
+                                    <field name="day" readonly="1" />
+                                    <field name="city_id" domain="[('type_selection', '=', 'city')]" string="City" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="sub_zone_id" string="Sub Zone" domain="[('zone_ids', 'in', [zone_id])]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="key_location_id" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" string="Location" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="rdier_shift_action" model="ir.actions.act_window">
+        <field name="name">Rider Shift</field>
+        <field name="res_model">rider.shift</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a rider shift...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="rider_shift_root_menu"
+        name="Rider"
+        groups="bn_rider_shift.rider_menu_group"
+        parent="sm_donation_box.menu_donation_box"
+        sequence="6"/>
+    
+    <menuitem
+        id="rider_shift_menu"
+        name="Shift"
+        action="rdier_shift_action"
+        groups="bn_rider_shift.rider_shift_collection_menu_group"
+        parent="bn_rider_shift.rider_shift_root_menu"
+        sequence="0"/>
+
+</odoo>

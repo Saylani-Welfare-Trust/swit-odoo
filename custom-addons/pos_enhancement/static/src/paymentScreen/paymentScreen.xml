@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="pos_enhancement.PaymentScreen" t-inherit="point_of_sale.PaymentScreen" t-inherit-mode="extension">
+
+        <xpath expr='//t[@t-call="point_of_sale.PaymentScreenTop"]' position="replace">
+            <t t-if="is_donee and !is_susidised">
+                <t t-call="pos_enhancement.PaymentScreenTop" />
+            </t>
+            <t t-else="">
+                <t t-call="point_of_sale.PaymentScreenTop" />
+            </t>
+        </xpath>
+
+        <xpath expr='//t[@t-call="point_of_sale.PaymentScreenValidate"]' position="replace">
+            <t t-if="is_donee ">
+                <t t-call="pos_enhancement.PaymentScreenValidate"/>
+            </t>
+            <!-- <t t-else=""> -->
+                <!-- <t t-call="point_of_sale.PaymentScreenValidate"/> -->
+            <!-- </t> -->
+        </xpath>
+
+        <xpath expr='//t[@t-call="point_of_sale.PaymentScreenMethods"]' position="replace">
+            <t t-if="!is_donee or is_susidised">
+                <t t-call="point_of_sale.PaymentScreenMethods"/>
+            </t>
+        
+        </xpath>
+
+        <xpath expr='//t[@t-call="point_of_sale.PaymentScreenButtons"]' position="replace">
+            <t t-if="is_donee and !is_susidised">
+                <t t-call="pos_enhancement.PaymentScreenButtons"/>
+            </t>
+            <t t-else="">
+                <t t-call="point_of_sale.PaymentScreenButtons"/>
+            </t>
+        </xpath>
+
+        <xpath expr='//t[@t-else=""]//t[@t-call="point_of_sale.PaymentScreenValidate"]' position="replace">
+            <t t-if="is_donee and !is_susidised">
+                <t t-call="pos_enhancement.PaymentScreenValidate"/>
+            </t>
+            <t t-else="">
+                <t t-call="point_of_sale.PaymentScreenValidate"/>
+            
+            </t>
+        </xpath>
+
+
+        <xpath expr='//t[@t-else=""]//t[@t-call="point_of_sale.PaymentScreenMethods"]' position="replace">
+            <t t-if="!is_donee or is_susidised">
+                <t t-call="point_of_sale.PaymentScreenMethods"/>
+            </t>
+        </xpath>
+        <xpath expr='//t[@t-else=""]//div[hasclass("center-content")]' position="replace">
+            <t t-if="is_donee and !is_susidised">
+                <div class="center-content d-flex flex-column w-50 p-1 border-start border-end bg-300" >
+                    <div>
+
+                        <div>Analytic Tags:</div>
+                        <Many2manyFieldTags/>
+
+                        <div class="partner-detail col mt-2">
+                            <t t-if="currentOrder.order_type == 'recurring'">
+                            <label class="form-label label" for="state">Reprint Support</label>
+                            <select t-on-click="(ev)=>this.setReprintSupport(ev)" class="detail form-select bg-white" id="reprint_support" name="reprint_support" >
+                                <option value=""> </option>
+                                    <option t-att-selected="currentOrder.reprint_support == 'daily'" value="daily">
+                                        Daily
+                                    </option>
+                                    <option t-att-selected="currentOrder.reprint_support == 'monthly'" value="monthly">
+                                        Monthly
+                                    </option>
+                                    <option t-att-selected="currentOrder.reprint_support == 'yearly'" value="yearly">
+                                        Yearly
+                                    </option>
+                                    <option t-att-selected="currentOrder.reprint_support == 'no_limit'" value="no_limit">
+                                        No Limit
+                                    </option>
+                            </select>
+                            </t>
+                        </div>
+                        <div class="partner-detail col mt-2">
+                            <label class="form-label label" for="state">Description</label>
+                            <textarea t-on-input="(ev)=>this.setDescrition(ev)"><t t-esc="currentOrder.description"/></textarea>
+                        </div>
+
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="center-content d-flex flex-column w-50 p-1 border-start border-end bg-300" >
+                    <PaymentScreenStatus order="currentOrder" />
+                    <Numpad class="'flex-grow-1'"  buttons="getNumpadButtons()" />
+                </div>
+            </t>
+
+        </xpath>
+        <xpath expr='//t[@t-else=""]//div[hasclass("right-content")]' position="replace">
+            <t t-if="is_donee and !is_susidised">
+                <div class="right-content w-25 bg-400">
+                    <t t-call="pos_enhancement.PaymentScreenButtons" />
+                </div>
+            </t>
+            <t t-else="">
+                <div class="right-content w-25 bg-400">
+                    <t t-call="point_of_sale.PaymentScreenButtons" />
+                </div>
+            </t>
+        </xpath>
+
+
+    </t>
+
+    <t t-name="pos_enhancement.PaymentScreenValidate">
+        <t t-if="ui.isSmall">
+            <div class="switchpane d-flex h-12">
+                <button class="btn-switchpane validation-button btn btn-primary flex-fill py-4 rounded-0 fw-bolder fs-1"
+                    t-att-class="{ secondary: ! currentOrder._isValidEmptyOrder() }"
+                    t-on-click="() => this.validateOrder()">
+                    <span>Validate</span>
+                </button>
+            </div>
+        </t>
+        <t t-else="">
+            <div style="height: 100%; display: flex; align-items: flex-end;">
+            <div class="button next validation btn btn-primary btn-lg py-5 rounded-0 d-flex flex-column align-items-center justify-content-center fw-bolder w-100" 
+                t-attf-class="{{currentOrder._isValidEmptyOrder() ? 'highlight' : 'disabled'}}"
+                t-on-click="() => this.validateOrder()">
+                <div class="pay-circle d-flex align-items-center justify-content-center mb-2">
+                    <i class="oi oi-chevron-right" role="img" aria-label="Pay" title="Pay" />
+                </div>
+                <span class="next_text">Validate</span>
+            </div>
+            </div>
+        </t>
+    </t>
+
+    <t t-name="pos_enhancement.PaymentScreenButtons">
+        <div class="payment-buttons d-flex flex-column flex-wrap">
+            <button class="button partner-button btn btn-light py-3 text-start rounded-0 border-bottom" 
+                t-att-class="{ 'highlight text-bg-primary': currentOrder.get_partner() }" 
+                t-on-click="() => this.selectPartner(false, [])">
+                <i class="fa fa-user me-2" role="img" title="Customer" />
+                <span class="partner-name">
+                    <t t-if="currentOrder.get_partner()" t-esc="currentOrder.get_partner().name"/>
+                    <t t-else="">Donee</t>
+                </span> 
+            </button>
+
+        </div>
+    </t>
+
+    <t t-name="pos_enhancement.PaymentScreenTop">
+        <div class="top-content d-flex align-items-center p-2 border-bottom text-center">
+            <div class="button back btn btn-lg btn-secondary" t-on-click="() => pos.showScreen('ProductScreen')">
+                <i class="fa fa-angle-double-left me-2" />
+                <span class="back_text">Back</span>
+            </div>
+            <div class="top-content-center flex-grow-1">
+                <h2 class="mb-0">Register Order</h2>
+            </div>
+        </div>
+    </t>
+
+</templates>

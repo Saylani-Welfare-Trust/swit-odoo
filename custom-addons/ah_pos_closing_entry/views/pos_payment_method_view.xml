@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+
+        <record id="ah_pos_payment_method_view" model="ir.ui.view">
+            <field name="name">ah.pos.payment.method.view</field>
+            <field name="model">pos.payment.method</field>
+            <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="is_cash" invisible="is_bank == True"/>
+                    <field name="cash_credit_account" invisible="is_bank == True or is_cash == False"/>
+                    <field name="cash_debit_account" invisible="is_bank == True or is_cash == False"/>
+
+                    <field name="is_bank" invisible="is_cash == True"/>
+                    <field name="bank_credit_account" invisible="is_cash == True or is_bank == False"/>
+                    <field name="bank_debit_account" invisible="is_cash == True or is_bank == False"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

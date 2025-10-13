@@ -1,0 +1,79 @@
+<odoo>
+
+    <!-- Menu Tree View -->
+    <record id="view_branch_kitchen_request_tree" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.tree</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="arch" type="xml">
+            <tree string="Monthly Menus From Branches">
+                <!--                <field name="branch_name"/>-->
+                <field name="menu_month"/>
+                <field name="state"/>
+                <field name="mr_id" widget="many2one_button"/>
+
+            </tree>
+        </field>
+    </record>
+
+    <!-- Menu Form View -->
+    <record id="view_branch_kitchen_request_form" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.form</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="arch" type="xml">
+            <form string="Branch Requests For Kitchen Month Wise">
+
+                <header>
+                    <button name="action_issue_mr"
+                            string="Issue Material Requisition"
+                            type="object"
+                            class="btn-primary"/>
+
+                    <button name="action_execute_daily_requirement" type="object" string="Execute Daily Requirement"/>
+                </header>
+
+                <field name="mr_id" widget="many2one_button" options="{'no_open': False}"/>
+
+
+                <sheet>
+                    <group>
+                        <!--                        <field name="branch_name"/>-->
+                        <field name="menu_month"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,sent"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Menu Items">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="branch_name"/>
+                                    <!--                                    <field name="product_id"/>-->
+                                    <field name="quantity"/>
+                                </tree>
+
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <footer>
+
+                    </footer>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- Action & Menu Items -->
+    <record id="action_branch_kitchen_request" model="ir.actions.act_window">
+        <field name="name">Kitchen Menus</field>
+        <field name="res_model">branch.kitchen.request</field>
+        <field name="view_mode">tree,form</field>
+
+    </record>
+
+
+</odoo>

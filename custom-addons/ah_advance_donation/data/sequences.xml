@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+
+        <record id="advance_donation_sequence" model="ir.sequence">
+            <field name="name">Advance Donation Sequence</field>
+            <field name="code">ah.advance.donation</field>
+            <field name="prefix">AD/</field>
+            <field name="padding">7</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="advance_donation_receipt" model="ir.sequence">
+            <field name="name">Advance Donation Receipt Sequence</field>
+            <field name="code">ah.advance.donation.receipt</field>
+            <field name="prefix">ADR/</field>
+            <field name="padding">7</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="advance_donation_cus_sequence" model="ir.sequence">
+            <field name="name">Advance Donation Customer Sequence</field>
+            <field name="code">advance.donation.customer</field>
+            <field name="prefix">C/</field>
+            <field name="padding">7</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

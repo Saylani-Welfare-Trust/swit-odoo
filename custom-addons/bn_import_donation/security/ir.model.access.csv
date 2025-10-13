@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_import_donation,access.import.donation,bn_import_donation.model_import_donation,,1,1,1,1
+access_invalid_donation,access.invalid.donation,bn_import_donation.model_invalid_donation,,1,1,1,1
+access_valid_donation,access.valid.donation,bn_import_donation.model_valid_donation,,1,1,1,1
+access_fund_utilization,access.fund.utilization,bn_import_donation.model_fund_utilization,,1,1,1,1
+access_donation,access.donation,bn_import_donation.model_donation,,1,1,1,1
+access_fee_box,access.fee.box,bn_import_donation.model_fee_box,,1,1,1,1
+access_header_type,access.header.type,bn_import_donation.model_header_type,,1,1,1,1
+access_dn_cover_image,access.dn.cover.image,bn_import_donation.model_dn_cover_image,,1,1,1,1

@@ -1,0 +1,7 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_pos_registered_order_line_registeration_user","Access Pos Registered Order Lines for Pos Registration User","model_pos_registered_order_line","group_pos_registration_user","1","1","1","1"
+"access_pos_registered_order_registeration_user","Access Pos Registered Orders for Pos Registration User","model_pos_registered_order","group_pos_registration_user","1","1","1","1"
+"access_pos_registered_order_line_pos_user",Access Pos Registered Order lines for Pos User,model_pos_registered_order_line,,1,0,0,0
+"access_pos_registered_order_pos_user",Access Pos Registered Orders for Pos User,model_pos_registered_order,,1,0,0,0
+"access_handle_registered_order",Access Handle Register Order,model_handle_registered_order,,1,1,1,1
+"access_order_validate_line",Access Order Validate Line,model_order_validate_line,,1,1,1,1

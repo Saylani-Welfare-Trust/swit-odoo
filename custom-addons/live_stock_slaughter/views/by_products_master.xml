@@ -1,0 +1,50 @@
+<odoo>
+    <!-- Parent Form -->
+    <record id="view_product_parent_form" model="ir.ui.view">
+        <field name="name">product.parent.form</field>
+        <field name="model">product.parent</field>
+        <field name="arch" type="xml">
+            <form string="Product Parent">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="product_id"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Product Lines">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Parent Tree/List -->
+    <record id="view_product_parent_tree" model="ir.ui.view">
+        <field name="name">product.parent.tree</field>
+        <field name="model">product.parent</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="product_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_product_parent" model="ir.actions.act_window">
+        <field name="name">Product Parents</field>
+        <field name="res_model">product.parent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu -->
+
+</odoo>

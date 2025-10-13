@@ -1,0 +1,24 @@
+<odoo>
+  <record id="pos_requisition_company_rule_meat" model="ir.rule">
+    <field name="name">meat.requisition: only own material_from company</field>
+    <field name="model_id" ref="model_meat_requisition"/>
+    <!-- show if material_from is in the list of companies the user may access -->
+    <field name="domain_force">[('material_from','in', user.company_ids.ids)]</field>
+    <field name="perm_read"  eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+  </record>
+
+  <record id="pos_requisition_company_rule_live_stock" model="ir.rule">
+    <field name="name">live_stock.requisition: only own material_from company</field>
+    <field name="model_id" ref="model_live_stock_requisition"/>
+    <field name="domain_force">[('material_from','in', user.company_ids.ids)]</field>
+    <field name="perm_read"  eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+  </record>
+</odoo>

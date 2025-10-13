@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+
+        <record id="ah_shariah_law_account_conf_view_tree" model="ir.ui.view">
+            <field name="name">ah.shariah.law.account.conf.view.tree</field>
+            <field name="model">shariah.law.account.conf</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="restricted_account_id"/>
+                    <field name="unrestricted_account_id"/>
+                </tree>
+            </field>
+        </record>
+
+         <record id="action_shariah_law_account_conf" model="ir.actions.act_window">
+            <field name="name">Analytical Account Configuration</field>
+            <field name="res_model">shariah.law.account.conf</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+    </data>
+</odoo>

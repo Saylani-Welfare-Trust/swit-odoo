@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+	<t t-name="sm_point_of_sale_apps.CustomReportsScreen" owl="1">
+        <div class="combo-screen screen h-100 bg-100">
+			<div class="controls d-flex align-items-center justify-content-between mt-1 mt-md-0 p-2 bg-400">
+				<div class="buttons d-flex gap-2">
+					<button class="discard btn btn-lg btn-light" t-on-click="() => this.pos.showScreen('ProductScreen')">
+						<span class="search-icon">
+							<i class="fa fa-angle-double-left"/>
+						</span>
+							Back
+					</button>
+				</div>
+			</div>
+			<div style="padding: 15px;" class="product-screen d-flex h-100 bg-100" t-att-class="{ 'd-none': !props.isShown }">
+				<div style="width: 200px !important;margin-right: 15px;">
+					<CategorySummaryButton />
+				</div>
+				<div style="width: 200px !important;margin-right: 15px;">
+					<LocationSummaryButton />
+				</div>
+				<div style="width: 200px !important;margin-right: 15px;">
+					<OrderSummaryButton />
+				</div>
+				<div style="width: 200px !important;margin-right: 15px;">
+					<PaymentSummaryButton />
+				</div>
+				<div style="width: 200px !important;margin-right: 15px;">
+					<ProductSummaryButton />
+				</div>
+			</div>
+		</div>
+	</t>
+</templates>
+
