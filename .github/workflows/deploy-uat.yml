@@ -16,22 +16,34 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Setup SSH (force single identity)
+      - name: Setup SSH (single key, publickey-only)
         env:
           DEPLOY_SSH_KEY:  ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           mkdir -p ~/.ssh
           echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # Use only this key (avoid agent’s extra identities)
-          unset SSH_AUTH_SOCK
-
-          # Trust host key non-interactively
+          # Known hosts
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
+
+          # Force ONLY this key + publickey auth (no agent, no password)
+          cat > ~/.ssh/config <<CFG
+          Host target
+            HostName ${DEPLOY_SSH_HOST}
+            Port ${DEPLOY_SSH_PORT:-22}
+            User ${DEPLOY_SSH_USER:-root}
+            IdentityFile ~/.ssh/id_ed25519
+            IdentitiesOnly yes
+            PreferredAuthentications publickey
+            PubkeyAuthentication yes
+            PasswordAuthentication no
+            KbdInteractiveAuthentication no
+            StrictHostKeyChecking yes
+CFG
+          chmod 600 ~/.ssh/config
 
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
         env:
@@ -45,7 +57,9 @@ jobs:
             SRC="./"
           fi
 
-          RSYNC_SSH="ssh -i ~/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+          # Build SSH command that unsets agent and forces our config
+          RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target'
+
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
             -e "$RSYNC_SSH" \
@@ -60,9 +74,7 @@ jobs:
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
           UAT_DB_NAME:     ${{ secrets.UAT_DB_NAME }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_SSH_PORT:-22}" \
-              -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-              "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
+          env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
 
@@ -70,7 +82,7 @@ jobs:
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
 
-            # Optional module auto-update:
+            # Optional: auto-update modules (fill names comma-separated)
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
