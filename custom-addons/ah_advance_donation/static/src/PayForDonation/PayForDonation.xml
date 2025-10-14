@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates id="template" xml:space="preserve">
+
+    <t t-name="ah_advance_donation.PayForDonationPopUp">
+        <div class="popup">
+            <div class="modal-header">
+                <h2><t t-esc="this.title"/></h2>
+            </div>
+            <div style="margin: 30px 15px;">
+                <div style="text-align:left;">
+                    <span style="width:120px; display:inline-block;">Is Donation Id?</span>
+                    <span>
+                        <input type="checkbox" id="is_donation_id" name="is_donation_id" checked="this.state.is_donation_id" t-on-change="onChangeIsDonationID"/>
+                     </span>
+                </div>
+                 <t t-if="this.state.is_donation_id == true">
+                     <div style="text-align:left; display:flex; margin-top:10px;">
+                            <span style="width:120px; display:inline-block;">Donation ID:</span>
+                            <span >
+                                <input type="text" id="donation_id" name="donation_id" required="True" t-on-change="onChangeDonationID" placeholder="AD/xxxxxxx"/>
+                             </span>
+                     </div>
+                 </t>
+                <div style="text-align:left; display:flex; margin-top:10px;">
+                    <span style="width:120px; display:inline-block;">Payment Method:</span>
+                    <select style="width:auto;" t-on-change="onPaymentMethodChange">
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+                <t t-if="this.state.payment_type == 'cheque'">
+                    <div style="text-align:left; display:flex; margin-top:10px;">
+                        <span style="width:120px; display:inline-block;">Bank Name:</span>
+                        <span >
+                             <select style="width:auto;" t-on-change="onBankChange">
+                                 <t t-foreach="this.bank_ids" t-as="bank_id" t-key="bank_id.id">
+                                    <option t-att-value="bank_id.id"><t t-esc="bank_id.name"/></option>
+                                 </t>
+                             </select>
+                        </span>
+                    </div>
+                    <div style="text-align:left; display:flex; margin-top:10px;">
+                        <span style="width:120px; display:inline-block;">Cheque Number:</span>
+                        <span >
+                            <input type="text" id="cheque_number" name="cheque_number" required="True" t-on-change="onChequeNumberChange"/>
+                         </span>
+                    </div>
+                    <div style="text-align:left; display:flex; margin-top:10px;">
+                        <span style="width:120px; display:inline-block;">Cheque Date:</span>
+                        <span>
+                            <input type="date" id="cheque_date" name="cheque_date" required="True" t-att-value="this.state.cheque_date" t-on-change="onChequeDateChange"/>
+                         </span>
+                    </div>
+                </t>
+                <div style="text-align:left; display:flex; margin-top:10px;">
+                        <span style="width:120px; display:inline-block;">Amount:</span>
+                        <span>
+                            <input type="text" id="amount" name="amount" required="True" t-on-change="onAmountChange"/>
+                        </span>
+                </div>
+            </div>
+            <footer class="footer modal-footer">
+                <button type="button" class="btn btn-primary" t-on-click="confirmPayment">Confirm</button>
+                <button type="button" class="btn btn-secondary" t-on-click="cancel">Cancel</button>
+            </footer>
+        </div>
+    </t>
+
+</templates>

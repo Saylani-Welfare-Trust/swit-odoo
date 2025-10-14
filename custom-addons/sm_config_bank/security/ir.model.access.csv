@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_config_bank,access.config.bank,model_config_bank,base.group_user,1,1,1,1
+access_config_bank_line,access.config.bank.line,model_config_bank_line,base.group_user,1,1,1,1
+access_config_bank_header,access.config.bank.header,model_config_bank_header,base.group_user,1,1,1,1
+access_currency_debit,access.currency.debit,model_currency_debit,base.group_user,1,1,1,1
+

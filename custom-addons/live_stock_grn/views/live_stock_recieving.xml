@@ -1,0 +1,57 @@
+<!-- File: views/receive_by_weight_wizard_views.xml -->
+<odoo>
+    <record id="view_receive_by_weight_wizard" model="ir.ui.view">
+        <field name="name">receive.by.weight.wizard.form</field>
+        <field name="model">receive.by.weight.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Receive by Weight">
+                <group>
+                    <field name="picking_id" readonly="1" force_save="True"/>
+                    <field name="is_received" invisible="1"/>
+
+                    <field name="line_ids" readonly="is_received == True">
+                        <tree editable="bottom">
+                            <field name="s_no" readonly="1" force_save="1"/>
+                            <field name="allowed_product_ids" column_invisible="1"/>
+                            <field name="product_id" options="{'no_create': True}" domain="[('id', 'in', allowed_product_ids)]"/>
+
+                            <field name="weight" sum="Total"/>
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+
+                    <button name="action_receive" type="object" string="Receive" class="btn-primary" invisible="is_received == True"/>
+                    <button name="action_save_only"
+                            type="object"
+                            string="Save"
+                            class="btn-secondary" invisible="is_received == True"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_receive_by_weight" model="ir.actions.act_window">
+        <field name="name">Receive by Weight</field>
+        <field name="res_model">receive.by.weight.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+
+    <record id="view_picking_form_inherit_receive_weight" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receive.weight</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="open_receive_by_weight_wizard"
+                        type="object"
+                        string="Receive by Weight"
+                        class="btn-primary"
+                        invisible="state != 'done'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,114 @@
+<odoo>
+    <record id="view_employee_purchase_requisition_form_inherit" model="ir.ui.view">
+        <field name="name">employee.purchase.requisition.form.inherit</field>
+        <field name="model">employee.purchase.requisition</field>
+        <field name="inherit_id" ref="employee_purchase_requisition.employee_purchase_requisition_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="replace">
+                <field name="state" widget="statusbar"
+                       statusbar_visible="new,
+                       approval_committee,
+                       waiting_department_approval,
+                       waiting_head_approval,
+                       approved,
+                       received,
+                       cancelled
+                       "/>
+            </xpath>
+
+            <xpath expr="//field[@name='employee_id']" position="before">
+                <field name="epr_visible"/>
+            </xpath>
+            <xpath expr="//field[@name='requisition_date']" position="before">
+                <field name="work_order_visible"/>
+            </xpath>
+<!--            <xpath expr="//field[@name='employee_id']" position="attributes">-->
+<!--                <attribute name="invisible">epr_visible == False</attribute>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//field[@name='dept_id']" position="attributes">-->
+<!--                <attribute name="invisible">epr_visible == False</attribute>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//field[@name='user_id']" position="attributes">-->
+<!--                <attribute name="invisible">epr_visible == False</attribute>-->
+<!--            </xpath>-->
+            <xpath expr="//field[@name='requisition_date']" position="attributes">
+                <attribute name="invisible">epr_visible == False</attribute>
+            </xpath>
+            <xpath expr="//field[@name='receive_date']" position="attributes">
+                <attribute name="invisible">epr_visible == False</attribute>
+            </xpath>
+            <xpath expr="//field[@name='requisition_deadline']" position="attributes">
+                <attribute name="invisible">epr_visible == False</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="milestone"/>
+                <field name="duration"/>
+                <field name="request_type"/>
+            </xpath>
+
+            <xpath expr="//field[@name='milestone']" position="attributes">
+                <attribute name="invisible">work_order_visible == False</attribute>
+            </xpath>
+            <xpath expr="//field[@name='duration']" position="attributes">
+                <attribute name="invisible">work_order_visible == False</attribute>
+            </xpath>
+            <xpath expr="//field[@name='request_type']" position="attributes">
+                <attribute name="invisible">work_order_visible == False</attribute>
+            </xpath>
+<!--            <xpath expr="//field[@name='employee_id']" position="attributes">-->
+<!--                <attribute name="invisible">work_order_visible == False</attribute>-->
+<!--            </xpath>-->
+
+
+
+
+
+
+            <xpath expr="//button[@name='action_confirm_requisition']" position="after">
+                <button name="action_committee_approval"
+                        class="oe_highlight"
+                        invisible="state != 'approval_committee'"
+                        string="Committee Approve"
+                        type="object"
+                        groups="purchase_requisition_budget.group_approval_budget_committee"/>
+
+                <button name="action_revert_to_new"
+                        type="object"
+                        string="Revert to New"
+                        class="btn-secondary"
+                        invisible="state == 'new'"/>
+            </xpath>
+            <xpath expr="//button[@name='action_create_purchase_order']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_receive']" position="attributes">
+                <attribute name="invisible">state != 'approved'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="budget"/>
+                <field name="within_budget"/>
+                <field name="backorder_picking_id" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="location_id"/>
+            </xpath>
+            <div class="oe_button_box" name="button_box">
+                <button name="action_open_picking" type="object" string="View Picking"
+                        icon="fa-truck" class="oe_stat_button" invisible="state != 'received'"/>
+            </div>
+        </field>
+    </record>
+
+    <record id="view_employee_purchase_order_form_inherit" model="ir.ui.view">
+        <field name="name">employee.purchase.order.form.inherit</field>
+        <field name="model">requisition.order</field>
+        <field name="inherit_id" ref="employee_purchase_requisition.requisition_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+    <!--     invisible="state != waiting_budget_committee_approval"-->
+</odoo>

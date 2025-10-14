@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="pos_enhancement.RecurringOrderList">
+        <div class="orders overflow-y-auto">
+            <div class="header-row d-flex text-bg-700 fw-bolder" t-att-class="{ 'd-none': ui.isSmall }">
+                <div class="col name p-2">Order</div>
+                <div class="col customer p-2">Donee</div>
+                <div class="col salesman p-2">Registrar</div>
+                <div class="col salesman p-2">Disbursment Type</div>
+                <div class="col salesman p-2">Transaction Type</div>
+                <div class="col date p-2">Date</div>
+                <!-- <div class="col total p-2">Total</div> -->
+                <!-- <div class="col state p-2">State</div> -->
+            </div>
+            <div class="order-list">
+                <t t-foreach="props.orders" t-as="order" t-key="order.id">
+                        <!-- onClickSaleOrder.bind="props.onClickSaleOrder" -->
+                    <RecurringOrderRow
+                        order="order"
+                        highlightedOrder="highlightedOrder" />
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates id="template" xml:space="preserve">
+
+    <t t-name="ah_advance_donation.AdvanceDonationButton">
+        <button class="control-button btn btn-light rounded-0 fw-bolder" t-on-click="() => this.onClick()">
+            <i aria-label="AdvanceDonation" title="AdvanceDonation"/>
+            <span>Advance Donation</span>
+        </button>
+    </t>
+
+</templates>

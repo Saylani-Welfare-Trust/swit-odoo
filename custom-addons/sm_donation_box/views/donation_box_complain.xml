@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_box_complain_view_tree" model="ir.ui.view">
+        <field name="name">donation.box.complain.view.tree</field>
+        <field name="model">donation.box.complain</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="rider_id" string="Rider" />
+                <field name="donation_box_id" string="Donation Box" />
+                <field name="box_status" />
+                <field name="remarks" />
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state == 'process'" decoration-success="state == 'resolved'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_view_form" model="ir.ui.view">
+        <field name="name">donation.box.complain.view.form</field>
+        <field name="model">donation.box.complain</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_process" string="Process Complain" type="object" invisible="state in ['process', 'resolved']"/>
+                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="state in ['draft', 'resolved']"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,process,resolved"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rider_id" />
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [1])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="state == 'process'" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="donation_box_complain_col_1">
+                            <field name="donation_box_id" string="Donation Box" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state == 'process'" />
+                            <field name="box_status" required="1" readonly="state == 'process'" />
+                        </group>
+                        <group name="donation_box_complain_col_1">
+                            <field name="remarks" required="1" readonly="state == 'process'" />
+                        </group>
+                    </group>
+
+                    <group name="donation_box_info" string="Donation Box Info">
+                        <group name="donation_box_info_col_1">
+                            <field name="donation_box_request_id" string="Request ID" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="name" readonly="1" />
+                            <field name="location" readonly="1" />
+                            <field name="contact_person_name" readonly="1" />
+                            <field name="installer_id" string="Installer Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="product_id" string="Box Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="box_no" readonly="1" />
+                        </group>
+                        <group name="donation_box_info_col_2">
+                            <field name="donor_id" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="contact_no" readonly="1" widget="phone" />
+                            <field name="installation_date" readonly="1" />
+                            <field name="installation_category_id" string="Installation Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="city_id" string="City" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="zone_id" string="Zone" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="sub_zone_id" string="Sub Zone" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_action" model="ir.actions.act_window">
+        <field name="name">Complain Center</field>
+        <field name="res_model">donation.box.complain</field>
+        <field name="view_mode">tree,form</field>
+        <!-- <field name="domain">[]</field>
+        <field name="context">{}</field> -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's Register a New Compalin against Donation Box...
+            </p>
+        </field>
+    </record>
+
+</odoo>

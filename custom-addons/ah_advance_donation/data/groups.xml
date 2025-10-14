@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+<!--        Category-->
+
+        <record id="advance_donation" model="ir.module.category">
+            <field name="name">Advance Donation</field>
+        </record>
+
+
+<!--        Groups-->
+
+        <record id="group_adv_don_approval_1" model="res.groups">
+            <field name="name">Approval 1</field>
+            <field name="category_id" ref="ah_advance_donation.advance_donation"/>
+        </record>
+
+        <record id="group_adv_don_approval_2" model="res.groups">
+            <field name="name">Approval 2</field>
+            <field name="category_id" ref="ah_advance_donation.advance_donation"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="inherit_view_pos_payment_advance_donation" model="ir.ui.view">
+        <field name="name">pos.make.payment.view.form.inherit</field>
+        <field name="model">pos.make.payment</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_payment"/>
+        <field name="arch" type="xml">
+            <!-- <xpath expr="//footer//button[@name='check']" position="replace">
+                <button name="%(point_of_sale.action_pos_payment)d" string="Payment" class="oe_highlight" type="action" invisible="approval_user == False and approved == False"/>
+                    
+            </xpath> -->
+            <xpath expr="//footer//button[@name='check']" position="attributes">
+                <attribute name="invisible">approval_user == False and approved == False</attribute>
+            </xpath>
+            <xpath expr="//footer" position="inside">
+                <field name="approved" invisible="1"/>
+            <field name="is_admin_user" invisible="1"/>
+            
+                <field name="approval_user" invisible="1"/>
+                <field name="request_sent" invisible="1"/>
+                <button name="action_request" invisible="approval_user == True or request_sent == True" string="Request For Approval" type="object"  class="btn-primary" />    
+                
+                <button name="action_approved" invisible="approval_user == False or approved == True" string="Approved" type="object"  class="btn-primary" />    
+                <button name="reject" string="Reject" invisible="approval_user == False or approved == True" type="object" class="btn-primary" />
+                    
+            </xpath>
+            
+        </field>
+    </record>
+
+</odoo>

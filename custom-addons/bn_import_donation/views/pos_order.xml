@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_pos_form_inherit_advance_donation" model="ir.ui.view">
+        <field name="name">pos.order.advance.donation.view.form.inherit</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="advance_donation.view_pos_pos_form_advance_donation"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='approva_state']" position="after">
+                <field name="remarks" />
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="view_pos_pos_form_inherit_point_of_sale" model="ir.ui.view">
+        <field name="name">pos.order.view.form.inherit</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field['state']" position="attributes">
+                <attribute name="statusbar_visible">draft,paid,refund_request,head_approval,cfo_approval,done</attribute>
+            </xpath>
+
+            <xpath expr="//button[@name='refund']" position="attributes">
+                <attribute name="string"> CFO Approval </attribute>
+                <attribute name="invisible">state in ['draft', 'refund_request', 'cfo_approval', 'paid', 'cancel', 'done', 'invoiced']</attribute>
+            </xpath>
+
+            <xpath expr="//button[@name='refund']" position="before">
+                <button string="Refund Request" name="action_refund_request" type="object" class="oe_highlight" invisible="state in ['refund_request', 'head_approval', 'cfo_approval', 'cancel', 'done', 'invoiced']" />
+                <button string="Head Approval" name="action_head_approval" type="object" class="oe_highlight" invisible="state in ['draft', 'head_approval', 'cfo_approval', 'paid', 'cancel', 'done', 'invoiced']" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

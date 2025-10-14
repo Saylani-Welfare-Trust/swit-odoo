@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="product_valuation_lines_sequence" model="ir.sequence">
+            <field name="name">Product Valuation Lines</field>
+            <field name="code">product.valuation.lines.sequence</field>
+            <field name="prefix">PVL/%(year)s/%(month)s/%(day)s/</field>
+            <field name="padding">6</field>
+        </record>
+    </data>
+</odoo>

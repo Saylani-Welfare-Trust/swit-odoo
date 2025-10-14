@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="approval_workflow_view_form" model="ir.ui.view">
+        <field name="name">approval.workflow.view.form</field>
+        <field name="model">approval.workflow</field>
+        <field name="arch" type="xml">
+            <form string="">
+                <sheet>
+                    <group>
+                        
+                    <group>
+                        <field name="name"/>
+                <field name="active_approval"/>
+                        
+                    </group>
+                    <group >
+                        <field name="users" widget="many2many_tags"/>
+                    </group>
+                
+                    </group>
+                    
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="approval_workflow_view_tree" model="ir.ui.view">
+        <field name="name">approval.workflow.view.tree</field>
+        <field name="model">approval.workflow</field>
+        <field name="arch" type="xml">
+            <tree string="">
+                <field name="name"/>
+
+                <field name="active_approval"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="action_record_approval" model="ir.actions.act_window">
+        <field name="name">Record Approval Form</field>
+        <field name="res_model">approval.workflow</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="view_id" ref="approval_workflow_view_tree"/>
+    </record>
+
+
+    <menuitem id='menu_record_approval' parent="point_of_sale.menu_point_config_product" name='Approval Config' sequence="50" action="action_record_approval"/>
+
+
+</odoo>

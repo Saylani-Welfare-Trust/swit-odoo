@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="sm_point_of_sale_apps.CustomPartnerLine" t-inherit="point_of_sale.PartnerLine" t-inherit-mode="extension">
+        <xpath expr="//tr" position="replace">
+            <tr t-attf-class="partner-line gap-2 gap-lg-0 align-top {{highlight}}" t-att-data-id="props.partner.id" t-on-click="() => this.props.onClickPartner(props.partner)">
+                <td>
+                    <b>
+                        <t t-esc="props.partner.name or ''" />
+                    </b>
+                    <div class="company-field text-bg-muted">
+                        <t t-esc="props.partner.parent_name or ''" />
+                    </div>
+                    <button t-if="_isPartnerSelected" class="unselect-tag d-lg-inline-block d-none btn btn-light mt-2">
+                        <i class="fa fa-times me-1"></i>
+                        <span> Unselect </span>
+                    </button>
+                </td>
+                <td style="text-transform: capitalize;">
+                    <t t-esc="props.partner.donor_type or 'Individual'" />
+                </td>
+                <td class="partner-line-balance" t-if="props.isBalanceDisplayed"></td>
+                <td class="edit-partner-button-cell">
+                    <button class="edit-partner-button btn btn-light border" t-on-click.stop="() => props.onClickEdit(props.partner)">Edit</button>
+                </td>
+                <td class="partner-line-last-column-placeholder oe_invisible"></td>
+            </tr>
+        </xpath>
+    </t>
+</templates>

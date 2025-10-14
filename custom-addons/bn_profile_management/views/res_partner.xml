@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_form_inherit_contacts" model="ir.ui.view">
+        <field name="name">res.partner.view.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name' and @invisible='not is_company']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name' and @invisible='is_company']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='street']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='mobile']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='email']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='company_type']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='function']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='title']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='category_id']" position="attributes">
+                <attribute name="invisible">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="invisible">registration_category == 'donor'</attribute>
+            </xpath>
+            
+            <xpath expr="//page[@name='contact_addresses']//field[@name='child_ids']" position="attributes">
+                <attribute name="readonly">registration_category in ['donee', 'donor']</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="string">NTN No.</attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page name="donation_box" string="Donation Box" invisible="registration_category != 'donor'">
+                    
+                </page>
+                <page name="pos_donation" string="POS Donations" invisible="registration_category != 'donor'">
+                    
+                </page>
+                <page name="donation" string="Online Donations" invisible="registration_category != 'donor'">
+                    
+                </page>
+                <page name="donation_by_home" string="Donation by Home" invisible="registration_category != 'donor'">
+                    
+                </page>
+                <page name="personal_info" string="Personal Information" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="personal_info_col_1">
+                            <field name="surname_name" readonly="1" />
+                            <field name="gender" readonly="1" />
+                            <field name="date_of_birth" readonly="1" />
+                            <field name="age" />
+                            <field name="religion_category" readonly="1" />
+                            <field name="next_kin" readonly="1" />
+                            <field name="street" string="Address" readonly="1" />
+                            <field name="nearest_land_mark" readonly="1" />
+                        </group>
+                        <group name="personal_info_col_2">
+                            <field name="father_name" readonly="1" />
+                            <field name="martial_status" readonly="1" />
+                            <field name="spouse_name" invisible="martial_status == 'unmarried'" readonly="1" />
+                            <field name="bank_wallet_account" readonly="1" />
+                            <field name="detail" readonly="1" />
+                        </group>
+                    </group>
+                </page>
+                <page name="institute_info" string="Intitute Information" invisible="donee_type != 'institute' and registration_category != 'donee'">
+                    <group>    
+                        <group name="institute_info_col_1">
+                            <field name="reg_no" readonly="1" />
+                            <field name="date_of_incorporation" readonly="1" />
+                            <field name="institution_referred_by" readonly="1" />
+                            <field name="authorized_person_name" readonly="1" />
+                        </group>
+                        <group name="institute_info_col_1">
+                            <field name="authorized_person_cell" readonly="1" />
+                            <field name="authorized_person_cnic" readonly="1" />
+                            <field name="contact_person_name" readonly="1" />
+                        </group>
+                    </group>
+                </page>
+                <page name="welfare_details" string="Welfare Details" invisible="registration_category != 'donee'">
+            
+                </page>
+                <page name="student_details" string="Student Details" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="student_details_col_1">
+                            <field name="father_cnic_no" readonly="1" />
+                        </group>
+                        <group name="student_details_col_1">
+                            <field name="course_ids" string="Courses" domain="[('is_course', '=', True)]" readonly="1" widget="many2many_tags" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="qualification" string="Qualification Details">
+                            <field name="student_qualification_ids" readonly="1" >
+                                <tree string="Student Qualification" editable="bottom">
+                                    <field name="examination" />
+                                    <field name="school_uni_center" />
+                                    <field name="board" />
+                                    <field name="percentage" />
+                                    <field name="year" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="fee_voucher" string="Fee Vouchers">
+                        </page>
+                    </notebook>
+                </page>
+                <page name="medical_details" string="Medical Details" invisible="registration_category != 'donee'">
+                    <notebook>
+                        <page name="medicine" string="Medicine">
+                            
+                        </page>
+                        <page name="equipment" string="Equipment">
+                            
+                        </page>
+                    </notebook>
+                </page>
+                <page name="microfinance" string="Microfinance Details" invisible="registration_category != 'donee'">
+                    
+                </page>
+                <!-- <page name="employment_info" string="Employment Information" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="employment_info_col_1">
+                            <field name="company_name" readonly="1" />
+                            <field name="company_address" readonly="1" />
+                            <field name="company_phone_no" readonly="1" />
+                        </group>
+                        <group name="employment_info_col_2">
+                            <field name="designation" readonly="1" />
+                            <field name="duration_of_service" readonly="1" />
+                            <field name="monthly_salary" readonly="1" />
+                        </group>
+                    </group>
+                </page>
+                <page name="education_info" string="Education Information" invisible="registration_category != 'donee' and not is_microfinance">
+                    <field name="microfinance_qualification_ids" readonly="1">
+                        <tree editable="bottom">
+                            <field name="examination" />
+                            <field name="school_uni_center" />
+                            <field name="board" />
+                            <field name="percentage" />
+                            <field name="year" />
+                        </tree>
+                    </field>
+                </page>
+                <page name="education_info" string="Education Information" invisible="registration_category != 'donee' and not is_welfare">
+                    <field name="welfare_qualification_ids" readonly="1">
+                        <tree editable="bottom">
+                            <field name="examination" />
+                            <field name="school_uni_center" />
+                            <field name="board" />
+                            <field name="percentage" />
+                            <field name="year" />
+                        </tree>
+                    </field>
+                </page>
+                <page name="house_ownership_residency_details" string="House Ownership / Residency Details" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="house_ownership_residency_details_col_1">
+                            <field name="residence_type" readonly="1" />
+                            <field name="home_phone_no" readonly="1" />
+                            <field name="rental_shared_duration" readonly="1" />
+                            <field name="electricity_bill" readonly="1" />
+                            <field name="gas_bill" readonly="1" />
+                        </group>
+                        <group name="house_ownership_residency_details_col_2">
+                            <field name="landlord_owner" readonly="1" />
+                            <field name="cnic_no_landlord" readonly="1" />
+                            <field name="mobile_no_landlord" readonly="1" />
+                            <field name="home_other_info" readonly="1" />
+                            <field name="per_month_rent" readonly="1" />
+                        </group>
+                    </group>
+                </page>
+                <page name="other_finance" string="Other Finance" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="other_finance_col_1">
+                            <field name="monthly_income" readonly="1" />
+                            <field name="bank_account" readonly="1" />
+                            <field name="bank_name" readonly="1" invisible="bank_account == 'no'" />
+                            <field name="account_no" readonly="1" invisible="bank_account == 'no'" />
+                        </group>
+                        <group name="other_finance_col_2">
+                            <field name="monthly_household_expense" readonly="1" />
+                            <field name="other_loan" readonly="1" />
+                            <field name="institute_name" readonly="1" invisible="other_loan == 'no'" />
+                            <field name="outstanding_amount" readonly="1" invisible="other_loan == 'no'" />
+                        </group>
+                    </group>
+                </page>
+                <page name="other_information" string="Other Information" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="other_information_col_1">
+                            <field name="aid_from_other_organization" readonly="1" />
+                            <field name="details_1" readonly="1" />
+                        </group>
+                        <group name="other_information_col_2">
+                            <field name="have_applied_swit" readonly="1" />
+                            <field name="details_2" readonly="1" />
+                        </group>
+                    </group>
+                </page>
+                <page name="request_details" string="Request Details" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="request_details_col_1">
+                            <field name="loan_request_amount" readonly="1" invisible="not is_microfinance" />
+                            <field name="security_offered" readonly="1" invisible="not is_microfinance" />
+                            
+                            <field name="tenure_kifalat_madad_expected" readonly="1" invisible="not is_welfare" />
+                        </group>
+                        <group name="request_details_col_2">
+                            <field name="loan_tenure_expected" readonly="1" invisible="not is_microfinance" />
+                        </group>
+                    </group>
+                </page>
+                <page name="guarantor_information" string="Guarantor Information" invisible="registration_category != 'donee'">
+                    <field name="guarantor_information_ids" readonly="1">
+                        <tree editable="bottom">
+                            <field name="name" />
+                            <field name="father_spouse_name" />
+                            <field name="cnic_no" />
+                            <field name="relation" />
+                            <field name="address" />
+                            <field name="mobile" />
+                            <field name="landline_no" />
+                        </tree>
+                    </field>
+                </page>
+                <page name="family_member" string="Family Details" invisible="registration_category != 'donee'">
+                    <group>
+                        <group name="family_member_col_1">
+                            <field name="dependent_person" readonly="1" />
+                        </group>
+                        <group name="family_member_col_2">
+                            <field name="household_member" readonly="1" />
+                        </group>
+                    </group>
+                    <field name="family_information_ids" readonly="1">
+                        <tree editable="bottom">
+                            <field name="complete_name" />
+                            <field name="age" />
+                            <field name="relation" />
+                            <field name="cnic_bform" />
+                            <field name="education" />
+                            <field name="monthly_income" />
+                        </tree>
+                    </field>
+                </page> -->
+            </xpath>
+
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="is_donee" invisible="1" />
+                <field name="is_medical" invisible="1" />
+                <field name="is_microfinance" invisible="1" />
+                <field name="is_welfare" invisible="1" />
+                <field name="is_employee" invisible="1" />
+                <field name="is_student" invisible="1" />
+                <field name="is_rider" invisible="1" />
+                <field name="state" invisible="1" />
+                <field name="is_change_request" invisible="1" />
+                <field name="donee_type" invisible="registration_category != 'donee' or not registration_category" readonly="1" />
+                <field name="donor_type" invisible="registration_category != 'donor' or not registration_category" readonly="1" />
+                <field name="registration_category" />
+
+                <field name="branch_id" invisible="registration_category not in ['donee', 'donor']" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="donation_type" invisible="1" />
+
+                <field name="gender" invisible="registration_category not in ['donee', 'donor']"  readonly="1" />
+                <field name="donee_id" string="Donee" invisible="registration_category != 'donee' or not registration_category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="donee_registration_id" invisible="registration_category != 'donee' or not registration_category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="donor_id" string="Donor" invisible="registration_category != 'donor' or not registration_category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="donor_registration_id" invisible="registration_category != 'donor' or not registration_category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="barcode" invisible="registration_category not in ['donee', 'donor']" string="Registration ID" readonly="1" />
+            </xpath>
+
+            <xpath expr="//widget[@name='web_ribbon']" position="attributes">
+                <attribute name="title">Rejected</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

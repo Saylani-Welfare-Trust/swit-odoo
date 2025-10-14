@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates id="template" xml:space="preserve">
+    <t t-name="ah_accounting_app.gl_template_new" t-inherit="dynamic_accounts_report.gl_template_new"
+       t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('analytic')]" position="before">
+            <div class="analytic_plan" style="">
+                <a type="button" class="dropdown-toggle"
+                   data-bs-toggle="dropdown"
+                   style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
+                    <div style="display:content;">
+                        <span>
+                            <span class="fa fa-book"
+                                  title="Analytic Plan"
+                                  role="img"/>
+                            Analytic Plan
+                        </span>
+                    </div>
+                    <t t-if="state.selected_analytic_plan_list">:
+                        <t t-foreach="state.selected_analytic_plan_list"
+                           t-as="Analytic_Plan_key"
+                           t-key="Analytic_Plan_key_index">
+                            <t t-foreach="state.selected_analytic_plan_list"
+                               t-as="AnalyticPlan"
+                               t-key="Analytic_Plan_index">
+                                <t t-if="AnalyticPlan['id'] == Analytic_Plan_key_index">
+                                    <span>
+                                        <t t-esc="AnalyticPlan['name']"/>
+                                    </span>
+                                </t>
+                            </t>
+                            <t t-if="Analytic_Plan_key_index != Object.keys(state.selected_analytic_plan_list).length - 1">
+                                ,
+                            </t>
+                        </t>
+                    </t>
+                </a>
+                <div class="dropdown-menu" role="menu">
+                    <div class="list-group">
+                        <t t-if="state.analytic_plans">
+                            <t t-foreach="state.analytic_plans"
+                               t-as="analyticplan"
+                               t-key="analyticplan.id">
+                                <button class="report-filter-button"
+                                        t-att-data-value="'analyticplan'"
+                                        t-att-data-id="analyticplan.id"
+                                        type="button"
+                                        t-on-click="applyAnalyticPlan">
+                                    <t t-esc="analyticplan.name"/>
+                                </button>
+                            </t>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="disbursement_bank_view_tree" model="ir.ui.view">
+        <field name="name">disbursement.bank.view.tree</field>
+        <field name="model">disbursement.bank</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="is_active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="disbursement_bank_action" model="ir.actions.act_window">
+        <field name="name">Bank</field>
+        <field name="res_model">disbursement.bank</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="domain">[]</field>
+        <field name="context">{}</field> -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's Add a Bank...
+            </p>
+        </field>
+    </record>
+
+</odoo>

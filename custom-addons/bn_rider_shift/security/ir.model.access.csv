@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rider_shift,access.rider.shift,bn_rider_shift.model_rider_shift,,1,1,1,1
+access_schedule_day,access.schedule.day,bn_rider_shift.model_schedule_day,,1,1,1,1
+access_rider_shift_wizard,access.rider.shift.wizard,bn_rider_shift.model_rider_shift_wizard,,1,1,1,1
+access_rider_shift_wizard_line,access.rider.shift.wizard.line,bn_rider_shift.model_rider_shift_wizard_line,,1,1,1,1

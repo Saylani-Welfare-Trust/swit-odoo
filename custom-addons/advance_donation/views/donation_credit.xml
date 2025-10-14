@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <record id="donation_credit_view_form" model="ir.ui.view">
+        <field name="name">donation.credit.view.form</field>
+        <field name="model">donation.credit</field>
+        <field name="arch" type="xml">
+            <form string="">
+                <sheet>
+                    <group>
+                    <group>
+                    <field name="name" required="1"/>
+                    <field name="parnter_id" widget="many2one_avatar"/>           
+                    </group>
+
+                    <group>
+                        <field name="date"/>
+
+                    </group>
+
+                    </group>
+
+                    <notebook>
+                        <page name="lineitem" string="Line Item">
+
+                              <field name="line_item"  widget="section_and_note_one2many" mode="tree" >
+
+                                <tree editable="bottom"  >
+                                    <control>
+                                        <create name="add_product_control" string="Add a Line"/>
+                                        <create name="add_section_control" string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                                    </control>
+                                    <field name="sequence" widget="handle" />
+                                    <field name="display_type" column_invisible="True"/>
+                                    <field name="product_id"/>
+                                    <field name="name"  widget="section_and_note_text" />
+                                    <field name="bank_name"/>
+                                    <field name="cheque_num"/>
+                                    <field name="date"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="qty"/>
+                                    <field name="amount"/>
+                                    <field name="credit_account"/>
+                                    <field name="debit_account"/>
+                                    <field name="invoice_id" readonly="1"/>
+                                    
+                                    <button name="action_create_invoice" string="Create Invoice" type="object"  class="btn-primary"/>
+            
+                                
+                                </tree>
+                              
+                              </field>
+
+                            
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_credit_view_tree" model="ir.ui.view">
+        <field name="name">donation.credit.view.tree</field>
+        <field name="model">donation.credit</field>
+        <field name="arch" type="xml">
+            <tree string="">
+                <field name="name"/>
+                <field name="parnter_id" widget="many2one_avatar"/>
+                <field name="date"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="action_donation_credit" model="ir.actions.act_window">
+        <field name="name">Donation Credit Form</field>
+        <field name="res_model">donation.credit</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="view_id" ref="donation_credit_view_tree"/>
+    </record>
+
+    
+
+
+    <menuitem id='menu_donation_credit' parent="point_of_sale.menu_point_of_sale" name='Donation Credit' sequence="5" action="action_donation_credit"/>
+
+
+</odoo>

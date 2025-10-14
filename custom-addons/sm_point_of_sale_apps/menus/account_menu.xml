@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="donation_box"
+            name="Donation Box"
+            parent="account.menu_finance"
+            sequence="5"
+        />
+    </data>
+</odoo>

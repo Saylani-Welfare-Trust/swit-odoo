@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="config_bank_tree_view" model="ir.ui.view">
+            <field name="name">config.bank.tree.view</field>
+            <field name="model">config.bank</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Bank">
+                    <field name="name" string="Name" />
+                    <field name="type" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="config_bank_form_view" model="ir.ui.view">
+            <field name="name">config.bank.form.view</field>
+            <field name="model">config.bank</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Bank">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" string="Name"/>
+                            <h1><field name="name" class="oe_inline" /></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="type" />
+                                <field name="street" string="Address" invisible="type != 'gateway'" />
+                                <field name="state_id" invisible="type != 'gateway'" />
+                                <field name="country_id" invisible="type != 'gateway'" />
+                                <field name="email" invisible="type != 'gateway'" />
+                            </group>
+                            <group>
+                                <field name="account_id" string="Debit Account" invisible="type == 'api'" />
+                                <field name="bic" string="Identifier Code" invisible="type != 'gateway'" />
+                                <field name="city" invisible="type != 'gateway'" />
+                                <field name="zip" invisible="type != 'gateway'" />
+                                <field name="phone" invisible="type != 'gateway'" />
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="config_line" string="Line">
+                                <field name="config_bank_line_ids">
+                                    <tree editable="bottom">
+                                        <field name="name" />
+                                        <field name="product_id" string="Product" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="analytic_plan_id" string="Analytic Plan" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="analytic_account_id" domain="[('plan_id', '=', analytic_plan_id)]" string="Analytic Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="account_id" string="GL Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="config_header" string="Header" invisible="type == 'api'">
+                                <field name="config_bank_header_ids">
+                                    <tree editable="bottom">
+                                        <field name="name" />
+                                        <field name="position" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="currency_debit" string="Currency Debit" invisible="type != 'api'">
+                                <field name="currency_debit_ids">
+                                    <tree editable="bottom">
+                                        <field name="currency_id" string="Currency" />
+                                        <field name="account_id" string="Debit Account" />
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_config_bank" model="ir.actions.act_window">
+            <field name="name">Gateway/File Category</field>
+            <field name="res_model">config.bank</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- <menuitem
+            id="menu_configuration_bank"
+            name="Payment Method"
+            parent="bn_import_donation.configuration_menu"
+            sequence="2"
+            action="action_config_bank"
+        /> -->
+        
+        <!-- <menuitem
+            id="menu_config_bank"
+            name="Gateway"
+            parent="sm_config_bank.menu_configuration_bank"
+            sequence="1"
+            action="action_config_bank"
+        /> -->
+    </data>
+</odoo>

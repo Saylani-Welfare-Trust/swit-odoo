@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+
+       
+
+        <record id="email_template_refund_request" model="mail.template">
+            <field name="name">User Request Approval Return</field>
+            <field name="model_id" ref="advance_donation.model_pos_make_payment"/>
+            <field name="subject">Request Approval Return</field>
+            <field name="email_to">{{ ctx.get('email_to') }}</field>
+            <field name="body_html" type="html">
+                <html>
+                    Dear User.
+                    <p>
+                    <t t-esc="ctx.get('user_name')"/> Need to Approval <t t-esc="ctx.get('ticket')"/>  
+                </p>
+                    
+                    
+                <div style="text-align:center; padding:16px 0px 16px 0px">
+                    <a style="background-color:#875A7B; padding:8px 16px 8px 16px; text-decoration:none; color:#fff; border-radius:5px; font-size:13px" target="_blank"  t-att-href="ctx.get('record_url')" >View Order</a>
+                    <br></br>
+                    </div>
+
+                    <br/>
+                    <p>Thank you</p>
+                </html>
+            </field>
+        </record>
+    
+    </data>
+    
+
+</odoo>

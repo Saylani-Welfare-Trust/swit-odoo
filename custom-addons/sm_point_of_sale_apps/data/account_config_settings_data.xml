@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="account_config_settings_1" model="account.config.settings">
+            <field name="model_id" ref="model_amount_currency_box" />
+            <field name="journal_id" ref="sm_point_of_sale_apps.account_journal_1" />
+            <field name="debit_account_id" ref="sm_point_of_sale_apps.account_account_2" />
+            <field name="credit_account_id" ref="sm_point_of_sale_apps.account_account_1" />
+        </record>
+        <record id="account_config_settings_2" model="account.config.settings">
+            <field name="model_id" ref="model_amount_currency_box_lines" />
+            <field name="journal_id" ref="sm_point_of_sale_apps.account_journal_1" />
+            <field name="debit_account_id" ref="sm_point_of_sale_apps.account_account_2" />
+            <field name="credit_account_id" ref="sm_point_of_sale_apps.account_account_1" />
+        </record>
+        <record id="account_config_settings_3" model="account.config.settings">
+            <field name="model_id" ref="model_amount_currency_deposit" />
+            <field name="journal_id" ref="sm_point_of_sale_apps.account_journal_1" />
+            <field name="debit_account_id" ref="sm_point_of_sale_apps.account_account_4" />
+            <field name="credit_account_id" ref="sm_point_of_sale_apps.account_account_2" />
+        </record>
+    </data>
+</odoo>

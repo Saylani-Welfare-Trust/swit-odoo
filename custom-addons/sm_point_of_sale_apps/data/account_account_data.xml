@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="account_account_1" model="account.account">
+            <field name="code">11101234</field>
+            <field name="name">Income from Donation Box</field>
+            <field name="account_type">income</field>
+            <field name="currency_id" ref="base.PKR" />
+            <field name="company_id" ref="base.main_company" />
+        </record>
+        <record id="account_account_2" model="account.account">
+            <field name="code">11101235</field>
+            <field name="name">Cash In Hand</field>
+            <field name="account_type">asset_cash</field>
+            <field name="currency_id" ref="base.PKR" />
+            <field name="company_id" ref="base.main_company" />
+        </record>
+        <record id="account_account_3" model="account.account">
+            <field name="code">11101236</field>
+            <field name="name">Donation Income</field>
+            <field name="account_type">income</field>
+            <field name="currency_id" ref="base.PKR" />
+            <field name="company_id" ref="base.main_company" />
+        </record>
+        <record id="account_account_4" model="account.account">
+            <field name="code">11101237</field>
+            <field name="name">Bank</field>
+            <field name="account_type">asset_cash</field>
+            <field name="currency_id" ref="base.PKR" />
+            <field name="company_id" ref="base.main_company" />
+        </record>
+    </data>
+</odoo>

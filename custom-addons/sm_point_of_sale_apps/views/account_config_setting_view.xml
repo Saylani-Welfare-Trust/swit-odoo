@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="account_config_settings_tree_view" model="ir.ui.view">
+            <field name="name">account.config.settings.tree.view</field>
+            <field name="model">account.config.settings</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account Config Settings" editable="bottom" create="false" edit="true" delete="false">
+                    <field name="model_id" />
+                    <field name="journal_id" />
+                    <field name="debit_account_id" />
+                    <field name="credit_account_id" />
+
+                </tree>
+            </field>
+        </record>
+        <record id="account_config_settings_form_view" model="ir.ui.view">
+            <field name="name">account.config.settings.form.view</field>
+            <field name="model">account.config.settings</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Account Config Settings">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="model_id" />
+                            </group>
+                            <group>
+                                <field name="journal_id" />
+                            </group>
+                            <group>
+                                <field name="debit_account_id" />
+                            </group>
+                            <group>
+                                <field name="credit_account_id" />
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_account_config_settings" model="ir.actions.act_window">
+            <field name="name">Account Config Settings</field>
+            <field name="res_model">account.config.settings</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem
+            id="menu_account_config_settings"
+            name="Account Config Settings"
+            parent="account.menu_finance_configuration"
+            sequence="1"
+            action="action_account_config_settings"
+        />
+    </data>
+</odoo>

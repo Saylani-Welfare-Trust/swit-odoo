@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ah_view_sharia_law_wizard_form" model="ir.ui.view">
+        <field name="name">ah.view.sharia.law.wizard.form</field>
+        <field name="model">shariah.law.transfer</field>
+        <field name="arch" type="xml">
+            <form>
+
+                <group>
+                    <field name="company_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="unrestricted_account_id" invisible="1"/>
+                    <field name="restricted_plan_id" invisible="1"/>
+                    <field name="unrestricted_plan_id" invisible="1"/>
+                    <field name="is_transfer_to" invisible="1"/>
+
+                    <field name="restricted_account_id" options="{'no_create': True, 'no_open': True}" required="1" readonly="1"/>
+                    <field name="transfer_to_partner_id" domain="[('is_shariah_law', '=', True), ('state', '=', 'register')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="is_transfer_to == False"/>
+                    <field name="transfer_from_partner_id" domain="[('is_shariah_law', '=', True), ('state', '=', 'register')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="is_transfer_to == True"/>
+                    <field name="direction" invisible="1"/>
+                    <field name="amount" required="1"/>
+                </group>
+                <footer>
+                    <button name="action_transfer_to_confirm" string="Confirm" type="object" class="btn-primary" invisible="is_transfer_to == False"/>
+                    <button name="action_transfer_back_confirm" string="Confirm" type="object" class="btn-primary" invisible="is_transfer_to == True"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_shariah_law_wizard" model="ir.actions.act_window">
+        <field name="name">Transfer Amount</field>
+        <field name="res_model">shariah.law.transfer</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

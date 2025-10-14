@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Form View for kitchen.daily.request -->
+    <record id="view_kitchen_daily_request_form" model="ir.ui.view">
+        <field name="name">kitchen.daily.request.form</field>
+        <field name="model">kitchen.daily.request</field>
+        <field name="arch" type="xml">
+            <form string="Daily Kitchen Request">
+                <header>
+                    <button name="action_issue_to_warehouse"
+                            string="Issue to Warehouse"
+                            type="object"
+                            class="btn-primary"
+                    />
+
+                    <button name="action_manufacture" string="Manufacture" type="object"  class="btn-primary"/>
+                    <button name="%(action_report_gate_pass_kitchen)d" string="Gate Pass" type="action"  class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="date"/>
+                        <field name="branch_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Request Lines">
+                            <field name="request_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="menu_name_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View for kitchen.daily.request -->
+    <record id="view_kitchen_daily_request_tree" model="ir.ui.view">
+        <field name="name">kitchen.daily.request.tree</field>
+        <field name="model">kitchen.daily.request</field>
+        <field name="arch" type="xml">
+            <tree string="Daily Kitchen Requests">
+                <field name="date"/>
+                <field name="branch_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action to open the form/tree views -->
+    <record id="action_kitchen_daily_request" model="ir.actions.act_window">
+        <field name="name">Daily Kitchen Requests</field>
+        <field name="res_model">kitchen.daily.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu items -->
+
+
+</odoo>

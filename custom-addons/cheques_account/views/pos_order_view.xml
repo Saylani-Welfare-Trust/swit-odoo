@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+
+
+    <record id="pos_cheque_order_view_tree" model="ir.ui.view">
+        <field name="name">apos.order.view.tree</field>
+        <field name="model">pos.order</field>
+        <field name="arch" type="xml">
+            <tree string="">
+                <field name="name"/>
+                <field name="date_order"/>
+                <field name="session_id"/>
+                <field name="partner_id"/>
+                 <!-- <field name="bank_name"/> -->
+                <!-- <field name="cheuque_number"/>
+                
+                <field name="cheque_status" widget="badge" decoration-info="state == 'pending'" decoration-success="state not in ('pending','cancelled','bounce')"/>
+                
+                <field name="amount_total" sum="Amount total" widget="monetary" decoration-bf="1"/>
+                
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state not in ('draft','cancel')"/> -->
+                <!-- <button name="action_clear_ch" invisible="cheque_status in ('bounce','cancelled','clear')" string="Clear Cheque" type="object"  class="btn-primary"/>
+                <button name="action_bounce_ch" invisible="cheque_status in ('bounce','cancelled','clear')" string="Bounce Cheque" type="object"  class="btn-primary" />
+                <button name="action_redeposite" invisible="cheque_status in ('pending','clear','cancelled')"  string="Redeposite" type="object"  class="btn-primary" />
+                <button name="action_cancel" invisible="cheque_status in ('pending','clear','cancelled')" string="Cancel" type="object"  class="btn-primary" />
+                 -->
+
+
+            </tree>
+        </field>
+    </record>
+    
+    <record id="action_pos_cheque_order" model="ir.actions.act_window">
+        <field name="name">POS Cheque</field>
+        <field name="res_model">pos.order</field>
+        <field name="view_mode">tree,form</field>
+          <field name="domain">[('cheque_order', '=', True)]</field>
+          <field name="view_id" ref="pos_cheque_order_view_tree"/>
+    </record>
+
+
+    <menuitem
+        id="pos_cheque_order_menu"
+        name="Pos Cheque Order"
+        sequence="30"
+        action="action_pos_cheque_order"
+        parent="account.menu_finance"
+        />
+
+</odoo>

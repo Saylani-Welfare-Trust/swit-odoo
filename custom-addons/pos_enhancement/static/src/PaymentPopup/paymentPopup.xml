@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="pos_enhancement.PaymentPopup">
+        <div class="popup popup-number w-auto" t-att-class="{ 'popup-password': props.isPassword }" t-if="!isMobile()">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title title"><t t-esc="props.title" /></h4>
+                <span t-if="props.subtitle" class="subtitle p-1"><t t-esc="props.subtitle"/></span>
+                <!-- <div class="slider_container">
+                    <span>
+                        Percentage
+                    </span>
+                    <label class="switch">
+                        
+                        <input type="checkbox" t-model="state.is_percent"/>
+                        <span class="slider"></span>
+                    </label>
+
+                </div> -->
+            </div>
+            <div class="input-symbol pt-3">
+                <div class="popup-input value active form-control form-control-lg w-75 mx-auto">
+                    <span class="input-value" t-att-class="{ 'highlight': state.toStartOver }"><t t-esc="inputBuffer"/></span>
+                    <t t-if="!state.is_percent">
+                        <span t-if="props.inputSuffix "><t t-esc="props.inputSuffix" /></span>
+                    </t>
+                    <t t-else="">
+                        <span>%</span>
+                    </t>
+                    
+                </div>
+            </div>
+            <Numpad buttons="getNumpadButtons()" class="'mx-auto my-3 w-75 max-width-325px'"/>
+            <t t-foreach="payment_methods_from_config" t-as="paymentMethod" t-key="paymentMethod.id">
+                <div class="button paymentmethod btn btn-light rounded-0 border-bottom" style="display:block;" t-on-click="() => this.addNewPaymentLine(paymentMethod)">
+                    <div class="payment-method-display d-flex align-items-center flex-grow-1">
+                        <div>
+                            <img class="payment-method-icon" t-att-src="paymentMethodImage(paymentMethod.id)" />
+                        </div>
+                        <span class="payment-name" t-esc="paymentMethod.name" />
+                    </div>
+                </div>
+            </t>
+            <footer class="footer centered modal-footer justify-content-center">
+                <t t-if="state.current_payment_method">
+                    <button class="button confirm highlight btn btn-lg btn-primary" t-on-mousedown.prevent="confirm">
+                            <span><t t-esc="props.confirmText" /></span>
+                            <span t-if="props.getInputBufferReminder(state.buffer)" class="input-buffer-reminder small">
+                                (<t t-esc="props.getInputBufferReminder(state.buffer)" />)
+                            </span>
+                    </button>
+                </t>
+                <button class="button cancel btn btn-lg btn-secondary" t-on-mousedown.prevent="cancel">
+                    <t t-esc="props.cancelText" />
+                </button>
+            </footer>
+        </div>
+        <div class="popup" t-att-class="{ 'popup-password': props.isPassword }" t-else="">
+            <header class="title drag-handle">
+                <t t-esc="props.title" />
+            </header>
+            <main>
+                <input type="text" t-model="state.payload" t-ref="input" class="value payment-input-number" inputmode="decimal"/>
+            </main>
+            <footer class="footer centered modal-footer">
+                <t t-if="state.current_payment_method">
+                    <button class="button confirm highlight btn btn-lg btn-primary" t-on-mousedown.prevent="confirm">
+                        <t t-esc="props.confirmText" />
+                    </button>
+                </t>
+                <button class="button cancel btn btn-lg btn-secondary" t-on-mousedown.prevent="cancel">
+                    <t t-esc="props.cancelText" />
+                </button>
+            </footer>
+        </div>
+    </t>
+
+</templates>

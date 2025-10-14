@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="True">
+
+        <record id="credit_account_one" model="dhs.account.configuration">
+            <field name="name">Credit Account (1)</field>
+        </record>
+
+        <record id="debit_account_one" model="dhs.account.configuration">
+            <field name="name">Debit Account (1)</field>
+        </record>
+
+        <record id="credit_account_two" model="dhs.account.configuration">
+            <field name="name">Credit Account (2)</field>
+        </record>
+
+        <record id="debit_account_two" model="dhs.account.configuration">
+            <field name="name">Debit Account (2)</field>
+        </record>
+
+
+    </data>
+</odoo>

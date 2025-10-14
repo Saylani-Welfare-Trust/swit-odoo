@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="view_mfd_recovery_tree" model="ir.ui.view">
+            <field name="name">view.mfd.recovery.tree</field>
+            <field name="model">mfd.recovery</field>
+            <field name="arch" type="xml">
+                <tree create="False" delete="False">
+                    <field name="currency_id" column_invisible="True"/>
+                    <field name="name"/>
+                    <field name="customer_id"/>
+                    <field name="asset_type"/>
+                    <field name="state" widget="badge" decoration-info="state == 'draft'"
+                           decoration-success="state == 'recovered'"/>
+                    <field name="amount"/>
+                    <field name="remaining_amount"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_mfd_recovery_form" model="ir.ui.view">
+            <field name="name">view.mfd.recovery.form</field>
+            <field name="model">mfd.recovery</field>
+            <field name="arch" type="xml">
+                <form delete="False" create="False">
+                    <header>
+                        <button name="action_temp_recovered" invisible="state != 'in_recovery'" string="Temporary Recovered" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_recovery"/>
+                        <button name="action_fully_recovered" invisible="state != 'recovered'" string="Fully Recovered" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_recovery"/>
+                        <button name="action_move_to_done" invisible="state != 'recovered'" string="Move to Done" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_recovery"/>
+                        <button name="request_write_off" invisible="state != 'fully_recovered'" string="Write Off Request" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_recovery"/>
+                        <button name="action_right_of_granted" invisible="state != 'right_of_approval'" string="Approve" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_write_off_approval_1"/>
+                        <button name="action_right_of_granted" invisible="state != 'right_of_approval_2'" string="Approve" type="object" class="oe_highlight" groups="microfinance_loan.group_mfd_write_off_approval_2"/>
+                        <button name="action_right_of_rejected" invisible="state != 'right_of_approval'" string="Reject" type="object" groups="microfinance_loan.group_mfd_write_off_approval_1"/>
+                        <button name="action_right_of_rejected" invisible="state != 'right_of_approval_2'" string="Reject" type="object" groups="microfinance_loan.group_mfd_write_off_approval_2"/>
+                        <field name="state" widget="statusbar" statusbar_visible="in_recovery,recovered,fully_recovered"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" title="In Recovery" bg_color="text-bg-warning" invisible="state != 'in_recovery'"/>
+                        <widget name="web_ribbon" title="Temp Recovered" invisible="state != 'recovered'"/>
+                        <widget name="web_ribbon" title="Fully Recovered" invisible="state != 'fully_recovered'"/>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="application_ids_domain" invisible="1"/>
+                                <field name="product_ids_domain" invisible="1"/>
+                                <field name="scheme_id" readonly="state != 'draft'" required="1" options="{'no_create': True, 'no_edit': True, 'no_open':True}"/>
+                                <field name="application_id" readonly="state != 'draft'" required="1" domain="[('id', 'in', application_ids_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open':True}"/>
+                                <field name="asset_type" widget="radio" readonly="state != 'draft'"/>
+
+                                <field name="customer_id" required="True" readonly="state != 'draft'"
+                                       domain="[('is_microfinance','=',True), ('state','=','register')]"
+                                       context="{'form_view_ref': 'microfinance_loan.mfd_loan_customer_form'}"/>
+
+                                <field name="product_id" invisible="asset_type == 'cash'" required="True"
+                                       readonly="state != 'draft'" domain="[('id', 'in', product_ids_domain)]"
+                                      options="{'no_create': True, 'no_edit': True, 'no_open':True}"/>
+                                <field name="amount" required="True" readonly="state != 'draft'"/>
+
+                                <field name="security_deposit" readonly="state != 'draft'"
+                                       invisible="asset_type == 'cash'"/>
+
+                                <field name="donor_contribution" readonly="state != 'draft'"
+                                       invisible="asset_type == 'cash'"/>
+
+                                <field name="total_amount" readonly="True" force_save="1"/>
+                                <field name="currency_id" readonly="state != 'draft'" required="1" options="{'no_create': True, 'no_edit': True, 'no_open':True}"/>
+                            </group>
+                            <group>
+                                <field name="installment_type" readonly="state != 'draft'"/>
+                                <field name="installment_amount" readonly="state != 'draft'"/>
+                                <field name="installment_period" required="True" force_save="1" readonly="True"/>
+                                <field name="disbursement_date" required="True" readonly="state != 'approved'"
+                                       invisible="state not in ('approved', 'done')"/>
+                                <field name="warehouse_loc_id" required="True"
+                                       domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]"
+                                       invisible="state not in ('approved', 'done') or asset_type != 'movable_asset' or product_id == False"
+                                       force_save="1"
+                                       readonly="state in ('done','rejected') and asset_availability == 'not_available' or state in ('done','rejected')"/>
+                                <field name="asset_availability" required="True"
+                                       invisible="1"
+                                       force_save="1" readonly="True"/>
+                                <field name="attachment_name" invisible="1"/>
+                                <field name="attachment_id" filename="attachment_name" readonly="state != 'draft'"/>
+                                <field name="recovered_location_id"
+                                       invisible="state != 'recovered' and asset_type == 'movable_asset' or asset_type != 'movable_asset'"
+                                       readonly="1"/>
+
+                                <field name="remarks" readonly="state in ('recovered','right_of_approval', 'right_of_approval_2', 'right_of_granted')" invisible="state == 'recovered' and asset_type != 'movable_asset'"/>
+                                <field name="member_right_of_remarks" readonly="state in ('in_recovery', 'fully_recovered')" invisible="state in ('recovered', 'right_of_approval_2', 'right_of_granted')"/>
+                                <field name="cfo_right_of_remarks" readonly="state in ('fully_recovered')" invisible="state not in ('fully_recovered','right_of_approval_2')"/>
+
+                                <field name="initiate_recovery" force_save="1" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Installments">
+                                <field name="recovery_request_lines" readonly="True">
+                                    <tree editable="bottom">
+                                        <field name="loan_state" readonly="1" column_invisible="True"/>
+                                        <!--                                         <field name="is_payment_done" column_invisible="True"/> -->
+                                        <field name="currency_id" column_invisible="True" readonly="1"/>
+                                        <field name="recovery_id" readonly="1"/>
+                                        <field name="installment_id" readonly="1"/>
+                                        <field name="due_date" readonly="1"/>
+                                        <field name="amount" readonly="1" sum="Total"/>
+                                        <field name="paid_amount" sum="Total"/>
+                                        <field name="remaining_amount" force_save="1" readonly="1" sum="Total"/>
+                                        <field name="state" force_save="1" widget="badge"
+                                               decoration-danger="state == 'unpaid'"
+                                               decoration-warning="state == 'partial'"
+                                               decoration-success="state == 'paid'"/>
+                                        <!--                                         <button name="create_pir" string="Create IR" type="object"  invisible="is_payment_done == True or loan_state in ('draft','to_approve','rejected')"/> -->
+                                        <!--                                         <button name="go_to_pir" string="Go to IR" type="object" class="oe_highlight" invisible="is_payment_done == False"/> -->
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_mfd_recovery" model="ir.ui.view">
+            <field name="name">view.search.recovery</field>
+            <field name="model">mfd.recovery</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="customer_id"/>
+                    <field name="state"/>
+                    <field name="asset_type"/>
+                    <field name="cnic"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_mfd_recovery_2" model="ir.actions.act_window">
+            <field name="name">Recovery Requests</field>
+            <field name="res_model">mfd.recovery</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+    </data>
+</odoo>

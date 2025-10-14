@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- <record id="inherit_view_pos_pos_form_customization_pos" model="ir.ui.view">
+        <field name="name">pos.order.form.inherit</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+            <button name="action_clear_cheque" string="Clear Cheque" type="object"  class="btn-primary"/>
+            <button name="action_bounce_cheque" string="Bounce Cheque" type="object"  class="btn-primary" groups="techbot_apprisal.group_appriasal_admin"/>
+
+                
+            </xpath>
+        </field>
+    </record> -->
+
+
+    <record id="inherit_view_pos_session_form_cus" model="ir.ui.view">
+        <field name="name">pos.session.view.form.inherit</field>
+        <field name="model">pos.session</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='move_id']" position="after">
+                <field name="pos_moves_id" widget="many2many_tags"/>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates id="template" xml:space="preserve">
+    <t t-name="sm_point_of_sale_apps.CustomCategorySelector" t-inherit="point_of_sale.CategorySelector" t-inherit-mode="extension">
+        <xpath expr="//div" position="replace">
+            <!-- Breadcrumb Level -->
+            <div t-if="props.categories[0].breadcrumb_category.length != 0" class="category-level-container" style="height: 60px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].breadcrumb_category" t-as="breadcrumb_categories" t-key="breadcrumb_categories.id" class="d-flex align-items-center flex-shrink-0">
+                        <button class="btn btn-light category-item p-2 d-flex align-items-center" style="border: none; white-space: nowrap; margin-right: 5px; height: 45px;" t-on-click="() => props.onClick(breadcrumb_categories.id)">
+                            <i t-if="breadcrumb_categories.id == 0" class="fa fa-home fa-lg" aria-hidden="true" />
+                            <i t-if="breadcrumb_categories.id != 0" class="fa fa-caret-right me-1" aria-hidden="true" />
+                            <span t-if="breadcrumb_categories.id and breadcrumb_categories.id != 0" class="small" t-esc="breadcrumb_categories.name" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 0 -->
+            <div t-if="props.categories[0].category_level_0.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_0" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 1 -->
+            <div t-if="props.categories[0].category_level_1.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_1" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 2 -->
+            <div t-if="props.categories[0].category_level_2.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_2" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 3 -->
+            <div t-if="props.categories[0].category_level_3.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_3" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 4 -->
+            <div t-if="props.categories[0].category_level_4.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_4" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Level 5 -->
+            <div t-if="props.categories[0].category_level_5.length != 0" class="category-level-container" style="height: 140px; width: 100%; border-bottom: 2px solid #000000; flex-shrink: 0;">
+                <div class="d-flex overflow-x-auto w-100 h-100 p-1 bg-view">
+                    <div t-foreach="props.categories[0].category_level_5" t-as="category" t-key="category.id" class="d-flex align-items-center flex-shrink-0 me-2">
+                        <button class="btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-2" style="width: 110px; height: 120px; white-space: normal;" t-on-click="() => props.onClick(category.id)">
+                            <t t-if="props.showImage">
+                                <img t-if="category.imageUrl" class="rounded mb-2" style="width: 60px; height: 60px; object-fit: cover;" t-att-src="category.imageUrl" alt="Category" />
+                            </t>
+                            <i t-if="category.icon" t-attf-class="fa {{category.icon}} mb-2" style="font-size: 24px;" aria-hidden="true" />
+                            <span t-if="category.name" class="text-center small text-wrap" style="line-height: 1.1; max-height: 32px; overflow: hidden;" t-esc="category.name" />
+                        </button>
+                        <i t-if="category.id == 0" t-attf-class="px-2 fa {{category.separator}}" style="opacity: 1;" aria-hidden="true" />
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>

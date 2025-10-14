@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_contacts_inherit_sm_point_of_sale_apps" model="ir.ui.view">
+        <field name="name">res.partner.sm.point.of.sale.apps.view.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.view_partner_form_inherit_contacts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='pos_donation']" position="inside">
+                <field name="pos_donation_ids" readonly="1">
+                    <tree>
+                        <field name="date_order" />
+                        <field name="name" />
+                        <field name="session_id" />
+                        <field name="user_id" string="Cashier" />
+                        <field name="amount_tax" />
+                        <field name="amount_total" />
+                        <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state in ['paid', 'posted']" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+</odoo>

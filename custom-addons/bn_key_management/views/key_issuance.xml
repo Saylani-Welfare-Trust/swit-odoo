@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="key_issuance_view_tree" model="ir.ui.view">
+        <field name="name">key.issuance.view.tree</field>
+        <field name="model">key.issuance</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0">
+                <field name="key_id" string="Key" />
+                <field name="rider_id" string="Rider" />
+                <field name="issued_on" />
+                <field name="returned_on" />
+                <field name="state" widget="badge" decoration-info="state == 'returned'" decoration-success="state == 'issued'" decoration-danger="state == 'overdue'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="key_issuance_view_form" model="ir.ui.view">
+        <field name="name">key.issuance.view.form</field>
+        <field name="model">key.issuance</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <header>
+                    <button string="Issued" name="action_key_issued" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'overdue']" />
+                    <button string="Return" name="action_return_key" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned']" />
+                    <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned', 'overdue']" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,returned,overdue"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rider_id"/>
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [1])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" class="oe_inline" readonly="state != 'draft'" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="key_inssuance_col_1">
+                            <field name="key_id" domain="[('state', '=', 'available')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Key" readonly="state != 'draft'" />
+                            <field name="returned_on" readonly="1" />
+                        </group>
+                        <group name="key_inssuance_col_2">
+                            <field name="donation_amount" readonly="1" />
+                            <field name="issued_on" readonly="1" />
+                        </group>
+                    </group>
+
+                    <group name="donation_box_info" string="Donation Box Info" invisible="key_id == False">
+                        <group name="donation_box_info_col_1">
+                            <field name="donation_box_id" string="Donation Box" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="donation_box_request_id" string="Request ID" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="name" readonly="1" />
+                            <field name="location" readonly="1" />
+                            <field name="contact_person_name" readonly="1" />
+                            <field name="installer_id" string="Installer Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="product_id" string="Box Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="box_no" readonly="1" />
+                        </group>
+                        <group name="donation_box_info_col_2">
+                            <field name="donor_id" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="contact_no" readonly="1" widget="phone" />
+                            <field name="installation_date" readonly="1" />
+                            <field name="installation_category_id" string="Installation Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="city_id" string="City" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="zone_id" string="Zone" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="sub_zone_id" string="Sub Zone" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="key_issuance_action" model="ir.actions.act_window">
+        <field name="name">Key Issuance</field>
+        <field name="res_model">key.issuance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's Issue a Key
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="key_issuance_menu"
+        name="Key Issuance"
+        action="bn_key_management.key_issuance_action"
+        parent="sm_donation_box.menu_donation_box"
+        sequence="7"/>
+    
+    <menuitem
+        id="key_issuance_history_menu"
+        name="Key Issuance History"
+        action="bn_key_management.key_issuance_action"
+        parent="bn_key_management.key_issuance_menu"
+        sequence="1"/>
+    
+    <menuitem
+        id="bulk_key_issuance_menu"
+        name="Bulk Key Issuance"
+        action="bn_key_management.bulk_key_issuance_action"
+        parent="bn_key_management.key_issuance_menu"
+        sequence="2"/>
+
+</odoo>

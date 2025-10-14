@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="sm_point_of_sale_apps.CustomReceiptScreen" t-inherit="point_of_sale.ReceiptScreen" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('print')]" position="replace">
+            <button class="button print btn btn-lg btn-secondary w-100 py-3" t-on-click="A4PrintReceipt" style="margin-top: 20px;">
+                <i class="fa fa-print ms-2"></i> Print Receipt
+            </button>
+        </xpath>
+        <xpath expr="//div[hasclass('pos-receipt-container')]" position="replace">
+            <div class="pos-receipt-container d-flex flex-grow-1 flex-lg-grow-0 user-select-none justify-content-center bg-200 text-center overflow-hidden">
+                <div class="d-inline-block m-3 p-3 border rounded bg-view text-start overflow-y-auto">
+                    <t t-set="pos_order" t-value="pos.get_order().export_for_printing()"/>
+                    <t t-set="company" t-value="pos_order.headerData.company"/>
+                    <t t-set="order" t-value="pos_order"/>
+                    <t t-set="partner" t-value="pos_order.partner"/>
+                    <t t-set="lines" t-value="pos_order.orderlines"/>
+                    <t t-set="date_format" t-value="DateFormat(order.date)" />
+                    <t t-set="format_currency_amount_zero" t-value="FormatCurrencyAmount(0)" />
+                    <t t-set="format_currency_amount" t-value="FormatCurrencyAmount(order.amount_total)" />
+                    <div class="pos_receipt_html pos_receipt" style="width: 1200px; max-width: 1200px;">
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+                        <style>
+                            .row {
+                                display: -webkit-box;
+                                display: flex;
+                            }
+                            body {
+                                font-family: Arial, sans-serif;
+                            }
+                            h1{
+                                font-size: 1.5em;
+                                color: #222;
+                            }
+                            h2{
+                                font-size: .9em;
+                            }
+                            h3{
+                                font-size: 1.2em;
+                                font-weight: 300;
+                                line-height: 2em;
+                            }
+                            p{
+                                font-size: .7em;
+                                color: #666;
+                                line-height: 1.2em;
+                            }
+                            .info h2 {
+                                font-size: 20px;
+                            }
+                            .div-box {
+                                display: flex;
+                                flex-direction: row;
+                                flex-wrap: nowrap;
+                                justify-content: space-between;
+                                align-items: center;
+                            }
+                            .text-transform {
+                                text-transform: uppercase;
+                                margin-top: 15px;
+                                margin-bottom: 0px;
+                            }
+                            .row-new {
+                                flex-direction: row;
+                                flex-wrap: nowrap;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                            }
+                            .table-bordered {
+                                border: 2px solid #000000 !important;
+                            }
+                            .table thead th {
+                                border-bottom: 2px solid #000000;
+                            }
+                            .table-bordered td, .table-bordered th {
+                                border: 2px solid #000000;
+                            }
+                            .w-full {
+                                width: 25% !important;
+                            }
+                            tfoot tr th {
+                                border-top: 2px solid #000000 !important;
+                                border-left: inherit !important;
+                                border-right: inherit !important;
+                                border-bottom: inherit !important;
+                            }
+                            tfoot tr td {
+                                border-top: 2px solid #000000 !important;
+                                border-left: inherit !important;
+                                border-right: inherit !important;
+                                border-bottom: inherit !important;
+                            }
+                            .text-left {
+                                text-align: left;
+                            }
+                            .text-right {
+                                text-align: right;
+                            }
+                            .service_margin {
+                                margin-left: 15px;
+                                margin-right: 15px;
+                            }
+                            .table-bordered {
+                                border: inherit;
+                            }
+                        </style>
+
+                        <!-- Header Section
+                        <div class="text-center mb-4">
+                            <div style="border-bottom: 3px solid #2c786c; padding-bottom: 15px;">
+                                Method 1: Using image URL if stored as attachment
+                                <t t-if="pos_order.cover_image">
+                                    <img t-attf-src="data:image/png;base64,{{ pos_order.cover_image.decode('utf-8') }}" 
+                                        alt="Organization Logo"
+                                        style="width: 800px; height: auto; height: 500px; margin-bottom: 10px;"
+                                        class="header-logo"/>
+                                </t>
+                                <t t-else="">
+                                    Fallback content
+                                    <h2 style="color: #2c786c; font-weight: bold; margin-bottom: 5px;">SAYLANI WELFARE TRUST</h2>
+                                    <p class="mb-1">A-32, Main Shabamba, Karachi, Pakistan</p>
+                                    <p>UAN: (+92-21) 111-722-626 | www.saylaniwelfare.com</p>
+                                </t>
+                            </div>
+                        </div> -->
+
+                        <center id="top">
+                            <div class="logo">
+                                <t t-if="company.id">
+                                    <img t-attf-src="/web/image?model=res.company&amp;id={{company.id}}&amp;field=logo" alt="Logo" class="pos-receipt-logo"/>
+                                </t>
+                            </div>
+                            <div class="info">
+                                <h2>
+                                    <t t-if="company.name">
+                                        <t t-esc="company.name" />
+                                    </t>
+                                </h2>
+                                <p style="margin-bottom: 6px;font-size: 12px;font-weight: 500;color: #000000;">
+                                    <t t-if="company.email">
+                                        <t t-esc="company.email" />
+                                    </t>
+                                </p>
+                                <p style="margin-bottom: 6px;font-size: 12px;font-weight: 500;color: #000000;">
+                                    <t t-if="company.phone">
+                                        <t t-esc="company.phone" />
+                                    </t>
+                                </p>
+                                <p style="margin-bottom: 6px;font-size: 12px;font-weight: 500;color: #000000;">
+                                    <t t-if="company.street">
+                                        <t t-esc="company.street" />,
+                                    </t>
+                                    <t t-if="company.street2">
+                                        <t t-esc="company.street2" />,
+                                    </t>
+                                    <t t-if="company.city">
+                                        <t t-esc="company.city" />,
+                                    </t>
+                                    <t t-if="company.state_id">
+                                        <t t-esc="company.state_id[1]" />,
+                                    </t>
+                                    <t t-if="company.country_id">
+                                        <t t-esc="company.country_id[1]" />,
+                                    </t>
+                                    <t t-if="company.zip">
+                                        <t t-esc="company.zip" />
+                                    </t>
+                                </p>
+                                <p style="margin-bottom: 6px;font-size: 12px;font-weight: 500;color: #000000;">
+                                    <t t-if="company.website">
+                                        <t t-esc="company.website" />
+                                    </t>
+                                </p>
+                            </div>
+                        </center>
+                        <hr class="service_margin" style="border-top: 2px solid #000000;margin-bottom: 0px;"/>
+                        <div class="div-box service_margin">
+                            <h1 class="text-transform">Donation Receipt</h1>
+                            <h1 class="text-transform">
+                                <t t-if="company.name">
+                                    <t t-esc="company.name" />
+                                </t>
+                                <t t-if="company.city">
+                                    (<t t-esc="company.city" />)
+                                </t>
+                            </h1>
+                        </div>
+                        <div class="row row-new service_margin" style="margin-top: 20px;margin-bottom: 20px;border: 2px solid #000;padding: 15px;">
+                            <div class="col-lg-6">
+                                
+                                
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">DN #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-set="city_code" t-value="company.city and company.city.substring(0,3).toUpperCase() or 'UNK'"/>
+                                            <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
+                                            <t t-set="current_year" t-value="new Date().getFullYear()"/>
+                                            <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
+                                            <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Receipt #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.name">
+                                                <t t-esc="order.name" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Receipt Date #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.date">
+                                                <t t-esc="date_format"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Donar Name:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="partner.name">
+                                                <t t-esc="partner.name"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cell #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="partner.mobile">
+                                                <t t-esc="partner.mobile"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-if="partner.phone">
+                                                    <t t-esc="partner.phone"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cash Amount:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="!order.comment_feedback">
+                                                <t t-if="order.amount_total">
+                                                    <t t-esc="format_currency_amount" />
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="format_currency_amount_zero"/>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Remarks:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cheque Date:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.comment_feedback">
+                                                <t t-if="order.date">
+                                                    <t t-esc="date_format"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cheque #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.comment_feedback">
+                                                <t t-if="order.customer_feedback">
+                                                    <t t-esc="order.customer_feedback"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Bank Branch #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.comment_feedback">
+                                                <t t-if="order.comment_feedback">
+                                                    <t t-esc="order.comment_feedback" />
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cheque Amount:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.comment_feedback">
+                                                <t t-if="order.amount_total">
+                                                    <t t-esc="format_currency_amount" />
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="format_currency_amount_zero"/>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service_margin">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: center;" class="w-full">Account Title</th>
+                                        <th style="text-align: center;" class="w-full">Quantity</th>
+                                        <th style="text-align: center;" class="w-full">Rate</th>
+                                        <th style="text-align: center;" class="w-full">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="lines" t-as="line" t-key="line.productName">
+                                        <tr>
+                                            <td class="w-full text-left">
+                                                <t t-if="line.productName">
+                                                    <t t-esc="line.productName"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </td>
+                                            <td class="w-full text-right">
+                                                <t t-if="line.qty">
+                                                    <t t-esc="line.qty"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </td>
+                                            <td class="w-full text-right">
+                                                <t t-if="line.unitPrice">
+                                                    <t t-esc="line.unitPrice"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </td>
+                                            <td class="w-full text-right">
+                                                <t t-if="line.price">
+                                                    <t t-esc="line.price"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <table class="table">
+                                <tfoot>
+                                    <tr>
+                                        <th class="w-full text-left">Amount In Words:</th>
+                                        <td class="w-full text-left">
+                                            <t t-if="order.amount_total">
+                                                <t t-set="amount_to_words" t-value="amountToWords(order.amount_total)" />
+                                                <t t-esc="amount_to_words" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </td>
+                                        <th class="w-full text-left">Total Amount:</th>
+                                        <td class="w-full text-right">
+                                            <t t-if="order.amount_total">
+                                                <t t-esc="format_currency_amount"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border-top: inherit !important;" class="w-full text-left">Printed By:</th>
+                                        <td style="border-top: inherit !important;" class="w-full text-left">
+                                            <t t-if="order.cashier">
+                                                <t t-esc="order.cashier" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </td>
+                                        <th style="border-top: inherit !important;" class="w-full text-left">Entered By:</th>
+                                        <td style="border-top: inherit !important;" class="w-full text-right">
+                                            <t t-if="order.cashier">
+                                                <t t-esc="order.cashier" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <br />
+                        <br />
+                        <br />
+                        <br />
+                        <hr class="service_margin" style="border-top: 2px solid #000000;"/>
+                        <div class="row row-new service_margin" style="margin-top: 20px;margin-bottom: 20px;border: 2px solid #000;padding: 15px;">
+                            <div class="col-lg-6">
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">DN #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-set="city_code" t-value="company.city and company.city.substring(0,3).toUpperCase() or 'UNK'"/>
+                                            <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
+                                            <t t-set="current_year" t-value="new Date().getFullYear()"/>
+                                            <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
+                                            <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
+                                        </h4>
+                                    </div>
+                                </div>
+                                
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Receipt #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.name">
+                                                <t t-esc="order.name" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Receipt Date #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.date">
+                                                <t t-esc="date_format"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Donar Name:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="partner.name">
+                                                <t t-esc="partner.name"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cell #:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="partner.mobile">
+                                                <t t-esc="partner.mobile"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-if="partner.phone">
+                                                    <t t-esc="partner.phone"/>
+                                                </t>
+                                                <t t-else="">
+                                                    -
+                                                </t>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cash Amount:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="!order.comment_feedback">
+                                                <t t-if="order.amount_total">
+                                                    <t t-esc="format_currency_amount" />
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="format_currency_amount_zero"/>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">A/C Title:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Receipt By:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.cashier">
+                                                <t t-esc="order.cashier" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Printed By:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.cashier">
+                                                <t t-esc="order.cashier" />
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Printed Date:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.date">
+                                                <t t-esc="date_format"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Cheque Amount:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.comment_feedback">
+                                                <t t-if="order.amount_total">
+                                                    <t t-esc="format_currency_amount" />
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="format_currency_amount_zero"/>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="row row-new">
+                                    <div class="col-lg-4">
+                                        <h4 style="font-size: 18px;">Total Amount:</h4>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <h4 style="font-weight: 500;font-size: 18px;">
+                                            <t t-if="order.amount_total">
+                                                <t t-esc="format_currency_amount"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="format_currency_amount_zero"/>
+                                            </t>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>

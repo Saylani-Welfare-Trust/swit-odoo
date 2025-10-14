@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_template_form_view_advance_donation" model="ir.ui.view">
+        <field name="name">product.product.form.inherit</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//page[@name='general_information']" position="after">
+                    
+                    <page name="config_advance_donation" string="Advance Donation">
+                            <group>
+                                <group>
+                                    <field name="for_credit_advance_donation"/>
+                                    <field name="for_debit_advance_donation"/>
+                                </group>
+                                
+                            </group>
+                            
+                            
+                    </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

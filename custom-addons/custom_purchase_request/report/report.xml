@@ -1,0 +1,150 @@
+<odoo>
+    <!-- Report Action -->
+
+    <!-- QWeb Template -->
+    <template id="report_custom_rfq">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <!-- Grab vendor_id from QWeb’s context -->
+                    <!--                    <t t-out="vendor_id"/>-->
+
+                    <div class="page">
+                        <h2>Request for Quotation:
+                            <t t-esc="doc.purchase_order_no"/>
+                        </h2>
+                        <p>
+                            <strong>Deadline:</strong>
+                            <t t-esc="doc.order_deadline"/>
+                        </p>
+                        <p>
+                            <strong>Expected Arrival:</strong>
+                            <t t-esc="doc.expected_arrival"/>
+                        </p>
+
+                        <table class="table table-sm mt32">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>UoM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Only lines assigned to this vendor_id -->
+                                <t t-foreach="doc.line_ids.filtered(lambda l: vendor_id in l.vendor.ids)" t-as="l">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="l.product.display_name"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <t t-esc="l.product_qty"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="l.product_uom.name"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+
+    <template id="report_custom_rfq_gi">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <!-- Grab vendor_id from QWeb’s context -->
+                    <!--                    <t t-out="vendor_id"/>-->
+
+                    <div class="page">
+                        <h2>Request for Quotation:
+                            <t t-esc="doc.purchase_order_no"/>
+                        </h2>
+                        <p>
+                            <strong>Deadline:</strong>
+                            <t t-esc="doc.order_deadline"/>
+                        </p>
+                        <p>
+                            <strong>Expected Arrival:</strong>
+                            <t t-esc="doc.expected_arrival"/>
+                        </p>
+
+                        <table class="table table-sm mt32">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>UoM</th>
+                                    <th>Vendor</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Only lines assigned to this vendor_id -->
+                                <t t-foreach="doc.line_ids" t-as="l">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="l.product.display_name"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <t t-esc="l.product_qty"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="l.product_uom.name"/>
+                                        </td>
+
+                                        <td>
+                                            <t t-foreach="l.vendor" t-as="vendor">
+                                                <t t-esc="', '.join(l.vendor.mapped('name'))"/>
+                                                <!--                                                <t t-if="not loop.last">,</t>-->
+                                            </t>
+                                        </td>
+
+                                        <td>
+                                            <t t-esc="l.price_unit"/>
+                                        </td>
+
+                                        <td>
+                                            <t t-esc="l.tax_excl"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="purchase_req_quo_report_action" model="ir.actions.report">
+        <field name="name">Purchase Requesst Report</field>
+        <field name="model">custom.purchase.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_purchase_request.report_custom_rfq</field>
+        <field name="report_file">custom_purchase_request.report_custom_rfq</field>
+        <field name="binding_model_id" ref="custom_purchase_request.model_custom_purchase_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+
+    <record id="purchase_req_quo_report_action_gi" model="ir.actions.report">
+        <field name="name">Purchase Requesst Report GI</field>
+        <field name="model">custom.purchase.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_purchase_request.report_custom_rfq_gi</field>
+        <field name="report_file">custom_purchase_request.report_custom_rfq_gi</field>
+        <field name="binding_model_id" ref="custom_purchase_request.model_custom_purchase_request"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

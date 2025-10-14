@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="True">
+
+<!--        Loan Configuration (Asset)-->
+
+        <record id="security_deposit_credit_account_asset" model="mfd.account.configuration">
+            <field name="name">Security Deposit Credit Account</field>
+            <field name="account_type">loan_conf_asset</field>
+        </record>
+
+         <record id="security_deposit_debit_account_asset" model="mfd.account.configuration">
+            <field name="name">Security Deposit Debit Account</field>
+             <field name="account_type">loan_conf_asset</field>
+         </record>
+
+        <record id="loan_asset_credit_account_asset" model="mfd.account.configuration">
+            <field name="name">Loan Asset Credit Account</field>
+            <field name="account_type">loan_conf_asset</field>
+         </record>
+
+        <record id="loan_donor_contribution_credit_account_asset" model="mfd.account.configuration">
+            <field name="name">Loan Donor Contribution Credit Account</field>
+            <field name="account_type">loan_conf_asset</field>
+         </record>
+
+        <record id="loan_income_credit_account_asset" model="mfd.account.configuration">
+            <field name="name">Loan Income Credit Account</field>
+            <field name="account_type">loan_conf_asset</field>
+        </record>
+
+        <record id="loan_debit_account_asset" model="mfd.account.configuration">
+            <field name="name">Loan Debit Account</field>
+            <field name="account_type">loan_conf_asset</field>
+        </record>
+
+        <!--        Loan Configuration (Cash)-->
+
+        <record id="security_deposit_credit_account_cash" model="mfd.account.configuration">
+            <field name="name">Security Deposit Credit Account</field>
+            <field name="account_type">loan_conf_cash</field>
+        </record>
+
+         <record id="security_deposit_debit_account_cash" model="mfd.account.configuration">
+            <field name="name">Security Deposit Debit Account</field>
+             <field name="account_type">loan_conf_cash</field>
+         </record>
+
+        <record id="loan_credit_account_cash" model="mfd.account.configuration">
+            <field name="name">Loan Credit Account</field>
+            <field name="account_type">loan_conf_cash</field>
+         </record>
+
+        <record id="loan_debit_account_cash" model="mfd.account.configuration">
+            <field name="name">Loan Debit Account</field>
+            <field name="account_type">loan_conf_cash</field>
+        </record>
+
+
+        <!--        Payment Configuration (Cash)-->
+
+        <record id="cash_payment_credit_account" model="mfd.account.configuration">
+            <field name="name">Cash Payment Credit Account</field>
+            <field name="account_type">payment_conf_cash</field>
+        </record>
+
+        <record id="cash_payment_debit_account" model="mfd.account.configuration">
+            <field name="name">Cash Payment Debit Account</field>
+            <field name="account_type">payment_conf_cash</field>
+        </record>
+
+
+        <!--        Deposit Configuration (Cheque)-->
+
+        <record id="cheque_deposit_credit_account_first" model="mfd.account.configuration">
+            <field name="name">Cheque Deposit Credit Account (1)</field>
+            <field name="account_type">deposit_conf_cheque</field>
+        </record>
+
+        <record id="cheque_deposit_debit_account_first" model="mfd.account.configuration">
+            <field name="name">Cheque Deposit Debit Account (1)</field>
+            <field name="account_type">deposit_conf_cheque</field>
+        </record>
+
+        <record id="cheque_deposit_credit_account_second" model="mfd.account.configuration">
+            <field name="name">Cheque Deposit Credit Account (2)</field>
+            <field name="account_type">deposit_conf_cheque</field>
+        </record>
+
+        <record id="cheque_deposit_debit_account_second" model="mfd.account.configuration">
+            <field name="name">Cheque Deposit Debit Account (2)</field>
+            <field name="account_type">deposit_conf_cheque</field>
+        </record>
+
+
+        <!--        Payment Configuration (Cheque)-->
+
+
+        <record id="cheque_payment_credit_account_first" model="mfd.account.configuration">
+            <field name="name">Cheque Payment Credit Account (1)</field>
+            <field name="account_type">payment_conf_cheque</field>
+        </record>
+
+        <record id="cheque_payment_debit_account_first" model="mfd.account.configuration">
+            <field name="name">Cheque Payment Debit Account (1)</field>
+            <field name="account_type">payment_conf_cheque</field>
+        </record>
+
+        <record id="cheque_payment_credit_account_second" model="mfd.account.configuration">
+            <field name="name">Cheque Payment Credit Account (2)</field>
+            <field name="account_type">payment_conf_cheque</field>
+        </record>
+
+        <record id="cheque_payment_debit_account_second" model="mfd.account.configuration">
+            <field name="name">Cheque Payment Debit Account (2)</field>
+            <field name="account_type">payment_conf_cheque</field>
+        </record>
+
+
+        <!--        Recovery Days Configuration  -->
+
+<!--        <record id="installment_type_daily" model="mfd.recovery.conf">-->
+<!--            <field name="installment_type">Daily</field>-->
+<!--        </record>-->
+
+<!--        <record id="installment_type_monthly" model="mfd.recovery.conf">-->
+<!--            <field name="installment_type">Monthly</field>-->
+<!--        </record>-->
+
+    </data>
+</odoo>

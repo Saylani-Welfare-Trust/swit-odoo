@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="profile_management_root_menu"
+        name="Profile Management"
+        web_icon="bn_profile_management,static/description/icon.png"
+        sequence="6"/>
+
+    <!-- Donee -->
+    <menuitem
+        id="donee_root_menu"
+        name="Donee"
+        action="master_donee_action"
+        parent="profile_management_root_menu"
+        sequence="1"/>
+
+    <!-- Donor -->
+    <menuitem
+        id="donor_root_menu"
+        name="Donor"
+        action="master_donor_action"
+        parent="profile_management_root_menu"
+        sequence="2"/>
+
+</odoo>

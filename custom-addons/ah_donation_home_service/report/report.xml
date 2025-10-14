@@ -1,0 +1,16 @@
+<odoo>
+    <data>
+
+        <record id="report_donation_home_service" model="ir.actions.report">
+            <field name="name">Donation Home Service Receipt</field>
+            <field name="model">donation.home.service</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">ah_donation_home_service.donation_home_service_template</field>
+            <field name="report_file">ah_donation_home_service.donation_home_service_template</field>
+            <field name="binding_model_id" ref="ah_donation_home_service.model_donation_home_service"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">(object.name)</field>
+        </record>
+
+    </data>
+</odoo>

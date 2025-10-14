@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_swt_kitchen_transfer_tree" model="ir.ui.view">
+        <field name="name">swt.kitchen_transfer.tree</field>
+        <field name="model">swt.kitchen_transfer</field>
+        <field name="arch" type="xml">
+            <tree string="Live Stock cutting_material Department">
+                <field name="product"/>
+                <field name="product_code"/>
+                <field name="quantity"/>
+                <field name="price"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_swt_kitchen_transfer_form" model="ir.ui.view">
+        <field name="name">swt_kitchen_transfer.form</field>
+        <field name="model">swt.kitchen_transfer</field>
+        <field name="arch" type="xml">
+            <form string="Kitchen Transfer">
+                <sheet>
+                    <group>
+                        <field name="product"/>
+                        <field name="product_code"/>
+                        <field name="quantity"/>
+                        <field name="price"/>
+                        <field name="confirm_hide" invisible="1"/>
+                        <field name="picking_id" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to Open the Views -->
+    <record id="action_swt_kitchen_transfer" model="ir.actions.act_window">
+        <field name="name">Kitchen Transfer</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">swt.kitchen_transfer</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+</odoo>

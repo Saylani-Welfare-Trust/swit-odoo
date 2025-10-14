@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_shariah_law,shariah.law,model_shariah_law,ah_shariah_law.group_shariah_law_admin,1,1,1,1
+access_shariah_law_transfer,shariah.transfer,model_shariah_law_transfer,ah_shariah_law.group_shariah_law_admin,1,1,1,1
+access_shariah_law_account_conf,shariah.law.account.conf,model_shariah_law_account_conf,ah_shariah_law.group_shariah_law_admin,1,1,1,1
+access_shariah_law_chart_of_account,shariah.law.chart.of.account,model_shariah_law_chart_of_account,ah_shariah_law.group_shariah_law_admin,1,1,1,1
+
+
+
+
+
+

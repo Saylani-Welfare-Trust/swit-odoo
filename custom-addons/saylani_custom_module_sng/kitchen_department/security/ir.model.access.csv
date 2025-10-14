@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_kitchen_menu,access_kitchen_menu,model_kitchen_menu,base.group_user,1,1,1,1
+access_kitchen_menu_line,access_kitchen_menu_line,model_kitchen_menu_line,base.group_user,1,1,1,1
+access_kitchen_menu_line_ingredient,access_kitchen_menu_line_ingredient,model_kitchen_menu_line_ingredient,base.group_user,1,1,1,1
+access_branch_request,access_branch_request,model_branch_request,base.group_user,1,1,1,1
+access_branch_request_line,access_branch_request_line,model_branch_request_line,base.group_user,1,1,1,1
+
+access_branch_kitchen_request,access_branch_kitchen_request,model_branch_kitchen_request,base.group_user,1,1,1,1
+access_branch_kitchen_request_line,access_branch_kitchen_request_line,model_branch_kitchen_request_line,base.group_user,1,1,1,1
+access_kitchen_material_requisition,access_kitchen_material_requisition,model_kitchen_material_requisition,base.group_user,1,1,1,1
+access_kitchen_material_requisition_line,access_kitchen_material_requisition_line,model_kitchen_material_requisition_line,base.group_user,1,1,1,1
+
+access_kitchen_daily_request,access_kitchen_daily_request,model_kitchen_daily_request,base.group_user,1,1,1,1
+access_kitchen_daily_request_line,access_kitchen_daily_request_line,model_kitchen_daily_request_line,base.group_user,1,1,1,1

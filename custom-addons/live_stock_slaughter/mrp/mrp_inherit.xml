@@ -1,0 +1,56 @@
+<odoo>
+    <record id="action_mrp_alternative_wizard" model="ir.actions.act_window">
+        <field name="name">Alternative Production</field>
+        <field name="res_model">mrp.alternative.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_mrp_production_form_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.form.alternatives</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <!-- replace your_module with your actual module name -->
+                <button name="%(live_stock_slaughter.action_mrp_alternative_wizard)d"
+                        type="action"
+                        string="Suggest Alternatives"
+                        class="btn-secondary"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_mrp_alternative_wizard" model="ir.ui.view">
+        <field name="model">mrp.alternative.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Select Alternative Production">
+                <sheet>
+                    <group>
+                        <field name="mo_id"/>
+
+                    </group>
+                    <field name="message" nolabel="1"/>
+
+                    <field name="line_ids">
+                        <tree editable="top">
+                            <field name="selected"/>
+                            <field name="product_id"/>
+                            <field name="max_qty"/>
+                        </tree>
+                    </field>
+                    <footer>
+                        <button string="Make Production" type="object" name="action_confirm" class="btn-primary"/>
+                        <button string="Confirm Production Order" type="object" name="action_confirm_mrp"
+                                class="btn-primary"/>
+                        <button string="Confirm" type="object" name="action_confirm" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+</odoo>
+

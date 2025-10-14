@@ -1,0 +1,48 @@
+<odoo>
+    <data>
+
+        <record id="report_mfd_installment_receipt" model="ir.actions.report">
+            <field name="name">Installment Receipt</field>
+            <field name="model">mfd.installment.receipt</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">microfinance_loan.mfd_installment_receipt_template</field>
+            <field name="report_file">microfinance_loan.mfd_installment_receipt_template</field>
+            <field name="binding_model_id" ref="microfinance_loan.model_mfd_installment_receipt"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">(object.name)</field>
+        </record>
+
+        <record id="report_mfd_pdc_template" model="ir.actions.report">
+            <field name="name">Download PDC template</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="report_type">xlsx</field>
+            <field name="report_name">microfinance_loan.bulk_upload_pxc_template</field>
+            <field name="report_file">microfinance_loan.bulk_upload_pxc_template</field>
+            <field name="binding_model_id" eval="False"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <record id="report_security_deposit_slip" model="ir.actions.report">
+            <field name="name">Security Deposit Slip</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">microfinance_loan.mfd_sd_slip_template</field>
+            <field name="report_file">microfinance_loan.mfd_sd_slip_template</field>
+            <field name="binding_model_id" eval="False"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">(object.name)</field>
+        </record>
+
+        <record id="report_mfd_slip" model="ir.actions.report">
+            <field name="name">Microfinance Loan Slip</field>
+            <field name="model">mfd.loan.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">microfinance_loan.mfd_slip_template</field>
+            <field name="report_file">microfinance_loan.mfd_slip_template</field>
+            <field name="binding_model_id" eval="False"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">(object.name)</field>
+        </record>
+
+    </data>
+</odoo>

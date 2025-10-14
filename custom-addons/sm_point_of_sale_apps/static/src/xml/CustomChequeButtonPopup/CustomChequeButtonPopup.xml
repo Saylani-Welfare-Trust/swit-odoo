@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="custom_popup.CustomChequeButtonPopup" owl="1">
+        <div class="popup custom_popup">
+            <div class="modal-header justify-content-center">
+                <h2 class="modal-title">
+                    <t t-esc="props.title"/>
+                </h2>
+            </div>
+            <div class="modal-body custom-form-view">
+                <form>
+                    <div class="col" style="padding-bottom: 10px;">
+                        <input class="w-100 form-control" id="check_bank_name" name="check_bank_name" t-on-input="onCheckBankNameChange" placeholder="Bank Name" />
+                    </div>
+                    <div class="col">
+                        <input type="text" class="w-100 form-control" id="check_cheque_number" t-on-input="onChequeNumberrChange" name="check_cheque_number" placeholder="Cheque Number" />
+                    </div>
+                </form>
+            </div>
+            <div class="footer footer-flex modal-footer justify-content-end">
+                <div class="button cancel btn btn-lg btn-primary" t-on-click="confirm">
+                    <t t-esc="props.confirmText"/>
+                </div>
+                <div class="button cancel btn btn-lg btn-primary" t-on-click="cancel">
+                    <t t-esc="props.closePopup"/>
+                </div>
+            </div>
+        </div>
+   </t>
+</templates>

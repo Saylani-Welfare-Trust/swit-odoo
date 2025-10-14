@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+   <t t-name="customization_pos.CustomButtonPopup" owl="1">
+      <div class="popup custom_popup">
+         <div class="modal-header justify-content-center">
+            <h2 class="modal-title">
+               <t t-esc="props.title"/>
+            </h2>
+         </div>
+         <div class="modal-body custom-form-view">
+            <form>
+               <div class="col d-flex justify-content-between align-items-center p-3">
+                  <label class="form-label label" for="bank_name">Bank Name</label>
+                  <input class="w-75 form-control" 
+                         name="bank_name" 
+                         t-on-input="onBankNameInput" 
+                         placeholder="Enter Bank Name"/>
+               </div>
+               <div class="col d-flex justify-content-between align-items-center p-3">
+                  <label class="form-label label" for="cheque_number">Cheque Number</label>
+                  <input type="text" 
+                         class="w-75 form-control" 
+                         name="cheque_number" 
+                         t-on-input="onChequeNumberInput" 
+                         placeholder="Enter Cheque Number"/>
+               </div>
+            </form>
+         </div>
+         <div class="footer footer-flex modal-footer justify-content-end">
+            <div class="button cancel btn btn-lg btn-primary" t-on-click="cancel">
+               <t t-esc="props.closePopup"/>
+            </div>
+            <div class="button confirm btn btn-lg btn-primary" t-on-click="save_button">
+               <t t-esc="props.confirmText"/>
+            </div>
+         </div>
+      </div>
+   </t>
+</templates>

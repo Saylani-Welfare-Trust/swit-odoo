@@ -1,0 +1,31 @@
+{
+    'name': 'Import Donation',
+    'version': '1.0',
+    'author': 'Syed Owais Noor',
+    'summary': 'Import Bulk Donations and Fee Voucher',
+    'website': 'https://bytesnode.com/',
+    'license': 'LGPL-3',
+    'category': 'BytesNode/Import Donation',
+    'depends': [
+        'mail',
+        'sm_config_bank',
+        'point_of_sale',
+        'bn_profile_management'
+    ],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/import_donation.xml',
+        'views/fund_utilization.xml',
+        'data/sequence.xml',
+        'views/donation.xml',
+        'views/fee_box.xml',
+        # 'views/pos_order.xml',
+        'views/res_partner.xml',
+        'views/header_type.xml',
+        'views/config_bank_view.xml',
+        'views/dn_cover_image.xml',
+        'reports/donation.xml',
+    ],
+    'auto_install': False,
+    'application': True,
+}

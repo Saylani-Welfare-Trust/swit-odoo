@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- <t t-name="PartnerDetailsEdit" t-inherit="point_of_sale.PartnerDetailsEdit" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('partner-details-header')]" position="before">
+            <div class="company-container">
+                <input type="radio" name="company_type" t-model="changes.company_type" t-att-checked="changes.company_type == 'person' " value="person"/> 
+                <label class="company_label">Individual</label>
+                <input type="radio" name="company_type" t-model="changes.company_type" t-att-checked="changes.company_type == 'company' " value="company"/> 
+                <label class="company_label">Institution</label>
+            </div>
+        </xpath>
+        <xpath expr="//div[hasclass('partner-details-box')]" position="replace">
+        <div class="partner-details-box row row-cols-1 row-cols-sm-2 gy-3 mt-3">
+                <t t-foreach="['Street', 'City', 'Zip', 'Email', 'Phone', 'Mobile','Bank Name','Bank Account No' ]" t-as="item" t-key="item">
+                <t t-set="formatted_item" t-value="formatItem(item)"/>
+                    <div class="partner-detail col">
+                        <label class="form-label label" t-attf-for="{{item}}" t-esc="item"/> -->
+                        <!-- authorized_person_cnic -->
+                        <!-- <input
+                            class="detail form-control"
+                            t-attf-id="{{item}}"
+                            t-attf-name="{{item}}" 
+                            t-model="changes[formatted_item]"
+                            t-attf-placeholder="{{item}}"
+                            t-att="{'disabled': isFieldCommercialAndPartnerIsChild(item)}"
+                            t-att-class="{'border-danger': missingFields.includes(item.toLowerCase())}" />
+                    </div>
+                </t>
+
+                <t t-if="changes.company_type == 'company'">
+                    <t t-foreach="['Reg No','Institution Referred By', 'Authorized Person Name','Authorized Person Cell','Authorized Person CNIC']" t-as="item" t-key="item">
+                    <t t-set="formatted_item" t-value="formatItem(item)"/>
+                        <div class="partner-detail col">
+                            <label class="form-label label" t-attf-for="{{item}}" t-esc="item"/>
+                            <input
+                                class="detail form-control"
+                                t-attf-id="{{item}}"
+                                t-attf-name="{{item}}" 
+                                t-model="changes[formatted_item]"
+                                t-attf-placeholder="{{item}}"
+                                t-att="{'disabled': isFieldCommercialAndPartnerIsChild(item)}"
+                                t-att-class="{'border-danger': missingFields.includes(item.toLowerCase())}" />
+                        </div>
+                    </t>
+
+                    <div class="partner-detail col">
+                        <label class="form-label label" for="date_of_incorporation" >Date of Incorporation</label>
+                        <input
+                            class="detail form-control"
+                            id="date_of_incorporation"
+                            name="date_of_incorporation" 
+                            t-model="changes.date_of_incorporation"
+                            t-att-class="{'border-danger': missingFields.includes('date_of_incorporation')}" 
+                            type="date"
+                            />
+                    </div>
+                </t>
+
+                <t t-if="changes.company_type == 'person'">
+                    <t t-foreach="['CNIC No','Reference Person CNIC', 'Age']" t-as="item" t-key="item">
+                    <t t-set="formatted_item" t-value="formatItem(item)"/>
+                        <div class="partner-detail col">
+                            <label class="form-label label" t-attf-for="{{item}}" t-esc="item"/> -->
+                            <!-- authorized_person_cnic -->
+                            <!-- <input
+                                class="detail form-control"
+                                t-attf-id="{{item}}"
+                                t-attf-name="{{item}}" 
+                                t-model="changes[formatted_item]"
+                                t-attf-placeholder="{{item}}"
+                                t-att="{'disabled': isFieldCommercialAndPartnerIsChild(item)}"
+                                t-att-class="{'border-danger': missingFields.includes(item.toLowerCase())}" />
+                        </div>
+                    </t>
+
+                    <div class="partner-detail col">
+                        <label class="form-label label" for="state">Gender</label>
+                        <select class="detail form-select" id="gender" name="gender" t-model="changes.gender"  t-att-class="{'border-danger': missingFields.includes('gender')}">
+                            <option value=""> </option>
+                            <option t-att-selected="changes.gender == 'male'" value="male">
+                                Male
+                            </option>
+                            <option t-att-selected="changes.gender == 'female'" value="female">
+                                Female
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="partner-detail col">
+                        <label class="form-label label" for="date_of_birth" >Date of Birth</label>
+                        <input
+                            class="detail form-control"
+                            id="date_of_birth"
+                            name="date_of_birth" 
+                            t-model="changes.date_of_birth"
+                            t-att-class="{'border-danger': missingFields.includes('date_of_birth')}" 
+                            type="date"
+                            />
+                    </div>
+
+                </t>
+
+
+
+                <div class="partner-detail col">
+                    <label class="form-label label" for="state">Disbursement Type</label>
+                    <select class="detail form-select" id="disbursement_type" name="disbursement_type" t-model="changes.disbursement_type"  t-att-class="{'border-danger': missingFields.includes('disbursement_type')}">
+                        <option value=""> </option>
+                        <option t-att-selected="changes.disbursement_type == 'in_kind'" value="in_kind">
+                            In Kind Support
+                        </option>
+                        <option t-att-selected="changes.disbursement_type == 'cash'" value="cash">
+                            Cash Support
+                        </option>
+                    </select>
+                </div>
+
+                <div class="partner-detail col">
+                    <t t-if="changes.disbursement_type == 'in_kind'">
+                    <label class="form-label label" for="state">Transaction Type</label>
+                    <select class="detail form-select" id="transaction_type" name="in_kind_transaction_type" t-model="changes.in_kind_transaction_type"  t-att-class="{'border-danger': missingFields.includes('in_kind_transaction_type')}">
+                        <option value=""> </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'ration'" value="ration">
+                                Ration Support
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'ramzan'" value="ramzan">
+                                Ramzan Support
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'meal'" value="meal">
+                                Meal Distribution
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'medicines'" value="medicines">
+                                Medicines - General
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'medicines_cancer'" value="medicines_cancer">
+                                Medicines - Cancer Support
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'assisted_devices'" value="assisted_devices">
+                                Artificial Limbs &amp; Assisted Devices
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'madaris'" value="madaris">
+                                Madaris Support
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'masjid'" value="masjid">
+                                Masajid Support
+                            </option>
+                            <option t-att-selected="changes.in_kind_transaction_type == 'wedding'" value="wedding">
+                                Wedding Support Program
+                            </option>
+
+                    </select>
+                    </t>
+                    <t t-if="changes.disbursement_type == 'cash'">
+                    <label class="form-label label" for="state">Transaction Type</label>
+                    <select class="detail form-select" id="cash_transaction_type" name="cash_transaction_type" t-model="changes.cash_transaction_type"  t-att-class="{'border-danger': missingFields.includes('cash_transaction_type')}">
+                        <option value=""> </option>
+                            <option t-att-selected="changes.cash_transaction_type == 'scholarship'" value="scholarship">
+                                Scholarship
+                            </option>
+                            <option t-att-selected="changes.cash_transaction_type == 'kifalat'" value="kifalat">
+                                Kifalat Program
+                            </option>
+                            <option t-att-selected="changes.cash_transaction_type == 'rozgar'" value="rozgar">
+                                Rozgar Schemes
+                            </option>
+                    </select>
+                    </t>
+                </div>
+
+
+        </div>
+        </xpath>
+    </t> -->
+
+</templates>

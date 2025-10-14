@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_enhancement.PartnerListScreen" t-inherit="point_of_sale.PartnerListScreen" t-inherit-mode="extension">
+
+        <!-- <xpath expr="//button[hasclass('new-customer')]" position="attributes">
+            <attribute name="t-if">!state.detailIsShown &amp;&amp; is_registration_user</attribute>
+        </xpath> -->
+        <!-- <xpath expr="//div[@t-if='state.detailIsShown']" position="attributes">
+            <attribute name="t-if">state.detailIsShown &amp;&amp; is_registration_user</attribute>
+        </xpath> -->
+
+    </t>
+ </templates>

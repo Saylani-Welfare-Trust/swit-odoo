@@ -1,0 +1,82 @@
+<!-- views/raw_meat_requirement_views.xml -->
+<odoo>
+    <!-- Monthly Requirement Form -->
+    <record id="view_raw_meat_monthly_form" model="ir.ui.view">
+        <field name="model">raw.meat.monthly.requirement</field>
+        <field name="arch" type="xml">
+            <form string="Monthly Meat &amp; Livestock Requirement">
+                <sheet>
+                    <group>
+                        <field name="month"/>
+                        <field name="total_raw_meat_qty" readonly="1"/>
+                        <field name="total_livestock_qty" readonly="1"/>
+                        <field name="excess_livestock_qty" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Kitchen Requests">
+                            <field name="kitchen_request_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Madaris Approvals">
+                            <field name="madaris_approval_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Medical Referrals">
+                            <field name="medical_referral_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Branch Livestock">
+                            <field name="branch_livestock_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="branch_name"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Monthly Requirement Tree -->
+    <record id="view_raw_meat_monthly_tree" model="ir.ui.view">
+        <field name="model">raw.meat.monthly.requirement</field>
+        <field name="arch" type="xml">
+            <tree string="Monthly Requirements">
+                <field name="name"/>
+                <field name="total_raw_meat_qty"/>
+                <field name="total_livestock_qty"/>
+                <field name="excess_livestock_qty"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_raw_meat_monthly" model="ir.actions.act_window">
+        <field name="name">Monthly Meat Requirements</field>
+        <field name="res_model">raw.meat.monthly.requirement</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create monthly requirement records by the 22nd of each month.
+            </p>
+        </field>
+    </record>
+
+
+</odoo>

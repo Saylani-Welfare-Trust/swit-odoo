@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="hr_shift_tree_view" model="ir.ui.view">
+        <field name="name">hr.shift.tree.view</field>
+        <field name="model">hr.shift</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="shift_type_id"/>
+                <field name="time_from"/>
+                <field name="time_too"/>
+                <field name="responsible_id"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="hr_shift_form_view" model="ir.ui.view">
+        <field name="name">hr.shift.form.view</field>
+        <field name="model">hr.shift</field>
+        <field name="arch" type="xml">
+            <form string="Shift From Details">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" name="action_open_weekoff" type="object" icon="fa-user">
+                            <field name="count_weekoff" widget="statinfo" string="Weekoffs"/> 
+                        </button>
+                        <button class="oe_stat_button" name="action_open_allocation_day" type="object" icon="fa-edit">
+                            <field name="count_allocation_day" widget="statinfo" string="Weekdays"/> 
+                        </button>
+                        <button class="oe_stat_button" name="action_open_allocation" type="object" icon="fa-tasks">
+                            <field name="count_allocation" widget="statinfo" string="Allocations"/> 
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>   
+                    <group>
+                        <group>
+                            <field name="shift_type_id" required="1"/>
+                            <!-- <field name="date_from"/> -->
+                            <field name="time_from" required="1"/>
+                            <field name="time_too" required="1"/>
+                            <field name="responsible_id"/>
+                        </group>
+                        <group> 
+                            <field name="calender_id" required='1'/>
+                            <!-- <field name="date_to"/> -->
+                            <field name="overtime_threshold" placeholder='in mintus'/>
+                            <field name="late_threshold" placeholder='in mintus'/>
+                            <field name="company_id"/>
+                        </group> 
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_shift_kanban_view" model="ir.ui.view">
+        <field name="name">hr.shift.kanban</field>
+        <field name="model">hr.shift</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="name"/>
+                <field name="calender_id"/>
+                <field name="time_from"/>
+                <field name="time_too"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <field name="priority" widget="priority"/>
+                                <div class="o_kanban_record_headings mt4 ml-1">
+                                    <strong class="o_kanban_record_title"><span><t t-esc="record.name.value"/></span></strong>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left text-muted">
+                                    <span> Working Hours : <t t-esc="record.calender_id.value"/><br/>
+                                    Time : <field name="time_from"/> To  <field name="time_too"/><br/>
+                                    Responsible : <field name="responsible_id"/><br/>
+                                    Company : <field name="company_id"/> 
+                                </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_view_of_hr_shift" model="ir.actions.act_window">
+        <field name="name">Employee Shifts</field>
+        <field name="res_model">hr.shift</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+
+    <menuitem
+        id="menu_hr_shift"
+        name="Shifts"
+        action="action_view_of_hr_shift"
+        parent="pways_shift_schedule_management.menu_config_shift_allocation"
+        sequence="8"
+        groups="hr.group_hr_manager,hr.group_hr_user"
+        />
+</odoo>

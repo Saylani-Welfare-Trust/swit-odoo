@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="key_location_view_tree" model="ir.ui.view">
+        <field name="name">key.location.view.tree</field>
+        <field name="model">key.location</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="city_id" string="City" />
+                <field name="zone_id" string="Zone" />
+                <field name="sub_zone_id" string="Sub Zone" />
+                <field name="room_no" />
+                <field name="rack_no" />
+                <field name="shelf_no" />
+                <field name="slot_no" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="key_location_view_form" model="ir.ui.view">
+        <field name="name">key.location.view.form</field>
+        <field name="model">key.location</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="group_name"/>
+                        <h1><field name="group_name" class="oe_inline" required="1" /></h1>
+                    </div>
+                    <group>
+                        <group name="key_location_col_1">
+                            <field name="room_no" required="1" />
+                            <field name="rack_no" required="1" />
+                            <field name="slot_no" required="1" />
+                            <field name="shelf_no" required="1" />
+                            <field name="rec_name" required="1" />
+                        </group>
+                        <group name="key_location_col_2">
+                            <field name="city_id" domain="[('type_selection', '=', 'city')]" string="City" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="sub_zone_id" string="Sub Zone" domain="[('zone_ids', 'in', [zone_id])]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="key_bunch" string="Key Bunch">
+                            <field name="key_ids" readonly="1">
+                                <tree>
+                                    <field name="name" string="Key Tag" />
+                                    <field name="box_no" />
+                                    <field name="lock_no" />
+                                    <field name="state" widget="badge" decoration-info="state == 'issued'" decoration-success="state == 'available'" />     
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="key_location_action" model="ir.actions.act_window">
+        <field name="name">Key Locaiton</field>
+        <field name="res_model">key.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new Key Group
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="key_location_menu"
+        name="Key Group"
+        action="key_location_action"
+        parent="sm_donation_box.menu_master_setup"
+        sequence="4"/>
+
+</odoo>
