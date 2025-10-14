@@ -1,86 +1,79 @@
-name: Deploy UAT Odoo Addons
+name: Deploy UAT (Odoo)
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - '**'
-  workflow_dispatch:
+    branches: [ main ]          # main par push hote hi deploy
+  workflow_dispatch:             # manual run button
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
-
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: |
-            ${{ secrets.DEPLOY_SSH_KEY }}
+          ref: main
+          fetch-depth: 1
 
-      - name: Add server to known_hosts
+      - name: Setup SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_HOST }}" >> ~/.ssh/known_hosts
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Create timestamp env
-        id: ts
-        run: echo "STAMP=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
-
-      - name: Backup current custom-addons and (optional) DB dump
+      - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
-          ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-            "sudo tar -czf /opt/swituat/_backups/custom-addons_${{ steps.ts.outputs.STAMP }}.tgz -C /opt/swituat custom-addons --warning=no-file-changed || true"
+          # Repo me addons yahin par hain:
+          SRC="custom-addons/"
+          if [ ! -d "$SRC" ]; then
+            echo "custom-addons/ not found at repo root; syncing full repo as fallback"
+            SRC="./"
+          fi
 
-          # OPTIONAL: UAT DB dump (uncomment if desired)
-          # ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-          #   \"pg_dump -U swituat -h localhost -p 5432 ${{ secrets.UAT_DB_NAME }} > /opt/swituat/_backups/${{ secrets.UAT_DB_NAME }}_${{ steps.ts.outputs.STAMP }}.sql\"
+          TARGET_DIR="/opt/swituat/custom-addons/"
+          RSYNC_RSH="ssh -p ${DEPLOY_SSH_PORT:-22}"
+          rsync -avz --delete \
+            --exclude=".git" --exclude=".github" \
+            -e "$RSYNC_RSH" \
+            "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:${TARGET_DIR}"
 
-      - name: Rsync repo to server (atomic to swit-odoo/)
+      - name: Fix perms, optional deps, optional module update, restart Odoo
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          ODOO_SERVICE: ${{ secrets.ODOO_SERVICE }}
+          ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
+          UAT_DB_NAME: ${{ secrets.UAT_DB_NAME }}
         run: |
-          rsync -az --delete -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }}" \
-            ./ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:/opt/swituat/custom-addons/swit-odoo_tmp/"
+          ssh -p "${DEPLOY_SSH_PORT:-22}" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
+            set -e
+            # 1) perms
+            chown -R root:root /opt/swituat/custom-addons
 
-          ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-            "rm -rf /opt/swituat/custom-addons/swit-odoo_prev && \
-             if [ -d /opt/swituat/custom-addons/swit-odoo ]; then mv /opt/swituat/custom-addons/swit-odoo /opt/swituat/custom-addons/swit-odoo_prev; fi && \
-             mv /opt/swituat/custom-addons/swit-odoo_tmp /opt/swituat/custom-addons/swit-odoo && \
-             chown -R swituat:swituat /opt/swituat/custom-addons/swit-odoo && \
-             chmod -R 775 /opt/swituat/custom-addons/swit-odoo"
+            # 2) optional python deps (if file present)
+            if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
+              pip3 install -r /opt/swituat/custom-addons/requirements.txt
+            fi
 
-      - name: (Optional) Install Python deps if your repo has requirements.txt
-        run: |
-          ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-            "if [ -f /opt/swituat/custom-addons/swit-odoo/requirements.txt ]; then \
-               if [ -d /opt/swituat/venv ]; then \
-                 source /opt/swituat/venv/bin/activate && pip install -r /opt/swituat/custom-addons/swit-odoo/requirements.txt; \
-               else \
-                 pip3 install -r /opt/swituat/custom-addons/swit-odoo/requirements.txt; \
-               fi \
-             fi"
+            # 3) optional module update (keep empty to skip)
+            # Example: AUTO_UPDATE="module_one,module_two"
+            AUTO_UPDATE=""
+            if [ -n "$AUTO_UPDATE" ]; then
+              /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
+            fi
 
-      - name: One-time module update on UAT DB (safe)
-        # This runs Odoo in "stop-after-init" just to apply module updates on UAT DB.
-        # It won't touch prod DB because of explicit -d.
-        run: |
-          ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-            "if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi; \
-             ODOO_BIN=\$( (command -v odoo) || (command -v odoo-bin) ); \
-             if [ -z \"\$ODOO_BIN\" ]; then \
-               # Fallback path; change if your odoo lives elsewhere
-               ODOO_BIN=/opt/odoo/odoo-bin; \
-             fi; \
-             \$PY \$ODOO_BIN -c ${{ secrets.ODOO_CONFIG_PATH }} -d ${{ secrets.UAT_DB_NAME }} -u all --stop-after-init || true"
-
-      - name: Restart Odoo
-        run: |
-          ssh -p "${{ secrets.DEPLOY_SSH_PORT }}" "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}" \
-            "sudo systemctl restart '${{ secrets.ODOO_SERVICE }}'"
-
-      - name: Health check (HTTP 200)
-        run: |
-          # Hit the UAT DB login (should respond 200)
-          curl -sS -o /dev/null -w "%{http_code}\n" "http://${{ secrets.DEPLOY_SSH_HOST }}:6922/web/login?db=${{ secrets.UAT_DB_NAME }}" | grep -q "200"
+            # 4) restart odoo
+            systemctl restart "${ODOO_SERVICE}"
+            systemctl is-active "${ODOO_SERVICE}"
+          '
