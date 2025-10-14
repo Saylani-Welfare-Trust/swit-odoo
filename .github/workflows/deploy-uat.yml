@@ -16,6 +16,8 @@ jobs:
           ref: main
           fetch-depth: 1
 
+      # Decode base64 private key → ~/.ssh/id_ed25519 (avoids CRLF/format issues),
+      # verify the key parses, and trust host key.
       - name: Setup SSH (decode base64 key + verify)
         env:
           DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
@@ -25,17 +27,18 @@ jobs:
           set -euo pipefail
           mkdir -p "$HOME/.ssh"
 
-          # Decode base64 → exact private key bytes (no CRLF issues)
+          # 1) decode exact bytes
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
-          # Parse self-check (fails fast if key is invalid)
+          # 2) self-parse check (fails fast if corrupted)
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
 
-          # Host key
+          # 3) host key
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
 
+      # Sanity auth probe (publickey-only)
       - name: Auth probe (publickey only)
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -46,6 +49,7 @@ jobs:
           SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
           $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
 
+      # Rsync code → /opt/swituat/custom-addons (ensures rsync exists and target dir present)
       - name: Rsync custom-addons → /opt/swituat/custom-addons/
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -61,7 +65,7 @@ jobs:
 
           SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
 
-          # Ensure rsync + target dir on remote
+          # Ensure rsync available and target directory exists
           $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
 
           # Sync (clean)
@@ -70,7 +74,8 @@ jobs:
             -e "$SSH" \
             "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:/opt/swituat/custom-addons/"
 
-      - name: Fix perms + optional deps + restart Odoo (minimal)
+      # Robust restart step (no fragile -lc; passes SERVICE/CONF/DB as args; strips CR/LF/quotes)
+      - name: Fix perms + optional deps + restart Odoo (robust)
         env:
           DEPLOY_SSH_HOST:  ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT:  ${{ secrets.DEPLOY_SSH_PORT }}
@@ -81,20 +86,32 @@ jobs:
         run: |
           set -euo pipefail
           SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-          $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
-            set -e
-            chown -R root:root /opt/swituat/custom-addons
 
-            if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
-              pip3 install -r /opt/swituat/custom-addons/requirements.txt
-            fi
+          # Pass values as args to remote script (avoids quoting issues)
+          $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -s -- \
+            "${ODOO_SERVICE:-swituat.service}" \
+            "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" \
+            "${UAT_DB_NAME:-remapping-uat}" <<'REMOTE_SCRIPT'
+set -euo pipefail
+SERVICE=$(printf "%s" "${1}" | tr -d '\r\n"')
+CONF=$(printf    "%s" "${2}" | tr -d '\r\n"')
+DB=$(printf      "%s" "${3}" | tr -d '\r\n"')
 
-            # Optional: auto-update modules (comma-separated), keep empty to skip
-            AUTO_UPDATE=""
-            if [ -n "$AUTO_UPDATE" ]; then
-              /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
-            fi
+echo "[deploy] service=${SERVICE} conf=${CONF} db=${DB}"
 
-            systemctl restart "${ODOO_SERVICE}"
-            systemctl is-active "${ODOO_SERVICE}"
-          '
+# Fix perms + optional deps
+chown -R root:root /opt/swituat/custom-addons
+if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
+  pip3 install -r /opt/swituat/custom-addons/requirements.txt
+fi
+
+# Optional auto-update modules (leave empty to skip)
+AUTO_UPDATE=""
+if [ -n "$AUTO_UPDATE" ]; then
+  /usr/bin/odoo -c "$CONF" -d "$DB" -u "$AUTO_UPDATE" --stop-after-init
+fi
+
+# Restart + health
+systemctl restart "$SERVICE"
+systemctl is-active "$SERVICE"
+REMOTE_SCRIPT
