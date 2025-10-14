@@ -2,8 +2,8 @@ name: Deploy UAT (Odoo)
 
 on:
   push:
-    branches: [ main ]          # main par push hote hi deploy
-  workflow_dispatch:             # manual run button
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -16,16 +16,27 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Setup SSH
+      - name: Setup SSH (force single identity)
         env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KEY:  ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           mkdir -p ~/.ssh
           echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
+          # Avoid trying other identities from agent
+          unset SSH_AUTH_SOCK
+
+          # Pre-accept host key (or set StrictHostKeyChecking=no later)
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
+
+          # Optional quick sanity test (does not fail job if it can't run)
+          ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_SSH_PORT:-22}" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo "SSH_OK" || true'
 
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
         env:
@@ -33,47 +44,42 @@ jobs:
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
-          # Repo me addons yahin par hain:
           SRC="custom-addons/"
           if [ ! -d "$SRC" ]; then
             echo "custom-addons/ not found at repo root; syncing full repo as fallback"
             SRC="./"
           fi
 
-          TARGET_DIR="/opt/swituat/custom-addons/"
-          RSYNC_RSH="ssh -p ${DEPLOY_SSH_PORT:-22}"
+          RSYNC_SSH="ssh -i ~/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
-            -e "$RSYNC_RSH" \
-            "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:${TARGET_DIR}"
+            -e "$RSYNC_SSH" \
+            "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:/opt/swituat/custom-addons/"
 
-      - name: Fix perms, optional deps, optional module update, restart Odoo
+      - name: Fix perms, optional deps, restart Odoo
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
-          ODOO_SERVICE: ${{ secrets.ODOO_SERVICE }}
-          ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
-          UAT_DB_NAME: ${{ secrets.UAT_DB_NAME }}
+          ODOO_SERVICE:    ${{ secrets.ODOO_SERVICE }}
+          ODOO_CONFIG_PATH:${{ secrets.ODOO_CONFIG_PATH }}
+          UAT_DB_NAME:     ${{ secrets.UAT_DB_NAME }}
         run: |
-          ssh -p "${DEPLOY_SSH_PORT:-22}" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
+          ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_SSH_PORT:-22}" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+              "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
             set -e
-            # 1) perms
             chown -R root:root /opt/swituat/custom-addons
-
-            # 2) optional python deps (if file present)
             if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
 
-            # 3) optional module update (keep empty to skip)
-            # Example: AUTO_UPDATE="module_one,module_two"
+            # Optional: enable to auto-update modules each deploy
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
             fi
 
-            # 4) restart odoo
             systemctl restart "${ODOO_SERVICE}"
             systemctl is-active "${ODOO_SERVICE}"
           '
