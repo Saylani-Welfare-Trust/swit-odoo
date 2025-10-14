@@ -21,7 +21,9 @@ jobs:
           DEPLOY_SSH_KEY:  ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
+          set -e
           mkdir -p ~/.ssh
           echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
@@ -29,20 +31,20 @@ jobs:
           # Known hosts
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
 
-          # Force ONLY this key + publickey auth (no agent, no password)
-          cat > ~/.ssh/config <<CFG
-          Host target
-            HostName ${DEPLOY_SSH_HOST}
-            Port ${DEPLOY_SSH_PORT:-22}
-            User ${DEPLOY_SSH_USER:-root}
-            IdentityFile ~/.ssh/id_ed25519
-            IdentitiesOnly yes
-            PreferredAuthentications publickey
-            PubkeyAuthentication yes
-            PasswordAuthentication no
-            KbdInteractiveAuthentication no
-            StrictHostKeyChecking yes
-CFG
+          # Write ~/.ssh/config without heredoc (YAML-safe)
+          printf '%s\n' \
+            'Host target' \
+            "  HostName ${DEPLOY_SSH_HOST}" \
+            "  Port ${DEPLOY_SSH_PORT:-22}" \
+            "  User ${DEPLOY_SSH_USER:-root}" \
+            '  IdentityFile ~/.ssh/id_ed25519' \
+            '  IdentitiesOnly yes' \
+            '  PreferredAuthentications publickey' \
+            '  PubkeyAuthentication yes' \
+            '  PasswordAuthentication no' \
+            '  KbdInteractiveAuthentication no' \
+            '  StrictHostKeyChecking yes' \
+            > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
@@ -51,13 +53,14 @@ CFG
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
+          set -e
           SRC="custom-addons/"
           if [ ! -d "$SRC" ]; then
             echo "custom-addons/ not found at repo root; syncing full repo as fallback"
             SRC="./"
           fi
 
-          # Build SSH command that unsets agent and forces our config
+          # Use our SSH config and disable agent identities
           RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target'
 
           rsync -avz --delete \
@@ -74,6 +77,7 @@ CFG
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
           UAT_DB_NAME:     ${{ secrets.UAT_DB_NAME }}
         run: |
+          set -e
           env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
