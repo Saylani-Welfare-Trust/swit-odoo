@@ -24,14 +24,14 @@ jobs:
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -e
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          mkdir -p "$HOME/.ssh"
+          echo "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
 
           # Known hosts
-          ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
 
-          # Write ~/.ssh/config without heredoc (YAML-safe)
+          # Write SSH config
           printf '%s\n' \
             'Host target' \
             "  HostName ${DEPLOY_SSH_HOST}" \
@@ -44,8 +44,8 @@ jobs:
             '  PasswordAuthentication no' \
             '  KbdInteractiveAuthentication no' \
             '  StrictHostKeyChecking yes' \
-            > ~/.ssh/config
-          chmod 600 ~/.ssh/config
+            > "$HOME/.ssh/config"
+          chmod 600 "$HOME/.ssh/config"
 
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
         env:
@@ -60,8 +60,16 @@ jobs:
             SRC="./"
           fi
 
-          # Use our SSH config and disable agent identities
-          RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target'
+          # Safety: ensure config exists
+          if [ ! -f "$HOME/.ssh/config" ]; then
+            echo "SSH config missing; recreating..."
+            mkdir -p "$HOME/.ssh"
+            printf '%s\n' "Host target" "  HostName ${DEPLOY_SSH_HOST}" "  Port ${DEPLOY_SSH_PORT:-22}" "  User ${DEPLOY_SSH_USER:-root}" '  IdentityFile ~/.ssh/id_ed25519' '  IdentitiesOnly yes' '  PreferredAuthentications publickey' '  PubkeyAuthentication yes' '  PasswordAuthentication no' '  KbdInteractiveAuthentication no' '  StrictHostKeyChecking yes' > "$HOME/.ssh/config"
+            chmod 600 "$HOME/.ssh/config"
+          fi
+
+          # Use $HOME (tilde not expanded inside quotes)
+          RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F '"$HOME"'/.ssh/config target'
 
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
@@ -78,7 +86,7 @@ jobs:
           UAT_DB_NAME:     ${{ secrets.UAT_DB_NAME }}
         run: |
           set -e
-          env -u SSH_AUTH_SOCK ssh -F ~/.ssh/config target bash -lc '
+          env -u SSH_AUTH_SOCK ssh -F "$HOME/.ssh/config" target bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
 
