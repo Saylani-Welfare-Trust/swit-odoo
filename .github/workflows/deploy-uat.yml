@@ -16,8 +16,8 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-
-      - name: Setup SSH (single key, publickey-only)
+  
+      - name: Setup SSH (single key, publickey-only, normalize)
         env:
           DEPLOY_SSH_KEY:  ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -26,13 +26,16 @@ jobs:
         run: |
           set -e
           mkdir -p "$HOME/.ssh"
-          echo "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf "%s" "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+
+          # Convert CRLF -> LF to avoid key parse issues
+          tr -d '\r' < "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/_tmpkey" && mv "$HOME/.ssh/_tmpkey" "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
           # Known hosts
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
 
-          # Write SSH config
+          # SSH config
           printf '%s\n' \
             'Host target' \
             "  HostName ${DEPLOY_SSH_HOST}" \
@@ -47,6 +50,15 @@ jobs:
             '  StrictHostKeyChecking yes' \
             > "$HOME/.ssh/config"
           chmod 600 "$HOME/.ssh/config"
+
+      - name: Auth probe (publickey only)
+        run: |
+          set -e
+          env -u SSH_AUTH_SOCK ssh -F "$HOME/.ssh/config" \
+            -o PreferredAuthentications=publickey \
+            -o PasswordAuthentication=no \
+            target 'echo AUTH_OK'
+
 
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
         env:
