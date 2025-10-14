@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_jahaiz_request,access_jahaiz_request,model_jahaiz_request,base.group_user,1,1,1,1
-access_jahaiz_selection,access_jahaiz_selection,model_jahaiz_selection,base.group_user,1,1,1,1
-access_distribution_request,access_distribution_request,model_distribution_request,base.group_user,1,1,1,1
-access_distribution_selection,access_distribution_selection,model_distribution_selection,base.group_user,1,1,1,1

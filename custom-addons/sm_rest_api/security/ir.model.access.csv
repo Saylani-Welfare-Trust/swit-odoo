@@ -1,6 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_donation_authorization,access.donation.authorization,model_donation_authorization,base.group_user,1,1,1,1
-access_donation_data,access.donation.data,model_donation_data,base.group_user,1,1,1,1
-access_donation_item,access.donation.item,model_donation_item,base.group_user,1,1,1,1
-access_import_donation_wizard,access.import.donation.wizard,model_import_donation_wizard,base.group_user,1,1,1,1
-

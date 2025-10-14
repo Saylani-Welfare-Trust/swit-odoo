@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-
-    <record id="medical_equipment_menu_group" model="res.groups">
-        <field name="name">Menu</field>
-    </record>
-
-</odoo>

@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_key,access.key,bn_key_management.model_key,,1,1,1,1
-access_key_issuance,access.key.issuance,bn_key_management.model_key_issuance,,1,1,1,1
-access_key_location,access.key.location,bn_key_management.model_key_location,,1,1,1,1
-access_bulk_key_issuance,access.bulk.key.issuance,bn_key_management.model_bulk_key_issuance,,1,1,1,1

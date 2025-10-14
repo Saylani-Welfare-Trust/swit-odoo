@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <record id="pos_registered_order_seq" model="ir.sequence">
-        <field name="name">POS Registered Order</field>
-        <field name="code">registered.order</field>
-        <field name="prefix">POS/RO</field>
-        <field name="padding">3</field>
-    </record>
-</odoo>

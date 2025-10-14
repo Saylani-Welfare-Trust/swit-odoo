@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<templates id="template" xml:space="preserve">
-    <t t-name="ah_pos_closing_entry.ClosePosPopup" t-inherit="point_of_sale.ClosePosPopup" t-inherit-mode="extension">
-        <xpath expr="(//textarea)[2]" position="after">
-            <label class="form-label mt-2" for="attachment">Attachment</label>
-            <input type="file" class="form-control" id="attachment" placeholder="Choose file to attach" t-on-change="onFileChange"/>
-        </xpath>
-    </t>
-</templates>
