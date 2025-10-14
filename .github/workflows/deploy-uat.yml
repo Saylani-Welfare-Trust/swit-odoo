@@ -26,19 +26,18 @@ jobs:
           set -euo pipefail
           mkdir -p "$HOME/.ssh"
 
-          # Decode base64 → exact private key bytes (avoids CRLF/format issues)
+          # Decode base64 → exact private key (no CRLF issues)
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
-          # Quick parse self-check (fails fast if key is corrupted)
+          # Verify key parses (fail fast if corrupted)
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
 
-          # Pre-accept host key
+          # Known hosts
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
 
-          # Build a reusable SSH command (no agent, single identity)
-          echo "ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" > "$HOME/.ssh/ssh_cmd"
-          chmod +x "$HOME/.ssh/ssh_cmd"
+          # Build reusable SSH command (no agent, single identity)
+          echo "SSH_BASE='env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'" >> $GITHUB_ENV
 
       - name: Auth probe (publickey only)
         env:
@@ -46,13 +45,11 @@ jobs:
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
-          SSH_CMD="$HOME/.ssh/ssh_cmd"
-          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
+          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
 
       - name: Rsync custom-addons → /opt/swituat/custom-addons/
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
@@ -62,15 +59,13 @@ jobs:
             SRC="./"
           fi
 
-          SSH_CMD="$HOME/.ssh/ssh_cmd"
+          # Ensure rsync and target dir exist on remote
+          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
 
-          # Ensure rsync exists and target dir present
-          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
-
-          # Sync (delete removed files, exclude CI/git folders)
+          # Sync (clean)
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
-            -e "env -u SSH_AUTH_SOCK $SSH_CMD" \
+            -e "$SSH_BASE" \
             "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:/opt/swituat/custom-addons/"
 
       - name: Fix perms + optional deps + restart Odoo (minimal)
@@ -82,21 +77,17 @@ jobs:
           UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
         run: |
           set -euo pipefail
-          SSH_CMD="$HOME/.ssh/ssh_cmd"
-          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
+          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
-
             if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
-
-            # Optional: auto-update specific modules (fill names to enable)
+            # Optional: list modules to auto-update
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
             fi
-
             systemctl restart "${ODOO_SERVICE}"
             systemctl is-active "${ODOO_SERVICE}"
           '
