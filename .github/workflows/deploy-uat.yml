@@ -16,40 +16,40 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Setup SSH (decode base64 key + config)
+      - name: Setup SSH (decode base64 key + verify)
         env:
           DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
           DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT:    ${{ secrets.DEPLOY_SSH_PORT }}
-          DEPLOY_SSH_USER:    ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.ssh"
 
-          # Decode base64 → exact private key (no CRLF issues)
+          # Decode base64 → exact private key bytes (no CRLF issues)
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
-          # Verify key parses (fail fast if corrupted)
+          # Parse self-check (fails fast if key is invalid)
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
 
-          # Known hosts
+          # Host key
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
-
-          # Build reusable SSH command (no agent, single identity)
-          echo "SSH_BASE='env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'" >> $GITHUB_ENV
+          chmod 644 "$HOME/.ssh/known_hosts"
 
       - name: Auth probe (publickey only)
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
-          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
 
       - name: Rsync custom-addons → /opt/swituat/custom-addons/
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
@@ -59,35 +59,42 @@ jobs:
             SRC="./"
           fi
 
-          # Ensure rsync and target dir exist on remote
-          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+
+          # Ensure rsync + target dir on remote
+          $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
 
           # Sync (clean)
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
-            -e "$SSH_BASE" \
+            -e "$SSH" \
             "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:/opt/swituat/custom-addons/"
 
       - name: Fix perms + optional deps + restart Odoo (minimal)
         env:
           DEPLOY_SSH_HOST:  ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT:  ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER:  ${{ secrets.DEPLOY_SSH_USER }}
           ODOO_SERVICE:     ${{ secrets.ODOO_SERVICE }}
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
           UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
         run: |
           set -euo pipefail
-          $SSH_BASE "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
+
             if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
-            # Optional: list modules to auto-update
+
+            # Optional: auto-update modules (comma-separated), keep empty to skip
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
             fi
+
             systemctl restart "${ODOO_SERVICE}"
             systemctl is-active "${ODOO_SERVICE}"
           '
