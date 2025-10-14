@@ -1,5 +1,3 @@
-#TESTING Checking
-#TESTING Checking 2 by Iqbal Hayat
 name: Deploy UAT (Odoo)
 
 on:
@@ -17,20 +15,19 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-  
-      - name: Setup SSH (single key, publickey-only, normalize)
+
+      - name: Setup SSH (decode key; publickey-only)
         env:
-          DEPLOY_SSH_KEY:  ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
+          DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT:    ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER:    ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -e
           mkdir -p "$HOME/.ssh"
-          printf "%s" "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
 
-          # Convert CRLF -> LF to avoid key parse issues
-          tr -d '\r' < "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/_tmpkey" && mv "$HOME/.ssh/_tmpkey" "$HOME/.ssh/id_ed25519"
+          # Decode base64 → id_ed25519 (avoids CRLF/format corruption)
+          echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
           # Known hosts
@@ -60,7 +57,6 @@ jobs:
             -o PasswordAuthentication=no \
             target 'echo AUTH_OK'
 
-
       - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -73,18 +69,7 @@ jobs:
             echo "custom-addons/ not found at repo root; syncing full repo as fallback"
             SRC="./"
           fi
-
-          # Safety: ensure config exists
-          if [ ! -f "$HOME/.ssh/config" ]; then
-            echo "SSH config missing; recreating..."
-            mkdir -p "$HOME/.ssh"
-            printf '%s\n' "Host target" "  HostName ${DEPLOY_SSH_HOST}" "  Port ${DEPLOY_SSH_PORT:-22}" "  User ${DEPLOY_SSH_USER:-root}" '  IdentityFile ~/.ssh/id_ed25519' '  IdentitiesOnly yes' '  PreferredAuthentications publickey' '  PubkeyAuthentication yes' '  PasswordAuthentication no' '  KbdInteractiveAuthentication no' '  StrictHostKeyChecking yes' > "$HOME/.ssh/config"
-            chmod 600 "$HOME/.ssh/config"
-          fi
-
-          # Use $HOME (tilde not expanded inside quotes)
           RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F '"$HOME"'/.ssh/config target'
-
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
             -e "$RSYNC_SSH" \
@@ -92,28 +77,22 @@ jobs:
 
       - name: Fix perms, optional deps, restart Odoo
         env:
-          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
-          ODOO_SERVICE:    ${{ secrets.ODOO_SERVICE }}
+          ODOO_SERVICE:     ${{ secrets.ODOO_SERVICE }}
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
-          UAT_DB_NAME:     ${{ secrets.UAT_DB_NAME }}
+          UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
         run: |
           set -e
           env -u SSH_AUTH_SOCK ssh -F "$HOME/.ssh/config" target bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
-
             if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
-
-            # Optional: auto-update modules (fill names comma-separated)
+            # Optional: auto-update modules
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
             fi
-
             systemctl restart "${ODOO_SERVICE}"
             systemctl is-active "${ODOO_SERVICE}"
           '
