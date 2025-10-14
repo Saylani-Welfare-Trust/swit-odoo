@@ -16,83 +16,87 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Setup SSH (decode key; publickey-only)
+      - name: Setup SSH (decode base64 key + config)
         env:
           DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
           DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT:    ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER:    ${{ secrets.DEPLOY_SSH_USER }}
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p "$HOME/.ssh"
 
-          # Decode base64 → id_ed25519 (avoids CRLF/format corruption)
+          # Decode base64 → exact private key bytes (avoids CRLF/format issues)
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
 
-          # Known hosts
+          # Quick parse self-check (fails fast if key is corrupted)
+          ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
+
+          # Pre-accept host key
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
 
-          # SSH config
-          printf '%s\n' \
-            'Host target' \
-            "  HostName ${DEPLOY_SSH_HOST}" \
-            "  Port ${DEPLOY_SSH_PORT:-22}" \
-            "  User ${DEPLOY_SSH_USER:-root}" \
-            '  IdentityFile ~/.ssh/id_ed25519' \
-            '  IdentitiesOnly yes' \
-            '  PreferredAuthentications publickey' \
-            '  PubkeyAuthentication yes' \
-            '  PasswordAuthentication no' \
-            '  KbdInteractiveAuthentication no' \
-            '  StrictHostKeyChecking yes' \
-            > "$HOME/.ssh/config"
-          chmod 600 "$HOME/.ssh/config"
+          # Build a reusable SSH command (no agent, single identity)
+          echo "ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" > "$HOME/.ssh/ssh_cmd"
+          chmod +x "$HOME/.ssh/ssh_cmd"
 
       - name: Auth probe (publickey only)
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
-          set -e
-          env -u SSH_AUTH_SOCK ssh -F "$HOME/.ssh/config" \
-            -o PreferredAuthentications=publickey \
-            -o PasswordAuthentication=no \
-            target 'echo AUTH_OK'
+          set -euo pipefail
+          SSH_CMD="$HOME/.ssh/ssh_cmd"
+          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
 
-      - name: Rsync custom-addons to server (/opt/swituat/custom-addons/)
+      - name: Rsync custom-addons → /opt/swituat/custom-addons/
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
-          set -e
+          set -euo pipefail
           SRC="custom-addons/"
           if [ ! -d "$SRC" ]; then
             echo "custom-addons/ not found at repo root; syncing full repo as fallback"
             SRC="./"
           fi
-          RSYNC_SSH='env -u SSH_AUTH_SOCK ssh -F '"$HOME"'/.ssh/config target'
+
+          SSH_CMD="$HOME/.ssh/ssh_cmd"
+
+          # Ensure rsync exists and target dir present
+          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
+
+          # Sync (delete removed files, exclude CI/git folders)
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
-            -e "$RSYNC_SSH" \
+            -e "env -u SSH_AUTH_SOCK $SSH_CMD" \
             "$SRC" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:/opt/swituat/custom-addons/"
 
-      - name: Fix perms, optional deps, restart Odoo
+      - name: Fix perms + optional deps + restart Odoo (minimal)
         env:
+          DEPLOY_SSH_HOST:  ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_USER:  ${{ secrets.DEPLOY_SSH_USER }}
           ODOO_SERVICE:     ${{ secrets.ODOO_SERVICE }}
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
           UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
         run: |
-          set -e
-          env -u SSH_AUTH_SOCK ssh -F "$HOME/.ssh/config" target bash -lc '
+          set -euo pipefail
+          SSH_CMD="$HOME/.ssh/ssh_cmd"
+          env -u SSH_AUTH_SOCK $SSH_CMD "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" bash -lc '
             set -e
             chown -R root:root /opt/swituat/custom-addons
+
             if [ -f /opt/swituat/custom-addons/requirements.txt ]; then
               pip3 install -r /opt/swituat/custom-addons/requirements.txt
             fi
-            # Optional: auto-update modules
+
+            # Optional: auto-update specific modules (fill names to enable)
             AUTO_UPDATE=""
             if [ -n "$AUTO_UPDATE" ]; then
               /usr/bin/odoo -c "${ODOO_CONFIG_PATH:-/etc/swituat.conf}" -d "${UAT_DB_NAME}" -u "$AUTO_UPDATE" --stop-after-init
             fi
+
             systemctl restart "${ODOO_SERVICE}"
             systemctl is-active "${ODOO_SERVICE}"
           '
