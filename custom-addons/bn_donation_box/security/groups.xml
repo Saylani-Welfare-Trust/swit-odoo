@@ -10,7 +10,7 @@
     </record>
     
     <record id="donation_box_registration_installation_approve_group" model="res.groups">
-        <field name="name">Registation or Installation / Approve</field>
+        <field name="name">Registration or Installation / Approve</field>
     </record>
     
     <record id="donation_box_complain_center_resolve_group" model="res.groups">
