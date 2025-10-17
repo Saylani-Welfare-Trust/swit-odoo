@@ -152,7 +152,7 @@
         id="menu_api_donation"
         name="Donation"
         action="action_api_donation"
-        parent="bn_import_donation.api_donation_menu"
+        parent="api_donation_menu"
         sequence="2"/>
 
 </odoo>
