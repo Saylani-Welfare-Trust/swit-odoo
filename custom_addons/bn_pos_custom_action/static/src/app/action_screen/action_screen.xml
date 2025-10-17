@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_custom_action.ActionScreen">
+        <div class="popup close-pos-popup">
+            <div class="modal-header">
+                <h4 class="modal-title">Actions</h4>
+            </div>
+            <main class="control-buttons modal-body d-flex flex-wrap gap-2 mt-2" />
+            <footer class="footer modal-footer justify-content-between">
+                <div class="modal-footer-left d-flex gap-2">
+                    <button class="button btn btn-lg btn-secondary" t-att-disabled="!canCancel()" t-on-click="cancel">Discard</button>
+                </div>
+            </footer>
+        </div>
+    </t>
+
+</templates>

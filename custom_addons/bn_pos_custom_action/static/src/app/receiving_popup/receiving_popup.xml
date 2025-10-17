@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <t t-name="bn_pos_custom_action.ReceivingPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title"><t t-esc="this.title" /></h4>
+            </div>
+            <main class="modal-body">
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold">Record Number:</div>
+                    <div class="col-8">
+                        <input type="text-area" class="form-control form-control-sm"
+                            t-att-placeholder="props.placeholder"
+                            id="record_number"
+                            name="record_number"
+                            t-on-change="updateRecordNumber"/>
+                    </div>
+                </div>
+            </main>
+            <footer class="footer modal-footer">
+                <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
+                <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
+            </footer>
+        </div>
+    </t>
+
+</odoo>

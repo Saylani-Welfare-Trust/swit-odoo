@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="api_donation_tree_view" model="ir.ui.view">
+        <field name="name">api.donation.tree.view</field>
+        <field name="model">api.donation</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="dn_number"/>
+                <field name="import_id" column_invisible="1"/>
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="cnic"/>
+                <field name="country"/>
+                <field name="website"/>
+                <field name="ip_address" column_invisible="1"/>
+                <field name="currency"/>
+                <field name="total_amount"/>
+                <field name="total_amount_local"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="api_donation_form_view" model="ir.ui.view">
+        <field name="name">api.donation.form.view</field>
+        <field name="model">api.donation</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0" delete="0">
+                <sheet>
+                    <group string="Information Details">
+                        <group>
+                            <field name="import_id"/>
+                            <field name="name"/>
+                            <field name="email"/>
+                            <field name="country"/>
+                            <field name="remarks"/>
+                            <field name="website"/>
+                            <field name="referer"/>
+                            <field name="created_at"/>
+                        </group>
+                        <group>
+                            <field name="dn_number"/>
+                            <field name="phone"/>
+                            <field name="cnic"/>
+                            <field name="ip_address"/>
+                            <field name="currency"/>
+                            <field name="updated_at"/>
+                        </group>
+                    </group>
+
+                    <group string="Subscription">
+                        <group>
+                            <field name="subscription_for_news"/>
+                            <field name="subscription_for_sms"/>
+                        </group>
+                        <group>
+                            <field name="subscription_for_whatsapp"/>
+                            <field name="subscription_interval"/>
+                        </group>
+                    </group>
+
+                    <group string="Qurbani">
+                        <group>
+                            <field name="qurbani_country"/>
+                            <field name="qurbani_day"/>
+                        </group>
+                        <group>
+                            <field name="qurbani_city"/>
+                        </group>
+                    </group>
+
+                    <group string="Donor">
+                        <group>
+                            <field name="donor"/>
+                            <field name="donation_from"/>
+                        </group>
+                        <group>
+                            <field name="donation_type"/>
+                        </group>
+                    </group>
+
+                    <group string="Response">
+                        <group>
+                            <field name="response_code"/>
+                        </group>
+                        <group>
+                            <field name="response_description"/>
+                        </group>
+                    </group>
+
+                    <group string="Account / Bank">
+                        <group>
+                            <field name="account_source"/>
+                            <field name="conversion_rate"/>
+                            <field name="bank_charges_in_text"/>
+                            <field name="total_amount"/>
+                            <field name="total_amount_local"/>
+                        </group>
+                        <group>
+                            <field name="is_recurring"/>
+                            <field name="bank_charges"/>
+                            <field name="blinq_notification_number"/>
+                        </group>
+                    </group>
+
+                    <group string="Donation / Invoice / Transaction">
+                        <group>
+                            <field name="donation_id"/>
+                            <field name="transaction_id"/>
+                        </group>
+                        <group>
+                            <field name="invoice_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Donation Item" name="donation_item">
+                            <field name="donation_item_ids" string="Donation Item">
+                                <tree string="Donation Item">
+                                    <field name="donation_type"/>
+                                    <field name="donation_no"/>
+                                    <field name="type"/>
+                                    <field name="item"/>
+                                    <field name="is_priced_item"/>
+                                    <field name="qty"/>
+                                    <field name="price"/>
+                                    <field name="total"/>
+                                    <field name="price_id"/>
+                                    <field name="api_donation_id" column_invisible="True"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_api_donation" model="ir.actions.act_window">
+        <field name="name">Donation Data</field>
+        <field name="res_model">api.donation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's fetch a new donation....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_api_donation"
+        name="Donation"
+        action="action_api_donation"
+        parent="bn_import_donation.api_donation_menu"
+        sequence="2"/>
+
+</odoo>

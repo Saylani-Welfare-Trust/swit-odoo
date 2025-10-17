@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- t-att-disabled="!selectedOrderline" -->
+
+    <t t-name="bn_pos_custom_action.ActionButton">
+        <button class="control-button btn btn-light rounded-0 fw-bolder" t-on-click="() => this.onClick()">
+            <i class="fa fa-cog me-1" />
+            <span> </span>
+            <span>Actions</span>
+        </button>
+    </t>
+
+</templates>

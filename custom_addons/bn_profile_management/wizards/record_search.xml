@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="record_search_view_form" model="ir.ui.view">
+        <field name="name">record.search.view.form</field>
+        <field name="model">record.search</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="search_type" options="{'horizontal': True}" widget="radio" />
+                    <div class="oe_title" invisible="search_type != 'registration_id'">
+                        <label for="registration_id"/>
+                        <h1><field name="registration_id" class="oe_inline" required="search_type == 'registration_id'" /></h1>
+                    </div>
+                    <div class="oe_title" invisible="search_type != 'cnic_no'">
+                        <label for="cnic_no"/>
+                        <h1><field name="cnic_no" class="oe_inline" required="search_type == 'cnic_no'" /></h1>
+                    </div>
+                    <div class="oe_title" invisible="search_type != 'mobile_no'">
+                        <label for="mobile_no"/>
+                        <h1 style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" required="search_type == 'mobile_no'"/> <field style="width: 70% !important;" name="mobile_no" required="search_type == 'mobile_no'"/></h1>
+                    </div>
+                    <group>
+                        <group name="record_search_col_1">
+                            <field name="registration_type" />
+                        </group>
+                        <group name="record_search_col_2">
+                            <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" />
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_search" type="object" string="Search"
+                            class="oe_highlight"/>
+                    <button special="cancel" string="Cancel" class="oe_highlight"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="record_search_action" model="ir.actions.act_window">
+        <field name="name">Record Search</field>
+        <field name="res_model">record.search</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+    <record id="record_search_microfinance_action" model="ir.actions.act_window">
+        <field name="name">Record Search</field>
+        <field name="res_model">record.search</field>
+        <field name="view_mode">form</field>
+        <field name="context">{
+            'default_registration_type': 'donee',
+            'default_donee_registration_type': 'microfinance',
+        }</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="record_search_welfare_action" model="ir.actions.act_window">
+        <field name="name">Record Search</field>
+        <field name="res_model">record.search</field>
+        <field name="view_mode">form</field>
+        <field name="context">{
+            'default_registration_type': 'donee',
+            'default_donee_registration_type': 'welfare',
+        }</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="record_search_menu"
+        name="Record Search"
+        action="record_search_action"
+        parent="bn_profile_management.profile_management_menu"
+        sequence="2"/>
+
+</odoo>

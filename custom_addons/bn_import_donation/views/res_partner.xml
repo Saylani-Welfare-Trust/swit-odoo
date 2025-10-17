@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_partner_form_inherit_bn_profile_management_inherit_bn_import_donation" model="ir.ui.view">
+        <field name="name">base.iew.partner.form.inherit.bn.profile.management.inherit.bn.import.donation</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.base_view_partner_form_inherit_bn_profile_management"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='import']" position="inside">
+                <field name="donation_ids" readonly="1">
+                    <tree>
+                        <field name="date" />
+                        <field name="name" />
+                        <field name="donor_id" />
+                        <field name="gateway_config_id" />
+                        <field name="analytic_account_id" string="Fund Utilization" />
+                        <field name="journal_id" string="Journal" />
+                        <field name="amount" />
+                        <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_profile_management_profile_management_view_form_inherit_bn_import_donation" model="ir.ui.view">
+        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.import.donation</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='import']" position="inside">
+                <field name="donation_ids" readonly="1">
+                    <tree>
+                        <field name="date" />
+                        <field name="name" />
+                        <field name="donor_id" />
+                        <field name="gateway_config_id" />
+                        <field name="analytic_account_id" string="Fund Utilization" />
+                        <field name="journal_id" string="Journal" />
+                        <field name="amount" />
+                        <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

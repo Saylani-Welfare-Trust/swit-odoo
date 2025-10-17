@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sub_zone,access.sub.zone,bn_master_setups.model_sub_zone,,1,1,1,1
-access_installation_category,access.installation.category,bn_master_setups.model_installation_category,,1,1,1,1
-access_location_type,access.location.type,bn_master_setups.model_location_type,,1,1,1,1
-access_res_city,access.res.city,bn_master_setups.model_res_city,,1,1,1,1

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sub_zone_view_tree" model="ir.ui.view">
+        <field name="name">sub.zone.view.tree</field>
+        <field name="model">sub.zone</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Zone')]" />
+                <field name="analytic_account_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="sub_zone_action" model="ir.actions.act_window">
+        <field name="name">Sub Zone</field>
+        <field name="res_model">sub.zone</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a sub zone option....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="sub_zone_menu"
+        name="Sub Zone"
+        action="sub_zone_action"
+        parent="bn_master_setup.donation_box_config_menu"
+        sequence="0"/>
+
+</odoo>

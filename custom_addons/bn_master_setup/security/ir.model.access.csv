@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_location_option,access.location.option,bn_master_setup.model_location_option,,1,1,1,1
+access_installation_category,access.installation.category,bn_master_setup.model_installation_category,,1,1,1,1
+access_header_type,access.header.type,bn_master_setup.model_header_type,,1,1,1,1
+access_gateway_config,access.gateway.config,bn_master_setup.model_gateway_config,,1,1,1,1
+access_gateway_config_line,access.gateway.config.line,bn_master_setup.model_gateway_config_line,,1,1,1,1
+access_gateway_config_header,access.gateway.config.header,bn_master_setup.model_gateway_config_header,,1,1,1,1
+access_gateway_config_currency,access.gateway.config.currency,bn_master_setup.model_gateway_config_currency,,1,1,1,1

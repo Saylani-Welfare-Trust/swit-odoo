@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_home_service_view_tree" model="ir.ui.view">
+        <field name="name">donation.home.service.view.tree</field>
+        <field name="model">donation.home.service</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" default_order="create_date desc">
+                <field name="name"/>
+                <field name="donor_id"/>
+                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['gate_out', 'gate_in', 'paid']" decoration-success="state == 'slotter'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_home_service_view_form" model="ir.ui.view">
+        <field name="name">donation.home.service.view.form</field>
+        <field name="model">donation.home.service</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <header>
+                    <!-- <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" /> -->
+                    <button string="Cancel" name="action_cancel" type="object" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="pending, gate_out, gate_in, paid, slotter" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_show_picking" type="object" class="oe_stat_button" icon="fa-truck">
+                            <field name="picking_id" string="Picking" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Request No." />
+                        <h1><field name="name" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="donation_home_service_col_1">
+                            <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="picking_id" invisible="1" readonly="1"/>
+                        </group>
+                        <group name="donation_home_service_col_2">
+                            <field name="mobile" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Items">
+                            <field name="donation_home_service_line_ids" readonly="1">
+                                <tree editable="bottom">
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}"/>
+                                    <field name="quantity"/>
+                                    <field name="amount" readonly="1"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="amount" readonly="1"/>
+                                <field name="service_charges" readonly="1"/>
+                                <field name="total_amount" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_home_service_action" model="ir.actions.act_window">
+        <field name="name">Donation Home Service</field>
+        <field name="res_model">donation.home.service</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for a new record...
+            </p>
+        </field>
+    </record>
+
+    <record id="donaiton_home_service_operation_action" model="ir.actions.act_window">
+        <field name="name">Donation Home Service Operation</field>
+        <field name="res_model">stock.picking.type</field>
+        <field name="view_mode">kanban</field>
+        <field name="domain">[('name', 'in', ['Donation Home Service | Gate Out', 'Donation Home Service | Gate In'])]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for an operation to occur...
+            </p>
+        </field>
+    </record>
+
+    <!-- <menuitem
+        id="donation_home_service_menu"
+        web_icon="bn_donation_home_service,static/description/icon.png"
+        groups="bn_donation_home_service.donation_home_service_menu_group"
+        name="Donation Home Service"
+        sequence="6"/> -->
+
+    <menuitem
+        id="donation_home_service_menu"
+        groups="bn_donation_home_service.donation_home_service_menu_group"
+        name="Donation Home Service"
+        parent="bn_import_donation.import_donation_root_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="provisional_order_menu"
+        name="Provisional Orders"
+        action="donation_home_service_action"
+        parent="donation_home_service_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="donation_home_service_operation_menu"
+        name="Operations"
+        action="donaiton_home_service_operation_action"
+        parent="donation_home_service_menu"
+        sequence="1"/>
+
+</odoo>

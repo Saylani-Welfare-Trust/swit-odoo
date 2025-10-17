@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="donation_box_receipt_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+
+                    <!-- Certificate Container -->
+                    <div class="mt-5 clearfix">
+
+                        <!-- Header -->
+                        <div class="text-center border-bottom border-3 pb-3 mb-4">
+                            <h2 class="fw-bold text-uppercase">
+                                DONATION BOX CERTIFICATE
+                            </h2>
+                            <p class="text-muted mt-2">
+                                This certificate acknowledges the collection from donation box
+                            </p>
+                        </div>
+
+                        <!-- Certificate Info -->
+                        <div class="bg-light p-3 border-start border-5 mb-4">
+                            <h4 class="fw-bold mb-3">Certificate Information</h4>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <t t-import="datetime"/>
+                                    <span class="fw-bold">Certificate Date:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Box No.:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.box_no"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Issued On:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Returned On:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.returned_on.strftime('%d-%m-%Y')"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Donation Box Details -->
+                        <div class="mb-4">
+                            <h4 class="fw-bold mb-3">Donation Box Details</h4>
+                            <table class="table table-bordered border-2">
+                                <thead class="text-white">
+                                    <tr>
+                                        <th class="text-center fw-bold">Category</th>
+                                        <th class="text-center fw-bold">Registration</th>
+                                        <th class="text-center fw-bold">Amount Collected</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-light">
+                                        <td class="text-center py-2">
+                                            <t t-esc="o.product_id.name"/>
+                                        </td>
+                                        <td class="text-center py-2">
+                                            <t t-esc="o.donation_box_id.name"/>
+                                        </td>
+                                        <td class="text-center fw-bold py-2">
+                                            <t t-esc="o.donation_amount"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Installation Info -->
+                        <div class="bg-light p-3 border-start border-5 mb-4">
+                            <h4 class="fw-bold mb-3">Installation Information</h4>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Installer Name:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.installer_id.name"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Installation Date:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.installation_date"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Installation Category:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.installation_category_id.name"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="text-center border-top border-2 pt-3 mt-5">
+                            <p class="text-muted fst-italic mb-4">
+                                This certificate is digitally generated and serves as an official acknowledgment of the donation box collection.
+                            </p>
+                            <div class="d-inline-block border-top border-dark pt-1" style="width: 200px;">
+                                <p class="mb-0 text-muted small">Authorized Signature</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="donation_box_receipt_report_action" model="ir.actions.report">
+        <field name="name">Donation Box Receipt</field>
+        <field name="model">key.issuance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">donation_box_receipt_template</field>
+        <field name="report_file">donation_box_receipt_template</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Donation Box Receipt - %s' % (object.box_no)</field>
+        <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
+    </record>
+
+</odoo>

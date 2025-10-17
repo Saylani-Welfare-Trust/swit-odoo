@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_box_request_view_form" model="ir.ui.view">
+        <field name="name">donation.box.request.view.form</field>
+        <field name="model">donation.box.request</field>
+        <field name="arch" type="xml">
+            <form>
+                 <header>
+                    <button name="action_draft" string="Set To Draft" type="object" invisible="status != 'approved'" />
+                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    <button name="action_reject" string="Rejected" type="object" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    
+                    <field name="status" widget="statusbar" statusbar_visible="draft, approved, rejected"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Request No." />
+                        <h1><field name="name" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="donation_box_request_col_1">
+                            <field name="employee_category_id" invisible="1" />
+                            <field name="rider_id" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [employee_category_id])]" required="1" readonly="status == 'approved'" />
+                            <field name="source_location_id" readonly="1" invisible="1" />
+                            <field name="picking_type_id" string="Picking Type" readonly="1" invisible="1" />
+                        </group>
+                        <group name="donation_box_request_col_2">
+                            <field name="request_date" required="1" readonly="status == 'approved'" />
+                            <field name="destination_location_id" readonly="1" invisible="1" />
+                            <field name="previous_record" string="Old System Records" readonly="status == 'approved'" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="donation_box_request_lines" string="Issued Boxes">
+                            <field name="donation_box_request_line_ids" readonly="status == 'approved'">
+                                <tree editable="bottom">
+                                    <field name="donation_box_request_id" column_invisible="1" />
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box Type" domain="[('is_donation_box', '=', True)]" />
+                                    <field name="allowed_lot_ids" column_invisible="1" />
+                                    <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." domain="[('id', 'in', allowed_lot_ids)]" />
+                                    <field name="lock_no" />
+                                    <field name="key_tag" readonly="1" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="donation_box_registration_installation" string="Registration / Installtion Infomation">
+                            <field name="donation_box_registration_installation_ids" readonly="1">
+                                <tree>
+                                    <field name="donor_id" string="Donor" />
+                                    <field name="installer_id" string="Installer" />
+                                    <field name="shop_name" />
+                                    <field name="location" />
+                                    <field name="contact_person" />
+                                    <field name="contact_no" />
+                                    <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." />
+                                    <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                                    <field name="installation_date" />
+                                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="donation_box_key" string="Keys Information">
+                            
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" options="{'open_attachments': True}" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_box_request_view_tree" model="ir.ui.view">
+        <field name="name">donation.box.request.view.tree</field>
+        <field name="model">donation.box.request</field>
+        <field name="arch" type="xml">
+            <tree string="">
+                <field name="name" />
+                <field name="rider_id" string="Rider" />
+                <field name="request_date" string="Request Date" />
+                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'approved'" decoration-danger="status == 'rejected'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_box_request_view_search" model="ir.ui.view">
+        <field name="name">donation.box.request.view.search</field>
+        <field name="model">donation.box.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="request_date" />
+                <field name="status" string="Status" />
+                <filter string="Approved Code Filter" name="status" domain="[('status', '=', 'approved')]" />
+                <filter string="Rejected Filter" name="status" domain="[('status', '=', 'rejected')]" />
+                <filter string="Request Date Filter" name="request_date" date="request_date" />
+                <group string="Group By">
+                    <filter string="Status Group" name="status" domain="[]" context="{'group_by': 'status'}" />
+                    <filter string="Request Date Group" name="request_date"  domain="[]" context="{'group_by': 'request_date'}" />
+                </group>   
+            </search>
+        </field>
+    </record>
+
+    <record id="donation_box_request_action" model="ir.actions.act_window">
+        <field name="name">Request</field>
+        <field name="res_model">donation.box.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new donation box request...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="donation_box_root_menu"
+        name="Donation Box"
+        groups="bn_donation_box.donation_box_menu_group"
+        web_icon="bn_donation_box,static/description/icon.png"
+        sequence="5"/>
+
+    <menuitem
+        id="donation_box_request_menu"
+        name="Request"
+        action="donation_box_request_action"
+        parent="donation_box_root_menu"
+        sequence="0"/>
+
+</odoo>

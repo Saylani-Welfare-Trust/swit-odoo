@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="account_account_analytic_distribution_model_form_inherit_bn_analytic_account_customization" model="ir.ui.view">
+        <field name="name">account.account.analytic.distribution.model.form.inherit.bn.analytic.account.customization</field>
+        <field name="model">account.analytic.distribution.model</field>
+        <field name="inherit_id" ref="account.account_analytic_distribution_model_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_categ_id']" position="after">
+                <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fetch_history_view_tree" model="ir.ui.view">
+        <field name="name">fetch.history.view.tree</field>
+        <field name="model">fetch.history</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="start_date" />
+                <field name="end_date" />
+
+                <button string="Show Journal Entry" name="show_journal_entry" type="object" class="oe_highlight" />
+                <button string="Show Fetch Donations" name="show_fetch_donation" type="object" class="oe_highlight" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="fetch_history_action" model="ir.actions.act_window">
+        <field name="name">Fetch History</field>
+        <field name="res_model">fetch.history</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's fetch a new donation....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="fetch_history_menu"
+        name="Fetch History"
+        action="fetch_history_action"
+        parent="bn_import_donation.api_donation_menu"
+        sequence="1"/>
+
+</odoo>

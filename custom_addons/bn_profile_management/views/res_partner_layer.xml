@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="profile_management_view_kanban" model="ir.ui.view">
+        <field name="name">profile.management.view.kanban</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="id"/>
+                <field name="color"/>
+                <field name="display_name"/>
+                <field name="title"/>
+                <field name="email"/>
+                <field name="parent_id"/>
+                <field name="is_company"/>
+                <field name="function"/>
+                <field name="phone"/>
+                <field name="street"/>
+                <field name="street2"/>
+                <field name="zip"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="mobile"/>
+                <field name="state_id"/>
+                <field name="category_id"/>
+                <field name="avatar_128"/>
+                <field name="type"/>
+                <field name="active"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill o_res_partner_kanban">
+                            <t t-if="!record.is_company.raw_value">
+                                <t t-set="avatar_image" t-value="kanban_image('res.partner', 'avatar_128', record.id.raw_value)"/>
+                                <div class="o_kanban_image_fill_left d-none d-md-block">
+                                    <img t-attf-src="#{avatar_image}" t-att-alt="record.id.value"/>
+                                    <img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'avatar_128', record.parent_id.raw_value)"/>
+                                </div>
+                                <div class="o_kanban_image d-md-none d-block">
+                                    <img t-attf-src="#{avatar_image}" t-att-alt="record.id.value"/>
+                                    <img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'avatar_128', record.parent_id.raw_value)"/>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div class="o_kanban_image_fill_left d-none d-md-block o_kanban_image_full">
+                                    <img t-attf-src="#{kanban_image('res.partner', 'avatar_128', record.id.raw_value)}" role="img" t-att-alt="record.id.value"/>
+                                </div>
+                                <div class="o_kanban_image d-md-none d-block o_kanban_image_full">
+                                    <img t-attf-src="#{kanban_image('res.partner', 'avatar_128', record.id.raw_value)}" role="img" t-att-alt="record.id.value"/>
+                                </div>
+                            </t>
+                            <div class="ribbon ribbon-top-right" invisible="active">
+                                <span class="text-bg-danger">Archived</span>
+                            </div>
+                            <div class="ribbon ribbon-top-right" invisible="state != 'reject'">
+                                <span class="text-bg-danger">Rejected</span>
+                            </div>
+                            <div class="oe_kanban_details d-flex flex-column justify-content-between">
+                                <div>
+                                    <strong class="o_kanban_record_title oe_partner_heading"><field name="display_name"/></strong>
+                                    <div class="o_kanban_tags_section oe_kanban_partner_categories">
+                                        <span class="oe_kanban_list_many2many">
+                                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                        </span>
+                                    </div>
+                                    <ul>
+                                        <li t-if="record.parent_id.raw_value and !record.function.raw_value"><field name="parent_id"/></li>
+                                        <li t-elif="!record.parent_id.raw_value and record.function.raw_value"><field name="function"/></li>
+                                        <li t-elif="record.parent_id.raw_value and record.function.raw_value"><field name="function"/> at <field name="parent_id"/></li>
+                                        <li t-if="record.city.raw_value or record.country_id.raw_value">
+                                            <t t-if="record.city.raw_value"><field name="city"/><t t-if="record.country_id.raw_value">, </t></t>
+                                            <t t-if="record.country_id.raw_value"><field name="country_id"/></t>
+                                        </li>
+                                        <li t-if="record.email.raw_value" class="o_text_overflow"><field name="email"/></li>
+                                    </ul>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left"/>
+                                    <div class="oe_kanban_bottom_right"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="profile_management_view_tree" model="ir.ui.view">
+        <field name="name">profile.management.view.tree</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="primary_registration_id" string="Primary ID" />
+                <field name="secondary_registration_id" string="Secondary ID" />
+
+                <field name="old_system_id" />
+                <field name="complete_name" />
+                <field name="gender" />
+                <field name="martial_status" />
+                <field name="street" string="Address" />
+                <field name="country_code_id" />
+                <field name="mobile" widget="phone" />
+                <field name="cnic_no" />
+                <field name="date_of_birth" />
+                <field name="age" />
+                <field name="city" />
+                <field name="analytic_account_id" string="Branch" />
+
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'validate'" decoration-success="state == 'register'" decoration-danger="state == 'reject'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="profile_management_view_form" model="ir.ui.view">
+        <field name="name">profile.management.view.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Print Info" name="action_print_info" type="object" />
+                    <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Change Request" name="action_change_request" type="object" class="oe_highlight" invisible="state != 'register'" />
+                    
+                    <!-- <button string="Generate MF Applciation" name="action_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" /> -->
+               
+                    <field name="state" widget="statusbar" statusbar_visible="draft, register, print_info"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Rejected" bg_color="text-bg-danger" invisible="state != 'reject'"/>
+
+                    <field name="avatar_128" invisible="1"/>
+                    <field name="user_id" invisible="1"/>
+                    <field name="image_1920" widget="image" class="oe_avatar" required="1" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" readonly="state in ['print_info', 'register', 'change_request']"/>
+                    <div class="oe_title mb24">
+                        <field name="is_company" invisible="1"/>
+                        <field name="donee_required_fields" invisible="1"/>
+                        <field name="is_donor" invisible="1"/>
+                        <field name="commercial_partner_id" invisible="1"/>
+                        <field name="active" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="country_code" invisible="1"/>
+                        <h1>
+                            <field id="individual" readonly="state != 'draft'" options="{'line_breaks': False}" widget="text" class="text-break" name="name" default_focus="1" placeholder="e.g. Brandom Freeman" required="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="profile_management_col_1">
+                            <span class="o_form_label o_td_label" name="address_name">
+                                <b>Address</b>
+                            </span>
+                            <div class="o_address_format">
+                                <field name="country_id" invisible="1"/>
+                                <field name="street" placeholder="Street..." class="o_address_street" readonly="state != 'draft'"/>
+                                <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="state != 'draft'"/>
+                                <field name="city" placeholder="City" class="o_address_city" required="1" readonly="state != 'draft'"/>
+                                <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_code_id, 'default_country_id': country_code_id, 'zip': zip}" readonly="state != 'draft'"/>
+                                <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="state != 'draft'"/>
+                            </div>
+                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" placeholder="e.g. &quot;Donor&quot;, &quot;Donee&quot;, &quot;Rider&quot;, ..." readonly="state != 'draft'"/>
+                        </group>
+                        <group name="profile_management_col_2">
+                            <label for="mobile"/>
+                            <div style="display: flex;">
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" required="1" name="country_code_id" nolabel="1" readonly="state != 'draft'" /> 
+                                <field style="width: 70% !important;" name="mobile" required="1" nolabel="1" readonly="state != 'draft'" />
+                            </div>
+                            <field name="email" widget="email" context="{'gravatar_image': True}" readonly="state != 'draft'" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="general_info" string="General Information">
+                            <group>
+                                <group name="general_info_col_1">
+                                    <field name="is_change_request" invisible="1" />
+                                    <field name="surname" readonly="state != 'draft'" />
+                                    <field name="gender" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="religion" readonly="state != 'draft'" />
+                                    <field name="martial_status" readonly="state != 'draft'" />
+                                    <field name="spouse_name" invisible="martial_status == 'unmarried'" required="donee_required_fields and martial_status == 'married'" readonly="state != 'draft'" />
+                                    <field name="has_cnic" readonly="state != 'draft'" />
+                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
+                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
+                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
+                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
+                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
+                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
+                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
+                                    <field name="approved_form_file" filename="approved_form" readonly="not is_change_request" required="is_change_request" />
+                                </group>
+                                <group name="general_info_col_2">
+                                    <field name="date_of_birth" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="age" />
+                                    <field name="father_name" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="father_cnic_no" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="next_kin" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="nearest_land_mark" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="reference_remarks" readonly="state != 'draft'" />
+                                    <field name="bank_wallet_account" readonly="state != 'draft'" />
+                                    <field name="primary_registration_id" string="Primary ID" readonly="1" />
+                                    <field name="secondary_registration_id" string="Secondary ID" readonly="1" />
+                                    <field name="old_system_id" readonly="state != 'draft'" />
+                                    <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="details" readonly="state != 'draft'" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="donation" string="Donation" invisible="not is_donor">
+                            <notebook>
+                                <page name="pos" string="POS Details">
+                                    
+                                </page>
+                                <page name="box" string="Box Details">
+                                    
+                                </page>
+                                <page name="home_service" string="Home Service Details">
+                                    
+                                </page>
+                                <page name="import" string="Import Details">
+                                    
+                                </page>
+                                <page name="online" string="Online Details">
+                                    
+                                </page>
+                            </notebook>
+                        </page>
+                        <page name="welfare" string="Welfare Details" invisible="is_donor">
+                            
+                        </page>
+                        <page name="microfinance" string="Microfinance Details" invisible="is_donor">
+                            
+                        </page>
+                        <page name="medical" string="Medical Equipment" invisible="is_donor">
+
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="donee_profile_management_action" model="ir.actions.act_window">
+        <field name="name">Donee Profile</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('category_id.name', 'in', ['Donee'])]</field>
+        <field name="context" eval="{
+            'default_category_id': [(6, 0, [
+                ref('bn_profile_management.donee_partner_category'),
+                ref('bn_profile_management.individual_partner_category')
+            ])]
+        }"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new donee....
+            </p>
+        </field>
+        <field name="view_ids"
+            eval="[(5, 0, 0),
+                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),
+                    (0, 0, {'view_mode': 'tree', 'view_id': ref('bn_profile_management.profile_management_view_tree')}),
+                    (0, 0, {'view_mode': 'form', 'view_id': ref('bn_profile_management.profile_management_view_form')})]"/>
+    </record>
+    
+    <record id="donor_profile_management_action" model="ir.actions.act_window">
+        <field name="name">Donor Profile</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('category_id.name', 'in', ['Donor'])]</field>
+        <field name="context" eval="{
+            'default_category_id': [(6, 0, [
+                ref('bn_profile_management.donor_partner_category'),
+                ref('bn_profile_management.individual_partner_category')
+            ])]
+        }"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new donor....
+            </p>
+        </field>
+        <field name="view_ids"
+            eval="[(5, 0, 0),
+                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),
+                    (0, 0, {'view_mode': 'tree', 'view_id': ref('bn_profile_management.profile_management_view_tree')}),
+                    (0, 0, {'view_mode': 'form', 'view_id': ref('bn_profile_management.profile_management_view_form')})]"/>
+    </record>
+
+    <menuitem
+        id="profile_management_menu"
+        name="Profile Management"
+        web_icon="bn_profile_management,static/description/icon.png"
+        sequence="6"/>
+
+    <menuitem
+        id="donee_profile_management_menu"
+        name="Donee"
+        action="donee_profile_management_action"
+        groups="bn_profile_management.profile_management_group"
+        parent="profile_management_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="donor_profile_management_menu"
+        name="Donor"
+        action="donor_profile_management_action"
+        groups="bn_profile_management.profile_management_group"
+        parent="profile_management_menu"
+        sequence="1"/>
+
+</odoo>

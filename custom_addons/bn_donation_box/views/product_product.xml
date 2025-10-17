@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_product_normal_form_view_inherit_bn_donation_box" model="ir.ui.view">
+        <field name="name">product.product.normal.form.view.inherit.bn.donation.box</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='options']" position="inside">
+                <span class="d-inline-flex">
+                    <field name="is_donation_box" on_change="1" field_id="is_donation_box"/>
+                    <label for="is_donation_box"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

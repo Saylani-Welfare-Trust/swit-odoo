@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_partner_form_inherit_bn_profile_management" model="ir.ui.view">
+        <field name="name">base.view.partner.form.inherit.bn.profile.management</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page name="donation" string="Donation" invisible="not is_donor">
+                    <notebook>
+                        <page name="pos" string="POS Details">
+                            
+                        </page>
+                        <page name="box" string="Box Details">
+                            
+                        </page>
+                        <page name="home_service" string="Home Service Details">
+                            
+                        </page>
+                        <page name="import" string="Import Details">
+                                    
+                        </page>
+                        <page name="online" string="Online Details">
+                            
+                        </page>
+                    </notebook>
+                </page>
+                <page name="welfare" string="Welfare Details" invisible="is_donor">
+                    
+                </page>
+                <page name="microfinance" string="Microfinance Details" invisible="is_donor">
+                    
+                </page>
+                <page name="medical" string="Medical Equipment" invisible="is_donor">
+
+                </page>
+            </xpath>
+
+            <xpath expr="//page[@name='contact_addresses']" position="before">
+                <page name="general_info" string="General Information" invisible="category_id.name not in ['Donor', 'Donee']">
+                    <group>
+                        <field name="state" invisible="1" />
+                        <field name="donee_required_fields" invisible="1" />
+                        <field name="is_donor" invisible="1"/>
+                        <group name="general_info_col_1">
+                            <field name="surname"  />
+                            <field name="gender" required="donee_required_fields" />
+                            <field name="religion" />
+                            <field name="martial_status" />
+                            <field name="spouse_name" invisible="martial_status == 'unmarried'" required="donee_required_fields and martial_status == 'married'" />
+                            <field name="has_cnic" />
+                            <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                            <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                            <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                            <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                            <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
+                            <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
+                            <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
+                            <field name="approved_form_file" filename="approved_form" />
+                        </group>
+                        <group name="general_info_col_2">
+                            <field name="date_of_birth" required="donee_required_fields" />
+                            <field name="age" />
+                            <field name="father_name" required="donee_required_fields" />
+                            <field name="father_cnic_no" required="donee_required_fields" />
+                            <field name="next_kin" required="donee_required_fields" />
+                            <field name="nearest_land_mark" required="donee_required_fields" />
+                            <field name="reference_remarks" />
+                            <field name="bank_wallet_account" />
+                            
+                            <label for="primary_registration_id" string="Donor" invisible="category_id.name == 'Donee'" />
+                            <label for="primary_registration_id" string="Donee" invisible="category_id.name == 'Donor'" />
+                            <field name="primary_registration_id" readonly="1" nolabel="1" />
+                            
+                            <label for="secondary_registration_id" string="Donor" invisible="category_id.name == 'Donor'" />
+                            <label for="secondary_registration_id" string="Donee" invisible="category_id.name == 'Donee'" />
+                            <field name="secondary_registration_id" readonly="1" nolabel="1" />
+                            
+                            <field name="old_system_id" />
+                            <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" />
+                            <field name="details" />
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <xpath expr="//field[@name='mobile']" position="replace">
+                <label for="mobile"/>
+                <div style="display: flex;">
+                    <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
+                    <field style="width: 70% !important;" name="mobile" nolabel="1" />
+                </div>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="after">
+                <widget name="web_ribbon" title="Rejected" bg_color="text-bg-danger" invisible="state != 'reject'"/>
+            </xpath>
+
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="string">NTN No.</attribute>
+            </xpath>
+            
+            <xpath expr="//page[@name='contact_addresses']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//page[@name='sales_purchases']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//page[@name='internal_notes']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='company_type']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="readonly">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='function']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='title']" position="attributes">
+                <attribute name="invisible">category_id.name in ['Donor', 'Donee']</attribute>
+            </xpath>
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="invisible">category_id.name == 'Donee'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

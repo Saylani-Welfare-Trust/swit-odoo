@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rider_shift,rider.shift,model_rider_shift,,1,1,1,1
+access_rider_schedule_day,rider.schedule.day,model_rider_schedule_day,,1,1,1,1
+access_rider_collection,rider.collection,model_rider_collection,,1,1,1,1
+access_rider_schedule,rider.schedule,model_rider_schedule,,1,1,1,1
+access_rider_schedule_line,rider.schedule.line,model_rider_schedule_line,,1,1,1,1

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_view_tree" model="ir.ui.view">
+        <field name="name">donation.view.tree</field>
+        <field name="model">donation</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="date" />
+                <field name="name" />
+                <field name="donor_id" />
+                <field name="gateway_config_id" />
+                <field name="analytic_account_id" string="Fund Utilization" />
+                <field name="journal_id" string="Journal" />
+                <field name="amount" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_view_form" model="ir.ui.view">
+        <field name="name">donation.view.form</field>
+        <field name="model">donation</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0" delete="0">
+                <header>
+                    <button string="Reset to Draft" name="action_draft" type="object" invisible="state == 'draft'" />
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state == 'posted'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" class="oe_inline" readonly="state == 'posted'" /></h1>
+                    </div>
+                    
+                    <group>
+                        <group name="donation_col_1">
+                            <field name="is_fee" invisible="1" />
+                            <field name="donor_id" domain="[('category_id.name', '=', ['Donor'])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
+                            <field name="analytic_account_id" string="Fund Utilization" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
+                            <label for="product_id" string="Product" invisible="is_fee" />
+                            <label for="product_id" string="Course" invisible="not is_fee" />
+                            <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" nolabel="1" />
+                            <field name="transaction_id" readonly="state == 'posted'" />
+                        </group>
+                        <group name="donation_col_2">
+                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
+                            <field name="date" readonly="state == 'posted'" />
+                            <field name="gateway_config_id" string="Gateway/File Ref" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
+                            <field name="amount" readonly="state == 'posted'" />
+                            <field name="reference" readonly="state == 'posted'" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_action" model="ir.actions.act_window">
+        <field name="name">Donation</field>
+        <field name="res_model">donation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for new import to arrive....
+            </p>
+        </field>
+    </record>
+    
+    <record id="fee_collection_action" model="ir.actions.act_window">
+        <field name="name">Fee Collection</field>
+        <field name="res_model">donation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{
+            'default_is_fee': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for new import to arrive....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="donation_menu"
+        name="Donation"
+        action="donation_action"
+        parent="bn_import_donation.import_menu"
+        sequence="1"/>
+    
+    <menuitem
+        id="fee_collection_menu"
+        name="Fee Collection"
+        action="fee_collection_action"
+        parent="bn_import_donation.import_menu"
+        sequence="2"/>
+
+</odoo>

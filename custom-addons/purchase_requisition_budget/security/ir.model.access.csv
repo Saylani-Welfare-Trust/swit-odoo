@@ -1,6 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_stock_quality_check,stock_quality_check,model_stock_quality_check,base.group_user,1,1,1,1
-access_purchase_comparative_line,purchase_comparative_line,model_purchase_comparative_line,base.group_user,1,1,1,1
-access_received_comparative_line,received_comparative_line,model_received_comparative_line,base.group_user,1,1,1,1
-
-access_terms_reference,terms_reference,model_terms_reference,base.group_user,1,1,1,1

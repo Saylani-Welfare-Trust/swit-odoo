@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_donation_box_donation_box_registration_installation_view_form_inherit_bn_key_management" model="ir.ui.view">
+        <field name="name">bn.donation.box.donation.box.registration.installation.view.form.inherit.bn.key.management</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='sub_zone_id']" position="after">
+                <field name="key_bunch_id" string="Key Bunch" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="sub_zone_id == False" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

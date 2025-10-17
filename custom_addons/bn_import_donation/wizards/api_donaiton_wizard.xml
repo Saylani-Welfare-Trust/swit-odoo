@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="api_donation_wizard_view_form" model="ir.ui.view">
+        <field name="name">api.donation.wizard.view.form</field>
+        <field name="model">api.donation.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="start_date"/>
+                    </group>
+                    <group>
+                        <field name="end_date"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_fetch_donation" string="Fetch" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="api_donation_wizard_action" model="ir.actions.act_window">
+        <field name="name">Fetch Donation</field>
+        <field name="res_model">api.donation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+    <menuitem
+        id="api_donation_menu"
+        name="Donation API"
+        parent="bn_import_donation.import_donation_root_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="fetch_donation_menu"
+        name="Fetch Donation"
+        action="api_donation_wizard_action"
+        parent="api_donation_menu"
+        sequence="0"/>
+
+</odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="analytic_view_account_analytic_account_form_inherit_bn_analytic_account_customization" model="ir.ui.view">
+        <field name="name">analytic.view.account.analytic.account.form.inherit.bn.analytic.account.customization</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="location_option_id" string="Location Option" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="address" />
+            </xpath>
+
+            <xpath expr="//field[@name='code']" position="attributes">
+                <attribute name="string">Code</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="analytic_view_account_analytic_account_list_inherit_bn_analytic_account_customization" model="ir.ui.view">
+        <field name="name">analytic.view.account.analytic.account.list.inherit.bn.analytic.account.customization</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="location_option_id" string="Location Option" />
+            </xpath>
+            
+            <xpath expr="//field[@name='code']" position="attributes">
+                <attribute name="string">Code</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

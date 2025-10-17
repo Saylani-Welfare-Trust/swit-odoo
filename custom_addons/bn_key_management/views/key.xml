@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="key_view_tree" model="ir.ui.view">
+        <field name="name">key.view.tree</field>
+        <field name="model">key</field>
+        <field name="arch" type="xml">
+            <tree create="0">
+                <field name="rider_id" string="Rider" />
+                <field name="lot_id" string="Box No." />
+                <field name="lock_no" />
+                <field name="name" string="Tag" />
+                <field name="key_bunch_id" string="Key Bunch" />
+                <field name="state" widget="badge" decoration-info="state == 'issued'" decoration-success="state == 'available'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="key_view_form" model="ir.ui.view">
+        <field name="name">key.view.form</field>
+        <field name="model">key</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button string="Available" name="action_available" type="object" class="oe_highlight" invisible="state in ['available', 'issued']" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, available, issued"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rider_id"/>
+                        <h1><field name="rider_id" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" readonly="1" /></h1>
+                    </div>
+                    <group>
+                        <group name="key_col_1">
+                            <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
+                            <field name="lock_no" readonly="1" />
+                        </group>
+                        <group name="key_col_2">
+                            <field name="name" string="Tag" readonly="1" />
+                            <field name="key_bunch_id" string="Key Bunch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="key_issuance" string="Key Issuance">
+                            <field name="key_issuance_ids" readonly="1">
+                                <tree>
+                                    <field name="rider_id" string="Rider" />
+                                    <field name="issued_on" />
+                                    <field name="returned_on" />
+                                    <field name="donation_amount" />
+                                    <field name="state" widget="badge" decoration-info="state == 'returned'" decoration-success="state == 'issued'" decoration-danger="state == 'overdue'" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="key_action" model="ir.actions.act_window">
+        <field name="name">Keys</field>
+        <field name="res_model">key</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new Key
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="key_root_menu"
+        name="Key Management"
+        groups="bn_key_management.key_management_menu_group"
+        parent="bn_donation_box.donation_box_root_menu"
+        sequence="2"/>
+    
+    <menuitem
+        id="key_menu"
+        name="Keys"
+        action="key_action"
+        parent="key_root_menu"
+        sequence="0"/>
+
+</odoo>

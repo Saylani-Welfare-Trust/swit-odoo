@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sub_zone,access.sub.zone,bn_master_setup_backup.model_sub_zone,,1,1,1,1

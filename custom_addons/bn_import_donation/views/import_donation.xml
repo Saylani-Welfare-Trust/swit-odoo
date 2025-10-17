@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="import_donation_view_tree" model="ir.ui.view">
+        <field name="name">import.donation.view.tree</field>
+        <field name="model">import.donation</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="gateway_config_id" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'validated'" decoration-success="state == 'upload'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="import_donation_view_form" model="ir.ui.view">
+        <field name="name">import.donation.view.form</field>
+        <field name="model">import.donation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_draft" type="object" string="Draft" invisible="state != 'validate'" />
+                    <button name="action_validate_excel_file" type="object" string="Validate Excel File" class="oe_highlight" invisible="state != 'draft'" />
+                    <button name="action_upload_excel_file" type="object" string="Upload Excel File" class="oe_highlight" invisible="state != 'validate'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,upload"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book">
+                            <field name="journal_entry_id" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" class="oe_inline" readonly="state != 'draft'"/></h1>
+                    </div>
+                    <group>
+                        <group name="import_donation_col_1">
+                            <field name="gateway_config_id" string="Gateway Catgeory" options="{'no_create': True, 'no_open': True, 'no_edit': True}" />
+                        </group>
+                        <group name="import_donation_col_1">
+                            <field name="file_name" invisible="1" />
+                            <field name="import_file" filename="file_name" readonly="state != 'draft'" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="invalid_import_donation" string="Invalid Donation">
+                            <field name="invalid_import_donation_ids">
+                                <tree editable="bottom" create="0">
+                                    <field name="date" />
+                                    <field name="transaction_id" readonly="1" />
+                                    <field name="donor_student_name" readonly="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" />
+                                    <field name="mobile" readonly="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" />
+                                    <field name="cnic_no" />
+                                    <field name="email" />
+                                    <field name="product" string="Product / Course" />
+                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Fund Utilization" />
+                                    <field name="amount" readonly="1" />
+                                    <field name="reference" />
+                                    <field name="reason" readonly="1" />
+                                    <field name="hide_button" column_invisible="1" />
+                                    
+                                    <field name="is_student" readonly="1" />
+
+                                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="valid_import_donation" string="Valid Donation">
+                            <field name="valid_import_donation_ids" readonly="1">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="transaction_id" />
+                                    <field name="donor_student_name" />
+                                    <field name="mobile" />
+                                    <field name="cnic_no" />
+                                    <field name="email" />
+                                    <field name="product" string="Product / Course" />
+                                    <field name="analytic_account_id" string="Fund Utilization" />
+                                    <field name="amount" />
+                                    <field name="reference" />
+
+                                    <field name="is_student" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="import_donation_action" model="ir.actions.act_window">
+        <field name="name">Import Donation</field>
+        <field name="res_model">import.donation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new import of donation....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="import_donation_root_menu"
+        name="Donation (Inflows)"
+        groups="bn_import_donation.import_donation_menu_group"
+        web_icon="bn_import_donation,static/description/icon.png"
+        sequence="6"/>
+
+    <menuitem
+        id="import_menu"
+        name="Import"
+        parent="import_donation_root_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="import_file_menu"
+        name="File"
+        action="import_donation_action"
+        parent="import_menu"
+        sequence="0"/>
+
+</odoo>

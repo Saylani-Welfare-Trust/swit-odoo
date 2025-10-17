@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_donation_box.DonationBoxPopup">
+        <div class="popup close-pos-popup">
+            <div class="modal-header">
+                <h4 class="modal-title">Donation Box</h4>
+            </div>
+            <main class="modal-body">
+                <!-- Rider Selection -->
+                <div class="col pb-2">
+                    <select class="form-select w-100" id="rider_id" name="rider_id"
+                            t-on-change="onSelection">
+                        <option value="">-- Select Rider --</option>
+                        <t t-foreach="this.rider_ids" t-as="rider" t-key="rider.id">
+                            <option t-att-value="rider.id">
+                                <t t-esc="rider.name"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+
+                <!-- Collections Table -->
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Day</th>
+                                <th>Date</th>
+                                <th>Box No.</th>
+                                <th>Shop</th>
+                                <th>Contact Person</th>
+                                <th>Contact No.</th>
+                                <th>Location</th>
+                                <th>Amount</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-if="this.rider_collections.length">
+                                <t t-foreach="this.rider_collections" t-as="collection" t-key="collection.id">
+                                    <tr>
+                                        <td t-esc="collection.day"/>
+                                        <td t-esc="collection.date"/>
+                                        <td t-esc="collection.box_no"/>
+                                        <td t-esc="collection.shop_name"/>
+                                        <td t-esc="collection.contact_person"/>
+                                        <td t-esc="collection.contact_number"/>
+                                        <td t-esc="collection.box_location"/>
+                                        <td t-esc="collection.amount"/>
+                                        <td>
+                                            <button class="btn btn-success me-2"
+                                                    t-on-click="() => this.onClick(collection)">
+                                                Donation Receive
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">No collections for this rider</td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+            <footer class="footer modal-footer justify-content-between">
+                <div class="modal-footer-left d-flex gap-2">
+                    <button class="btn btn-lg btn-secondary"
+                            t-att-disabled="!canCancel()" t-on-click="cancel">
+                        Discard
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_company_form_inherit_bn_res_company" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.res.company</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='branches']" position="after">
+                <page name="pos" string="POS">
+                    <group name="pos">
+                        <field name="dn_image" filename="dn_name" widget="image" class="oe_avatar" />
+                    </group>
+                </page>
+                <page name="donation_api_auth" string="Donation API Auth">
+                    <group name="donation_api_auth">
+                        <group name="donation_api_auth_col_1">
+                            <field name="url" />
+                            <field name="client_secret" password="True" />
+                        </group>
+                        <group name="donation_api_auth_col_2">
+                            <field name="client_id" password="True" />
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

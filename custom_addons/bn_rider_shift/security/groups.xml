@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="rider_menu_group" model="res.groups">
+        <field name="name">Rider / Menu</field>
+    </record>
+    
+    <record id="rider_shift_collection_menu_group" model="res.groups">
+        <field name="name">Rider / Shift / Collection</field>
+    </record>
+    
+    <record id="rider_schedule_menu_group" model="res.groups">
+        <field name="name">Rider / Schedule</field>
+    </record>
+
+</odoo>

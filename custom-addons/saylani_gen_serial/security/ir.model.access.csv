@@ -1,2 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_saylani_gen_serial_saylani_gen_serial,saylani_gen_serial.saylani_gen_serial,model_saylani_gen_serial_saylani_gen_serial,base.group_user,1,1,1,1

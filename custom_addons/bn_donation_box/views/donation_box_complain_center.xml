@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_box_complain_center_view_form" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.form</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved']" />
+                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved']" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+
+                    <field name="status" widget="statusbar" statusbar_visible="draft, process, resolved"/>
+                </header>
+
+                <sheet>
+                    <field name="employee_category_id" invisible="1" />
+                    <div class="oe_title">
+                        <label for="rider_id" />
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status == 'process'" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="donation_box_complain_col_1">
+                            <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status == 'process'" />
+                            <field name="box_status" required="1" readonly="status == 'process'" />
+                        </group>
+                        <group name="donation_box_complain_col_1">
+                            <field name="remarks" required="1" readonly="status == 'process'" />
+                        </group>
+                    </group>
+
+                    <group name="donation_box_info" string="Box Information">
+                        <group name="donation_box_info_col_1">
+                            <field name="name" string="Request No." readonly="1" />
+                            <field name="shop_name" string="Shop No." readonly="1" />
+                            <field name="location" readonly="1" />
+                            <field name="contact_person" readonly="1" />
+                            <field name="installer_id" string="Installer" readonly="1" />
+                            <field name="product_id" string="Box Category" readonly="1" />
+                            <field name="lot_id" string="Box No." readonly="1" />
+                        </group>
+                        <group name="donation_box_info_col_2">
+                            <field name="donor_id" string="Donor" readonly="1" />
+                            <field name="contact_no" readonly="1" widget="phone" />
+                            <field name="installation_date" readonly="1" />
+                            <field name="installation_category_id" string="Installation Category" readonly="1" />
+                            <field name="city_id" string="City" readonly="1" />
+                            <field name="zone_id" string="Zone" readonly="1" />
+                            <field name="sub_zone_id" string="Sub Zone" readonly="1" />
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_center_view_tree" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.tree</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="rider_id" string="Rider" />
+                <field name="donation_box_registration_installation_id" />
+                <field name="box_status" />
+                <field name="remarks" />
+                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'process'" decoration-success="status == 'resolved'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_center_action" model="ir.actions.act_window">
+        <field name="name">Complain Center</field>
+        <field name="res_model">donation.box.complain.center</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's Register a new compalin against Donation Box...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="complain_center_menu"
+        name="Complain Center"
+        action="donation_box_complain_center_action"
+        parent="bn_donation_box.donation_box_sub_root_menu"
+        sequence="2"/>
+
+</odoo>

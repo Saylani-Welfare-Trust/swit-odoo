@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="donation_home_service_sequence" model="ir.sequence">
+            <field name="name">Donation Home Service</field>
+            <field name="code">donation_home_service</field>
+            <field name="prefix">DHS/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
+    </data>
+    
+
+</odoo>

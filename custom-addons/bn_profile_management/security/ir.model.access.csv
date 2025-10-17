@@ -1,6 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_family_information,access.family.information,bn_profile_management.model_family_information,,1,1,1,1
-access_guarantor_information,access.guarantor.information,bn_profile_management.model_guarantor_information,,1,1,1,1
-access_student_qualification,access.student.qualification,bn_profile_management.model_student_qualification,,1,1,1,1
-access_welfare_qualification,access.welfare.qualification,bn_profile_management.model_welfare_qualification,,1,1,1,1
-access_microfinance_qualification,access.microfinance.qualification,bn_profile_management.model_microfinance_qualification,,1,1,1,1

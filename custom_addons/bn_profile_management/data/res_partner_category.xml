@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="vendor_partner_category" model="res.partner.category">
+            <field name="name">Vendor</field>
+        </record>
+
+        <record id="donor_partner_category" model="res.partner.category">
+            <field name="name">Donor</field>
+        </record>
+        
+        <record id="donee_partner_category" model="res.partner.category">
+            <field name="name">Donee</field>
+        </record>
+        
+        <record id="individual_partner_category" model="res.partner.category">
+            <field name="name">Individual</field>
+        </record>
+        
+        <record id="coorporate_institute_partner_category" model="res.partner.category">
+            <field name="name">Coorporate / Institute</field>
+        </record>
+        
+        <record id="welfare_partner_category" model="res.partner.category">
+            <field name="name">Welfare</field>
+        </record>
+        
+        <record id="microfinance_partner_category" model="res.partner.category">
+            <field name="name">MicroFinance</field>
+        </record>
+        
+        <record id="medical_partner_category" model="res.partner.category">
+            <field name="name">Medical</field>
+        </record>
+        
+        <record id="student_partner_category" model="res.partner.category">
+            <field name="name">Student</field>
+        </record>
+        
+
+        <record id="employee_partner_category" model="res.partner.category">
+            <field name="name">Employee</field>
+        </record>
+
+        <record id="rider_partner_category" model="res.partner.category">
+            <field name="name">Rider</field>
+        </record>
+        
+        <record id="installer_partner_category" model="res.partner.category">
+            <field name="name">Installer</field>
+        </record>
+        
+        <record id="donation_box_rider_partner_category" model="res.partner.category">
+            <field name="name">Donation Box Rider</field>
+        </record>
+    
+    </data>
+
+</odoo>
