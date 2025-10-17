@@ -6,8 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Import Donation',
     'depends': [
-        'bn_profile_management',
-        'bn_import_donation'
+        'bn_profile_management'
     ],
     'data': [
         'data/sequence.xml',
