@@ -30,7 +30,7 @@
         id="fetch_history_menu"
         name="Fetch History"
         action="fetch_history_action"
-        parent="bn_import_donation.api_donation_menu"
+        parent="api_donation_menu"
         sequence="1"/>
 
 </odoo>
