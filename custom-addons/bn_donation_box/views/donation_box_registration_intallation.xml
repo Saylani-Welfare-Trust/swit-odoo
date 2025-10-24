@@ -79,7 +79,7 @@
                 <field name="donor_id" string="Donor" />
                 <field name="installer_id" string="Installer" />
                 <field name="rider_id" string="Rider" />
-                <field name="name" />
+                <field name="name" string="Registration No." />
                 <field name="location" />
                 <field name="contact_person" />
                 <field name="contact_no" />
