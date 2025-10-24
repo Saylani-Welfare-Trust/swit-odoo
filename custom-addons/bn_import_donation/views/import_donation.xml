@@ -21,7 +21,7 @@
                 <header>
                     <button name="action_draft" type="object" string="Draft" invisible="state != 'validate'" />
                     <button name="action_validate_excel_file" type="object" string="Validate Excel File" class="oe_highlight" invisible="state != 'draft'" />
-                    <button name="action_upload_excel_file" type="object" string="Upload Excel File" class="oe_highlight" invisible="state != 'validate'" />
+                    <button name="action_upload_excel_file" type="object" string="Upload Excel File" class="oe_highlight" invisible="state != 'validated'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,upload"/>
                 </header>
