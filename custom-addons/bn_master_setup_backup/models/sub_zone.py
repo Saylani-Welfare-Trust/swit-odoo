@@ -9,5 +9,3 @@ class SubZone(models.Model):
     name = fields.Char('Name')
 
     analytic_account_id = fields.Many2one('account.analytic.account', string="Zone")
-
-    analytic_account_ids = fields.Many2many('account.analytic.account', string="Branchs")

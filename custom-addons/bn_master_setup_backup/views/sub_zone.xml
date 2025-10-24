@@ -8,7 +8,6 @@
             <tree editable="bottom">
                 <field name="name" />
                 <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Zone')]" />
-                <field name="analytic_account_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" />
             </tree>
         </field>
     </record>

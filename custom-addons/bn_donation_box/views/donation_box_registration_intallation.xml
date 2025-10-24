@@ -35,8 +35,6 @@
                             <field name="box_status" readonly="1" />
                         </group>
                         <group name="donation_box_registration_installation_col_2">
-                            <field name="branch_domain" invisible="1" />
-
                             <!-- <field name="donor_id" domain="[('is_donee', '=', False), ('registration_category', '=', 'donor')]" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" /> -->
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" />
                             <label for="contact_no"/>
@@ -46,7 +44,6 @@
                             <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" />
                             <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="city_id == False" />
                             <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="zone_id == False" />
-                            <field name="branch_id" domain="branch_domain" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="sub_zone_id == False" />
                         </group>
                     </group>
                     <notebook>

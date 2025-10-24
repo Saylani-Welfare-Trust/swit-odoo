@@ -24,9 +24,8 @@ class RiderScheduleDay(models.Model):
 
     city_id = fields.Many2one('account.analytic.account', string="City")
     zone_id = fields.Many2one('account.analytic.account', string="Zone")
-    sub_zone_id = fields.Many2one('account.analytic.account', string="Sub Zone")
-    branch_id = fields.Many2one('account.analytic.account', string="Branch")
     key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch")
+    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
     name = fields.Char('Name', compute="_set_name")
 

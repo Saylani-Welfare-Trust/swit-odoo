@@ -43,9 +43,8 @@
                                     <field name="day" readonly="1" />
                                     <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="sub_zone_id" string="Sub Zone" domain="[('parent_id', '=', zone_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="branch_id" string="Sub Zone" domain="[('parent_id', '=', sub_zone_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="key_bunch_id" domain="[('branch_id', '=', branch_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" string="Location" />
+                                    <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="key_bunch_id" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" string="Location" />
                                 </tree>
                             </field>
                         </page>

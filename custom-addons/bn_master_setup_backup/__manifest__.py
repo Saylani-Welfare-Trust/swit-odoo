@@ -2,7 +2,7 @@
     'name': 'Master Setup Backup',
     'version': '1.0',
     'author': 'Syed Owais Noor',
-    'website': '',
+    'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Master Setup Backup',
     'depends': [

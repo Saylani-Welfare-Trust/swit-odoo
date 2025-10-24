@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class KeyBunch(models.Model):
@@ -15,8 +15,7 @@ class KeyBunch(models.Model):
 
     city_id = fields.Many2one('account.analytic.account', string="City", tracking=True)
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
-    sub_zone_id = fields.Many2one('account.analytic.account', string="Sub Zone", tracking=True)
-    branch_id = fields.Many2one('account.analytic.account', string="Branch", tracking=True)
+    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
 

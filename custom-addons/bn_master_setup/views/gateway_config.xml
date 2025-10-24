@@ -37,8 +37,7 @@
                                 <tree editable="bottom">
                                     <field name="name" />
                                     <field name="product_id" string="Product" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="analytic_plan_id" string="Analytic Plan" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="analytic_account_id" domain="[('plan_id', '=', analytic_plan_id)]" string="Analytic Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" string="Analytic Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="account_id" string="GL Account" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                 </tree>
                             </field>

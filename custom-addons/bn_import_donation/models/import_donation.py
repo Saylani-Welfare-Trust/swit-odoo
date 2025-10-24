@@ -43,10 +43,10 @@ class ImportDonation(models.Model):
         self.state = 'draft'
 
     def action_validate_excel_file(self):
-        if not self.file:
+        if not self.import_file:
             raise ValidationError('No file uploaded.')
 
-        file_data = base64.b64decode(self.file)
+        file_data = base64.b64decode(self.import_file)
         if not file_data:
             raise ValidationError('The uploaded file is empty.')
 

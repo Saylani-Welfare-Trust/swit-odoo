@@ -1,11 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
-import re
-
-
-mobile_pattern = r"^(?:\+92|92|0)[\s-]?[3-9][0-9]{2}[\s-]?[0-9]{7}$"
-
 
 box_status_selection = [
     ('not_installed', 'Not Installed'),
@@ -41,19 +36,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     
     city_id = fields.Many2one('account.analytic.account', string="City", tracking=True)
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
-    branch_id = fields.Many2one('account.analytic.account', string="Branch", tracking=True)
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
-
-    branch_domain = fields.Binary(compute="_compute_branch_domain")
-
-    @api.depends('sub_zone_id')
-    def _compute_branch_domain(self):
-        for rec in self:
-            if rec.sub_zone_id:
-                branch_ids = rec.sub_zone_id.analytic_account_ids.ids
-                rec.branch_domain = [('id', 'in', branch_ids)]
-            else:
-                rec.branch_domain = []
 
     name = fields.Char(related='donation_box_request_id.name', string="Name", store=True)
     shop_name = fields.Char('Shop Name', tracking=True)
@@ -68,15 +51,6 @@ class DonationBoxRegistrationInstallation(models.Model):
     status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True)
     box_status = fields.Selection(selection=box_status_selection, string="Box Status", default='not_installed', tracking=True)
 
-
-    @api.model
-    def create(self, vals):
-        # raise exceptions.UserError(str(vals)+ " <-> " +str(re.match(mobile_pattern, vals.get('contact_no'))))
-
-        if vals.get('contact_no') and not re.match(mobile_pattern, vals.get('contact_no')):
-            raise ValidationError(str(f'Invalid Contact No. {vals.get("contact_no")}'))
-        
-        return super(DonationBoxRegistrationInstallation, self).create(vals)
     
     def action_install(self):
         self.box_state = 'installed'
@@ -92,14 +66,6 @@ class DonationBoxRegistrationInstallation(models.Model):
             key.action_available()
 
         self.status = 'available'
-
-    @api.onchange('sub_zone_id')
-    def _onchange_sub_zone_id(self):
-        if self.sub_zone_id:
-            analytic_accounts = self.sub_zone_id.analytic_account_ids.ids
-            return {'domain': {'branch_id': [('id', 'in', analytic_accounts)]}}
-        else:
-            return {'domain': {'branch_id': []}} 
 
     # def action_create_donor(self):
     #     return {
