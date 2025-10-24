@@ -70,6 +70,8 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     @api.model
     def create(self, vals):
+        raise ValidationError(str(vals))
+
         if not vals.get('name'):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
 
