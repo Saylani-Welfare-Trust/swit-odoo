@@ -3,6 +3,13 @@
 
     <data noupdate="1">
     
+        <record id="donation_box_requets_sequence" model="ir.sequence">
+            <field name="name">Donation Box Request</field>
+            <field name="code">donation_box_request</field>
+            <field name="prefix">DBR/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+        
         <record id="donation_box_sequence" model="ir.sequence">
             <field name="name">Donation Box</field>
             <field name="code">donation_box</field>

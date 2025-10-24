@@ -68,6 +68,13 @@ class DonationBoxRegistrationInstallation(models.Model):
 
         self.status = 'available'
 
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
+
+        return super(DonationBoxRegistrationInstallation, self).create(vals)
+
     # def action_create_donor(self):
     #     return {
     #         'name': 'Donor Registation',

@@ -40,7 +40,7 @@ class DonationBoxRequest(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
+            vals['name'] = self.env['ir.sequence'].next_by_code('donation_box_request') or ('New')
 
         return super(DonationBoxRequest, self).create(vals)
     
