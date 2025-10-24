@@ -34,10 +34,10 @@ class ImportDonation(models.Model):
 
 
     def action_draft(self):
-        for line in self.invalid_donation_ids:
+        for line in self.invalid_import_donation_ids:
             line.unlink()
 
-        for line in self.valid_donation_ids:
+        for line in self.valid_import_donation_ids:
             line.unlink()
 
         self.state = 'draft'
@@ -292,7 +292,7 @@ class ImportDonation(models.Model):
         self.state = 'validated'
 
     def action_upload_excel_file(self):
-        if not self.valid_donation_ids:
+        if not self.valid_import_donation_ids:
             raise ValidationError('There are no Valid Lines in Excel File.')
 
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
@@ -303,7 +303,7 @@ class ImportDonation(models.Model):
         credit_groups = {}
         total_amount = 0.0
 
-        for line in self.valid_donation_ids:
+        for line in self.valid_import_donation_ids:
             # Resolve partner (prefer mobile match)
             partner = self.env['res.partner'].search([('mobile', '=', line.mobile)], limit=1) or default_partner
 
