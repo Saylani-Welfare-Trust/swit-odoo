@@ -255,7 +255,7 @@ class ImportDonation(models.Model):
                         })
                         continue
 
-                    donor = Partner.search([('mobile', '=', mobile), ('categoru_id.name', 'in', ['Donor'])], limit=1)
+                    donor = Partner.search([('mobile', '=', mobile), ('category_id.name', 'in', ['Donor'])], limit=1)
                     if not donor and mobile:
                         donor = Partner.create({
                             'name': name or f'Undefined {mobile}',
