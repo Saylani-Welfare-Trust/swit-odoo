@@ -43,6 +43,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     contact_no = fields.Char('Contact No', size=10, tracking=True)
     location = fields.Char('Requested Location', tracking=True)
     contact_person = fields.Char('Contact Person', tracking=True)
+    old_box_no = fields.Char('Old Box No.')
 
     installation_date = fields.Date('Installation Date', default=fields.Date.today(), tracking=True)
 
