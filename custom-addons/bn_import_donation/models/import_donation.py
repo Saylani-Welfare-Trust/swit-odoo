@@ -73,7 +73,7 @@ class ImportDonation(models.Model):
         InvalidDonation = self.env['invalid.import.donation']
 
         # Header mapping
-        header_list = [(h.header_type_id.name, h.position) for h in self.gateway_id.gateway_config_header_ids]
+        header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
         header_map = {name: pos for name, pos in header_list}
 
         def get_value(row, name):
@@ -109,7 +109,7 @@ class ImportDonation(models.Model):
                 if mobile and len(mobile) != 10:
                     mobile = mobile[-10:]
 
-                gateway_name = self.gateway_id.name or ''
+                gateway_name = self.gateway_config_id.name or ''
                 is_student_import = gateway_name in ['SMIT', 'PIAIC']
 
                 # ===== Student (Donee) Imports =====
@@ -308,7 +308,7 @@ class ImportDonation(models.Model):
             partner = self.env['res.partner'].search([('mobile', '=', line.mobile)], limit=1) or default_partner
 
             # Determine configuration line
-            config_line = self.gateway_id.gateway_config_line_ids.filtered(lambda c: c.name == line.product)
+            config_line = self.gateway_config_id.gateway_config_line_ids.filtered(lambda c: c.name == line.product)
 
             if not config_line:
                 raise ValidationError(f"Missing configuration for: {line.product}")
@@ -360,7 +360,7 @@ class ImportDonation(models.Model):
 
         # Build journal entry lines
         debit_line = (0, 0, {
-            'account_id': self.gateway_id.account_id.id,
+            'account_id': self.gateway_config_id.account_id.id,
             'name': f'Total Donations Received from {self.name}',
             'debit': total_amount,
         })
