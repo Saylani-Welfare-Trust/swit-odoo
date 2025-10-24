@@ -34,7 +34,7 @@ class MedicalEquipment(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
+        if not vals.get('name'):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
         return super(MedicalEquipment, self).create(vals)

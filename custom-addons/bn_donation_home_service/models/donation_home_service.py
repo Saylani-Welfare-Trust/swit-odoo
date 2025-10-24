@@ -37,7 +37,7 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
+        if not vals.get('name'):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_home_service') or ('New')
 
         return super(DonationHomeService, self).create(vals)

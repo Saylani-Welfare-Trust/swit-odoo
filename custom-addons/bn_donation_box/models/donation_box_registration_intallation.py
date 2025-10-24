@@ -70,7 +70,7 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
+        if not vals.get('name'):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
 
         return super(DonationBoxRegistrationInstallation, self).create(vals)
