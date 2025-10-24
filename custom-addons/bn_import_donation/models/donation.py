@@ -20,7 +20,7 @@ class Donation(models.Model):
     company_id = fields.Many2one('res.company', string="Company", default=lambda self: self.env.user.company_id.id)
     currency_id = fields.Many2one(related='company_id.currency_id', string="Currency")
 
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New")
     transaction_id = fields.Char('Transaction ID')
 
     reference = fields.Text('Reference/Remarks')
@@ -36,7 +36,7 @@ class Donation(models.Model):
 
     @api.model
     def create(self, vals):
-        if not vals.get('name'):
+        if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('import_donation') or ('New')
 
         return super(Donation, self).create(vals)

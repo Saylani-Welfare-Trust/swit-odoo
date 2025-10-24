@@ -38,7 +38,8 @@ class DonationBoxRegistrationInstallation(models.Model):
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
-    name = fields.Char(related='donation_box_request_id.name', string="Name", store=True)
+    name = fields.Char('Name', default="New")
+    request_no = fields.Char(related='donation_box_request_id.name', string="Request No.", store=True)
     shop_name = fields.Char('Shop Name', tracking=True)
     contact_no = fields.Char('Contact No', size=10, tracking=True)
     location = fields.Char('Requested Location', tracking=True)
@@ -70,9 +71,7 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     @api.model
     def create(self, vals):
-        raise ValidationError(str(vals))
-
-        if not vals.get('name'):
+        if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
 
         return super(DonationBoxRegistrationInstallation, self).create(vals)

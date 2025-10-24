@@ -20,7 +20,7 @@ class MedicalEquipment(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
 
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donee_id.mobile', string="Mobile No.")
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
@@ -34,7 +34,7 @@ class MedicalEquipment(models.Model):
 
     @api.model
     def create(self, vals):
-        if not vals.get('name'):
+        if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
         return super(MedicalEquipment, self).create(vals)
