@@ -18,8 +18,7 @@
                     <div class="oe_title">
                         <label for="request_no" />
                         <h1><field name="request_no" class="oe_inline" readonly="1" /></h1>
-                    </div>
-                    <div class="oe_title">
+                        
                         <label for="name" string="Registration No." />
                         <h3><field name="name" class="oe_inline" readonly="1" /></h3>
                     </div>
