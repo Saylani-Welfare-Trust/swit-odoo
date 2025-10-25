@@ -23,7 +23,7 @@
                     <group>
                         <group name="donation_box_request_col_1">
                             <field name="employee_category_id" invisible="1" />
-                            <field name="rider_id" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [employee_category_id])]" required="1" readonly="status == 'approved'" />
+                            <field name="rider_id" string="Installer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [employee_category_id])]" required="1" readonly="status == 'approved'" />
                             <field name="source_location_id" readonly="1" invisible="1" />
                             <field name="picking_type_id" string="Picking Type" readonly="1" invisible="1" />
                         </group>

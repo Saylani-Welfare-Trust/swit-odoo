@@ -21,7 +21,7 @@ class DonationBoxRequest(models.Model):
     source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
     destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
 
-    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
+    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.installer_hr_employee_category', raise_if_not_found=False).id)
     
     name = fields.Char('Name', default="New")
 
