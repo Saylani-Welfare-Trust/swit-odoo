@@ -31,14 +31,13 @@ class DonationBoxRequestLine(models.Model):
                 line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
                 continue
 
-            quants = self.env['stock.quant'].search([
+            lots = self.env['stock.lot'].search([
                 ('product_id', '=', line.product_id.id),
-                ('lot_id', '!=', False),
-                ('quantity', '>', 0),
+                ('product_qty', '>', 0),
                 ('location_id', '=', line.donation_box_request_id.source_location_id.id),
             ])
 
-            lot_ids = quants.mapped('lot_id').filtered(lambda l: not l.lot_consume)
+            lot_ids = lots.filtered(lambda l: not l.lot_consume)
             line.allowed_lot_ids = lot_ids
 
     @api.model_create_multi
