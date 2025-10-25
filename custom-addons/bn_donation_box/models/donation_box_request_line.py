@@ -43,7 +43,7 @@ class DonationBoxRequestLine(models.Model):
 
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
-        for rec in self.donation_box_request_id.donation_box_request_line_ids:
+        for rec in self:
             if rec.lot_id == self.id:
                 raise ValidationError('You have already selected this Box No.')
 
