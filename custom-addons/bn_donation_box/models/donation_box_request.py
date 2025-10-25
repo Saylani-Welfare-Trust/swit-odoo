@@ -24,7 +24,6 @@ class DonationBoxRequest(models.Model):
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
     
     name = fields.Char('Name', default="New")
-    previous_record = fields.Char('Previous Record', tracking=True)
 
     request_date = fields.Datetime(string='Request Date', default=fields.Datetime.now(), tracking=True)
     

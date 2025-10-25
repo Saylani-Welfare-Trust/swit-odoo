@@ -30,7 +30,6 @@
                         <group name="donation_box_request_col_2">
                             <field name="request_date" required="1" readonly="status == 'approved'" />
                             <field name="destination_location_id" readonly="1" invisible="1" />
-                            <field name="previous_record" string="Old System Records" readonly="status == 'approved'" />
                         </group>
                     </group>
                     <notebook>
