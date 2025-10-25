@@ -25,6 +25,7 @@
         'views/donation_box_complain_center.xml',
         'views/product_product.xml',
         'views/product_template.xml',
+        'views/stock_lot.xml',
         'reports/donation_box_report.xml',
     ],
     'auto_install': False,
