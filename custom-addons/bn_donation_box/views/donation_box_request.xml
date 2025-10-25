@@ -81,7 +81,7 @@
         <field name="arch" type="xml">
             <tree string="">
                 <field name="name" />
-                <field name="rider_id" string="Rider" />
+                <field name="rider_id" string="Installer" />
                 <field name="request_date" string="Request Date" />
                 <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'approved'" decoration-danger="status == 'rejected'" />
             </tree>
