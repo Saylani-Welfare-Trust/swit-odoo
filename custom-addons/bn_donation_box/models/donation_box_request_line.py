@@ -33,7 +33,7 @@ class DonationBoxRequestLine(models.Model):
 
             lots = self.env['stock.lot'].search([
                 ('product_id', '=', line.product_id.id),
-                ('product_qty', '>', 0),
+                # ('product_qty', '>', 0),
                 ('location_id', '=', line.donation_box_request_id.source_location_id.id),
             ])
 
