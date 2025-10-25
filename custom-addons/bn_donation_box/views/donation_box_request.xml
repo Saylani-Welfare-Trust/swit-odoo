@@ -42,6 +42,7 @@
                                     <field name="allowed_lot_ids" column_invisible="1" />
                                     <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." domain="[('id', 'in', allowed_lot_ids)]" />
                                     <field name="lock_no" />
+                                    <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
                                 </tree>
                             </field>

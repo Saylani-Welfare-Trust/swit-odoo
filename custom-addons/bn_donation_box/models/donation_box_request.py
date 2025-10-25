@@ -76,7 +76,8 @@ class DonationBoxRequest(models.Model):
                 'donation_box_request_id': self.id,
                 'lot_id': donation_box.lot_id.id,
                 'product_id': donation_box.product_id.id,
-                'installer_id': self.rider_id.id
+                'installer_id': self.rider_id.id,
+                'old_box_no': donation_box.old_box_no,
             })
 
             self.env['key'].create({

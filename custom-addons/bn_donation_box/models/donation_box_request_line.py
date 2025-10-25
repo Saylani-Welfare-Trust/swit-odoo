@@ -14,6 +14,7 @@ class DonationBoxRequestLine(models.Model):
 
     lock_no = fields.Char('Lock No.')
     key_tag = fields.Char('Key Tag')
+    old_box_no = fields.Char('Old Box No.')
 
     allowed_lot_ids = fields.Many2many(
         'stock.lot',

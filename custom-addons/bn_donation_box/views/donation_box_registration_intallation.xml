@@ -45,7 +45,7 @@
                             <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" />
                             <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="city_id == False" />
                             <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="zone_id == False" />
-                            <field name="old_box_no" />
+                            <field name="old_box_no" readonly="1" />
                         </group>
                     </group>
                     <notebook>
