@@ -106,7 +106,16 @@ class DonationBoxRequest(models.Model):
         stock_move._action_assign()
         stock_move._action_done()
 
+    def check_lines(self):
+        lot_ids = self.donation_box_request_line_ids.mapped('lot_id.id')
+        duplicate_lots = [lot for lot in lot_ids if lot_ids.count(lot) > 1 and lot]
+
+        if duplicate_lots:
+            raise ValidationError('Duplicate Box No. found in request lines.')
+
     def action_approve(self):
+        self.check_lines()
+
         self.generate_records()
 
         # Picking = self.env['stock.picking']

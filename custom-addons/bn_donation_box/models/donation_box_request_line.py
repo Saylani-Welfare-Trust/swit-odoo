@@ -41,12 +41,6 @@ class DonationBoxRequestLine(models.Model):
             lot_ids = lots.filtered(lambda l: not l.lot_consume)
             line.allowed_lot_ids = lot_ids
 
-    @api.onchange('lot_id')
-    def _onchange_lot_id(self):
-        for rec in self:
-            if rec.lot_id == self.id:
-                raise ValidationError('You have already selected this Box No.')
-
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
