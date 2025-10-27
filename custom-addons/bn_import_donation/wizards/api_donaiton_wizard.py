@@ -76,7 +76,7 @@ class APIDonationWizard(models.TransientModel):
 
         # prepare caches & config
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        gateway_config = self.env['gateway.config'].search([('name', '=', 'Website API')], limit=1)
+        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         company_currency = self.env.company.currency_id
 
         # simple caches
