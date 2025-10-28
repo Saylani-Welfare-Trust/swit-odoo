@@ -8,9 +8,6 @@ class HRExpense(models.Model):
     _inherit = 'hr.expense'
 
 
-    is_record_created = fields.Boolean('Is Record Created', default=False)
-
-
     @api.onchange('date')
     def _onchange_date(self):
         if self.date:
@@ -27,9 +24,3 @@ class HRExpense(models.Model):
     def _onchange_payment_mode(self):
         if self.payment_mode == 'company_account':
             raise ValidationError('Expense payment mode can be set as ( Company ).')
-        
-    @api.model
-    def create(self, vals):
-        vals['is_record_created'] = True
-
-        return super(HRExpense, self).create(vals)

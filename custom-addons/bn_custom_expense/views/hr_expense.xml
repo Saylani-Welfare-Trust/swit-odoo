@@ -6,12 +6,8 @@
         <field name="model">hr.expense</field>
         <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='analytic_distribution']" position="after">
-                <field name="is_record_created" invisible="1" />
-            </xpath>
-
             <xpath expr="//field[@name='analytic_distribution']" position="attributes">
-                <attribute name="invisible">is_record_created == False</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
         </field>
     </record>
