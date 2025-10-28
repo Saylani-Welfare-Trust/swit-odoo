@@ -32,7 +32,7 @@
     </record>
     
     <record id="donation_read_access_group" model="res.groups">
-        <field name="name">Fetch History / Read Access</field>
+        <field name="name">Donation / Read Access</field>
     </record>
 
     <!-- Fetch History -->
