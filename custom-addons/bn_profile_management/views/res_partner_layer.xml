@@ -293,13 +293,13 @@
         id="profile_management_menu"
         name="Profile Management"
         web_icon="bn_profile_management,static/description/icon.png"
+        groups="bn_profile_management.profile_management_group"
         sequence="6"/>
 
     <menuitem
         id="donee_profile_management_menu"
         name="Donee"
         action="donee_profile_management_action"
-        groups="bn_profile_management.profile_management_group"
         parent="profile_management_menu"
         sequence="0"/>
     
@@ -307,7 +307,6 @@
         id="donor_profile_management_menu"
         name="Donor"
         action="donor_profile_management_action"
-        groups="bn_profile_management.profile_management_group"
         parent="profile_management_menu"
         sequence="1"/>
 

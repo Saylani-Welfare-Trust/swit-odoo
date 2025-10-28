@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="app_menu_group" model="res.groups">
+        <field name="name">App Menu</field>
+    </record>
+    
+    <record id="contacts_menu_group" model="res.groups">
+        <field name="name">Contacts Menu</field>
+    </record>
+    
+    <record id="dashboard_menu_group" model="res.groups">
+        <field name="name">Dashboard Menu</field>
+    </record>
+    
+    <record id="employees_menu_group" model="res.groups">
+        <field name="name">Employee Menu</field>
+    </record>
+    
+    <record id="expense_menu_group" model="res.groups">
+        <field name="name">Expense Menu</field>
+    </record>
+
+</odoo>
