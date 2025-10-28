@@ -269,9 +269,12 @@ class APIDonationWizard(models.TransientModel):
             else:
                 country = self.env['res.country'].search([('name', '=', donor.get('country', ''))]).id if donor.get('country', '') else None
 
+                mobile = donor.get('phone', '')
+                mobile = mobile[-10:]
+
                 donor_id = self.env['res.partner'].create({
                     'name': donor.get('name', ''),
-                    'mobile': donor.get('phone', ''),
+                    'mobile': mobile,
                     'email': donor.get('email', ''),
                     'country_code_id': country,
                     'category_id': [(6, 0, [
