@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <form create="0">
                 <header>
-                    <!-- <button string="Create Donor" name="action_create_donor" type="object" class="oe_highlight"/> -->
                     <button name="action_install" string="Install" type="object" class="oe_highlight" invisible="status in ['installed', 'approved', 'available']" />
                     <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status in ['draft', 'approved', 'available']" groups="bn_donation_box.donation_box_registration_installation_approve_group" />
                     
@@ -37,7 +36,7 @@
                         </group>
                         <group name="donation_box_registration_installation_col_2">
                             <!-- <field name="donor_id" domain="[('is_donee', '=', False), ('registration_category', '=', 'donor')]" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" /> -->
-                            <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" />
+                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [2, 4])]}" options="{'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" />
                             <label for="contact_no"/>
                             <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_id" readonly="status in ['approved', 'available']" required="1"/> <field style="width: 70% !important;" name="contact_no" required="1" readonly="status in ['approved', 'available']" /></div>
                             <field name="installation_date" required="1" readonly="status in ['approved', 'available']" />

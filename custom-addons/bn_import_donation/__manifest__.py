@@ -11,6 +11,7 @@
     'data': [
         'data/sequence.xml',
         'security/group.xml',
+        'security/access_right.xml',
         'security/ir.model.access.csv',
         'views/import_donation.xml',
         'views/donation.xml',

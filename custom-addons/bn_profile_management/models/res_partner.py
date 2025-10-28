@@ -44,7 +44,7 @@ class ResPartner(models.Model):
 
     gender = fields.Selection(selection=gender_selection, string="Gender", tracking=True)
     religion = fields.Selection(selection=religion_selection, string="Religion", tracking=True)
-    martial_status = fields.Selection(selection=martial_status_selection, string="Religion", tracking=True)
+    martial_status = fields.Selection(selection=martial_status_selection, string="Martial Status", tracking=True)
     has_cnic = fields.Selection(selection=general_selection, string="Has CNIC", default='yes', tracking=True)
     state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
     
@@ -80,7 +80,7 @@ class ResPartner(models.Model):
     details = fields.Text('Details')
 
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
-    country_code_id = fields.Many2one('res.country', string="Country Code")
+    country_code_id = fields.Many2one('res.country', string="Phone Code")
 
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
@@ -154,24 +154,24 @@ class ResPartner(models.Model):
             elif len(cleaned_cnic) > 5:
                 self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
     
-    @api.constrains('member_cnic_no')
-    def _check_member_cnic_no_format(self):
+    @api.constrains('father_cnic_no')
+    def _check_father_cnic_no_format(self):
         for record in self:
-            if record.member_cnic_no:
-                if not re.match(cnic_pattern, record.member_cnic_no):
+            if record.father_cnic_no:
+                if not re.match(cnic_pattern, record.father_cnic_no):
                     raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
-                parts = record.member_cnic_no.split('-')
+                parts = record.father_cnic_no.split('-')
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    @api.onchange('member_cnic_no')
-    def _onchange_member_cnic_no(self):
-        if self.member_cnic_no:
-            cleaned_cnic = re.sub(r'[^0-9]', '', self.member_cnic_no)
+    @api.onchange('father_cnic_no')
+    def _onchange_father_cnic_no(self):
+        if self.father_cnic_no:
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.father_cnic_no)
             if len(cleaned_cnic) >= 13:
-                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
+                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
-                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
     
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):

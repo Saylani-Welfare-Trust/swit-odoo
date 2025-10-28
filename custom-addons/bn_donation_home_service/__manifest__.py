@@ -12,8 +12,9 @@
         'bn_import_donation',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'security/group.xml',
+        'security/access_right.xml',
+        'security/ir.model.access.csv',
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',

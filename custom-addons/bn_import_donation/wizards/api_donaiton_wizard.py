@@ -262,12 +262,25 @@ class APIDonationWizard(models.TransientModel):
         donor_id = None
 
         if donor.get('name', ''):
-            donor_id = self.env['res.partner'].search([('name', '=', donor.get('name', '')), ('category_id.name', 'in', ['Donor'])])
+            donor_id = self.env['res.partner'].search([('mobile', '=', donor.get('phone', '')), ('category_id.name', 'in', ['Donor'])])
 
             if donor_id:
                 donor_id = donor_id.id
             else:
-                donor_id = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1).id
+                country = self.env['res.country'].search([('name', '=', donor.get('country', ''))]).id if donor.get('country', '') else None
+
+                donor_id = self.env['res.partner'].create({
+                    'name': donor.get('name', ''),
+                    'mobile': donor.get('phone', ''),
+                    'email': donor.get('email', ''),
+                    'country_code_id': country,
+                    'category_id': [(6, 0, [
+                        self.env.ref('bn_profile_management.donor_partner_category').id,
+                        self.env.ref('bn_profile_management.individual_partner_category').id,
+                    ])]
+                })
+
+                donor_id = donor_id.id
         else:
             donor_id = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1).id
 

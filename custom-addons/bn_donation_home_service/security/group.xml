@@ -5,4 +5,17 @@
         <field name="name">Menu</field>
     </record>
 
+    <!-- Donation Home Service -->
+    <record id="donation_home_service_admin_group" model="res.groups">
+        <field name="name">Donation Home Service / Admin Access</field>
+    </record>
+
+    <record id="donation_home_service_create_access_group" model="res.groups">
+        <field name="name">Donation Home Service / Create Access</field>
+    </record>
+    
+    <record id="donation_home_service_read_access_group" model="res.groups">
+        <field name="name">Donation Home Service / Read Access</field>
+    </record>
+
 </odoo>

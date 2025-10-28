@@ -10,11 +10,12 @@
         'bn_pos_custom_action'
     ],
     'data': [
+        'security/group.xml',
+        'security/access_right.xml',
+        'security/ir.model.access.csv',
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
-        'security/group.xml',
-        'security/ir.model.access.csv',
         'views/medical_equipment.xml',
         'views/product_product.xml',
         'views/product_template.xml',

@@ -75,18 +75,3 @@ class DonationBoxRegistrationInstallation(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
 
         return super(DonationBoxRegistrationInstallation, self).create(vals)
-
-    # def action_create_donor(self):
-    #     return {
-    #         'name': 'Donor Registation',
-    #         'view_mode': 'form',
-    #         'view_id': self.env.ref('bn_profile_management.custom_donor_res_partner_view_form').id,
-    #         'res_model': 'res.partner',
-    #         'type': 'ir.actions.act_window',
-    #         'context': {
-    #             'default_is_donee': False,
-    #             'default_donor_type': 'individual',
-    #             'default_registration_category': 'donor',
-    #         },
-    #         'target': 'new',
-    #     }

@@ -118,62 +118,62 @@ class DonationBoxRequest(models.Model):
 
         self.generate_records()
 
-        # Picking = self.env['stock.picking']
-        # Move = self.env['stock.move']
+        Picking = self.env['stock.picking']
+        Move = self.env['stock.move']
 
-        # # create picking
-        # picking_vals = {
-        #     'picking_type_id': self.picking_type_id.id,
-        #     'location_id': self.source_location_id.id,
-        #     'location_dest_id': self.destination_location_id.id,
-        #     'origin': self.name,
-        # }
-        # picking = Picking.create(picking_vals)
+        # create picking
+        picking_vals = {
+            'picking_type_id': self.picking_type_id.id,
+            'location_id': self.source_location_id.id,
+            'location_dest_id': self.destination_location_id.id,
+            'origin': self.name,
+        }
+        picking = Picking.create(picking_vals)
 
-        # # create moves
-        # for line in self.donation_box_request_line_ids:
-        #     move_vals = {
-        #         'name': line.product_id.display_name,
-        #         'product_id': line.product_id.id,
-        #         'product_uom_qty': 1.0,
-        #         'product_uom': line.product_id.uom_id.id,
-        #         'location_id': self.source_location_id.id,
-        #         'location_dest_id': self.destination_location_id.id,
-        #         'picking_id': picking.id,
-        #     }
+        # create moves
+        for line in self.donation_box_request_line_ids:
+            move_vals = {
+                'name': line.product_id.display_name,
+                'product_id': line.product_id.id,
+                'product_uom_qty': 1.0,
+                'product_uom': line.product_id.uom_id.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.destination_location_id.id,
+                'picking_id': picking.id,
+            }
 
-        #     Move.create(move_vals)
+            Move.create(move_vals)
 
-        # # confirm & assign
-        # picking.action_confirm()
-        # picking.action_assign()
+        # confirm & assign
+        picking.action_confirm()
+        picking.action_assign()
 
-        # # add move lines with lot and qty_done
-        # mls = []
-        # for move in picking.move_ids_without_package:
-        #     # match the request line for same product that has not been processed yet
-        #     box_line = self.donation_box_request_line_ids.filtered(lambda l: l.product_id == move.product_id and not hasattr(l,'used'))
-        #     if box_line:
-        #         box = box_line[0]
-        #         # mark as used in this loop so we don't reuse same line for duplicate products
-        #         box.used = True
-        #         mlvals = {
-        #             'move_id': move.id,
-        #             'picking_id': picking.id,
-        #             'product_id': move.product_id.id,
-        #             'product_uom_id': move.product_uom.id,
-        #             'qty_done': 1.0,
-        #             'lot_id': box.lot_id.id,
-        #             'location_id': move.source_location_id.id,
-        #             'location_dest_id': move.destination_location_id.id,
-        #         }
-        #         mls.append((0,0,mlvals))
-        # if mls:
-        #     picking.write({'move_line_ids_without_package': mls})
+        # add move lines with lot and qty_done
+        mls = []
+        for move in picking.move_ids_without_package:
+            # match the request line for same product that has not been processed yet
+            box_line = self.donation_box_request_line_ids.filtered(lambda l: l.product_id == move.product_id and not hasattr(l,'used'))
+            if box_line:
+                box = box_line[0]
+                # mark as used in this loop so we don't reuse same line for duplicate products
+                box.used = True
+                mlvals = {
+                    'move_id': move.id,
+                    'picking_id': picking.id,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_uom.id,
+                    'qty_done': 1.0,
+                    'lot_id': box.lot_id.id,
+                    'location_id': move.source_location_id.id,
+                    'location_dest_id': move.destination_location_id.id,
+                }
+                mls.append((0,0,mlvals))
+        if mls:
+            picking.write({'move_line_ids_without_package': mls})
 
-        # # final validation
-        # picking.button_validate()
+        # final validation
+        picking.button_validate()
 
         self.status = 'approved'
-        # self.picking_id = picking.id
+        self.picking_id = picking.id
         self.key_tag_assign = True

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Import Donation -->
+    <record id="access_import_donation_create" model="ir.model.access">
+        <field name="name">Import Donation Create Access</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="group_id" ref="import_donation_create_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="access_import_donation_write" model="ir.model.access">
+        <field name="name">Import Donation Write Access</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="group_id" ref="import_donation_write_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="access_import_donation_read" model="ir.model.access">
+        <field name="name">Import Donation Read Access</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="group_id" ref="import_donation_read_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="access_import_donation_delete" model="ir.model.access">
+        <field name="name">Import Donation Delete Access</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="group_id" ref="import_donation_delete_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
+
+    <!-- Donaiton -->
+    <record id="access_donation_read" model="ir.model.access">
+        <field name="name">Donation Read Access</field>
+        <field name="model_id" ref="model_donation"/>
+        <field name="group_id" ref="donation_read_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- Fetch History -->
+    <record id="access_fetch_history_read" model="ir.model.access">
+        <field name="name">Fetch History Read Access</field>
+        <field name="model_id" ref="model_fetch_history"/>
+        <field name="group_id" ref="fetch_history_read_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- API Donation -->
+    <record id="access_api_donation_read" model="ir.model.access">
+        <field name="name">API Donation Read Access</field>
+        <field name="model_id" ref="model_api_donation"/>
+        <field name="group_id" ref="api_donation_read_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+</odoo>

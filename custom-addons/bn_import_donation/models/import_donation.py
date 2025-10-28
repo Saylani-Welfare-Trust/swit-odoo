@@ -69,6 +69,7 @@ class ImportDonation(models.Model):
 
         # Cache frequently used models
         Partner = self.env['res.partner']
+        Country = self.env['res.country'].search([('name', '=', 'Pakistan')])
         ValidDonation = self.env['valid.import.donation']
         InvalidDonation = self.env['invalid.import.donation']
 
@@ -157,6 +158,7 @@ class ImportDonation(models.Model):
                     if not partner and mobile:
                         partner = Partner.create({
                             'name': name or f'Undefined {mobile}',
+                            'country_code_id': Country.id,
                             'mobile': mobile,
                             'cnic_no': cnic,
                             'email': email,
@@ -259,6 +261,7 @@ class ImportDonation(models.Model):
                     if not donor and mobile:
                         donor = Partner.create({
                             'name': name or f'Undefined {mobile}',
+                            'country_code_id': Country.id,
                             'mobile': mobile,
                             'cnic_no': cnic,
                             'email': email,

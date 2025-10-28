@@ -156,7 +156,7 @@
                                 <field name="country_id" invisible="1"/>
                                 <field name="street" placeholder="Street..." class="o_address_street" readonly="state != 'draft'"/>
                                 <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="state != 'draft'"/>
-                                <field name="city" placeholder="City" class="o_address_city" required="1" readonly="state != 'draft'"/>
+                                <field name="city" placeholder="City" class="o_address_city" required="donee_required_fields" readonly="state != 'draft'"/>
                                 <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_code_id, 'default_country_id': country_code_id, 'zip': zip}" readonly="state != 'draft'"/>
                                 <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="state != 'draft'"/>
                             </div>
@@ -181,7 +181,7 @@
                                     <field name="gender" required="donee_required_fields" readonly="state != 'draft'" />
                                     <field name="religion" readonly="state != 'draft'" />
                                     <field name="martial_status" readonly="state != 'draft'" />
-                                    <field name="spouse_name" invisible="martial_status == 'unmarried'" required="donee_required_fields and martial_status == 'married'" readonly="state != 'draft'" />
+                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married'" readonly="state != 'draft'" />
                                     <field name="has_cnic" readonly="state != 'draft'" />
                                     <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
                                     <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />

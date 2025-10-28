@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_expense_create_access_group" model="res.groups">
+        <field name="name">Expense / Create Access</field>
+    </record>
+    
+    <record id="hr_expense_write_access_group" model="res.groups">
+        <field name="name">Expense / Update Access</field>
+    </record>
+    
+    <record id="hr_expense_read_access_group" model="res.groups">
+        <field name="name">Expense / Read Access</field>
+    </record>
+    
+    <record id="hr_expense_delete_access_group" model="res.groups">
+        <field name="name">Expense / Delete Access</field>
+    </record>
+
+</odoo>

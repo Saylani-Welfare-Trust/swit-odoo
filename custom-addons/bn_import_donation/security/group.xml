@@ -5,4 +5,52 @@
         <field name="name">Menu</field>
     </record>
 
+    <!-- Import Donation -->
+    <record id="import_donation_admin_group" model="res.groups">
+        <field name="name">Import Donation / Admin Access</field>
+    </record>
+
+    <record id="import_donation_create_access_group" model="res.groups">
+        <field name="name">Import Donation / Create Access</field>
+    </record>
+    
+    <record id="import_donation_write_access_group" model="res.groups">
+        <field name="name">Import Donation / Update Access</field>
+    </record>
+    
+    <record id="import_donation_read_access_group" model="res.groups">
+        <field name="name">Import Donation / Read Access</field>
+    </record>
+    
+    <record id="import_donation_delete_access_group" model="res.groups">
+        <field name="name">Import Donation / Delete Access</field>
+    </record>
+    
+    <!-- Donaiton -->
+    <record id="donaiton_admin_group" model="res.groups">
+        <field name="name">Donation / Admin Access</field>
+    </record>
+    
+    <record id="donation_read_access_group" model="res.groups">
+        <field name="name">Fetch History / Read Access</field>
+    </record>
+
+    <!-- Fetch History -->
+    <record id="fetch_history_admin_group" model="res.groups">
+        <field name="name">Fetch History / Admin Access</field>
+    </record>
+    
+    <record id="fetch_history_read_access_group" model="res.groups">
+        <field name="name">Fetch History / Read Access</field>
+    </record>
+    
+    <!-- API Donation -->
+    <record id="api_donation_admin_group" model="res.groups">
+        <field name="name">API Donation / Admin Access</field>
+    </record>
+    
+    <record id="api_donation_read_access_group" model="res.groups">
+        <field name="name">API Donation / Read Access</field>
+    </record>
+
 </odoo>
