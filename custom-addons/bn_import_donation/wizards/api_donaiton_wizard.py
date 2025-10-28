@@ -280,6 +280,8 @@ class APIDonationWizard(models.TransientModel):
                     ])]
                 })
 
+                donor_id.action_register()
+
                 donor_id = donor_id.id
         else:
             donor_id = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1).id
