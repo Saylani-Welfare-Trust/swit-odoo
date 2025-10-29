@@ -214,7 +214,7 @@ class ResPartner(models.Model):
             res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
             if res_partner:
-                raise ValidationError(str(f'A Donee with same CNIC or Mobile No. already exist in the System.'))
+                raise ValidationError(str(f'A Donor with same Mobile No. already exist in the System.'))
             
             res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 
