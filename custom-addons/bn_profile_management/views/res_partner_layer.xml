@@ -133,7 +133,7 @@
 
                     <field name="avatar_128" invisible="1"/>
                     <field name="user_id" invisible="1"/>
-                    <field name="image_1920" widget="image" class="oe_avatar" required="donee_required_fields" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" readonly="state in ['print_info', 'register', 'change_request']"/>
+                    <field name="image_1920" widget="image" class="oe_avatar" required="donee_required_fields" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" />
                     <div class="oe_title mb24">
                         <field name="is_company" invisible="1"/>
                         <field name="donee_required_fields" invisible="1"/>
@@ -143,7 +143,7 @@
                         <field name="company_id" invisible="1"/>
                         <field name="country_code" invisible="1"/>
                         <h1>
-                            <field id="individual" readonly="state != 'draft'" options="{'line_breaks': False}" widget="text" class="text-break" name="name" default_focus="1" placeholder="e.g. Brandom Freeman" required="1"/>
+                            <field id="individual" options="{'line_breaks': False}" widget="text" class="text-break" name="name" default_focus="1" placeholder="e.g. Brandom Freeman" required="1"/>
                         </h1>
                     </div>
 
@@ -154,21 +154,21 @@
                             </span>
                             <div class="o_address_format">
                                 <field name="country_id" invisible="1"/>
-                                <field name="street" placeholder="Street..." class="o_address_street" readonly="state != 'draft'"/>
-                                <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="state != 'draft'"/>
-                                <field name="city" placeholder="City" class="o_address_city" required="donee_required_fields" readonly="state != 'draft'"/>
-                                <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_code_id, 'default_country_id': country_code_id, 'zip': zip}" readonly="state != 'draft'"/>
-                                <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="state != 'draft'"/>
+                                <field name="street" placeholder="Street..." class="o_address_street"/>
+                                <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                                <field name="city" placeholder="City" class="o_address_city" required="donee_required_fields"/>
+                                <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_code_id, 'default_country_id': country_code_id, 'zip': zip}"/>
+                                <field name="zip" placeholder="ZIP" class="o_address_zip"/>
                             </div>
-                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" placeholder="e.g. &quot;Donor&quot;, &quot;Donee&quot;, &quot;Rider&quot;, ..." readonly="state != 'draft'"/>
+                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" placeholder="e.g. &quot;Donor&quot;, &quot;Donee&quot;, &quot;Rider&quot;, ..."/>
                         </group>
                         <group name="profile_management_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" required="1" name="country_code_id" nolabel="1" readonly="state != 'draft'" /> 
-                                <field style="width: 70% !important;" name="mobile" required="1" nolabel="1" readonly="state != 'draft'" />
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" required="1" name="country_code_id" nolabel="1" /> 
+                                <field style="width: 70% !important;" name="mobile" required="1" nolabel="1" />
                             </div>
-                            <field name="email" widget="email" context="{'gravatar_image': True}" readonly="state != 'draft'" />
+                            <field name="email" widget="email" context="{'gravatar_image': True}" />
                         </group>
                     </group>
 
@@ -177,35 +177,35 @@
                             <group>
                                 <group name="general_info_col_1">
                                     <field name="is_change_request" invisible="1" />
-                                    <field name="surname" readonly="state != 'draft'" />
-                                    <field name="gender" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="religion" readonly="state != 'draft'" />
-                                    <field name="martial_status" readonly="state != 'draft'" />
-                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married'" readonly="state != 'draft'" />
-                                    <field name="has_cnic" readonly="state != 'draft'" />
-                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
-                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
-                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
-                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state != 'draft'" />
-                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
-                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
-                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state != 'draft'" />
+                                    <field name="surname" />
+                                    <field name="gender" required="donee_required_fields" />
+                                    <field name="religion" />
+                                    <field name="martial_status" />
+                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married'" />
+                                    <field name="has_cnic" />
+                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
+                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
+                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
+                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
                                     <field name="approved_form_file" filename="approved_form" readonly="not is_change_request" required="is_change_request" />
                                 </group>
                                 <group name="general_info_col_2">
-                                    <field name="date_of_birth" required="donee_required_fields" readonly="state != 'draft'" />
+                                    <field name="date_of_birth" required="donee_required_fields" />
                                     <field name="age" />
-                                    <field name="father_name" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="father_cnic_no" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="next_kin" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="nearest_land_mark" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="reference_remarks" readonly="state != 'draft'" />
-                                    <field name="bank_wallet_account" readonly="state != 'draft'" />
+                                    <field name="father_name" required="donee_required_fields" />
+                                    <field name="father_cnic_no" required="donee_required_fields" />
+                                    <field name="next_kin" required="donee_required_fields" />
+                                    <field name="nearest_land_mark" required="donee_required_fields" />
+                                    <field name="reference_remarks" />
+                                    <field name="bank_wallet_account" />
                                     <field name="primary_registration_id" string="Primary ID" readonly="1" />
                                     <field name="secondary_registration_id" string="Secondary ID" readonly="1" />
-                                    <field name="old_system_id" readonly="state != 'draft'" />
-                                    <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" readonly="state != 'draft'" />
-                                    <field name="details" readonly="state != 'draft'" />
+                                    <field name="old_system_id" />
+                                    <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" />
+                                    <field name="details" />
                                 </group>
                             </group>
                         </page>
