@@ -9,9 +9,6 @@ class IrActionsReport(models.Model):
 
     def _render_qweb_pdf_prepare_streams(self, report_ref, data, res_ids=None):
         # OVERRIDE
-        res = super()._render_qweb_pdf_prepare_streams(report_ref, data, res_ids)
-        if not res_ids:
-            return res
         report = self._get_report(report_ref)
         if report.report_name == 'hr_expense.report_expense_sheet':
             # expense_sheets = self.env['hr.expense.sheet'].browse(res_ids)
@@ -45,5 +42,10 @@ class IrActionsReport(models.Model):
             #     for stream in stream_list:
             #         stream.close()
             pass
+        
+        res = super()._render_qweb_pdf_prepare_streams(report_ref, data, res_ids)
+        
+        if not res_ids:
+            return res
         
         return res
