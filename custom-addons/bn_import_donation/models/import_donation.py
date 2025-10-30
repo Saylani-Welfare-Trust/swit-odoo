@@ -302,7 +302,7 @@ class ImportDonation(models.Model):
         if not journal:
             raise ValidationError("Bank journal not found.")
 
-        default_partner = self.env['res.partner'].search([('barcode', '=', '2025-9999998-9')], limit=1)
+        default_partner = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
         credit_groups = {}
         total_amount = 0.0
 
