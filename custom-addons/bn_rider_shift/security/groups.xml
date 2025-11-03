@@ -5,6 +5,10 @@
         <field name="name">Rider / Menu</field>
     </record>
     
+    <record id="rider_shift_menu_group" model="res.groups">
+        <field name="name">Rider / shift Menu</field>
+    </record>
+    
     <record id="rider_shift_collection_menu_group" model="res.groups">
         <field name="name">Rider / Shift / Collection</field>
     </record>
