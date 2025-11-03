@@ -41,7 +41,7 @@
     </record>
     
     <record id="api_donation_read_access_group" model="res.groups">
-        <field name="name">API Donation / Read Access</field>
+        <field name="name">API Donation / User Access</field>
     </record>
 
 </odoo>
