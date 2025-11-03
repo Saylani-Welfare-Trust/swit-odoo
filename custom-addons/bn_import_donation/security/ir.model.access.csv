@@ -2,7 +2,7 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_import_donation,access.import.donation,bn_import_donation.model_import_donation,import_donation_admin_group,1,1,1,1
 access_invalid_import_donation,access.invalid.import.donation,bn_import_donation.model_invalid_import_donation,,1,1,1,1
 access_valid_import_donation,access.valid.import.donation,bn_import_donation.model_valid_import_donation,,1,1,1,1
-access_donation,access.donation,bn_import_donation.model_donation,donaiton_admin_group,1,1,1,1
+access_donation,access.donation,bn_import_donation.model_donation,import_donation_admin_group,1,1,1,1
 access_api_donation,access.api.donation,bn_import_donation.model_api_donation,api_donation_admin_group,1,1,1,1
 access_api_donation_item,access.api.donation.item,bn_import_donation.model_api_donation_item,,1,1,1,1
 access_api_donation_wizard,access.api.donation.wizard,bn_import_donation.model_api_donation_wizard,api_donation_admin_group,1,1,1,1
