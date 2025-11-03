@@ -379,7 +379,7 @@ class ImportDonation(models.Model):
         ]
 
         # Create and post journal entry
-        journal_entry = self.env['account.move'].create({
+        journal_entry = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'ref': self.name,
             'date': fields.Date.today(),
