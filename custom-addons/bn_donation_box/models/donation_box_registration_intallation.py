@@ -56,7 +56,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     
     def action_install(self):
         self.box_status = 'installed'
-        self.state = 'installed'
+        self.status = 'installed'
 
     def action_approved(self):
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
