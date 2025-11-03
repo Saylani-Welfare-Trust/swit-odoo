@@ -57,7 +57,7 @@
     <record id="access_fetch_history_read" model="ir.model.access">
         <field name="name">Fetch History Read Access</field>
         <field name="model_id" ref="model_fetch_history"/>
-        <field name="group_id" ref="bn_import_donation.fetch_history_read_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_read_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>
