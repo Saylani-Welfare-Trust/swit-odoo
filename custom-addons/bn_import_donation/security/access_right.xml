@@ -75,4 +75,15 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
+    <!-- API Donation -->
+    <record id="access_api_donation_wizard_read" model="ir.model.access">
+        <field name="name">API Donation Wizard Read Access</field>
+        <field name="model_id" ref="model_api_donation_wizard"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_read_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
 </odoo>
