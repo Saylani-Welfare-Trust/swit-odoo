@@ -6,7 +6,7 @@
     </record>
     
     <record id="rider_shift_menu_group" model="res.groups">
-        <field name="name">Rider / shift Menu</field>
+        <field name="name">Rider / Shift Menu</field>
     </record>
     
     <record id="rider_shift_collection_menu_group" model="res.groups">
