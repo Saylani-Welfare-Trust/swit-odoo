@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <t t-name="bn_pos_payment_method.PaymentPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title"><t t-esc="this.title" /></h4>
+            </div>
+            <main class="modal-body">
+                <div class="row mb-2" t-if="this.is_bank">
+                    <div class="col-4 fw-semibold text-start">Bank</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.bank_name"
+                            t-on-change="updateBankName"
+                            placeholder="Enter Bank Name"/>
+                    </div>
+                </div>
+                
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold text-start"><t t-esc="this.label" /></div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.number"
+                            t-on-change="updateNumber"
+                            placeholder="Enter number"/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold text-start">Date</div>
+                    <div class="col-8">
+                        <input type="date" class="form-control form-control-sm"
+                            t-att-value="this.state.date"
+                            t-on-change="updateDate"/>
+                    </div>
+                </div>
+            </main>
+            <footer class="footer modal-footer">
+                <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
+                <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
+            </footer>
+        </div>
+    </t>
+
+</odoo>

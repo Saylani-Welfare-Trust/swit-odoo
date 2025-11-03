@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_cheque_view_tree" model="ir.ui.view">
+        <field name="name">pos.cheque.view.tree</field>
+        <field name="model">pos.cheque</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="bank_name" />
+                <field name="name" string="Cheque No." />
+                <field name="date" />
+                <field name="bounce_count" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" />
+
+                <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
+
+                <button string="Clear" name="action_clear" type="object" class="oe_highlight"/>
+                <button string="Bounce" name="action_bounce" type="object" />
+                <button string="Cancel" name="action_cancel" type="object" class="btn-danger"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="pos_cheque_action" model="ir.actions.act_window">
+        <field name="name">Cheque</field>
+        <field name="res_model">pos.cheque</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for new pos cheque/qr code....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="pos_cheque_menu"
+        name="POS Cheque"
+        action="pos_cheque_action"
+        groups="pos_cheque_menu_group"
+        parent="account.menu_finance"
+        sequence="6"/>
+
+</odoo>

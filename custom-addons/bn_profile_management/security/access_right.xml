@@ -4,7 +4,7 @@
     <record id="access_profile_management_create" model="ir.model.access">
         <field name="name">Profile Management Create Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="profile_management_create_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_create_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="1"/>
@@ -14,7 +14,7 @@
     <record id="access_profile_management_write" model="ir.model.access">
         <field name="name">Profile Management Write Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="profile_management_write_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_write_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="0"/>
@@ -24,7 +24,7 @@
     <record id="access_profile_management_read" model="ir.model.access">
         <field name="name">Profile Management Read Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="profile_management_read_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_read_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>
@@ -34,7 +34,7 @@
     <record id="access_profile_management_delete" model="ir.model.access">
         <field name="name">Profile Management Delete Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="profile_management_delete_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_delete_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>

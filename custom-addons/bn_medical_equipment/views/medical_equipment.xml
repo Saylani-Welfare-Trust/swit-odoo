@@ -5,7 +5,7 @@
         <field name="name">medical.equipment.view.tree</field>
         <field name="model">medical.equipment</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" default_order="create_date desc">
+            <tree default_order="create_date desc">
                 <field name="name"/>
                 <field name="donee_id"/>
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['payment_received', 'payment_return', 'validate']" decoration-success="state == 'return'" />
@@ -17,7 +17,7 @@
         <field name="name">medical.equipment.view.form</field>
         <field name="model">medical.equipment</field>
         <field name="arch" type="xml">
-            <form create="0" edit="0">
+            <form>
                 <header>
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'payment_received'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'payment_return'" />
@@ -36,18 +36,18 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
-                            <field name="donee_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="donee_id" string="Donee" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', 'in', ['Donee'])]" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
-                            <field name="mobile" readonly="1"/>
+                            <field name="mobile"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
 
                     <notebook>
                         <page string="Items">
-                            <field name="medical_equipment_line_ids" readonly="1">
+                            <field name="medical_equipment_line_ids">
                                 <tree editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>

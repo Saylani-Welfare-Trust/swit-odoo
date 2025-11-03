@@ -5,7 +5,7 @@
     <record id="access_donation_home_service_create" model="ir.model.access">
         <field name="name">Donation Home Service Create Access</field>
         <field name="model_id" ref="model_donation_home_service"/>
-        <field name="group_id" ref="donation_home_service_create_access_group"/>
+        <field name="group_id" ref="bn_donation_home_service.donation_home_service_create_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="1"/>
@@ -15,7 +15,7 @@
     <record id="access_donation_home_service_read" model="ir.model.access">
         <field name="name">Donation Home Service Read Access</field>
         <field name="model_id" ref="model_donation_home_service"/>
-        <field name="group_id" ref="donation_home_service_read_access_group"/>
+        <field name="group_id" ref="bn_donation_home_service.donation_home_service_read_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="bn_pos_cheque.ChequePopup" owl="1">
+        <div class="popup popup-textinput chequeorder">
+            <!-- Header -->
+            <div class="modal-header" style="max-width: 1200px; width: 90%;">
+                <h4 class="modal-title">
+                    <i class="fa fa-money-check-alt me-2"></i>
+                    <t t-esc="props.title" />
+                </h4>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="input-group mt-3 mb-3 px-3">
+                <input type="text" class="form-control" placeholder="Search Cheque Number..." 
+                    t-ref="search-input" t-on-keyup="searchChequeNumber"/>
+                <button class="btn btn-outline-primary" t-on-click="searchChequeNumber">
+                    <i class="fa fa-search me-1"></i> Search
+                </button>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container d-flex justify-content-between align-items-center px-3 mb-2">
+                <button class="btn btn-sm btn-outline-secondary" t-on-click="previous">
+                    <i class="fa fa-chevron-left me-1"></i> Previous
+                </button>
+                <span class="text-muted fw-bold">
+                    Page <t t-esc="state.currentPage" /> of 
+                    <t t-esc="Math.ceil(state.totalRecords / state.limit)" />
+                </span>
+                <button class="btn btn-sm btn-outline-secondary" 
+                        t-on-click="next"
+                        t-att-disabled="state.currentPage * state.limit >= state.totalRecords">
+                    Next <i class="fa fa-chevron-right ms-1"></i>
+                </button>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="text-center">
+                            <th>Order Ref</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Receipt Number</th>
+                            <th>Bank Name</th>
+                            <th>Cheque Number</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-if="state.chequeorder &amp;&amp; state.chequeorder.length">
+                            <t t-foreach="state.chequeorder" t-as="order" t-key="order['id']">
+                                <tr>
+                                    <td><t t-esc="order['name']"/></td>
+                                    <td><t t-esc="order['date']"/></td>
+                                    <td><t t-esc="order['customer']"/></td>
+                                    <td><t t-esc="order['ref']"/></td>
+                                    <td><t t-esc="order['bank_name']"/></td>
+                                    <td><t t-esc="order['cheque_number']"/></td>
+                                    <td>
+                                        <span t-if="order['status'] == 'Cleared'" class="badge bg-success">Cleared</span>
+                                        <span t-elif="order['status'] == 'Pending'" class="badge bg-warning text-dark">Pending</span>
+                                        <span t-else="" class="badge bg-secondary"><t t-esc="order['status']"/></span>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+                        <t t-else="">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">No Data Found!</td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer d-flex justify-content-end">
+                <button class="btn btn-secondary btn-lg" t-on-click="cancel">
+                    <t t-esc="props.cancelText"/>
+                </button>
+            </div>
+        </div>
+    </t>
+</templates>

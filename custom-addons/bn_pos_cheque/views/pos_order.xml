@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="point_of_sale_view_pos_pos_form_inherit_bn_pos_cheque" model="ir.ui.view">
+        <field name="name">point.of.sale.view.pos.pos.form.inherit.bn.pos.cheque</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='extra']//field[@name='tracking_number']" position="after">
+                <field name="bank_name" readonly="1" />
+                <field name="cheque_number" invisible="not bank_name" readonly="1" />
+                <field name="qr_code" invisible="bank_name" readonly="1" />
+                <field name="cheque_date" readonly="1" />
+                <field name="cheque_state" invisible="not cheque_number" readonly="1" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -23,12 +23,12 @@
                     </div>
                 </div>
 
-                <div class="row mb-2" t-if="props.action_type !== 'me'">
+                <div class="row mb-2">
                     <div class="col-4 fw-semibold">Amount</div>
                     <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
 
-                <div class="row mb-2 align-items-center" t-if="props.action_type !== 'me'">
+                <div class="row mb-2 align-items-center">
                     <div class="col-4 fw-semibold">Service Charges</div>
                     <div class="col-8">
                         <input type="number" class="form-control form-control-sm"

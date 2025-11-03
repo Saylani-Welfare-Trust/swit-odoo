@@ -14,8 +14,16 @@
         <field name="name">Medical Equipment / Create Access</field>
     </record>
     
+    <record id="medical_equipment_write_access_group" model="res.groups">
+        <field name="name">Medical Equipment / Write Access</field>
+    </record>
+
     <record id="medical_equipment_read_access_group" model="res.groups">
         <field name="name">Medical Equipment / Read Access</field>
+    </record>
+    
+    <record id="medical_equipment_delete_access_group" model="res.groups">
+        <field name="name">Medical Equipment / Delete Access</field>
     </record>
 
 </odoo>

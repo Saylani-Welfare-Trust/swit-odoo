@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="point_of_sale_pos_payment_method_view_form_inherit_bn_pos_payment_method" model="ir.ui.view">
+        <field name="name">point.of.sale.pos.payment.method.view.form.inherit.bn.pos.payment.method</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='journal_id']" position="before">
+                <field name="show_popup" />
+                <field name="is_bank" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

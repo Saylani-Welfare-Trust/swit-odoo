@@ -91,8 +91,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
             })
-        } else if (this.active_type === 'me') {
-            return;
         }
     }
 }
