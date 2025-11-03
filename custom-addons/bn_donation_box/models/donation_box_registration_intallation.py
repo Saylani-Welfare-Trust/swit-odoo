@@ -55,7 +55,7 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     
     def action_install(self):
-        self.box_state = 'installed'
+        self.box_status = 'installed'
         self.state = 'installed'
 
     def action_approved(self):
