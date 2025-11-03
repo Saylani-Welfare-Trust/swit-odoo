@@ -60,7 +60,7 @@
         <field name="group_id" ref="bn_import_donation.api_donation_read_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
-        <field name="perm_create" eval="0"/>
+        <field name="perm_create" eval="1"/>
         <field name="perm_unlink" eval="0"/>
     </record>
     
@@ -71,7 +71,7 @@
         <field name="group_id" ref="bn_import_donation.api_donation_read_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
-        <field name="perm_create" eval="0"/>
+        <field name="perm_create" eval="1"/>
         <field name="perm_unlink" eval="0"/>
     </record>
 

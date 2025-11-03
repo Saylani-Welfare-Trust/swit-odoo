@@ -5,5 +5,5 @@ access_valid_import_donation,access.valid.import.donation,bn_import_donation.mod
 access_donation,access.donation,bn_import_donation.model_donation,donaiton_admin_group,1,1,1,1
 access_api_donation,access.api.donation,bn_import_donation.model_api_donation,api_donation_admin_group,1,1,1,1
 access_api_donation_item,access.api.donation.item,bn_import_donation.model_api_donation_item,,1,1,1,1
-access_api_donation_wizard,access.api.donation.wizard,bn_import_donation.model_api_donation_wizard,,1,1,1,1
+access_api_donation_wizard,access.api.donation.wizard,bn_import_donation.model_api_donation_wizard,api_donation_admin_group,1,1,1,1
 access_fetch_history,access.fetch.history,bn_import_donation.model_fetch_history,api_donation_admin_group,1,1,1,1

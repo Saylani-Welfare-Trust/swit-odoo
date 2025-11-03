@@ -105,7 +105,7 @@ class APIDonationWizard(models.TransientModel):
                 if not donation_vals:
                     continue
 
-                donation = self.env['api.donation'].sudo().create(donation_vals)
+                donation = self.env['api.donation'].create(donation_vals)
                 new_donations.append(donation)
 
                 # accumulate journal lines only if configuration exists
@@ -123,7 +123,7 @@ class APIDonationWizard(models.TransientModel):
                     move = self._create_grouped_journal_move(journal, debit_accumulator, credit_accumulator,
                                                              company_currency)
                     
-                    fetch_history = self.env['fetch.history'].sudo().create({
+                    fetch_history = self.env['fetch.history'].create({
                         'start_date': self.start_date,
                         'end_date': self.end_date,
                         'journal_entry_id': move.id
