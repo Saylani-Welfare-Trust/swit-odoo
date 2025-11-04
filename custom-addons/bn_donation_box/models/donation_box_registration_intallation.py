@@ -76,5 +76,5 @@ class DonationBoxRegistrationInstallation(models.Model):
 
         return super(DonationBoxRegistrationInstallation, self).create(vals)
     
-    def install_donation_box(self):
-        raise ValidationError(str(self))
+    def install_donation_box(self, records):
+        raise ValidationError(str(records))
