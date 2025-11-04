@@ -20,6 +20,22 @@
                     </tree>
                 </field>
             </xpath>
+            
+            <xpath expr="//page[@name='online']" position="inside">
+                <field name="api_donation_ids" readonly="1">
+                    <tree>
+                        <field name="dn_number" />
+                        <field name="name" />
+                        <field name="phone" />
+                        <field name="email" />
+                        <field name="website" />
+                        <field name="country" />
+                        <field name="currency" />
+                        <field name="total_amount" />
+                        <field name="total_amount_local" />
+                    </tree>
+                </field>
+            </xpath>
         </field>
     </record>
 
@@ -39,6 +55,22 @@
                         <field name="journal_id" string="Journal" />
                         <field name="amount" />
                         <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
+                    </tree>
+                </field>
+            </xpath>
+           
+            <xpath expr="//page[@name='online']" position="inside">
+                <field name="api_donation_ids" readonly="1">
+                    <tree>
+                        <field name="dn_number" />
+                        <field name="name" />
+                        <field name="phone" />
+                        <field name="email" />
+                        <field name="website" />
+                        <field name="country" />
+                        <field name="currency" />
+                        <field name="total_amount" />
+                        <field name="total_amount_local" />
                     </tree>
                 </field>
             </xpath>
