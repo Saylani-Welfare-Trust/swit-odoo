@@ -8,14 +8,16 @@ patch(ProductsWidget.prototype, {
         const { db } = this.pos;
         let list = [];
         var parent_check = db.get_category_by_id(this.selectedCategoryId)
+
+        console.log(parent_check);
+
         if (this.searchWord !== "") {
             list = db.search_product_in_category(this.selectedCategoryId, this.searchWord);
         } else {
-            if(parent_check.parent_id) {
+            if (!parent_check.child_id || parent_check.child_id.length === 0 || parent_check.name != "Root") {
                 list = db.get_product_by_category(this.selectedCategoryId);
-            }
-            else {
-                list = []
+            } else {
+                list = [];
             }
         }
 
