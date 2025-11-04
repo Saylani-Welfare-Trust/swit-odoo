@@ -14,7 +14,10 @@ patch(ProductsWidget.prototype, {
         if (this.searchWord !== "") {
             list = db.search_product_in_category(this.selectedCategoryId, this.searchWord);
         } else {
-            if (!parent_check.child_id || parent_check.child_id.length === 0 || parent_check.name != "Root") {
+            if (parent_check.name == "Root") {
+                list = []
+            }
+            else if (!parent_check.child_id || parent_check.child_id.length === 0) {
                 list = db.get_product_by_category(this.selectedCategoryId);
             } else {
                 list = [];
