@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
+
     <t t-name="bn_pos_cheque.ChequePopup" owl="1">
         <div class="popup popup-textinput chequeorder">
             <!-- Header -->
@@ -84,4 +85,5 @@
             </div>
         </div>
     </t>
+    
 </templates>

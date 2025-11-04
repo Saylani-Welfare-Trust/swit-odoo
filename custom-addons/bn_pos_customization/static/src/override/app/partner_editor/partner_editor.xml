@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_customization.PartnerDetailsEdit" t-inherit="point_of_sale.PartnerDetailsEdit" t-inherit-mode="extension">
+        <xpath expr="//section" position="replace">
+            <section class="partner-details edit d-flex flex-column m-3">
+                <div class="container">
+                    <div class="partner-details-header d-flex gap-2 align-items-center pe-2">
+                        <div class="partner-picture position-relative rounded text-center border d-flex justify-content-center align-items-center overflow-hidden">
+                            <t t-if="partnerImageUrl">
+                                <img class="rounded object-fit-cover" t-att-src="partnerImageUrl" alt="Partner" style="width: 64px; height: 64px;" />
+                            </t>
+                            <t t-else="">
+                                <i class="fa fa-camera fs-5" role="img" aria-label="Picture" title="Picture"></i>
+                            </t>
+                            <input type="file" class="image-uploader" t-on-change="uploadImage" />
+                        </div>
+                        <input class="form-control form-control-lg" t-model="changes.name" id="name" name="name" placeholder="Name" />
+                    </div>
+
+                    <br/>
+
+                    <label class="form-label" for="category">Donor Type</label>
+                    <div class="partner-details-header d-flex gap-2 pe-2">
+                        <select class="form-control form-control-lg"
+                                id="category"
+                                name="category"
+                                t-model="changes.donor_type"
+                                t-on-change="updateDonorType">
+                            <option value=""> </option>
+                            <option value="individual">Individual</option>
+                            <option value="coorporate">Corporate</option>
+                        </select>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-sm-2 gy-3 mt-3">
+                        <div class="col" t-attf-id="email">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control"
+                                id="email"
+                                name="email"
+                                t-model="changes.email"
+                                placeholder="Email"
+                                t-att="{'disabled': isFieldCommercialAndPartnerIsChild('email')}"
+                                t-att-class="{'border-danger': missingFields.includes('email')}" />
+                        </div>
+
+                        <div class="col" t-attf-id="country_code_id">
+                            <label class="form-label" for="country_code_id">Code</label>
+                            <select class="form-control"
+                                    id="country_code_id"
+                                    name="country_code_id"
+                                    t-model="changes.country_code_id"
+                                    t-att="{'disabled': isFieldCommercialAndPartnerIsChild('country_code_id')}"
+                                    t-att-class="{'border-danger': missingFields.includes('country_code_id')}">
+                                <t t-foreach="countries.list" t-as="country" t-key="country.id">
+                                    <option t-att-value="country.phone_code"
+                                            t-att-selected="(changes.country_code_id ? country.phone_code == changes.country_code_id : country.phone_code == '92')">
+                                        <t t-esc="country.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="col" t-attf-id="mobile">
+                            <label class="form-label" for="mobile">Mobile</label>
+                            <input class="form-control"
+                                id="mobile"
+                                name="mobile"
+                                t-model="changes.mobile"
+                                placeholder="Mobile"
+                                maxlength="10"
+                                t-att="{'disabled': isFieldCommercialAndPartnerIsChild('mobile')}"
+                                t-att-class="{'border-danger': missingFields.includes('mobile')}" />
+                        </div>
+
+                        <div class="col" t-attf-id="cnic_no" t-attf-style="{{ cnicStyle }}">
+                            <label class="form-label" for="cnic_no">CNIC</label>
+                            <input class="form-control"
+                                id="cnic_no"
+                                name="cnic_no"
+                                t-model="changes.cnic_no"
+                                placeholder="CNIC"
+                                t-att="{'disabled': isFieldCommercialAndPartnerIsChild('cnic_no')}"
+                                t-att-class="{'border-danger': missingFields.includes('cnic_no')}" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </xpath>
+    </t>
+
+    
+</templates>

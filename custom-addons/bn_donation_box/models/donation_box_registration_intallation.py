@@ -77,4 +77,15 @@ class DonationBoxRegistrationInstallation(models.Model):
         return super(DonationBoxRegistrationInstallation, self).create(vals)
     
     def install_donation_box(self, records):
-        raise ValidationError(str(records))
+        # raise ValidationError(str(records))
+        
+        for rec in records:
+            rec.action_install()
+    
+    def add_demo_rider(self, records):
+        for rec in records:
+            rec.rider_id = 1 # Default Odoo Administrator ID
+
+    def approve_donation_box(self, records):
+        for rec in records:
+            rec.action_approved()

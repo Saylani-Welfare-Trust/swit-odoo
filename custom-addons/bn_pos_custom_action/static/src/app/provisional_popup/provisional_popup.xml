@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<templates id="template" xml:space="preserve">
 
     <t t-name="bn_pos_custom_action.ProvisionalPopup">
         <div class="popup popup-selection">
@@ -51,4 +51,4 @@
         </div>
     </t>
 
-</odoo>
+</templates>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_customization.ProductsWidget" t-inherit="point_of_sale.ProductsWidget" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('product-list-container')]" position="replace">
+            <div class="product-list-container flex-grow-1 overflow-y-auto"
+                t-att-style="productsToDisplay.length == 0 ? 'background-image: url(\'/bn_pos_customization/static/src/images/banner.png\'); background-size: cover; background-repeat: no-repeat; background-position: center;' : ''">
+                <div t-if="productsToDisplay.length != 0 and pos.posHasValidProduct()" t-attf-class="product-list {{this.pos.productListViewMode}} p-1">
+                    <t t-foreach="productsToDisplay" t-as="product" t-key="product.id">
+                        <ProductCard
+                            class="pos.productViewMode"
+                            name="product.display_name"
+                            productId="product.id"
+                            price="product.getFormattedUnitPrice()"
+                            imageUrl="pos.show_product_images and product.getImageUrl()"
+                            onClick="() =>this.pos.addProductToCurrentOrder(product)"
+                            productInfo="true"
+                            onProductInfoClick="() => this.onProductInfoClick(product)"
+                        />
+                    </t>
+                </div>
+                <div t-else="" class="product-list-empty no-results-message text-center position-absolute top-50 start-50 translate-middle z-3">
+                    <t t-if="searchWord">
+                        <div class="bg-white bg-opacity-75 p-4 rounded shadow-sm">
+                            <p class="text-dark m-0">
+                                No products found for <b>"<t t-esc="searchWord"/>"</b> in this category.
+                            </p>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <t t-if="pos.posHasValidProduct()">
+                            <div class="bg-white bg-opacity-75 p-4 rounded shadow-sm">
+                                <p class="text-dark m-0">There are no products in this category.</p>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div t-if="!state.loadingDemo"
+                                class="bg-white bg-opacity-75 p-4 rounded shadow-sm">
+                                <p class="text-dark m-0 fs-5">
+                                    No products available. Explore
+                                    <a role="button" class="fw-bold text-decoration-underline" t-on-click="loadDemoDataProducts">demo data</a>
+                                    or
+                                    <a role="button" class="fw-bold text-decoration-underline" t-on-click="createNewProducts">create your own</a>.
+                                </p>
+                            </div>
+                            <div t-else=""
+                                class="position-absolute top-0 start-0 bg-dark bg-opacity-50 w-100 h-100 d-flex align-items-center justify-content-center text-white">
+                                <div class="text-center">
+                                    <div class="spinner-border text-light mb-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div>Loading...</div>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </div>
+                <div t-if="searchWord" class="search-more-button d-flex justify-content-center">
+                    <button class="btn btn-primary btn-lg" t-on-click="onPressEnterKey">Search more</button>
+                </div>
+                <div class="portal search-database-button no-results-message" t-att-class="{ 'd-none':  !shouldShowButton }"></div>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_customization.CategorySelector" t-inherit="point_of_sale.CategorySelector" t-inherit-mode="extension">
+        <xpath expr="//button" position="replace">
+            <button
+                class="category-button btn btn-light d-flex flex-column align-items-center justify-content-center category-item p-1 h-100"
+                style="min-width: 100px; width: auto;"
+                t-on-click="() => props.onClick(category.id)">
+                <t t-if="props.showImage">
+                    <img t-if="category.imageUrl"
+                        class="rounded h-75"
+                        t-att-src="category.imageUrl"
+                        alt="Category" />
+                </t>
+                <i t-if="category.icon"
+                    t-attf-class="fa {{category.icon}}"
+                    aria-hidden="true" />
+                <span t-if="category.name" class="w-100 text-center fs-5 inline-block text-truncate" t-esc="category.name" style="min-height: 1.2rem" />
+            </button>
+        </xpath>
+    </t>
+
+</templates>
