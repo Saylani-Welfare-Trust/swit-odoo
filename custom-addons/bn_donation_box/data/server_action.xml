@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data>
+
+        <record id="bulk_install_server_action" model="ir.actions.server">
+            <field name="name">Bulk Install | BN</field>
+            <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+            <field name="state">code</field>
+            <field name="code">
+model.install_donation_box()
+            </field>
+        </record>
+
+    </data>
+
+</odoo>

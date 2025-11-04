@@ -14,8 +14,9 @@
         'bn_pos_custom_action'
     ],
     'data': [
-        'security/ir.model.access.csv',
         'security/groups.xml',
+        'security/ir.model.access.csv',
+        'data/server_action.xml',
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',

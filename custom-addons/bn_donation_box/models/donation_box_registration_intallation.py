@@ -75,3 +75,6 @@ class DonationBoxRegistrationInstallation(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or ('New')
 
         return super(DonationBoxRegistrationInstallation, self).create(vals)
+    
+    def install_donation_box(self):
+        raise ValidationError(str(self))
