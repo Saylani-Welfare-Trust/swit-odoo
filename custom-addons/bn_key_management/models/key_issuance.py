@@ -98,17 +98,16 @@ class KeyIssuance(models.Model):
 
         collection.state = 'paid'
 
-        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', '=', 'issued')])
+        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', '=', 'issued')], limit=1)
 
         if not key_obj:
             return {
-            "status": "error",
-            "body": "Invalid Donation Box",
+                "status": "error",
+                "body": "Invalid Donation Box",
             }
 
-        for key in key_obj:
-            key.donation_amount = data['amount']
-            key.action_donation_receive()
+        key_obj.donation_amount = data['amount']
+        key_obj.action_donation_receive()
 
         return {
             "status": "success",
