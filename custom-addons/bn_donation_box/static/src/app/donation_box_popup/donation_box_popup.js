@@ -59,7 +59,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                 this.notification.add(_t("Amount Recorded Successfully"), {
                     type: "info",
                 });
-                this.report.doAction("bn_donation_box.donation_box_receipt_template", [data.id]);
+                this.report.doAction("bn_donation_box.donation_box_receipt_report_action", [data.id]);
             }
         });
     }
