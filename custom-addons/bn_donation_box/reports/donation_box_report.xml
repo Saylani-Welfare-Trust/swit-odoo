@@ -39,13 +39,17 @@
                                 <div class="col-md-6 mb-2">
                                     <span class="fw-bold">Issued On:</span>
                                     <span class="ms-2">
-                                        <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
+                                        <t t-if="o.issued_on">
+                                            <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
+                                        </t>
                                     </span>
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <span class="fw-bold">Returned On:</span>
                                     <span class="ms-2">
-                                        <t t-esc="o.returned_on.strftime('%d-%m-%Y')"/>
+                                        <t t-if="o.returned_on">
+                                            <t t-esc="o.returned_on.strftime('%d-%m-%Y')"/>
+                                        </t>
                                     </span>
                                 </div>
                             </div>
