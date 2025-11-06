@@ -50,6 +50,9 @@ class RiderSchedule(models.TransientModel):
             # ✅ No existing collection → create new from shift
             for obj in rider_shift_obj:
                 lot_ids = obj.key_bunch_id.key_ids.mapped('lot_id')
+
+                raise UserError(str(lot_ids) + "    " + str(rider_shift_obj))
+
                 boxes = self.env['donation.box.registration.installation'].search([('lot_id', 'in', lot_ids.ids)])
 
                 for box in boxes:
