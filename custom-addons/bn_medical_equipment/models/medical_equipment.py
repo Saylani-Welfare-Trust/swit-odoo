@@ -32,6 +32,8 @@ class MedicalEquipment(models.Model):
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
+
+
     @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
     def _compute_total_amount(self):
         for record in self:
@@ -39,9 +41,7 @@ class MedicalEquipment(models.Model):
             for line in record.medical_equipment_line_ids:
                 # Use 'amount' instead of 'amounts'
                 total += line.amounts * line.quantity
-            record.total_amount = total
-            
-            
+            record.total_amount = total    
 
     @api.model
     def create(self, vals):

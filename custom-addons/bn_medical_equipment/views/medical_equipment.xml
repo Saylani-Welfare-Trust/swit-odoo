@@ -56,8 +56,7 @@
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">
-                                <!-- <field name="amount" readonly="1"/> -->
-                                <field name="total_amounts" readonly="1"/>
+                                <field name="total_amount" readonly="1"/>
                             </group>
                         </page>
                     </notebook>
