@@ -6,8 +6,8 @@ status_selection = [
     ('draft', 'Draft'),
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
+    ('return', 'Return'),
     ('payment_return','Payment Return'),
-    ('return', 'Return')
 ]
 
 
@@ -21,16 +21,27 @@ class MedicalEquipment(models.Model):
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
 
     name = fields.Char('Name', default="New")
-    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.")
+    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.",)
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
-    total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
+    
+    total_amount = fields.Monetary('Total Amount', currency_field='currency_id',compute='_compute_total_amount',store=True)
+    
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
-
+    @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
+    def _compute_total_amount(self):
+        for record in self:
+            total = 0.0
+            for line in record.medical_equipment_line_ids:
+                # Use 'amount' instead of 'amounts'
+                total += line.amounts * line.quantity
+            record.total_amount = total
+            
+            
 
     @api.model
     def create(self, vals):
@@ -40,13 +51,95 @@ class MedicalEquipment(models.Model):
         return super(MedicalEquipment, self).create(vals)
     
     def calculate_amount(self):
-        self.amount = sum(line.amount for line in self.medical_equipment_line_ids)
-
-    def action_validate(self):
-        raise ValidationError('Functionality Coming soon')
-    
+        self.amounts = sum(line.amount for line in self.medical_equipment_line_ids)
     def action_return(self):
-        raise ValidationError('Functionality Coming soon')
+        
+        
+        """
+        Automatically create return picking and update state
+        """
+        self.ensure_one()
+        
+        if not self.picking_id:
+            raise ValidationError('No stock picking found to return. Please validate the equipment first.')
+        
+        if self.picking_id.state != 'done':
+            raise ValidationError('Stock picking must be validated before returning.')
+        
+        # Create return wizard and generate return picking
+        return_wizard = self.env['stock.return.picking'].with_context(
+            active_id=self.picking_id.id,
+            active_ids=[self.picking_id.id],
+            active_model='stock.picking'
+        ).create({})
+        
+        # Create the return picking
+        result = return_wizard.create_returns()
+        
+        if result and result.get('res_id'):
+            return_picking = self.env['stock.picking'].browse(result['res_id'])
+            
+            # Update medical equipment record
+            self.write({
+                'picking_id': return_picking.id,
+                'state': 'return'
+            })
+            
+            # Optional: Validate the return picking automatically
+            return_picking.action_confirm()
+            return_picking.action_assign()
+            return_picking.button_validate()
+            
+            # Show success message and open the return picking
+            return True
+        
+        raise ValidationError('Failed to create return picking.')
+    
+    def action_validate(self):
+        """
+        Create a stock.picking record and assign operation type
+        """
+        # Ensure we're working with a single record
+        self.ensure_one()
+        
+      
+        operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
+      
+        
+        # Prepare stock picking values
+        picking_vals = {
+            'picking_type_id': operation_type.id,
+            'location_id': operation_type.default_location_src_id.id,
+            'location_dest_id': operation_type.default_location_dest_id.id,
+            'origin': self.name,  # Reference to your medical equipment record
+            'scheduled_date': fields.Datetime.now(),
+            'move_ids': [(0, 0, {
+                'name': f'Medical Equipment: {self.name}',
+                'product_id': product_line.product_id.id,
+                'product_uom_qty': product_line.quantity,
+                'product_uom': product_line.product_id.uom_id.id,
+                'location_id': operation_type.default_location_src_id.id,
+                'location_dest_id': operation_type.default_location_dest_id.id,
+                'name': product_line.product_id.name,
+            }) for product_line in self.medical_equipment_line_ids],
+        }
+        
+        # Create the stock picking
+        stock_picking = self.env['stock.picking'].create(picking_vals)  
+        stock_picking.action_confirm()
+        stock_picking.action_assign()
+        stock_picking.button_validate()
+        
+        # Link the stock picking to your medical equipment record
+        self.write({
+            'picking_id': stock_picking.id,
+            'state': 'validate'  # Or whatever your next state should be
+        })
+        
+        # Optional: Validate the picking automatically
+        # stock_picking.button_validate()
+        return True
+        
     
     def action_show_picking(self):
         return {
