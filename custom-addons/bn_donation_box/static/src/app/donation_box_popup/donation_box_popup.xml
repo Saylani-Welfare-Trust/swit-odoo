@@ -12,7 +12,7 @@
                     <select class="form-select w-100" id="rider_id" name="rider_id"
                             t-on-change="onSelection">
                         <option value="">-- Select Rider --</option>
-                        <t t-foreach="rider_ids" t-as="rider" t-key="rider.id">
+                        <t t-foreach="props.rider_ids" t-as="rider" t-key="rider.id">
                             <option t-att-value="rider.id">
                                 <t t-esc="rider.name"/>
                             </option>
@@ -37,8 +37,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-if="rider_collections.length">
-                                <t t-foreach="rider_collections" t-as="collection" t-key="collection.id">
+                            <t t-if="props.rider_collections.length">
+                                <t t-foreach="props.rider_collections" t-as="collection" t-key="collection.id">
                                     <tr>
                                         <td t-esc="collection.day"/>
                                         <td t-esc="collection.date"/>
