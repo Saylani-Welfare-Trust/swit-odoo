@@ -66,7 +66,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             // 🔹 Search for "Donation Box Receipt" product
             const product_data = await this.orm.call('product.product', 'search_read', [
                 [['name', '=', 'Donation Box Receipt']],
-                ['id', 'name', 'lst_price']
+                ['id', 'name']
             ]);
 
             if (!product_data.length) {

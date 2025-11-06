@@ -45,6 +45,7 @@ class POSCheque(models.Model):
             raise ValidationError('You can not bounce the cheque more then 3 times')
 
         self.bounce_count += 1
+        self.state = 'bounce'
     
     def action_cancel(self):
         self.state = 'cancel'
