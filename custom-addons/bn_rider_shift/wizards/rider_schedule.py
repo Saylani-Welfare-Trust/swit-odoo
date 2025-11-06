@@ -24,14 +24,20 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
 
-        # First, check if collections already exist for this rider + date
-        existing_collections = self.env['rider.collection'].search([
-            ('rider_id', '=', employee.id),
-            ('date', '=', today)
-        ])
+        for obj in rider_shift_obj:
+            lot_ids = obj.key_bunch_id.key_ids.mapped('lot_id')
 
-        if existing_collections:
-            # ✅ Use existing collections
+            # 🔹 Fetch existing collections for these lot_ids
+            existing_collections = self.env['rider.collection'].search([
+                ('rider_id', '=', employee.id),
+                ('date', '=', today),
+                ('lot_id', 'in', lot_ids.ids),
+            ])
+
+            # Get already existing lot_ids
+            existing_lot_ids = existing_collections.mapped('lot_id').ids
+
+            # 🔹 Add existing collections to the lines
             for record in existing_collections:
                 line_vals.append((0, 0, {
                     'rider_collection_id': record.id,
@@ -46,14 +52,13 @@ class RiderSchedule(models.TransientModel):
                     'contact_number': record.contact_number,
                     'amount': record.amount,
                 }))
-        else:
-            # ✅ No existing collection → create new from shift
-            for obj in rider_shift_obj:
-                lot_ids = obj.key_bunch_id.key_ids.mapped('lot_id')
 
-                raise UserError(str(lot_ids) + "    " + str(rider_shift_obj))
-
-                boxes = self.env['donation.box.registration.installation'].search([('lot_id', 'in', lot_ids.ids)])
+            # 🔹 Create new collections only for missing lot_ids
+            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
+            if missing_lot_ids:
+                boxes = self.env['donation.box.registration.installation'].search([
+                    ('lot_id', 'in', missing_lot_ids)
+                ])
 
                 for box in boxes:
                     collection = self.env['rider.collection'].create({
@@ -80,7 +85,7 @@ class RiderSchedule(models.TransientModel):
                     }))
 
         # ✅ Build wizard
-        rider_scheulde = self.env['rider.schedule'].create({
+        rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
         })
 
@@ -89,6 +94,6 @@ class RiderSchedule(models.TransientModel):
             'res_model': 'rider.schedule',
             'view_mode': 'form',
             'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
-            'res_id': rider_scheulde.id,
+            'res_id': rider_schedule.id,
             'target': 'new'
         }
