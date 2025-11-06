@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidaitonError
 
 
 day_selection = [
@@ -47,6 +48,8 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
+        raise ValidaitonError('Hit')
+
         collection_ids = self.env['rider.collection'].sudo().search([('state', '=', 'donation_submit')])
 
         if not collection_ids:
