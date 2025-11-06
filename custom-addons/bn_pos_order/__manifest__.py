@@ -9,6 +9,7 @@
         'point_of_sale'
     ],
     'data': [
+        'data/paper_format.xml',
         'reports/duplicate_dn.xml',
         'views/pos_order.xml',
     ],
