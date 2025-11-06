@@ -3,7 +3,7 @@
 
     <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('pos-receipt')]" position="replace">
-            <div class="pos-receipt" style="margin-top: 600px;">
+            <div class="pos-receipt">
                 <t t-set="company" t-value="props.data.headerData.company"/>
                 <t t-set="order" t-value="props.data"/>
                 <t t-set="partner" t-value="props.data.partner"/>
@@ -13,7 +13,7 @@
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
                 <!-- Header -->
-                <hr class="border-top border-2 border-dark my-3"/>
+                <hr class="border-top border-2 border-dark my-3" style="margin-top: 600px;"/>
 
                 <div class="row">
                     <div class="col-4">
