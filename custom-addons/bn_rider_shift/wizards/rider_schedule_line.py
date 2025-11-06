@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.exceptions import ValidationError
 
 
 day_selection = [
@@ -48,10 +49,31 @@ class RiderScheduleLine(models.TransientModel):
     def mark_as_done(self):
         self.state = 'donation_collected'
         self.rider_collection_id.state = 'donation_collected'
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'rider.schedule',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
+            'res_id': self.rider_schedule_id.id,
+            'target': 'new'
+        }
     
     def mark_as_submit(self):
+        if not self.amount:
+            raise ValidationError('Please first enter the collected amount.')
+
         self.state = 'donation_submit'
         self.submission_time = fields.Datetime.now()
         self.rider_collection_id.state = 'donation_submit'
         self.rider_collection_id.submission_time = fields.Datetime.now()
         self.rider_collection_id.amount = self.amount
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'rider.schedule',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
+            'res_id': self.rider_schedule_id.id,
+            'target': 'new'
+        }
