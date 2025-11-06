@@ -13,7 +13,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
     static template = "bn_pos_cheque.ChequePopup";
 
     async get_pos_cheque() {
-        console.log(this.pos);
+        // console.log(this.pos);
 
         const shop = this.pos.config.id;
 
@@ -21,7 +21,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
             
         const result = await this.orm.call('pos.order', 'get_cheque_pos_order', [this.state.activeId, shop, offset, this.state.limit]);
 
-        console.log(result);
+        // console.log(result);
         
         this.state.chequeorder = result.orders;
         this.state.totalRecords = result.total_count;

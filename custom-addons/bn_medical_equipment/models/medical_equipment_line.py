@@ -11,5 +11,10 @@ class DonationHomeServiceLine(models.Model):
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
     
     quantity = fields.Integer('Quantity', default=1)
+    amounts = fields.Float(
+    string='Amount', 
+    related='product_id.lst_price',
+    readonly=True
+)
 
-    amount = fields.Monetary('Amount', currency_field='currency_id')
+    

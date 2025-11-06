@@ -60,7 +60,7 @@ class RiderSchedule(models.TransientModel):
                         'shop_name': box.name,
                         'lot_id': box.lot_id.id,
                         'box_location': box.location,
-                        'contact_person': box.contact_person_name,
+                        'contact_person': box.contact_person,
                         'contact_number': box.contact_no,
                     })
 
@@ -77,13 +77,13 @@ class RiderSchedule(models.TransientModel):
                     }))
 
         # ✅ Build wizard
-        rider_scheulde = self.env['rider.shedule'].create({
-            'rider_shift_wizard_line_ids': line_vals
+        rider_scheulde = self.env['rider.schedule'].create({
+            'rider_schedule_line_ids': line_vals
         })
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'rider.shedule',
+            'res_model': 'rider.schedule',
             'view_mode': 'form',
             'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
             'res_id': rider_scheulde.id,

@@ -7,7 +7,7 @@ import { CustomClosingPopup } from "../app/closing_popup/custom_closing_popup";
 
 patch(Navbar.prototype, {
     async closeSession() {
-        console.log(this);
+        // console.log(this);
 
         const info = await this.pos.getClosePosInfo();
         this.popup.add(CustomClosingPopup, { ...info });
