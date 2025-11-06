@@ -47,7 +47,7 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
-        collection_ids = self.sudo().search([('state', '=', 'donation_submit')])
+        collection_ids = self.env['rider.collection'].sudo().search([('state', '=', 'donation_submit')])
 
         if not collection_ids:
             return {
