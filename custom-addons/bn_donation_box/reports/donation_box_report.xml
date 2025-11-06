@@ -33,7 +33,7 @@
                                 <div class="col-md-6 mb-2">
                                     <span class="fw-bold">Box No.:</span>
                                     <span class="ms-2">
-                                        <t t-esc="o.box_no"/>
+                                        <t t-esc="o.lot_id.name"/>
                                     </span>
                                 </div>
                                 <div class="col-md-6 mb-2">
@@ -127,7 +127,7 @@
         <field name="report_file">bn_donation_box.donation_box_receipt_template</field>
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
-        <field name="print_report_name">'Donation Box Receipt - %s' % (object.box_no)</field>
+        <field name="print_report_name">'Donation Box Receipt - %s' % (object.lot_id.name)</field>
         <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
     </record>
 
