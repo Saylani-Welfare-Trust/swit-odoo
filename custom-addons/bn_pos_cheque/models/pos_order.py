@@ -32,7 +32,7 @@ class POSOrder(models.Model):
             self.pos_cheque_id.bank_name = self.bank_name
             self.pos_cheque_id.name = self.cheque_number
             self.pos_cheque_id.date = self.cheque_date
-        elif not ui_order.get('qr_code'):
+        elif not ui_order.get('qr_code') and ui_order.get('cheque_number'):
             cheque = self.env['pos.cheque'].create({
                 'bank_name': ui_order.get('bank_name'),
                 'name': ui_order.get('cheque_number'),
