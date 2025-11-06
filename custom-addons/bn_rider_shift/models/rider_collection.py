@@ -58,7 +58,7 @@ class RiderCollection(models.Model):
                 "body": f"No donation collections were found for today {fields.Date.today().strftime('%d-%m-%Y')}."
             }
 
-        raise ValidationError(str(collection_ids))
+        # raise ValidationError(str(collection_ids))
 
         return {
             "status": "success",

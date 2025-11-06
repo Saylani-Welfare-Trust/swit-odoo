@@ -10,6 +10,8 @@ import {_t} from "@web/core/l10n/translation";
 patch(ActionScreen.prototype, {
     async clickRecordDonation() {
         await this.orm.call('rider.collection', "get_rider_collection", []).then((data) => {
+            console.log(data);
+
             if (data.status === 'error') {
                 this.popup.add(ErrorPopup, {
                     title: _t("Error"),
