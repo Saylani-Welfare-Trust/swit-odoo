@@ -248,8 +248,8 @@
                                                     Cheque #:
                                                 </div>
                                                 <div style="width: 60%; font-size: 12px; font-weight: 500;">
-                                                    <t t-if="order.cheuque_number">
-                                                        <t t-esc="order.cheuque_number"/>
+                                                    <t t-if="order.cheque_number">
+                                                        <t t-esc="order.cheque_number"/>
                                                     </t>
                                                     <t t-else="">
                                                         -
