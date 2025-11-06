@@ -12,7 +12,7 @@
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
-                <div class="row" style="margin-top: 212px;">
+                <div class="row" style="margin-top: 250px;">
                     <div class="col-4">
                         <h1 class="fs-3 fw-bold text-uppercase">Donation Receipt</h1>
                     </div>
