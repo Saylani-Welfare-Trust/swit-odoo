@@ -106,8 +106,9 @@ class KeyIssuance(models.Model):
             "body": "Invalid Donation Box",
             }
 
-        key_obj.donation_amount = data['amount']
-        key_obj.action_donation_receive()
+        for key in key_obj:
+            key.donation_amount = data['amount']
+            key.action_donation_receive()
 
         return {
             "status": "success",
