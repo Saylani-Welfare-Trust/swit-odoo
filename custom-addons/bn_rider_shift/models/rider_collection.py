@@ -48,7 +48,7 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
-        raise ValidationError('Hit')
+        # raise ValidationError('Hit')
 
         collection_ids = self.env['rider.collection'].sudo().search([('state', '=', 'donation_submit')])
 
@@ -57,6 +57,8 @@ class RiderCollection(models.Model):
                 "status": "error",
                 "body": f"No donation collections were found for today {fields.Date.today().strftime('%d-%m-%Y')}."
             }
+
+        raise ValidationError(str(collection_ids))
 
         return {
             "status": "success",
