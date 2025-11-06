@@ -49,20 +49,55 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             amount: collection.amount
         };
 
-        await this.orm.call('key.issuance', "set_donation_amount", [payload]).then((data) => {
-            if (data.status === 'error') {
+        // 🔹 First call your custom method
+        const data = await this.orm.call('key.issuance', "set_donation_amount", [payload]);
+
+        if (data.status === 'error') {
+            this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: data.body,
+            });
+            return;
+        }
+
+        if (data.status === 'success') {
+            this.notification.add(_t("Amount Recorded Successfully"), { type: "info" });
+
+            // 🔹 Search for "Donation Box Receipt" product
+            const product_data = await this.orm.call('product.product', 'search_read', [
+                [['name', '=', 'Donation Box Receipt']],
+                ['id', 'name', 'lst_price']
+            ]);
+
+            if (!product_data.length) {
                 this.popup.add(ErrorPopup, {
                     title: _t("Error"),
-                    body: data.body,
+                    body: _t("Product 'Donation Box Receipt' not found. Please create it in Products."),
                 });
-            } else if (data.status === 'success') {
-                this.notification.add(_t("Amount Recorded Successfully"), {
-                    type: "info",
-                });
-                this.report.doAction("bn_donation_box.donation_box_receipt_report_action", [data.id]);
-
-                this.cancel();
+                return;
             }
-        });
+
+            // 🔹 Check if product is loaded in POS session
+            const product = this.pos.db.get_product_by_id(product_data[0].id);
+            if (!product) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: _t("Donation Box Receipt product not loaded in POS session."),
+                });
+                return;
+            }
+
+            // 🔹 Add product line to current order
+            const current_order = this.pos.get_order();
+            if (current_order) {
+                current_order.add_product(product, {
+                    price: collection.amount,
+                    quantity: 1
+                });
+            }
+
+            // 🔹 Close popup
+            this.cancel();
+        }
     }
 }
