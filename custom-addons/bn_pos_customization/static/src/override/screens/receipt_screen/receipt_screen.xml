@@ -3,7 +3,7 @@
 
     <t t-name="bn_pos_customization.ReceiptScreen" t-inherit="point_of_sale.ReceiptScreen" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('pos-receipt-container')]" position="replace">
-            <div class="mt-5 pos-receipt-container user-select-none bg-200 overflow-hidden">
+            <div class="pos-receipt-container user-select-none bg-200 overflow-hidden">
                 <OrderReceipt data="pos.get_order().export_for_printing()" formatCurrency="env.utils.formatCurrency" />
             </div>
         </xpath>
