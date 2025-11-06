@@ -9,21 +9,45 @@ import {_t} from "@web/core/l10n/translation";
 
 patch(ActionScreen.prototype, {
     async clickRecordDonation() {
-        await this.orm.call('rider.collection', "get_rider_collection", []).then((data) => {
-            console.log(data);
+        const data = await this.orm.call('rider.collection', "get_rider_collection", []);
 
-            if (data.status === 'error') {
-                this.popup.add(ErrorPopup, {
-                    title: _t("Error"),
-                    body: data.body,
-                });
-            }
-            else if (data.status === 'success') {
+        console.log("Received Data:", data);
+
+        // Check if data exists and has the required structure
+        if (!data || typeof data !== 'object') {
+            this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: _t("No data received from the server."),
+            });
+            return;
+        }
+
+        if (data.status === 'error') {
+            this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: data.body || _t("An unknown error occurred."),
+            });
+        } 
+        else if (data.status === 'success') {
+            // Check if collection and rider IDs exist before proceeding
+            if (data.collection_ids && data.collection_ids.length > 0) {
                 this.popup.add(DonationBoxPopup, {
                     collection_ids: data.collection_ids,
-                    rider_ids: data.disbursement_ids
+                    rider_ids: data.disbursement_ids || [],
+                });
+            } else {
+                this.popup.add(ErrorPopup, {
+                    title: _t("No Collections Found"),
+                    body: _t("No collection data was received for this rider."),
                 });
             }
-        });
+        } 
+        else {
+            // Handle unexpected response
+            this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: _t("Unexpected response from the server."),
+            });
+        }
     }
 });
