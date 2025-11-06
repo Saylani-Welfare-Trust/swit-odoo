@@ -60,6 +60,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                     type: "info",
                 });
                 this.report.doAction("bn_donation_box.donation_box_receipt_report_action", [data.id]);
+
+                this.cancel();
             }
         });
     }
