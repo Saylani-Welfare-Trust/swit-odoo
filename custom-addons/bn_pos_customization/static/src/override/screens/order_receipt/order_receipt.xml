@@ -13,7 +13,7 @@
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
                 <!-- Header -->
-                <hr class="mt-5 border-top border-2 border-dark my-3"/>
+                <hr class="border-top border-2 border-dark my-3"/>
 
                 <div class="row">
                     <div class="col-4">
