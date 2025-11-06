@@ -72,7 +72,7 @@
                                             <t t-esc="o.product_id.name"/>
                                         </td>
                                         <td class="text-center py-2">
-                                            <t t-esc="o.donation_box_id.name"/>
+                                            <t t-esc="o.donation_box_request_id.name"/>
                                         </td>
                                         <td class="text-center fw-bold py-2">
                                             <t t-esc="o.donation_amount"/>
