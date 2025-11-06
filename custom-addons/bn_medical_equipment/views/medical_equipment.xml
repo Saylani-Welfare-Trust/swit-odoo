@@ -20,9 +20,9 @@
             <form>
                 <header>
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'payment_received'" />
-                    <button string="Return" name="action_return" type="object" invisible="state != 'validate'" />
+                    <button string="Return" name="action_return" type="object" invisible="state != 'payment_return'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, payment_received, validate,return,payment_return," />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, payment_received, validate, payment_return, return" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -52,12 +52,12 @@
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>
                                     <field name="quantity"/>
-                                    <field name="amounts" readonly="1"/>
+                                    <field name="amount" readonly="1"/>
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">
-                                <!-- <field name="amount" readonly="1"/> -->
-                                <field name="total_amounts" readonly="1"/>
+                                <field name="amount" readonly="1"/>
+                                <field name="total_amount" readonly="1"/>
                             </group>
                         </page>
                     </notebook>

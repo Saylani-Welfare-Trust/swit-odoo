@@ -63,6 +63,6 @@ class RiderShift(models.Model):
                 current_date += timedelta(days=1)
             
             if lines_to_create:
-                self.env['rider.schedule.day'].create(lines_to_create)
+                self.env['schedule.day'].create(lines_to_create)
         
         return True

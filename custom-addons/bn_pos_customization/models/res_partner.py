@@ -1,21 +1,10 @@
-from odoo import models, api, fields
+from odoo import models, api
 from odoo.exceptions import ValidationError
 
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-
-    categories = fields.Char('Categories', compute="_compute_category_names", store=True)
-
-
-    @api.depends('category_id')
-    def _compute_category_names(self):
-        for partner in self:
-            partner.categories = ""
-
-            if partner.category_id:
-                partner.categories = ", ".join(partner.category_id.mapped("name"))
 
     @api.model
     def create_from_ui(self, partner):

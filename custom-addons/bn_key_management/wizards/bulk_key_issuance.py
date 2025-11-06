@@ -29,7 +29,7 @@ class BulkKeyIssuance(models.TransientModel):
     def _set_rider_domain(self):
         for rec in self:
             if rec.date:
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
+                schedule_days = self.env['schedule.day'].search([('date', '=', rec.date)])
                 rec.rider_ids = [(6, 0, schedule_days.mapped('rider_shift_id.rider_id').ids)]
             else:
                 rec.rider_ids = [(6, 0, [])]
@@ -38,7 +38,7 @@ class BulkKeyIssuance(models.TransientModel):
     def _set_location_domain(self):
         for rec in self:
             if rec.date:
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
+                schedule_days = self.env['schedule.day'].search([('date', '=', rec.date)])
                 rec.domain_key_bunch_ids = [(6, 0, schedule_days.mapped('key_bunch_id').ids)]
             else:
                 rec.domain_key_bunch_ids = [(6, 0, [])]
