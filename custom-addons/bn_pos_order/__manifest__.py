@@ -10,6 +10,7 @@
     ],
     'data': [
         'reports/duplicate_dn.xml',
+        'views/pos_order.xml',
     ],
     'auto_install': False,
     'application': False,
