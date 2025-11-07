@@ -11,8 +11,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     static template = "bn_pos_custom_action.ReceivingPopup";
 
     setup() {
-        super.setup();
-        
         // Initialize services
         this.pos = usePos();
         this.orm = useService("orm");
@@ -59,14 +57,20 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     async confirm() {
         const selectedOrder = this.pos.get_order();
+
+        if (!this.state.record_number) {
+            this.notification.add(
+                "Please Enter a Number",
+                { type: 'info' }
+            );
+        }
         
         // Handle different action types
-        if (this.active_type === 'dhs') {
+        if (this.action_type === 'dhs') {
             return;
         } 
-        
         // Process medical equipment records
-        if (this.state.record_number.slice(0, 2).toLowerCase() === 'me') {
+        if (this.action_type === 'me') {
             await this.processMedicalEquipmentRecord(selectedOrder);
         }
     }
@@ -190,7 +194,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     async addProductsToOrder(equipmentLines, equipmentRecord, selectedOrder) {
         let addedProductsCount = 0;
         
-        for (const line of equipmentLines) {
+        for (let line of equipmentLines) {
             if (await this.addProductLine(line, equipmentRecord, selectedOrder)) {
                 addedProductsCount++;
             }
@@ -215,11 +219,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return false;
         }
 
-        const quantity = this.calculateProductPrice(line, product, equipmentRecord);
+        const quantity = this.calculateProductPrice(line, equipmentRecord);
         // console.log(`Adding product ${product.display_name} with price ${price}`);
         
         selectedOrder.add_product(product, {
-            quantity: quantity|| 1,
+            quantity: quantity || 1,
             price:  line.amounts || product.lst_price,
             merge: false
         });
@@ -231,21 +235,19 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Calculate product price based on equipment state
      */
-    calculateProductPrice(line, product, equipmentRecord) {
-        let Price = line.quantity;
+    calculateProductPrice(line, equipmentRecord) {
+        let qty = line.quantity;
         
         // Apply negative price for return state
         if (equipmentRecord.state == 'return') {
-            Price = -1*Price;
-            console.log(`Using negative price for return state: ${Price}`);
-           
-            
-                
-            
+            qty = -1*qty;
+
+            // console.log(`Using negative price for return state: ${qty}`);
         }
+
         // console.log(`Using standard price: ${Price}`);
         
-        return Price;
+        return qty;
     }
 
     /**

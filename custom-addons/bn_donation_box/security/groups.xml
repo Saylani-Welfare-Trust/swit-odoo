@@ -5,6 +5,14 @@
         <field name="name">Menu</field>
     </record>
     
+    <record id="donation_box_registration_admin_group" model="res.groups">
+        <field name="name">Registration or Installation / Admin</field>
+    </record>
+
+    <record id="donation_box_registration_user_group" model="res.groups">
+        <field name="name">Registration or Installation / User</field>
+    </record>
+    
     <record id="donation_box_request_approve_reject_group" model="res.groups">
         <field name="name">Request / Approve or Reject</field>
     </record>

@@ -20,6 +20,7 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_pos_cheque/static/src/app/**/*',
+            'bn_pos_cheque/static/src/screens/**/*',
             'bn_pos_cheque/static/src/models/*',
         ],
     }

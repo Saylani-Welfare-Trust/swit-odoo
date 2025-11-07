@@ -4,7 +4,7 @@ import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaita
 import { _t } from '@web/core/l10n/translation';
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
-import {ErrorPopup} from "@point_of_sale/app/errors/popups/error_popup";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 export class DonationBoxPopup extends AbstractAwaitablePopup {
     static template = "bn_donation_box.DonationBoxPopup";

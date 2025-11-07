@@ -10,13 +10,13 @@
                 <field name="name" string="Cheque No." />
                 <field name="date" />
                 <field name="bounce_count" />
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" decoration-danger="state == 'cancel'" />
 
                 <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
 
-                <button string="Clear" name="action_clear" type="object" class="oe_highlight"/>
-                <button string="Bounce" name="action_bounce" type="object" />
-                <button string="Cancel" name="action_cancel" type="object" class="btn-danger"/>
+                <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state == 'cancel'" />
+                <button string="Bounce" name="action_bounce" type="object" invisible="bounce_count > 3" />
+                <!-- <button string="Cancel" name="action_cancel" type="object" class="btn-danger"/> -->
             </tree>
         </field>
     </record>

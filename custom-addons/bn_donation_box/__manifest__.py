@@ -15,6 +15,7 @@
     ],
     'data': [
         'security/groups.xml',
+        'security/access_right.xml',
         'security/ir.model.access.csv',
         'data/server_action.xml',
         'data/sequence.xml',

@@ -8,7 +8,7 @@
 }
 
 @page {
-    padding: 20mm; /* A4 page margins */
+    padding: 0; /* A4 page margins */
 }
 
 @media print {
@@ -34,17 +34,13 @@
         font-size: 14px !important;
         width: 210mm !important; /* changed from 266px to A4 */
         min-height: 297mm !important; /* optional: full A4 height */
-        padding: 20mm; /* optional: margins inside page */
+        padding: 0; /* optional: margins inside page */
         box-sizing: border-box; /* ensures padding included in width */
     }
     .render-container {
         position: absolute !important;
-        top: 10px;
-        left: 10px;
     }
     .o-main-components-container  {
         position: absolute !important;
-        top: 0;
-        left: 0;
     }
 }

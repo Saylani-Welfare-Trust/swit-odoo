@@ -7,25 +7,6 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
-    get checkMedicalEquipment() {
-        const orderlines = this.pos.get_order().get_orderlines();
-
-        if (orderlines) {
-            if (orderlines.length === 1) {
-                const product = orderlines[0].get_product();
-                return product && product.is_medical_equipment === true;
-            }
-            
-            // Multiple lines
-            return orderlines.some(line => {
-                const product = line.get_product();
-                return product && product.is_medical_equipment === true;
-            });
-        } else {
-            return false;
-        }
-    },
-    
     async clickRecordME() {
         this.popup.add(ReceivingPopup, {
             title: "Medical Equipment",

@@ -55,6 +55,10 @@
         <record id="donation_box_rider_partner_category" model="res.partner.category">
             <field name="name">Donation Box Rider</field>
         </record>
+        
+        <record id="donation_box_donor_partner_category" model="res.partner.category">
+            <field name="name">DB Donor</field>
+        </record>
     
     </data>
 

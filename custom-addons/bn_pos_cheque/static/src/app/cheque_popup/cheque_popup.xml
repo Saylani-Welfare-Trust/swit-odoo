@@ -2,9 +2,9 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="bn_pos_cheque.ChequePopup" owl="1">
-        <div class="popup popup-textinput chequeorder">
+        <div class="popup popup-textinput chequeorder" style="max-width: 1000px; width: 100%;">
             <!-- Header -->
-            <div class="modal-header" style="max-width: 1200px; width: 90%;">
+            <div class="modal-header">
                 <h4 class="modal-title">
                     <i class="fa fa-money-check-alt me-2"></i>
                     <t t-esc="props.title" />
@@ -64,6 +64,12 @@
                                         <span t-if="order['status'] == 'Cleared'" class="badge bg-success">Cleared</span>
                                         <span t-elif="order['status'] == 'Pending'" class="badge bg-warning text-dark">Pending</span>
                                         <span t-else="" class="badge bg-secondary"><t t-esc="order['status']"/></span>
+                                    </td>
+                                    <td t-if="order['status'] == 'Bounce' &amp;&amp; order['bounce_count'] &lt;= 3">
+                                        <button class="btn btn-warning btn-sm me-2 btn_edit" t-on-click="() => this.reDeposite(order['id'])">Re-Deposite</button>
+                                    </td>
+                                    <td t-if="order['status'] == 'Bounce' &amp;&amp; order['bounce_count'] &gt; 3">
+                                        <button class="btn btn-info btn-sm me-2 btn_edit" t-on-click="() => this.settleOrder(order['id'])">Settle Order</button>
                                     </td>
                                 </tr>
                             </t>

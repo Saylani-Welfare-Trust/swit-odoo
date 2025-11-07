@@ -41,7 +41,7 @@ class POSCheque(models.Model):
     
     def action_bounce(self):
         # raise ValidationError('Functionality coming soon')
-        if self.bounce_count >= 3:
+        if self.bounce_count > 3:
             raise ValidationError('You can not bounce the cheque more then 3 times')
 
         self.bounce_count += 1

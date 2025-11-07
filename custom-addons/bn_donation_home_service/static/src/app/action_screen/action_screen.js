@@ -16,6 +16,7 @@ patch(ActionScreen.prototype, {
         if (orderlines) {
             if (orderlines.length === 1) {
                 const product = orderlines[0].get_product();
+                
                 return product && product.is_livestock === true;
             }
             

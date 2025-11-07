@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="access_donation_box_registration_create" model="ir.model.access">
+        <field name="name">Donation Box Registration User Access</field>
+        <field name="model_id" ref="model_donation_box_registration_installation"/>
+        <field name="group_id" ref="bn_donation_box.donation_box_registration_user_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="access_donation_box_registration_approval" model="ir.model.access">
+        <field name="name">Donation Box Registration Approval Access</field>
+        <field name="model_id" ref="model_donation_box_registration_installation"/>
+        <field name="group_id" ref="bn_donation_box.donation_box_registration_installation_approve_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+</odoo>

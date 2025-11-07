@@ -14,6 +14,8 @@ class POSOrder(models.Model):
     
     cheque_date = fields.Date('Date')
 
+    bounce_count = fields.Integer(related='pos_cheque_id.bounce_count', string="Bounce Count", store=True)
+    
     cheque_state = fields.Selection(related='pos_cheque_id.state', string="Cheque Status", store=True)
 
 
@@ -32,7 +34,7 @@ class POSOrder(models.Model):
             self.pos_cheque_id.bank_name = self.bank_name
             self.pos_cheque_id.name = self.cheque_number
             self.pos_cheque_id.date = self.cheque_date
-        elif not ui_order.get('qr_code') and ui_order.get('cheque_number'):
+        elif not ui_order.get('qr_code') and 'cheque_number' in ui_order and ui_order.get('cheque_number'):
             cheque = self.env['pos.cheque'].create({
                 'bank_name': ui_order.get('bank_name'),
                 'name': ui_order.get('cheque_number'),
@@ -45,8 +47,8 @@ class POSOrder(models.Model):
     
     def get_cheque_pos_order(self, shop, offset=0, limit=10):
         # orders = self.env['pos.order'].search([('session_id.config_id', '=', shop)], offset=offset, limit=limit)
-        orders = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_state', '!=', 'clear'), ('cheque_number', '!=', '')], offset=offset, limit=limit)
-        total_count = self.env['pos.order'].search_count([('session_id.config_id', '=', shop), ('cheque_state', '!=', 'clear'), ('cheque_number', '!=', '')])
+        orders = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')], offset=offset, limit=limit)
+        total_count = self.env['pos.order'].search_count([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')])
         
         data = []
         
@@ -71,6 +73,7 @@ class POSOrder(models.Model):
                 "amount": order.amount_total,
                 "cheque_number": order.cheque_number,
                 "bank_name": order.bank_name,
+                "bounce_count": order.bounce_count,
                 "status":status
             }
 
@@ -85,7 +88,9 @@ class POSOrder(models.Model):
         if text:
             order = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_number', '=', text)])
             total_count = len(order)
+            
             data = []
+            
             for i in order:
                 temp = {
                     "id":i.id,
@@ -100,7 +105,34 @@ class POSOrder(models.Model):
                     "status":i.cheque_status
                 }
                 data.append(temp)
+
             return {
                     "orders": data,
                     "total_count": total_count  # Send total count for pagination calculation
                 }
+        
+    def redeposite_cheque(self, orderid):
+        order = self.env['pos.order'].browse(orderid)
+        
+        order.pos_cheque_id.state = 'draft'
+    
+    def settle_cheque_order(self, orderid):
+        order = self.env['pos.order'].browse(orderid)
+
+        if not order:
+            return {
+                "status": "error",
+                "body": "Order does not exist in the system or been delete instead."
+            }
+
+
+        # raise ValidationError(str(order))
+        # raise ValidationError(str(order.pos_cheque_id))
+        
+        order.pos_cheque_id.state = 'cancel'
+
+        return {
+            "status": "success",
+            "body": "Cheque Status has been updated successfully."
+        }
+        # raise ValidationError(str(order.pos_cheque_id.state))

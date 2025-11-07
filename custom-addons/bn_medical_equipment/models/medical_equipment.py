@@ -18,14 +18,14 @@ class MedicalEquipment(models.Model):
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
-    picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    picking_id = fields.Many2one('stock.picking', string="Picking")
+    return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
 
     name = fields.Char('Name', default="New")
+    country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code",)
     mobile = fields.Char(related='donee_id.mobile', string="Mobile No.",)
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
-
-    amount = fields.Monetary('Amount', currency_field='currency_id')
     
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id',compute='_compute_total_amount',store=True)
     
@@ -49,12 +49,8 @@ class MedicalEquipment(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
         return super(MedicalEquipment, self).create(vals)
-    
-    def calculate_amount(self):
-        self.amounts = sum(line.amount for line in self.medical_equipment_line_ids)
-    def action_return(self):
-        
-        
+
+    def action_return(self):  
         """
         Automatically create return picking and update state
         """
@@ -81,7 +77,7 @@ class MedicalEquipment(models.Model):
             
             # Update medical equipment record
             self.write({
-                'picking_id': return_picking.id,
+                'return_picking_id': return_picking.id,
                 'state': 'return'
             })
             

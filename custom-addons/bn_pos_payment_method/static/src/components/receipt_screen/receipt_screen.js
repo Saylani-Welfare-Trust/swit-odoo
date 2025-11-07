@@ -13,6 +13,9 @@ patch(ReceiptScreen.prototype, {
         if (this.pos.addedOtherInfo) {
             this.pos.addedOtherInfo = false
         }
+        if (this.pos.pos_cheque_order_id) {
+            this.pos.pos_cheque_order_id = false
+        }
         
         this.pos.showScreen(name, props);
     }
