@@ -5,8 +5,6 @@ import { patch } from "@web/core/utils/patch";
 
 patch(Order.prototype, {
     export_for_printing() {
-        console.log(this);
-
         return {
             ...super.export_for_printing(),
 

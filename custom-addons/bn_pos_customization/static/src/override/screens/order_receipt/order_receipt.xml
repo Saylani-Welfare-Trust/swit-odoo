@@ -196,6 +196,7 @@
                             <th>Quantity</th>
                             <th>Rate</th>
                             <th>Amount</th>
+                            <th>Customer Note</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -222,6 +223,12 @@
                                 <td class="text-end">
                                     <t t-if="line.price">
                                         <t t-esc="line.price"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+                                <td class="text-start">
+                                    <t t-if="line.customerNote">
+                                        <t t-esc="line.customerNote"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </td>
