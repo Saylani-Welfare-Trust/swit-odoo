@@ -7,12 +7,14 @@ patch(Order.prototype, {
     export_for_printing() {
         return {
             ...super.export_for_printing(),
-
+            
             partner: {
                 name: this.partner ? this.partner.name : "",
                 mobile: this.partner ? this.partner.mobile : "",
                 phone: this.partner ? this.partner.phone : "",
-            }
+            },
+            branch_code: this.cashier.branch_code,
+            receive_voucher: this.pos.receive_voucher
         };
     },
 });

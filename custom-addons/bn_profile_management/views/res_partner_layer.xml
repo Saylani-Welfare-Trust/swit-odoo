@@ -204,7 +204,7 @@
                                     <field name="primary_registration_id" string="Primary ID" readonly="1" />
                                     <field name="secondary_registration_id" string="Secondary ID" readonly="1" />
                                     <field name="old_system_id" />
-                                    <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" />
+                                    <!-- <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" /> -->
                                     <field name="details" />
                                 </group>
                             </group>

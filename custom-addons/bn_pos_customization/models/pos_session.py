@@ -10,3 +10,9 @@ class POSSession(models.Model):
         
         vals["search_params"]["fields"] += ["categories"]
         return vals
+    
+    def _loader_params_res_users(self):
+        vals = super()._loader_params_res_users()
+        
+        vals["search_params"]["fields"] += ["branch_code"]
+        return vals

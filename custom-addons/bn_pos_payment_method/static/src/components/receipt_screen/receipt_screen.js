@@ -16,6 +16,9 @@ patch(ReceiptScreen.prototype, {
         if (this.pos.pos_cheque_order_id) {
             this.pos.pos_cheque_order_id = false
         }
+        if (this.pos.receive_voucher) {
+            this.pos.receive_voucher = false
+        }
         
         this.pos.showScreen(name, props);
     }

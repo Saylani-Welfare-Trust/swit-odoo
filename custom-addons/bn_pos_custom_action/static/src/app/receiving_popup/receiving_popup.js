@@ -67,10 +67,14 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         
         // Handle different action types
         if (this.action_type === 'dhs') {
+            this.pos.receive_voucher = true
+            
             return;
         } 
         // Process medical equipment records
         if (this.action_type === 'me') {
+            this.pos.receive_voucher = true
+
             await this.processMedicalEquipmentRecord(selectedOrder);
         }
     }
@@ -88,6 +92,17 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 ['name', 'state', 'donee_id', 'medical_equipment_line_ids'],
                 { limit: 1 }
             );
+
+            console.log(record);
+
+            if (!['draft', 'return'].includes(record[0].state)) {
+                this.notification.add(
+                    "Unauthorized Provisional Order State",
+                    { type: 'warning' }
+                );
+
+                return
+            } 
             
             console.log("Medical Equipment Record:", record);
             

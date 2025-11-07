@@ -14,7 +14,8 @@
 
                 <div class="row" style="margin-top: 425px;">
                     <div class="col-4">
-                        <h1 class="fs-3 fw-bold text-uppercase">Donation Receipt</h1>
+                        <h1 class="fs-3 fw-bold text-uppercase" t-if="order.receive_voucher">Receipt Voucher</h1>
+                        <h1 class="fs-3 fw-bold text-uppercase" t-if="!order.receive_voucher">Donation Receipt</h1>
                     </div>
                     <div class="col-8 text-end">
                         <h1 class="fs-3 fw-bold text-uppercase">
@@ -33,7 +34,7 @@
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-set="city_code" t-value="company.city and company.city.substring(0,3).toUpperCase() or 'UNK'"/>
+                                    <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
                                     <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
                                     <t t-set="current_year" t-value="new Date().getFullYear()"/>
                                     <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
@@ -200,7 +201,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <t t-foreach="lines" t-as="line" t-key="line.productName">
+                        <t t-foreach="lines" t-as="line" t-key="line.id">
                             <tr>
                                 <td class="text-start">
                                     <t t-if="line.productName">
