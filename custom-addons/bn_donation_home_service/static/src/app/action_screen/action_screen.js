@@ -17,13 +17,13 @@ patch(ActionScreen.prototype, {
             if (orderlines.length === 1) {
                 const product = orderlines[0].get_product();
                 
-                return product && product.is_livestock === true;
+                return product && product.detailed_type !== 'service';
             }
             
             // Multiple lines
             return orderlines.some(line => {
                 const product = line.get_product();
-                return product && product.is_livestock === true;
+                return product && product.detailed_type !== 'service';
             });
         } else {
             return false;
