@@ -1,6 +1,10 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
+import re
+
+# CNIC regular expression
+cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 status_selection = [       
     ('draft', 'Draft'),
@@ -22,8 +26,11 @@ class MedicalEquipment(models.Model):
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
 
     name = fields.Char('Name', default="New")
-    country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code",)
-    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.",)
+    country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
+    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True)
+    city = fields.Char(related='donee_id.city', string="City", store=True)
+    street = fields.Char(related='donee_id.street', string="Street", store=True)
+    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True)
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
@@ -34,6 +41,25 @@ class MedicalEquipment(models.Model):
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
 
+    @api.constrains('cnic_no')
+    def _check_cnic_no_format(self):
+        for record in self:
+            if record.cnic_no:
+                if not re.match(cnic_pattern, record.cnic_no):
+                    raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
+                parts = record.cnic_no.split('-')
+                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
+                    raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
+
+    @api.onchange('cnic_no')
+    def _onchange_cnic_no(self):
+        if self.cnic_no:
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.cnic_no)
+            if len(cleaned_cnic) >= 13:
+                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
+            elif len(cleaned_cnic) > 5:
+                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+    
     @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
     def _compute_total_amount(self):
         for record in self:

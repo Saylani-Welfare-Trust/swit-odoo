@@ -19,6 +19,7 @@
         'views/api_donation.xml',
         'views/fetch_history.xml',
         'views/res_partner.xml',
+        # 'reports/import_donation.xml',
     ],
     'auto_install': False,
     'application': True,

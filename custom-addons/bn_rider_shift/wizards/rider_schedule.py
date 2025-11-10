@@ -30,8 +30,9 @@ class RiderSchedule(models.TransientModel):
             # 🔹 Fetch existing collections for these lot_ids
             existing_collections = self.env['rider.collection'].search([
                 ('rider_id', '=', employee.id),
-                ('date', '=', today),
+                ('date', '<=', today),
                 ('lot_id', 'in', lot_ids.ids),
+                ('state', 'not in', ['donation_submit', 'paid']),
             ])
 
             # Get already existing lot_ids
@@ -65,7 +66,7 @@ class RiderSchedule(models.TransientModel):
                         'rider_id': employee.id,
                         'day': obj.day,
                         'date': obj.date,
-                        'shop_name': box.name,
+                        'shop_name': box.shop_name,
                         'lot_id': box.lot_id.id,
                         'box_location': box.location,
                         'contact_person': box.contact_person,

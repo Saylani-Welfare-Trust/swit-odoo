@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class DonationHomeServiceLine(models.Model):
@@ -12,9 +13,14 @@ class DonationHomeServiceLine(models.Model):
     
     quantity = fields.Integer('Quantity', default=1)
     amounts = fields.Float(
-    string='Amount', 
-    related='product_id.lst_price',
-    readonly=True
-)
+        string='Amount', 
+        related='product_id.lst_price',
+        readonly=True
+    )
 
-    
+
+    @api.onchange('quantity')
+    def _onchange_check_on_hand(self):
+        if self.product_id and self.product_id.detailed_type != 'service':
+            if self.quantity > self.product_id.free_qty:
+                raise ValidationError('You have enter the quantity value greater then free quantity of the product.')

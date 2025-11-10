@@ -44,15 +44,18 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
-                            <field name="donee_id" string="Donee" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', 'in', ['Donee'])]" />
+                            <field name="donee_id" string="Donee" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', 'in', ['Donee'])]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_state': 'register'}" />
+                            <field name="street" string="Address" readonly="0" />
+                            <field name="cnic_no" readonly="0" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
-                                <field style="width: 70% !important;" name="mobile" nolabel="1" />
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="0" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
+                                <field style="width: 70% !important;" name="mobile" readonly="0" nolabel="1" />
                             </div>
+                            <field name="city" readonly="0" />
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>

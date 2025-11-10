@@ -28,7 +28,7 @@
                             <field name="shop_name" required="1" readonly="status in ['approved', 'available']" />
                             <field name="contact_person" required="1" readonly="status in ['approved', 'available']" />
                             <field name="location" required="1" readonly="status in ['approved', 'available']" />
-                            <field name="rider_id" string="Rider" domain="[('category_ids', 'in', [employee_category_1_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"  required="status == 'installed'" invisible="status not in ['installed', 'approved']" />
+                            <field name="rider_id" string="Rider" domain="[('category_ids', 'in', [employee_category_1_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="status not in ['installed', 'approved']" />
                             <field name="installer_id" string="Installer" domain="[('category_ids', 'in', [employee_category_2_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="product_id" string="Box Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
