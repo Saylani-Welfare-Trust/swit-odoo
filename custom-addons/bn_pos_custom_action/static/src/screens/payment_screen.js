@@ -79,8 +79,60 @@ patch(PaymentScreen.prototype, {
                     { type: 'warning' }
                 );
             }
+        }
+        // Only process medical equipment if order has extra_data with medical_equipment
+        else if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
+            try {
+                const dhsData = currentOrder.extra_data.dhs;
+                const dhsId = medicalData.dhs_id;
+                
+                if (dhsId) {
+                    // First, get the current state of the medical equipment record
+                    const dhsRecord = await this.env.services.orm.searchRead(
+                        'donation.home.service',
+                        [['id', '=', equipmentId]],
+                        ['name', 'state'],
+                        { limit: 1 }
+                    );
+                    
+                    if (dhsRecord && dhsRecord.length > 0) {
+                        const currentState = dhsRecord[0].state;
+                        
+                        const newState = 'paid'; // Keep current state
+                        
+                        // Only update if state changed
+                        if (newState && newState !== currentState) {
+                            const result = await this.env.services.orm.write(
+                                'donation.home.service',
+                                [dhsId],
+                                { state: newState }
+                            );
+                            
+                            // Show appropriate notification based on state change
+                            if (currentState === 'gate_in') {
+                                this.env.services.notification.add(
+                                    `Donation Home Service ${dhsData.record_number} payment processed`,
+                                    { type: 'success' }
+                                );
+                            }
+                        } else {
+                            console.log("🟡 [Donation Home Service] No state change required");
+                        }
+                    } else {
+                        console.error("❌ [Donation Home Service] Equipment record not found");
+                    }
+                } else {
+                    console.error("❌ [Donation Home Service] No donation home service ID found");
+                }
+            } catch (error) {
+                console.error("❌ [Donation Home Service] Error updating state:", error);
+                this.env.services.notification.add(
+                    "Note: Donation Home Service status not updated, but order will proceed",
+                    { type: 'warning' }
+                );
+            }
         } else {
-            console.log("🟡 [Medical Equipment] No medical equipment data found in order - using normal POS flow");
+            console.log("🟡 Data found in order - using normal POS flow");
         }
         
         // Continue with normal POS flow

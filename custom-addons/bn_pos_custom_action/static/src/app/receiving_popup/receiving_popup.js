@@ -69,13 +69,40 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (this.action_type === 'dhs') {
             this.pos.receive_voucher = true
             
-            return;
+            await this.processDHSRecord(selectedOrder);
         } 
         // Process medical equipment records
-        if (this.action_type === 'me') {
+        else if (this.action_type === 'me') {
             this.pos.receive_voucher = true
 
             await this.processMedicalEquipmentRecord(selectedOrder);
+        }
+    }
+
+    /**
+     * Process Donation Home Service record
+     */
+    async processDHSRecord(selectedOrder) {
+        console.log("Donation Home Service Record Number:", this.state.record_number);
+        
+        try {
+            const record = await this.orm.searchRead(
+                'donation.home.service',
+                [['name', '=', this.state.record_number]],
+                ['name', 'state', 'donor_id', 'donation_home_service_line_ids'],
+                { limit: 1 }
+            );
+            
+            console.log("Donation Home Service:", record);
+            
+            if (record && record.length > 0) {
+                await this.handleRecordFound(record[0], selectedOrder);
+            } else {
+                this.handleRecordNotFound();
+            }
+            
+        } catch (error) {
+            this.handleProcessingError(error);
         }
     }
 
@@ -120,19 +147,33 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Handle found medical equipment record
      */
-    async handleRecordFound(equipmentRecord, selectedOrder) {
-        console.log("Record found:", equipmentRecord);
+    async handleRecordFound(record, selectedOrder) {
+        console.log("Record found:", record);
         
-        // Process all record components
-        await this.processEquipmentLines(equipmentRecord, selectedOrder);
-        this.addExtraOrderData(selectedOrder, equipmentRecord);
-        await this.processPartner(equipmentRecord, selectedOrder);
-        
-        // Log current state and close popup
-        console.log("Record state:", equipmentRecord.state);
-        super.confirm();
-        
-        return equipmentRecord.state;
+        if (this.action_type === 'dhs') {
+            // Process all record components
+            await this.processDHSLines(record, selectedOrder);
+            this.addExtraOrderData(selectedOrder, record);
+            await this.processPartner(record, selectedOrder);
+            
+            // Log current state and close popup
+            console.log("Record state:", record.state);
+            super.confirm();
+            
+            return record.state;
+        }
+        else if (this.action_type === 'me') {
+            // Process all record components
+            await this.processEquipmentLines(record, selectedOrder);
+            this.addExtraOrderData(selectedOrder, record);
+            await this.processPartner(record, selectedOrder);
+            
+            // Log current state and close popup
+            console.log("Record state:", record.state);
+            super.confirm();
+            
+            return record.state;
+        }
     }
 
     /**
@@ -160,24 +201,52 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     }
 
     /**
-     * Process equipment lines and add products to POS order
+     * Process dhs lines and add products to POS order
      */
-    async processEquipmentLines(equipmentRecord, selectedOrder) {
-        if (!this.hasEquipmentLines(equipmentRecord)) {
+    async processDHSLines(record, selectedOrder) {
+        if (!this.hasDHSLines(record)) {
             return;
         }
 
-        const equipmentLines = await this.fetchEquipmentLines(equipmentRecord);
-        const addedProductsCount = await this.addProductsToOrder(equipmentLines, equipmentRecord, selectedOrder);
+        const dhsLines = await this.fetchDHSLines(record);
+        const addedProductsCount = await this.addProductsToOrder(dhsLines, record, selectedOrder);
         
         this.notifyProductAdditionResult(addedProductsCount);
     }
 
     /**
+     * Process equipment lines and add products to POS order
+     */
+    async processDHSLines(record, selectedOrder) {
+        if (!this.hasEquipmentLines(record)) {
+            return;
+        }
+
+        const equipmentLines = await this.fetchEquipmentLines(record);
+        const addedProductsCount = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
+        
+        this.notifyProductAdditionResult(addedProductsCount);
+    }
+
+    /**
+     * Check if dhs has lines
+     */
+    hasDHSLines(record) {
+        if (!record.donation_home_service_line_ids || record.donation_home_service_line_ids.length === 0) {
+            console.log("No donation home service lines found for this record");
+            this.notification.add(
+                "No products configured for this donation home service",
+                { type: 'warning' }
+            );
+            return false;
+        }
+        return true;
+    }
+    /**
      * Check if equipment has lines
      */
-    hasEquipmentLines(equipmentRecord) {
-        if (!equipmentRecord.medical_equipment_line_ids || equipmentRecord.medical_equipment_line_ids.length === 0) {
+    hasEquipmentLines(record) {
+        if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
             console.log("No equipment lines found for this record");
             this.notification.add(
                 "No products configured for this equipment",
@@ -191,10 +260,25 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Fetch equipment lines from database
      */
-    async fetchEquipmentLines(equipmentRecord) {
+    async fetchDHSLines(record) {
+        const equipmentLines = await this.orm.searchRead(
+            'donation.home.service.line',
+            [['id', 'in', record.donation_home_service_line_ids]],
+            ['product_id', 'quantity', 'amount'],
+            {}
+        );
+        
+        console.log("Equipment lines:", equipmentLines);
+        return equipmentLines;
+    }
+    
+    /**
+     * Fetch equipment lines from database
+     */
+    async fetchEquipmentLines(record) {
         const equipmentLines = await this.orm.searchRead(
             'medical.equipment.line',
-            [['id', 'in', equipmentRecord.medical_equipment_line_ids]],
+            [['id', 'in', record.medical_equipment_line_ids]],
             ['product_id', 'quantity', 'amounts'],
             {}
         );
@@ -206,11 +290,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Add products to POS order
      */
-    async addProductsToOrder(equipmentLines, equipmentRecord, selectedOrder) {
+    async addProductsToOrder(lines, record, selectedOrder) {
         let addedProductsCount = 0;
         
-        for (let line of equipmentLines) {
-            if (await this.addProductLine(line, equipmentRecord, selectedOrder)) {
+        for (let line of lines) {
+            if (await this.addProductLine(line, record, selectedOrder)) {
                 addedProductsCount++;
             }
         }
@@ -221,7 +305,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Add individual product line to order
      */
-    async addProductLine(line, equipmentRecord, selectedOrder) {
+    async addProductLine(line, record, selectedOrder) {
         if (!line.product_id || !line.product_id[0]) {
             return false;
         }
@@ -234,7 +318,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return false;
         }
 
-        const quantity = this.calculateProductPrice(line, equipmentRecord);
+        const quantity = this.calculateProductPrice(line, record);
         // console.log(`Adding product ${product.display_name} with price ${price}`);
         
         selectedOrder.add_product(product, {
@@ -250,11 +334,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Calculate product price based on equipment state
      */
-    calculateProductPrice(line, equipmentRecord) {
+    calculateProductPrice(line, record) {
         let qty = line.quantity;
         
         // Apply negative price for return state
-        if (equipmentRecord.state == 'return') {
+        if (record.state == 'return') {
             qty = -1*qty;
 
             // console.log(`Using negative price for return state: ${qty}`);
@@ -286,12 +370,12 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Process partner assignment
      */
-    async processPartner(equipmentRecord, selectedOrder) {
-        if (!equipmentRecord.donee_id || !equipmentRecord.donee_id[0]) {
+    async processPartner(record, selectedOrder) {
+        if (!record.donee_id || !record.donee_id[0]) {
             return;
         }
 
-        const partnerId = equipmentRecord.donee_id[0];
+        const partnerId = record.donee_id[0];
         let partner = await this.getOrLoadPartner(partnerId);
         
         if (partner) {
@@ -352,19 +436,31 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Add extra data to order for reporting
      */
-    addExtraOrderData(selectedOrder, equipmentRecord) {
+    addExtraOrderData(selectedOrder, record) {
         if (!selectedOrder.extra_data) {
             selectedOrder.extra_data = {};
         }
         
-        selectedOrder.extra_data.medical_equipment = {
-            record_number: equipmentRecord.name,
-            equipment_state: equipmentRecord.state,
-            equipment_id: equipmentRecord.id,
-            scan_timestamp: new Date().toISOString(),
-        };
+        if (this.action_type === 'dhs') {
+            selectedOrder.extra_data.dhs = {
+                record_number: record.name,
+                dhs_state: record.state,
+                dhs_id: record.id,
+                scan_timestamp: new Date().toISOString(),
+            };
+
+            console.log("Extra order data added:", selectedOrder.extra_data.dhs);
+        } else if (this.action_type === 'me') {
+            selectedOrder.extra_data.medical_equipment = {
+                record_number: record.name,
+                equipment_state: record.state,
+                equipment_id: record.id,
+                scan_timestamp: new Date().toISOString(),
+            };
+
+            console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
+        }
         
-        console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
     }
     async cancel() {
         if (this.canCancel()) {

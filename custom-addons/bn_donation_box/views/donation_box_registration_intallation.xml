@@ -36,7 +36,7 @@
                         </group>
                         <group name="donation_box_registration_installation_col_2">
                             <!-- <field name="donor_id" domain="[('is_donee', '=', False), ('registration_category', '=', 'donor')]" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" /> -->
-                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [2, 4, 14])], 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_state': 'register'}" options="{'no_edit': True, 'no_open': True}" />
+                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [2, 4, 14])], 'default_street': location, 'default_street': location, 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_state': 'register'}" options="{'no_edit': True, 'no_open': True}" />
                             <label for="contact_no"/>
                             <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_id" readonly="status in ['approved', 'available']" required="1"/> <field style="width: 70% !important;" name="contact_no" required="1" readonly="status in ['approved', 'available']" /></div>
                             <field name="installation_date" required="1" readonly="status in ['approved', 'available']" />
