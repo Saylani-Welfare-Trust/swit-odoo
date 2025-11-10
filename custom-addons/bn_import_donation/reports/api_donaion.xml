@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="api_donation_form">
+        <t t-call="web.html_container">
+            <div class="print">
+                <div class="container my-4 p-4 bg-white border" style="max-width: 794px;">
+                    
+                    <!-- Header -->
+                    <div class="text-center mb-4 border-bottom border-3 pb-3">
+                        <t t-if="docs.env.company.dn_image">
+                            <img t-attf-src="data:image/png;base64,{{ docs.env.company.dn_image.decode('utf-8') }}" 
+                                class="img-fluid mb-2" alt="Organization Logo" style="width: 800px; height: auto; max-height: 500px; margin-bottom: 10px;"/>
+                        </t>
+                        <t t-else="">
+                            <h2 class="text-primary fw-bold mb-1 text-uppercase">
+                                <t t-esc="docs.env.company.name"/>
+                            </h2>
+                            <p class="mb-1"><t t-esc="docs.env.company.street"/></p>
+                            <p class="mb-0">UAN: (+92-21) 111-722-626 | www.saylaniwelfare.com</p>
+                        </t>
+                    </div>
+
+                    <!-- Receipt Title -->
+                    <h4 class="text-primary border-bottom border-2 pb-1 mb-3">Donation Receipt</h4>
+
+                    <!-- Receipt Info Row -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Receipt #:</strong> ONLINE-<t t-esc="docs.dn_number"/>
+                        </div>
+                        <div class="col-6 text-end">
+                            <strong>Date:</strong> <span t-field="docs.created_at" t-field-options="{'widget': 'date'}"/>
+                        </div>
+                    </div>
+
+                    <!-- Donor Info -->
+                    <div class="p-3 mb-4 bg-light rounded">
+                        <p class="mb-1"><strong>Donor Name:</strong> <t t-esc="docs.name"/></p>
+                        <p class="mb-1"><strong>Contact:</strong> <t t-esc="docs.phone"/></p>
+                        <p class="mb-0"><strong>Currency:</strong> <t t-esc="docs.currency"/></p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="text-center">Purpose</th>
+                                        <th class="text-center">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="docs.donation_item_ids" t-as="line">
+                                        <tr>
+                                            <td>
+                                                <t t-esc="line.item"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <t t-esc="line.total"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center border-top pt-3 pb-3">
+                        <p class="small mb-1">This is computer generated receipt and does not require physical signature</p>
+                        <p class="small mb-0">For any queries: contact@saylaniwelfare.com | Support: +92-21-111-722-626</p>
+                    </div>
+                    
+                    <div class="text-center border-top pt-3">
+                        <p class="mb-1" style="font-size: 0.7rem;">Powered by BytesNode</p>
+                        <p class="mb-0" style="font-size: 0.7rem;">Mobile No. --- 03170295857 | Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com | Webiste --- bytesnode.com</p>
+                    </div>
+
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <record id="action_report_api_donation_form" model="ir.actions.report">
+        <field name="name">API Donation</field>
+        <field name="model">api.donation</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">bn_import_donation.api_donation_form</field>
+        <field name="report_file">bn_import_donation.api_donation_form</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="binding_model_id" ref="model_api.donation"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>
