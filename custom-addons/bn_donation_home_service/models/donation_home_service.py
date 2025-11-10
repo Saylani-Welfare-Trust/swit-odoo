@@ -50,35 +50,50 @@ class DonationHomeService(models.Model):
         self.total_amount = self.amount + self.service_charges
 
     def action_confirm(self):
-        # raise ValidationError('Functionality Coming soon')
+        """Confirm donation and create stock picking if product-type lines exist."""
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+        StockLocation = self.env.ref('stock.stock_location_stock')
+        GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
+        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
-        picking = self.env['stock.picking'].create({
-            'partner_id': self.donor_id.id,
-            'picking_type_id': self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type').id,
-            'origin': self.name,
-            'dhs_id': self.id,
-            'state' : 'draft',
-        })
+        for record in self:
+            product_lines = record.donation_home_service_line_ids.filtered(
+                lambda l: l.product_id.detailed_type != 'service'
+            )
 
-        for line in self.donation_home_service_line_ids:
-            if line.product_id.detailed_type == 'product':
-                self.env['stock.move'].create({
-                    'name': f'Gate Out against {self.name}',
-                    'product_id': line.product_id.id,
-                    'product_uom': line.product_id.uom_id.id,
-                    'product_uom_qty': line.quantity,
-                    'location_id': self.env.ref('stock.stock_location_stock').id,
-                    'location_dest_id': self.env.ref('bn_donation_home_service.gate_out_location').id,
-                    'state': 'draft',
-                    'picking_id': picking.id
-                })
+            if not product_lines:
+                continue  # skip if no stockable products
 
-        for move in picking.move_ids:   
-            move._action_assign()
+            # ✅ Create the picking
+            picking = StockPicking.create({
+                'partner_id': record.donor_id.id,
+                'picking_type_id': PickingType.id,
+                'origin': record.name,
+                'dhs_id': record.id,
+                'state': 'draft',
+            })
 
-        picking.action_confirm()
+            # ✅ Create all stock moves in bulk for efficiency
+            moves_vals = [{
+                'name': f'Gate Out against {record.name}',
+                'product_id': line.product_id.id,
+                'product_uom': line.product_id.uom_id.id,
+                'product_uom_qty': line.quantity,
+                'location_id': StockLocation.id,
+                'location_dest_id': GateOutLocation.id,
+                'picking_id': picking.id,
+                'state': 'draft',
+            } for line in product_lines]
 
-        self.picking_id = picking.id      
+            StockMove.create(moves_vals)
+
+            # ✅ Assign and confirm moves properly
+            picking.action_assign()
+            picking.action_confirm()
+
+            # ✅ Link picking back to record
+            record.picking_id = picking.id     
     
     def action_cancel(self):
         """Cancel Donation Home Service and associated pickings safely"""
@@ -111,9 +126,17 @@ class DonationHomeService(models.Model):
         self.state = 'cancel'
     
     def action_gate_out(self):
-        self.picking_id.action_confirm()
-        self.picking_id.action_assign()
-        self.picking_id.button_validate()
+        product_lines = self.donation_home_service_line_ids.filtered(
+            lambda l: l.product_id.detailed_type != 'service'
+        )
+
+        if product_lines:
+            self.picking_id.action_confirm()
+            self.picking_id.action_assign()
+            self.picking_id.button_validate()
+        else:
+            self.state = 'gate_in'
+
     
     def action_gate_in(self):
         self.second_picking_id.action_confirm()

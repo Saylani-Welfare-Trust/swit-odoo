@@ -14,17 +14,19 @@ patch(ActionScreen.prototype, {
         const orderlines = this.pos.get_order().get_orderlines();
 
         if (orderlines) {
-            if (orderlines.length === 1) {
-                const product = orderlines[0].get_product();
+            // if (orderlines.length === 1) {
+            //     const product = orderlines[0].get_product();
                 
-                return product && product.detailed_type !== 'service';
-            }
+            //     return product && product.detailed_type !== 'service';
+            // }
             
-            // Multiple lines
-            return orderlines.some(line => {
-                const product = line.get_product();
-                return product && product.detailed_type !== 'service';
-            });
+            // // Multiple lines
+            // return orderlines.some(line => {
+            //     const product = line.get_product();
+            //     return product && product.detailed_type !== 'service';
+            // });
+
+            return true;
         } else {
             return false;
         }
