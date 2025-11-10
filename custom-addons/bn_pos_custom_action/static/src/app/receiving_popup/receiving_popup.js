@@ -72,7 +72,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processDHSRecord(selectedOrder);
         } 
         // Process medical equipment records
-        else if (this.action_type === 'me') {
+        if (this.action_type === 'me') {
             this.pos.receive_voucher = true
 
             await this.processMedicalEquipmentRecord(selectedOrder);
@@ -162,7 +162,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             
             return record.state;
         }
-        else if (this.action_type === 'me') {
+        
+        if (this.action_type === 'me') {
             // Process all record components
             await this.processEquipmentLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
@@ -450,7 +451,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             };
 
             console.log("Extra order data added:", selectedOrder.extra_data.dhs);
-        } else if (this.action_type === 'me') {
+        }
+        if (this.action_type === 'me') {
             selectedOrder.extra_data.medical_equipment = {
                 record_number: record.name,
                 equipment_state: record.state,

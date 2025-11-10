@@ -81,10 +81,10 @@ patch(PaymentScreen.prototype, {
             }
         }
         // Only process medical equipment if order has extra_data with medical_equipment
-        else if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
             try {
                 const dhsData = currentOrder.extra_data.dhs;
-                const dhsId = medicalData.dhs_id;
+                const dhsId = dhsData.dhs_id;
                 
                 if (dhsId) {
                     // First, get the current state of the medical equipment record
