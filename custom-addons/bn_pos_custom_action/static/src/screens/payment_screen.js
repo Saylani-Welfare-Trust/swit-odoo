@@ -90,7 +90,7 @@ patch(PaymentScreen.prototype, {
                     // First, get the current state of the medical equipment record
                     const dhsRecord = await this.env.services.orm.searchRead(
                         'donation.home.service',
-                        [['id', '=', equipmentId]],
+                        [['id', '=', dhsId]],
                         ['name', 'state'],
                         { limit: 1 }
                     );

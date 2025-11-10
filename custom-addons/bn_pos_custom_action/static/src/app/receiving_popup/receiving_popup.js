@@ -94,6 +94,17 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             );
             
             console.log("Donation Home Service:", record);
+
+            if (['paid', 'slotter'].includes(record[0].state)) {
+                this.notification.add(
+                    "Unauthorized Provisional Order State",
+                    { type: 'warning' }
+                );
+
+                return
+            } 
+            
+            console.log("Medical Equipment Record:", record);
             
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
@@ -159,8 +170,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             // Log current state and close popup
             console.log("Record state:", record.state);
             super.confirm();
-            
-            return record.state;
         }
         
         if (this.action_type === 'me') {
@@ -172,9 +181,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             // Log current state and close popup
             console.log("Record state:", record.state);
             super.confirm();
-            
-            return record.state;
         }
+
+        return record.state;
     }
 
     /**
@@ -218,7 +227,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Process equipment lines and add products to POS order
      */
-    async processDHSLines(record, selectedOrder) {
+    async processEquipmentLines(record, selectedOrder) {
         if (!this.hasEquipmentLines(record)) {
             return;
         }
