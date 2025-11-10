@@ -44,9 +44,9 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
-                            <field name="city" required="1" readonly="0" />
-                            <field name="street" string="Address" readonly="0" required="1" />
                             <field name="cnic_no" readonly="0" required="1" />
+                            <field name="street" string="Address" readonly="0" required="1" />
+                            <field name="city" required="1" readonly="0" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
