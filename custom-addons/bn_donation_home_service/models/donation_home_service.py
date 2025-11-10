@@ -20,6 +20,7 @@ class DonationHomeService(models.Model):
     donor_id = fields.Many2one('res.partner', string="Donee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
 
     name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.")
@@ -80,7 +81,46 @@ class DonationHomeService(models.Model):
         self.picking_id = picking.id      
     
     def action_cancel(self):
-        raise ValidationError('Functionality Coming soon')
+        """Cancel Donation Home Service and associated pickings safely"""
+
+        # Cancel the main picking
+        if self.picking_id:
+            if self.picking_id.state == 'done':
+                # Create a return picking to reverse the done picking
+                return_picking = self.picking_id._create_returns()
+                return_picking.action_confirm()
+                for move in return_picking.move_ids:
+                    move.quantity_done = move.product_uom_qty
+                return_picking.button_validate()
+            elif self.picking_id.state not in ['cancel', 'done']:
+                self.picking_id.action_cancel()
+
+        # Cancel the second picking (return / gate in)
+        if self.second_picking_id:
+            if self.second_picking_id.state == 'done':
+                # Optionally, create a return for the done picking
+                return_picking = self.second_picking_id._create_returns()
+                return_picking.action_confirm()
+                for move in return_picking.move_ids:
+                    move.quantity_done = move.product_uom_qty
+                return_picking.button_validate()
+            elif self.second_picking_id.state not in ['cancel', 'done']:
+                self.second_picking_id.action_cancel()
+
+        # Update DHS state to 'cancel'
+        self.state = 'cancel'
+    
+    def action_gate_out(self):
+        self.picking_id.action_confirm()
+        self.picking_id.action_assign()
+        self.picking_id.button_validate()
+    
+    def action_gate_in(self):
+        self.second_picking_id.action_confirm()
+        self.second_picking_id.action_assign()
+        self.second_picking_id.button_validate()
+        
+        self.state = 'gate_in'
     
     def action_show_picking(self):
         return {

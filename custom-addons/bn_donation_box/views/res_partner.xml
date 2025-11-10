@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_profile_management_profile_management_view_form_inherit_bn_donation_box" model="ir.ui.view">
+        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.donation.box</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='box']" position="inside">
+                <field name="donation_box_registration_installation_ids" readonly="1">
+                    <tree>
+                        <field name="donor_id" string="Donor" />
+                        <field name="installer_id" string="Installer" />
+                        <field name="rider_id" string="Rider" />
+                        <field name="name" string="Registration No." />
+                        <field name="location" />
+                        <field name="contact_person" />
+                        <field name="contact_no" />
+                        <field name="lot_id" string="Box No." />
+                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                        <field name="installation_date" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="base_view_partner_form_inherit_bn_donation_box" model="ir.ui.view">
+        <field name="name">base.view.partner.form.inherit.bn.donation.box</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='box']" position="inside">
+                <field name="donation_box_registration_installation_ids" readonly="1">
+                    <tree>
+                        <field name="donor_id" string="Donor" />
+                        <field name="installer_id" string="Installer" />
+                        <field name="rider_id" string="Rider" />
+                        <field name="name" string="Registration No." />
+                        <field name="location" />
+                        <field name="contact_person" />
+                        <field name="contact_no" />
+                        <field name="lot_id" string="Box No." />
+                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                        <field name="installation_date" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

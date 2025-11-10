@@ -28,6 +28,7 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/stock_lot.xml',
+        'views/res_partner.xml',
         'reports/donation_box_report.xml',
     ],
     'auto_install': False,

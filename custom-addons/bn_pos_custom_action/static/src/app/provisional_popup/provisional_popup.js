@@ -24,7 +24,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.donor_id = this.props.donor_id;
         this.donor_name = this.props.donor_name;
         this.orderLines = this.props.orderLines;
-        this.active_type = this.props.active_type;
+        this.action_type = this.props.action_type;
         
         this.state = useState({
             amount: parseFloat(this.props.amount),
@@ -67,7 +67,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     async confirm(){
         const selectedOrder = this.pos.get_order();
 
-        if (this.active_type === 'dhs') {
+        if (this.action_type === 'dhs') {
             const payload ={
                 'donor_id': this.donor_id,
                 'address': this.state.donor_address,

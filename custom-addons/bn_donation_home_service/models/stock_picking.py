@@ -15,12 +15,12 @@ class StockPicking(models.Model):
         # Check if this is a donation home service picking (original)
         if self.dhs_id and not self.check_picking:
             try:
-                # Create duplicate picking with swapped locations
+                # Create a gate in picking
                 picking = self.create({
                     'partner_id': self.partner_id.id,
                     'picking_type_id': self.env.ref('bn_donation_home_service.donation_home_service_in_stock_picking_type').id,
                     'origin': self.name,
-                    'dhs_id': self.id,
+                    'dhs_id': self.dhs_id.id,
                     'state' : 'draft',
                 })
 
@@ -43,6 +43,7 @@ class StockPicking(models.Model):
                 # Update home donation service state from 'pending' to 'gatepass'
                 if self.dhs_id:
                     self.dhs_id.state = 'gate_out'
+                    self.dhs_id.second_picking_id = picking.id
                 
                 # Validate the original picking
                 super(StockPicking, self).button_validate()
