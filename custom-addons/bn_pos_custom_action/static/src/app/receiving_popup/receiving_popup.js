@@ -381,18 +381,35 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process partner assignment
      */
     async processPartner(record, selectedOrder) {
-        if (!record.donee_id || !record.donee_id[0]) {
-            return;
+        if (this.action_type == 'dhs') {
+            if (!record.donor_id || !record.donor_id[0]) {
+                return;
+            }
+    
+            const partnerId = record.donor_id[0];
+            let partner = await this.getOrLoadPartner(partnerId);
+            
+            if (partner) {
+                this.assignPartnerToOrder(partner, selectedOrder);
+            } else {
+                console.warn("Partner not found in POS database:", partnerId);
+            }
+            
         }
-
-        const partnerId = record.donee_id[0];
-        let partner = await this.getOrLoadPartner(partnerId);
-        
-        if (partner) {
-            this.assignPartnerToOrder(partner, selectedOrder);
-        } else {
-            console.warn("Partner not found in POS database:", partnerId);
-        }
+        if (this.action_type == 'me') {
+            if (!record.donee_id || !record.donee_id[0]) {
+                return;
+            }
+    
+            const partnerId = record.donee_id[0];
+            let partner = await this.getOrLoadPartner(partnerId);
+            
+            if (partner) {
+                this.assignPartnerToOrder(partner, selectedOrder);
+            } else {
+                console.warn("Partner not found in POS database:", partnerId);
+            }
+        }   
     }
 
     /**
