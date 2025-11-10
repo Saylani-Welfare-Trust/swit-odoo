@@ -55,10 +55,34 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     
     def action_install(self):
+        if not self.donor_id:
+            donor = self.env['res.partner'].create({
+                'name': self.shop_name,
+                'street': self.location,
+                'country_code_id': self.country_id.id,
+                'mobile': self.contact_no,
+                'category_id': [(6, 0, [2, 4, 14])],
+                'state': 'register'
+            })
+
+            self.donor_id = donor.id
+
         self.box_status = 'installed'
         self.status = 'installed'
 
     def action_approved(self):
+        if not self.donor_id:
+            donor = self.env['res.partner'].create({
+                'name': self.shop_name,
+                'street': self.location,
+                'country_code_id': self.country_id.id,
+                'mobile': self.contact_no,
+                'category_id': [(6, 0, [2, 4, 14])],
+                'state': 'register'
+            })
+
+            self.donor_id = donor.id
+
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
 
         if key:
