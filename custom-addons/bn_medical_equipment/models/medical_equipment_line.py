@@ -19,8 +19,25 @@ class DonationHomeServiceLine(models.Model):
     )
 
 
-    @api.onchange('quantity')
+    @api.onchange('quantity', 'product_id')
     def _onchange_check_on_hand(self):
+        """
+        Validate that entered quantity does not exceed available stock
+        in the source location (e.g., WH/Stock) for internal transfers.
+        """
         if self.product_id and self.product_id.detailed_type != 'service':
-            if self.quantity > self.product_id.free_qty:
-                raise ValidationError('You have enter the quantity value greater then free quantity of the product.')
+            # Determine source location (use stock location by default)
+            source_location = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+
+            if source_location:
+                # Get available quantity for the product at source location
+                qty_available = self.env['stock.quant']._get_available_quantity(
+                    self.product_id, source_location
+                )
+
+                # Validate quantity
+                if self.quantity > qty_available:
+                    raise ValidationError(_(
+                        "You have entered a quantity greater than the available quantity "
+                        "in %s (Available: %s, Entered: %s)"
+                    ) % (source_location.display_name, qty_available, self.quantity))

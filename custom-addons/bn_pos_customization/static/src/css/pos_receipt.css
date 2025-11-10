@@ -1,0 +1,6 @@
+.pos-receipt-print {
+    width: 794px;        /* A4 width at 96 DPI */
+    min-height: 1123px;  /* A4 height at 96 DPI */
+    font-size: 12px;
+    color: #000000;
+}

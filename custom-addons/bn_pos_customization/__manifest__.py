@@ -24,6 +24,7 @@
             'bn_pos_customization/static/src/override/screens/**/*',
             'bn_pos_customization/static/src/override/store/**/*',
             'bn_pos_customization/static/src/scss/*',
+            'bn_pos_customization/static/src/css/*',
         ],
     }
 }
