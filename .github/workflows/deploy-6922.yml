@@ -1,4 +1,4 @@
-name: Deploy UAT (Odoo)
+name: Deploy UAT (Odoo) 6922
 
 on:
   push:
