@@ -22,7 +22,7 @@ jobs:
           DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
           DEPLOY_SSH_PORT_6922:    ${{ secrets.DEPLOY_SSH_PORT_6922 }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           mkdir -p "$HOME/.ssh"
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
