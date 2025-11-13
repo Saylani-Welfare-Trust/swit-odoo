@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="microfinance_scheme_view_tree" model="ir.ui.view">
+        <field name="name">microfinance.scheme.view.tree</field>
+        <field name="model">microfinance.scheme</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="prefix" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="microfinance_scheme_view_form" model="ir.ui.view">
+        <field name="name">microfinance.scheme.view.form</field>
+        <field name="model">microfinance.scheme</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Name"/>
+                        <h1><field name="name" class="oe_inline" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="microfinance_scheme_col_1">
+                            <field name="prefix" />
+                        </group>
+                        <group name="microfinance_scheme_col_2">
+                            <field name="installment_type" options="{'horizontal': True}" widget="radio" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="application_category" string="Application Category">
+                            <field name="microfinance_scheme_line_ids">
+                                <tree>
+                                    <field name="name" />
+                                    <field name="asset_type" />
+                                </tree>
+
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group name="application_category_col_1">
+                                                <field name="name" />
+                                            </group>
+                                            <group name="application_category_col_2">
+                                                <field name="asset_type" />
+                                            </group>
+
+                                            <field name="loan_product_line_ids">
+                                                <tree editable="bottom">
+                                                    <field name="product_id" option="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                                    <field name="inst_amount" />
+                                                    <field name="sd_amount" />
+                                                    <field name="product_ids" widget="many2many_tags" option="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                                    <field name="is_recover" />
+                                                </tree>
+                                            </field>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        <page name="recovery_configuration" string="Recovery Config">
+                            <group>
+                                <group name="recovery_configuration_col_1" string="Daily">
+                                    <field name="daily_recovery_days" />
+                                </group>
+                                <group name="recovery_configuration_col_2" string="Monthly">
+                                    <field name="monthly_recovery_days" />
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="microfinance_scheme_action" model="ir.actions.act_window">
+        <field name="name">Microfinance Scheme</field>
+        <field name="res_model">microfinance.scheme</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a microfinance scheme....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="microfinance_menu"
+        name="Microfinance"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="3"/>
+
+    <menuitem
+        id="microfinance_scheme_menu"
+        name="Microfinance Scheme"
+        action="microfinance_scheme_action"
+        parent="microfinance_menu"
+        sequence="0"/>
+
+</odoo>

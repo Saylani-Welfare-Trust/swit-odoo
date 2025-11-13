@@ -6,3 +6,6 @@ access_gateway_config,access.gateway.config,bn_master_setup.model_gateway_config
 access_gateway_config_line,access.gateway.config.line,bn_master_setup.model_gateway_config_line,,1,1,1,1
 access_gateway_config_header,access.gateway.config.header,bn_master_setup.model_gateway_config_header,,1,1,1,1
 access_gateway_config_currency,access.gateway.config.currency,bn_master_setup.model_gateway_config_currency,,1,1,1,1
+access_microfinance_scheme,access.microfinance.scheme,bn_master_setup.model_microfinance_scheme,,1,1,1,1
+access_microfinance_scheme_line,access.microfinance.scheme.line,bn_master_setup.model_microfinance_scheme_line,,1,1,1,1
+access_loan_product_line,access.loan.product.line,bn_master_setup.model_loan_product_line,,1,1,1,1

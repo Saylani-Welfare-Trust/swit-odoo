@@ -15,6 +15,7 @@
         'views/installation_category.xml',
         'views/header_type.xml',
         'views/gateway_config.xml',
+        'views/microfinance_scheme.xml',
     ],
     'auto_install': False,
     'application': True,

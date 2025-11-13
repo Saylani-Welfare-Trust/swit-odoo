@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_donation_box_request,donation.box.request,model_donation_box_request,,1,1,1,1
 access_donation_box_request_line,donation.box.request.line,model_donation_box_request_line,,1,1,1,1
-access_donation_box_registration_installation,donation.box.registration.installation,model_donation_box_registration_installation,donation_box_registration_admin_group,1,1,1,1
+access_donation_box_registration_installation,donation.box.registration.installation,model_donation_box_registration_installation,bn_donation_box.donation_box_registration_admin_group,1,1,1,1
 access_donation_box_complain_center,donation.box.complain.center,model_donation_box_complain_center,,1,1,1,1

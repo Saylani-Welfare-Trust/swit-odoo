@@ -5,6 +5,8 @@
 import { useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
 
 export class ReceivingPopup extends AbstractAwaitablePopup {
@@ -83,17 +85,17 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process Donation Home Service record
      */
     async processDHSRecord(selectedOrder) {
-        console.log("Donation Home Service Record Number:", this.state.record_number);
+        // console.log("Donation Home Service Record Number:", this.state.record_number);
         
         try {
             const record = await this.orm.searchRead(
                 'donation.home.service',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donor_id', 'donation_home_service_line_ids'],
+                ['name', 'state', 'donor_id', 'service_charges', 'donation_home_service_line_ids'],
                 { limit: 1 }
             );
             
-            console.log("Donation Home Service:", record);
+            // console.log("Donation Home Service:", record);
 
             if (['paid', 'slotter'].includes(record[0].state)) {
                 this.notification.add(
@@ -104,7 +106,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 return
             } 
             
-            console.log("Medical Equipment Record:", record);
+            // console.log("Medical Equipment Record:", record);
             
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
@@ -121,7 +123,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process medical equipment record
      */
     async processMedicalEquipmentRecord(selectedOrder) {
-        console.log("Medical Equipment Record Number:", this.state.record_number);
+        // console.log("Medical Equipment Record Number:", this.state.record_number);
         
         try {
             const record = await this.orm.searchRead(
@@ -131,7 +133,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 { limit: 1 }
             );
 
-            console.log(record);
+            // console.log(record);
 
             if (!['draft', 'return'].includes(record[0].state)) {
                 this.notification.add(
@@ -142,7 +144,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 return
             } 
             
-            console.log("Medical Equipment Record:", record);
+            // console.log("Medical Equipment Record:", record);
             
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
@@ -159,7 +161,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Handle found medical equipment record
      */
     async handleRecordFound(record, selectedOrder) {
-        console.log("Record found:", record);
+        // console.log("Record found:", record);
         
         if (this.action_type === 'dhs') {
             // Process all record components
@@ -168,7 +170,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processPartner(record, selectedOrder);
             
             // Log current state and close popup
-            console.log("Record state:", record.state);
+            // console.log("Record state:", record.state);
+
             super.confirm();
         }
         
@@ -179,7 +182,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processPartner(record, selectedOrder);
             
             // Log current state and close popup
-            console.log("Record state:", record.state);
+            // console.log("Record state:", record.state);
+
             super.confirm();
         }
 
@@ -190,9 +194,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Handle record not found scenario
      */
     handleRecordNotFound() {
-        console.log("No record found with number:", this.state.record_number);
+        // console.log("No record found with number:", this.state.record_number);
+
         this.notification.add(
-            "Medical equipment record not found",
+            "Record not found",
             { type: 'warning' }
         );
         return null;
@@ -202,7 +207,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Handle processing errors
      */
     handleProcessingError(error) {
-        console.error("Error processing medical equipment record:", error);
+        console.error("Error processing:", error);
         this.notification.add(
             "Error processing equipment record",
             { type: 'danger' }
@@ -219,8 +224,48 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
 
         const dhsLines = await this.fetchDHSLines(record);
-        const addedProductsCount = await this.addProductsToOrder(dhsLines, record, selectedOrder);
+        let addedProductsCount = await this.addProductsToOrder(dhsLines, record, selectedOrder);
         
+        // Add service charge line if present
+        if (record.service_charges && parseFloat(record.service_charges) > 0) {
+            // Fetch the service product
+            const serviceProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', 'Donation Home Service charges'],
+                    ['type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+            
+            if (serviceProduct.length) {
+                // Get the product from POS DB
+                const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
+                
+                if (!product) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t("Donation Home Service Receipt product not loaded in POS session."),
+                    });
+                    
+                    return
+                }
+                
+                // Add product to order
+                selectedOrder.add_product(product, {
+                    quantity: 1,
+                    price: record.service_charges,
+                    price_extra: record.service_charges,
+                });
+
+                addedProductsCount++;
+
+                console.log(selectedOrder);
+            }
+        }
+
         this.notifyProductAdditionResult(addedProductsCount);
     }
 
@@ -243,7 +288,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     hasDHSLines(record) {
         if (!record.donation_home_service_line_ids || record.donation_home_service_line_ids.length === 0) {
-            console.log("No donation home service lines found for this record");
+            // console.log("No donation home service lines found for this record");
+
             this.notification.add(
                 "No products configured for this donation home service",
                 { type: 'warning' }
@@ -257,7 +303,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     hasEquipmentLines(record) {
         if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
-            console.log("No equipment lines found for this record");
+            // console.log("No equipment lines found for this record");
+
             this.notification.add(
                 "No products configured for this equipment",
                 { type: 'warning' }
@@ -268,18 +315,20 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     }
 
     /**
-     * Fetch equipment lines from database
+     * Fetch equipment lines and add service charge product with custom price
      */
     async fetchDHSLines(record) {
-        const equipmentLines = await this.orm.searchRead(
+        // Fetch equipment/product lines
+        let dhsLines = await this.orm.searchRead(
             'donation.home.service.line',
             [['id', 'in', record.donation_home_service_line_ids]],
             ['product_id', 'quantity', 'amount'],
             {}
         );
-        
-        console.log("Equipment lines:", equipmentLines);
-        return equipmentLines;
+
+        // console.log("DHS lines:", dhsLines);
+
+        return dhsLines;
     }
     
     /**
@@ -293,7 +342,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             {}
         );
         
-        console.log("Equipment lines:", equipmentLines);
+        // console.log("Equipment lines:", equipmentLines);
         return equipmentLines;
     }
 
@@ -334,7 +383,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         selectedOrder.add_product(product, {
             quantity: quantity || 1,
             price:  line.amounts || product.lst_price,
-            merge: false
+
         });
         
         // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);
@@ -365,13 +414,13 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     notifyProductAdditionResult(addedProductsCount) {
         if (addedProductsCount > 0) {
             this.notification.add(
-                `Added ${addedProductsCount} products from equipment record`,
+                `Added ${addedProductsCount} products from record`,
                 { type: 'success' }
             );
         } else {
-            console.error("No products could be added from equipment lines");
+            console.error("No products could be added from lines");
             this.notification.add(
-                "No products found in equipment record",
+                "No products found in record",
                 { type: 'warning' }
             );
         }
@@ -436,12 +485,14 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             { limit: 1 }
         );
         
-        console.log("Partner Data:", partnerData);
+        // console.log("Partner Data:", partnerData);
         
         if (partnerData && partnerData.length > 0) {
             this.pos.db.add_partners([partnerData[0]]);
             const partner = this.pos.db.get_partner_by_id(partnerId);
-            console.log("Partner loaded to POS:", partner);
+            
+            // console.log("Partner loaded to POS:", partner);
+            
             return partner;
         }
         
@@ -453,7 +504,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     assignPartnerToOrder(partner, selectedOrder) {
         selectedOrder.set_partner(partner);
-        console.log("Partner set on order:", partner.name);
+        
+        // console.log("Partner set on order:", partner.name);
+        
         this.notification.add(
             `Customer set to: ${partner.name}`,
             { type: 'info' }
@@ -476,7 +529,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 scan_timestamp: new Date().toISOString(),
             };
 
-            console.log("Extra order data added:", selectedOrder.extra_data.dhs);
+            // console.log("Extra order data added:", selectedOrder.extra_data.dhs);
         }
         if (this.action_type === 'me') {
             selectedOrder.extra_data.medical_equipment = {
@@ -486,7 +539,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 scan_timestamp: new Date().toISOString(),
             };
 
-            console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
+            // console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
         }
         
     }

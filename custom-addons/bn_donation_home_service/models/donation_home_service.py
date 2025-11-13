@@ -63,6 +63,8 @@ class DonationHomeService(models.Model):
             )
 
             if not product_lines:
+                self.state = 'gate_in'
+
                 continue  # skip if no stockable products
 
             # ✅ Create the picking

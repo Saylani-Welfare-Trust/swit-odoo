@@ -5,3 +5,6 @@ from . import gateway_config
 from . import gateway_config_line
 from . import gateway_config_header
 from . import gateway_config_currency
+from . import microfinance_scheme
+from . import microfinance_scheme_line
+from . import loan_product_line

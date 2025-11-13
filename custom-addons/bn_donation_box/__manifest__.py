@@ -9,7 +9,6 @@
         'mail',
         'stock',
         'product',
-        'bn_analytic_account_customization',
         'bn_master_setup_backup',
         'bn_pos_custom_action'
     ],
