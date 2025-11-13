@@ -2,7 +2,7 @@ name: Deploy UAT (Odoo) 6922
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -19,14 +19,17 @@ jobs:
       - name: Setup SSH (decode base64 key + verify)
         env:
           DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
-          DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT_6922:    ${{ secrets.DEPLOY_SSH_PORT_6922 }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT_6922: ${{ secrets.DEPLOY_SSH_PORT_6922 }}
         run: |
           set -euxo pipefail
           mkdir -p "$HOME/.ssh"
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
+
+          nc -zvw5 "${DEPLOY_SSH_HOST}" "${DEPLOY_SSH_PORT_6922:-22}"
+
           ssh-keyscan -p "${DEPLOY_SSH_PORT_6922:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
 
@@ -61,12 +64,12 @@ jobs:
 
       - name: Fix perms + optional deps + restart Odoo (robust)
         env:
-          DEPLOY_SSH_HOST:  ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT_6922:  ${{ secrets.DEPLOY_SSH_PORT_6922 }}
-          DEPLOY_SSH_USER:  ${{ secrets.DEPLOY_SSH_USER }}
-          ODOO_SERVICE:     ${{ secrets.ODOO_SERVICE }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT_6922: ${{ secrets.DEPLOY_SSH_PORT_6922 }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          ODOO_SERVICE: ${{ secrets.ODOO_SERVICE }}
           ODOO_CONFIG_PATH: ${{ secrets.ODOO_CONFIG_PATH }}
-          UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
+          UAT_DB_NAME: ${{ secrets.UAT_DB_NAME }}
         run: |
           set -euo pipefail
           SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT_6922:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
