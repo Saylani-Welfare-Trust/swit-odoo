@@ -27,9 +27,7 @@ jobs:
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
-
           nc -zvw5 "${DEPLOY_SSH_HOST}" "${DEPLOY_SSH_PORT_6922:-22}"
-
           ssh-keyscan -p "${DEPLOY_SSH_PORT_6922:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
 
