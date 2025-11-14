@@ -6,7 +6,7 @@
             <div class="modal-header drag-handle">
                 <h4 class="modal-title"><t t-esc="this.title" /></h4>
             </div>
-            <main class="modal-body">
+            <main class="modal-body" t-if="this.action_type != 'mf'">
                 <div class="row mb-2">
                     <div class="col-4 fw-semibold">Customer</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
@@ -42,6 +42,76 @@
                 <div class="row mb-2">
                     <div class="col-4 fw-semibold">Total</div>
                     <div class="col-8 fw-bold" t-esc="this.state.total"/>
+                </div>
+            </main>
+
+            <!-- Microfinance -->
+            <main class="modal-body" t-if="this.action_type == 'mf'">
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.microfinance_request_no"
+                            t-on-change="updateMicrofinanceRequestNo"
+                            placeholder="Enter Microfinance Requets No."/>
+                    </div>
+                </div>
+                
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold">Payment Method</div>
+                    <div class="col-8">
+                        <select class="form-select form-select-sm"
+                                t-on-change="updatePaymentMethod">
+                            <option value="">Select a payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-2 align-items-center" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
+                    <div class="col-4 fw-semibold">Bank Name</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.bank_name"
+                            t-on-change="updateBankName"
+                            placeholder="Enter Bank Name"/>
+                    </div>
+                </div>
+                
+                <div class="row mb-2 align-items-center" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
+                    <div class="col-4 fw-semibold">Cheque No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.cheque_no"
+                            t-on-change="updateChequeNo"
+                            placeholder="Enter Cheque No."/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 align-items-center" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
+                    <div class="col-4 fw-semibold">Cheque Date</div>
+                    <div class="col-8">
+                        <input type="date"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.cheque_date"
+                            t-on-change="updateChequeDate"
+                            placeholder="Select Cheque Date"/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 align-items-center">
+                    <div class="col-4 fw-semibold">Amount</div>
+                    <div class="col-8">
+                        <input type="number" class="form-control form-control-sm"
+                            t-att-value="this.state.amount"
+                            id="amount"
+                            name="amount"
+                            t-on-change="saveAmount"/>
+                    </div>
                 </div>
             </main>
             <footer class="footer modal-footer">

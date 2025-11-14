@@ -50,7 +50,7 @@ class DonationHomeService(models.Model):
         self.total_amount = self.amount + self.service_charges
 
     def action_confirm(self):
-        """Confirm donation and create stock picking if product-type lines exist."""
+        """Confirm donation and create stock picking if stockable product lines exist."""
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
         StockLocation = self.env.ref('stock.stock_location_stock')
@@ -63,11 +63,10 @@ class DonationHomeService(models.Model):
             )
 
             if not product_lines:
-                self.state = 'gate_in'
+                record.state = 'gate_in'
+                continue
 
-                continue  # skip if no stockable products
-
-            # ✅ Create the picking
+            # Create picking
             picking = StockPicking.create({
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
@@ -76,7 +75,7 @@ class DonationHomeService(models.Model):
                 'state': 'draft',
             })
 
-            # ✅ Create all stock moves in bulk for efficiency
+            # Create moves
             moves_vals = [{
                 'name': f'Gate Out against {record.name}',
                 'product_id': line.product_id.id,
@@ -90,61 +89,68 @@ class DonationHomeService(models.Model):
 
             StockMove.create(moves_vals)
 
-            # ✅ Assign and confirm moves properly
-            picking.action_assign()
+            # Confirm and validate picking safely
             picking.action_confirm()
+            for move in picking.move_ids:
+                move.quantity = move.product_uom_qty
+            picking.button_validate()
 
-            # ✅ Link picking back to record
-            record.picking_id = picking.id     
+            # Link picking to DHS record
+            record.picking_id = picking.id
     
     def action_cancel(self):
-        """Cancel Donation Home Service and associated pickings safely"""
+        """Cancel DHS and safely reverse done pickings."""
+        
+        def _create_return_for_picking(picking):
+            """Create and validate a return picking programmatically."""
+            ReturnWizard = self.env['stock.return.picking']
+            return_wizard = ReturnWizard.with_context(
+                active_id=picking.id,
+                active_ids=[picking.id],
+            ).create({'picking_id': picking.id})
 
-        # Cancel the main picking
-        if self.picking_id:
-            if self.picking_id.state == 'done':
-                # Create a return picking to reverse the done picking
-                return_picking = self.picking_id._create_returns()
-                return_picking.action_confirm()
-                for move in return_picking.move_ids:
-                    move.quantity_done = move.product_uom_qty
-                return_picking.button_validate()
-            elif self.picking_id.state not in ['cancel', 'done']:
-                self.picking_id.action_cancel()
+            # returns (action_dict, list_of_created_picking_ids)
+            action_dict, picking_ids = return_wizard._create_returns()
+            return_picking = self.env['stock.picking'].browse(picking_ids)
 
-        # Cancel the second picking (return / gate in)
-        if self.second_picking_id:
-            if self.second_picking_id.state == 'done':
-                # Optionally, create a return for the done picking
-                return_picking = self.second_picking_id._create_returns()
-                return_picking.action_confirm()
-                for move in return_picking.move_ids:
-                    move.quantity_done = move.product_uom_qty
-                return_picking.button_validate()
-            elif self.second_picking_id.state not in ['cancel', 'done']:
-                self.second_picking_id.action_cancel()
+            # Force done
+            for move in return_picking.move_ids:
+                move.quantity = move.product_uom_qty
 
-        # Update DHS state to 'cancel'
+            return_picking.action_confirm()
+            return_picking.button_validate()
+            return return_picking
+
+        for picking in [self.picking_id, self.second_picking_id]:
+            if picking:
+                if picking.state == 'done':
+                    _create_return_for_picking(picking)
+                elif picking.state not in ['cancel', 'done']:
+                    picking.action_cancel()
+        
         self.state = 'cancel'
     
     def action_gate_out(self):
-        product_lines = self.donation_home_service_line_ids.filtered(
-            lambda l: l.product_id.detailed_type != 'service'
-        )
-
-        if product_lines:
-            self.picking_id.action_confirm()
-            self.picking_id.action_assign()
-            self.picking_id.button_validate()
+        if self.picking_id and self.picking_id.move_lines:
+            picking = self.picking_id
+            picking.action_confirm()
+            for move in picking.move_lines:
+                move.quantity = move.product_uom_qty
+            picking.action_assign()
+            picking.button_validate()
+            self.state = 'gate_out'
         else:
             self.state = 'gate_in'
 
     
     def action_gate_in(self):
-        self.second_picking_id.action_confirm()
-        self.second_picking_id.action_assign()
-        self.second_picking_id.button_validate()
-        
+        if self.second_picking_id and self.second_picking_id.move_lines:
+            picking = self.second_picking_id
+            picking.action_confirm()
+            for move in picking.move_lines:
+                move.quantity = move.product_uom_qty
+            picking.action_assign()
+            picking.button_validate()
         self.state = 'gate_in'
     
     def action_show_picking(self):
@@ -154,6 +160,16 @@ class DonationHomeService(models.Model):
             'res_model': 'stock.picking',
             'view_mode': 'form',
             'res_id': self.picking_id.id,
+            'target': 'current',
+        }
+    
+    def action_show_second_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Gate Out',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.second_picking_id.id,
             'target': 'current',
         }
 

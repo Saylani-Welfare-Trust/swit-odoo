@@ -27,10 +27,16 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.action_type = this.props.action_type;
         
         this.state = useState({
+            microfinance_request_no: '',
+            payment_method: '',
+            bank_name: '',
+            cheque_no: '',
+            cheque_date: '',
+
             amount: parseFloat(this.props.amount),
             service_charges: 0,
             total: parseFloat(this.props.amount),
-            donor_address: this.props.donor_address || "",
+            donor_address: this.props.donor_address || "",            
         });
     }
 
@@ -39,9 +45,33 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
+    
+    saveAmount(event) {
+        this.state.amount = parseFloat(event.target.value);
+    }
 
     updateAddress(event) {
         this.state.donor_address = event.target.value;
+    }
+    
+    updatePaymentMethod(event) {
+        this.state.payment_method = event.target.value;
+    }
+    
+    updateMicrofinanceRequestNo(event) {
+        this.state.microfinance_request_no = event.target.value;
+    }
+    
+    updateBankName(event) {
+        this.state.bank_name = event.target.value;
+    }
+    
+    updateChequeNo(event) {
+        this.state.cheque_no = event.target.value;
+    }
+    
+    updateChequeDate(event) {
+        this.state.cheque_date = event.target.value;
     }
 
     prepareOrderLines(orderLines) {
@@ -91,6 +121,50 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
             })
+        }
+        if (this.action_type == 'mf') {
+            if (!this.state.microfinance_request_no) {
+                this.notification.add(
+                    "Please enter a Microfinance Request No.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (!this.state.payment_method) {
+                this.notification.add(
+                    "Please select a payment method.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.bank_name) {
+                this.notification.add(
+                    "Please enter a bank name.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.cheque_no) {
+                this.notification.add(
+                    "Please enter a cheque number.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.cheque_date) {
+                this.notification.add(
+                    "Please select a cheque no.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+
+            
         }
     }
 }

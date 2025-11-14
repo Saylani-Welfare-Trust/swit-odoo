@@ -14,7 +14,7 @@
                             t-att-placeholder="props.placeholder"
                             id="record_number"
                             name="record_number"
-                            t-on-change="updateRecordNumber"/>
+                            t-on-change="updateRecordNumber" required="1" />
                     </div>
                 </div>
             </main>

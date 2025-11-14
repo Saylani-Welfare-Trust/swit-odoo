@@ -193,8 +193,8 @@ class ResPartner(models.Model):
     def action_register(self):
         if not self.date_of_birth and 'Donee' in self.category_id.mapped('name') and 'Individual' in self.category_id.mapped('name'):
             raise ValidationError('Please specify your Date of Birth...')
-        elif self.date_of_birth and 'MicroFinance' in self.category_id.mapped('name'):
-            raise ValidationError('Cannot register the Person for MicroFinance as his/her age is below 18.')
+        elif self.date_of_birth and 'Microfinance' in self.category_id.mapped('name'):
+            raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
         elif 'Donee' in self.category_id.mapped('name'):
             res_partner = self.env['res.partner'].search(['|', ('cnic_no', '=', self.cnic_no), ('mobile', '=', self.mobile), ('country_code_id', '=', self.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 

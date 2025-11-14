@@ -28,7 +28,7 @@
         </record>
         
         <record id="microfinance_partner_category" model="res.partner.category">
-            <field name="name">MicroFinance</field>
+            <field name="name">Microfinance</field>
         </record>
         
         <record id="medical_partner_category" model="res.partner.category">

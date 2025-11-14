@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class LoanProductLine(models.Model):
     _name = 'loan.product.line'
+    _description = "Loan Product Line"
 
 
     product_id = fields.Many2one('product.product', string='Product')

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_microfinance.MicrofinanceButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
+        <xpath expr="//main" position="inside">
+            <button class="btn btn-secondary btn-lg py-5" t-on-click="() => this.clickRecordMF()">
+                <i class="fa fa-money me-1" role="img" aria-label="Microfinance" title="Microfinance"/>
+                Microfinance
+            </button>
+        </xpath>
+    </t>
+
+</templates>

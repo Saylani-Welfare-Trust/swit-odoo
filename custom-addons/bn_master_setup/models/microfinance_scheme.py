@@ -27,20 +27,22 @@ class MicrofinanceScheme(models.Model):
     @api.model
     def create(self, vals):
         # vals['is_created'] = True
-        record = super().create(vals)
+        record = super(MicrofinanceScheme, self).create(vals)
 
         self.env['ir.sequence'].create({
             'name': f"{record.name} Sequence",
-            'code': f"mfd.loan.request.{record.id}",
+            'code': f"microfinance.{record.id}",
             'padding': 7,
             'prefix': record.prefix,
         })
+
         return record
 
     def write(self, vals):
-        record = super().write(vals)
-        seq_record = self.env['ir.sequence'].search([
-            ('code', '=', f"mfd.loan.request.{self.id}")
-        ])
+        record = super(MicrofinanceScheme, self).write(vals)
+        
+        seq_record = self.env['ir.sequence'].search([('code', '=', f"microfinance.{self.id}")])
+        
         seq_record.write({'prefix': self.prefix})
+        
         return record

@@ -201,7 +201,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <t t-foreach="lines" t-as="line" t-key="line.id">
+                        <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                             <tr>
                                 <td class="text-start">
                                     <t t-if="line.productName">

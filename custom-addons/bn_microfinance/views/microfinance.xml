@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="microfinance_view_tree" model="ir.ui.view">
+        <field name="name">microfinance.view.tree</field>
+        <field name="model">microfinance</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="donee_id" />
+                <field name="asset_type" />
+                <field name="total_amount" />
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['approve', 'done']" decoration-success="state in ['approve', 'done']" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="microfinance_view_form" model="ir.ui.view">
+        <field name="name">microfinance.view.form</field>
+        <field name="model">microfinance</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'draft' or in_recovery" />
+                    
+                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />
+                    <button string="Reject" name="action_reject" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group,bn_microfinance.microfinance_member_group" />
+                    <button string="Revert" name="action_revert" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group,bn_microfinance.microfinance_member_group" />
+                    
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve' or in_recovery" groups="bn_microfinance.microfinance_member_group" />
+                    
+                    <button string="Proceed" name="action_proceed" type="object" class="oe_highlight" invisible="state != 'approve' or in_recovery" />
+                    <button string="SD Slip" name="action_sd_slip" type="object" invisible="state != 'approve' or in_recovery" />
+                    
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery" />
+                    <button string="Receipt" name="action_receipt" type="object" invisible="state != 'wfd' or in_recovery" />
+
+                    <button string="Temporary Recovery" name="action_temporary_recovery" type="object" class="oe_highlight" invisible="state != 'in_recovery' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
+                    <button string="Fully Recoverd" name="action_fully_recovered" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
+                    <button string="Write Off Request" name="action_write_off_request" type="object" class="oe_highlight" invisible="state != 'fully_recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
+                    <button string="Approve" name="action_right_of_approve" invisible="state not in ['right_granted', 'right_of_approval', 'right_of_approval_2'] or not in_recovery" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_group" />
+                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval', 'right_of_approval_2'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
+
+                    <button string="Send for Recovery" name="action_send_to_recovery" type="object" invisible="in_recovery" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, wfd, done, reject" invisible="in_recovery" />
+                    <field name="state" widget="statusbar" statusbar_visible="in_recovery, recover, right_granted, right_of_approval_1, right_of_approval_2, fully_recover, done" invisible="not in_recovery" />
+                </header>
+                <sheet>
+                    <field name="in_recovery" invisible="1" />
+                    <widget name="web_ribbon" title="In Recovery" invisible="not in_recovery"/>
+
+                    <div class="oe_title">
+                        <label for="name" string="Name"/>
+                        <h1><field name="name" class="oe_inline" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="microfinance_col_1">
+                            <field name="microfinance_scheme_line_ids" invisible="1" />
+                            <field name="microfinance_scheme_id" string="Shceme" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="microfinance_scheme_line_id" string="Application For" domain="[('id', 'in', microfinance_scheme_line_ids)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="asset_type" options="{'horizontal': True}" widget="radio" />
+                            <field name="donee_id" domain="[('category_id.name', 'in', ['Donee', 'Microfinance'])]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="product_id" domain="[('is_microfinance', '=', True)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="amount" readonly="1" />
+                            <field name="security_deposit" readonly="1" />
+                            <field name="donor_contribution" />
+                            <field name="total_amount" />
+                            <field name="old_system_record" />
+                        </group>
+                        <group name="microfinance_col_2">
+                            <field name="installment_type" options="{'horizontal': True}" widget="radio" />
+                            <field name="installment_amount" readonly="1" />
+                            <field name="installment_period" readonly="1" />
+                            <field name="delivery_date" required="state == 'wfd'" readonly="state not in ['approve', 'wfd']" invisible="state not in ['approve', 'wfd', 'done', 'in_recovery', 'recover']" />
+                            <field name="warehouse_location_id" required="asset_type == 'movable_asset' and asset_availability == 'available'" domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]" invisible="state not in ['waiting_delivery', 'done', 'in_recovery', 'recover'] or asset_type != 'movable_asset' or product_id == False or in_recovery" />
+                            <field name="recovered_location_id" readonly="1" invisible="not in_recovery" />
+                            <field name="asset_availability" readonly="1" />
+                            <field name="application_form_name" invisible="1"/>
+                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="1"/>
+                            <field name="frc_name" invisible="1"/>
+                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="1"/>
+                            <field name="electricity_bill_name" invisible="1"/>
+                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" required="1"/>
+                            <field name="gas_bill_name" invisible="1"/>
+                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" required="1"/>
+                            <field name="family_cnic_name" invisible="1"/>
+                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
+                            
+                            <field name="sd_slip_id" option="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('payment_type', '=', 'security'), ('state', '=', 'paid'), ('microfinance_id', '=', id)]" required="state == 'wfd'" invisible="asset_type == 'cash' or state in ['draft','hod_approve','mem_approve','reject'] or in_recovery" />
+                            
+                            <field name="hod_remarks" invisible="state not in ['hod_approve','reject']" />
+                            <field name="mem_remarks" invisible="state not in ['hod_approve','mem_approve','reject']" />
+                            <field name="remarks" invisible="in_recovery" />
+                            <field name="recovery_remarks" invisible="not in_recovery" />
+                            <field name="member_right_of_remarks" invisible="state != 'right_of_approval_1' or not in_recovery" />
+                            <field name="cfo_right_of_remarks" invisible="state != 'right_of_approval_2' or not in_recovery" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="installment" string="Installments" invisible="state not in ['done', 'reject'] or in_recovery">
+                            <field name="microfinance_line_ids" readonly="1">
+                                <tree>
+                                    <field name="installment_no" />
+                                    <field name="due_date" />
+                                    <field name="amount" />
+                                    <field name="paid_amount" />
+                                    <field name="remaining_amount" />
+                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="pdc" string="Post Dated Cheque" invisible="state not in ['done', 'reject'] or in_recovery">
+                            <group>
+                                <group name="pdc_col_1">
+                                    <button name="download_pdc_template" string="Template" type="object" class="oe_highlight"/>
+                                    <button name="action_upload_cheques" string="Upload" type="object" class="oe_highlight"/>
+                                </group>
+                                <group name="pdc_col_1">
+                                    <field name="pdc_attachment_name" invisible="1"/>
+                                    <field name="pdc_attachment" filename="pdc_attachment_name"/>
+                                </group>
+                            </group>
+                            <field name="microfinance_line_ids" readonly="1">
+                                <tree>
+                                    <field name="is_cheque_deposit" column_invisible="1" />
+
+                                    <field name="installment_no" />
+                                    <field name="cheque_date" />
+                                    <field name="bank_name" />
+                                    <field name="cheque_no" />
+                                    <field name="amount" />
+                                    
+                                    <button name="action_cheque_deposit" string="Deposit Cheque" type="object" class="oe_highlight" invisible="is_cheque_deposit == True"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="recovery_installment" string="Installments" invisible="not in_recovery">
+                            <field name="microfinance_recovery_line_ids" readonly="1">
+                                <tree>
+                                    <field name="installment_no" />
+                                    <field name="due_date" />
+                                    <field name="amount" />
+                                    <field name="paid_amount" />
+                                    <field name="remaining_amount" />
+                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="employee_info" string="Employee Info.">
+                            <group>
+                                <group name="employee_info_col_1">
+                                    <field name="company_name" />
+                                    <field name="company_phone" />
+                                    <field name="company_address" />
+                                </group>
+                                <group name="employee_info_col_2">
+                                    <field name="designation" />
+                                    <field name="service_duration" />
+                                    <field name="monthly_salary" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="education_info" string="Education Info.">
+                            <field name="educaiton_line_ids">
+                                <tree editable="bottom">
+                                    <field name="examination" />
+                                    <field name="school_uni_center" />
+                                    <field name="board" />
+                                    <field name="percentage" />
+                                    <field name="passing_year" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="house_ownership_residency_detail" string="House Ownership / Residency Details">
+                            <group>
+                                <group name="house_ownership_residency_detail_col_1">
+                                    <field name="residence_type" options="{'horizontal': True}" widget="radio" />
+                                    <field name="home_phone_no" />
+                                    <field name="rental_shared_duration" />
+                                    <field name="electricity_bill" />
+                                    <field name="gas_bill" />
+                                </group>
+                                <group name="house_ownership_residency_detail_col_2">
+                                    <field name="landlord_name" />
+                                    <field name="landlord_cnic_no" />
+                                    <field name="landlord_mobile" />
+                                    <field name="home_other_info" />
+                                    <field name="per_month_rent" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="other_finance" string="Other Finance">
+                            <group>
+                                <group name="other_finance_col_1">
+                                    <field name="monthly_income" />
+                                    <field name="bank_account" options="{'horizontal': True}" widget="radio" />
+                                    <field name="bank_name" invisible="bank_account == 'no'" />
+                                    <field name="account_no" invisible="bank_account == 'no'" />
+                                </group>
+                                <group name="other_finance_col_2">
+                                    <field name="monthly_household_expense" />
+                                    <field name="other_loan" />
+                                    <field name="institute_name" invisible="other_loan == 'no'" />
+                                    <field name="outstanding_amount" invisible="other_loan == 'no'" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="other_information" string="Other Information">
+                            <group>
+                                <group name="other_information_col_1">
+                                    <field name="aid_from_other_organization" />
+                                    <field name="details_1" />
+                                </group>
+                                <group name="other_information_col_2">
+                                    <field name="have_applied_swit" />
+                                    <field name="details_2" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="request_details" string="Request Details">
+                            <group>
+                                <group name="request_details_col_1">
+                                    <field name="loan_request_amount" />
+                                    <field name="security_offered" />
+                                </group>
+                                <group name="request_details_col_2">
+                                    <field name="loan_tenure_expected" />
+                                </group>
+                            </group>
+                        </page>
+                        <page name="guarantor_information" string="Guarantor Information">
+                            <field name="guarantor_line_ids">
+                                <tree editable="bottom">
+                                    <field name="name" />
+                                    <field name="father_spouse_name" />
+                                    <field name="cnic_no" />
+                                    <field name="relation" />
+                                    <field name="address" />
+                                    <field name="mobile" />
+                                    <field name="landline_no" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="family_member" string="Family Details">
+                            <group>
+                                <group name="family_member_col_1">
+                                    <field name="dependent_person" />
+                                </group>
+                                <group name="family_member_col_2">
+                                    <field name="household_member" />
+                                </group>
+                            </group>
+                            <field name="family_line_ids">
+                                <tree editable="bottom">
+                                    <field name="complete_name" />
+                                    <field name="age" />
+                                    <field name="relation" />
+                                    <field name="cnic_b_form_name" column_invisible="1"/>
+                                    <field name="cnic_b_form" filename="cnic_b_form_name"/>
+                                    <field name="education" />
+                                    <field name="monthly_income" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="microfinance_action" model="ir.actions.act_window">
+        <field name="name">Loan Request</field>
+        <field name="res_model">microfinance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('in_recovery', '=', False)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a Loan Request....
+            </p>
+        </field>
+    </record>
+    
+    <record id="microfinance_recovery_action" model="ir.actions.act_window">
+        <field name="name">Recovery Request</field>
+        <field name="res_model">microfinance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('in_recovery', '=', True)]</field>
+        <field name="context">{
+            'create': 0
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a Recovery Request....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="microfinance_menu"
+        name="Microfinance"
+        groups="bn_microfinance.microfinance_group"
+        web_icon="bn_microfinance,static/description/icon.png"
+        sequence="6"/>
+
+    <menuitem
+        id="loan_recovery_menu"
+        name="Loan &amp; Recovery"
+        parent="microfinance_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="loan_request_menu"
+        name="Loan Request"
+        action="microfinance_action"
+        parent="loan_recovery_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="recovery_request_menu"
+        name="Recovery Request"
+        action="microfinance_recovery_action"
+        parent="loan_recovery_menu"
+        sequence="1"/>
+
+</odoo>

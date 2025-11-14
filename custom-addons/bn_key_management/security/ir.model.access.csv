@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_key,key,model_key,,1,1,1,1
-access_key_issuance,key.issuance,model_key_issuance,,1,1,1,1
-access_key_bunch,key.bunch,model_key_bunch,,1,1,1,1
-access_bulk_key_issuance,bulk.key.issuance,model_bulk_key_issuance,,1,1,1,1
+access_key,key,bn_key_management.model_key,,1,1,1,1
+access_key_issuance,key.issuance,bn_key_management.model_key_issuance,,1,1,1,1
+access_key_bunch,key.bunch,bn_key_management.model_key_bunch,,1,1,1,1
+access_bulk_key_issuance,bulk.key.issuance,bn_key_management.model_bulk_key_issuance,,1,1,1,1

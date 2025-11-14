@@ -9,7 +9,7 @@ cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 donee_registration_selection = [
     ('student', 'Student'),
     ('welfare', 'Welfare'),
-    ('microfinance', 'MicroFinance'),
+    ('microfinance', 'Microfinance'),
     ('medical', 'Medical'),
 ]
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="microfinance_pdc_template_report_action" model="ir.actions.report">
+        <field name="name">Download PDC template</field>
+        <field name="model">microfinance</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">bn_microfinance.bulk_upload_pdc</field>
+        <field name="report_file">bn_microfinance.bulk_upload_pdc</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

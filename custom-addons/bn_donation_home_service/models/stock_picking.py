@@ -48,16 +48,6 @@ class StockPicking(models.Model):
                 # Validate the original picking
                 super(StockPicking, self).button_validate()
                 
-                # Return action to show the duplicate picking
-                return {
-                    'type': 'ir.actions.act_window',
-                    'name': _('Return Picking Created'),
-                    'res_model': 'stock.picking',
-                    'res_id': picking.id,
-                    'view_mode': 'form',
-                    'target': 'current',
-                }
-                
             except Exception as e:
                 raise ValidationError(_('Error creating return picking: %s') % str(e))
         # Handle check_picking validation (duplicate picking)

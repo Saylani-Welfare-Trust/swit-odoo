@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_partner_form_inherit_bn_profile_management_inherit_bn_microfinance" model="ir.ui.view">
+        <field name="name">base.iew.partner.form.inherit.bn.profile.management.inherit.bn.microfinance</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.base_view_partner_form_inherit_bn_profile_management"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='microfinance']" position="inside">
+                <field name="microfinance_line_ids" readonly="1">
+                    <tree>
+                        <field name="name" />
+                        <field name="donee_id" />
+                        <field name="asset_type" />
+                        <field name="total_amount" />
+                        <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['approve', 'done']" decoration-success="state in ['approve', 'done']" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_profile_management_profile_management_view_form_inherit_bn_microfinance" model="ir.ui.view">
+        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.microfinance</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='microfinance']" position="inside">
+                <field name="microfinance_line_ids" readonly="1">
+                    <tree>
+                        <field name="name" />
+                        <field name="donee_id" />
+                        <field name="asset_type" />
+                        <field name="total_amount" />
+                        <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['approve', 'done']" decoration-success="state in ['approve', 'done']" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

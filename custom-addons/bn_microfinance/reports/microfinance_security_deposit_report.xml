@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="security_deposit_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+
+                    <!-- Microfinance Container -->
+                    <div class="mt-5 clearfix">
+
+                        <!-- Header -->
+                        <div class="text-center border-bottom border-3 pb-3 mb-4">
+                            <h2 class="fw-bold text-uppercase">
+                                Provisional Security Deposit Receipt
+                            </h2>
+                        </div>
+
+                        <!-- Microfinance Info -->
+                        <div class="bg-light p-3 border-start border-5 mb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <t t-import="datetime"/>
+                                    <span class="fw-bold">Date:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Microfinance ID</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.name"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Donee:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.donee_id.name"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Registration No.:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.donee_id.primary_registration_id"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">CNIC No.:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.donee_id.cnic_no"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Info -->
+                        <div class="bg-light p-3 border-start border-5 mb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Payment Type:</span>
+                                    <span class="ms-2">
+                                        
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Amount:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.amount"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Security Deposit:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.security_deposit"/>
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <span class="fw-bold">Total:</span>
+                                    <span class="ms-2">
+                                        <t t-esc="o.total_amount"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="security_deposit_report_action" model="ir.actions.report">
+        <field name="name">Microfinance Security Deposit</field>
+        <field name="model">microfinance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_microfinance.donation_box_receipt_template</field>
+        <field name="report_file">bn_microfinance.donation_box_receipt_template</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Security Deposit - %s' % (object.lot_id.name)</field>
+        <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
+    </record>
+
+</odoo>

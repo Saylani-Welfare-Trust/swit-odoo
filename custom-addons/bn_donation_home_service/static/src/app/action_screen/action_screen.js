@@ -10,7 +10,7 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
-    get checkProductType() {
+    get checkProduct() {
         const orderlines = this.pos.get_order().get_orderlines();
 
         if (orderlines) {
@@ -28,7 +28,7 @@ patch(ActionScreen.prototype, {
 
         const donor = order.partner ? order.partner : null;
 
-        if (!donor && this.checkProductType) {
+        if (!donor && this.checkProduct) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Error"),
                 body: "Please select a donor first..."
@@ -37,7 +37,7 @@ patch(ActionScreen.prototype, {
 
         const { confirmed, payload: selectedOption } = await this.popup.add(
             SelectionPopup,
-            this.checkProductType
+            this.checkProduct
                 ? {
                     title: _t("Let's create an order!"),
                     list: [

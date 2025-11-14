@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="microfinance_installment_1_sequence" model="ir.sequence">
+            <field name="name">SD Slip</field>
+            <field name="code">sd_slip</field>
+            <field name="prefix">SDS/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+        
+        <record id="microfinance_installment_2_sequence" model="ir.sequence">
+            <field name="name">Insallement Slip</field>
+            <field name="code">installment_slip</field>
+            <field name="prefix">IS/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+        
+        <record id="microfinance_line_sequence" model="ir.sequence">
+            <field name="name">Microfiance Line</field>
+            <field name="code">microfinance_line</field>
+            <field name="prefix">MFI/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+        
+        <record id="microfinance_recovery_line_sequence" model="ir.sequence">
+            <field name="name">Microfiance Recovery Line</field>
+            <field name="code">microfinance_recovery_line</field>
+            <field name="prefix">MFR/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
+    </data>
+
+</odoo>

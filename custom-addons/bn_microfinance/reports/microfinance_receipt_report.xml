@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- rgba(200, 200, 200, 0.25) -->
+        <template id="pos_donation_receipt_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="order">
+                    <div class="page">
+                        <style>
+                            .page {
+                                position: relative;
+                            }
+                            .row {
+                                display: -webkit-box;
+                                display: flex;
+                            }
+                            body {
+                                font-family: Arial, sans-serif;
+                            }
+                            h1{
+                                font-size: 1.5em;
+                                color: #222;
+                            }
+                            h2{
+                                font-size: .9em;
+                            }
+                            h3{
+                                font-size: 1.2em;
+                                font-weight: 300;
+                                line-height: 2em;
+                            }
+                            p{
+                                font-size: .7em;
+                                color: #666;
+                                line-height: 1.2em;
+                            }
+                            .info h2 {
+                                font-size: 20px;
+                            }
+                            .div-box {
+                                display: flex;
+                                flex-direction: row;
+                                flex-wrap: nowrap;
+                                justify-content: space-between;
+                                align-items: center;
+                            }
+                            .text-transform {
+                                text-transform: uppercase;
+                                margin-top: 15px;
+                                margin-bottom: 0px;
+                                font-size: 16px;
+                            }
+                            .row-new {
+                                flex-direction: row;
+                                flex-wrap: nowrap;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                            }
+                            .table-bordered {
+                                border: 2px solid #000000 !important;
+                            }
+                            .table thead th {
+                                border-bottom: 2px solid #000000;
+                            }
+                            .table-bordered td, .table-bordered th {
+                                border: 2px solid #000000;
+                            }
+                            .w-full {
+                                width: 25% !important;
+                            }
+                            tfoot tr th {
+                                border-top: 2px solid #000000 !important;
+                                border-left: inherit !important;
+                                border-right: inherit !important;
+                                border-bottom: inherit !important;
+                            }
+                            tfoot tr td {
+                                border-top: 2px solid #000000 !important;
+                                border-left: inherit !important;
+                                border-right: inherit !important;
+                                border-bottom: inherit !important;
+                            }
+                            .text-left {
+                                text-align: left;
+                            }
+                            .text-right {
+                                text-align: right;
+                            }
+                            .service_margin {
+                                margin-left: 15px;
+                                margin-right: 15px;
+                            }
+                            .table-bordered {
+                                border: inherit;
+                            }
+                            .donation-receipt-container {
+                                width: 100%;
+                                max-width: 1200px;
+                                margin: 0 auto;
+                                position: relative;
+                                z-index: 1;
+                            }
+                            .table {
+                                font-size: 12px;
+                            }
+                        </style>
+
+                        <div class="donation-receipt-container">
+                            <div class="div-box service_margin">
+                                <h1 class="text-transform">
+                                    <t t-if="o.doc_type == 'sec_dep'">
+                                        Security Deposit Receipt
+                                    </t>
+                                    <t t-else="">
+                                        Installment Receipt
+                                    </t>
+                                </h1>
+                                <h1 class="text-transform"><t t-esc="o.name" /></h1>
+                            </div>
+                            
+                            <div class="service_margin" style="border: 2px solid #000;padding: 15px;">
+                                <div style="display: flex; width: 100%;">
+                                    <div style="width: 50%; padding-right: 15px;">
+                                        
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Date:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                        
+                                        
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Receipt #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.name" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Microfinance Request #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.microfinance_id.name" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Donee Name:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.donee_id.name"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                CNIC #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.donee_id.cnic_no"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Payment Method:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.payment_method" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Paid on:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.payment_method" />
+                                                -
+                                                <t t-esc="o.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="width: 50%; padding-left: 15px;">
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Total Amount:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Bank Name:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.bank_name"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Cheque #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.cheque_no" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Cheque Date:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.cheque_date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <br/>
+
+                            <!-- Product Table Section -->
+                            <div class="service_margin">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <t t-if="o.payment_type == 'cash'">
+                                                <th style="text-align: center;" class="w-full">Payment Method</th>
+                                                <th style="text-align: center;" class="w-full">Amount</th>
+                                            </t>
+                                            <t t-else="">
+                                                <th style="text-align: center;" class="w-full">Payment Method</th>
+                                                <th style="text-align: center;" class="w-full">Bank Name</th>
+                                                <th style="text-align: center;" class="w-full">Cheque No.</th>
+                                                <th style="text-align: center;" class="w-full">Cheque Date</th>
+                                                <th style="text-align: center;" class="w-full">Amount</th>
+                                            </t>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <t t-if="o.payment_type == 'cash'">
+                                                <td class="w-full text-center">
+                                                    <t t-if="o.payment_type">
+                                                        <t t-esc="o.payment_type"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                                <td class="w-full text-right">
+                                                    <t t-if="o.amount">
+                                                        <span t-field="o.amount"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="w-full text-center">
+                                                    <t t-if="o.payment_type">
+                                                        <t t-esc="o.payment_type"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                                <td class="w-full text-center">
+                                                    <t t-if="o.mfd_bank_id.name">
+                                                        <t t-esc="o.mfd_bank_id.name"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                                <td class="w-full text-center">
+                                                    <t t-if="o.cheque_number">
+                                                        <t t-esc="o.cheque_number"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                                <td class="w-full text-center">
+                                                    <t t-if="o.cheque_date">
+                                                        <t t-esc="o.cheque_date"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                                <td class="w-full text-right">
+                                                    <t t-if="o.amount">
+                                                        <span t-field="o.amount"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        -
+                                                    </t>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table">
+                                    <tfoot>
+                                        <tr>
+                                            <th class="w-full text-left">Amount In Words:</th>
+                                            <td class="w-full text-left">
+                                                <t t-esc="'%.2f' % o.amount"/> Only
+                                            </td>
+                                            <th class="w-full text-left">Total Amount:</th>
+                                            <td class="w-full text-right">
+                                                <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            
+                            <!-- Second Receipt Section -->
+                            <div class="service_margin" style="border: 2px solid #000;padding: 15px;">
+                                <div style="display: flex; width: 100%;">
+                                    <div style="width: 50%; padding-right: 15px;">
+                                        
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Date:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                        
+                                        
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Receipt #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.name" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Microfinance Request #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.microfinance_id.name" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Donee Name:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.donee_id.name"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                CNIC #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.donee_id.cnic_no"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Payment Method:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.payment_method" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Paid on:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.payment_method" />
+                                                -
+                                                <t t-esc="o.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="width: 50%; padding-left: 15px;">
+                                        <div style="display: flex;">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Total Amount:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Bank Name:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.bank_name"/>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Cheque #:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.cheque_no" />
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;" t-if="o.payment_type != 'cash'">
+                                            <div style="width: 40%; font-size: 12px; font-weight: normal;">
+                                                Cheque Date:
+                                            </div>
+                                            <div style="width: 60%; font-size: 12px; font-weight: 500;">
+                                                <t t-esc="o.cheque_date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+
+        <record id="microfinance_receipt_report_action" model="ir.actions.report">
+            <field name="name">Microfinance Receipt</field>
+            <field name="model">microfinance.installment</field>
+            <field name="report_type">qweb-html</field>
+            <field name="report_name">bn_microfinance.pos_donation_receipt_template</field>
+            <field name="report_file">bn_microfinance.pos_donation_receipt_template</field>
+            <field name="binding_model_id" ref="bn_microfinance.model_microfinance_installment"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="bn_pos_order.paperformat_pos_donation_receipt_a4"/>
+        </record>
+    </data>
+</odoo>
