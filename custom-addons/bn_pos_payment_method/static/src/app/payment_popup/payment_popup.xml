@@ -7,8 +7,8 @@
                 <h4 class="modal-title"><t t-esc="this.title" /></h4>
             </div>
             <main class="modal-body">
-                <div class="row mb-2" t-if="this.is_bank">
-                    <div class="col-4 fw-semibold text-start">Bank</div>
+                <div class="row mb-2 text-start" t-if="this.is_bank">
+                    <div class="col-4 fw-semibold">Bank</div>
                     <div class="col-8">
                         <input type="text"
                             class="form-control form-control-sm"
@@ -18,8 +18,8 @@
                     </div>
                 </div>
                 
-                <div class="row mb-2 align-items-center">
-                    <div class="col-4 fw-semibold text-start"><t t-esc="this.label" /></div>
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold"><t t-esc="this.label" /></div>
                     <div class="col-8">
                         <input type="text"
                             class="form-control form-control-sm"
@@ -29,8 +29,8 @@
                     </div>
                 </div>
 
-                <div class="row mb-2 align-items-center">
-                    <div class="col-4 fw-semibold text-start">Date</div>
+                <div class="row mb-2  text-start">
+                    <div class="col-4 fw-semibold">Date</div>
                     <div class="col-8">
                         <input type="date" class="form-control form-control-sm"
                             t-att-value="this.state.date"
