@@ -182,6 +182,7 @@ class DonationHomeService(models.Model):
             product_lines.append((0, 0, {
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
+                'amount': line['price'],
             }))
         
         dhs = self.env['donation.home.service'].create({
@@ -204,8 +205,9 @@ class DonationHomeService(models.Model):
                     total_price_incl_tax += tax_amount
                 else:
                     total_price_incl_tax += tax.amount
-
-            line.amount = total_price_incl_tax * line.quantity
+            
+            if not line.amount:
+                line.amount = total_price_incl_tax * line.quantity
 
         dhs.calculate_amount()
         dhs.calculate_service_charges()

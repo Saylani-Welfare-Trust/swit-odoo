@@ -79,6 +79,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 {
                     product_id: line.product.id,
                     quantity: line.quantity,
+                    price: line.price,
                 }
             )
         );
@@ -164,7 +165,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 return;
             }
 
-            
+
         }
     }
 }
