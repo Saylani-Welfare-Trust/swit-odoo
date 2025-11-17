@@ -1,5 +1,3 @@
-
-
 /** @odoo-module **/
 
 import { useState } from "@odoo/owl";
@@ -79,6 +77,40 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             await this.processMedicalEquipmentRecord(selectedOrder);
         }
+        // Process microfinance records
+        if (this.action_type === 'mf') {
+            this.pos.receive_voucher = true
+
+            await this.processMicrofinanceRecord(selectedOrder);
+        }
+    }
+
+    /**
+     * Process Microfinance record
+     */
+    async processMicrofinanceRecord(selectedOrder) {
+        try {
+            const record = await this.orm.searchRead(
+                'microfinance',
+                [['name', '=', this.state.record_number]],
+                ['name', 'state', 'microfinance_line_ids'],
+                { limit: 1 }
+            );
+
+            if (!record.length) return this.handleRecordNotFound();
+            if (record[0].state !== 'done') {
+                this.notification.add("Unauthorized Request State", { type: 'warning' });
+                return;
+            }
+
+            const microfinanceLineIds = await this.handleMicrofinanceLines(record[0], selectedOrder);
+
+            this.addExtraOrderData(selectedOrder, record[0], microfinanceLineIds);
+            super.confirm();
+
+        } catch (error) {
+            this.handleProcessingError(error);
+        }
     }
 
     /**
@@ -97,7 +129,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             
             // console.log("Donation Home Service:", record);
 
-            if (['paid', 'slotter'].includes(record[0].state)) {
+            if (record[0].state != 'gate_in') {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }
@@ -158,7 +190,57 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     }
 
     /**
-     * Handle found medical equipment record
+     * Handle found microfinance record
+     */
+    async handleMicrofinanceLines(record, selectedOrder) {
+        if (!record.microfinance_line_ids || !record.microfinance_line_ids.length) return;
+
+        const lines = await this.orm.searchRead(
+            'microfinance.line',
+            [['id', 'in', record.microfinance_line_ids], ['paid_amount', '=', false]],
+            ['id', 'amount', 'due_date'],
+            {}
+        );
+
+        if (!lines.length) return;
+
+        const now = new Date();
+        const dueThisMonth = lines.filter(l => {
+            const due = new Date(l.due_date);
+            return due.getMonth() === now.getMonth() && due.getFullYear() === now.getFullYear();
+        });
+
+        if (!dueThisMonth.length) return;
+
+        const mfProduct = await this.orm.searchRead(
+            'product.product',
+            [['name', '=', 'Microfinance Installement'], ['type', '=', 'service'], ['available_in_pos', '=', true]],
+            ['id'],
+            { limit: 1 }
+        );
+
+        let microfinanceLineIds = [];
+        if (mfProduct.length) {
+            const product = this.pos.db.get_product_by_id(mfProduct[0].id);
+            if (!product) {
+                await this.popup.add(ErrorPopup, { title: "Error", body: "Microfinance Installement product not loaded in POS session." });
+                return;
+            }
+
+            for (const line of dueThisMonth) {
+                const orderline = selectedOrder.add_product(product, { quantity: 1, price_extra: line.amount });
+                orderline.set_customer_note(`Due date: ${line.due_date}`);
+                microfinanceLineIds.push({ id: line.id, amount: line.amount });
+            }
+        }
+
+        this.notification.add(`Processed ${dueThisMonth.length} microfinance instalments`, { type: 'success' });
+
+        return microfinanceLineIds;
+    }
+
+    /**
+     * Handle found record
      */
     async handleRecordFound(record, selectedOrder) {
         // console.log("Record found:", record);
@@ -200,6 +282,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             "Record not found",
             { type: 'warning' }
         );
+
         return null;
     }
 
@@ -212,6 +295,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             "Error processing equipment record",
             { type: 'danger' }
         );
+
         return null;
     }
 
@@ -256,7 +340,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
-                    price: record.service_charges,
                     price_extra: record.service_charges,
                 });
 
@@ -296,6 +379,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             );
             return false;
         }
+
         return true;
     }
     /**
@@ -311,6 +395,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             );
             return false;
         }
+
         return true;
     }
 
@@ -377,23 +462,29 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return false;
         }
 
-        const quantity = this.calculateProductPrice(line, record);
+        const quantity = this.calculateProductQuantity(line, record);
         // console.log(`Adding product ${product.display_name} with price ${price}`);
-        
-        selectedOrder.add_product(product, {
-            quantity: quantity || 1,
-            price:  line.amounts || product.lst_price,
-
-        });
+         
+        if (product.lst_price > 0) {
+            selectedOrder.add_product(product, {
+                quantity: quantity || 1,
+            });
+        }
+        else if (product.lst_price <= 0) {
+            selectedOrder.add_product(product, {
+                quantity: quantity || 1,
+                price_extra: line.amount || line.amounts || product.lst_price,
+            });
+        }
         
         // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);
         return true;
     }
 
     /**
-     * Calculate product price based on equipment state
+     * Calculate product price based on state
      */
-    calculateProductPrice(line, record) {
+    calculateProductQuantity(line, record) {
         let qty = line.quantity;
         
         // Apply negative price for return state
@@ -516,7 +607,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Add extra data to order for reporting
      */
-    addExtraOrderData(selectedOrder, record) {
+    addExtraOrderData(selectedOrder, record, lineIds=null) {
         if (!selectedOrder.extra_data) {
             selectedOrder.extra_data = {};
         }
@@ -541,8 +632,18 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             // console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
         }
+        if (this.action_type === 'mf') {
+            selectedOrder.extra_data.microfinance = {
+                record_number: record.name,
+                microfinance_state: record.state,
+                microfinance_id: record.id,
+                microfinance_line_ids: lineIds,
+                scan_timestamp: new Date().toISOString(),
+            };
+        }
         
     }
+
     async cancel() {
         if (this.canCancel()) {
             super.cancel();

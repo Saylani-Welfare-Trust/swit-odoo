@@ -48,55 +48,6 @@ class DonationHomeService(models.Model):
 
     def calculate_service_charges(self):
         self.total_amount = self.amount + self.service_charges
-
-    def action_confirm(self):
-        """Confirm donation and create stock picking if stockable product lines exist."""
-        StockPicking = self.env['stock.picking']
-        StockMove = self.env['stock.move']
-        StockLocation = self.env.ref('stock.stock_location_stock')
-        GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
-        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
-
-        for record in self:
-            product_lines = record.donation_home_service_line_ids.filtered(
-                lambda l: l.product_id.detailed_type != 'service'
-            )
-
-            if not product_lines:
-                record.state = 'gate_in'
-                continue
-
-            # Create picking
-            picking = StockPicking.create({
-                'partner_id': record.donor_id.id,
-                'picking_type_id': PickingType.id,
-                'origin': record.name,
-                'dhs_id': record.id,
-                'state': 'draft',
-            })
-
-            # Create moves
-            moves_vals = [{
-                'name': f'Gate Out against {record.name}',
-                'product_id': line.product_id.id,
-                'product_uom': line.product_id.uom_id.id,
-                'product_uom_qty': line.quantity,
-                'location_id': StockLocation.id,
-                'location_dest_id': GateOutLocation.id,
-                'picking_id': picking.id,
-                'state': 'draft',
-            } for line in product_lines]
-
-            StockMove.create(moves_vals)
-
-            # Confirm and validate picking safely
-            picking.action_confirm()
-            for move in picking.move_ids:
-                move.quantity = move.product_uom_qty
-            picking.button_validate()
-
-            # Link picking to DHS record
-            record.picking_id = picking.id
     
     def action_cancel(self):
         """Cancel DHS and safely reverse done pickings."""
@@ -131,27 +82,148 @@ class DonationHomeService(models.Model):
         self.state = 'cancel'
     
     def action_gate_out(self):
-        if self.picking_id and self.picking_id.move_lines:
-            picking = self.picking_id
-            picking.action_confirm()
-            for move in picking.move_lines:
-                move.quantity = move.product_uom_qty
-            picking.action_assign()
-            picking.button_validate()
-            self.state = 'gate_out'
-        else:
-            self.state = 'gate_in'
+        """Confirm donation and create stock picking if stockable product lines exist."""
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+        StockLocation = self.env.ref('stock.stock_location_stock')
+        GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
+        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
+        for record in self:
+
+            # Skip if picking already exists
+            if record.picking_id:
+                continue
+
+            # Only NON-service product lines
+            stockable_lines = record.donation_home_service_line_ids.filtered(
+                lambda l: l.product_id.detailed_type not in ['service', 'consu'] and l.product_id.type == 'product'
+            )
+
+            # If NO stockable products → do NOT create picking
+            if not stockable_lines:
+                record.state = 'gate_out'   # or 'paid' if you prefer
+                continue
+
+            # -----------------------------------------
+            # Create Picking
+            # -----------------------------------------
+            picking = StockPicking.create({
+                'partner_id': record.donor_id.id,
+                'picking_type_id': PickingType.id,
+                'origin': record.name,
+                'dhs_id': record.id,
+                'state': 'draft',
+            })
+
+            # -----------------------------------------
+            # Create Moves for Stockable Products Only
+            # -----------------------------------------
+            moves_vals = [{
+                'name': f'Gate Out against {record.name}',
+                'product_id': line.product_id.id,
+                'product_uom': line.product_id.uom_id.id,
+                'product_uom_qty': line.quantity,
+                'location_id': StockLocation.id,
+                'location_dest_id': GateOutLocation.id,
+                'picking_id': picking.id,
+                'state': 'draft',
+            } for line in stockable_lines]
+
+            StockMove.create(moves_vals)
+
+            # -----------------------------------------
+            # Confirm & Validate Picking
+            # -----------------------------------------
+            picking.action_confirm()
+            picking.action_assign()
+
+            for move in picking.move_ids:
+                move.quantity = move.product_uom_qty
+
+            picking.button_validate()
+
+            # -----------------------------------------
+            # Link Picking
+            # -----------------------------------------
+            record.picking_id = picking.id
+
+            if not picking.dhs_id:
+                picking.dhs_id = record.id
+
+            record.state = 'gate_out'
     
     def action_gate_in(self):
-        if self.second_picking_id and self.second_picking_id.move_lines:
-            picking = self.second_picking_id
+        """Confirm donation and create stock picking if stockable product lines exist."""
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+        StockLocation = self.env.ref('bn_donation_home_service.gate_out_location')
+        GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
+        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_in_stock_picking_type')
+
+        for record in self:
+
+            # Skip if picking already exists
+            if record.second_picking_id:
+                continue
+
+            # Only NON-service product lines
+            stockable_lines = record.donation_home_service_line_ids.filtered(
+                lambda l: l.product_id.detailed_type not in ['service', 'consu'] and l.product_id.type == 'product'
+            )
+
+            # If NO stockable products → do NOT create picking
+            if not stockable_lines:
+                record.state = 'gate_out'   # or 'paid' if you prefer
+                continue
+
+            # -----------------------------------------
+            # Create Picking
+            # -----------------------------------------
+            picking = StockPicking.create({
+                'partner_id': record.donor_id.id,
+                'picking_type_id': PickingType.id,
+                'origin': record.name,
+                'dhs_id': record.id,
+                'state': 'draft',
+            })
+
+            # -----------------------------------------
+            # Create Moves for Stockable Products Only
+            # -----------------------------------------
+            moves_vals = [{
+                'name': f'Gate Out against {record.name}',
+                'product_id': line.product_id.id,
+                'product_uom': line.product_id.uom_id.id,
+                'product_uom_qty': line.quantity,
+                'location_id': StockLocation.id,
+                'location_dest_id': GateOutLocation.id,
+                'picking_id': picking.id,
+                'state': 'draft',
+            } for line in stockable_lines]
+
+            StockMove.create(moves_vals)
+
+            # -----------------------------------------
+            # Confirm & Validate Picking
+            # -----------------------------------------
             picking.action_confirm()
-            for move in picking.move_lines:
-                move.quantity = move.product_uom_qty
             picking.action_assign()
+
+            for move in picking.move_ids:
+                move.quantity = move.product_uom_qty
+
             picking.button_validate()
-        self.state = 'gate_in'
+
+            # -----------------------------------------
+            # Link Picking
+            # -----------------------------------------
+            record.second_picking_id = picking.id
+
+            if not picking.dhs_id:
+                picking.dhs_id = record.id
+
+            record.state = 'gate_in'
     
     def action_show_picking(self):
         return {
@@ -175,47 +247,64 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
+        # -------------------------
+        # 1. Prepare Line Items
+        # -------------------------
         product_lines = []
-
         for line in data['order_lines']:
-            # Assuming 'product_id' is a valid product ID
             product_lines.append((0, 0, {
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
             }))
-        
+
+        # -------------------------
+        # 2. Create DHS Record
+        # -------------------------
         dhs = self.env['donation.home.service'].create({
             'donor_id': data['donor_id'],
             'address': data['address'],
             'service_charges': data['service_charges'],
-            'donation_home_service_line_ids': product_lines
+            'donation_home_service_line_ids': product_lines,
         })
 
+        # -------------------------
+        # 3. Check if ALL lines are service products
+        # -------------------------
+        all_service = all(
+            line.product_id.detailed_type == 'service'
+            for line in dhs.donation_home_service_line_ids
+        )
+
+        if all_service:
+            dhs.state = 'gate_in'     # ✔ only if 100% service lines
+
+        # -------------------------
+        # 4. Calculate prices & taxes for all lines
+        # -------------------------
         for line in dhs.donation_home_service_line_ids:
             base_price = line.product_id.lst_price
             taxes = line.product_id.taxes_id
 
             total_price_incl_tax = base_price
-
             for tax in taxes:
                 if tax.amount_type == 'percent':
-                    tax_amount = base_price * (tax.amount / 100)
-
-                    total_price_incl_tax += tax_amount
+                    total_price_incl_tax += base_price * (tax.amount / 100)
                 else:
                     total_price_incl_tax += tax.amount
-            
+
             if not line.amount:
                 line.amount = total_price_incl_tax * line.quantity
 
+        # -------------------------
+        # 5. Recalculate totals
+        # -------------------------
         dhs.calculate_amount()
         dhs.calculate_service_charges()
-        dhs.action_confirm()
-       
-        return{
+
+        return {
             "status": "success",
-            "id": dhs.id
+            "id": dhs.id,
         }
     
     @api.model

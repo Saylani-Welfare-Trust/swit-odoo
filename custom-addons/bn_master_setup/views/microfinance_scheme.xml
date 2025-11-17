@@ -56,7 +56,7 @@
                                                     <field name="inst_amount" />
                                                     <field name="sd_amount" />
                                                     <field name="product_ids" widget="many2many_tags" option="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                                    <field name="is_recover" />
+                                                    <field name="is_recover" column_invisible="1" />
                                                 </tree>
                                             </field>
                                         </group>

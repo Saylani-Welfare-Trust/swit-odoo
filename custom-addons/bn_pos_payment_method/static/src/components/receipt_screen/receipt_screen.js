@@ -19,6 +19,9 @@ patch(ReceiptScreen.prototype, {
         if (this.pos.receive_voucher) {
             this.pos.receive_voucher = false
         }
+        if (this.pos.bn_customization) {
+            this.pos.bn_customization = false
+        }
         
         this.pos.showScreen(name, props);
     }

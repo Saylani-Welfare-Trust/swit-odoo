@@ -71,6 +71,7 @@ class Microfinance(models.Model):
     recovered_location_id = fields.Many2one('stock.location', string="Recovery Location")
     warehouse_location_id = fields.Many2one('stock.location', string="Warehouse Location")
     
+    product_domain = fields.Many2many('product.product', string="Product Domain", compute="_compute_product_domain", store=True)
     microfinance_scheme_line_ids = fields.Many2many(
         'microfinance.scheme.line',
         string="Microfinance Scheme Lines",
@@ -198,7 +199,24 @@ class Microfinance(models.Model):
                 rec.microfinance_scheme_line_ids = [(6, 0, rec.microfinance_scheme_id.microfinance_scheme_line_ids.ids)]
             else:
                 rec.microfinance_scheme_line_ids = [(5, 0, 0)]  # Clear the field if no scheme selected
+    
+    @api.depends('microfinance_scheme_line_id')
+    def _compute_product_domain(self):
+        for rec in self:
+            rec.product_domain = [(5, 0, 0)]
 
+            if rec.microfinance_scheme_line_id:
+                # Fetch lines related to selected scheme line
+                lines = self.env['loan.product.line'].search([
+                    ('microfinance_scheme_line_id', '=', self.microfinance_scheme_line_id.id)
+                ])
+
+                if lines:
+                    line_ids = lines.mapped('product_id').ids
+
+                    rec.product_domain = line_ids
+                    
+                    rec.product_domain = [(6, 0, lines.ids)]
 
     @api.depends('amount', 'security_deposit', 'donor_contribution')
     def _set_total_amount(self):

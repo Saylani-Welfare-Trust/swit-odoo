@@ -90,7 +90,7 @@ patch(PaymentScreen.prototype, {
                 console.error("❌ [Medical Equipment] No equipment ID found");
             }
         }
-        // Only process medical equipment if order has extra_data with medical_equipment
+        // Only process donation home service if order has extra_data with dhs
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
             try {
                 const dhsData = currentOrder.extra_data.dhs;
@@ -141,6 +141,31 @@ patch(PaymentScreen.prototype, {
                     { type: 'warning' }
                 );
             }
+        }
+        // --- MICROFINANCE ---
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.microfinance) {
+            const mfData = currentOrder.extra_data.microfinance;
+            const microfinanceLineIds = mfData.microfinance_line_ids || [];
+            
+            if (microfinanceLineIds.length > 0) {
+                // Fetch unpaid microfinance lines
+
+                for (const line of microfinanceLineIds) {
+                    await this.env.services.orm.write(
+                        'microfinance.line',
+                        [line.id],
+                        {
+                            paid_amount: line.amount,
+                            state: 'paid', // optional
+                        }
+                    );
+                }
+
+                this.env.services.notification.add(
+                    `Processed ${microfinanceLineIds.length} microfinance instalments`,
+                    { type: 'success' }
+                );
+            }
         } else {
             console.log("🟡 Data found in order - using normal POS flow");
         }
@@ -159,7 +184,7 @@ patch(PaymentScreen.prototype, {
 
         const equipmentLines = await this.fetchEquipmentLines(record);
 
-        console.log(`Equipment Lines:`, equipmentLines);
+        // console.log(`Equipment Lines:`, equipmentLines);
 
         for (const line of equipmentLines) {
             const equipmentLineId = line.id;
@@ -171,9 +196,9 @@ patch(PaymentScreen.prototype, {
                 (ol) => ol.product.id === productId
             );
 
-            console.log(`Checking Product: ${productName}`);
-            console.log(`Equipment Qty: ${equipmentQty}`);
-            console.log(`OrderLine:`, orderLine);
+            // console.log(`Checking Product: ${productName}`);
+            // console.log(`Equipment Qty: ${equipmentQty}`);
+            // console.log(`OrderLine:`, orderLine);
 
             if (orderLine) {
                 const orderQty = orderLine.quantity || 0;
@@ -201,7 +226,7 @@ patch(PaymentScreen.prototype, {
                             { type: "info" }
                         );
 
-                        console.log(`✅ Updated ${productName}: ${equipmentQty} → ${newQty}`);
+                        // console.log(`✅ Updated ${productName}: ${equipmentQty} → ${newQty}`);
                     } catch (error) {
                         console.error(`❌ Failed to update ${productName}`, error);
                         this.env.services.notification.add(
@@ -212,7 +237,7 @@ patch(PaymentScreen.prototype, {
 
                     return true;
                 } else {
-                    console.log(`✅ Quantities already match for ${productName}`);
+                    // console.log(`✅ Quantities already match for ${productName}`);
 
                     return false;
                 }
@@ -227,7 +252,8 @@ patch(PaymentScreen.prototype, {
      */
     hasEquipmentLines(record) {
         if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
-            console.log("No equipment lines found for this record");
+            // console.log("No equipment lines found for this record");
+
             this.notification.add(
                 "No products configured for this equipment",
                 { type: 'warning' }
@@ -248,7 +274,8 @@ patch(PaymentScreen.prototype, {
             {}
         );
         
-        console.log("Equipment lines:", equipmentLines);
+        // console.log("Equipment lines:", equipmentLines);
+        
         return equipmentLines;
     }
 });

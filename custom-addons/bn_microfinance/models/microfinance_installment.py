@@ -76,3 +76,43 @@ class MicrofinanceInstallment(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+    @api.model
+    def create_microfinance_security_deposit(self, data):
+        microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])
+
+        if not microfinance_request:
+            return {
+                'status': "error",
+                'body': "No request found against enter number."
+            }
+        
+        if data['amount'] and data['amount'] < 1:
+            return {
+                'status': "error",
+                'body': "Amount can't be zero or negative."
+            }
+
+        if self.search([('microfinance_id', '=', microfinance_request.id)]):
+            return {
+                'status': "error",
+                'body': "Someone has already paid the Security Deposit against this request."
+            }
+
+        microfinance_installment = self.create({
+            'payment_type': 'security',
+            'payment_method': data['payment_method'],
+            'bank_name': data['bank_name'],
+            'cheque_no': data['cheque_no'],
+            'cheque_date': data['cheque_date'],
+            'amount': data['amount'],
+            'microfinance_id': microfinance_request.id,
+            'donee_id': microfinance_request.donee_id.id,
+            'date': fields.Date.today()
+        })
+
+        if microfinance_installment:
+            return {
+                'status': "success",
+                'id': microfinance_request.id
+            }

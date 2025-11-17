@@ -31,7 +31,7 @@ patch(ActionScreen.prototype, {
             } else {
                 this.popup.add(ReceivingPopup, {
                     title: "Microfinance Installment",
-                    placeholder: "MF/XX/XXXXX",
+                    placeholder: "MF/XX/XX/XXXXX",
                     action_type: "mf"
                 });
             }
