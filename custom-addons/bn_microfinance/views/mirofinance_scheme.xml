@@ -6,10 +6,10 @@
         <field name="model">microfinance.scheme</field>
         <field name="inherit_id" ref="bn_master_setup.microfinance_scheme_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='application_category']//field[@name='microfinance_scheme_line_ids']//form//field[@name='product_id']" position="attributes">
+            <xpath expr="//page[@name='application_category']//field[@name='loan_product_line_ids']//form//field[@name='product_id']" position="attributes">
                 <attribute name="domain">[('is_microfinance', '=', True)]</attribute>
             </xpath>
-            <xpath expr="//page[@name='application_category']//field[@name='microfinance_scheme_line_ids']//form//field[@name='product_ids']" position="attributes">
+            <xpath expr="//page[@name='application_category']//field[@name='loan_product_line_ids']//form//field[@name='product_ids']" position="attributes">
                 <attribute name="domain">[('is_microfinance', '=', True)]</attribute>
             </xpath>
         </field>
