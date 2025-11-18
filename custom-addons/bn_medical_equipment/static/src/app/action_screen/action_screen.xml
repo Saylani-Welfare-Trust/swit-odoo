@@ -3,8 +3,8 @@
 
     <t t-name="bn_medical_equipment.MEButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg py-5" t-on-click="() => this.clickRecordME()">
-                <i class="fa fa-medkit me-1" role="img" aria-label="Medical Equipment" title="Medical Equipment"/>
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordME()">
+                <i class="fa fa-medkit me-1 text-danger" role="img" aria-label="Medical Equipment" title="Medical Equipment" />
                 Medical Equipment
             </button>
         </xpath>

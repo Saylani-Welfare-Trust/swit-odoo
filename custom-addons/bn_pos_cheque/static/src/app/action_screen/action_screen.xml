@@ -3,8 +3,8 @@
 
     <t t-name="bn_pos_cheque.ChequeButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg py-5" t-on-click="() => this.clickRecordCheque()">
-                <i class="fa fa-credit-card me-1" role="img" aria-label="Cheque" title="Cheque"/>
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordCheque()">
+                <i class="fa fa-credit-card me-1 text-primary" role="img" aria-label="Cheque" title="Cheque"/>
                 Cheque
             </button>
         </xpath>

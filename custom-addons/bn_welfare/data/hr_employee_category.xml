@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="inquiry_officer_hr_employee_category" model="hr.employee.category">
+            <field name="name">Inquiry Officer</field>
+        </record>
+    
+    </data>
+
+</odoo>

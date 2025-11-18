@@ -3,8 +3,8 @@
 
     <t t-name="bn_donation_box.DonationBoxButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg py-5" t-on-click="() => this.clickRecordDonation()">
-                <i class="fa fa-gift me-1" role="img" aria-label="Donation Box" title="Donation Box"/>
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordDonation()">
+                <i class="fa fa-gift me-1" role="img" aria-label="Donation Box" title="Donation Box" style="color: brown;"/>
                 Donation Box
             </button>
         </xpath>

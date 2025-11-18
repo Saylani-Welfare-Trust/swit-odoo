@@ -1,7 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_microfinance,microfinance,bn_microfinance.model_microfinance,,1,1,1,1
 access_microfinance_line,microfinance.line,bn_microfinance.model_microfinance_line,,1,1,1,1
-access_microfinance_educaiton,microfinance.educaiton,bn_microfinance.model_microfinance_educaiton,,1,1,1,1
+access_microfinance_education,microfinance.education,bn_microfinance.model_microfinance_education,,1,1,1,1
 access_microfinance_guarantor,microfinance.guarantor,bn_microfinance.model_microfinance_guarantor,,1,1,1,1
 access_microfinance_family,microfinance.family,bn_microfinance.model_microfinance_family,,1,1,1,1
 access_microfinance_installment,microfinance.installment,bn_microfinance.model_microfinance_installment,,1,1,1,1

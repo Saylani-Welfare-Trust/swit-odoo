@@ -3,8 +3,8 @@
 
     <t t-name="bn_donation_home_service.DHSButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg py-5" t-on-click="() => this.clickRecordDHS()">
-                <i class="fa fa-home me-1" role="img" aria-label="Donation Home Service" title="Donation Home Servcie"/>
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordDHS()">
+                <i class="fa fa-home me-1 text-info" role="img" aria-label="Donation Home Service" title="Donation Home Servcie" />
                 Donation Home Servcie
             </button>
         </xpath>

@@ -22,6 +22,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.title = this.props.title || "Module Name";
         this.action_type = this.props.action_type;
         this.placeholder = this.props.placeholder;
+        
+        this.wf_request_type = this.props.wf_request_type;
 
         // Initialize component state
         this.state = useState({

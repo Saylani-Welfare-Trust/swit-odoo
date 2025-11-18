@@ -135,7 +135,7 @@ class Microfinance(models.Model):
     monthly_salary = fields.Monetary('Monthly Salary', currency_field='currency_id', default=0)
 
     # Education Information
-    educaiton_line_ids = fields.One2many('microfinance.educaiton', 'microfinance_id', string="Educaiton Lines")
+    educaiton_line_ids = fields.One2many('microfinance.education', 'microfinance_id', string="Educaiton Lines")
 
     # House Ownership / Residency Details
     residence_type = fields.Selection(selection=residence_selection, string="Residence Type")

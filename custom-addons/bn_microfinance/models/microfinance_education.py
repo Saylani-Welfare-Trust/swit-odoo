@@ -12,7 +12,7 @@ examination_selection = [
 
 
 class MicrofinanceEducaiton(models.Model):
-    _name = 'microfinance.educaiton'
+    _name = 'microfinance.education'
     _description = "Microfinance Educaiton"
 
 
