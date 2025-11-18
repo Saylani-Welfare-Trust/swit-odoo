@@ -12,4 +12,24 @@
         </field>
     </record>
 
+    <record id="point_of_sale_view_pos_pos_form_inherit_bn_pos_order" model="ir.ui.view">
+        <field name="name">point.of.sale.view.pos.pos.form.inherit.bn.pos.order</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="replace">
+                <field name="state" widget="statusbar" statusbar_visible="draft,refund_request,cfo_approval,paid,done"/>
+            </xpath>
+
+            <xpath expr="//header//button[@name='refund']" position="attributes">
+                <attribute name="invisible">state != 'cfo_approval' or not has_refundable_lines</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button string="Refund Request" name="action_refund_request" type="object" invisible="state not in ['paid', 'done'] or not has_refundable_lines" />
+                <button string="CFO Approval" name="action_cfo_approval" type="object" class="oe_highlight" invisible="state != 'refund_request'" groups="bn_pos_order.pos_order_cfo_approval_group" />
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

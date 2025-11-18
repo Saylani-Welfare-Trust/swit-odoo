@@ -9,3 +9,5 @@ access_gateway_config_currency,access.gateway.config.currency,bn_master_setup.mo
 access_microfinance_scheme,access.microfinance.scheme,bn_master_setup.model_microfinance_scheme,,1,1,1,1
 access_microfinance_scheme_line,access.microfinance.scheme.line,bn_master_setup.model_microfinance_scheme_line,,1,1,1,1
 access_loan_product_line,access.loan.product.line,bn_master_setup.model_loan_product_line,,1,1,1,1
+access_disbursement_application_type,access.disbursement.application.type,bn_master_setup.model_disbursement_application_type,,1,1,1,1
+access_disbursement_category,access.disbursement.category,bn_master_setup.model_disbursement_category,,1,1,1,1

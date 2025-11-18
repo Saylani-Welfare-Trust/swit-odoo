@@ -16,6 +16,8 @@
         'views/header_type.xml',
         'views/gateway_config.xml',
         'views/microfinance_scheme.xml',
+        'views/disbursement_category.xml',
+        'views/disbursement_application_type.xml',
     ],
     'auto_install': False,
     'application': True,
