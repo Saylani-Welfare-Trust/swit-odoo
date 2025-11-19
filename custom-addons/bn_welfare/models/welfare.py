@@ -46,7 +46,7 @@ portal_sync_selection = [
     ('not_synced', 'Not Synced'),
     ('syncing', 'Syncing'),
     ('synced', 'Synced'),
-    ('error', 'Sync Error')
+    ('error', 'Sync Error'),
 ]
 
 

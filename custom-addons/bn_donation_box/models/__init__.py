@@ -6,3 +6,4 @@ from . import stock_lot
 from . import product_product
 from . import res_partner
 from . import product_template
+from . import stock_move
