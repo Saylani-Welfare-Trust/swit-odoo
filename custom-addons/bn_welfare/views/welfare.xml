@@ -21,6 +21,12 @@
             <form>
                 <header>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
+                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
+                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
+                    <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
+                    
                     <button string="Reject" name="action_reject" type="object" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, send_for_inquiry, inquiry, hod_approve, mem_approve, approve, disbursed" />
@@ -35,15 +41,17 @@
                     <group>
                         <group name="welfare_col_1">
                             <field name="employee_category_id" invisible="1" />
+                            <field name="is_synced" readonly="1" invisible="1" />
 
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', 'in', ['Donee'])]" readonly="state in ['recurring', 'disbursed']" required="1" />
-                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed']" />
+                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'inquiry'" />
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="cnic_expiration_date" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="hod_remarks" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="member_remarks" readonly="state in ['recurring', 'disbursed']" />
+                            <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
+                            <field name="hod_remarks" readonly="state in ['recurring', 'disbursed'] or state != 'hod_approve'" required="state == 'hod_approve'"  />
+                            <field name="member_remarks" readonly="state in ['recurring', 'disbursed'] or state != 'mem_approve'" required="state == 'mem_approve'" />
                         </group>
                         <group name="welfare_col_2">
                             <field name="application_form_name" invisible="1"/>
@@ -79,7 +87,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="recurring_line" string="Recurring Details">
+                        <page name="recurring_line" string="Recurring Details" invisible="portal_sync_status != 'recurring'">
                             <field name="welfare_recurring_line_ids" readonly="1">
                                 <tree>
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
@@ -88,10 +96,21 @@
                                     <field name="collection_point" />
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_date" />
-                                    <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
                                     <field name="amount" />
                                 </tree>
                             </field>
+                        </page>
+                        <page name="portal_details" string="Portal Details" invisible="portal_sync_status != 'synced'">
+                            <group>
+                                <group name="portal_details_col_1">
+                                    <field name="portal_application_id" readonly="1" />
+                                    <field name="last_sync_date" readonly="1" />
+                                </group>
+                                <group name="portal_details_col_2">
+                                    <field name="portal_donee_id" readonly="1" />
+                                    <field name="portal_review_notes" readonly="1" />
+                                </group>
+                            </group>
                         </page>
                         <page name="employee_info" string="Employee Info.">
                             <group>

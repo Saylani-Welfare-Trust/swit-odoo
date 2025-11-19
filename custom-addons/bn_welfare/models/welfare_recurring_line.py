@@ -26,7 +26,6 @@ class WelfareRecurringLine(models.Model):
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
 
-    marriage_date = fields.Date('Marriage Date', default=fields.Date.today())
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
