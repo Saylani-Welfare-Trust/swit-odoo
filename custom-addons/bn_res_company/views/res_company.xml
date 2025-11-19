@@ -23,7 +23,7 @@
                         </group>
                     </group>
                 </page>
-                <!-- <page name="welfare_api_auth_endpoints" string="Welfare API Auth / Endpoints">
+                <page name="welfare_api_auth_endpoints" string="Welfare API Auth / Endpoints">
                     <group>
                         <group name="welfare_api_auth_endpoints_col_1" string="Auth">
                             <field name="welfare_url" />
@@ -36,7 +36,7 @@
                             <field name="mark_application_endpoint" />
                         </group>
                     </group>
-                </page> -->
+                </page>
             </xpath>
         </field>
     </record>
