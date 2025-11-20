@@ -111,6 +111,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
      * Process partner assignment
      */
     async processPartner(record, selectedOrder) {
+        console.log(record);
+
         if (!record.donor_id) {
             return;
         }
