@@ -206,10 +206,11 @@ class ResPartner(models.Model):
             if res_partner:
                 self.secondary_registration_id = res_partner.primary_registration_id
             else:
-                res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
+                if self.cnic_no:
+                    res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
-                if res_partner:
-                    self.secondary_registration_id = res_partner.primary_registration_id
+                    if res_partner:
+                        self.secondary_registration_id = res_partner.primary_registration_id
         elif 'Donor' in self.category_id.mapped('name'):
             res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
@@ -221,10 +222,11 @@ class ResPartner(models.Model):
             if res_partner:
                 self.secondary_registration_id = res_partner.primary_registration_id
             else:
-                res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
+                if self.cnic_no:
+                    res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 
-                if res_partner:
-                    self.secondary_registration_id = res_partner.primary_registration_id
+                    if res_partner:
+                        self.secondary_registration_id = res_partner.primary_registration_id
         
         if not self.primary_registration_id:
             seq_num = None
