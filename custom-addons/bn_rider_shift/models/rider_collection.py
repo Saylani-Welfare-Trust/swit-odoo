@@ -41,7 +41,7 @@ class RiderCollection(models.Model):
     
     date = fields.Date("Date")
 
-    submission_time = fields.Datetime('Submission Date')
+    submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
 
