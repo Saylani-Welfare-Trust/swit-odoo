@@ -25,13 +25,13 @@
                     <table class="table table-striped table-hover table-bordered">
                         <thead class="table-dark">
                             <tr>
-                                <th>Day</th>
-                                <th>Date</th>
+                                <!-- <th>Day</th>
+                                <th>Date</th> -->
                                 <th>Box No.</th>
                                 <th>Shop</th>
-                                <th>Contact Person</th>
+                                <!-- <th>Contact Person</th>
                                 <th>Contact No.</th>
-                                <th>Location</th>
+                                <th>Location</th> -->
                                 <th>Amount</th>
                                 <th></th>
                             </tr>
@@ -40,13 +40,13 @@
                             <t t-if="this.rider_collections.length">
                                 <t t-foreach="this.rider_collections" t-as="collection" t-key="collection.id">
                                     <tr>
-                                        <td t-esc="collection.day"/>
-                                        <td t-esc="collection.date"/>
+                                        <!-- <td t-esc="collection.day"/>
+                                        <td t-esc="collection.date"/> -->
                                         <td t-esc="collection.box_no"/>
                                         <td t-esc="collection.shop_name"/>
-                                        <td t-esc="collection.contact_person"/>
+                                        <!-- <td t-esc="collection.contact_person"/>
                                         <td t-esc="collection.contact_number"/>
-                                        <td t-esc="collection.box_location"/>
+                                        <td t-esc="collection.box_location"/> -->
                                         <td t-esc="collection.amount"/>
                                         <td>
                                             <button class="btn btn-success me-2"
