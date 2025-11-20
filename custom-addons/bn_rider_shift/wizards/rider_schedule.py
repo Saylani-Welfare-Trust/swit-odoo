@@ -32,7 +32,7 @@ class RiderSchedule(models.TransientModel):
                 ('rider_id', '=', employee.id),
                 ('date', '<=', today),
                 ('lot_id', 'in', lot_ids.ids),
-                ('state', '=', 'paid'),
+                ('state', '!=', 'paid'),
             ])
 
             # Get already existing lot_ids
