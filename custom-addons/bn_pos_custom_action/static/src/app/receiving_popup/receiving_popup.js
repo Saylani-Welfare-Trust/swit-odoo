@@ -216,7 +216,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
         const mfProduct = await this.orm.searchRead(
             'product.product',
-            [['name', '=', 'Microfinance Installement'], ['type', '=', 'service'], ['available_in_pos', '=', true]],
+            [['name', '=', 'Microfinance Installment'], ['type', '=', 'service'], ['available_in_pos', '=', true]],
             ['id'],
             { limit: 1 }
         );
@@ -225,7 +225,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (mfProduct.length) {
             const product = this.pos.db.get_product_by_id(mfProduct[0].id);
             if (!product) {
-                await this.popup.add(ErrorPopup, { title: "Error", body: "Microfinance Installement product not loaded in POS session." });
+                await this.popup.add(ErrorPopup, { title: "Error", body: "Microfinance Installment product not loaded in POS session." });
                 return;
             }
 
