@@ -18,7 +18,7 @@ class PosSession(models.Model):
         orders = self._get_closed_orders()
         breakdown_dict = {}
 
-        for order in orders.filtered(lambda o: o.state in ['paid', 'invoiced', 'done']):
+        for order in orders.filtered(lambda o: o.state in ['cfo_approval', 'paid', 'invoiced', 'done']):
             order_restricted_amount = 0.0
             order_unrestricted_amount = 0.0
 
