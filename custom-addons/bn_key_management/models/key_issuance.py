@@ -110,7 +110,11 @@ class KeyIssuance(models.Model):
         key_obj.action_donation_receive()
 
         box = self.env['donation.box.registration.installation'].search([
-            ('lot_id', '=', data['lot_id'])
+            ('lot_id', '=', data['lot_id']),
+            ('shop_name', '=', data['shop_name']),
+            ('contact_person', '=', data['contact_person']),
+            ('contact_no', '=', data['contact_no']),
+            ('location', '=', data['box_location']),
         ])
 
         return {

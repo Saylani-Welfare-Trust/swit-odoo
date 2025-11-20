@@ -46,7 +46,11 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
         const payload = { 
             lot_id: collection.lot_id,
             box_no: collection.box_no,
-            amount: collection.amount
+            amount: collection.amount,
+            shop_name: collection.shop_name,
+            contact_person: collection.contact_person,
+            contact_number: collection.contact_number,
+            box_location: collection.box_location,
         };
 
         // 🔹 First call your custom method
