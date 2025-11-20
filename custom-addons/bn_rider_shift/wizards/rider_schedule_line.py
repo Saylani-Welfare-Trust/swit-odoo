@@ -61,7 +61,7 @@ class RiderScheduleLine(models.TransientModel):
     
     def mark_as_submit(self):
         if self.amount < 0:
-            raise ValidationError('Please first enter the validate collected amount.')
+            raise ValidationError('Please first enter the valid collected amount.')
 
         self.state = 'donation_submit'
         self.submission_time = fields.Datetime.now()
