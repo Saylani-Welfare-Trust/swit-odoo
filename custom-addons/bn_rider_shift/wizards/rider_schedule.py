@@ -34,6 +34,11 @@ class RiderSchedule(models.TransientModel):
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', '!=', 'paid'),
             ])
+            today_collections = self.env['rider.collection'].search([
+                ('rider_id', '=', employee.id),
+                ('date', '=', today),
+                ('lot_id', 'in', lot_ids.ids),
+            ])
 
             # Get already existing lot_ids
             existing_lot_ids = existing_collections.mapped('lot_id').ids
@@ -55,7 +60,7 @@ class RiderSchedule(models.TransientModel):
                 }))
 
             # 🔹 Create new collections only for missing lot_ids
-            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
+            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids) - set(today_collections))
 
             # raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
 
