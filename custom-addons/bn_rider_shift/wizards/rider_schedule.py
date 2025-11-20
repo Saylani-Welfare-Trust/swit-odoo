@@ -34,11 +34,6 @@ class RiderSchedule(models.TransientModel):
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', '!=', 'paid'),
             ])
-            today_collections = self.env['rider.collection'].search([
-                ('rider_id', '=', employee.id),
-                ('date', '=', today),
-                ('lot_id', 'in', lot_ids.ids),
-            ])
 
             # Get already existing lot_ids
             existing_lot_ids = existing_collections.mapped('lot_id').ids
@@ -60,13 +55,18 @@ class RiderSchedule(models.TransientModel):
                 }))
 
             # 🔹 Create new collections only for missing lot_ids
-            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids) - set(today_collections))
+            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
+            finalized_missing_lot_ids = []
 
             # raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
 
             if missing_lot_ids:
+                for missing_lot_id in missing_lot_ids:
+                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id)]):
+                        finalized_missing_lot_ids.append(missing_lot_id)
+
                 boxes = self.env['donation.box.registration.installation'].search([
-                    ('lot_id', 'in', missing_lot_ids)
+                    ('lot_id', 'in', finalized_missing_lot_ids)
                 ])
 
                 for box in boxes:
