@@ -117,6 +117,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             return;
         }
 
+        console.log('Hit');
+
         const partnerId = record.donor_id;
         let partner = await this.getOrLoadPartner(partnerId);
         
