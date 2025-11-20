@@ -96,8 +96,80 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                 });
             }
 
+            this.processPartner(data, current_order)
+
             // 🔹 Close popup
             this.cancel();
         }
+    }
+
+    /**
+     * Process partner assignment
+     */
+    async processPartner(record, selectedOrder) {
+        if (!record.donor_id) {
+            return;
+        }
+
+        const partnerId = record.donor_id;
+        let partner = await this.getOrLoadPartner(partnerId);
+        
+        if (partner) {
+            this.assignPartnerToOrder(partner, selectedOrder);
+        } else {
+            console.warn("Partner not found in POS database:", partnerId);
+        } 
+    }
+
+    /**
+     * Get partner from POS DB or load from server
+     */
+    async getOrLoadPartner(partnerId) {
+        let partner = this.pos.db.get_partner_by_id(partnerId);
+        
+        if (!partner) {
+            partner = await this.loadPartnerFromServer(partnerId);
+        }
+        
+        return partner;
+    }
+
+    /**
+     * Load partner data from server
+     */
+    async loadPartnerFromServer(partnerId) {
+        const partnerData = await this.orm.searchRead(
+            'res.partner',
+            [['id', '=', partnerId]],
+            ['name', 'email', 'phone', 'street', 'city'],
+            { limit: 1 }
+        );
+        
+        // console.log("Partner Data:", partnerData);
+        
+        if (partnerData && partnerData.length > 0) {
+            this.pos.db.add_partners([partnerData[0]]);
+            const partner = this.pos.db.get_partner_by_id(partnerId);
+            
+            // console.log("Partner loaded to POS:", partner);
+            
+            return partner;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Assign partner to order
+     */
+    assignPartnerToOrder(partner, selectedOrder) {
+        selectedOrder.set_partner(partner);
+        
+        // console.log("Partner set on order:", partner.name);
+        
+        this.notification.add(
+            `Customer set to: ${partner.name}`,
+            { type: 'info' }
+        );
     }
 }

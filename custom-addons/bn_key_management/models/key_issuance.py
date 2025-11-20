@@ -109,7 +109,12 @@ class KeyIssuance(models.Model):
         key_obj.donation_amount = data['amount']
         key_obj.action_donation_receive()
 
+        box = self.env['donation.box.registration.installation'].search([
+            ('lot_id', '=', data['lot_id'])
+        ])
+
         return {
             "status": "success",
             "id": key_obj.id,
+            "donor_id": box.donor_id.id
         }
