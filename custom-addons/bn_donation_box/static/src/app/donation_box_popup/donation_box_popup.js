@@ -100,7 +100,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                 });
             }
 
-            this.processPartner(data, current_order)
+            await this.processPartner(data, current_order)
 
             // 🔹 Close popup
             this.cancel();
@@ -116,8 +116,6 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
         if (!record.donor_id) {
             return;
         }
-
-        console.log('Hit');
 
         const partnerId = record.donor_id;
         let partner = await this.getOrLoadPartner(partnerId);
