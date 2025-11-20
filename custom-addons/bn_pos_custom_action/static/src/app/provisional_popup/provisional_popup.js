@@ -200,7 +200,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 const securityProduct = await this.orm.searchRead(
                     'product.product',
                     [
-                        ['name', '=', 'Security Deposit'],
+                        ['name', '=', 'Microfinance Security Deposit'],
                         ['type', '=', 'service'],
                         ['available_in_pos', '=', true]
                     ],
@@ -215,7 +215,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 if (!product) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t("Security Deposit product not loaded in POS session."),
+                        body: _t("Microfinance Security Deposit product not loaded in POS session."),
                     });
                     
                     return
