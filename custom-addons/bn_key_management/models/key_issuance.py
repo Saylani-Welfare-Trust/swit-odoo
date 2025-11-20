@@ -113,7 +113,7 @@ class KeyIssuance(models.Model):
             ('lot_id', '=', data['lot_id']),
             ('shop_name', '=', data['shop_name']),
             ('contact_person', '=', data['contact_person']),
-            ('contact_no', '=', data['contact_no']),
+            ('contact_no', '=', data['contact_number']),
             ('location', '=', data['box_location']),
         ])
 
