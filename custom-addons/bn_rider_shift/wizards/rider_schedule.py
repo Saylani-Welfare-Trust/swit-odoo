@@ -57,7 +57,7 @@ class RiderSchedule(models.TransientModel):
             # 🔹 Create new collections only for missing lot_ids
             missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
 
-            raise UserError(str(missing_lot_ids)+" --------------- "+str(existing_lot_ids))
+            raise UserError(str(missing_lot_ids)+" --------------- "+set(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
 
             if missing_lot_ids:
                 boxes = self.env['donation.box.registration.installation'].search([
