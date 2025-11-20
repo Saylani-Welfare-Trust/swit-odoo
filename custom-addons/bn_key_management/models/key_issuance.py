@@ -83,7 +83,7 @@ class KeyIssuance(models.Model):
                 "body": "Please specify Key and Collection Amount",
             }
 
-        collection = self.env['rider.collection'].search([('lot_id', '=', data['lot_id']), ('state', '=', 'donation_submit'), ('date', '=', fields.Date.today())])
+        collection = self.env['rider.collection'].search([('lot_id', '=', data['lot_id']), ('state', '=', 'donation_submit'), ('submission_time', '=', fields.Date.today())])
         
         if not collection:
             return {
