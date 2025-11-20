@@ -88,7 +88,7 @@ class KeyIssuance(models.Model):
         if not collection:
             return {
                 "status": "error",
-                "body": f"Please first submit your Collection aganist {data['box_no']} {data['lot_id']}",
+                "body": f"Please first submit your Collection aganist {data['box_no']}",
             }
         elif collection and collection.amount != float(data['amount']):
             return {
