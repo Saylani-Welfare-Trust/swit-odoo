@@ -121,6 +121,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
 
         const partnerId = record.donor_id;
         let partner = await this.getOrLoadPartner(partnerId);
+
+        console.log(partner);
         
         if (partner) {
             this.assignPartnerToOrder(partner, selectedOrder);
@@ -171,6 +173,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
      * Assign partner to order
      */
     assignPartnerToOrder(partner, selectedOrder) {
+        console.log(partner);
+
         selectedOrder.set_partner(partner);
         
         // console.log("Partner set on order:", partner.name);
