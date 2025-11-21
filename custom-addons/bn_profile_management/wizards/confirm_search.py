@@ -40,17 +40,18 @@ class ConfirmSearch(models.TransientModel):
     def return_donee_form(self, donee=None):
         if self.donee_registration_type == 'microfinance':
             if donee:
-                # donee.scheme_type_ids = [(4, self.scheme_type_id.id)]
+                donee.category_id = [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.microfinance_partner_category').id])]
 
-                # self.env.cr.commit()
+                self.env.cr.commit()
 
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'res.partner',
                     'view_mode': 'form',
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
-                    'domain': '[("category_id.name", "in", ["Donee"])]',
-                    'res_id': donee.id
+                    'domain': "[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]",
+                    'res_id': donee.id,
+                    'target': 'new'
                 }
             else:
                 return {
@@ -58,23 +59,30 @@ class ConfirmSearch(models.TransientModel):
                     'res_model': 'res.partner',
                     'view_mode': 'form',
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
-                    'domain': '[("category_id.name", "in", ["Donee"])]',
+                    'domain': "[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]",
                     'context': {
                         'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.microfinance_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
+                        'default_country_code_id': self.country_code_id.id,
                         # 'default_scheme_type_ids': [(4, self.scheme_type_id.id)]
                     },
+                    'target': 'new'
                 }
         elif self.donee_registration_type == 'welfare':
             if donee:
+                donee.category_id = [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.welfare_partner_category').id])]
+
+                self.env.cr.commit()
+
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'res.partner',
                     'view_mode': 'form',
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': '[("category_id.name", "in", ["Donee"])]',
-                    'res_id': donee.id
+                    'res_id': donee.id,
+                    'target': 'new'
                 }
             else:
                 return {
@@ -87,8 +95,10 @@ class ConfirmSearch(models.TransientModel):
                         'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.welfare_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
+                        'default_country_code_id': self.country_code_id.id,
                         # 'default_scheme_type_ids': [(4, self.scheme_type_id.id)]
                     },
+                    'target': 'new'
                 }
         elif self.donee_registration_type == 'medical':
             if donee:
@@ -98,7 +108,8 @@ class ConfirmSearch(models.TransientModel):
                     'view_mode': 'form',
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': '[("category_id.name", "in", ["Donee"])]',
-                    'res_id': donee.id
+                    'res_id': donee.id,
+                    'target': 'new'
                 }
             else:
                 return {
@@ -110,8 +121,10 @@ class ConfirmSearch(models.TransientModel):
                     'context': {
                         'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.medical_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
-                        'default_mobile': self.mobile_no
+                        'default_mobile': self.mobile_no,
+                        'default_country_code_id': self.country_code_id.id,
                     },
+                    'target': 'new'
                 }
         elif self.donee_registration_type == 'student':
             if donee:
@@ -121,7 +134,8 @@ class ConfirmSearch(models.TransientModel):
                     'view_mode': 'form',
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': '[("category_id.name", "in", ["Donee"])]',
-                    'res_id': donee.id
+                    'res_id': donee.id,
+                    'target': 'new'
                 }
             else:
                 return {
@@ -134,7 +148,9 @@ class ConfirmSearch(models.TransientModel):
                         'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.student_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
+                        'default_country_code_id': self.country_code_id.id,
                     },
+                    'target': 'new'
                 }
 
     def action_confirm(self):
@@ -171,7 +187,8 @@ class ConfirmSearch(models.TransientModel):
                         'view_mode': 'form',
                         'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                         'domain': '[("category_id.name", "in", ["Donor"])]',
-                        'res_id': donor_obj.id
+                        'res_id': donor_obj.id,
+                        'target': 'new'
                     }
                 else:
                     return {
@@ -183,6 +200,7 @@ class ConfirmSearch(models.TransientModel):
                         'context': {
                             'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donor_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id])]
                         },
+                        'target': 'new'
                     }
             elif self.search_type == 'cnic_no':
                 donor_obj = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donor'])])
@@ -194,7 +212,8 @@ class ConfirmSearch(models.TransientModel):
                         'view_mode': 'form',
                         'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                         'domain': '[("category_id.name", "in", ["Donor"])]',
-                        'res_id': donor_obj.id
+                        'res_id': donor_obj.id,
+                        'target': 'new'
                     }
                 else:
                     return {
@@ -207,6 +226,7 @@ class ConfirmSearch(models.TransientModel):
                             'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donor_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id])],
                             'default_cnic_no': self.cnic_no
                         },
+                        'target': 'new'
                     }
             elif self.search_type == 'mobile_no':
                 donor_obj = self.env['res.partner'].search([('phone_code_id', '=', self.phone_code_id.id), ('mobile', '=', self.mobile_no), ('category_id.name', 'in', ['Donor'])])
@@ -218,7 +238,8 @@ class ConfirmSearch(models.TransientModel):
                         'view_mode': 'form',
                         'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                         'domain': '[("category_id.name", "in", ["Donor"])]',
-                        'res_id': donor_obj.id
+                        'res_id': donor_obj.id,
+                        'target': 'new'
                     }
                 else:
                     return {
@@ -230,5 +251,7 @@ class ConfirmSearch(models.TransientModel):
                         'context': {
                             'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donor_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id])],
                             'default_mobile': self.mobile_no,
+                            'default_country_code_id': self.country_code_id.id,
                         },
+                        'target': 'new'
                     }

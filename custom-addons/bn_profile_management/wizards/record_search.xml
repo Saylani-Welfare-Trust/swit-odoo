@@ -22,10 +22,13 @@
                     </div>
                     <group>
                         <group name="record_search_col_1">
-                            <field name="registration_type" />
+                            <field name="is_welfare" invisible="1" />
+                            <field name="is_microfinance" invisible="1" />
+
+                            <field name="registration_type" readonly="is_microfinance or is_welfare" />
                         </group>
                         <group name="record_search_col_2">
-                            <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" />
+                            <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" readonly="is_microfinance or is_welfare" />
                         </group>
                     </group>
                 </sheet>
@@ -52,6 +55,7 @@
         <field name="context">{
             'default_registration_type': 'donee',
             'default_donee_registration_type': 'microfinance',
+            'default_is_microfinance': True,
         }</field>
         <field name="target">new</field>
     </record>
@@ -63,6 +67,7 @@
         <field name="context">{
             'default_registration_type': 'donee',
             'default_donee_registration_type': 'welfare',
+            'default_is_welfare': True,
         }</field>
         <field name="target">new</field>
     </record>

@@ -64,7 +64,7 @@
                             <field name="microfinance_scheme_id" string="Shceme" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="microfinance_scheme_line_id" string="Application For" domain="[('id', 'in', microfinance_scheme_line_ids)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="asset_type" options="{'horizontal': True}" widget="radio" />
-                            <field name="donee_id" domain="[('category_id.name', 'in', ['Donee', 'Microfinance'])]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="donee_id" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance'), ('state', '=', 'register')]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="amount" readonly="1" />
                             <field name="security_deposit" readonly="1" />

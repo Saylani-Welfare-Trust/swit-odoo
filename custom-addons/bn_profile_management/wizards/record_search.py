@@ -40,6 +40,9 @@ class RecordSearch(models.TransientModel):
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
 
+    is_welfare = fields.Boolean('Is Welfare')
+    is_microfinance = fields.Boolean('Is Microfinance')
+
 
     @api.constrains('cnic_no')
     def _check_cnic_format(self):

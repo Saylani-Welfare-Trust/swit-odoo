@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_view_location_form_inherit_bn_stock_locaiton" model="ir.ui.view">
+        <field name="name">stock.view.location.form.inherit.bn.stock.locaiton</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='replenish_location']" position="after">
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="usage != 'internal'" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_view_location_tree2_inherit_bn_stock_location" model="ir.ui.view">
+        <field name="name">stock.view.location.tree2.inherit.bn.stock.location</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_tree2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='complete_name']" position="after">
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="usage != 'internal'" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

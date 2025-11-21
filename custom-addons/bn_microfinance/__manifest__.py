@@ -19,6 +19,7 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/res_partner.xml',
+        'views/record_search.xml',
         'wizards/return_microfinance_product.xml',
         'reports/microfinance_pdc_template_report.xml',
         'reports/microfinance_receipt_report.xml',

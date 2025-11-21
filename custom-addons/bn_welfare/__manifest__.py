@@ -18,6 +18,7 @@
         'views/welfare.xml',
         'views/product_product.xml',
         'views/product_template.xml',
+        'views/record_search.xml',
     ],
     'auto_install': False,
     'application': True,

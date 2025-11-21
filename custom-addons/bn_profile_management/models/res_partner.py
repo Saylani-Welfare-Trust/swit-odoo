@@ -186,14 +186,14 @@ class ResPartner(models.Model):
         return self.env.ref('bn_profile_management.action_profile_management_report').report_action(self)
     
     def action_welfare_application(self):
-        return self.env['disbursement.request'].create({
+        return self.env['welfare'].create({
             'donee_id': self.id
         })
     
     def action_register(self):
         if not self.date_of_birth and 'Donee' in self.category_id.mapped('name') and 'Individual' in self.category_id.mapped('name'):
             raise ValidationError('Please specify your Date of Birth...')
-        elif self.date_of_birth and 'Microfinance' in self.category_id.mapped('name'):
+        elif self.date_of_birth and 'Microfinance' in self.category_id.mapped('name') and self.age and self.age < 18:
             raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
         elif 'Donee' in self.category_id.mapped('name'):
             res_partner = self.env['res.partner'].search(['|', ('cnic_no', '=', self.cnic_no), ('mobile', '=', self.mobile), ('country_code_id', '=', self.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])

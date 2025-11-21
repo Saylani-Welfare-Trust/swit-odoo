@@ -43,7 +43,7 @@
                             <field name="employee_category_id" invisible="1" />
                             <field name="is_synced" readonly="1" invisible="1" />
 
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', 'in', ['Donee'])]" readonly="state in ['recurring', 'disbursed']" required="1" />
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register')]" readonly="state in ['recurring', 'disbursed']" required="1" />
                             <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'inquiry'" />
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="cnic_expiration_date" readonly="state in ['recurring', 'disbursed']" />
