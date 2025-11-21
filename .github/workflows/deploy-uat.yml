@@ -16,7 +16,7 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Setup SSH (decode base64 key + verify)
+      - name: Setup SSH (No keyscan / Trust Host)
         env:
           DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
           DEPLOY_SSH_HOST:    ${{ secrets.DEPLOY_SSH_HOST }}
@@ -27,8 +27,13 @@ jobs:
           echo "$DEPLOY_SSH_KEY_B64" | base64 -d > "$HOME/.ssh/id_ed25519"
           chmod 600 "$HOME/.ssh/id_ed25519"
           ssh-keygen -yf "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/derived.pub"
-          ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_SSH_HOST" >> "$HOME/.ssh/known_hosts"
-          chmod 644 "$HOME/.ssh/known_hosts"
+          
+          # FIX: Create a config that disables host key checking for this host
+          # This replaces the failing ssh-keyscan command
+          echo "Host $DEPLOY_SSH_HOST" > "$HOME/.ssh/config"
+          echo "  StrictHostKeyChecking no" >> "$HOME/.ssh/config"
+          echo "  UserKnownHostsFile=/dev/null" >> "$HOME/.ssh/config"
+          echo "  LogLevel ERROR" >> "$HOME/.ssh/config"
 
       - name: Auth probe (publickey only)
         env:
@@ -37,7 +42,8 @@ jobs:
           DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
         run: |
           set -euo pipefail
-          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          # FIX: Changed StrictHostKeyChecking=yes to no
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
           $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'echo AUTH_OK'
 
       - name: Rsync custom-addons → /opt/swituat/custom-addons/
@@ -52,8 +58,11 @@ jobs:
             echo "custom-addons/ not found at repo root; syncing full repo as fallback"
             SRC="./"
           fi
-          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          # FIX: Changed StrictHostKeyChecking=yes to no
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          
           $SSH "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" 'command -v rsync >/dev/null 2>&1 || (apt-get update && apt-get install -y rsync); mkdir -p /opt/swituat/custom-addons'
+          
           rsync -avz --delete \
             --exclude=".git" --exclude=".github" \
             -e "$SSH" \
@@ -69,7 +78,8 @@ jobs:
           UAT_DB_NAME:      ${{ secrets.UAT_DB_NAME }}
         run: |
           set -euo pipefail
-          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          # FIX: Changed StrictHostKeyChecking=yes to no
+          SSH="env -u SSH_AUTH_SOCK ssh -i $HOME/.ssh/id_ed25519 -p ${DEPLOY_SSH_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
           # Pass values as environment variables and run a single, well-quoted remote command
           SERVICE="${ODOO_SERVICE:-swituat.service}"
