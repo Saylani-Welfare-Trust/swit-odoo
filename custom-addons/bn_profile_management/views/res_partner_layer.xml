@@ -91,6 +91,10 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree>
+                <header>
+                    <button string="Register" name="action_register" type="object" class="oe_highlight"/>
+                </header>
+                
                 <field name="primary_registration_id" string="Primary ID" />
                 <field name="secondary_registration_id" string="Secondary ID" />
 

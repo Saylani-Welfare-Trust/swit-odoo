@@ -12,6 +12,7 @@
         'bn_master_setup',
     ],
     'data': [
+        'security/ir.model.access.csv',
         'views/analytic_account.xml',
         'views/analytic_distribution_model.xml',
         'views/hr_employee.xml'

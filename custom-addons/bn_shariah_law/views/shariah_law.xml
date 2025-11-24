@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="shariah_law_view_tree" model="ir.ui.view">
+        <field name="name">shariah.law.view.tree</field>
+        <field name="model">shariah.law</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="restricted_amount" />
+                <field name="unrestricted_amount" />
+
+                <button string="Transfer To" name="action_transfer_to" type="object" />
+                <button string="Transfer From" name="action_transfer_from" type="object" class="oe_highlight" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="shariah_law_action" model="ir.actions.act_window">
+        <field name="name">Shariah Law</field>
+        <field name="res_model">shariah.law</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a shariah law...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="shariah_law_menu"
+        name="Shariah Law"
+        web_icon="bn_shariah_law,static/description/icon.png"
+        groups="bn_shariah_law.shariah_law_menu_group"
+        sequence="6"/>
+
+    <menuitem
+        id="shariah_law_overview_menu"
+        name="Shariah Law"
+        action="shariah_law_action"
+        parent="shariah_law_menu"
+        sequence="0"/>
+
+</odoo>

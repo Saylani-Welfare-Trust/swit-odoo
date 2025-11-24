@@ -1,6 +1,8 @@
 from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
 
+import requests
+
 import logging
 from dateutil.relativedelta import relativedelta
 
@@ -53,13 +55,8 @@ portal_sync_selection = [
 class Welfare(models.Model):
     _name = 'welfare'
     _description = "Welfare"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    
-    name = fields.Char('Name', default="NEW")
-    cnic_no = fields.Char('CNIC No.')
-    father_name = fields.Char('Father Name')
-    father_cnic_no = fields.Char('Father CNIC No.')
-    old_system_id = fields.Char('Old System ID')
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     employee_id = fields.Many2one('hr.employee', string="Employee")
@@ -67,11 +64,18 @@ class Welfare(models.Model):
 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
     
+    name = fields.Char('Name', default="NEW")
+    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True)
+    father_name = fields.Char(related='donee_id.father_name', string="Father Name", store=True)
+    father_cnic_no = fields.Char(related='donee_id.father_cnic_no', string="Father CNIC No.", store=True)
+    old_system_id = fields.Char('Old System ID')
+    
     date = fields.Date('Date', default=fields.Date.today())
-    cnic_expiration_date = fields.Date('CNIC Expiration Date')
+    cnic_expiration_date = fields.Date(related='donee_id.cnic_expiration', string="CNIC Expiration Date", store=True)
 
     hod_remarks = fields.Text('HOD Remarks')
     member_remarks = fields.Text('Member Remarks')
+    portal_last_sync_message = fields.Text('Portal Last Sync Message')
 
     application_form = fields.Binary('Application Form')
     application_form_name = fields.Char('Application Form Name')
@@ -176,9 +180,44 @@ class Welfare(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('welfare_sequence') or _('New')
+            vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
         
         return super(Welfare, self).create(vals)
+    
+    def _make_sadqa_api_call(self, endpoint, method='GET', data=None):
+        """Make API call to Sadqa Jaria portal"""
+        # base_url = 'https://backend.switsjmm.com'
+        url = f"{self.env.company.welfare_url}{endpoint}"
+        headers = self._get_sadqa_api_headers()
+
+
+        
+        try:
+            if method.upper() == 'GET':
+                response = requests.get(url, headers=headers, timeout=30)
+            elif method.upper() == 'POST':
+                response = requests.post(url, headers=headers, json=data, timeout=30)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
+            
+            response.raise_for_status()
+            result = response.json()
+            # raise exceptions.ValidationError(str("result",result))
+
+            
+            if not result.get('success'):
+                error_msg = result.get('error', 'Unknown error occurred')
+                raise Exception(f"Portal API Error: {error_msg}")
+            # raise exceptions.ValidationError(str("result",result))
+                
+            return result
+            
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
+            raise Exception(f"Network error: {str(e)}")
+        except Exception as e:
+            _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
+            raise e
     
     def _check_donee_exists_in_portal(self):
         """Check if donee already exists in portal"""

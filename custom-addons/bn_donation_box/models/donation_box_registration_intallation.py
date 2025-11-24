@@ -62,7 +62,6 @@ class DonationBoxRegistrationInstallation(models.Model):
                 'country_code_id': self.country_id.id,
                 'mobile': self.contact_no,
                 'category_id': [(6, 0, [2, 4, 14])],
-                'state': 'register'
             })
 
             self.donor_id = donor.id
@@ -78,7 +77,6 @@ class DonationBoxRegistrationInstallation(models.Model):
                 'country_code_id': self.country_id.id,
                 'mobile': self.contact_no,
                 'category_id': [(6, 0, [2, 4, 14])],
-                'state': 'register'
             })
 
             self.donor_id = donor.id
