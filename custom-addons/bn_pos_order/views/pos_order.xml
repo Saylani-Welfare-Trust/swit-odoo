@@ -9,6 +9,10 @@
             <xpath expr="//field[@name='state']" position="after">
                     <button name="%(pos_donation_receipt_report)d" string="Print Receipt" type="action" class="oe_stat_button" icon="fa-print" title="Print Donation Receipt"/>
             </xpath>
+
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+            </xpath>
         </field>
     </record>
 

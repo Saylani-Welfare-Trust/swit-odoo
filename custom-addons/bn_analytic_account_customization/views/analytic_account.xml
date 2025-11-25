@@ -17,6 +17,23 @@
         </field>
     </record>
 
+    <record id="base_account_budget_view_account_analytic_account_form_budget_inherit_bn_analytic_account_customization" model="ir.ui.view">
+        <field name="name">base.account.budget.view.account.analytic.account.form.budget.inherit.bn.analytic.account.customization</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="base_account_budget.view_account_analytic_account_form_inherit_budget"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="analytical_product" string="Line Item">
+                    <field name="analytical_product_line_ids">
+                        <tree editable="bottom">
+                            <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
     <record id="analytic_view_account_analytic_account_list_inherit_bn_analytic_account_customization" model="ir.ui.view">
         <field name="name">analytic.view.account.analytic.account.list.inherit.bn.analytic.account.customization</field>
         <field name="model">account.analytic.account</field>

@@ -105,6 +105,7 @@
                                 <group name="portal_details_col_1">
                                     <field name="portal_application_id" readonly="1" />
                                     <field name="last_sync_date" readonly="1" />
+                                    <field name="portal_last_sync_message" readonly="1" />
                                 </group>
                                 <group name="portal_details_col_2">
                                     <field name="portal_donee_id" readonly="1" />

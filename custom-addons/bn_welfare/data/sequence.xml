@@ -5,7 +5,7 @@
     
         <record id="welfare_sequence" model="ir.sequence">
             <field name="name">Welfare</field>
-            <field name="code">welfare</field>
+            <field name="code">welfare_sequence</field>
             <field name="prefix">WF/%(year)s/</field>
             <field name="padding">5</field>
         </record>

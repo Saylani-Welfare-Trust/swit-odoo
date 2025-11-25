@@ -191,90 +191,91 @@ class ResPartner(models.Model):
         })
     
     def action_register(self):
-        if not self.date_of_birth and 'Donee' in self.category_id.mapped('name') and 'Individual' in self.category_id.mapped('name'):
-            raise ValidationError('Please specify your Date of Birth...')
-        elif self.date_of_birth and 'Microfinance' in self.category_id.mapped('name') and self.age and self.age < 18:
-            raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
-        elif 'Donee' in self.category_id.mapped('name'):
-            res_partner = self.env['res.partner'].search(['|', ('cnic_no', '=', self.cnic_no), ('mobile', '=', self.mobile), ('country_code_id', '=', self.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
+        for rec in self:
+            if not rec.date_of_birth and 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
+                raise ValidationError('Please specify your Date of Birth...')
+            elif rec.date_of_birth and 'Microfinance' in rec.category_id.mapped('name') and rec.age and rec.age < 18:
+                raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
+            elif 'Donee' in rec.category_id.mapped('name'):
+                res_partner = rec.env['res.partner'].search(['|', ('cnic_no', '=', rec.cnic_no), ('mobile', '=', rec.mobile), ('country_code_id', '=', rec.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 
-            if res_partner:
-                raise ValidationError(str(f'A Donee with same CNIC or Mobile No. already exist in the System.'))
-            
-            res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-            if res_partner:
-                self.secondary_registration_id = res_partner.primary_registration_id
-            else:
-                if self.cnic_no:
-                    res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-                    if res_partner:
-                        self.secondary_registration_id = res_partner.primary_registration_id
-        elif 'Donor' in self.category_id.mapped('name'):
-            res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-            if res_partner:
-                raise ValidationError(str(f'A Donor with same Mobile No. already exist in the System.'))
-            
-            res_partner = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
-
-            if res_partner:
-                self.secondary_registration_id = res_partner.primary_registration_id
-            else:
-                if self.cnic_no:
-                    res_partner = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
-
-                    if res_partner:
-                        self.secondary_registration_id = res_partner.primary_registration_id
-        
-        if not self.primary_registration_id:
-            seq_num = None
-            age = None
-            BY = None
-            
-            RY = fields.Date.today().year
-            RY = str(RY)[2:]
-
-            if self.date_of_birth:
-                BY = str(self.date_of_birth).split('-')[0]
+                if res_partner:
+                    raise ValidationError(str(f'A Donee with same CNIC or Mobile No. already exist in the System.'))
                 
-                today = fields.Date.today()
-                age = today.year - int(BY)
+                res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
-            check_digit = None
-
-            if 'Donee' in self.category_id.mapped('name'):
-                seq_num = self.env['ir.sequence'].next_by_code('donee_profile_management') or ('New')
-                
-                if 'Employee' in self.category_id.mapped('name') and self.gender == 'female':
-                    check_digit = 2
-                if 'Employee' in self.category_id.mapped('name') and self.gender == 'male':
-                    check_digit = 3
-                elif age > 18 and self.gender == 'female':
-                    check_digit = 0
-                elif age > 18 and self.gender == 'male':
-                    check_digit = 1
-                elif age < 18 and self.gender == 'female':
-                    check_digit = 4
-                elif age < 18 and self.gender == 'male':
-                    check_digit = 5
-            else:
-                seq_num = self.env['ir.sequence'].next_by_code('donor_profile_management') or ('New')
-                
-                if 'Employee' in self.category_id.mapped('name'):
-                    check_digit = 8
-                elif 'Individual' in self.category_id.mapped('name'):
-                    check_digit = 6
+                if res_partner:
+                    rec.secondary_registration_id = res_partner.primary_registration_id
                 else:
-                    check_digit = 7
+                    if rec.cnic_no:
+                        res_partner = rec.env['res.partner'].search([('cnic_no', '=', rec.cnic_no), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
-            self.primary_registration_id = f'{RY}-{str(BY)[2:]}-{seq_num}-{check_digit}' if 'Donee' in self.category_id.mapped('name') and 'Individual' in self.category_id.mapped('name') else f'{RY}-{seq_num}-{check_digit}'
+                        if res_partner:
+                            rec.secondary_registration_id = res_partner.primary_registration_id
+            elif 'Donor' in rec.category_id.mapped('name'):
+                res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
 
-        self.state = 'register'
+                if res_partner:
+                    raise ValidationError(str(f'A Donor with same Mobile No. already exist in the System.'))
+                
+                res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 
-        if 'Welfare' in self.category_id.mapped('name'):
-            self.action_welfare_application()
+                if res_partner:
+                    rec.secondary_registration_id = res_partner.primary_registration_id
+                else:
+                    if rec.cnic_no:
+                        res_partner = rec.env['res.partner'].search([('cnic_no', '=', rec.cnic_no), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
+
+                        if res_partner:
+                            rec.secondary_registration_id = res_partner.primary_registration_id
+            
+            if not rec.primary_registration_id:
+                seq_num = None
+                age = None
+                BY = None
+                
+                RY = fields.Date.today().year
+                RY = str(RY)[2:]
+
+                if rec.date_of_birth:
+                    BY = str(rec.date_of_birth).split('-')[0]
+                    
+                    today = fields.Date.today()
+                    age = today.year - int(BY)
+
+                check_digit = None
+
+                if 'Donee' in rec.category_id.mapped('name'):
+                    seq_num = rec.env['ir.sequence'].next_by_code('donee_profile_management') or ('New')
+                    
+                    if 'Employee' in rec.category_id.mapped('name') and rec.gender == 'female':
+                        check_digit = 2
+                    if 'Employee' in rec.category_id.mapped('name') and rec.gender == 'male':
+                        check_digit = 3
+                    elif age > 18 and rec.gender == 'female':
+                        check_digit = 0
+                    elif age > 18 and rec.gender == 'male':
+                        check_digit = 1
+                    elif age < 18 and rec.gender == 'female':
+                        check_digit = 4
+                    elif age < 18 and rec.gender == 'male':
+                        check_digit = 5
+                else:
+                    seq_num = rec.env['ir.sequence'].next_by_code('donor_profile_management') or ('New')
+                    
+                    if 'Employee' in rec.category_id.mapped('name'):
+                        check_digit = 8
+                    elif 'Individual' in rec.category_id.mapped('name'):
+                        check_digit = 6
+                    else:
+                        check_digit = 7
+
+                rec.primary_registration_id = f'{RY}-{str(BY)[2:]}-{seq_num}-{check_digit}' if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name') else f'{RY}-{seq_num}-{check_digit}'
+
+            rec.state = 'register'
+
+            if 'Welfare' in rec.category_id.mapped('name'):
+                rec.action_welfare_application()
     
     def action_change_request(self):
         self.is_change_request = True

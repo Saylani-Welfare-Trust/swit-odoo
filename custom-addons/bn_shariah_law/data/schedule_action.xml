@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="shariah_law_cron" model="ir.cron">
+        <field name="name">Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="state">code</field>
+        <field name="code">
+shariah_record = {}
+
+for rec in env['pos.order'].search([]):
+    for line in rec.lines:
+        if not line.product_id:
+            continue
+
+        analytical_lines = env['analytical.product.line'].search(
+            [('product_id', '=', line.product_id.id)]
+        )
+        for analytical_line in analytical_lines:
+            categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
+            if not categ_name:
+                continue
+
+            analytic_id = analytical_line.analytic_id.id
+            if analytic_id not in shariah_record:
+                shariah_record[analytic_id] = {'restricted': 0, 'unrestricted': 0}
+
+            if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
+                shariah_record[analytic_id]['restricted'] += line.price_subtotal_incl
+
+            if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
+                shariah_record[analytic_id]['unrestricted'] += line.price_subtotal_incl
+
+# Create or update Shariah Law records
+for analytic_id, values in shariah_record.items():
+    shariah_law = env['shariah.law'].search([('restricted_account_id', '=', analytic_id)], limit=1)
+    if shariah_law:
+        # Update existing amounts
+        shariah_law.write({
+            'restricted_amount': shariah_law.restricted_amount + values['restricted'],
+            'unrestricted_amount': shariah_law.unrestricted_amount + values['unrestricted']
+        })
+    else:
+        # Create new record
+        env['shariah.law'].create({
+            'restricted_account_id': analytic_id,
+            'restricted_amount': values['restricted'],
+            'unrestricted_amount': values['unrestricted']
+        })
+
+        </field>
+    </record>
+
+</odoo>
