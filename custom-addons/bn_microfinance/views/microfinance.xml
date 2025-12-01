@@ -36,11 +36,11 @@
                     <button string="Receipt" name="action_receipt" type="object" invisible="state != 'wfd' or in_recovery" />
 
                     <button string="Temporary Recovery" name="action_temporary_recovery" type="object" class="oe_highlight" invisible="state != 'in_recovery' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state not in ['recover', 'right_of_approval_2'] or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
                     <button string="Fully Recoverd" name="action_fully_recovered" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
                     <button string="Write Off Request" name="action_write_off_request" type="object" class="oe_highlight" invisible="state != 'fully_recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Approve" name="action_right_of_approve" invisible="state not in ['right_granted', 'right_of_approval', 'right_of_approval_2'] or not in_recovery" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_group" />
-                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval', 'right_of_approval_2'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
+                    <button string="Approve" name="action_right_of_approve" invisible="state not in ['right_granted', 'right_of_approval_1'] or not in_recovery" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_group" />
+                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval_1'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
 
                     <button string="Send for Recovery" name="action_send_to_recovery" type="object" invisible="in_recovery" />
 
@@ -61,11 +61,11 @@
                             <field name="microfinance_scheme_line_ids" invisible="1" />
                             <field name="product_domain" invisible="1" />
                             
-                            <field name="microfinance_scheme_id" string="Shceme" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
-                            <field name="microfinance_scheme_line_id" string="Application For" domain="[('id', 'in', microfinance_scheme_line_ids)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="microfinance_scheme_id" string="Shceme" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="microfinance_scheme_line_id" string="Application For" domain="[('id', 'in', microfinance_scheme_line_ids)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="asset_type" options="{'horizontal': True}" widget="radio" />
-                            <field name="donee_id" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance'), ('state', '=', 'register')]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
-                            <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" option="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="donee_id" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance'), ('state', '=', 'register')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="amount" readonly="1" />
                             <field name="security_deposit" readonly="1" />
                             <field name="donor_contribution" />
@@ -76,8 +76,8 @@
                             <field name="installment_type" options="{'horizontal': True}" widget="radio" />
                             <field name="installment_amount" readonly="1" />
                             <field name="installment_period" readonly="1" />
-                            <field name="delivery_date" required="state == 'wfd'" readonly="state not in ['approve', 'wfd']" invisible="state not in ['approve', 'wfd', 'done', 'in_recovery', 'recover']" />
-                            <field name="warehouse_location_id" required="asset_type == 'movable_asset' and asset_availability == 'available'" domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]" invisible="state not in ['waiting_delivery', 'done', 'in_recovery', 'recover'] or asset_type != 'movable_asset' or product_id == False or in_recovery" />
+                            <field name="delivery_date" required="state == 'wfd'" readonly="state not in ['approve', 'wfd', 'right_of_approval_2']" invisible="state not in ['approve', 'wfd', 'done', 'in_recovery', 'recover', 'right_of_approval_2']" />
+                            <field name="warehouse_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="asset_type == 'movable_asset' and asset_availability == 'available'" domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]" invisible="state not in ['wfd', 'done', 'in_recovery', 'recover'] or asset_type != 'movable_asset' or product_id == False or in_recovery" />
                             <field name="recovered_location_id" readonly="1" invisible="not in_recovery" />
                             <field name="asset_availability" readonly="1" />
                             <field name="application_form_name" invisible="1"/>
@@ -91,7 +91,7 @@
                             <field name="family_cnic_name" invisible="1"/>
                             <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
                             
-                            <field name="sd_slip_id" option="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('payment_type', '=', 'security'), ('state', '=', 'paid'), ('microfinance_id', '=', id)]" required="state == 'wfd'" invisible="asset_type == 'cash' or state in ['draft','hod_approve','mem_approve','reject'] or in_recovery" />
+                            <field name="sd_slip_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('payment_type', '=', 'security'), ('state', '=', 'paid'), ('microfinance_id', '=', id)]" required="state == 'wfd'" invisible="asset_type == 'cash' or state in ['draft','hod_approve','mem_approve','reject'] or in_recovery" />
                             
                             <field name="hod_remarks" invisible="state not in ['hod_approve','reject']" />
                             <field name="mem_remarks" invisible="state not in ['hod_approve','mem_approve','reject']" />

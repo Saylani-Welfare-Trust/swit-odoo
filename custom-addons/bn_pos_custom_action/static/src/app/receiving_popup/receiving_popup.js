@@ -85,6 +85,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             await this.processMicrofinanceRecord(selectedOrder);
         }
+        if (this.action_type === 'mf recovery') {
+            this.pos.receive_voucher = true
+
+            await this.processMicrofinanceRecoveryRecord(selectedOrder);
+        }
     }
 
     /**
@@ -108,6 +113,34 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const microfinanceLineIds = await this.handleMicrofinanceLines(record[0], selectedOrder);
 
             this.addExtraOrderData(selectedOrder, record[0], microfinanceLineIds);
+            super.confirm();
+
+        } catch (error) {
+            this.handleProcessingError(error);
+        }
+    }
+
+    /**
+     * Process Microfinance record
+     */
+    async processMicrofinanceRecoveryRecord(selectedOrder) {
+        try {
+            const record = await this.orm.searchRead(
+                'microfinance',
+                [['name', '=', this.state.record_number]],
+                ['name', 'state', 'microfinance_recovery_line_ids'],
+                { limit: 1 }
+            );
+
+            if (!record.length) return this.handleRecordNotFound();
+            if (record[0].state !== 'done') {
+                this.notification.add("Unauthorized Request State", { type: 'warning' });
+                return;
+            }
+
+            const microfinanceRecoveryLineIds = await this.handleMicrofinanceRecoveryLines(record[0], selectedOrder);
+
+            this.addExtraOrderData(selectedOrder, record[0], microfinanceRecoveryLineIds);
             super.confirm();
 
         } catch (error) {
@@ -199,46 +232,157 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
         const lines = await this.orm.searchRead(
             'microfinance.line',
-            [['id', 'in', record.microfinance_line_ids], ['paid_amount', '=', false]],
+            [['id', 'in', record.microfinance_line_ids], ['paid_amount', '=', 0]],
             ['id', 'amount', 'due_date'],
             {}
         );
 
         if (!lines.length) return;
 
+        // Current date values
         const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Filter only lines due THIS month
         const dueThisMonth = lines.filter(l => {
-            const due = new Date(l.due_date);
-            return due.getMonth() === now.getMonth() && due.getFullYear() === now.getFullYear();
+            if (!l.due_date) return false;
+
+            // parse in a safe way to prevent timezone shift
+            const [year, month, day] = l.due_date.split("-").map(Number);
+            const due = new Date(year, month - 1, day);
+
+            return due.getMonth() === currentMonth && due.getFullYear() === currentYear;
         });
 
         if (!dueThisMonth.length) return;
 
+        // Load installment product
         const mfProduct = await this.orm.searchRead(
             'product.product',
-            [['name', '=', 'Microfinance Installment'], ['type', '=', 'service'], ['available_in_pos', '=', true]],
+            [
+                ['name', '=', 'Microfinance Installment'],
+                ['type', '=', 'service'],
+                ['available_in_pos', '=', true]
+            ],
             ['id'],
             { limit: 1 }
         );
 
-        let microfinanceLineIds = [];
-        if (mfProduct.length) {
-            const product = this.pos.db.get_product_by_id(mfProduct[0].id);
-            if (!product) {
-                await this.popup.add(ErrorPopup, { title: "Error", body: "Microfinance Installment product not loaded in POS session." });
-                return;
-            }
-
-            for (const line of dueThisMonth) {
-                const orderline = selectedOrder.add_product(product, { quantity: 1, price_extra: line.amount });
-                orderline.set_customer_note(`Due date: ${line.due_date}`);
-                microfinanceLineIds.push({ id: line.id, amount: line.amount });
-            }
+        if (!mfProduct.length) {
+            await this.popup.add(ErrorPopup, {
+                title: "Error",
+                body: "Microfinance Installment product not found or not available in POS."
+            });
+            return;
         }
 
-        this.notification.add(`Processed ${dueThisMonth.length} microfinance instalments`, { type: 'success' });
+        const product = this.pos.db.get_product_by_id(mfProduct[0].id);
+        if (!product) {
+            await this.popup.add(ErrorPopup, {
+                title: "Error",
+                body: "Microfinance Installment product not loaded in POS session."
+            });
+            return;
+        }
+
+        let microfinanceLineIds = [];
+
+        // Add all installments due this month
+        for (const line of dueThisMonth) {
+            const orderline = selectedOrder.add_product(product, {
+                quantity: 1,
+                price_extra: line.amount
+            });
+
+            microfinanceLineIds.push({ id: line.id, amount: line.amount });
+        }
+
+        this.notification.add(
+            `Added ${dueThisMonth.length} installment(s) due this month`,
+            { type: "success" }
+        );
 
         return microfinanceLineIds;
+    }
+    
+    async handleMicrofinanceRecoveryLines(record, selectedOrder) {
+        if (!record.microfinance_recovery_line_ids || !record.microfinance_recovery_line_ids.length) return;
+
+        const lines = await this.orm.searchRead(
+            'microfinance.recovery.line',
+            [['id', 'in', record.microfinance_recovery_line_ids], ['paid_amount', '=', 0]],
+            ['id', 'amount', 'due_date'],
+            {}
+        );
+
+        if (!lines.length) return;
+
+        // Current date values
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Filter only lines due THIS month
+        const dueThisMonth = lines.filter(l => {
+            if (!l.due_date) return false;
+
+            // parse in a safe way to prevent timezone shift
+            const [year, month, day] = l.due_date.split("-").map(Number);
+            const due = new Date(year, month - 1, day);
+
+            return due.getMonth() === currentMonth && due.getFullYear() === currentYear;
+        });
+
+        if (!dueThisMonth.length) return;
+
+        // Load installment product
+        const mfProduct = await this.orm.searchRead(
+            'product.product',
+            [
+                ['name', '=', 'Microfinance Installment'],
+                ['type', '=', 'service'],
+                ['available_in_pos', '=', true]
+            ],
+            ['id'],
+            { limit: 1 }
+        );
+
+        if (!mfProduct.length) {
+            await this.popup.add(ErrorPopup, {
+                title: "Error",
+                body: "Microfinance Installment product not found or not available in POS."
+            });
+            return;
+        }
+
+        const product = this.pos.db.get_product_by_id(mfProduct[0].id);
+        if (!product) {
+            await this.popup.add(ErrorPopup, {
+                title: "Error",
+                body: "Microfinance Installment product not loaded in POS session."
+            });
+            return;
+        }
+
+        let microfinanceRecoveryLineIds = [];
+
+        // Add all installments due this month
+        for (const line of dueThisMonth) {
+            const orderline = selectedOrder.add_product(product, {
+                quantity: 1,
+                price_extra: line.amount
+            });
+
+            microfinanceRecoveryLineIds.push({ id: line.id, amount: line.amount });
+        }
+
+        this.notification.add(
+            `Added ${dueThisMonth.length} installment(s) due this month`,
+            { type: "success" }
+        );
+
+        return microfinanceRecoveryLineIds;
     }
 
     /**
@@ -294,7 +438,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     handleProcessingError(error) {
         console.error("Error processing:", error);
         this.notification.add(
-            "Error processing equipment record",
+            "Error processing record",
             { type: 'danger' }
         );
 
@@ -641,6 +785,17 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 microfinance_id: record.id,
                 microfinance_line_ids: lineIds,
                 scan_timestamp: new Date().toISOString(),
+                security_desposit: false
+            };
+        }
+        if (this.action_type === 'mf recovery') {
+            selectedOrder.extra_data.microfinance = {
+                record_number: record.name,
+                microfinance_state: record.state,
+                microfinance_id: record.id,
+                microfinance_recovery_line_ids: lineIds,
+                scan_timestamp: new Date().toISOString(),
+                security_desposit: false
             };
         }
         

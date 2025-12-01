@@ -92,6 +92,12 @@ class MicrofinanceInstallment(models.Model):
                 'status': "error",
                 'body': "Amount can't be zero or negative."
             }
+        elif data['amount'] != microfinance_request.security_deposit:
+            return {
+                'status': "error",
+                'body': "Please enter the correct security deposit amount."
+            }
+
 
         if self.search([('microfinance_id', '=', microfinance_request.id)]):
             return {
@@ -104,7 +110,7 @@ class MicrofinanceInstallment(models.Model):
             'payment_method': data['payment_method'],
             'bank_name': data['bank_name'],
             'cheque_no': data['cheque_no'],
-            'cheque_date': data['cheque_date'],
+            'cheque_date': data['cheque_date'] if data['cheque_date'] else None,
             'amount': data['amount'],
             'microfinance_id': microfinance_request.id,
             'donee_id': microfinance_request.donee_id.id,
@@ -114,5 +120,7 @@ class MicrofinanceInstallment(models.Model):
         if microfinance_installment:
             return {
                 'status': "success",
-                'id': microfinance_request.id
+                'id': microfinance_request.id,
+                'donee_id': microfinance_request.donee_id.id,
+                'deposit_id': microfinance_installment.id
             }

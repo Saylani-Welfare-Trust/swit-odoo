@@ -176,7 +176,16 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 cheque_no: this.state.cheque_no,
                 cheque_date: this.state.cheque_date,
                 amount: this.state.amount,
+                security_desposit: true
             }
+
+            if (!selectedOrder.extra_data) {
+                selectedOrder.extra_data = {};
+            }
+
+            selectedOrder.extra_data.microfinance = payload
+
+            let record = null
 
             await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
                 if (data.status === 'error') {
@@ -186,28 +195,30 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     });
                 }
                 else if (data.status === 'success') {
+                    record = data
+
+                    payload.security_deposit_id = data.deposit_id
+
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
-                    
                     // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-                        //     data.id,
-                        // ]);
-                        
-                    }
-                });
+                    //     data.id,
+                    // ]);
+                }
+            });
                 
-                const securityProduct = await this.orm.searchRead(
-                    'product.product',
-                    [
-                        ['name', '=', 'Microfinance Security Deposit'],
-                        ['type', '=', 'service'],
-                        ['available_in_pos', '=', true]
-                    ],
-                    ['id'],
-                    { limit: 1 }
+            const securityProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', 'Microfinance Security Deposit'],
+                    ['type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
             );
-            
+        
             if (securityProduct.length) {
                 // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(securityProduct[0].id);
@@ -228,7 +239,81 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 });
             }
 
+            await this.processPartner(record, selectedOrder);
+                
             this.cancel()
         }
+    }
+
+    /**
+     * Process partner assignment
+     */
+    async processPartner(record, selectedOrder) {
+        if (this.action_type == 'mf') {
+            if (!record.donee_id || !record.donee_id[0]) {
+                return;
+            }
+    
+            const partnerId = record.donee_id[0];
+            let partner = await this.getOrLoadPartner(partnerId);
+            
+            if (partner) {
+                this.assignPartnerToOrder(partner, selectedOrder);
+            } else {
+                console.warn("Partner not found in POS database:", partnerId);
+            }
+        }   
+    }
+
+    /**
+     * Get partner from POS DB or load from server
+     */
+    async getOrLoadPartner(partnerId) {
+        let partner = this.pos.db.get_partner_by_id(partnerId);
+        
+        if (!partner) {
+            partner = await this.loadPartnerFromServer(partnerId);
+        }
+        
+        return partner;
+    }
+
+    /**
+     * Load partner data from server
+     */
+    async loadPartnerFromServer(partnerId) {
+        const partnerData = await this.orm.searchRead(
+            'res.partner',
+            [['id', '=', partnerId]],
+            ['name', 'email', 'phone', 'street', 'city'],
+            { limit: 1 }
+        );
+        
+        // console.log("Partner Data:", partnerData);
+        
+        if (partnerData && partnerData.length > 0) {
+            this.pos.db.add_partners([partnerData[0]]);
+            const partner = this.pos.db.get_partner_by_id(partnerId);
+            
+            // console.log("Partner loaded to POS:", partner);
+            
+            return partner;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Assign partner to order
+     */
+    assignPartnerToOrder(partner, selectedOrder) {
+        selectedOrder.set_partner(partner);
+        
+        // console.log("Partner set on order:", partner.name);
+        
+        this.notification.add(
+            `Customer set to: ${partner.name}`,
+            { type: 'info' }
+        );
     }
 }
