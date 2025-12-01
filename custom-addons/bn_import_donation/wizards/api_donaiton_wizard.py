@@ -265,7 +265,7 @@ class APIDonationWizard(models.TransientModel):
             mobile = donor.get('phone', '')
             mobile = mobile[-10:]
 
-            donor_id = self.env['res.partner'].search([('mobile', '=', mobile), ('category_id.name', 'in', ['Donor'])])
+            donor_id = self.env['res.partner'].search([('mobile', '=', mobile), ('category_id.name', 'in', ['Donor'])], limit=1)
 
             if donor_id:
                 donor_id = donor_id.id
@@ -396,6 +396,7 @@ class APIDonationWizard(models.TransientModel):
         journal_lines = []
         company_currency_id = company_currency.id
 
+        # Add debit lines
         for (account_id, currency_id), vals in debit_accumulator.items():
             line_vals = {
                 'account_id': account_id,
@@ -408,6 +409,7 @@ class APIDonationWizard(models.TransientModel):
                 line_vals['amount_currency'] = vals.get('amount_currency', 0.0)
             journal_lines.append((0, 0, line_vals))
 
+        # Add credit lines
         for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
             line_vals = {
                 'account_id': account_id,
@@ -422,26 +424,24 @@ class APIDonationWizard(models.TransientModel):
                 line_vals['analytic_distribution'] = {str(analytic_id): 100}
             journal_lines.append((0, 0, line_vals))
 
-        # rounding
+        # Calculate the exact difference (no rounding)
         debit_total = sum(l[2].get('debit', 0.0) for l in journal_lines)
         credit_total = sum(l[2].get('credit', 0.0) for l in journal_lines)
-        difference = round(debit_total - credit_total, 2)
+        difference = debit_total - credit_total  # can be positive or negative
 
-        if abs(difference) > 0.0001:
-            rounding_account = self.env['account.account'].search([('code', '=', '999999')], limit=1)
-            if not rounding_account:
-                raise ValidationError("Rounding account with code '999999' not found. Please create or configure one.")
-            rounding_line = {
-                'account_id': rounding_account.id,
-                'name': 'Rounding Adjustment',
-                'debit': 0.0,
-                'credit': 0.0,
+        # If difference exists, post to the difference account
+        if abs(difference) > 0:  # post even tiny differences
+            difference_account = self.env['account.account'].search([('code', '=', '999999')], limit=1)
+            if not difference_account:
+                raise ValidationError("Difference account with code '999999' not found.")
+
+            diff_line = {
+                'account_id': difference_account.id,
+                'name': 'Difference Adjustment',
+                'debit': difference < 0 and abs(difference) or 0.0,
+                'credit': difference > 0 and difference or 0.0,
             }
-            if difference > 0:
-                rounding_line['credit'] = difference
-            else:
-                rounding_line['debit'] = abs(difference)
-            journal_lines.append((0, 0, rounding_line))
+            journal_lines.append((0, 0, diff_line))
 
         move_vals = {
             'move_type': 'entry',

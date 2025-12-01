@@ -32,14 +32,37 @@ class MedicalEquipment(models.Model):
     street = fields.Char(related='donee_id.street', string="Street", store=True)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True)
 
+    date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
+
+    age = fields.Integer('Age',compute="_compute_age", store=True)
+
+    gender = fields.Selection(related='donee_id.gender', string="Gender", store=True)
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id',compute='_compute_total_amount',store=True)
-    
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
+
+    is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
+
+    @api.depends('date_of_birth')
+    def _compute_age(self):
+        for record in self:
+            if record.date_of_birth:
+                # Get today's date
+                today = fields.Date.today()
+                age = today.year - record.date_of_birth.year
+                record.age = age
+            else:
+                record.age = 0  # Default value when there's no birth date
+
+    @api.onchange('date_of_birth')
+    def _onchange_date_of_birth(self):
+        if self.date_of_birth:
+            if self.date_of_birth.year == fields.Date.today().year or self.date_of_birth.year > fields.Date.today().year:
+                raise ValidationError(str(f'Invalid Date of Birth...'))
 
     @api.constrains('cnic_no')
     def _check_cnic_no_format(self):
@@ -67,7 +90,19 @@ class MedicalEquipment(models.Model):
             for line in record.medical_equipment_line_ids:
                 # Use 'amount' instead of 'amounts'
                 total += line.amounts * line.quantity
-            record.total_amount = total    
+            record.total_amount = total
+
+    @api.depends('donee_id')
+    def _set_is_donee_register(self):
+        for rec in self:
+            rec.is_donee_register = False
+
+            if rec.donee_id and rec.donee_id.state == 'register':
+                rec.is_donee_register = True
+
+    def action_register_donee(self):
+        self.donee_id.action_register()
+        self.is_donee_register = True
 
     @api.model
     def create(self, vals):
@@ -162,7 +197,6 @@ class MedicalEquipment(models.Model):
         # stock_picking.button_validate()
         return True
         
-    
     def action_show_picking(self):
         return {
             'type': 'ir.actions.act_window',
@@ -170,6 +204,16 @@ class MedicalEquipment(models.Model):
             'res_model': 'stock.picking',
             'view_mode': 'form',
             'res_id': self.picking_id.id,
+            'target': 'current',
+        }
+    
+    def action_show_return_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Return',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.return_picking_id.id,
             'target': 'current',
         }
 

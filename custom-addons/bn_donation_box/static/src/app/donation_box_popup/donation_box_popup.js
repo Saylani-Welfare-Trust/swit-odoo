@@ -51,11 +51,13 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             contact_person: collection.contact_person,
             contact_number: collection.contact_number,
             box_location: collection.box_location,
+            check_validation: true
         };
-
+        
+        
         // 🔹 First call your custom method
         const data = await this.orm.call('key.issuance', "set_donation_amount", [payload]);
-
+        
         if (data.status === 'error') {
             this.popup.add(ErrorPopup, {
                 title: _t("Error"),
@@ -63,9 +65,18 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             });
             return;
         }
-
+        
         if (data.status === 'success') {
-            this.notification.add(_t("Amount Recorded Successfully"), { type: "info" });
+            // 🔹 Add product line to current order
+            const current_order = this.pos.get_order();
+
+            payload.check_validation = false
+
+            if (!current_order.extra_data) {
+                current_order.extra_data = {};
+            }
+
+            current_order.extra_data.donation_box = payload
 
             // 🔹 Search for "Donation Box Receipt" product
             const product_data = await this.orm.call('product.product', 'search_read', [
@@ -91,12 +102,10 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                 return;
             }
 
-            // 🔹 Add product line to current order
-            const current_order = this.pos.get_order();
             if (current_order) {
                 current_order.add_product(product, {
-                    price: collection.amount,
-                    quantity: 1
+                    quantity: 1,
+                    price_extra: collection.amount
                 });
             }
 

@@ -31,7 +31,6 @@ martial_status_selection = [
 
 state_selection = [
     ('draft', 'Draft'),
-    ('print_info', 'Print Info'),
     ('register', 'Registered'),
     ('reject', 'Rejected'),
     ('change_request', 'Change Request'),
@@ -180,8 +179,10 @@ class ResPartner(models.Model):
                 raise ValidationError(str(f'Invalid Date of Birth...'))
 
     def action_print_info(self):
+        if self.is_change_request:
+            self.state = 'draft'
+        
         self.is_change_request = False
-        self.state = 'print_info'
 
         return self.env.ref('bn_profile_management.action_profile_management_report').report_action(self)
     

@@ -128,7 +128,7 @@
                     
                     <!-- <button string="Generate MF Applciation" name="action_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" /> -->
                
-                    <field name="state" widget="statusbar" statusbar_visible="draft, register, print_info"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft, register"/>
                 </header>
 
                 <sheet>

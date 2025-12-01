@@ -84,8 +84,8 @@ class Microfinance(models.Model):
     asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
-    security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', default=0)
+    amount = fields.Monetary('Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
+    security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
     donor_contribution = fields.Monetary('Contribution by Donor', currency_field='currency_id', default=0)
     total_amount = fields.Monetary('Total Amount', compute="_set_total_amount", store=True, currency_field='currency_id')
     installment_amount = fields.Monetary('Installment Amount', compute="_set_installment_amount", store=True, currency_field='currency_id')
@@ -203,20 +203,37 @@ class Microfinance(models.Model):
     @api.depends('microfinance_scheme_line_id')
     def _compute_product_domain(self):
         for rec in self:
-            rec.product_domain = [(5, 0, 0)]
+            if not rec.microfinance_scheme_line_id:
+                rec.product_domain = [(5, 0, 0)]  # clear all
+                continue
 
-            if rec.microfinance_scheme_line_id:
-                # Fetch lines related to selected scheme line
-                lines = self.env['loan.product.line'].search([
-                    ('microfinance_scheme_line_id', '=', self.microfinance_scheme_line_id.id)
-                ])
+            # Fetch lines related to selected scheme line
+            lines = self.env['loan.product.line'].search([
+                ('microfinance_scheme_line_id', '=', rec.microfinance_scheme_line_id.id)
+            ])
 
-                if lines:
-                    line_ids = lines.mapped('product_id').ids
+            # Get product IDs
+            product_ids = lines.mapped('product_id').ids
 
-                    rec.product_domain = line_ids
-                    
-                    rec.product_domain = [(6, 0, lines.ids)]
+            # Set Many2many properly
+            rec.product_domain = [(6, 0, product_ids)]
+    
+    @api.depends('product_id')
+    def _set_amount_and_sd(self):
+        for rec in self:
+            if not rec.product_id:
+                continue
+
+            # raise ValidationError('Hit')
+
+            # Fetch lines related to selected scheme line
+            line = self.env['loan.product.line'].search([
+                ('microfinance_scheme_line_id', '=', rec.microfinance_scheme_line_id.id),
+                ('product_id', '=', rec.product_id.id)
+            ], limit=1)
+
+            rec.amount = line.inst_amount
+            rec.security_deposit = line.sd_amount
 
     @api.depends('amount', 'security_deposit', 'donor_contribution')
     def _set_total_amount(self):

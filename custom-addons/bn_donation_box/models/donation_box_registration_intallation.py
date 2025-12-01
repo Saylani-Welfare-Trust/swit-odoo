@@ -86,6 +86,8 @@ class DonationBoxRegistrationInstallation(models.Model):
         if key:
             key.key_bunch_id = self.key_bunch_id.id
             key.rider_id = self.rider_id.id
+            key.donation_box_request_id = self.donation_box_request_id.id
+            key.donation_box_registration_installation_id = self.id
 
             key.action_available()
 

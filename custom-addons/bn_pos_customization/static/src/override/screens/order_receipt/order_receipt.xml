@@ -8,6 +8,7 @@
                 <t t-set="order" t-value="props.data"/>
                 <t t-set="partner" t-value="props.data.partner"/>
                 <t t-set="lines" t-value="props.data.orderlines"/>
+                <t t-set="payment" t-value="props.data.paymentlines[0]"/>
                 <t t-set="date_format" t-value="order.date" />
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
@@ -75,44 +76,21 @@
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-4"><h4 class="fs-5 fw-medium">Cash:</h4></div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="!order.comment_feedback">
-                                        <t t-if="order.amount_total">
-                                            <t t-esc="format_currency_amount"/>
-                                        </t>
-                                        <t t-else="">
-                                            <t t-esc="format_currency_amount_zero"/>
-                                        </t>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
-                                    </t>
-                                </h4>
-                            </div>
-                        </div>
-
+                        
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque Amount:</h4>
+                                <h4 class="fs-5 fw-medium">Payment Method:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.comment_feedback">
-                                        <t t-esc="format_currency_amount"/>
+                                    <t t-if="payment.name">
+                                        <t t-esc="payment.name"/>
                                     </t>
-                                    <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
-                                    </t>
+                                    <t t-else="">-</t>
                                 </h4>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-6">
                         <div class="row">
                             <div class="col-4">
                                 <h4 class="fs-5 fw-medium">Total Amount:</h4>
@@ -128,7 +106,9 @@
                                 </h4>
                             </div>
                         </div>
+                    </div>
 
+                    <div class="col-6">
                         <div class="row">
                             <div class="col-4">
                                 <h4 class="fs-5 fw-medium">Receipt Date:</h4>
@@ -273,7 +253,7 @@
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-set="city_code" t-value="company.city and company.city.substring(0,3).toUpperCase() or 'UNK'"/>
+                                    <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
                                     <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
                                     <t t-set="current_year" t-value="new Date().getFullYear()"/>
                                     <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
@@ -284,7 +264,7 @@
                         
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Donor Name:</h4>
+                                <h4 class="fs-5 fw-medium">Donor:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
@@ -297,19 +277,19 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-4"><h4 class="fs-5 fw-medium">Cash Amount:</h4></div>
+                            <div class="col-4">
+                                <h4 class="fs-5 fw-medium">Cell #:</h4>
+                            </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="!order.comment_feedback">
-                                        <t t-if="order.amount_total">
-                                            <t t-esc="format_currency_amount"/>
-                                        </t>
-                                        <t t-else="">
-                                            <t t-esc="format_currency_amount_zero"/>
-                                        </t>
+                                    <t t-if="partner.mobile">
+                                        <t t-esc="partner.mobile"/>
                                     </t>
                                     <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
+                                        <t t-if="partner.phone">
+                                            <t t-esc="partner.phone"/>
+                                        </t>
+                                        <t t-else="">-</t>
                                     </t>
                                 </h4>
                             </div>
@@ -317,25 +297,25 @@
 
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Printed By:</h4>
+                                <h4 class="fs-5 fw-medium">Payment Method:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.cashier">
-                                        <t t-esc="order.cashier"/>
+                                    <t t-if="payment.name">
+                                        <t t-esc="payment.name"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </h4>
                             </div>
                         </div>
-                      
+
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque Amount:</h4>
+                                <h4 class="fs-5 fw-medium">Total Amount:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.comment_feedback">
+                                    <t t-if="order.amount_total">
                                         <t t-esc="format_currency_amount"/>
                                     </t>
                                     <t t-else="">
@@ -360,29 +340,24 @@
                                 </h4>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cell #:</h4>
+                                <h4 class="fs-5 fw-medium">Receipt By:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="partner.mobile">
-                                        <t t-esc="partner.mobile"/>
+                                    <t t-if="order.cashier">
+                                        <t t-esc="order.cashier"/>
                                     </t>
-                                    <t t-else="">
-                                        <t t-if="partner.phone">
-                                            <t t-esc="partner.phone"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </t>
+                                    <t t-else="">-</t>
                                 </h4>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Receipt By:</h4>
+                                <h4 class="fs-5 fw-medium">Printed By:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
@@ -404,22 +379,6 @@
                                         <t t-esc="date_format"/>
                                     </t>
                                     <t t-else="">-</t>
-                                </h4>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Total Amount:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.amount_total">
-                                        <t t-esc="format_currency_amount"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
-                                    </t>
                                 </h4>
                             </div>
                         </div>
