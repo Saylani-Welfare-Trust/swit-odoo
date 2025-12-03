@@ -13,16 +13,16 @@
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
-                <div class="row" style="margin-top: 425px;">
+                <div class="row" style="margin-top: 360px;">
                     <div class="col-4">
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="order.receive_voucher">Receipt Voucher</h1>
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="!order.receive_voucher">Donation Receipt</h1>
                     </div>
                     <div class="col-8 text-end">
-                        <h1 class="fs-3 fw-bold text-uppercase">
+                        <b><span class="fw-bold text-uppercase">
                             <t t-if="company.name"><t t-esc="company.name"/></t>
-                            <t t-if="company.city">(<t t-esc="company.city"/>)</t>
-                        </h1>
+                            <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
+                        </span></b>
                     </div>
                 </div>
 
@@ -109,58 +109,46 @@
                     </div>
 
                     <div class="col-6">
-                        <div class="row">
+                        <div class="row" t-if="order.bank_name">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Receipt Date:</h4>
+                                <h4 class="fs-5 fw-medium">Bank Name:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.date">
-                                        <t t-esc="date_format"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.bank_name"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.cheque_number">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Receipt By:</h4>
+                                <h4 class="fs-5 fw-medium">Cheque No.:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.cashier">
-                                        <t t-esc="order.cashier"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.cheque_number"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.qr_code">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Printed By:</h4>
+                                <h4 class="fs-5 fw-medium">QR Code:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.cashier">
-                                        <t t-esc="order.cashier"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.qr_code"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.cheque_date">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Printed Date:</h4>
+                                <h4 class="fs-5 fw-medium">Cheque Date:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.date">
-                                        <t t-esc="date_format"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.cheque_date"/>
                                 </h4>
                             </div>
                         </div>
@@ -327,58 +315,46 @@
                     </div>
 
                     <div class="col-6">
-                        <div class="row">
+                        <div class="row" t-if="order.bank_name">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Receipt Date:</h4>
+                                <h4 class="fs-5 fw-medium">Bank Name:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.date">
-                                        <t t-esc="date_format"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.bank_name"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.cheque_number">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Receipt By:</h4>
+                                <h4 class="fs-5 fw-medium">Cheque No.:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.cashier">
-                                        <t t-esc="order.cashier"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.cheque_number"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.qr_code">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Printed By:</h4>
+                                <h4 class="fs-5 fw-medium">QR Code:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.cashier">
-                                        <t t-esc="order.cashier"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.qr_code"/>
                                 </h4>
                             </div>
                         </div>
-
-                        <div class="row">
+                        
+                        <div class="row" t-if="order.cheque_date">
                             <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Printed Date:</h4>
+                                <h4 class="fs-5 fw-medium">Cheque Date:</h4>
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.date">
-                                        <t t-esc="date_format"/>
-                                    </t>
-                                    <t t-else="">-</t>
+                                    <t t-esc="order.cheque_date"/>
                                 </h4>
                             </div>
                         </div>

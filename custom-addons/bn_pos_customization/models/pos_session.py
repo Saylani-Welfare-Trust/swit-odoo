@@ -17,7 +17,7 @@ class POSSession(models.Model):
     def _loader_params_res_users(self):
         vals = super()._loader_params_res_users()
         
-        vals["search_params"]["fields"] += ["branch_code"]
+        vals["search_params"]["fields"] += ["branch_code", "branch_name"]
         return vals
     
     @api.depends('user_id')

@@ -110,10 +110,10 @@
                             <!-- Header -->
                             <div class="div-box service_margin">
                                 <h1 class="text-transform">Donation Receipt</h1>
-                                <h1 class="text-transform">
+                                <h6 class="text-transform">
                                     <t t-if="order.company_id.name"><t t-esc="order.company_id.name"/></t>
-                                    <t t-if="order.company_id.city">(<t t-esc="order.company_id.city"/>)</t>
-                                </h1>
+                                    <t t-if="order.user_id.branch_name">(<t t-esc="order.user_id.branch_name"/>)</t>
+                                </h6>
                             </div>
 
                             <!-- Donor Info Section -->

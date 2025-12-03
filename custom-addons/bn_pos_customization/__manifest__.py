@@ -6,7 +6,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Customization',
     'depends': [
-        'point_of_sale',
+        'pos_sale',
+        'bn_pos_cheque',
         'bn_profile_management',
         'bn_analytic_account_customization'
     ],

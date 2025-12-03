@@ -6,3 +6,4 @@ class ResUser(models.Model):
 
 
     branch_code = fields.Char(related='employee_id.analytic_account_id.code', string="Branch Code", store=True)
+    branch_name = fields.Char(related='employee_id.analytic_account_id.name', string="Branch Name", store=True)
