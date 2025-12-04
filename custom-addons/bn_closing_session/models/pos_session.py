@@ -1,7 +1,7 @@
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 from odoo.tools import float_is_zero
-import json
 from odoo import models, fields, _
+
 import logging
 
 
@@ -12,7 +12,7 @@ class PosSession(models.Model):
     _inherit = 'pos.session'
 
 
-    def _compute_payment_breakdown(self):
+    def _compute_closing_details(self):
         """Compute restricted/unrestricted breakdown per payment method for the session."""
         self.ensure_one()
         orders = self._get_closed_orders()
@@ -45,6 +45,44 @@ class PosSession(models.Model):
 
         return breakdown_dict
 
+    def _compute_payment_breakdown(self):
+        """Compute restricted/unrestricted payment breakdown using pos.session.slip records."""
+        self.ensure_one()
+        breakdown_dict = {}
+
+        # Fetch slips for this session
+        slips = self.env['pos.session.slip'].search([
+            ('session_id', '=', self.id)
+        ])
+
+        for slip in slips:
+            method_id = slip.pos_payment_method_id.id
+
+            # Initialize if not already present
+            if method_id not in breakdown_dict:
+                breakdown_dict[method_id] = {
+                    'restricted': [],
+                    'unrestricted': [],
+                }
+
+            # Determine restricted/unrestricted account names
+            restricted = self._get_unrestricted_category()
+            unrestricted = self._get_restricted_category()
+
+            # Decide based on slip.type
+            if slip.type == restricted:
+                breakdown_dict[method_id]['restricted'].append({
+                    'amount': slip.amount,
+                    'ref': slip.slip_no,
+                })
+            elif slip.type == unrestricted:
+                breakdown_dict[method_id]['unrestricted'].append({
+                    'amount': slip.amount,
+                    'ref': slip.slip_no,
+                })
+
+        return breakdown_dict
+
     def _is_restricted_product(self, product):
         """
         Return 1 for restricted, 2 for unrestricted, False for neither
@@ -56,10 +94,6 @@ class PosSession(models.Model):
                 return 2
             elif self._get_restricted_category().lower() in category_name :
                 return 1
-            # if 'unrestricted' in category_name or 'un-restricted' in category_name:
-            #     return 2
-            # elif 'restricted' in category_name :
-            #     return 1
         return False
 
     def get_closing_control_data(self):
@@ -93,8 +127,8 @@ class PosSession(models.Model):
                 'amount': cash_move.amount
             })
 
-        # Use helper instead of field
-        breakdown_dict = self._compute_payment_breakdown()
+        # 🔥 Use helper instead of field
+        breakdown_dict = self._compute_closing_details()
 
         default_cash_details = None
         if default_cash_payment_method_id:
@@ -286,24 +320,28 @@ class PosSession(models.Model):
 
         account_move = self.move_id
 
-        # Decide source of breakdown
+        # raise ValidationError(str(account_move.read()))
+
+        payment_breakdown = {}
+
+        # 🔥 Decide source of breakdown
         if lines:
             # Keep frontend format (don’t aggregate)
             payment_breakdown = {int(pm_id): vals for pm_id, vals in lines.items()}
         else:
-            # Backend fallback: convert to same structure
+            # backend fallback: computed already returns the desired lists
             computed = self._compute_payment_breakdown()
-            payment_breakdown = {
-                pm_id: {
-                    "restricted": [{"amount": vals.get("restricted", 0.0), "ref": None}],
-                    "unrestricted": [{"amount": vals.get("unrestricted", 0.0), "ref": None}],
-                }
-                for pm_id, vals in computed.items()
-            }
+            payment_breakdown = {int(pm_id): {'restricted': vals.get('restricted', []) or [], 'unrestricted': vals.get('unrestricted', []) or []} for pm_id, vals in computed.items()}
+
+        # raise ValidationError(str(payment_breakdown))
 
         receivable_lines = account_move.line_ids.filtered(
-            lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
+            # lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
+            lambda l: l.account_id.account_type == 'asset_current' and l.debit > 0
         )
+
+        # raise ValidationError(str(receivable_lines))
+
         payment_method_amounts = self._group_receivable_lines_by_payment_method(receivable_lines)
         receivable_lines.unlink()
 
@@ -318,6 +356,9 @@ class PosSession(models.Model):
                     original_data[key] = {}
 
         original_data['_split_data'] = split_data
+
+        # raise ValidationError(str(original_data))
+        
         return original_data
 
     def _group_receivable_lines_by_payment_method(self, receivable_lines):
@@ -347,6 +388,8 @@ class PosSession(models.Model):
             'unrestricted_lines': [],
             'move_id': account_move.id
         }
+
+        # raise ValidationError(str(payment_method_amounts) + "----" + str(payment_breakdown))
 
         for pm_id, pm_data in payment_method_amounts.items():
             payment_method = pm_data['method']
@@ -520,7 +563,7 @@ class PosSession(models.Model):
     def _get_unrestricted_category(self):
         """Returns the default Unrestricted Category if no unrestricted category is set on the payment method."""
         return self.company_id.unrestricted_category
-    
+
     def _get_restricted_receivable_account(self, payment_method):
         """Returns the default pos receivable account if no receivable_account_id is set on the payment method."""
         return payment_method.restricted_account_id or self.company_id.account_default_pos_restricted_receivable_account_id
@@ -621,3 +664,12 @@ class PosSession(models.Model):
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         
         return vals
+    
+    def show_session_slip(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Deposit Slip',
+            'res_model': 'pos.session.slip',
+            'domain': [('session_id', '=', self.id)],
+            'view_mode': 'tree'
+        }

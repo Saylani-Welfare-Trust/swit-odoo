@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
 
+    <!-- New Enhanced Closing Popup Component -->
     <t t-name="CustomClosingPopup" owl="1">
-        <div class="popup close-pos-popup">
+        <div class="popup close-pos-popup" style="max-width: 1000px !important;">
             <div class="modal-header">
                 <h4 class="modal-title">Closing Session</h4>
                 <div class="total-orders fw-bolder">
@@ -15,58 +16,122 @@
                     <table class="text-start">
                         <thead>
                             <tr class="text-dark">
-                                <th>Payment Method</th>
-                                <th>Expected</th>
-                                <th>Difference</th>
-                                <th class="text-start">Count</th>
-                                <th>Slip No.</th>
-                                <th>Amount</th>
+                                <th class="text-start">Payment Method</th>
+                                <th class="text-start">Expected</th>
+                                <th class="text-start">Difference</th>
+                                <th  class="text-start" style="width:20%">Count</th>
+                                <th class="text-start">Slip No.</th>
+                                <th class="text-start">Amount</th>
+                                <th class="text-start">Action</th>
                             </tr>
                         </thead>
                         <t t-if="pos.config.cash_control">
                             <tbody>
                                 <tr>
-                                    <td t-esc="props.default_cash_details.name"/>
-                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.amount)"/>
-                                    <td t-esc="env.utils.formatCurrency(getDifference(props.default_cash_details.id))"
+                                    <td class="px-1 py-1" t-esc="props.default_cash_details.name"/>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.amount)"/>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(getDifference(props.default_cash_details.id))"
                                         t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getDifference(props.default_cash_details.id))}"/>
-                                    <td>
+                                    <td class="px-1 py-1">
                                         <Input tModel="[state.payments[props.default_cash_details.id], 'counted']"
                                             callback.bind="(value) =>  this.setManualCashInput(value)"
                                             isValid.bind="env.utils.isValidFloat"/>
                                     </td>
-                                    <td/>
-                                    <td/>
                                 </tr>
                             </tbody>
                             <tbody class="cash-overview border-start small text-muted">
                                 <tr>
-                                    <td><span t-esc="pos.company.restricted_category" /> Amount</td>
-                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.restricted)"/>
-                                    <td/>
-                                    <td/>
-                                    <td>
+                                    <td class="px-1 py-1"><span t-esc="pos.company.restricted_category"/> Amount</td>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.restricted)"/>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Slip No."
-                                            t-model="state.lines[props.default_cash_details.id].restricted.ref"/>
+                                            t-model="state.newLines[props.default_cash_details.id].restricted.ref"/>
                                     </td>
-                                    <td>
+                                    <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Amount"
-                                            t-model="state.lines[props.default_cash_details.id].restricted.amount"/>
+                                            t-model="state.newLines[props.default_cash_details.id].restricted.amount"/>
+                                    </td>
+                                    <td class="text-center px-1 py-1">
+                                        <button class="btn btn-secondary" 
+                                            t-on-click="() => handleAddLine(props.default_cash_details.id, 'restricted')">➕</button>
                                     </td>
                                 </tr>
+
+                                <tr t-foreach="state.lines[props.default_cash_details.id].restricted || []" t-as="line" t-key="line.id">
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                        t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'restricted')">❌</button></td>
+                                </tr>
+
                                 <tr>
-                                    <td><span t-esc="pos.company.unrestricted_category" /> Amount</td>
-                                    <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.unrestricted)"/>
-                                    <td/>
-                                    <td/>
-                                    <td>
+                                    <td class="px-1 py-1"><span t-esc="pos.company.unrestricted_category"/> Amount</td>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.unrestricted)"/>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Slip No."
-                                            t-model="state.lines[props.default_cash_details.id].unrestricted.ref"/>
+                                            t-model="state.newLines[props.default_cash_details.id].unrestricted.ref"/>
                                     </td>
-                                    <td>
+                                    <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Amount"
-                                            t-model="state.lines[props.default_cash_details.id].unrestricted.amount"/>
+                                            t-model="state.newLines[props.default_cash_details.id].unrestricted.amount"/>
                                     </td>
+                                    <td class="text-center px-1 py-1">
+                                        <button class="btn btn-secondary" 
+                                            t-on-click="() => handleAddLine(props.default_cash_details.id, 'unrestricted')">➕</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr t-foreach="state.lines[props.default_cash_details.id].unrestricted || []" t-as="line" t-key="line.id">
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                        t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
+                                </tr>
+                            </tbody>
+                            <tbody class="cash-overview border-start small text-muted">
+                                <tr>
+                                    <td class="px-1 py-1">Opening</td>
+                                    <td class="align-top px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.opening)"/>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                </tr>
+                                <tr t-foreach="props.default_cash_details.moves" t-as="move" t-key="move_index">
+                                    <td class="px-1 py-1">
+                                        <div class="flex d-flex flex-row">
+                                            <div class="cash-sign me-1" t-esc="move.amount &lt; 0 ? '-' : '+'"/>
+                                            <t t-esc="move.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="align-top px-1 py-1" t-esc="env.utils.formatCurrency(Math.abs(move.amount))"/>
+                                </tr>
+                                <tr t-if="props.default_cash_details.payment_amount">
+                                    <td class="px-1 py-1">
+                                        <div class="flex d-flex flex-row">
+                                            <div class="cash-sign me-1" t-esc="props.default_cash_details.payment_amount &lt; 0 ? '-' : '+'"/>
+                                            Payments in <t t-esc="props.default_cash_details.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="align-top px-1 py-1" t-esc="env.utils.formatCurrency(Math.abs(props.default_cash_details.payment_amount))"/>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="text-center px-1 py-1">----</td>
                                 </tr>
                             </tbody>
                         </t>
@@ -74,49 +139,77 @@
                             <t t-foreach="props.other_payment_methods" t-as="pm" t-key="pm.id">
                                 <tbody>
                                     <tr>
-                                        <td t-esc="pm.name"/>
-                                        <td t-esc="env.utils.formatCurrency(pm.amount)"/>
+                                        <td class="px-1 py-1" t-esc="pm.name"/>
+                                        <td class="px-1 py-1" t-esc="env.utils.formatCurrency(pm.amount)"/>
                                         <t t-set="_showDiff" t-value="pm.type === 'bank' and pm.number !== 0" />
-                                        <td t-if="_showDiff" t-esc="env.utils.formatCurrency(getDifference(pm.id))"
+                                        <td class="px-1 py-1" t-if="_showDiff" t-esc="env.utils.formatCurrency(getDifference(pm.id))"
                                             t-att-class="{'warning text-danger fw-bolder': getDifference(pm.id)}"/>
                                         <td t-if="_showDiff">
                                             <Input tModel="[state.payments[pm.id], 'counted']"
                                                 isValid.bind="env.utils.isValidFloat" />
                                         </td>
-                                        <td/>
-                                        <td/>
-                                        <td/>
                                     </tr>
                                 </tbody>
 
                                 <tbody class="cash-overview border-start small text-muted">
                                     <tr>
-                                        <td><span t-esc="pos.company.restricted_category" /> Amount</td>
+                                        <td class="px-1 py-1"><span t-esc="pos.company.restricted_category"/> Amount</td>
                                         <td t-esc="env.utils.formatCurrency(pm.breakdown.restricted)"/>
-                                        <td/>
-                                        <td/>
-                                        <td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Slip No."
-                                                t-model="state.lines[pm.id].restricted.ref"/>
+                                                t-model="state.newLines[pm.id].restricted.ref"/>
                                         </td>
-                                        <td>
+                                        <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Amount"
-                                                t-model="state.lines[pm.id].restricted.amount"/>
+                                                t-model="state.newLines[pm.id].restricted.amount"/>
+                                        </td>
+                                        <td class="text-center px-1 py-1">
+                                            <button class="btn btn-secondary" 
+                                                t-on-click="() => handleAddLine(pm.id, 'restricted')">➕</button>
                                         </td>
                                     </tr>
+
+                                    <tr t-foreach="state.lines[pm.id].restricted || []" t-as="line" t-key="line.id">
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                            t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'restricted')">❌</button></td>
+                                    </tr>
+
                                     <tr>
-                                        <td><span t-esc="pos.company.unrestricted_category" /> Amount</td>
+                                        <td class="px-1 py-1"><span t-esc="pos.company.unrestricted_category"/> Amount</td>
                                         <td t-esc="env.utils.formatCurrency(pm.breakdown.unrestricted)"/>
-                                        <td/>
-                                        <td/>
-                                        <td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Slip No."
-                                                t-model="state.lines[pm.id].unrestricted.ref"/>
+                                                t-model="state.newLines[pm.id].unrestricted.ref"/>
                                         </td>
-                                        <td>
+                                        <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Amount"
-                                                t-model="state.lines[pm.id].unrestricted.amount"/>
+                                                t-model="state.newLines[pm.id].unrestricted.amount"/>
                                         </td>
+                                        <td class="text-center px-1 py-1">
+                                            <button class="btn btn-secondary" 
+                                                t-on-click="() => handleAddLine(pm.id, 'unrestricted')">➕</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr t-foreach="state.lines[pm.id].unrestricted || []" t-as="line" t-key="line.id">
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                            t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
                                     </tr>
                                 </tbody>
                             </t>
@@ -124,6 +217,7 @@
                     </table>
                 </div>
                 
+
                 <div class="notes-container d-flex flex-column flex-sm-row gap-3 border-top mt-3 pt-3">
                     <div class="opening-notes-container d-flex flex-column flex-grow-1 align-items-start" t-if="props.opening_notes" >
                         <label class="form-label" for="props.opening_notes">Opening note</label>
