@@ -28,7 +28,7 @@ class MicrofinanceInstallment(models.Model):
 
 
     name = fields.Char('Name', default="NEW")
-    cnic_no = fields.Char('CNIC No.')
+    cnic_no = fields.Char('CNIC No.', size=13)
     bank_name = fields.Char('Bank Name')
     cheque_no = fields.Char('Cheque No.')
 
@@ -68,6 +68,10 @@ class MicrofinanceInstallment(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+    def is_valid_cnic_characters(cnic):
+        """Return True only if CNIC contains digits and '-' only."""
+        return bool(re.fullmatch(r'[0-9-]*', cnic))
+
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no:
@@ -76,6 +80,9 @@ class MicrofinanceInstallment(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            if not self.is_valid_cnic_characters(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
 
     @api.model
     def create_microfinance_security_deposit(self, data):

@@ -23,7 +23,7 @@ class DonationHomeService(models.Model):
     second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
 
     name = fields.Char('Name', default="New")
-    mobile = fields.Char(related='donor_id.mobile', string="Mobile No.")
+    mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
 
     address = fields.Text('Address')
 

@@ -27,10 +27,10 @@ class MedicalEquipment(models.Model):
 
     name = fields.Char('Name', default="New")
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
-    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True)
+    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True, size=10)
     city = fields.Char(related='donee_id.city', string="City", store=True)
     street = fields.Char(related='donee_id.street', string="Street", store=True)
-    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True)
+    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=13)
 
     date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
 
@@ -74,6 +74,10 @@ class MedicalEquipment(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+    def is_valid_cnic_characters(cnic):
+        """Return True only if CNIC contains digits and '-' only."""
+        return bool(re.fullmatch(r'[0-9-]*', cnic))
+
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no:
@@ -82,6 +86,9 @@ class MedicalEquipment(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            if not self.is_valid_cnic_characters(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
     
     @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
     def _compute_total_amount(self):

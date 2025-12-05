@@ -15,7 +15,7 @@ class MicrofinanceGuarantor(models.Model):
     father_spouse_name = fields.Char('Father / Spouse Name')
     landline_no = fields.Char('Landline No.')
     address = fields.Char('Address')
-    cnic_no = fields.Char('CNIC No.')
+    cnic_no = fields.Char('CNIC No.', size=13)
     mobile = fields.Char('Mobile No.', size=10)
     phone_code_id = fields.Many2one('res.country', string="Phone Code")
 
@@ -32,6 +32,10 @@ class MicrofinanceGuarantor(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+    def is_valid_cnic_characters(cnic):
+        """Return True only if CNIC contains digits and '-' only."""
+        return bool(re.fullmatch(r'[0-9-]*', cnic))
+
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no:
@@ -40,3 +44,6 @@ class MicrofinanceGuarantor(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+            
+            if not self.is_valid_cnic_characters(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
