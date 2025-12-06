@@ -15,6 +15,8 @@
         'data/server_action.xml',
         'data/res_partner_category.xml',
         'security/group.xml',
+        'security/access_right.xml',
+        'security/record_rule.xml',
         'security/ir.model.access.csv',
         'views/res_partner.xml',
         'views/res_partner_layer.xml',

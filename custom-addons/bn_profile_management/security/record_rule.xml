@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donor_rule" model="ir.rule">
+        <field name="name">Donor Rule</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="domain_force">[('category_id.name', '=', 'Donor')]</field>
+        <field name="groups" eval="[(4, ref('bn_profile_management.edit_donor_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

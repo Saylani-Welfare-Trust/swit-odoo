@@ -13,7 +13,7 @@ class HREmployee(models.Model):
 
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
 
-    cnic_no = fields.Char('CNIC No.', tracking=True, size=13)
+    cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
 
 
     @api.constrains('cnic_no')
@@ -26,9 +26,8 @@ class HREmployee(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    def is_valid_cnic_characters(cnic):
-        """Return True only if CNIC contains digits and '-' only."""
-        return bool(re.fullmatch(r'[0-9-]*', cnic))
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
 
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
@@ -42,5 +41,5 @@ class HREmployee(models.Model):
             if self.search([('cnic_no', '=', self.cnic_no)]):
                 raise ValidationError("A User with same CNIC No. already exist.")
 
-            if not self.is_valid_cnic_characters(self.cnic_no):
-                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
+            if not self.is_valid_cnic_format(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')

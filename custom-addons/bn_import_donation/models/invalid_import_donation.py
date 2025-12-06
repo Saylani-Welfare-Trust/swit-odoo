@@ -12,7 +12,7 @@ class InvalidImportDonation(models.Model):
     transaction_id = fields.Char('Transacetion ID')
     donor_student_name = fields.Char('Donor / Student Name')
     mobile = fields.Char('Mobile No.', size=10)
-    cnic_no = fields.Char('CNIC No.', size=13)
+    cnic_no = fields.Char('CNIC No.', size=15)
     email = fields.Char('Email')
     product = fields.Char('Product')
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")

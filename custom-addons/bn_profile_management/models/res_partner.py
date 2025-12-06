@@ -49,14 +49,14 @@ class ResPartner(models.Model):
     
     mobile = fields.Char(size=10)
     surname = fields.Char('Surname', tracking=True)
-    cnic_no = fields.Char('CNIC No.', tracking=True, size=13)
+    cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
     next_kin = fields.Char('Next Kin', tracking=True)
     spouse_name = fields.Char('Spouse Name', tracking=True)
     father_name = fields.Char('Father Name', tracking=True)
-    head_cnic_no = fields.Char('Head CNIC No.', tracking=True, size=13)
+    head_cnic_no = fields.Char('Head CNIC No.', tracking=True, size=15)
     old_system_id = fields.Char('Old System ID', tracking=True)
-    member_cnic_no = fields.Char('Member CNIC No.', tracking=True, size=13)
-    father_cnic_no = fields.Char('Father CNIC No.', tracking=True, size=13)
+    member_cnic_no = fields.Char('Member CNIC No.', tracking=True, size=15)
+    father_cnic_no = fields.Char('Father CNIC No.', tracking=True, size=15)
     nearest_land_mark = fields.Char('Nearest Land Mark', tracking=True)
     reference_remarks = fields.Char('Reference / Remarks', tracking=True)
     bank_wallet_account = fields.Char('Bank / Wallet Account', tracking=True)
@@ -125,9 +125,8 @@ class ResPartner(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    def is_valid_cnic_characters(cnic):
-        """Return True only if CNIC contains digits and '-' only."""
-        return bool(re.fullmatch(r'[0-9-]*', cnic))
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
 
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
@@ -138,8 +137,8 @@ class ResPartner(models.Model):
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
 
-            if not self.is_valid_cnic_characters(self.cnic_no):
-                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
+            if not self.is_valid_cnic_format(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
 
     @api.constrains('member_cnic_no')
     def _check_member_cnic_no_format(self):
@@ -161,8 +160,8 @@ class ResPartner(models.Model):
                 self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
 
             
-            if not self.is_valid_cnic_characters(self.member_cnic_no):
-                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
+            if not self.is_valid_cnic_format(self.member_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.constrains('father_cnic_no')
     def _check_father_cnic_no_format(self):
@@ -184,8 +183,8 @@ class ResPartner(models.Model):
                 self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
 
             
-            if not self.is_valid_cnic_characters(self.father_cnic_no):
-                raise ValidationError('Invalid CNIC No. Can contain only digit and -')
+            if not self.is_valid_cnic_format(self.father_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):

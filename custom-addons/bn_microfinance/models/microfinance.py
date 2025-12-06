@@ -141,7 +141,7 @@ class Microfinance(models.Model):
     residence_type = fields.Selection(selection=residence_selection, string="Residence Type")
 
     home_phone_no = fields.Char('Home Phone No.')
-    landlord_cnic_no = fields.Char('CNIC No. of Landlord', size=13)
+    landlord_cnic_no = fields.Char('CNIC No. of Landlord', size=15)
     landlord_mobile = fields.Char('Mobile No. of Landlord')
     landlord_name = fields.Char('Name of Landlord / Owner')
     
@@ -289,9 +289,8 @@ class Microfinance(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    def is_valid_cnic_characters(cnic):
-        """Return True only if CNIC contains digits and '-' only."""
-        return bool(re.fullmatch(r'[0-9-]*', cnic))
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
 
     @api.onchange('landlord_cnic_no')
     def _onchange_landlord_cnic_no(self):
@@ -303,8 +302,8 @@ class Microfinance(models.Model):
                 self.landlord_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
 
             
-            if not self.is_valid_cnic_characters(self.landlord_cnic_no):
-                raise ValidationError('Invalid CNIC No. Can contain only digit and -')            
+            if not self.is_valid_cnic_format(self.landlord_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')            
 
     def action_move_to_hod(self):
         self.state = 'hod_approve'

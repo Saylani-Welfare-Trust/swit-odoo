@@ -65,9 +65,9 @@ class Welfare(models.Model):
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
     
     name = fields.Char('Name', default="NEW")
-    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=13)
+    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
     father_name = fields.Char(related='donee_id.father_name', string="Father Name", store=True)
-    father_cnic_no = fields.Char(related='donee_id.father_cnic_no', string="Father CNIC No.", store=True, size=13)
+    father_cnic_no = fields.Char(related='donee_id.father_cnic_no', string="Father CNIC No.", store=True, size=15)
     old_system_id = fields.Char('Old System ID')
     
     date = fields.Date('Date', default=fields.Date.today())
@@ -126,7 +126,7 @@ class Welfare(models.Model):
     residence_type = fields.Selection(selection=residence_selection, string="Residence Type")
 
     home_phone_no = fields.Char('Home Phone No.')
-    landlord_cnic_no = fields.Char('CNIC No. of Landlord', size=13)
+    landlord_cnic_no = fields.Char('CNIC No. of Landlord', size=15)
     landlord_mobile = fields.Char('Mobile No. of Landlord')
     landlord_name = fields.Char('Name of Landlord / Owner')
     
