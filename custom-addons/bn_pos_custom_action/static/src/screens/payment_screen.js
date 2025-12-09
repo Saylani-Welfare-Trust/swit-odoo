@@ -149,12 +149,20 @@ patch(PaymentScreen.prototype, {
             if (mfData.security_desposit) {
                 const depositID = mfData.security_deposit_id || null;
 
+                const payment_method = currentOrder.paymentlines[0].name
+
+                console.log(payment_method);
+
                 if (depositID) {
                     await this.env.services.orm.write(
                         'microfinance.installment',
                         [depositID],
                         {
-                            state: 'paid'
+                            payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                            bank_name: currentOrder.bank_name,
+                            cheque_no: currentOrder.cheque_number,
+                            cheque_date: currentOrder.cheque_date,
+                            state: 'paid',
                         }
                     );
                     
@@ -207,8 +215,6 @@ patch(PaymentScreen.prototype, {
                 }
             }
 
-        } else {
-            console.log("🟡 Data found in order - using normal POS flow");
         }
         
         // Continue with normal POS flow

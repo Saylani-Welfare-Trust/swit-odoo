@@ -353,13 +353,16 @@ class Microfinance(models.Model):
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
-                raise ValidationError("Please enter Security Deposit Receipt ID")
+                raise ValidationError("Please select a Security Deposit Receipt.")
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         
         self.state = 'wfd'
 
     def action_sd_slip(self):
+        if not self.sd_slip_id:
+            raise ValidationError('Please select a Security Deposit Receipt.')
+        
         return self.env.ref('bn_microfinance.security_deposit_report_action').report_action(self)
 
     def action_move_to_done(self):

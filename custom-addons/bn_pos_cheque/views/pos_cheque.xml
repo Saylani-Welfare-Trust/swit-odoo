@@ -33,11 +33,17 @@
     </record>
 
     <menuitem
+        id="treasury_menu"
+        name="Treasury"
+        parent="account.menu_finance"
+        sequence="6"/>
+    
+    <menuitem
         id="pos_cheque_menu"
         name="POS Cheque"
         action="pos_cheque_action"
         groups="pos_cheque_menu_group"
-        parent="account.menu_finance"
-        sequence="6"/>
+        parent="bn_pos_cheque.treasury_menu"
+        sequence="0"/>
 
 </odoo>

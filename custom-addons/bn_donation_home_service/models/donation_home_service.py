@@ -17,7 +17,7 @@ class DonationHomeService(models.Model):
     _description = "Donation Home Service"
 
 
-    donor_id = fields.Many2one('res.partner', string="Donee")
+    donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
@@ -33,7 +33,7 @@ class DonationHomeService(models.Model):
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
-    donation_home_service_line_ids = fields.One2many('donation.home.service.line', 'donation_home_service_id', string="Donation Home Services")
+    donation_home_service_line_ids = fields.One2many('donation.home.service.line', 'donation_home_service_id', string="Donation Home Service Lines")
 
 
     @api.model

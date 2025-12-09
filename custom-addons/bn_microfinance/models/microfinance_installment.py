@@ -113,10 +113,6 @@ class MicrofinanceInstallment(models.Model):
 
         microfinance_installment = self.create({
             'payment_type': 'security',
-            'payment_method': data['payment_method'],
-            'bank_name': data['bank_name'],
-            'cheque_no': data['cheque_no'],
-            'cheque_date': data['cheque_date'] if data['cheque_date'] else None,
             'amount': data['amount'],
             'microfinance_id': microfinance_request.id,
             'donee_id': microfinance_request.donee_id.id,

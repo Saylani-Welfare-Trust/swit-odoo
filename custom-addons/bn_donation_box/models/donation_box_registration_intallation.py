@@ -45,6 +45,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     location = fields.Char('Requested Location', tracking=True)
     contact_person = fields.Char('Contact Person', tracking=True)
     old_box_no = fields.Char('Old Box No.')
+    lock_no = fields.Char('Lock No.')
 
     installation_date = fields.Date('Installation Date', default=fields.Date.today(), tracking=True)
 
@@ -113,3 +114,10 @@ class DonationBoxRegistrationInstallation(models.Model):
     def approve_donation_box(self, records):
         for rec in records:
             rec.action_approved()
+
+    def populate_lock_no(self, records):
+        for rec in records:
+            lock_no = rec.donation_box_request_id.donation_box_request_line_ids.filtered(lambda x:x.lot_id == rec.lot_id).lock_no
+
+            # raise ValidationError(lock_no)
+            rec.lock_no = lock_no

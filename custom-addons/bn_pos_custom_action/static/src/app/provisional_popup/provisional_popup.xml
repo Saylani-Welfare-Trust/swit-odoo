@@ -57,51 +57,6 @@
                             placeholder="Enter Microfinance Requets No."/>
                     </div>
                 </div>
-                
-                <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Payment Method</div>
-                    <div class="col-8">
-                        <select class="form-select form-select-sm"
-                                t-on-change="updatePaymentMethod">
-                            <option value="">Select a payment method</option>
-                            <option value="cash">Cash</option>
-                            <option value="cheque">Cheque</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="row mb-2 text-start" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
-                    <div class="col-4 fw-semibold">Bank Name</div>
-                    <div class="col-8">
-                        <input type="text"
-                            class="form-control form-control-sm"
-                            t-att-value="this.state.bank_name"
-                            t-on-change="updateBankName"
-                            placeholder="Enter Bank Name"/>
-                    </div>
-                </div>
-                
-                <div class="row mb-2 text-start" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
-                    <div class="col-4 fw-semibold">Cheque No.</div>
-                    <div class="col-8">
-                        <input type="text"
-                            class="form-control form-control-sm"
-                            t-att-value="this.state.cheque_no"
-                            t-on-change="updateChequeNo"
-                            placeholder="Enter Cheque No."/>
-                    </div>
-                </div>
-
-                <div class="row mb-2 text-start" t-if="this.state.payment_method != 'cash' &amp;&amp; this.state.payment_method">
-                    <div class="col-4 fw-semibold">Cheque Date</div>
-                    <div class="col-8">
-                        <input type="date"
-                            class="form-control form-control-sm"
-                            t-att-value="this.state.cheque_date"
-                            t-on-change="updateChequeDate"
-                            placeholder="Select Cheque Date"/>
-                    </div>
-                </div>
 
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Amount</div>

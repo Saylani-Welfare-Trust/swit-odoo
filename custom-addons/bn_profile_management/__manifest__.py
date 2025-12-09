@@ -24,6 +24,7 @@
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'reports/profile_management_report.xml',
+        'reports/microfinance_report.xml',
     ],
     'auto_install': False,
     'application': True,

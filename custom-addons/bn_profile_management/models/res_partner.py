@@ -299,5 +299,20 @@ class ResPartner(models.Model):
     def action_reject(self):
         self.state = 'reject'
 
-    def action_microfinance_application(self):
-        pass
+    def action_print_microfinance_application(self):
+        if 'Microfinance' not in self.category_id.mapped('name'):
+            raise ValidationError('This action is only restricted for Microfinance Application.')
+        
+        # raise ValidationError(str(self.env.context))
+
+        scheme_id = self.env.context.get('microfinance_scheme_id', None)
+
+        if scheme_id:
+            microfinance = self.env['microfinance'].create({
+                'microfinance_scheme_id': scheme_id,
+                'donee_id': self.id
+            })
+
+            microfinance._compute_microfinance_scheme_line_ids()
+
+        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)

@@ -56,7 +56,7 @@ class RiderScheduleLine(models.TransientModel):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
             'res_id': self.rider_schedule_id.id,
-            'target': 'new'
+            'target': 'current'
         }
     
     def mark_as_submit(self):
@@ -75,5 +75,5 @@ class RiderScheduleLine(models.TransientModel):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
             'res_id': self.rider_schedule_id.id,
-            'target': 'new'
+            'target': 'current'
         }
