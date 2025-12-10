@@ -127,7 +127,7 @@ class DirectDeposit(models.Model):
 
         # NOW ADD ONLY ONE DEBIT LINE
         receivable_account = self.env['account.account'].search([
-            ('code', '=', '1121001'),
+            ('code', '=', '102401001'),
             ('company_id', '=', self.env.company.id)
         ], limit=1)
         if not receivable_account:
