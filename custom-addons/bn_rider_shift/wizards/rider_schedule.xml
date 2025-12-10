@@ -20,6 +20,7 @@
                             <field name="contact_person" readonly="1" />
                             <field name="contact_number" readonly="1" />
                             <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                            <field name="counterfeit_notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
                             <field name="submission_time" readonly="1" />
                             <field name="state" widget="badge" decoration-info="state == 'donation_collected'"  decoration-success="state in ['donation_submit', 'paid']" readonly="1" />
                             

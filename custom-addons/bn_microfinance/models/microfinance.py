@@ -84,7 +84,8 @@ class Microfinance(models.Model):
     asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    amount = fields.Monetary('Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
+    amount = fields.Monetary('Installement Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
+    product_amount = fields.Monetary('Product Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
     security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
     donor_contribution = fields.Monetary('Contribution by Donor', currency_field='currency_id', default=0)
     total_amount = fields.Monetary('Total Amount', compute="_set_total_amount", store=True, currency_field='currency_id')
@@ -234,14 +235,12 @@ class Microfinance(models.Model):
 
             rec.amount = line.inst_amount
             rec.security_deposit = line.sd_amount
+            rec.product_amount = rec.product_id.lst_price
 
-    @api.depends('amount', 'security_deposit', 'donor_contribution')
+    @api.depends('product_amount', 'security_deposit', 'donor_contribution')
     def _set_total_amount(self):
         for rec in self:
-            if rec.security_deposit > rec.donor_contribution:
-                rec.total_amount = rec.security_deposit - rec.donor_contribution - rec.amount
-            else:
-                rec.total_amount = rec.donor_contribution - rec.security_deposit - rec.amount
+            rec.total_amount = rec.product_amount - rec.security_deposit - rec.donor_contribution
     
     @api.depends('product_id')
     def _set_installment_amount(self):
@@ -360,8 +359,13 @@ class Microfinance(models.Model):
         self.state = 'wfd'
 
     def action_sd_slip(self):
-        if not self.sd_slip_id:
-            raise ValidationError('Please select a Security Deposit Receipt.')
+        self.env['microfinance.installment'].create({
+            'payment_type': 'security',
+            'amount': self.security_deposit,
+            'microfinance_id': self.id,
+            'donee_id': self.donee_id.id,
+            'date': fields.Date.today()
+        })
         
         return self.env.ref('bn_microfinance.security_deposit_report_action').report_action(self)
 

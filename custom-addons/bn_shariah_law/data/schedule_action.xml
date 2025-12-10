@@ -12,7 +12,7 @@
 
 shariah_record = {}
 
-for rec in env['pos.order'].search([]):
+for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
     for line in rec.lines:
         if not line.product_id:
             continue
@@ -34,6 +34,8 @@ for rec in env['pos.order'].search([]):
 
             if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
                 shariah_record[analytic_id]['unrestricted'] += line.price_subtotal_incl
+
+    rec['is_sync_shariah_law'] = True
 
 # Create or update Shariah Law records
 for analytic_id, values in shariah_record.items():

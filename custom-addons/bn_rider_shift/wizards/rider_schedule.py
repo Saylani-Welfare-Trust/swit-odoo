@@ -60,6 +60,7 @@ class RiderSchedule(models.TransientModel):
                     'contact_person': record.contact_person,
                     'contact_number': record.contact_number,
                     'amount': record.amount,
+                    'counterfeit_notes': record.counterfeit_notes,
                 }))
 
             # 🔹 Create new collections only for missing lot_ids

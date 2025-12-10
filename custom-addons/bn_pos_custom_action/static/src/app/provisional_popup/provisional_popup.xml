@@ -28,7 +28,7 @@
                     <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
 
-                <div class="row mb-2 text-start">
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'">
                     <div class="col-4 fw-semibold">Service Charges</div>
                     <div class="col-8">
                         <input type="number" class="form-control form-control-sm"
@@ -39,7 +39,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-2 text-start">
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'">
                     <div class="col-4 fw-semibold">Total</div>
                     <div class="col-8 fw-bold" t-esc="this.state.total"/>
                 </div>
@@ -55,17 +55,6 @@
                             t-att-value="this.state.microfinance_request_no"
                             t-on-change="updateMicrofinanceRequestNo"
                             placeholder="Enter Microfinance Requets No."/>
-                    </div>
-                </div>
-
-                <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Amount</div>
-                    <div class="col-8">
-                        <input type="number" class="form-control form-control-sm"
-                            t-att-value="this.state.amount"
-                            id="amount"
-                            name="amount"
-                            t-on-change="saveAmount"/>
                     </div>
                 </div>
             </main>

@@ -126,3 +126,29 @@ class MicrofinanceInstallment(models.Model):
                 'donee_id': microfinance_request.donee_id.id,
                 'deposit_id': microfinance_installment.id
             }
+    
+    @api.model
+    def get_microfinance_security_deposit(self, data):
+        microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])
+
+        if not microfinance_request:
+            return {
+                'status': "error",
+                'body': "No request found against enter number."
+            }
+
+        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id)])
+        
+        if security_deposit:
+            return {
+                'status': "success",
+                'id': microfinance_request.id,
+                'donee_id': microfinance_request.donee_id.id,
+                'deposit_id': security_deposit.id,
+                'amount': security_deposit.amount
+            }
+        
+        return {
+            'status': "error",
+            'body': "Record not found."
+        }

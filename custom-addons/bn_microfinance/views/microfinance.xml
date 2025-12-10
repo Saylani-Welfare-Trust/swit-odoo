@@ -66,10 +66,11 @@
                             <field name="asset_type" options="{'horizontal': True}" widget="radio" />
                             <field name="donee_id" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance'), ('state', '=', 'register')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
-                            <field name="amount" readonly="1" />
+                            <field name="product_amount" readonly="1" />
                             <field name="security_deposit" readonly="1" />
                             <field name="donor_contribution" />
                             <field name="total_amount" />
+                            <field name="amount" readonly="1" />
                             <field name="old_system_record" />
                         </group>
                         <group name="microfinance_col_2">

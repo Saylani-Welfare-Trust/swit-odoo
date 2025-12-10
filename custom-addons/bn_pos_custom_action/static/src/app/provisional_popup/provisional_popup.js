@@ -42,10 +42,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
-    
-    saveAmount(event) {
-        this.state.amount = parseFloat(event.target.value);
-    }
 
     updateAddress(event) {
         this.state.donor_address = event.target.value;
@@ -131,7 +127,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
             let record = null
 
-            await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
+            await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]).then((data) => {
                 if (data.status === 'error') {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
@@ -151,6 +147,26 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     // ]);
                 }
             });
+            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
+            //     if (data.status === 'error') {
+            //         this.popup.add(ErrorPopup, {
+            //             title: _t("Error"),
+            //             body: data.body,
+            //         });
+            //     }
+            //     else if (data.status === 'success') {
+            //         record = data
+
+            //         payload.security_deposit_id = data.deposit_id
+
+            //         this.notification.add(_t("Operation Successful"), {
+            //             type: "info",
+            //         });
+            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
+            //         //     data.id,
+            //         // ]);
+            //     }
+            // });
                 
             const securityProduct = await this.orm.searchRead(
                 'product.product',
@@ -179,7 +195,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
-                    price_extra: this.state.amount,
+                    price_extra: record.amount,
                 });
             }
 
@@ -188,6 +204,33 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.pos.receive_voucher = true
 
             this.cancel()
+        }
+
+        // Donation Home Service
+        if (this.action_type === 'dd') {
+            const payload ={
+                'donor_id': this.donor_id,
+                'address': this.state.donor_address,
+                'service_charges': this.state.service_charges,
+                'order_lines': this.prepareOrderLines(this.orderLines),
+            }
+    
+            await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
+                if (data.status === 'success') {
+                    this.notification.add(_t("Operation Successful"), {
+                        type: "info",
+                    });
+    
+                    this.cancel()
+                    
+                    this.report.doAction("bn_direct_deposit.report_direct_deposit", [
+                        data.id,
+                    ]);
+                }
+    
+                this.pos.removeOrder(selectedOrder);
+                this.pos.add_new_order();
+            })
         }
     }
 

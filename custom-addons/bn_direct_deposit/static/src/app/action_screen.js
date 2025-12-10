@@ -44,12 +44,7 @@ patch(ActionScreen.prototype, {
                         { id: "0", label: _t("Create an order"), item: "provisional_order" },
                     ],
                 }
-                : {
-                    title: _t("Let's settle your direct deposit order!"),
-                    list: [
-                        { id: "0", label: _t("Settle the order"), item: "settle" },
-                    ],
-                }
+                : {}
         );
 
         if (confirmed) {
@@ -63,12 +58,6 @@ patch(ActionScreen.prototype, {
                     donor_address: donor.address,
                     orderLines: orderLines,
                     amount: amount,
-                    action_type: "dd"
-                });
-            } else {
-                this.popup.add(ReceivingPopup, {
-                    title: "Direct Deposit",
-                    placeholder: "DD/XX/XXXXX",
                     action_type: "dd"
                 });
             }

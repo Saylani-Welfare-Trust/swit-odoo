@@ -44,6 +44,7 @@ class RiderScheduleLine(models.TransientModel):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
+    counterfeit_notes = fields.Float('Counter Feit Notes')
 
 
     def mark_as_done(self):
@@ -62,12 +63,22 @@ class RiderScheduleLine(models.TransientModel):
     def mark_as_submit(self):
         if self.amount < 0:
             raise ValidationError('Please first enter the valid collected amount.')
+        if self.counterfeit_notes < 0:
+            raise ValidationError('Please first enter the valid Counterfeit Notes amount.')
 
         self.state = 'donation_submit'
         self.submission_time = fields.Datetime.now()
         self.rider_collection_id.state = 'donation_submit'
         self.rider_collection_id.submission_time = fields.Datetime.now()
         self.rider_collection_id.amount = self.amount
+        self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
+
+        self.env['counterfeit.notes'].create({
+            'rider_id': self.rider_id.id,
+            'lot_id': self.lot_id.id,
+            'submission_time': self.submission_time,
+            'amount': self.counterfeit_notes,
+        })
 
         return {
             'type': 'ir.actions.act_window',
