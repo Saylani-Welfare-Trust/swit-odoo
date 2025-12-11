@@ -28,7 +28,7 @@ class MicrofinanceInstallment(models.Model):
 
 
     name = fields.Char('Name', default="NEW")
-    cnic_no = fields.Char('CNIC No.')
+    cnic_no = fields.Char('CNIC No.', size=15)
     bank_name = fields.Char('Bank Name')
     cheque_no = fields.Char('Cheque No.')
 
@@ -68,6 +68,9 @@ class MicrofinanceInstallment(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
+
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no:
@@ -76,6 +79,9 @@ class MicrofinanceInstallment(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            if not self.is_valid_cnic_format(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
 
     @api.model
     def create_microfinance_security_deposit(self, data):
@@ -92,6 +98,12 @@ class MicrofinanceInstallment(models.Model):
                 'status': "error",
                 'body': "Amount can't be zero or negative."
             }
+        elif data['amount'] != microfinance_request.security_deposit:
+            return {
+                'status': "error",
+                'body': "Please enter the correct security deposit amount."
+            }
+
 
         if self.search([('microfinance_id', '=', microfinance_request.id)]):
             return {
@@ -101,10 +113,6 @@ class MicrofinanceInstallment(models.Model):
 
         microfinance_installment = self.create({
             'payment_type': 'security',
-            'payment_method': data['payment_method'],
-            'bank_name': data['bank_name'],
-            'cheque_no': data['cheque_no'],
-            'cheque_date': data['cheque_date'],
             'amount': data['amount'],
             'microfinance_id': microfinance_request.id,
             'donee_id': microfinance_request.donee_id.id,
@@ -114,5 +122,33 @@ class MicrofinanceInstallment(models.Model):
         if microfinance_installment:
             return {
                 'status': "success",
-                'id': microfinance_request.id
+                'id': microfinance_request.id,
+                'donee_id': microfinance_request.donee_id.id,
+                'deposit_id': microfinance_installment.id
             }
+    
+    @api.model
+    def get_microfinance_security_deposit(self, data):
+        microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])
+
+        if not microfinance_request:
+            return {
+                'status': "error",
+                'body': "No request found against enter number."
+            }
+
+        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id)])
+        
+        if security_deposit:
+            return {
+                'status': "success",
+                'id': microfinance_request.id,
+                'donee_id': microfinance_request.donee_id.id,
+                'deposit_id': security_deposit.id,
+                'amount': security_deposit.amount
+            }
+        
+        return {
+            'status': "error",
+            'body': "Record not found."
+        }

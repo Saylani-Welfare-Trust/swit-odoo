@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Customization',
     'depends': [
-        'point_of_sale',
+        'bn_pos_cheque',
         'bn_profile_management',
         'bn_analytic_account_customization'
     ],
@@ -14,6 +14,7 @@
         'security/group.xml',
         'security/record_rule.xml',
         'views/pos_config.xml',
+        'views/pos_session.xml',
     ],
     'auto_install': False,
     'application': False,

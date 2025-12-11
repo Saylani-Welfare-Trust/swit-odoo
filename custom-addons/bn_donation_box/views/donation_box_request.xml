@@ -56,6 +56,7 @@
                                     <field name="contact_person" />
                                     <field name="contact_no" />
                                     <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." />
+                                    <field name="lock_no" />
                                     <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
                                     <field name="installation_date" />
                                     <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />

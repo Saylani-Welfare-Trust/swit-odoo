@@ -245,8 +245,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
         
         selectedOrder.add_product(product, {
             quantity: -1*line.qty || -1,
-            price:  line.price_subtotal_incl || product.lst_price,
-            merge: false
+            price_extra:  product.lst_price == 0 ? line.price_subtotal_incl : 0
         });
         
         // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);

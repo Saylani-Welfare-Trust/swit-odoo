@@ -20,5 +20,6 @@ class POSOrder(models.Model):
 
     @api.depends('user_id')
     def _set_employee_branch(self):
-        if self.user_id:
-            self.analytic_account_id = self.user_id.employee_id.analytic_account_id.id or None
+        for rec in self:
+            if rec.user_id:
+                rec.analytic_account_id = rec.user_id.employee_id.analytic_account_id.id or None

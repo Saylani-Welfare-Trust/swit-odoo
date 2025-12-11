@@ -6,3 +6,4 @@ access_microfinance_guarantor,microfinance.guarantor,bn_microfinance.model_micro
 access_microfinance_family,microfinance.family,bn_microfinance.model_microfinance_family,,1,1,1,1
 access_microfinance_installment,microfinance.installment,bn_microfinance.model_microfinance_installment,,1,1,1,1
 access_return_microfinance_product,return.microfinance.product,bn_microfinance.model_return_microfinance_product,,1,1,1,1
+access_microfinance_recovery_line,microfinance.recovery.line,bn_microfinance.model_microfinance_recovery_line,,1,1,1,1

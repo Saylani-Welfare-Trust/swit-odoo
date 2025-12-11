@@ -29,6 +29,20 @@ export class PaymentPopup extends AbstractAwaitablePopup {
             number: this.props.number || "",
             date: this.props.date || "",
         });
+
+        // Today's date
+        const today = new Date();
+
+        // Calculate 6 months ago (minimum allowed date)
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+        // Max date should be last day of the current year
+        const endOfYear = new Date(today.getFullYear(), 11, 31);
+
+        // Convert to YYYY-MM-DD
+        this.minDate = sixMonthsAgo.toISOString().split("T")[0];
+        this.maxDate = endOfYear.toISOString().split("T")[0];
     }
 
     updateBankName(event) {
