@@ -31,7 +31,7 @@
 
                     <group>
                         <group name="donation_box_complain_col_1">
-                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status == 'process'" />
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True)]" required="1" readonly="status == 'process'" />
                             <field name="box_status" required="1" readonly="status == 'process'" />
                         </group>
                         <group name="donation_box_complain_col_1">
