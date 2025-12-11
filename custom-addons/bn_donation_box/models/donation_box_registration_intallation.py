@@ -11,7 +11,8 @@ status_selection = [
     ('draft', 'Draft'),
     ('installed', 'Installed'),
     ('approved', 'Approved'),
-    ('available', 'Available')
+    ('available', 'Available'),
+    ('close', 'Closed'),
 ]
 
 
