@@ -11,12 +11,10 @@
         'bn_donation_box',
     ],
     'data': [
-        'data/sequence.xml',
         'security/ir.model.access.csv',
         'security/groups.xml',
         'views/rider_shift.xml',
         'views/rider_collection.xml',
-        'views/counterfeit_notes.xml',
         'wizards/rider_schedule.xml'
     ],
     'auto_install': False,

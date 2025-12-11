@@ -13,7 +13,6 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/shariah_law.xml',
-        'views/pos_order.xml',
     ],
     'auto_install': False,
     'application': True,

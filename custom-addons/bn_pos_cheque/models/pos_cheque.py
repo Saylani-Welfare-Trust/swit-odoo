@@ -27,19 +27,12 @@ class POSCheque(models.Model):
 
 
     def action_show_pos_order(self):
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
-
         return {
             'name': 'POS Order',
             'type': 'ir.actions.act_window',
             'res_model': 'pos.order',
-            # 'domain': [('pos_cheque_id', '=', self.id)],
-            'context': {
-                'edit': '0',
-                'delete': '0',
-            },
-            'view_mode': 'form',
-            'res_id': pos_order.id,
+            'domain': [('pos_cheque_id', '=', self.id)],
+            'view_mode': 'tree',
             'target': 'new',
         }
 

@@ -1,6 +1,6 @@
 .pos-receipt-print {
-    width: 210mm !important; /* changed from 266px to A4 */
-    min-height: 297mm !important; /* optional: full A4 height */
+    width: 794px;        /* A4 width at 96 DPI */
+    min-height: 1123px;  /* A4 height at 96 DPI */
     font-size: 12px;
     color: #000000;
 }

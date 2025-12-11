@@ -18,7 +18,6 @@ patch(ActionScreen.prototype, {
                 list: [
                     { id: "0", label: _t("Security Deposit"), item: "provisional_order" },
                     { id: "1", label: _t("Insallment Receipt"), item: "settle" },
-                    { id: "2", label: _t("Microfinance Recovery"), item: "recovery" },
                 ],
             },
         );
@@ -29,15 +28,7 @@ patch(ActionScreen.prototype, {
                     title: 'Security Deposit Details',
                     action_type: "mf"
                 });
-            }
-            if (selectedOption === 'recovery') {
-                this.popup.add(ReceivingPopup, {
-                    title: "Microfinance Recovery",
-                    placeholder: "MF/XX/XX/XXXXX",
-                    action_type: "mf recovery"
-                });
-            } 
-            if (selectedOption === 'settle') {
+            } else {
                 this.popup.add(ReceivingPopup, {
                     title: "Microfinance Installment",
                     placeholder: "MF/XX/XX/XXXXX",

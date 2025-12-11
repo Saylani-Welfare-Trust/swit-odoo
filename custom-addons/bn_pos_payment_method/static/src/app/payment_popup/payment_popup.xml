@@ -34,8 +34,6 @@
                     <div class="col-8">
                         <input type="date" class="form-control form-control-sm"
                             t-att-value="this.state.date"
-                            t-att-min="this.minDate"
-                            t-att-max="this.maxDate"
                             t-on-change="updateDate"/>
                     </div>
                 </div>

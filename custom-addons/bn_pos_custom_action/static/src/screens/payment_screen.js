@@ -145,76 +145,29 @@ patch(PaymentScreen.prototype, {
         // --- MICROFINANCE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.microfinance) {
             const mfData = currentOrder.extra_data.microfinance;
+            const microfinanceLineIds = mfData.microfinance_line_ids || [];
+            
+            if (microfinanceLineIds.length > 0) {
+                // Fetch unpaid microfinance lines
 
-            if (mfData.security_desposit) {
-                const depositID = mfData.security_deposit_id || null;
-
-                const payment_method = currentOrder.paymentlines[0].name
-
-                console.log(payment_method);
-
-                if (depositID) {
+                for (const line of microfinanceLineIds) {
                     await this.env.services.orm.write(
-                        'microfinance.installment',
-                        [depositID],
+                        'microfinance.line',
+                        [line.id],
                         {
-                            payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
-                            bank_name: currentOrder.bank_name,
-                            cheque_no: currentOrder.cheque_number,
-                            cheque_date: currentOrder.cheque_date,
-                            state: 'paid',
+                            paid_amount: line.amount,
+                            state: 'paid', // optional
                         }
                     );
-                    
-                    this.env.services.notification.add(
-                        `Deposit Received successfully`,
-                        { type: 'success' }
-                    );
                 }
-            } else {
-                const microfinanceLineIds = mfData.microfinance_line_ids || [];
-                
-                if (microfinanceLineIds.length > 0) {
-                    // Fetch unpaid microfinance lines
-                    
-                    for (const line of microfinanceLineIds) {
-                        await this.env.services.orm.write(
-                            'microfinance.line',
-                            [line.id],
-                            {
-                                paid_amount: line.amount,
-                                state: 'paid', // optional
-                            }
-                        );
-                    }
-                    
-                    this.env.services.notification.add(
-                        `Processed ${microfinanceLineIds.length} microfinance instalments`,
-                        { type: 'success' }
-                    );
-                } else {
-                    const microfinanceRecoveryLineIds = mfData.microfinance_recovery_line_ids || [];
-                    
-                    // Fetch unpaid microfinance lines
-                    
-                    for (const line of microfinanceRecoveryLineIds) {
-                        await this.env.services.orm.write(
-                            'microfinance.recovery.line',
-                            [line.id],
-                            {
-                                paid_amount: line.amount,
-                                state: 'paid', // optional
-                            }
-                        );
-                    }
-                    
-                    this.env.services.notification.add(
-                        `Processed ${microfinanceLineIds.length} microfinance instalments`,
-                        { type: 'success' }
-                    );
-                }
-            }
 
+                this.env.services.notification.add(
+                    `Processed ${microfinanceLineIds.length} microfinance instalments`,
+                    { type: 'success' }
+                );
+            }
+        } else {
+            console.log("🟡 Data found in order - using normal POS flow");
         }
         
         // Continue with normal POS flow

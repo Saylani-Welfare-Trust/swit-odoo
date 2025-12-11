@@ -35,7 +35,6 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_donation_box/static/src/app/**/*',
-            'bn_donation_box/static/src/screen/*',
         ],
     },
 }

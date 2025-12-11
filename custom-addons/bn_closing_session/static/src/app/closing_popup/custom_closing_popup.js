@@ -12,7 +12,6 @@ import { _t } from "@web/core/l10n/translation";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { Input } from "@point_of_sale/app/generic_components/inputs/input/input";
 import { useAsyncLockedMethod } from "@point_of_sale/app/utils/hooks";
-import { onMounted } from "@odoo/owl";
 
 export class CustomClosingPopup extends AbstractAwaitablePopup {
     static components = { SaleDetailsButton, Input };
@@ -32,7 +31,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         "cancelKey",
     ];
 
-    // --- setup() : make forEach safe even if other_payment_methods is null/undefined
     setup() {
         super.setup();
         this.pos = usePos();
@@ -44,41 +42,24 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
         this.state = useState({
             ...this.getInitialState(),
-            lines: {},       // all lines per payment method + type
-            newLines: {},    // new line inputs per payment method + type
+            lines: {}, // Direct line storage without add/remove logic
         });
 
+        // Initialize line storage for each payment method
         const initializePayment = (pm) => {
             if (!pm?.id) return;
-            this.state.lines[pm.id] = { restricted: [], unrestricted: [] };
-            this.state.newLines[pm.id] = {
-                restricted: { amount: 0, ref: "", record_id: 0 },
-                unrestricted: { amount: 0, ref: "", record_id: 0 },
+            this.state.lines[pm.id] = {
+                restricted: { amount: 0, ref: "" },
+                unrestricted: { amount: 0, ref: "" },
             };
         };
-
-        // 🔥 Cleanup after UI mounts
-        onMounted(async () => {
-            try {
-                // Delete all slips from backend
-                await this.orm.call("pos.session.slip", "delete_session_slips_for_session", [
-                    this.pos.pos_session.id,
-                ]);
-            } catch (error) {
-                console.error("Slip cleanup failed:", error);
-            }
-        });
 
         if (this.props.default_cash_details) initializePayment(this.props.default_cash_details);
         (this.props.other_payment_methods || []).forEach((pm) => initializePayment(pm));
 
-        this.handleAddLine = this.handleAddLine.bind(this);
-        this.handleRemoveLine = this.handleRemoveLine.bind(this);
-
         this.confirm = useAsyncLockedMethod(this.confirm);
     }
 
-    // --- getInitialState(): guard other_payment_methods
     getInitialState() {
         const initialState = { notes: "", payments: {} };
 
@@ -129,10 +110,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return counted + this.getLinesTotal(paymentId);
     }
 
-    // --- getDifference(): don't crash if pm not found
     getDifference(paymentId) {
         if (!this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) {
-            return NaN;
+            return 0; // Return 0 instead of NaN for invalid counted
         }
 
         let expectedAmount = 0;
@@ -146,10 +126,8 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     getLinesTotal(paymentId) {
-        const lines = this.state.lines[paymentId] || { restricted: [], unrestricted: [] };
-        const restrictedTotal = (lines.restricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
-        const unrestrictedTotal = (lines.unrestricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
-        return restrictedTotal + unrestrictedTotal;
+        const lines = this.state.lines[paymentId] || { restricted: { amount: 0 }, unrestricted: { amount: 0 } };
+        return (parseFloat(lines.restricted.amount) || 0) + (parseFloat(lines.unrestricted.amount) || 0);
     }
 
     getMaxDifference() {
@@ -184,18 +162,59 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             }
         }
 
-        console.log(this.state.lines);
-
         try {
+            // Prepare the lines in the expected format
+            const serverLines = {};
+            
+            // Process default cash details
+            if (this.props.default_cash_details) {
+                const paymentId = this.props.default_cash_details.id;
+                const lines = this.state.lines[paymentId] || {};
+                
+                serverLines[paymentId] = {
+                    restricted: lines.restricted && parseFloat(lines.restricted.amount) > 0 ? [{
+                        amount: parseFloat(lines.restricted.amount),
+                        ref: lines.restricted.ref
+                    }] : [],
+                    unrestricted: lines.unrestricted && parseFloat(lines.unrestricted.amount) > 0 ? [{
+                        amount: parseFloat(lines.unrestricted.amount),
+                        ref: lines.unrestricted.ref
+                    }] : []
+                };
+            }
+
+            // Process other payment methods
+            (this.props.other_payment_methods || []).forEach(pm => {
+                if (!pm?.id) return;
+                
+                const lines = this.state.lines[pm.id] || {};
+                
+                serverLines[pm.id] = {
+                    restricted: lines.restricted && parseFloat(lines.restricted.amount) > 0 ? [{
+                        amount: parseFloat(lines.restricted.amount),
+                        ref: lines.restricted.ref
+                    }] : [],
+                    unrestricted: lines.unrestricted && parseFloat(lines.unrestricted.amount) > 0 ? [{
+                        amount: parseFloat(lines.unrestricted.amount),
+                        ref: lines.unrestricted.ref
+                    }] : []
+                };
+            });
+
             const bankDiffPairs = this.props.other_payment_methods
                 .filter(pm => pm.type === "bank")
-                .map(pm => [pm.id, this.getDifference(pm.id)]);
+                .map(pm => {
+                    const diff = this.getDifference(pm.id);
+                    // Ensure the difference is a number, if not use 0
+                    return [pm.id, isNaN(diff) ? 0 : diff];
+                });
 
             const response = await this.orm.call("pos.session", "close_session_from_ui", [
                 this.pos.pos_session.id,
                 bankDiffPairs,
-                this.state.lines,   // <-- 🔥 add your restricted/unrestricted lines here
+                serverLines, // Send the formatted lines
             ]);
+            
             if (!response.successful) return this.handleClosingError(response);
             this.pos.redirectToBackend();
         } catch (error) {
@@ -217,103 +236,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             sound: response.type !== "alert",
         });
         if (response.redirect) this.pos.redirectToBackend();
-    }
-
-    // --- handleAddLine(): compute 'allowed' from cash OR matching other_payment_method
-    async handleAddLine(paymentId, type = "restricted") {
-        const { amount, ref } = this.state.newLines[paymentId][type];
-        const amountNum = parseFloat(amount);
-
-        // Basic validation
-        if (!amount || !ref || isNaN(amountNum) || amountNum <= 0) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Invalid input"),
-                body: _t("Please enter a valid Amount and Ref."),
-            });
-            return;
-        }
-
-        // Duplicate slip check (within this payment method)
-        const duplicate = Object.values(this.state.lines[paymentId] || {})
-            .flat()
-            .some((line) => line.ref === ref);
-        if (duplicate) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Duplicate Ref"),
-                body: _t("Slip No (Ref) must be unique for this payment method."),
-            });
-            return;
-        }
-
-        // Sum current total for this type
-        const currentTotal = (this.state.lines[paymentId][type] || [])
-            .reduce((sum, line) => sum + (line.amount || 0), 0);
-
-        // 👉 Determine allowed based on matching payment method's breakdown
-        const isCash = paymentId === this.props.default_cash_details?.id;
-        const cashBreakdown = this.props.default_cash_details?.breakdown;
-        const pm = isCash ? null : (this.props.other_payment_methods || []).find((m) => m.id === paymentId);
-        const pmBreakdown = isCash ? cashBreakdown : pm?.breakdown;
-
-        // If no breakdown exists, don't enforce a cap (allowed = Infinity)
-        const allowed = pmBreakdown?.[type] ?? Number.POSITIVE_INFINITY;
-
-        if (currentTotal + amountNum > allowed) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Limit exceeded"),
-                body: _t(
-                    `${type.charAt(0).toUpperCase() + type.slice(1)} amount cannot exceed ` +
-                    this.env.utils.formatCurrency(Number.isFinite(allowed) ? allowed : 0)
-                ),
-            });
-            return;
-        }
-
-        // Add line
-        const id = Date.now();
-        
-        const payload = {
-            payment_method_id: paymentId,
-            type: type,
-            amount: amountNum,
-            ref: ref
-        }
-        
-        const slip = await this.orm.call("pos.session.slip", "create_session_slip", [
-            this.pos.pos_session.id,
-            payload,
-        ]);
-
-        if (slip.status == 'error') {
-            await this.popup.add(ErrorPopup, {
-                title: _t("Session Slip Error"),
-                body: _t("Unable to add slip to session please check your internet connection."),
-            });
-        }
-        
-        if (slip.status == 'success') {
-            this.state.lines[paymentId][type].push({ id, amount: amountNum, ref, record_id: slip.id });
-        }
-        
-        // Reset input
-        this.state.newLines[paymentId][type] = { amount: 0, ref: "" };
-        
-        this.setManualCashInput(amountNum);
-    }
-    
-    async handleRemoveLine(paymentId, lineId, record_id, type = "restricted") {
-        const slip = await this.orm.call("pos.session.slip", "delete_session_slip", [record_id]);
-        
-        if (slip.status == 'error') {
-            await this.popup.add(ErrorPopup, {
-                title: _t("Session Slip Error"),
-                body: _t("Unable to add slip to session please check your internet connection."),
-            });
-        }
-
-        if (slip.status == 'success') {
-            this.state.lines[paymentId][type] = this.state.lines[paymentId][type].filter(line => line.id !== lineId);
-        }
     }
 
     setManualCashInput(amount) {

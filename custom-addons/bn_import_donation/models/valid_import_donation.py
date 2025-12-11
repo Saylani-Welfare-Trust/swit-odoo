@@ -10,7 +10,7 @@ class ValidImportDonation(models.Model):
 
     transaction_id = fields.Char('Transacetion ID')
     donor_student_name = fields.Char('Donor / Student Name')
-    mobile = fields.Char('Mobile No.', size=10)
+    mobile = fields.Char('Mobile No.')
     cnic_no = fields.Char('CNIC No.')
     email = fields.Char('Email')
     product = fields.Char('Product')

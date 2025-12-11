@@ -32,10 +32,9 @@ class RecordSearch(models.TransientModel):
 
     registration_id = fields.Char('Registration ID')
     mobile_no = fields.Char('Mobile No.', size=10)
-    cnic_no = fields.Char('CNIC No.', size=15)
+    cnic_no = fields.Char('CNIC No.')
     
     country_code_id = fields.Many2one('res.country', string="Country Code")
-    microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
 
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
@@ -55,9 +54,6 @@ class RecordSearch(models.TransientModel):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    def is_valid_cnic_format(self, cnic):
-        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
-
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no and self.search_type == 'cnic_no':
@@ -66,10 +62,6 @@ class RecordSearch(models.TransientModel):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
-            
-            if not self.is_valid_cnic_format(self.cnic_no):
-                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
 
     def action_search(self):
         return {
@@ -86,7 +78,7 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
+                # 'default_scheme_type_id': self.scheme_type_id.id,
             },
             'target': 'new',
         }

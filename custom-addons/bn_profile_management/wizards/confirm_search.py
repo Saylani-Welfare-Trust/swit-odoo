@@ -27,11 +27,10 @@ class ConfirmSearch(models.TransientModel):
 
 
     registration_id = fields.Char('Registration ID')
-    mobile_no = fields.Char('Mobile No.', size=10)
-    cnic_no = fields.Char('CNIC No.', size=15)
+    mobile_no = fields.Char('Mobile No.')
+    cnic_no = fields.Char('CNIC No.')
 
     country_code_id = fields.Many2one('res.country', string="Country Code")
-    microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
 
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
@@ -52,9 +51,6 @@ class ConfirmSearch(models.TransientModel):
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': "[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]",
                     'res_id': donee.id,
-                    'context': {
-                        'microfinance_scheme_id': self.microfinance_scheme_id.id
-                    },
                     'target': 'new'
                 }
             else:
@@ -69,7 +65,7 @@ class ConfirmSearch(models.TransientModel):
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
                         'default_country_code_id': self.country_code_id.id,
-                        'microfinance_scheme_id': self.microfinance_scheme_id.id
+                        # 'default_scheme_type_ids': [(4, self.scheme_type_id.id)]
                     },
                     'target': 'new'
                 }

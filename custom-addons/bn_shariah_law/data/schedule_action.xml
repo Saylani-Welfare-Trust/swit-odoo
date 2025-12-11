@@ -9,10 +9,9 @@
         <field name="numbercall">-1</field>
         <field name="state">code</field>
         <field name="code">
-
 shariah_record = {}
 
-for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
+for rec in env['pos.order'].search([]):
     for line in rec.lines:
         if not line.product_id:
             continue
@@ -25,7 +24,7 @@ for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
             if not categ_name:
                 continue
 
-            analytic_id = analytical_line.analytic_account_id.id
+            analytic_id = analytical_line.analytic_id.id
             if analytic_id not in shariah_record:
                 shariah_record[analytic_id] = {'restricted': 0, 'unrestricted': 0}
 
@@ -35,11 +34,9 @@ for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
             if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
                 shariah_record[analytic_id]['unrestricted'] += line.price_subtotal_incl
 
-    rec['is_sync_shariah_law'] = True
-
 # Create or update Shariah Law records
 for analytic_id, values in shariah_record.items():
-    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
+    shariah_law = env['shariah.law'].search([('restricted_account_id', '=', analytic_id)], limit=1)
     if shariah_law:
         # Update existing amounts
         shariah_law.write({
@@ -49,11 +46,11 @@ for analytic_id, values in shariah_record.items():
     else:
         # Create new record
         env['shariah.law'].create({
-            'analytic_account_id': analytic_id,
+            'restricted_account_id': analytic_id,
             'restricted_amount': values['restricted'],
             'unrestricted_amount': values['unrestricted']
         })
-        
+
         </field>
     </record>
 

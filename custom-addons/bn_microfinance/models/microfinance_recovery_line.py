@@ -26,7 +26,7 @@ class MicrofinanceRecoveryLine(models.Model):
 
     currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
 
-    state = fields.Selection(selection=state_selection, string='State', default="unpaid")
+    state = fields.Selection(selection=state_selection, string='State')
 
 
     @api.model
@@ -36,7 +36,7 @@ class MicrofinanceRecoveryLine(models.Model):
                 
         return super(MicrofinanceRecoveryLine, self).create(vals)
     
-    @api.depends('due_date', 'paid_amount')
+    @api.depends('due_date')
     def _compute_remaining_amount(self):
         for rec in self:
             rec.remaining_amount = rec.amount - rec.paid_amount

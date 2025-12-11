@@ -96,6 +96,8 @@ class KeyIssuance(models.Model):
                 "body": f"Please enter the correct amount collected against {data['box_no']}",
             }
 
+        collection.state = 'paid'
+
         key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', '=', 'issued')], limit=1)
 
         if not key_obj:
@@ -104,6 +106,9 @@ class KeyIssuance(models.Model):
                 "body": "Invalid Donation Box",
             }
 
+        key_obj.donation_amount = data['amount']
+        key_obj.action_donation_receive()
+
         box = self.env['donation.box.registration.installation'].search([
             ('lot_id', '=', data['lot_id']),
             ('shop_name', '=', data['shop_name']),
@@ -111,16 +116,6 @@ class KeyIssuance(models.Model):
             ('contact_no', '=', data['contact_number']),
             ('location', '=', data['box_location']),
         ])
-
-        if not data['check_validation']:
-            key_obj.donation_amount = data['amount']
-            key_obj.action_donation_receive()
-
-            collection.state = 'paid'
-
-            return {
-                "status": "success"
-            }
 
         return {
             "status": "success",

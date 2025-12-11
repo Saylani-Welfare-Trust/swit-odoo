@@ -8,8 +8,8 @@ patch(PaymentScreen.prototype, {
         const currentOrder = this.currentOrder;
         const pos_cheque_order_id = this.pos.pos_cheque_order_id;
 
-        console.log(currentOrder);
-        console.log(pos_cheque_order_id);
+        // console.log(currentOrder);
+        // console.log(pos_cheque_order_id);
 
         if (currentOrder && pos_cheque_order_id) {
             const data = await this.env.services.orm.call('pos.order', 'settle_cheque_order', [this.pos.pos_session.id, pos_cheque_order_id]);
@@ -20,7 +20,7 @@ patch(PaymentScreen.prototype, {
                     data.body,
                     { type: 'danger' }
                 );
-            } else if (data.status == "success") {
+            } else if (condition) {
                 this.env.services.notification.add(
                     data.body,
                     { type: 'success' }

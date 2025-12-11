@@ -29,6 +29,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         
         this.state = useState({
             microfinance_request_no: '',
+            payment_method: '',
+            bank_name: '',
+            cheque_no: '',
+            cheque_date: '',
 
             amount: parseFloat(this.props.amount),
             service_charges: 0,
@@ -42,13 +46,33 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
+    
+    saveAmount(event) {
+        this.state.amount = parseFloat(event.target.value);
+    }
 
     updateAddress(event) {
         this.state.donor_address = event.target.value;
     }
-
+    
+    updatePaymentMethod(event) {
+        this.state.payment_method = event.target.value;
+    }
+    
     updateMicrofinanceRequestNo(event) {
         this.state.microfinance_request_no = event.target.value;
+    }
+    
+    updateBankName(event) {
+        this.state.bank_name = event.target.value;
+    }
+    
+    updateChequeNo(event) {
+        this.state.cheque_no = event.target.value;
+    }
+    
+    updateChequeDate(event) {
+        this.state.cheque_date = event.target.value;
     }
 
     prepareOrderLines(orderLines) {
@@ -112,22 +136,49 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
                 return;
             }
+            else if (!this.state.payment_method) {
+                this.notification.add(
+                    "Please select a payment method.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.bank_name) {
+                this.notification.add(
+                    "Please enter a bank name.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.cheque_no) {
+                this.notification.add(
+                    "Please enter a cheque number.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+            else if (this.state.payment_method != 'cash' && !this.state.cheque_date) {
+                this.notification.add(
+                    "Please select a cheque no.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
 
             const payload = {
                 microfinance_request_no: this.state.microfinance_request_no,
+                payment_method: this.state.payment_method,
+                bank_name: this.state.bank_name,
+                cheque_no: this.state.cheque_no,
+                cheque_date: this.state.cheque_date,
                 amount: this.state.amount,
-                security_desposit: true
             }
 
-            if (!selectedOrder.extra_data) {
-                selectedOrder.extra_data = {};
-            }
-
-            selectedOrder.extra_data.microfinance = payload
-
-            let record = null
-
-            await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]).then((data) => {
+            await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
                 if (data.status === 'error') {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
@@ -135,50 +186,28 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     });
                 }
                 else if (data.status === 'success') {
-                    record = data
-
-                    payload.security_deposit_id = data.deposit_id
-
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
+                    
                     // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-                    //     data.id,
-                    // ]);
-                }
-            });
-            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
-            //     if (data.status === 'error') {
-            //         this.popup.add(ErrorPopup, {
-            //             title: _t("Error"),
-            //             body: data.body,
-            //         });
-            //     }
-            //     else if (data.status === 'success') {
-            //         record = data
-
-            //         payload.security_deposit_id = data.deposit_id
-
-            //         this.notification.add(_t("Operation Successful"), {
-            //             type: "info",
-            //         });
-            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-            //         //     data.id,
-            //         // ]);
-            //     }
-            // });
+                        //     data.id,
+                        // ]);
+                        
+                    }
+                });
                 
-            const securityProduct = await this.orm.searchRead(
-                'product.product',
-                [
-                    ['name', '=', 'Microfinance Security Deposit'],
-                    ['type', '=', 'service'],
-                    ['available_in_pos', '=', true]
-                ],
-                ['id'],
-                { limit: 1 }
+                const securityProduct = await this.orm.searchRead(
+                    'product.product',
+                    [
+                        ['name', '=', 'Microfinance Security Deposit'],
+                        ['type', '=', 'service'],
+                        ['available_in_pos', '=', true]
+                    ],
+                    ['id'],
+                    { limit: 1 }
             );
-        
+            
             if (securityProduct.length) {
                 // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(securityProduct[0].id);
@@ -195,114 +224,11 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
-                    price_extra: record.amount,
+                    price_extra: this.state.amount,
                 });
             }
 
-            await this.processPartner(record, selectedOrder);
-               
-            this.pos.receive_voucher = true
-
             this.cancel()
         }
-
-        // Donation Home Service
-        if (this.action_type === 'dd') {
-            const payload ={
-                'donor_id': this.donor_id,
-                'address': this.state.donor_address,
-                'service_charges': this.state.service_charges,
-                'order_lines': this.prepareOrderLines(this.orderLines),
-            }
-    
-            await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
-                if (data.status === 'success') {
-                    this.notification.add(_t("Operation Successful"), {
-                        type: "info",
-                    });
-    
-                    this.cancel()
-                    
-                    this.report.doAction("bn_direct_deposit.report_direct_deposit", [
-                        data.id,
-                    ]);
-                }
-    
-                this.pos.removeOrder(selectedOrder);
-                this.pos.add_new_order();
-            })
-        }
-    }
-
-    /**
-     * Process partner assignment
-     */
-    async processPartner(record, selectedOrder) {
-        if (this.action_type == 'mf') {
-            if (!record.donee_id || !record.donee_id[0]) {
-                return;
-            }
-    
-            const partnerId = record.donee_id[0];
-            let partner = await this.getOrLoadPartner(partnerId);
-            
-            if (partner) {
-                this.assignPartnerToOrder(partner, selectedOrder);
-            } else {
-                console.warn("Partner not found in POS database:", partnerId);
-            }
-        }   
-    }
-
-    /**
-     * Get partner from POS DB or load from server
-     */
-    async getOrLoadPartner(partnerId) {
-        let partner = this.pos.db.get_partner_by_id(partnerId);
-        
-        if (!partner) {
-            partner = await this.loadPartnerFromServer(partnerId);
-        }
-        
-        return partner;
-    }
-
-    /**
-     * Load partner data from server
-     */
-    async loadPartnerFromServer(partnerId) {
-        const partnerData = await this.orm.searchRead(
-            'res.partner',
-            [['id', '=', partnerId]],
-            ['name', 'email', 'phone', 'street', 'city'],
-            { limit: 1 }
-        );
-        
-        // console.log("Partner Data:", partnerData);
-        
-        if (partnerData && partnerData.length > 0) {
-            this.pos.db.add_partners([partnerData[0]]);
-            const partner = this.pos.db.get_partner_by_id(partnerId);
-            
-            // console.log("Partner loaded to POS:", partner);
-            
-            return partner;
-        }
-        
-        return null;
-    }
-
-    /**
-     * Assign partner to order
-     */
-    assignPartnerToOrder(partner, selectedOrder) {
-        selectedOrder.set_partner(partner);
-        
-        // console.log("Partner set on order:", partner.name);
-        
-        this.notification.add(
-            `Customer set to: ${partner.name}`,
-            { type: 'info' }
-        );
     }
 }

@@ -44,7 +44,6 @@ class RiderCollection(models.Model):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
-    counterfeit_notes = fields.Float('Counter Feit Notes')
 
 
     @api.model

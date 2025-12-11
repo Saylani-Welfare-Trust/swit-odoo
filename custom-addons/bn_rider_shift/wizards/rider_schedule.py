@@ -1,5 +1,6 @@
-from odoo import fields, models, api, _
+from odoo import fields, models
 from odoo.exceptions import UserError
+from odoo.tools.translate import _
 
 
 class RiderSchedule(models.TransientModel):
@@ -8,15 +9,6 @@ class RiderSchedule(models.TransientModel):
 
     rider_schedule_line_ids = fields.One2many('rider.schedule.line', 'rider_schedule_id', string="Rider Schedule Lines")
 
-    name = fields.Char('Name', default="NEW")
-
-
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('rider_schedule') or _('New')
-        
-        return super(RiderSchedule, self).create(vals)
 
     def action_check_shift(self):
         today = fields.Date.today()
@@ -60,7 +52,6 @@ class RiderSchedule(models.TransientModel):
                     'contact_person': record.contact_person,
                     'contact_number': record.contact_number,
                     'amount': record.amount,
-                    'counterfeit_notes': record.counterfeit_notes,
                 }))
 
             # 🔹 Create new collections only for missing lot_ids
@@ -107,13 +98,11 @@ class RiderSchedule(models.TransientModel):
             'rider_schedule_line_ids': line_vals
         })
 
-        self.unlink()
-
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'rider.schedule',
             'view_mode': 'form',
             'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
             'res_id': rider_schedule.id,
-            'target': 'current'
+            'target': 'new'
         }

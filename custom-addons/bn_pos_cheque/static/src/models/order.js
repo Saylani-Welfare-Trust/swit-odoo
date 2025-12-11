@@ -4,15 +4,15 @@ import { Order } from "@point_of_sale/app/store/models";
 import { patch } from "@web/core/utils/patch";
 
 patch(Order.prototype, {
-    export_for_printing() {
-        return {
-            ...super.export_for_printing(),
-            
-            bank_name: this.bank_name,
-            cheque_number: this.cheque_number,
-            cheque_date: this.cheque_date,
-            qr_code: this.qr_code,
-        };
+    export_as_JSON() {
+        const json = super.export_as_JSON(...arguments);
+        
+        json.bank_name = this.bank_name;
+        json.cheque_number = this.cheque_number;
+        json.cheque_date = this.cheque_date;
+        json.qr_code = this.qr_code;
+        
+        return json;
     },
 
     set_bank_name(bank_name){

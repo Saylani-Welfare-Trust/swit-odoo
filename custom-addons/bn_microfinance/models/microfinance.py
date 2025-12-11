@@ -84,9 +84,8 @@ class Microfinance(models.Model):
     asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    amount = fields.Monetary('Installement Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
-    product_amount = fields.Monetary('Product Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
-    security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
+    amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
+    security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', default=0)
     donor_contribution = fields.Monetary('Contribution by Donor', currency_field='currency_id', default=0)
     total_amount = fields.Monetary('Total Amount', compute="_set_total_amount", store=True, currency_field='currency_id')
     installment_amount = fields.Monetary('Installment Amount', compute="_set_installment_amount", store=True, currency_field='currency_id')
@@ -142,7 +141,7 @@ class Microfinance(models.Model):
     residence_type = fields.Selection(selection=residence_selection, string="Residence Type")
 
     home_phone_no = fields.Char('Home Phone No.')
-    landlord_cnic_no = fields.Char('CNIC No. of Landlord', size=15)
+    landlord_cnic_no = fields.Char('CNIC No. of Landlord')
     landlord_mobile = fields.Char('Mobile No. of Landlord')
     landlord_name = fields.Char('Name of Landlord / Owner')
     
@@ -204,46 +203,28 @@ class Microfinance(models.Model):
     @api.depends('microfinance_scheme_line_id')
     def _compute_product_domain(self):
         for rec in self:
-            if not rec.microfinance_scheme_line_id:
-                rec.product_domain = [(5, 0, 0)]  # clear all
-                continue
+            rec.product_domain = [(5, 0, 0)]
 
-            # Fetch lines related to selected scheme line
-            lines = self.env['loan.product.line'].search([
-                ('microfinance_scheme_line_id', '=', rec.microfinance_scheme_line_id.id)
-            ])
+            if rec.microfinance_scheme_line_id:
+                # Fetch lines related to selected scheme line
+                lines = self.env['loan.product.line'].search([
+                    ('microfinance_scheme_line_id', '=', self.microfinance_scheme_line_id.id)
+                ])
 
-            # Get product IDs
-            product_ids = lines.mapped('product_id').ids
+                if lines:
+                    line_ids = lines.mapped('product_id').ids
 
-            # Set Many2many properly
-            rec.product_domain = [(6, 0, product_ids)]
-    
-    @api.depends('product_id')
-    def _set_amount_and_sd(self):
-        for rec in self:
-            if not rec.product_id:
-                continue
+                    rec.product_domain = line_ids
+                    
+                    rec.product_domain = [(6, 0, lines.ids)]
 
-            # raise ValidationError('Hit')
-
-            # Fetch lines related to selected scheme line
-            line = self.env['loan.product.line'].search([
-                ('microfinance_scheme_line_id', '=', rec.microfinance_scheme_line_id.id),
-                ('product_id', '=', rec.product_id.id)
-            ], limit=1)
-
-            rec.amount = line.inst_amount
-            rec.security_deposit = line.sd_amount
-            rec.product_amount = rec.product_id.lst_price
-
-    @api.depends('product_amount', 'security_deposit', 'donor_contribution')
+    @api.depends('amount', 'security_deposit', 'donor_contribution')
     def _set_total_amount(self):
         for rec in self:
-            rec.total_amount = rec.product_amount - rec.security_deposit - rec.donor_contribution
+            rec.total_amount = rec.amount - rec.security_deposit - rec.donor_contribution
     
     @api.depends('product_id')
-    def _set_installment_amount(self):
+    def compute_installment_amount(self):
         for rec in self:
             rec.installment_amount = 0
 
@@ -254,7 +235,7 @@ class Microfinance(models.Model):
                 ], limit=1)
 
                 if record:
-                    rec.installment_amount = record.inst_amount
+                    rec.installment_amount = record.price
                     rec.security_deposit = record.sd_amount
                 else:
                     rec.installment_amount = 0
@@ -288,9 +269,6 @@ class Microfinance(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
-    def is_valid_cnic_format(self, cnic):
-        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
-
     @api.onchange('landlord_cnic_no')
     def _onchange_landlord_cnic_no(self):
         if self.landlord_cnic_no:
@@ -299,10 +277,6 @@ class Microfinance(models.Model):
                 self.landlord_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.landlord_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
-            
-            if not self.is_valid_cnic_format(self.landlord_cnic_no):
-                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')            
 
     def action_move_to_hod(self):
         self.state = 'hod_approve'
@@ -352,21 +326,13 @@ class Microfinance(models.Model):
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
-                raise ValidationError("Please select a Security Deposit Receipt.")
+                raise ValidationError("Please enter Security Deposit Receipt ID")
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         
         self.state = 'wfd'
 
     def action_sd_slip(self):
-        self.env['microfinance.installment'].create({
-            'payment_type': 'security',
-            'amount': self.security_deposit,
-            'microfinance_id': self.id,
-            'donee_id': self.donee_id.id,
-            'date': fields.Date.today()
-        })
-        
         return self.env.ref('bn_microfinance.security_deposit_report_action').report_action(self)
 
     def action_move_to_done(self):
@@ -417,15 +383,15 @@ class Microfinance(models.Model):
             else:
                 stock_move = self.env['stock.move'].create({
                     'name': f'Re-Return Product of Loan {self.name}',
-                    'product_id': self.product_id.id,
-                    'product_uom': self.product_id.uom_id.id,
+                    'product_id': self.recovered_product_id.id,
+                    'product_uom': self.recovered_product_id.uom_id.id,
                     'product_uom_qty': 1,  # Decrease 1 unit
                     'location_id': self.recovered_location_id.id,
                     'location_dest_id': self.env.ref('stock.stock_location_customers').id,
                     'state': 'draft',
                 })
                 picking = self.env['stock.picking'].create({
-                    'partner_id': self.donee_id.id,  # Link to customer
+                    'partner_id': self.customer_id.id,  # Link to customer
                     'picking_type_id': self.env.ref('stock.picking_type_out').id,  # Outgoing picking type
                     'move_ids_without_package': [(6, 0, [stock_move.id])],  # Associate the stock move with the picking
                     'origin': self.name
@@ -437,8 +403,6 @@ class Microfinance(models.Model):
 
         if not self.in_recovery:
             self.compute_installment()
-        else:
-            self.compute_recovery_installment()
         
         self.state = 'done'
 
@@ -456,8 +420,8 @@ class Microfinance(models.Model):
                     ('product_id', '=', self.product_id.id)
                 ], limit=1)
 
-            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
-            form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
+            action = self.env.ref('microfinance_loan.return_microfinance_product_action').read()[0]
+            form_view_id = self.env.ref('microfinance_loan.return_microfinance_product_view_form').id
             
             action['views'] = [
                 [form_view_id, 'form']
@@ -466,7 +430,7 @@ class Microfinance(models.Model):
             if product_line.product_id:
                 action['context'] = {
                     'default_donee_id': self.donee_id.id,
-                    'default_product_domain': self.product_domain.ids,
+                    'default_product_domain': product_line.product_ids.ids,
                     'default_source_document': self.name,
                     'default_microfinance_id': self.id
                 }
@@ -529,34 +493,6 @@ class Microfinance(models.Model):
                 amount = remaining_amount
 
             self.env['microfinance.line'].create({
-                'microfinance_id': self.id,
-                'installment_no': f"{self.name}/{i + 1:04d}",
-                'due_date': due_date,
-                'paid_amount': 0,
-                'amount': amount
-            })
-    
-    def compute_recovery_installment(self):
-        if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
-            return
-
-        self.microfinance_recovery_line_ids.unlink()
-
-        total_covered = self.installment_amount * (self.installment_period - 1)
-        remaining_amount = max(self.total_amount - total_covered, 0)
-
-        for i in range(self.installment_period):
-            if self.installment_type == 'monthly':
-                due_date = self.delivery_date + relativedelta(months=i + 1)
-            elif self.installment_type == 'daily':
-                due_date = self.delivery_date + timedelta(days=i + 1)
-
-            if i < self.installment_period - 1:
-                amount = self.installment_amount
-            else:
-                amount = remaining_amount
-
-            self.env['microfinance.recovery.line'].create({
                 'microfinance_id': self.id,
                 'installment_no': f"{self.name}/{i + 1:04d}",
                 'due_date': due_date,
