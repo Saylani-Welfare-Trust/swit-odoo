@@ -20,5 +20,9 @@
     <record id="profile_management_delete_access_group" model="res.groups">
         <field name="name">Profile Management / Delete Access</field>
     </record>
+    
+    <record id="profile_management_edit_donor_access_group" model="res.groups">
+        <field name="name">Profile Management / Edit Donor</field>
+    </record>
 
 </odoo>

@@ -9,10 +9,13 @@
         'point_of_sale'
     ],
     'data': [
+        'security/ir.model.access.csv',
         'views/pos_order.xml',
         'views/pos_payment_method.xml',
         'views/res_company.xml',
-        'views/res_config_setting.xml'
+        'views/res_config_setting.xml',
+        'views/pos_session_slip.xml',
+        'views/pos_session.xml',
     ],
     'auto_install': False,
     'application': False,

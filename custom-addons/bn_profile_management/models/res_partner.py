@@ -31,7 +31,6 @@ martial_status_selection = [
 
 state_selection = [
     ('draft', 'Draft'),
-    ('print_info', 'Print Info'),
     ('register', 'Registered'),
     ('reject', 'Rejected'),
     ('change_request', 'Change Request'),
@@ -50,14 +49,14 @@ class ResPartner(models.Model):
     
     mobile = fields.Char(size=10)
     surname = fields.Char('Surname', tracking=True)
-    cnic_no = fields.Char('CNIC No.', tracking=True)
+    cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
     next_kin = fields.Char('Next Kin', tracking=True)
     spouse_name = fields.Char('Spouse Name', tracking=True)
     father_name = fields.Char('Father Name', tracking=True)
-    head_cnic_no = fields.Char('Head CNIC No.', tracking=True)
+    head_cnic_no = fields.Char('Head CNIC No.', tracking=True, size=15)
     old_system_id = fields.Char('Old System ID', tracking=True)
-    member_cnic_no = fields.Char('Member CNIC No.', tracking=True)
-    father_cnic_no = fields.Char('Father CNIC No.', tracking=True)
+    member_cnic_no = fields.Char('Member CNIC No.', tracking=True, size=15)
+    father_cnic_no = fields.Char('Father CNIC No.', tracking=True, size=15)
     nearest_land_mark = fields.Char('Nearest Land Mark', tracking=True)
     reference_remarks = fields.Char('Reference / Remarks', tracking=True)
     bank_wallet_account = fields.Char('Bank / Wallet Account', tracking=True)
@@ -126,6 +125,9 @@ class ResPartner(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
+
     @api.onchange('cnic_no')
     def _onchange_cnic_no(self):
         if self.cnic_no:
@@ -134,6 +136,9 @@ class ResPartner(models.Model):
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            if not self.is_valid_cnic_format(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
 
     @api.constrains('member_cnic_no')
     def _check_member_cnic_no_format(self):
@@ -153,6 +158,10 @@ class ResPartner(models.Model):
                 self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            
+            if not self.is_valid_cnic_format(self.member_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.constrains('father_cnic_no')
     def _check_father_cnic_no_format(self):
@@ -172,6 +181,10 @@ class ResPartner(models.Model):
                 self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            
+            if not self.is_valid_cnic_format(self.father_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):
@@ -180,8 +193,10 @@ class ResPartner(models.Model):
                 raise ValidationError(str(f'Invalid Date of Birth...'))
 
     def action_print_info(self):
+        if self.is_change_request:
+            self.state = 'draft'
+        
         self.is_change_request = False
-        self.state = 'print_info'
 
         return self.env.ref('bn_profile_management.action_profile_management_report').report_action(self)
     
@@ -284,5 +299,20 @@ class ResPartner(models.Model):
     def action_reject(self):
         self.state = 'reject'
 
-    def action_microfinance_application(self):
-        pass
+    def action_print_microfinance_application(self):
+        if 'Microfinance' not in self.category_id.mapped('name'):
+            raise ValidationError('This action is only restricted for Microfinance Application.')
+        
+        # raise ValidationError(str(self.env.context))
+
+        scheme_id = self.env.context.get('microfinance_scheme_id', None)
+
+        if scheme_id:
+            microfinance = self.env['microfinance'].create({
+                'microfinance_scheme_id': scheme_id,
+                'donee_id': self.id
+            })
+
+            microfinance._compute_microfinance_scheme_line_ids()
+
+        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)

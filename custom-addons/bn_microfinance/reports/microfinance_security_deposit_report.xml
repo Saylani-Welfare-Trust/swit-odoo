@@ -87,11 +87,11 @@
         <field name="name">Microfinance Security Deposit</field>
         <field name="model">microfinance</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_microfinance.donation_box_receipt_template</field>
-        <field name="report_file">bn_microfinance.donation_box_receipt_template</field>
+        <field name="report_name">bn_microfinance.security_deposit_template</field>
+        <field name="report_file">bn_microfinance.security_deposit_template</field>
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
-        <field name="print_report_name">'Security Deposit - %s' % (object.lot_id.name)</field>
+        <field name="print_report_name">'Security Deposit - %s' % (object.name)</field>
         <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
     </record>
 

@@ -126,9 +126,11 @@
                     <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Change Request" name="action_change_request" type="object" class="oe_highlight" invisible="state != 'register'" />
                     
+                    <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" />
+                    
                     <!-- <button string="Generate MF Applciation" name="action_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" /> -->
                
-                    <field name="state" widget="statusbar" statusbar_visible="draft, register, print_info"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft, register"/>
                 </header>
 
                 <sheet>
@@ -299,18 +301,18 @@
         web_icon="bn_profile_management,static/description/icon.png"
         groups="bn_profile_management.profile_management_group"
         sequence="6"/>
-
-    <menuitem
-        id="donee_profile_management_menu"
-        name="Donee"
-        action="donee_profile_management_action"
-        parent="profile_management_menu"
-        sequence="0"/>
     
     <menuitem
         id="donor_profile_management_menu"
         name="Donor"
         action="donor_profile_management_action"
+        parent="profile_management_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="donee_profile_management_menu"
+        name="Donee"
+        action="donee_profile_management_action"
         parent="profile_management_menu"
         sequence="1"/>
 

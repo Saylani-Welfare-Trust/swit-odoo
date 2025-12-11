@@ -23,4 +23,8 @@
         </field>
     </record>
 
+    <record id="stock.menu_action_location_form" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('bn_stock_location.inventory_location_menu_group'))]"/>
+    </record>
+
 </odoo>

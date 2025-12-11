@@ -14,8 +14,8 @@
 
                 <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
 
-                <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state == 'cancel'" />
-                <button string="Bounce" name="action_bounce" type="object" invisible="bounce_count > 3" />
+                <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state in ['cancel', 'clear'] or bounce_count &gt;= 4" />
+                <button string="Bounce" name="action_bounce" type="object" invisible="state == 'clear' or bounce_count > 3" />
                 <!-- <button string="Cancel" name="action_cancel" type="object" class="btn-danger"/> -->
             </tree>
         </field>
@@ -33,11 +33,17 @@
     </record>
 
     <menuitem
+        id="treasury_menu"
+        name="Treasury"
+        parent="account.menu_finance"
+        sequence="6"/>
+    
+    <menuitem
         id="pos_cheque_menu"
         name="POS Cheque"
         action="pos_cheque_action"
         groups="pos_cheque_menu_group"
-        parent="account.menu_finance"
-        sequence="6"/>
+        parent="bn_pos_cheque.treasury_menu"
+        sequence="0"/>
 
 </odoo>

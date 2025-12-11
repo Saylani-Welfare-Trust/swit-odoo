@@ -29,7 +29,7 @@ class MicrofinanceLine(models.Model):
 
     currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
 
-    state = fields.Selection(selection=state_selection, string='State')
+    state = fields.Selection(selection=state_selection, string='State', default="unpaid")
 
     is_cheque_deposit = fields.Boolean('Is Cheque Deposit')
 
@@ -41,7 +41,7 @@ class MicrofinanceLine(models.Model):
                 
         return super(MicrofinanceLine, self).create(vals)
     
-    @api.depends('due_date')
+    @api.depends('due_date', 'paid_amount')
     def _compute_remaining_amount(self):
         for rec in self:
             rec.remaining_amount = rec.amount - rec.paid_amount
