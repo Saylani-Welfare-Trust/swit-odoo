@@ -19,7 +19,7 @@
                     <field name="employee_category_id" invisible="1" />
 
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck">
+                        <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
                             <field name="return_picking_id" string="Return" widget="statinfo"/>
                         </button>
                     </div>
