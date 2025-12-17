@@ -6,7 +6,7 @@
         <field name="model">direct.deposit.account.setup</field>
         <field name="arch" type="xml">
             <tree create="false" delete="false" editable="bottom">
-                <field name="name" />
+                <field name="name" string="Account Prefix" />
             </tree>
         </field>
     </record>
