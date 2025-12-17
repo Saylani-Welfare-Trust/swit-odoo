@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Form View -->
+    <record id="bn_master_setup_view_direct_deposit_account_setup_form" model="ir.ui.view">
+        <field name="name">direct.deposit.account.setup.form</field>
+        <field name="model">direct.deposit.account.setup</field>
+        <field name="arch" type="xml">
+            <form string="Direct Deposit Account Setup">
+                <sheet>
+                    <group>
+                        <field name="name" string="Account Prefix"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <!-- Tree View (no create, no delete, allow edit) -->
     <record id="bn_master_setup_view_direct_deposit_account_setup_tree" model="ir.ui.view">
         <field name="name">direct.deposit.account.setup.tree</field>
         <field name="model">direct.deposit.account.setup</field>
         <field name="arch" type="xml">
-            <tree create="false" delete="false" editable="bottom">
-                <field name="name" string="Account Prefix" />
+            <tree create="false" delete="false">
+                <field name="name" string="Account Prefix"/>
             </tree>
         </field>
     </record>
@@ -15,8 +30,7 @@
     <record id="bn_master_setup_action_direct_deposit_account_setup" model="ir.actions.act_window">
         <field name="name">Direct Deposit Account</field>
         <field name="res_model">direct.deposit.account.setup</field>
-        <field name="view_mode">tree</field>
-        <field name="view_id" ref="bn_master_setup_view_direct_deposit_account_setup_tree"/>
+        <field name="view_mode">tree,form</field>
         <field name="target">current</field>
         <field name="context">{"default_active": True}</field>
     </record>
