@@ -11,6 +11,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/group.xml',
+        'data/direct_account_prefix.xml',
         'views/location_option.xml',
         'views/installation_category.xml',
         'views/header_type.xml',
@@ -18,7 +19,11 @@
         'views/microfinance_scheme.xml',
         'views/disbursement_category.xml',
         'views/disbursement_application_type.xml',
+        'views/direct_deposit_account_setup.xml',
+        'views/donation_in_kind_config.xml',
     ],
     'auto_install': False,
     'application': True,
-}
+    'post_init_hook': 'post_init_direct_deposit_account_setup',
+
+} # type: ignore

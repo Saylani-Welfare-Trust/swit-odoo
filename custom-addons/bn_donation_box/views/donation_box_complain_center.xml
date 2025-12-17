@@ -22,6 +22,9 @@
                         <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
                             <field name="return_picking_id" string="Return" widget="statinfo"/>
                         </button>
+                        <button name="action_scrap_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not scrap_picking_id">
+                            <field name="scrap_picking_id" string="Scrap" widget="statinfo"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -31,7 +34,7 @@
 
                     <group>
                         <group name="donation_box_complain_col_1">
-                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True)]" required="1" readonly="status == 'process'" />
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status == 'process'" />
                             <field name="box_status" required="1" readonly="status == 'process'" />
                         </group>
                         <group name="donation_box_complain_col_1">
@@ -76,6 +79,7 @@
             <tree>
                 <field name="rider_id" string="Rider" />
                 <field name="donation_box_registration_installation_id" />
+                <field name="lot_id" string="Box No." />
                 <field name="box_status" />
                 <field name="remarks" />
                 <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'process'" decoration-success="status == 'resolved'" />

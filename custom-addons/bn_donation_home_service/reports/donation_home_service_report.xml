@@ -6,21 +6,37 @@
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-call="web.external_layout">
-                        <div class="mt-5 clearfix" />
+                        <style>
+                            h1 {
+                                font-size: 1.5em;
+                                margin: 3px;
+                            }
+                            .watermark {
+                                position: fixed; /* important: appears on every page */
+                                top: 50%;        /* vertical center */
+                                left: 50%;       /* horizontal center */
+                                transform: translate(-50%, -50%) rotate(-30deg); /* center + rotate */
+                                font-size: 150px;
+                                color: rgba(200, 200, 200, 0.15); /* lighter for printing */
+                                font-weight: bold;
+                                white-space: nowrap;
+                                pointer-events: none; /* don't block clicks */
+                                user-select: none;
+                                z-index: 0; /* behind all content */
+                            }
+                        </style>
+                        
+                        <div class="watermark" style="padding-top: 600px; padding-right: 250px;">PROVISION</div>
+                        
+                        <div class="mt-5 clearfix"/>
 
                         <!-- Header -->
-                        <div class="text-center border-bottom border-3 pb-3 mb-4">
-                            <h2 class="fw-bold text-uppercase">
-                                DONATION HOME SERVICE CERTIFICATE
-                            </h2>
-                            <p class="text-muted mt-2">
-                                This certificate acknowledges the collection from donation home service
-                            </p>
+                        <div class="div-box service_margin">
+                            <h1 class="text-transform">Provision Receipt</h1>
                         </div>
 
                         <!-- Certificate Info -->
-                        <div class="bg-light p-3 border-start border-5 mb-4">
-                            <h4 class="fw-bold mb-3">Certificate Information</h4>
+                        <div class="mb-4">
                             <div class="row">
                                 <!-- Left column -->
                                 <div class="col-6 pe-3">
@@ -86,7 +102,7 @@
                         <div class="mb-4">
                             <h4 class="fw-bold mb-3">Donation Home Service Details</h4>
                             <table class="table table-bordered border-2">
-                                <thead class="text-white">
+                                <thead class="text-black">
                                     <tr>
                                         <th class="text-center fw-bold">Product</th>
                                         <th class="text-center fw-bold">Quantity</th>
@@ -112,8 +128,7 @@
                         </div>
 
                         <!-- Installation Info -->
-                        <div class="bg-light p-3 border-start border-5 mb-4">
-                            <h4 class="fw-bold mb-3">Donor Information</h4>
+                        <div class="mb-4">
                             <div class="row">
                                 <!-- Left column -->
                                 <div class="col-6 pe-3">
@@ -180,14 +195,25 @@
                             <p class="text-muted fst-italic mb-4">
                                 This certificate is digitally generated and serves as an official acknowledgment of the donation box collection.
                             </p>
-                            <div class="d-inline-block border-top border-dark pt-1" style="width: 200px;">
-                                <p class="mb-0 text-muted small">Authorized Signature</p>
-                            </div>
+                        </div>
+                        <div class="d-inline-block border-top border-dark pt-1" style="width: 200px; margin-top: 75px;">
+                            <p class="mb-0 text-muted small text-center">Authorized Signature</p>
                         </div>
                     </t>
                 </t>
             </t>
         </template>
+
+        <record id="report_donation_home_service_paperformat" model="report.paperformat">
+            <field name="name">A4 - Donation Home Service Receipt Format</field>
+            <field name="format">A4</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">85</field>
+            <field name="margin_bottom">15</field>
+            <field name="margin_left">18</field>
+            <field name="margin_right">14</field>
+            <field name="header_spacing">35</field>
+        </record>
 
         <record id="report_donation_home_service" model="ir.actions.report">
             <field name="name">Donation Home Service Receipt</field>
@@ -198,7 +224,7 @@
             <field name="binding_model_id" ref="bn_donation_home_service.model_donation_home_service"/>
             <field name="binding_type">report</field>
             <field name="print_report_name">'Donation Home Service Receipt - %s' % (object.name)</field>
-            <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
+            <field name="paperformat_id" ref="report_donation_home_service_paperformat"/>
         </record>
     </data>
     

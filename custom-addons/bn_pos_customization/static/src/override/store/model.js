@@ -3,6 +3,7 @@
 import { Order } from "@point_of_sale/app/store/models";
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
+const { DateTime } = luxon;
 
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
@@ -40,5 +41,11 @@ patch(Order.prototype, {
     get_partner_mobile() {
         const partner = this.partner;
         return partner ? partner.mobile : "";
+    },
+
+    get_formatted_date(date) {
+        return date
+            ? DateTime.fromJSDate(this.date).toFormat("dd-MM-yyyy")
+            : "";
     }
 });

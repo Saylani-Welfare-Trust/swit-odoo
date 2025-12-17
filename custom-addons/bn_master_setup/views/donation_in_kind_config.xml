@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_in_kind_config_view_tree" model="ir.ui.view">
+        <field name="name">donation.in.kind.config.view.tree</field>
+        <field name="model">donation.in.kind.config</field>
+        <field name="arch" type="xml">
+            <tree create="0" delete="0" editable="bottom">
+                <field name="picking_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="debit_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="credit_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="donation_in_kind_config_action" model="ir.actions.act_window">
+        <field name="name">Donation In Kind Config.</field>
+        <field name="res_model">donation.in.kind.config</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new donation in kind configuration....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="donaiton_in_kind_config_menu"
+        name="Donation In Kind Config."
+        action="donation_in_kind_config_action"
+        parent="bn_master_setup.donation_inflow_config_menu"
+        sequence="2"/>
+
+</odoo>

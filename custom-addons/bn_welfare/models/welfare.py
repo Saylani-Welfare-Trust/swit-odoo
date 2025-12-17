@@ -1,5 +1,5 @@
 from odoo import models, fields, _, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 import requests
 
@@ -191,7 +191,11 @@ class Welfare(models.Model):
         headers = self._get_sadqa_api_headers()
 
 
-        
+        # raise UserError(
+        #     f"API Request Failed\n\n"
+        #     f"URL: {url}\n"
+        #     f"Headers: {headers}"
+        # )
         try:
             if method.upper() == 'GET':
                 response = requests.get(url, headers=headers, timeout=30)
@@ -222,7 +226,8 @@ class Welfare(models.Model):
     def _check_donee_exists_in_portal(self):
         """Check if donee already exists in portal"""
         try:
-            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}{self.id}')
+            # _logger.info(f"Donee not found in portal: {self.donee_id.id}")
+            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}{self.donee_id.id}')
             return result.get('data')
         except Exception as e:
             _logger.info(f"Donee not found in portal: {str(e)}")
@@ -302,7 +307,7 @@ class Welfare(models.Model):
             'portal_application_id': portal_application.get('id'),
             'portal_donee_id': synced_application.get('doneeId', ''),
             'is_synced': True,
-            'sync_date': fields.Datetime.now(),
+            'last_sync_date': fields.Datetime.now(),
             'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
         })
         
@@ -316,10 +321,13 @@ class Welfare(models.Model):
     def _create_donee_in_portal(self):
         """Create donee in Sadqa Jaria portal"""
         data = {
-            "name": self.name or '',
+            "name": self.donee_id.name or '',
             "whatsapp": self.donee_id.mobile or '',
-            "cnic": self.cnic_no ,
-            "odooId": str(self.id)
+            "cnic": (
+                self.donee_id.cnic_no.replace("-", "")
+                if self.donee_id.cnic_no else ""
+            ),            
+            "odooId": str(self.donee_id.id)
         }
         
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
@@ -337,7 +345,7 @@ class Welfare(models.Model):
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
             'is_synced': True,
-            'sync_date': fields.Datetime.now(),
+            'last_sync_date': fields.Datetime.now(),
             'portal_application_id': f"CREATED_{fields.Datetime.now().strftime('%Y%m%d_%H%M%S')}"
         }
         
@@ -465,10 +473,10 @@ class Welfare(models.Model):
         self.state = 'mem_approve'
     
     def action_approve(self):
-        for line in self.disbursement_request_line_ids:
+        for line in self.welfare_line_ids:
             if line.order_type == 'recurring':
-                if self.env['welfare.recurring.line'].search_count([('donee_id', '=', self.donee_id.id), ('disbursement_type_id', '=', line.disbursement_type_id.id), ('state', '=', 'draft')]):
-                    raise ValidationError(f"There are recurring disbursement requests in process for {line.disbursement_type_id.name}. Please complete them first.")
+                if self.env['welfare.recurring.line'].search_count([('donee_id', '=', self.donee_id.id), ('disbursement_category_id', '=', line.disbursement_category_id.id), ('state', '=', 'draft')]):
+                    raise ValidationError(f"There are recurring disbursement requests in process for {line.disbursement_category_id.name}. Please complete them first.")
     
         self.state = 'approve'
 
@@ -476,7 +484,7 @@ class Welfare(models.Model):
         self.state = 'reject'
 
     def action_create_recurring_order(self):
-        for line in self.disbursement_request_line_ids:
+        for line in self.welfare_line_ids:
             if line.order_type != 'recurring':
                 raise ValidationError('This request does not belong to recurring order.')
             
@@ -484,7 +492,7 @@ class Welfare(models.Model):
                 month = 0
                 
                 for i in range(int(line.recurring_duration.split('_')[0])):
-                    self.env['recurring.disbursement.request'].create({
+                    self.env['welfare.recurring.line'].create({
                         'welfare_id': line.welfare_id.id,
                         'collection_date': line.collection_date + relativedelta(months=month),
                         'product_id': line.product_id.id,

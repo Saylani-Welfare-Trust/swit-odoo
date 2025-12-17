@@ -24,7 +24,7 @@
                 <header>
                     <button string="Gate Out" name="action_gate_out" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Gate In" name="action_gate_in" type="object" class="oe_highlight" invisible="state != 'gate_out'" />
-                    <button string="Cancel" name="action_cancel" type="object" invisible="state in ['paid', 'slotter', 'cancel']" />
+                    <button string="Cancel" name="action_cancel" type="object" invisible="state in ['gate_out']" groups="bn_donation_home_service.donation_home_service_cancel_group"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, gate_out, gate_in, paid, slotter" />
                 </header>
@@ -51,6 +51,9 @@
                         <group name="donation_home_service_col_2">
                             <field name="mobile" readonly="1"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="tag_number" readonly="state != 'draft'"/>
                         </group>
                     </group>
 

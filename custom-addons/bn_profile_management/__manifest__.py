@@ -24,6 +24,7 @@
         'views/product_product.xml',
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
+        'wizards/microfinance_application_wizard.xml',
         'reports/profile_management_report.xml',
         'reports/microfinance_report.xml',
     ],

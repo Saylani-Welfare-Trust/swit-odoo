@@ -24,6 +24,9 @@
                         <page name="online" string="Online Details">
                             
                         </page>
+                        <page name="donation_in_kind" string="Donation In Kind">
+                                    
+                        </page>
                     </notebook>
                 </page>
                 <page name="welfare" string="Welfare Details" invisible="is_donor">

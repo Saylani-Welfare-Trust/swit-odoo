@@ -20,6 +20,7 @@
                         </group>
                         <group name="donation_api_auth_col_2">
                             <field name="client_id" password="True" />
+                            <field name="difference_account_prefix" />
                         </group>
                     </group>
                 </page>
@@ -37,6 +38,9 @@
                         </group>
                     </group>
                 </page>
+            </xpath>
+            <xpath expr="//page[@name='general_info']/group/group[2]" position="inside">
+                <field name="max_file_size"/>
             </xpath>
         </field>
     </record>

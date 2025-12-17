@@ -6,7 +6,9 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Shariah Law',
     'depends': [
-        'bn_analytic_account_customization'
+        'bn_analytic_account_customization',
+        'bn_import_donation',
+        'purchase',
     ],
     'data': [
         'data/schedule_action.xml',
@@ -14,6 +16,10 @@
         'security/ir.model.access.csv',
         'views/shariah_law.xml',
         'views/pos_order.xml',
+        'views/purchase_order.xml',
+        'views/donation.xml',
+        'views/api_donation.xml',
+        'views/hr_expense.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -13,6 +13,8 @@ class ResCompany(models.Model):
     url = fields.Char('URL', tracking=True)
     client_id = fields.Char('Client ID', tracking=True)
     client_secret = fields.Char('Client Secret', tracking=True)
+    difference_account_prefix = fields.Char('Difference Account Prefix', tracking=True)
+    
 
     # Welfare
     welfare_url = fields.Char('Welfare URL', tracking=True)
@@ -22,3 +24,6 @@ class ResCompany(models.Model):
     check_donee_endpoint = fields.Char('Check Donee Endpoint', tracking=True)
     create_donee_endpoint = fields.Char('Create Donee Endpoint', tracking=True)
     mark_application_endpoint = fields.Char('Mark Application Endpoint', tracking=True)
+
+    # attachment size limit
+    max_file_size = fields.Float('Max File Size (MB)', default=5)

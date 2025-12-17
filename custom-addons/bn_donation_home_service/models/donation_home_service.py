@@ -21,6 +21,7 @@ class DonationHomeService(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    # direct_deposit_id = fields.Many2one('direct.deposit', string="Direct Deposit")
 
     name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
@@ -32,6 +33,8 @@ class DonationHomeService(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
+
+    tag_number = fields.Char('Tag Number')
 
     donation_home_service_line_ids = fields.One2many('donation.home.service.line', 'donation_home_service_id', string="Donation Home Service Lines")
 
@@ -90,6 +93,10 @@ class DonationHomeService(models.Model):
         PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
         for record in self:
+
+            # tag number is mandatory
+            if not record.tag_number:
+                raise ValidationError("Tag Number is required before proceeding.")
 
             # Skip if picking already exists
             if record.picking_id:

@@ -430,7 +430,7 @@ class APIDonationWizard(models.TransientModel):
 
         # If difference exists, post to the difference account
         if abs(difference) > 0:  # post even tiny differences
-            difference_account = self.env['account.account'].search([('code', '=', '999999')], limit=1)
+            difference_account = self.env['account.account'].search([('code', '=', self.env.company.difference_account_prefix)], limit=1)
             if not difference_account:
                 raise ValidationError("Difference account with code '999999' not found.")
 

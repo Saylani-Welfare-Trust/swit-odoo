@@ -303,16 +303,15 @@ class ResPartner(models.Model):
         if 'Microfinance' not in self.category_id.mapped('name'):
             raise ValidationError('This action is only restricted for Microfinance Application.')
         
-        # raise ValidationError(str(self.env.context))
-
-        scheme_id = self.env.context.get('microfinance_scheme_id', None)
-
-        if scheme_id:
-            microfinance = self.env['microfinance'].create({
-                'microfinance_scheme_id': scheme_id,
-                'donee_id': self.id
-            })
-
-            microfinance._compute_microfinance_scheme_line_ids()
-
-        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)
+        # Open wizard to select microfinance scheme
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Select Microfinance Scheme',
+            'res_model': 'microfinance.application.wizard',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            }
+        }

@@ -43,7 +43,8 @@
                                 <tr>
                                     <td class="px-1 py-1"><span t-esc="pos.company.restricted_category"/> Amount</td>
                                     <td class="px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.restricted)"/>
-                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(getRestrictedDifference(props.default_cash_details.id))"
+                                        t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getRestrictedDifference(props.default_cash_details.id))}"/>
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Slip No."
@@ -73,7 +74,8 @@
                                 <tr>
                                     <td class="px-1 py-1"><span t-esc="pos.company.unrestricted_category"/> Amount</td>
                                     <td class="px-1 py-1" t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown.unrestricted)"/>
-                                    <td class="text-center px-1 py-1">----</td>
+                                    <td class="px-1 py-1" t-esc="env.utils.formatCurrency(getUnrestrictedDifference(props.default_cash_details.id))"
+                                        t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getUnrestrictedDifference(props.default_cash_details.id))}"/>
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="px-1 py-1">
                                         <input class="form-control" placeholder="Slip No."
@@ -99,6 +101,52 @@
                                     <td class="text-center px-1 py-1"><button class="btn btn-danger" 
                                         t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
                                 </tr>
+
+                                <tr>
+                                    <td class="px-1 py-1">Neutral Amount</td>
+                                    <td class="px-1 py-1"
+                                        t-esc="formatCurrencyNeutral(props.default_cash_details.breakdown.neutral)"/>
+
+                                    <td class="px-1 py-1"
+                                        t-esc="formatCurrencyNeutral(getNeutralDifference(props.default_cash_details.id))"
+                                        t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getNeutralDifference(props.default_cash_details.id))}"/>
+
+                                    <td class="text-center px-1 py-1">----</td>
+
+                                    <td class="px-1 py-1">
+                                        <input class="form-control" placeholder="Slip No."
+                                            t-model="state.newLines[props.default_cash_details.id].neutral.ref"/>
+                                    </td>
+
+                                    <td class="px-1 py-1">
+                                        <input class="form-control" placeholder="Amount"
+                                            t-model="state.newLines[props.default_cash_details.id].neutral.amount"/>
+                                    </td>
+
+                                    <td class="text-center px-1 py-1">
+                                        <button class="btn btn-secondary"
+                                            t-on-click="() => handleAddLine(props.default_cash_details.id, 'neutral')">➕</button>
+                                    </td>
+                                </tr>
+
+                                <tr t-foreach="state.lines[props.default_cash_details.id].neutral"
+                                    t-as="line" t-key="line.id">
+                                    <td class="px-1 py-1">----</td>
+                                    <td class="px-1 py-1">----</td>
+                                    <td class="px-1 py-1">----</td>
+                                    <td class="px-1 py-1">----</td>
+
+                                    <td class="px-1 py-1 text-dark"><t t-esc="line.ref"/></td>
+                                    <td class="px-1 py-1 text-end text-dark"
+                                        t-esc="formatCurrencyNeutral(line.amount)"/>
+
+                                    <td class="text-center px-1 py-1">
+                                        <button class="btn btn-danger"
+                                            t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'neutral')">❌</button>
+                                    </td>
+                                </tr>
+
+                        
                             </tbody>
                             <tbody class="cash-overview border-start small text-muted">
                                 <tr>
@@ -155,7 +203,8 @@
                                     <tr>
                                         <td class="px-1 py-1"><span t-esc="pos.company.restricted_category"/> Amount</td>
                                         <td t-esc="env.utils.formatCurrency(pm.breakdown.restricted)"/>
-                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="px-1 py-1" t-if="_showDiff" t-esc="env.utils.formatCurrency(getRestrictedDifference(pm.id))"
+                                            t-att-class="{'warning text-danger fw-bolder': getRestrictedDifference(pm.id)}"/>
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Slip No."
@@ -185,7 +234,8 @@
                                     <tr>
                                         <td class="px-1 py-1"><span t-esc="pos.company.unrestricted_category"/> Amount</td>
                                         <td t-esc="env.utils.formatCurrency(pm.breakdown.unrestricted)"/>
-                                        <td class="text-center px-1 py-1">----</td>
+                                        <td class="px-1 py-1" t-if="_showDiff" t-esc="env.utils.formatCurrency(getUnrestrictedDifference(pm.id))"
+                                            t-att-class="{'warning text-danger fw-bolder': getUnrestrictedDifference(pm.id)}"/>
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="px-1 py-1">
                                             <input class="form-control" placeholder="Slip No."
@@ -211,6 +261,52 @@
                                         <td class="text-center px-1 py-1"><button class="btn btn-danger" 
                                             t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
                                     </tr>
+
+
+                                    <tr>
+                                        <td class="px-1 py-1">Neutral Amount</td>
+
+                                        <td class="px-1 py-1"
+                                            t-esc="formatCurrencyNeutral(pm.breakdown.neutral)"/>
+
+                                        <td class="px-1 py-1" t-if="_showDiff"
+                                            t-esc="formatCurrencyNeutral(getNeutralDifference(pm.id))"
+                                            t-att-class="{'warning text-danger fw-bolder': getNeutralDifference(pm.id)}"/>
+
+                                        <td class="text-center px-1 py-1">----</td>
+
+                                        <td class="px-1 py-1">
+                                            <input class="form-control" placeholder="Slip No."
+                                                t-model="state.newLines[pm.id].neutral.ref"/>
+                                        </td>
+
+                                        <td class="px-1 py-1">
+                                            <input class="form-control" placeholder="Amount"
+                                                t-model="state.newLines[pm.id].neutral.amount"/>
+                                        </td>
+
+                                        <td class="text-center px-1 py-1">
+                                            <button class="btn btn-secondary"
+                                                t-on-click="() => handleAddLine(pm.id, 'neutral')">➕</button>
+                                        </td>
+                                    </tr>
+
+                                    <tr t-foreach="state.lines[pm.id].neutral" t-as="line" t-key="line.id">
+                                        <td class="px-1 py-1">----</td>
+                                        <td class="px-1 py-1">----</td>
+                                        <td class="px-1 py-1">----</td>
+                                        <td class="px-1 py-1">----</td>
+
+                                        <td class="px-1 py-1 text-dark"><t t-esc="line.ref"/></td>
+                                        <td class="px-1 py-1 text-end text-dark"
+                                            t-esc="formatCurrencyNeutral(line.amount)"/>
+
+                                        <td class="text-center px-1 py-1">
+                                            <button class="btn btn-danger"
+                                                t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'neutral')">❌</button>
+                                        </td>
+                                    </tr>
+
                                 </tbody>
                             </t>
                         </t>

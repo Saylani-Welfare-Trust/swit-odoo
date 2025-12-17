@@ -5,118 +5,181 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
-
                     <!-- Certificate Container -->
-                    <div class="mt-5 clearfix">
+                    <div class="page" style="position: relative;">
+                        <style>
+                        .page-content {
+                            position: relative;
+                            z-index: 1;
+                            margin-top: 360px;
+                        }
+                        .compact-section {
+                            margin-bottom: 15px;
+                        }
+                        .compact-row {
+                            margin-bottom: 8px;
+                        }
+                        .tight-padding {
+                            padding: 8px !important;
+                        }
+                        .no-margin {
+                            margin: 0;
+                        }
+                        .signature-line {
+                            width: 200px;
+                            border-top: 2px solid #333;
+                            margin-top: 5px;
+                        }
+                        </style>
 
-                        <!-- Header -->
-                        <div class="text-center border-bottom border-3 pb-3 mb-4">
-                            <h2 class="fw-bold text-uppercase">
-                                DONATION BOX CERTIFICATE
-                            </h2>
-                            <p class="text-muted mt-2">
-                                This certificate acknowledges the collection from donation box
-                            </p>
-                        </div>
+                        <div class="page-content">
+                            <!-- Header -->
+                            <div class="row compact-section">
+                                <div class="col-5">
+                                    <h4 class="fw-bold text-uppercase mb-2 no-margin">
+                                        DONATION BOX CERTIFICATE
+                                    </h4>
+                                </div>
+                                <div class="col-7 text-end">
+                                    <p class="text-muted mb-2" style="font-size: 13px;">
+                                        This certificate acknowledges the collection from donation box
+                                    </p>
+                                </div>
+                            </div>
 
-                        <!-- Certificate Info -->
-                        <div class="bg-light p-3 border-start border-5 mb-4">
-                            <h4 class="fw-bold mb-3">Certificate Information</h4>
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <t t-import="datetime"/>
-                                    <span class="fw-bold">Certificate Date:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/>
-                                    </span>
+                            <!-- Certificate Info -->
+                            <div class="bg-light p-3 border-start border-5 mb-3 compact-section">
+                                <h5 class="fw-bold mb-2 no-margin">Certificate Information</h5>
+                                <div class="row compact-row">
+                                    <div class="col-6 pe-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Certificate Date:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-import="datetime"/>
+                                                <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Box No.:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-esc="o.lot_id.name"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 ps-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Issued On:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-if="o.issued_on">
+                                                    <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
+                                                </t>
+                                                <t t-if="not o.issued_on">--</t>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Returned On:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-if="o.returned_on">
+                                                    <t t-esc="o.returned_on.strftime('%d-%m-%Y')"/>
+                                                </t>
+                                                <t t-if="not o.returned_on">--</t>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Box No.:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.lot_id.name"/>
-                                    </span>
+                            </div>
+
+                            <!-- Donation Box Details -->
+                            <div class="compact-section">
+                                <h5 class="fw-bold mb-2 no-margin">Donation Box Details</h5>
+                                <table class="table table-bordered border-2" style="font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center fw-bold tight-padding">Category</th>
+                                            <th class="text-center fw-bold tight-padding">Registration</th>
+                                            <th class="text-center fw-bold tight-padding">Amount Collected</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="bg-light">
+                                            <td class="text-center tight-padding">
+                                                <t t-esc="o.product_id.name"/>
+                                            </td>
+                                            <td class="text-center tight-padding">
+                                                <t t-esc="o.donation_box_request_id.name"/>
+                                            </td>
+                                            <td class="text-center fw-bold tight-padding">
+                                                <t t-esc="o.donation_amount"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Installation Info -->
+                            <div class="bg-light p-3 border-start border-5 compact-section">
+                                <h5 class="fw-bold mb-2 no-margin">Installation Information</h5>
+                                <div class="row compact-row">
+                                    <div class="col-6 pe-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Installer Name:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-esc="o.installer_id.name"/>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Installation Category:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-esc="o.installation_category_id.name"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 ps-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="w-50" style="font-size: 13px;">Installation Date:</div>
+                                            <div class="w-50 fw-semibold" style="font-size: 13px;">
+                                                <t t-esc="o.installation_date"/>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Issued On:</span>
-                                    <span class="ms-2">
-                                        <t t-if="o.issued_on">
-                                            <t t-esc="o.issued_on.strftime('%d-%m-%Y')"/>
-                                        </t>
-                                    </span>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Returned On:</span>
-                                    <span class="ms-2">
-                                        <t t-if="o.returned_on">
-                                            <t t-esc="o.returned_on.strftime('%d-%m-%Y')"/>
-                                        </t>
-                                    </span>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="mt-4">
+                                <div class="border-top border-2 pt-3">
+                                    <!-- Certificate Note -->
+                                    <p class="text-center text-muted fst-italic mb-2" style="font-size: 12px;">
+                                        This certificate is digitally generated and serves as an official acknowledgment of the donation box collection.
+                                    </p>
+
+                                    <!-- Signature Section -->
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-start">
+                                            <div class="signature-line">
+                                                <p class="mb-0 text-muted mt-1" style="font-size: 12px;">
+                                                    Authorized Signature
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Powered By Section -->
+                                        <div class="text-center mt-3">
+                                            <p class="mb-1 text-muted" style="font-size: 12px;">
+                                                Powered by <strong>BytesNode</strong>
+                                            </p>
+                                            <p class="mb-0 text-muted" style="font-size: 11px;">
+                                                Mobile No. --- 03170295857 |
+                                                Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com |
+                                                Website --- bytesnode.com
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Donation Box Details -->
-                        <div class="mb-4">
-                            <h4 class="fw-bold mb-3">Donation Box Details</h4>
-                            <table class="table table-bordered border-2">
-                                <thead class="text-white">
-                                    <tr>
-                                        <th class="text-center fw-bold">Category</th>
-                                        <th class="text-center fw-bold">Registration</th>
-                                        <th class="text-center fw-bold">Amount Collected</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="bg-light">
-                                        <td class="text-center py-2">
-                                            <t t-esc="o.product_id.name"/>
-                                        </td>
-                                        <td class="text-center py-2">
-                                            <t t-esc="o.donation_box_request_id.name"/>
-                                        </td>
-                                        <td class="text-center fw-bold py-2">
-                                            <t t-esc="o.donation_amount"/>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Installation Info -->
-                        <div class="bg-light p-3 border-start border-5 mb-4">
-                            <h4 class="fw-bold mb-3">Installation Information</h4>
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Installer Name:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.installer_id.name"/>
-                                    </span>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Installation Date:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.installation_date"/>
-                                    </span>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Installation Category:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.installation_category_id.name"/>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="text-center border-top border-2 pt-3 mt-5">
-                            <p class="text-muted fst-italic mb-4">
-                                This certificate is digitally generated and serves as an official acknowledgment of the donation box collection.
-                            </p>
-                            <div class="d-inline-block border-top border-dark pt-1" style="width: 200px;">
-                                <p class="mb-0 text-muted small">Authorized Signature</p>
-                            </div>
-                        </div>
-
                     </div>
                 </t>
             </t>

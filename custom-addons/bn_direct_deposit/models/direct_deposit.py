@@ -6,6 +6,7 @@ status_selection = [
     ('draft', 'Draft'),
     ('clear', 'Clear'),
     ('not_clear', 'Not Clear'),
+    ('transferred', 'Transferred to DHS')
 ]
 
 
@@ -15,6 +16,8 @@ class DirectDeposit(models.Model):
 
 
     donor_id = fields.Many2one('res.partner', string="Donor")
+    user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
     name = fields.Char('Name', default="New")
@@ -22,10 +25,19 @@ class DirectDeposit(models.Model):
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
+    transaction_ref = fields.Char('Transaction Reference')
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
 
+    donor_contact = fields.Char(string="Donor Contact", compute='_compute_donor_contact', store=False)
+    
+    dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
+
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
+
+    def _compute_donor_contact(self):
+        for rec in self:
+            rec.donor_contact = rec.donor_id.mobile or rec.donor_id.phone or ''
 
 
     @api.model
@@ -40,6 +52,9 @@ class DirectDeposit(models.Model):
 
     @api.model
     def create_dd_record(self, data):
+        user_id = data.get('user_id') or self.env.user.id
+        transaction_ref = data.get('transaction_ref')
+
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------
@@ -52,10 +67,12 @@ class DirectDeposit(models.Model):
             }))
 
         # -------------------------
-        # 2. Create DHS Record
+        # 2. Create DD Record
         # -------------------------
-        dd = self.env['direct.deposit'].create({
+        dd = self.create({
             'donor_id': data['donor_id'],
+            'user_id': user_id,
+            'transaction_ref': transaction_ref,
             'direct_deposit_line_ids': product_lines,
         })
 
@@ -125,9 +142,10 @@ class DirectDeposit(models.Model):
 
             total_amount += line.amount
 
+        prefix=self.env['direct.deposit.account.setup'].search([], limit=1)
         # NOW ADD ONLY ONE DEBIT LINE
         receivable_account = self.env['account.account'].search([
-            ('code', '=', '1121001'),
+            ('code', '=', prefix.name),
             ('company_id', '=', self.env.company.id)
         ], limit=1)
         if not receivable_account:
@@ -157,10 +175,100 @@ class DirectDeposit(models.Model):
         self._create_invoice()
 
         self.state = 'clear'
+        
+        # Auto-print report when transitioning to clear (duplicate watermark)
+        return self.env.ref('bn_direct_deposit.report_direct_deposit').report_action(self, data={'is_duplicate': True, 'ids': self.ids})
 
     def action_not_clear(self):
         self.state = 'not_clear'
 
+    def action_transfer_to_dhs(self):
+        """Transfer confirmed direct deposit payment to Donation Home Service
+        
+        Splits lines by product type:
+        - Service products → DHS with state 'gate_in'
+        - Consumable products → DHS with state 'draft'
+        - Both types → Creates separate DHS records for each
+        """
+        self.ensure_one()
+        
+        DHS = self.env['donation.home.service']
+        DHSLine = self.env['donation.home.service.line']
+        
+        # Separate lines by product type
+        service_lines = self.direct_deposit_line_ids.filtered(
+            lambda l: l.product_id.type == 'service'
+        )
+        consu_lines = self.direct_deposit_line_ids.filtered(
+            lambda l: l.product_id.detailed_type == 'consu'
+        )
+        
+        created_dhs_ids = []
+        
+        # Create DHS record for service products (gate_in state)
+        if service_lines:
+            service_amount = sum(line.amount for line in service_lines)
+            dhs_service = DHS.create({
+                'donor_id': self.donor_id.id,
+                'amount': service_amount,
+                'address': self.donor_id.street or '',
+                'direct_deposit_id': self.id,
+                'state': 'gate_in',
+            })
+            
+            # Create DHS lines for service products
+            for line in service_lines:
+                DHSLine.create({
+                    'donation_home_service_id': dhs_service.id,
+                    'product_id': line.product_id.id,
+                    'quantity': line.quantity,
+                    'amount': line.amount,
+                })
+            
+            created_dhs_ids.append(dhs_service.id)
+        
+        # Create DHS record for consumable products (draft state)
+        if consu_lines:
+            consu_amount = sum(line.amount for line in consu_lines)
+            dhs_consu = DHS.create({
+                'donor_id': self.donor_id.id,
+                'amount': consu_amount,
+                'address': self.donor_id.street or '',
+                'direct_deposit_id': self.id,
+                'state': 'draft',
+            })
+            
+            # Create DHS lines for consumable products
+            for line in consu_lines:
+                DHSLine.create({
+                    'donation_home_service_id': dhs_consu.id,
+                    'product_id': line.product_id.id,
+                    'quantity': line.quantity,
+                    'amount': line.amount,
+                })
+            
+            created_dhs_ids.append(dhs_consu.id)
+        self.state = 'transferred'
+        # if len(self.dhs_ids) == 1:
+        #         # Open single DHS record
+        #         return {
+        #             "type": "ir.actions.act_window",
+        #             "res_model": "donation.home.service",
+        #             "view_mode": "form",
+        #             "res_id": self.dhs_ids.id,   
+        #             "target": "current",
+        #         }
+        # else:
+        #         # Show list of DHS records
+        #         return {
+        #             "type": "ir.actions.act_window",
+        #             "res_model": "donation.home.service",
+        #             "view_mode": "tree,form",
+        #             "domain": [('id', 'in', self.dhs_ids.ids)],  
+        #             "target": "current",
+        #         }
+
+        
     def action_show_invoice(self):
         return {
             "name": _("Invoice"),
@@ -169,3 +277,29 @@ class DirectDeposit(models.Model):
             "view_mode": "form",
             "res_id": self.move_id.id,
         }
+
+    def action_show_dhs_records(self):
+        self.ensure_one()
+        dhs_record_ids = self.dhs_ids.ids
+        
+        if not dhs_record_ids:
+            return
+        
+        if len(dhs_record_ids) == 1:
+            # Open single DHS record
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "donation.home.service",
+                "view_mode": "form",
+                "res_id": dhs_record_ids[0],
+                "target": "current",
+            }
+        else:
+            # Show list of DHS records
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "donation.home.service",
+                "view_mode": "tree,form",
+                "domain": [('id', 'in', dhs_record_ids)],
+                "target": "current",
+            }
