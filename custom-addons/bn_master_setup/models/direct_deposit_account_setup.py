@@ -6,4 +6,5 @@ class DirectDepositAccountSetup(models.Model):
     _name = 'direct.deposit.account.setup'
     _description = 'Direct Deposit Account Setup'
 
-    name=fields.Char(string="Name", default="Account Prefix")
+
+    name = fields.Char(string="Name", default="Account Prefix")
