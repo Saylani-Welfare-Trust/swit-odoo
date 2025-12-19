@@ -1,5 +1,4 @@
-from odoo import models, _
-from odoo.exceptions import UserError
+from odoo import models
 
 
 class ResCurrency(models.Model):
@@ -11,9 +10,3 @@ class ResCurrency(models.Model):
         some move lines (either as their foreign currency, or as the main currency).
         """
         return False
-    
-    def write(self, vals):
-        if 'rounding' in vals:
-            return super(ResCurrency, self).write(vals)
-
-        return super(ResCurrency, self).write(vals)
