@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Currency Customization',
     'depends': [
-        'base'
+        'account'
     ],
     'data': [],
     'auto_install': False,
