@@ -6,10 +6,19 @@
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
+                <field name="parent_id" column_invisible="1" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="restricted_amount" />
-                <field name="unrestricted_amount" />
+                
+                <field name="inflow_restricted_amount" />
+                <field name="inflow_unrestricted_amount" />
 
+                <field name="purchase_amount" />
+
+                <field name="welfare_individual_amount" />
+                <field name="welfare_portal_amount" />
+
+                <field name="expense_amount" />
+                
                 <button string="Transfer To" name="action_transfer_to" type="object" />
                 <button string="Transfer From" name="action_transfer_from" type="object" class="oe_highlight" />
             </tree>

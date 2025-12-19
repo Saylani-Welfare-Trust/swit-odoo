@@ -9,12 +9,24 @@
                 <header>
                     <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved']" />
                     <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved']" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    
+                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="box_status != 'return' or status == 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, process, resolved"/>
                 </header>
 
                 <sheet>
                     <field name="employee_category_id" invisible="1" />
+
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
+                            <field name="return_picking_id" string="Return" widget="statinfo"/>
+                        </button>
+                        <button name="action_scrap_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not scrap_picking_id">
+                            <field name="scrap_picking_id" string="Scrap" widget="statinfo"/>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <label for="rider_id" />
                         <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status == 'process'" /></h1>
@@ -22,7 +34,7 @@
 
                     <group>
                         <group name="donation_box_complain_col_1">
-                            <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status == 'process'" />
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status == 'process'" />
                             <field name="box_status" required="1" readonly="status == 'process'" />
                         </group>
                         <group name="donation_box_complain_col_1">
@@ -32,13 +44,13 @@
 
                     <group name="donation_box_info" string="Box Information">
                         <group name="donation_box_info_col_1">
+                            <field name="donation_box_registration_installation_id" readonly="1" />
                             <field name="name" string="Request No." readonly="1" />
                             <field name="shop_name" string="Shop No." readonly="1" />
                             <field name="location" readonly="1" />
                             <field name="contact_person" readonly="1" />
                             <field name="installer_id" string="Installer" readonly="1" />
                             <field name="product_id" string="Box Category" readonly="1" />
-                            <field name="lot_id" string="Box No." readonly="1" />
                         </group>
                         <group name="donation_box_info_col_2">
                             <field name="donor_id" string="Donor" readonly="1" />
@@ -67,6 +79,7 @@
             <tree>
                 <field name="rider_id" string="Rider" />
                 <field name="donation_box_registration_installation_id" />
+                <field name="lot_id" string="Box No." />
                 <field name="box_status" />
                 <field name="remarks" />
                 <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'process'" decoration-success="status == 'resolved'" />

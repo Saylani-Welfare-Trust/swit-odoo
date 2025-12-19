@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="action_report_microfinance_application_form" model="ir.actions.report">
-        <field name="name">MicroFinance Application Form</field>
-        <field name="model">res.partner</field>
-        <field name="report_type">qweb-html</field>
-        <field name="report_name">bn_profile_management.microfinance_application_form</field>
-        <field name="report_file">bn_profile_management.microfinance_application_form</field>
-        <field name="print_report_name">'%s' % object.name</field>
-        <field name="binding_model_id" ref="model_res_partner"/>
-        <field name="binding_type">report</field>
-    </record>
+
 
     <template id="microfinance_application_form">
         <t t-call="web.html_container">
@@ -23,13 +14,15 @@
                                     <span>Application No. : </span>
                                 </div>
                                 <div class="col-3">
-                                    <t t-esc="docs.microfinance_line_ids[-1].name"/>
+                                    <t t-if="o.microfinance_line_ids">
+                                        <t t-esc="o.microfinance_line_ids[-1].name"/>
+                                    </t>
                                 </div>
                                 <div class="col-3">
                                     <span>Master Donee No. : </span>
                                 </div>
                                 <div class="col-3">
-                                    <t t-esc="docs.primary_registration_id"/>
+                                    <t t-esc="o.primary_registration_id"/>
                                 </div>
                             </div>
                             <div class="row">
@@ -37,13 +30,13 @@
                                     <span>Donee Name : </span>
                                 </div>
                                 <div class="col-3">
-                                    <t t-esc="docs.name"/>
+                                    <t t-esc="o.name"/>
                                 </div>
                                 <div class="col-3">
                                     <span>Mobile Number : </span>
                                 </div>
                                 <div class="col-3">
-                                    <t t-esc="docs.country_code_id.name"/><t t-esc="docs.mobile"/>
+                                    <t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/>
                                 </div>
                             </div>
                         </section>
@@ -662,5 +655,16 @@
             </div>
         </t>
     </template>
+
+    <record id="action_report_microfinance_application_form" model="ir.actions.report">
+        <field name="name">MicroFinance Application Form</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">bn_profile_management.microfinance_application_form</field>
+        <field name="report_file">bn_profile_management.microfinance_application_form</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="binding_model_id" ref="model_res_partner"/>
+        <field name="binding_type">report</field>
+    </record>
 
 </odoo>

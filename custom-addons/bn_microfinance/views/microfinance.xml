@@ -32,7 +32,7 @@
                     <button string="Proceed" name="action_proceed" type="object" class="oe_highlight" invisible="state != 'approve' or in_recovery" />
                     <button string="SD Slip" name="action_sd_slip" type="object" invisible="state != 'approve' or in_recovery" />
                     
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery" />
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery" groups="stock.group_stock_user"/>
                     <button string="Receipt" name="action_receipt" type="object" invisible="state != 'wfd' or in_recovery" />
 
                     <button string="Temporary Recovery" name="action_temporary_recovery" type="object" class="oe_highlight" invisible="state != 'in_recovery' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />

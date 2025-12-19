@@ -145,15 +145,17 @@ patch(PaymentScreen.prototype, {
         // --- MICROFINANCE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.microfinance) {
             const mfData = currentOrder.extra_data.microfinance;
+            
 
             if (mfData.security_desposit) {
                 const depositID = mfData.security_deposit_id || null;
+                const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                const partnerId = currentOrder.get_partner()?.id || null;
 
-                const payment_method = currentOrder.paymentlines[0].name
-
-                console.log(payment_method);
+                
 
                 if (depositID) {
+                    // Update existing record
                     await this.env.services.orm.write(
                         'microfinance.installment',
                         [depositID],
@@ -162,6 +164,7 @@ patch(PaymentScreen.prototype, {
                             bank_name: currentOrder.bank_name,
                             cheque_no: currentOrder.cheque_number,
                             cheque_date: currentOrder.cheque_date,
+                            donee_id: partnerId,
                             state: 'paid',
                         }
                     );
@@ -170,22 +173,91 @@ patch(PaymentScreen.prototype, {
                         `Deposit Received successfully`,
                         { type: 'success' }
                     );
+                } else {
+                    // Create new microfinance.installment record if it doesn't exist
+                    const microfinanceId = mfData.microfinance_id || null;
+                    const amount = mfData.amount || 0;
+
+                    try {
+                        const newInstallment = await this.env.services.orm.create(
+                            'microfinance.installment',
+                            [{
+                                payment_type: 'security',
+                                payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                                bank_name: currentOrder.bank_name || false,
+                                cheque_no: currentOrder.cheque_number || false,
+                                cheque_date: currentOrder.cheque_date || false,
+                                microfinance_id: microfinanceId,
+                                donee_id: partnerId,
+                                amount: amount,
+                                date: new Date().toISOString().split('T')[0],
+                                state: 'paid',
+                            }]
+                        );
+
+                        console.log("🟢 [Microfinance] Created installment:", newInstallment);
+
+                        if (newInstallment) {
+                            this.env.services.notification.add(
+                                `Security Deposit record created and paid successfully`,
+                                { type: 'success' }
+                            );
+                        }
+                    } catch (error) {
+                        console.error("❌ [Microfinance] Error creating installment:", error);
+                        this.env.services.notification.add(
+                            `Error creating security deposit: ${error.message}`,
+                            { type: 'danger' }
+                        );
+                    }
                 }
             } else {
                 const microfinanceLineIds = mfData.microfinance_line_ids || [];
                 
                 if (microfinanceLineIds.length > 0) {
-                    // Fetch unpaid microfinance lines
+                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                    const partnerId = currentOrder.get_partner()?.id || null;
+                    const microfinanceId = mfData.microfinance_id || null;
                     
+                    // Calculate total amount from all lines
+                    let totalAmount = 0;
+                    for (const line of microfinanceLineIds) {
+                        totalAmount += line.amount || 0;
+                    }
+                    
+                    // Update microfinance lines as paid
                     for (const line of microfinanceLineIds) {
                         await this.env.services.orm.write(
                             'microfinance.line',
                             [line.id],
                             {
                                 paid_amount: line.amount,
-                                state: 'paid', // optional
+                                state: 'paid',
                             }
                         );
+                    }
+                    
+                    // Create microfinance.installment record for tracking the installment payment
+                    try {
+                        const newInstallment = await this.env.services.orm.create(
+                            'microfinance.installment',
+                            [{
+                                payment_type: 'installment',
+                                payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                                bank_name: currentOrder.bank_name || false,
+                                cheque_no: currentOrder.cheque_number || false,
+                                cheque_date: currentOrder.cheque_date || false,
+                                microfinance_id: microfinanceId,
+                                donee_id: partnerId,
+                                amount: totalAmount,
+                                date: new Date().toISOString().split('T')[0],
+                                state: 'paid',
+                            }]
+                        );
+                        
+                        console.log("🟢 [Microfinance] Created installment record:", newInstallment);
+                    } catch (error) {
+                        console.error("❌ [Microfinance] Error creating installment record:", error);
                     }
                     
                     this.env.services.notification.add(
@@ -215,6 +287,80 @@ patch(PaymentScreen.prototype, {
                 }
             }
 
+        }
+
+        // --- WELFARE ---
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+            try {
+                const wfData = currentOrder.extra_data.welfare;
+                const welfareId = wfData.welfare_id;
+                const isRecurring = wfData.is_recurring;
+
+                if (welfareId) {
+                    if (!isRecurring) {
+                        // One-time disbursement: Update welfare.state to 'disbursed'
+                        await this.env.services.orm.write(
+                            'welfare',
+                            [welfareId],
+                            { state: 'disbursed' }
+                        );
+
+                        this.env.services.notification.add(
+                            `Welfare ${wfData.record_number} one-time disbursement completed`,
+                            { type: 'success' }
+                        );
+                    } else {
+                        // Recurring disbursement: Update recurring lines to 'disbursed'
+                        const recurringLineIds = wfData.recurring_line_ids || [];
+                        
+                        if (recurringLineIds.length > 0) {
+                            for (const line of recurringLineIds) {
+                                await this.env.services.orm.write(
+                                    'welfare.recurring.line',
+                                    [line.id],
+                                    { state: 'disbursed' }
+                                );
+                            }
+
+                            this.env.services.notification.add(
+                                `Processed ${recurringLineIds.length} recurring welfare disbursement(s)`,
+                                { type: 'success' }
+                            );
+
+                            // Check if ALL recurring lines are now disbursed
+                            const remainingLines = await this.env.services.orm.searchRead(
+                                'welfare.recurring.line',
+                                [
+                                    ['welfare_id', '=', welfareId],
+                                    ['state', '!=', 'disbursed']
+                                ],
+                                ['id'],
+                                {}
+                            );
+
+                            // If no remaining lines, update welfare.state to 'disbursed'
+                            if (remainingLines.length === 0) {
+                                await this.env.services.orm.write(
+                                    'welfare',
+                                    [welfareId],
+                                    { state: 'disbursed' }
+                                );
+
+                                this.env.services.notification.add(
+                                    `Welfare ${wfData.record_number} fully disbursed (all recurring lines completed)`,
+                                    { type: 'success' }
+                                );
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("❌ [Welfare] Error updating state:", error);
+                this.env.services.notification.add(
+                    "Note: Welfare status not updated, but order will proceed",
+                    { type: 'warning' }
+                );
+            }
         }
         
         // Continue with normal POS flow

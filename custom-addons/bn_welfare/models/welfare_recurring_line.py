@@ -18,6 +18,7 @@ class WelfareRecurringLine(models.Model):
 
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
+    donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")

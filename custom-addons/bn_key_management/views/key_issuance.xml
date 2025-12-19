@@ -24,6 +24,7 @@
                     <button string="Issued" name="action_issue" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'overdue']" />
                     <button string="Return" name="action_return" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned']" />
                     <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned', 'overdue']" />
+                    <button string="Print Receipt" name="%(bn_donation_box.donation_box_receipt_report_action)d" type="action" class="btn-secondary" icon="fa-print"  invisible="state in ['draft', 'issued', 'returned', 'overdue']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,returned,overdue"/>
                 </header>
@@ -98,6 +99,13 @@
         action="bn_key_management.bulk_key_issuance_action"
         parent="key_issuance_menu"
         sequence="1"/>
+    
+    <menuitem
+        id="manual_key_issuance_menu"
+        name="Manual Assign / Return"
+        action="bn_key_management.manual_key_issuance_action"
+        parent="key_issuance_menu"
+        sequence="2"/>
 
     <menuitem
         id="key_issuance_history_menu"

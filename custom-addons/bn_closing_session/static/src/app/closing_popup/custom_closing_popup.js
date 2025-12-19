@@ -50,10 +50,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
         const initializePayment = (pm) => {
             if (!pm?.id) return;
-            this.state.lines[pm.id] = { restricted: [], unrestricted: [] };
+            this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
             this.state.newLines[pm.id] = {
                 restricted: { amount: 0, ref: "", record_id: 0 },
                 unrestricted: { amount: 0, ref: "", record_id: 0 },
+                neutral: { amount: 0, ref: "", record_id: 0 },
             };
         };
 
@@ -145,11 +146,49 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return this.getEffectiveCounted(paymentId) - expectedAmount;
     }
 
+    _getPaymentMethod(paymentId) {
+        return paymentId === this.props.default_cash_details?.id
+            ? this.props.default_cash_details
+            : (this.props.other_payment_methods || []).find(m => m.id === paymentId);
+    }
+
+    getRestrictedDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.restricted || 0;
+        const actual = (this.state.lines[paymentId]?.restricted || [])
+            .reduce((sum, line) => sum + (line.amount || 0), 0);
+        return actual - expected;
+    }
+
+    getUnrestrictedDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.unrestricted || 0;
+        const actual = (this.state.lines[paymentId]?.unrestricted || [])
+            .reduce((sum, line) => sum + (line.amount || 0), 0);
+        return actual - expected;
+    }
+
     getLinesTotal(paymentId) {
         const lines = this.state.lines[paymentId] || { restricted: [], unrestricted: [] };
         const restrictedTotal = (lines.restricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
         const unrestrictedTotal = (lines.unrestricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
-        return restrictedTotal + unrestrictedTotal;
+        const neutralTotal = (lines.neutral || []).reduce((sum, l) => sum + (l.amount || 0), 0);
+
+        return restrictedTotal + unrestrictedTotal + neutralTotal;
+    }
+
+    getNeutralDifference(paymentId) {
+    const pm = this._getPaymentMethod(paymentId);
+    const expected = pm?.breakdown?.neutral || 0;
+    const actual = (this.state.lines[paymentId]?.neutral || [])
+        .reduce((sum, line) => sum + (line.amount || 0), 0);
+    return actual - expected;
+}
+
+    // Safely format amounts for neutral rows to avoid undefined/NaN reaching formatCurrency
+    formatCurrencyNeutral(value) {
+        const num = Number(value);
+        return this.env.utils.formatCurrency(Number.isFinite(num) ? num : 0);
     }
 
     getMaxDifference() {
@@ -225,7 +264,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         const amountNum = parseFloat(amount);
 
         // Basic validation
-        if (!amount || !ref || isNaN(amountNum) || amountNum <= 0) {
+        if (!amount || !ref || isNaN(amountNum)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid input"),
                 body: _t("Please enter a valid Amount and Ref."),

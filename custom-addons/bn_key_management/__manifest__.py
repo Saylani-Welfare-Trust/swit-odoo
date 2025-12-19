@@ -13,6 +13,7 @@
         'security/groups.xml',
         'data/schedule_action.xml',
         'wizards/bulk_key_issuance.xml',
+        'wizards/manual_key_issuance.xml',
         'views/key.xml',
         'views/key_bunch.xml',
         'views/key_issuance.xml',

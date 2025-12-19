@@ -12,7 +12,7 @@
 
 shariah_record = {}
 
-for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
+for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', 'in', ['cfo_approval', 'paid'])]):
     for line in rec.lines:
         if not line.product_id:
             continue
@@ -20,6 +20,7 @@ for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
         analytical_lines = env['analytical.product.line'].search(
             [('product_id', '=', line.product_id.id)]
         )
+        
         for analytical_line in analytical_lines:
             categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
             if not categ_name:
@@ -27,32 +28,244 @@ for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False)]):
 
             analytic_id = analytical_line.analytic_account_id.id
             if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'restricted': 0, 'unrestricted': 0}
+                shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
 
             if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['restricted'] += line.price_subtotal_incl
+                shariah_record[analytic_id]['inflow_restricted'] += line.price_subtotal_incl
 
             if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['unrestricted'] += line.price_subtotal_incl
+                shariah_record[analytic_id]['inflow_unrestricted'] += line.price_subtotal_incl
+
+    rec['is_sync_shariah_law'] = True
+
+for rec in env['donation'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'posted')]):
+    if not rec.product_id:
+        continue
+
+    analytical_lines = env['analytical.product.line'].search(
+        [('product_id', '=', rec.product_id.id)]
+    )
+    
+    for analytical_line in analytical_lines:
+        categ_name = rec.product_id.categ_id.complete_name.lower() if rec.product_id.categ_id else ''
+        if not categ_name:
+            continue
+
+        analytic_id = analytical_line.analytic_account_id.id
+        if analytic_id not in shariah_record:
+            shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
+
+        if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
+            shariah_record[analytic_id]['inflow_restricted'] += rec.amount
+
+        if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
+            shariah_record[analytic_id]['inflow_unrestricted'] += rec.amount
+
+    rec['is_sync_shariah_law'] = True
+
+for rec in env['api.donation'].search([('is_sync_shariah_law', '=', False)]):
+    for line in rec.donation_item_ids:
+        product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
+        
+        if not product_name:
+            continue
+        
+        found = env['gateway.config.line'].search([('name', '=', product_name)], limit=1)
+    
+        analytical_lines = env['analytical.product.line'].search(
+            [('product_id', '=', found.product_id.id)]
+        )
+        
+        for analytical_line in analytical_lines:
+            categ_name = found.product_id.categ_id.complete_name.lower() if found.product_id.categ_id else ''
+            if not categ_name:
+                continue
+    
+            analytic_id = analytical_line.analytic_account_id.id
+            if analytic_id not in shariah_record:
+                shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
+    
+            if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
+                shariah_record[analytic_id]['inflow_restricted'] += line.total
+    
+            if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
+                shariah_record[analytic_id]['inflow_unrestricted'] += line.total
 
     rec['is_sync_shariah_law'] = True
 
 # Create or update Shariah Law records
 for analytic_id, values in shariah_record.items():
+    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
+    
+    parent_id = analytic_account_id.parent_id
+    
     shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
+    
     if shariah_law:
         # Update existing amounts
         shariah_law.write({
-            'restricted_amount': shariah_law.restricted_amount + values['restricted'],
-            'unrestricted_amount': shariah_law.unrestricted_amount + values['unrestricted']
+            'inflow_restricted_amount': shariah_law.inflow_restricted + values['inflow_restricted'],
+            'inflow_unrestricted_amount': shariah_law.inflow_unrestricted + values['inflow_unrestricted']
         })
     else:
         # Create new record
         env['shariah.law'].create({
+            'parent_id': parent_id.id,
             'analytic_account_id': analytic_id,
-            'restricted_amount': values['restricted'],
-            'unrestricted_amount': values['unrestricted']
+            'inflow_restricted_amount': values['inflow_restricted'],
+            'inflow_unrestricted_amount': values['inflow_unrestricted']
         })
+        
+    while parent_id:
+        sub_parent_id = parent_id.parent_id or None
+        
+        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
+        
+        if shariah_law:
+            # Update existing amounts
+            shariah_law.write({
+                'inflow_restricted_amount': shariah_law.inflow_restricted + values['inflow_restricted'],
+                'inflow_unrestricted_amount': shariah_law.inflow_unrestricted + values['inflow_unrestricted']
+            })
+        else:
+            # Create new record
+            env['shariah.law'].create({
+                'parent_id': sub_parent_id.id if sub_parent_id else None,
+                'analytic_account_id': parent_id.id,
+                'inflow_restricted_amount': values['inflow_restricted'],
+                'inflow_unrestricted_amount': values['inflow_unrestricted']
+            })
+            
+        parent_id = parent_id.parent_id
+
+shariah_record = {}
+
+for rec in env['hr.expense'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'done')]):
+    if not rec.product_id:
+        continue
+
+    analytical_lines = env['analytical.product.line'].search(
+        [('product_id', '=', rec.product_id.id)]
+    )
+    
+    for analytical_line in analytical_lines:
+        categ_name = rec.product_id.categ_id.complete_name.lower() if rec.product_id.categ_id else ''
+        if not categ_name:
+            continue
+
+        analytic_id = analytical_line.analytic_account_id.id
+        if analytic_id not in shariah_record:
+            shariah_record[analytic_id] = {'expense': 0}
+
+        shariah_record[analytic_id]['expense'] += rec.total_amount_currency
+
+    rec['is_sync_shariah_law'] = True
+
+# Create or update Shariah Law records
+for analytic_id, values in shariah_record.items():
+    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
+    
+    parent_id = analytic_account_id.parent_id
+    
+    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
+    
+    if shariah_law:
+        # Update existing amounts
+        shariah_law.write({
+            'expense_amount': shariah_law.inflow_restricted + values['expense'],
+        })
+    else:
+        # Create new record
+        env['shariah.law'].create({
+            'parent_id': parent_id.id,
+            'analytic_account_id': analytic_id,
+            'expense_amount': values['expense'],
+        })
+        
+    while parent_id:
+        sub_parent_id = parent_id.parent_id or None
+        
+        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
+        
+        if shariah_law:
+            # Update existing amounts
+            shariah_law.write({
+                'expense_amount': shariah_law.inflow_unrestricted + values['expense']
+            })
+        else:
+            # Create new record
+            env['shariah.law'].create({
+                'parent_id': sub_parent_id.id if sub_parent_id else None,
+                'analytic_account_id': parent_id.id,
+                'expense_amount': values['expense']
+            })
+            
+        parent_id = parent_id.parent_id
+
+shariah_record = {}
+
+for rec in env['purchase.order'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'purchase')]):
+    for line in rec.order_line:
+        if not line.product_id:
+            continue
+    
+        analytical_lines = env['analytical.product.line'].search(
+            [('product_id', '=', line.product_id.id)]
+        )
+        
+        for analytical_line in analytical_lines:
+            categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
+            if not categ_name:
+                continue
+    
+            analytic_id = analytical_line.analytic_account_id.id
+            if analytic_id not in shariah_record:
+                shariah_record[analytic_id] = {'purchase': 0}
+    
+            shariah_record[analytic_id]['purchase'] += line.price_subtotal
+
+    rec['is_sync_shariah_law'] = True
+
+# Create or update Shariah Law records
+for analytic_id, values in shariah_record.items():
+    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
+    
+    parent_id = analytic_account_id.parent_id
+    
+    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
+    
+    if shariah_law:
+        # Update existing amounts
+        shariah_law.write({
+            'purchase_amount': shariah_law.purchase_amount + values['purchase'],
+        })
+    else:
+        # Create new record
+        env['shariah.law'].create({
+            'parent_id': parent_id.id,
+            'analytic_account_id': analytic_id,
+            'purchase_amount': values['purchase'],
+        })
+        
+    while parent_id:
+        sub_parent_id = parent_id.parent_id or None
+        
+        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
+        
+        if shariah_law:
+            # Update existing amounts
+            shariah_law.write({
+                'purchase_amount': shariah_law.purchase_amount + values['purchase']
+            })
+        else:
+            # Create new record
+            env['shariah.law'].create({
+                'parent_id': sub_parent_id.id if sub_parent_id else None,
+                'analytic_account_id': parent_id.id,
+                'purchase_amount': values['purchase']
+            })
+            
+        parent_id = parent_id.parent_id
         
         </field>
     </record>

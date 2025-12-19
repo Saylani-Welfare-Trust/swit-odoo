@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_partner_form_inherit_bn_profile_management_inherit_bn_donation_in_kind" model="ir.ui.view">
+        <field name="name">base.view.partner.form.inherit.bn.profile.management.inherit.bn.donation.in.kind</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.base_view_partner_form_inherit_bn_profile_management"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='donation_in_kind']" position="inside">
+                <field name="donation_in_kind_ids" readonly="1">
+                    <tree>
+                        <field name="name" readonly="1" />
+                        <field name="donor_id" />
+                        <field name="product_id" />
+                        <field name="location_id" />
+                        <field name="quantity" />
+                        <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'approval'" decoration-danger="state == 'cancel'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_profile_management_profile_management_view_form_inherit_bn_donation_in_kind" model="ir.ui.view">
+        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.donation.in.kind</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='donation_in_kind']" position="inside">
+                <field name="donation_in_kind_ids" readonly="1">
+                    <tree>
+                        <field name="name" readonly="1" />
+                        <field name="donor_id" />
+                        <field name="product_id" />
+                        <field name="location_id" />
+                        <field name="quantity" />
+                        <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'approval'" decoration-danger="state == 'cancel'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

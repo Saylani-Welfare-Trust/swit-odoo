@@ -33,7 +33,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             amount: parseFloat(this.props.amount),
             service_charges: 0,
             total: parseFloat(this.props.amount),
-            donor_address: this.props.donor_address || "",            
+            address: this.props.address || "",   
+            transaction_ref: this.props.transaction_ref || "",         
         });
     }
 
@@ -43,12 +44,16 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.total = this.state.amount + service_charges
     }
 
-    updateAddress(event) {
-        this.state.donor_address = event.target.value;
-    }
-
     updateMicrofinanceRequestNo(event) {
         this.state.microfinance_request_no = event.target.value;
+    }
+
+    updateAddress(event) {
+        this.state.address = event.target.value;
+    }
+    
+    updateTransactionRef(event) {
+        this.state.transaction_ref = event.target.value;
     }
 
     prepareOrderLines(orderLines) {
@@ -79,7 +84,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         if (this.action_type === 'dhs') {
             const payload ={
                 'donor_id': this.donor_id,
-                'address': this.state.donor_address,
+                'address': this.state.address,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
             }
@@ -127,26 +132,41 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
             let record = null
 
-            await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]).then((data) => {
-                if (data.status === 'error') {
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: data.body,
-                    });
-                }
-                else if (data.status === 'success') {
-                    record = data
+            const data = await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]);
+            
+            if (data.status === 'error') {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: data.body,
+                });
+                return;
+            }
+            
+            if (data.status === 'success') {
+                record = data;
+                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
+                payload.microfinance_id = data.id;  // Store microfinance_id for creating record if needed
+                payload.amount = data.amount;  // Store amount from microfinance request
 
-                    payload.security_deposit_id = data.deposit_id
-
-                    this.notification.add(_t("Operation Successful"), {
+                if (data.deposit_exists) {
+                    this.notification.add(_t("Existing deposit found"), {
                         type: "info",
                     });
-                    // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-                    //     data.id,
-                    // ]);
+                } else {
+                    this.notification.add(_t("Security deposit will be created upon payment"), {
+                        type: "info",
+                    });
                 }
-            });
+                
+                // Set customer from donee_id
+                if (data.donee_id) {
+                    const partnerId = data.donee_id;
+                    let partner = await this.getOrLoadPartner(partnerId);
+                    if (partner) {
+                        this.assignPartnerToOrder(partner, selectedOrder);
+                    }
+                }
+            }
             // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
             //     if (data.status === 'error') {
             //         this.popup.add(ErrorPopup, {
@@ -198,21 +218,21 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     price_extra: record.amount,
                 });
             }
-
-            await this.processPartner(record, selectedOrder);
                
             this.pos.receive_voucher = true
 
             this.cancel()
         }
 
-        // Donation Home Service
+        // Direct Deposit
         if (this.action_type === 'dd') {
+            const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
-                'address': this.state.donor_address,
+                'transaction_ref': this.state.transaction_ref,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
+                'user_id': userId,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {

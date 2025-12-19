@@ -137,7 +137,7 @@ class MicrofinanceInstallment(models.Model):
                 'body': "No request found against enter number."
             }
 
-        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id)])
+        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id), ('payment_type', '=', 'security')])
         
         if security_deposit:
             return {
@@ -145,10 +145,16 @@ class MicrofinanceInstallment(models.Model):
                 'id': microfinance_request.id,
                 'donee_id': microfinance_request.donee_id.id,
                 'deposit_id': security_deposit.id,
-                'amount': security_deposit.amount
+                'amount': security_deposit.amount,
+                'deposit_exists': True
             }
         
+        # Return microfinance info even if no deposit exists, so POS can create it
         return {
-            'status': "error",
-            'body': "Record not found."
+            'status': "success",
+            'id': microfinance_request.id,
+            'donee_id': microfinance_request.donee_id.id,
+            'deposit_id': False,
+            'amount': microfinance_request.security_deposit,
+            'deposit_exists': False
         }

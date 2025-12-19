@@ -29,7 +29,7 @@
                         </group>
                         <group name="record_search_col_2">
                             <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" readonly="is_microfinance or is_welfare" />
-                            <field name="microfinance_scheme_id" invisible="not is_microfinance" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="is_microfinance" />
+                            <!-- <field name="microfinance_scheme_id" invisible="not is_microfinance" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="is_microfinance" /> -->
                         </group>
                     </group>
                 </sheet>

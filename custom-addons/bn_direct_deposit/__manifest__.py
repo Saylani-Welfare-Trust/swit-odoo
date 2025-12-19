@@ -6,7 +6,9 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Direct Deposit',
     'depends': [
-        'bn_pos_cheque'
+        'bn_pos_cheque',
+        'bn_donation_home_service',
+    
     ],
     'data': [
         'data/sequence.xml',
@@ -21,4 +23,4 @@
             'bn_direct_deposit/static/src/app/**/*',
         ],
     },
-}
+} # type: ignore

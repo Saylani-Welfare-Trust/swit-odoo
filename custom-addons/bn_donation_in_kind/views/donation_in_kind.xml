@@ -1,0 +1,126 @@
+<?xml version="1.0" ?>
+<odoo>
+
+    <record id="donaiton_in_kind_tree_view" model="ir.ui.view">
+        <field name="name">donation.in.kind.tree.view</field>
+        <field name="model">donation.in.kind</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree create="0" delete="0">
+                <field name="name" readonly="1" />
+                <field name="donor_id" />
+                <field name="product_id" />
+                <field name="location_id" />
+                <field name="quantity" />
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'approval'" decoration-danger="state == 'cancel'" />
+            </tree>
+        </field>
+    </record>
+    
+    <record id="donaiton_in_kind_form_view" model="ir.ui.view">
+        <field name="name">donation.in.kind.form.view</field>
+        <field name="model">donation.in.kind</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form create="0" delete="0">
+                <header>
+                    <button name="action_validate" string="Validate" type="object" class="oe_highlight" invisible="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state in ['validate', 'box_open','valuation_committee', 'approval', 'box_validate','cancel']" />
+                    <button name="action_box_open" string="Open Box" type="object" class="oe_highlight" invisible="state in ['draft', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" />
+                    <button name="action_check" string="Check Item" type="object" class="oe_highlight" invisible="state != 'box_open' or check_bool in ['yes', 'no']" />
+                    <button name="action_valuation_committee" string="Valuation Committee" type="object" class="oe_highlight" invisible="state in ['draft', 'validate', 'valuation_committee', 'approval', 'box_validate', 'cancel'] or check_bool in ['default', 'no']"/>
+                    <button name="action_approval" string="Approval" type="object" class="oe_highlight" invisible="state in ['draft', 'validate', 'box_open', 'approval', 'box_validate', 'cancel']" groups="bn_donation_in_kind.donation_in_kind_valuation_committee_group" />
+                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" invisible="state in ['draft', 'validate', 'box_open', 'valuation_committee', 'box_validate', 'cancel']" />
+                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" invisible="state == 'box_validate' or check_bool in ['default', 'yes']" />
+                    <button name="action_draft" string="Draft" type="object" class="btn-secondary" invisible="state in ['draft', 'validate', 'box_open', 'valuation_committee', 'approval', 'box_validate']"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validate,box_open,check_item,valuation_committee,approval,box_validate" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_product_box" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="product_id == False">
+                            <field name="product_id" widget="statinfo"/>
+                        </button>
+                        <button name="action_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="picking_id == False">
+                            <field name="picking_id" widget="statinfo"/>
+                        </button>
+                        <button name="action_journal_entries" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="account_move_id == False">
+                            <field name="account_move_id" widget="statinfo"/>
+                        </button>
+                        <button name="action_reverse_journal_entries" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reverse_account_move_id == False">
+                            <field name="reverse_account_move_id" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="donor_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="product_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="debit_account_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="picking_type_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="check_bool" invisible="1" />
+                            <field name="reverse_account_move_id" invisible="1" />
+                        </group>
+                        <group>
+                            <field name="location_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="quantity" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" />
+                            <field name="credit_account_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="journal_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="account_move_id" invisible="1" />
+                            <field name="picking_id" invisible="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Donation In Kind Lines" name="donation_in_kind_line_ids">
+                            <field name="donation_in_kind_line_ids" readonly="state in ['draft', 'validate', 'valuation_committee','approval', 'box_validate', 'cancel'] or check_bool in ['yes', 'no']">
+                                <tree editable="bottom">
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" />
+                                    <field name="price_bool" column_invisible="True" />
+                                    <field name="check_price_bool" column_invisible="True" />
+                                    <field name="avg_price" optional="hide" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Valuation Committee" name="product_valuation_committee_line_ids" groups="bn_donation_in_kind.donation_in_kind_valuation_committee_group">
+                            <field name="product_valuation_committee_line_ids" readonly="state in ['draft', 'validate', 'approval', 'box_validate', 'cancel']">
+                                <tree string="Valuation Committee" editable="bottom" create="false" edit="true" delete="false">
+                                    <field name="product_id" readonly="check_price_bool == True" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" readonly="check_price_bool == True" />
+                                    <field name="price_bool" column_invisible="True" />
+                                    <field name="check_price_bool" column_invisible="True"  />
+                                    <field name="avg_price" />
+                                    <field name="donation_in_kind_line_id" column_invisible="True" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="donation_in_kind_action" model="ir.actions.act_window">
+        <field name="name">Donation In Kind</field>
+        <field name="res_model">donation.in.kind</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new donation in kind...
+            </p>
+        </field>
+    </record>
+    
+    <menuitem
+        id="donation_in_kind_menu"
+        name="Donation In Kind"
+        action="donation_in_kind_action"
+        parent="bn_import_donation.import_donation_root_menu"
+        sequence="3"/>
+
+</odoo>

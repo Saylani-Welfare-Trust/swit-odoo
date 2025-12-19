@@ -50,8 +50,8 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="hod_remarks" readonly="state in ['recurring', 'disbursed'] or state != 'hod_approve'" required="state == 'hod_approve'"  />
-                            <field name="member_remarks" readonly="state in ['recurring', 'disbursed'] or state != 'mem_approve'" required="state == 'mem_approve'" />
+                            <field name="hod_remarks" readonly="state != 'inquiry'" required="state == 'hod_approve'"  />
+                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'mem_approve'" />
                         </group>
                         <group name="welfare_col_2">
                             <field name="application_form_name" invisible="1"/>
@@ -87,7 +87,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="recurring_line" string="Recurring Details" invisible="portal_sync_status != 'recurring'">
+                        <page name="recurring_line" string="Recurring Details" invisible="state != 'recurring'">
                             <field name="welfare_recurring_line_ids" readonly="1">
                                 <tree>
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
@@ -97,6 +97,7 @@
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_date" />
                                     <field name="amount" />
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" />
                                 </tree>
                             </field>
                         </page>

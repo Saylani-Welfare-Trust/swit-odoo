@@ -211,7 +211,15 @@ class ResPartner(models.Model):
                 raise ValidationError('Please specify your Date of Birth...')
             elif rec.date_of_birth and 'Microfinance' in rec.category_id.mapped('name') and rec.age and rec.age < 18:
                 raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
-            elif 'Donee' in rec.category_id.mapped('name'):
+            
+            # Check CNIC expiry date for Donee registration - must be at least 1 year from today
+            if 'Donee' in rec.category_id.mapped('name') and rec.cnic_expiration:
+                from dateutil.relativedelta import relativedelta
+                min_expiry_date = fields.Date.today() + relativedelta(years=1)
+                if rec.cnic_expiration < min_expiry_date:
+                    raise ValidationError('CNIC expiry date should be minimum one year from the date of application. Please renew your CNIC before registration.')
+            
+            if 'Donee' in rec.category_id.mapped('name'):
                 res_partner = rec.env['res.partner'].search(['|', ('cnic_no', '=', rec.cnic_no), ('mobile', '=', rec.mobile), ('country_code_id', '=', rec.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
 
                 if res_partner:
@@ -291,6 +299,10 @@ class ResPartner(models.Model):
 
             if 'Welfare' in rec.category_id.mapped('name'):
                 rec.action_welfare_application()
+            
+            # Automatically open microfinance application wizard after successful registration
+            if 'Microfinance' in rec.category_id.mapped('name'):
+                return rec.action_print_microfinance_application()
     
     def action_change_request(self):
         self.is_change_request = True
@@ -303,16 +315,15 @@ class ResPartner(models.Model):
         if 'Microfinance' not in self.category_id.mapped('name'):
             raise ValidationError('This action is only restricted for Microfinance Application.')
         
-        # raise ValidationError(str(self.env.context))
-
-        scheme_id = self.env.context.get('microfinance_scheme_id', None)
-
-        if scheme_id:
-            microfinance = self.env['microfinance'].create({
-                'microfinance_scheme_id': scheme_id,
-                'donee_id': self.id
-            })
-
-            microfinance._compute_microfinance_scheme_line_ids()
-
-        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)
+        # Open wizard to select microfinance scheme
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Select Microfinance Scheme',
+            'res_model': 'microfinance.application.wizard',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            }
+        }

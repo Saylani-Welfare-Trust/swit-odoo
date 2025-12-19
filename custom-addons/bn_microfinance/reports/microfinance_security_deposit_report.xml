@@ -7,11 +7,11 @@
                 <t t-call="web.external_layout">
 
                     <!-- Microfinance Container -->
-                    <div class="mt-5 clearfix">
+                    <div class="mt-5 clearfix" style="margin-top:360px !important;">
 
                         <!-- Header -->
-                        <div class="text-center border-bottom border-3 pb-3 mb-4">
-                            <h2 class="fw-bold text-uppercase">
+                        <div class="text-center border-bottom border-3 pb-3 mb-4" style="border-color: black !important;">
+                            <h2 class="fw-bold text-uppercase" style="color: black;">
                                 Provisional Security Deposit Receipt
                             </h2>
                         </div>

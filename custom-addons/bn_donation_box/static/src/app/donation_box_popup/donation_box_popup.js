@@ -44,6 +44,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
 
     async onClick(collection) {
         const payload = { 
+            collection_id: collection.id,
             lot_id: collection.lot_id,
             box_no: collection.box_no,
             amount: collection.amount,

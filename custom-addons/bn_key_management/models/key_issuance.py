@@ -83,14 +83,29 @@ class KeyIssuance(models.Model):
                 "body": "Please specify Key and Collection Amount",
             }
 
-        collection = self.env['rider.collection'].search([('lot_id', '=', data['lot_id']), ('state', '=', 'donation_submit'), ('submission_time', '=', fields.Date.today())])
-        
-        if not collection:
+        # Get collection record by ID for reliable lookup
+        collection_id = data.get('collection_id')
+        if not collection_id:
             return {
                 "status": "error",
-                "body": f"Please first submit your Collection aganist {data['box_no']}",
+                "body": "Collection ID is required",
             }
-        elif collection and collection.amount != float(data['amount']):
+        
+        collection = self.env['rider.collection'].browse(collection_id)
+        
+        if not collection.exists():
+            return {
+                "status": "error",
+                "body": f"Collection record not found for {data['box_no']}",
+            }
+        
+        if collection.state != 'donation_submit':
+            return {
+                "status": "error",
+                "body": f"Please first submit your Collection against {data['box_no']}",
+            }
+        
+        if collection.amount != float(data['amount']):
             return {
                 "status": "error",
                 "body": f"Please enter the correct amount collected against {data['box_no']}",

@@ -3,7 +3,7 @@
 
     <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('pos-receipt')]" position="replace">
-            <div class="pos-receipt">
+            <div class="pos-receipt" style="page-break-inside: avoid; min-height: 0;">
                 <t t-set="company" t-value="props.data.headerData.company"/>
                 <t t-set="order" t-value="props.data"/>
                 <t t-set="partner" t-value="props.data.partner"/>
@@ -13,7 +13,7 @@
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
-                <div class="row" style="margin-top: 360px;">
+                <div class="row" style="margin-top: 360px; font-size: 10px !important; transform: scale(0.99); transform-origin: top;">
                     <div class="col-4">
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="order.receive_voucher">Receipt Voucher</h1>
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="!order.receive_voucher">Donation Receipt</h1>
@@ -27,7 +27,7 @@
                 </div>
 
                 <!-- Donor & Receipt Info -->
-                <div class="row border border-2 p-3">
+                <div class="row  p-2" style="font-size: 7px !important; line-height: 1.1; margin-top: 2px;">
                     <div class="col-6">
                         <div class="row">
                             <div class="col-4">
@@ -152,50 +152,63 @@
                                 </h4>
                             </div>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-4">
+                                <h4 class="fs-5 fw-medium">Date Time:</h4>
+                            </div>
+                            <div class="col-8">
+                                <h4 class="fs-5 fw-medium">
+                                    <t t-set="dateObj" t-value="new Date(date_format)"/>
+                                    <t t-set="day" t-value="dateObj.getDate()"/>
+                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
+                                    <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' + (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+                                </h4>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <br/>
-
+                
                 <!-- Items Table -->
-                <table class="table table-bordered text-center">
+                <table class="table table-bordered text-center" style="font-size: 12px !important; margin-top: 2px !important; line-height: 1;">
                     <thead>
                         <tr>
-                            <th>Account Title</th>
-                            <th>Quantity</th>
-                            <th>Rate</th>
-                            <th>Amount</th>
-                            <th>Customer Note</th>
+                            <th style="padding: 2px;">Account Title</th>
+                            <th style="padding: 2px;">Quantity</th>
+                            <th style="padding: 2px;">Rate</th>
+                            <th style="padding: 2px;">Amount</th>
+                            <th style="padding: 2px;">Customer Note</th>
                         </tr>
                     </thead>
                     <tbody>
                         <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                            <tr>
-                                <td class="text-start">
+                            <tr style="page-break-inside: avoid;">
+                                <td class="text-start" style="padding: 2px;">
                                     <t t-if="line.productName">
                                         <t t-esc="line.productName"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end" style="padding: 2px;">
                                     <t t-if="line.qty">
                                         <t t-esc="line.qty"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end" style="padding: 2px;">
                                     <t t-if="line.unitPrice">
                                         <t t-esc="line.unitPrice"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end" style="padding: 2px;">
                                     <t t-if="line.price">
                                         <t t-esc="line.price"/>
                                     </t>
                                     <t t-else="">-</t>
                                 </td>
-                                <td class="text-start">
+                                <td class="text-start" style="padding: 2px;">
                                     <t t-if="line.customerNote">
                                         <t t-esc="line.customerNote"/>
                                     </t>
@@ -207,18 +220,18 @@
                 </table>
 
                 <!-- Amount in words & Footer -->
-                <table class="table table-bordered">
+                <table class="table table-bordered" style="font-size: 12px !important; margin-top: 1px !important;">
                     <tfoot>
                         <tr>
-                            <th class="text-start">Enter By</th>
-                            <td class="text-start">
+                            <th class="text-start" style="padding: 2px;">Enter By</th>
+                            <td class="text-start" style="padding: 2px;">
                                 <t t-if="order.cashier">
                                     <t t-esc="order.cashier"/>
                                 </t>
                                 <t t-else="">-</t>
                             </td>
-                            <th class="text-start">Total Amount</th>
-                            <td class="text-end">
+                            <th class="text-start" style="padding: 2px;">Total Amount</th>
+                            <td class="text-end" style="padding: 2px;">
                                 <t t-if="order.amount_total">
                                     <t t-esc="format_currency_amount"/>
                                 </t>
@@ -230,10 +243,10 @@
                     </tfoot>
                 </table>
 
-                <hr class="border-top border-2 border-dark my-3"/>
+                <hr class="border-top border-2 border-dark" style="margin: 3px 0;"/>
 
-                <!-- Donor & Receipt Info -->
-                <div class="row border border-2 p-3">
+                <!-- Donor & Receipt Info (Duplicate) -->
+                <div class="row  p-2" style="font-size: 7px !important; line-height: 1.1; margin-top: 2px !important;">
                     <div class="col-6">
                         <div class="row">
                             <div class="col-4">
@@ -358,14 +371,32 @@
                                 </h4>
                             </div>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-4">
+                                <h4 class="fs-5 fw-medium">Date Time:</h4>
+                            </div>
+                            <div class="col-8">
+                                <h4 class="fs-5 fw-medium">
+                                    <t t-set="dateObj" t-value="new Date(date_format)"/>
+                                    <t t-set="day" t-value="dateObj.getDate()"/>
+                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
+                                    <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' + (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+                                </h4>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <br/>
-                <div class="pos-receipt-order-data">
-                    <p>Powered by BytesNode</p>
-                    <p>Mobile No. --- 03170295857 | Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com | Webiste --- bytesnode.com</p>
+                <div style="page-break-inside: avoid; margin-top: 2px !important;">
+                    <p style="font-size: 8px !important; text-align: center; margin: 1px 0; line-height: 1; transform: scale(0.95); transform-origin: center;">
+                        Powered by BytesNode
+                    </p>
+                    <p style="font-size: 8px !important; text-align: center; margin: 0; line-height: 1; transform: scale(0.95); transform-origin: center;">
+                        Mobile No. --- 03170295857 | Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com | Website --- bytesnode.com
+                    </p>
                 </div>
+
             </div>
         </xpath>
     </t>

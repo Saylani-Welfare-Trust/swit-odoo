@@ -1,10 +1,12 @@
-from odoo import fields, models
+from odoo import fields, models, api
+from odoo.exceptions import ValidationError
 
 
 box_status_selection = [
     ('missing', 'Missing'),
     ('broken', 'Broken'),
     ('robbery', 'Robbery'),
+    ('return', 'Return'),
 ]
 
 status_selection = [
@@ -20,12 +22,13 @@ class DonationBoxComplain(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
+    lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
-    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", tracking=True)
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", compute="_set_registration_id", tracking=True)
+    return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True)
+    scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True)
 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
-    
-    lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string='Box No', store=True, tracking=True)
     
     name = fields.Char(related='donation_box_registration_installation_id.name', string='Registration / Installation No.', store=True, tracking=True)
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string='Shop Name', store=True, tracking=True)
@@ -54,4 +57,175 @@ class DonationBoxComplain(models.Model):
         self.status = 'process'
     
     def action_resolve(self):
+        if self.box_status != 'return':
+            self.donation_box_registration_installation_id.status = 'close'
+            self.lot_id.is_not_return = True
+
+        if self.box_status == 'broken':
+            self.action_scrap()
+
         self.status = 'resolved'
+
+    @api.depends('lot_id')
+    def _set_registration_id(self):
+        for rec in self:
+            rec.donation_box_registration_installation_id = None
+
+            if rec.lot_id:
+                rec.donation_box_registration_installation_id = self.env['donation.box.registration.installation'].search([('lot_id', '=', rec.lot_id.id), ('status', '=', 'available')], order='id desc', limit=1).id
+
+    def action_return(self):
+        """Perform a serial-based stock return for the donation box."""
+        for rec in self:
+
+            if not rec.lot_id:
+                raise ValidationError("Please select a Serial (Lot) to return.")
+
+            registration = rec.donation_box_registration_installation_id
+            if not registration:
+                raise ValidationError("No installation record found for this serial.")
+
+            # 1. Find original picking (delivery)
+            picking = registration.donation_box_request_id.picking_id
+
+            if not picking or picking.state != "done":
+                picking = self.env['stock.picking'].search([
+                    ('origin', '=', registration.donation_box_request_id.name),
+                    ('state', '=', 'done')
+                ], order="id desc", limit=1)
+
+            if not picking:
+                raise ValidationError("No completed Stock Picking found for this box.")
+
+            # 2. Create return wizard
+            return_wizard = self.env['stock.return.picking'].create({
+                'picking_id': picking.id,
+            })
+
+            # 3. Keep only the selected serial
+            serial_used = picking.move_line_ids.filtered(lambda ml: ml.lot_id.id == rec.lot_id.id)
+            if not serial_used:
+                raise ValidationError("This serial does not belong to the selected picking.")
+
+            # Update return lines
+            for line in return_wizard.product_return_moves:
+                if line.product_id == serial_used.product_id:
+                    line.quantity = 1
+                else:
+                    line.quantity = 0
+
+            # 4. Create the return picking
+            res = return_wizard.create_returns()   # res = {'res_id': return picking ID}
+            return_picking = self.env['stock.picking'].browse(res['res_id'])
+
+            # 5. Assign the same serial number to return move line
+            return_move_line = return_picking.move_line_ids.filtered(
+                lambda ml: ml.product_id == serial_used.product_id
+            )
+
+            if not return_move_line:
+                # create move line if missing
+                return_move_line = self.env['stock.move.line'].create({
+                    'move_id': return_picking.move_ids_without_package.filtered(
+                        lambda m: m.product_id == serial_used.product_id
+                    ).id,
+                    'picking_id': return_picking.id,
+                    'product_id': serial_used.product_id.id,
+                    'product_uom_id': serial_used.product_uom_id.id,
+                    'quantity': 1,
+                    'lot_id': rec.lot_id.id,
+                    'location_id': picking.location_dest_id.id,
+                    'location_dest_id': picking.location_id.id,
+                })
+            else:
+                # update existing move line
+                return_move_line.lot_id = rec.lot_id.id
+                return_move_line.quantity = 1
+
+            # 6. Validate the return picking
+            return_picking.button_validate()
+
+            # 7. Close installation
+            registration.status = 'close'
+
+            # 8. Close complain
+            rec.status = 'resolved'
+            rec.return_picking_id = return_picking.id
+            
+            # 9. Lot consume
+            rec.lot_id.lot_consume = False
+
+    def action_scrap(self):
+        """Scrap the selected serial (lot) instead of returning picking."""
+        for rec in self:
+
+            if not rec.lot_id:
+                raise ValidationError("Please select a Serial (Lot) to scrap.")
+
+            registration = rec.donation_box_registration_installation_id
+            if not registration:
+                raise ValidationError("No installation record found for this serial.")
+
+            # 1. Find original picking (delivery)
+            picking = registration.donation_box_request_id.picking_id
+
+            if not picking or picking.state != "done":
+                picking = self.env['stock.picking'].search([
+                    ('origin', '=', registration.donation_box_request_id.name),
+                    ('state', '=', 'done')
+                ], order="id desc", limit=1)
+
+            if not picking:
+                raise ValidationError("No completed Stock Picking found for this box.")
+
+            # 2. Find move line for the selected serial
+            serial_used = picking.move_line_ids.filtered(
+                lambda ml: ml.lot_id.id == rec.lot_id.id
+            )
+
+            if not serial_used:
+                raise ValidationError("This serial does not belong to the selected picking.")
+
+            product = serial_used.product_id
+
+            # 3. Determine scrap location
+            scrap_location = self.env.ref("stock.stock_location_scrapped", raise_if_not_found=False)
+            if not scrap_location:
+                raise ValidationError("Scrap location not configured in the system.")
+
+            # 4. Create Scrap Record
+            scrap = self.env["stock.scrap"].create({
+                "product_id": product.id,
+                "lot_id": rec.lot_id.id,
+                "scrap_qty": 1,
+                "product_uom_id": serial_used.product_uom_id.id,
+                "location_id": picking.location_dest_id.id,   # From where it will be scrapped
+                "scrap_location_id": scrap_location.id,       # To scrap location
+                "company_id": picking.company_id.id,
+                "origin": picking.name,
+            })
+
+            # 5. Confirm / Validate the scrap
+            scrap.action_validate()
+
+            # 7. Close complain
+            rec.status = "resolved"
+            rec.scrap_picking_id = scrap.id
+
+    def action_return_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.return_picking_id.id,
+            'target': 'current'
+        }
+    
+    def action_scrap_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.scrap',
+            'view_mode': 'form',
+            'res_id': self.scrap_picking_id.id,
+            'target': 'current'
+        }

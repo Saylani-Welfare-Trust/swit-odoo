@@ -3,3 +3,4 @@ access_key,key,bn_key_management.model_key,,1,1,1,1
 access_key_issuance,key.issuance,bn_key_management.model_key_issuance,,1,1,1,1
 access_key_bunch,key.bunch,bn_key_management.model_key_bunch,,1,1,1,1
 access_bulk_key_issuance,bulk.key.issuance,bn_key_management.model_bulk_key_issuance,,1,1,1,1
+access_manual_key_issuance,manual.key.issuance,bn_key_management.model_manual_key_issuance,,1,1,1,1

@@ -6,3 +6,4 @@ class StockLot(models.Model):
 
 
     lot_consume = fields.Boolean('Lot Consume', default=False)
+    is_not_return = fields.Boolean('Is not return', default=False)

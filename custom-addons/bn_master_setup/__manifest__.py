@@ -18,7 +18,11 @@
         'views/microfinance_scheme.xml',
         'views/disbursement_category.xml',
         'views/disbursement_application_type.xml',
+        'views/direct_deposit_account_setup.xml',
+        'views/donation_in_kind_config.xml',
     ],
     'auto_install': False,
     'application': True,
-}
+    'post_init_hook': 'post_init_direct_deposit_account_setup',
+
+} # type: ignore

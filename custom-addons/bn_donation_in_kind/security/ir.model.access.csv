@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_donation_in_kind,donation.in.kind,bn_donation_in_kind.model_donation_in_kind,,1,1,1,1
+access_donation_in_kind_line,donation.in.kind.line,bn_donation_in_kind.model_donation_in_kind_line,,1,1,1,1
+access_product_valuation_committee_line,product.valuation.committee.line,bn_donation_in_kind.model_product_valuation_committee_line,,1,1,1,1
