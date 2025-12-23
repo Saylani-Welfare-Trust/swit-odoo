@@ -179,9 +179,11 @@ class DonationBoxComplain(models.Model):
             if not picking:
                 raise ValidationError("No completed Stock Picking found for this box.")
 
+            raise ValidationError(str(rec.lot_id.id)+" "+str(picking.move_ids_without_package[0].lot_ids.ids))
+            
             # 2. Find move line for the selected serial
             serial_used = picking.move_ids_without_package.filtered(
-                lambda ml: rec.lot_id.id in ml.lot_ids.ids 
+                lambda ml: rec.lot_id.id in ml.lot_ids.ids
             )
 
             if not serial_used:
