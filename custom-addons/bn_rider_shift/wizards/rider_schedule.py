@@ -25,7 +25,7 @@ class RiderSchedule(models.TransientModel):
         # Find today's shift
         rider_shift_obj = self.env['rider.schedule.day'].search([
             ('rider_shift_id.rider_id', '=', employee.id),
-            ('date', '=', today)
+            ('date', '<=', today)
         ])
         if not rider_shift_obj:
             raise UserError(_("No shift found for today. Please check your schedule."))
@@ -61,6 +61,7 @@ class RiderSchedule(models.TransientModel):
                     'contact_number': record.contact_number,
                     'amount': record.amount,
                     'counterfeit_notes': record.counterfeit_notes,
+                    'remarks': record.remarks,
                 }))
 
             # 🔹 Create new collections only for missing lot_ids

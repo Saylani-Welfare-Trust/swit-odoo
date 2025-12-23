@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_requisition_type_action" model="ir.actions.act_window">
+        <field name="name">Purchase Requisition Type</field>
+        <field name="res_model">purchase.requisition.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for agreement type....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="purchase_requisition_type_menu"
+        name="Purchase Requisition Type"
+        action="purchase_requisition_type_action"
+        parent="purchase.menu_purchase_config"
+        sequence="10"/>
+
+</odoo>

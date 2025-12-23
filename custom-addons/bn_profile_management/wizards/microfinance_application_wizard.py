@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 class MicrofinanceApplicationWizard(models.TransientModel):
     _name = 'microfinance.application.wizard'
@@ -12,10 +12,25 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         """Create microfinance record and print the application form"""
         self.ensure_one()
         
-        # Create microfinance record with the selected scheme
+
+
+        # Check existing enrollment
+        existing = self.env['microfinance'].search([
+            ('donee_id', '=', self.partner_id.id),
+            ('microfinance_scheme_id', '=', self.microfinance_scheme_id.id),
+            ('state', '!=', 'rejected'),
+        ], limit=1)
+
+        if existing:
+            raise UserError(_(
+                "This donee is already enrolled in the selected scheme.\n\n"
+                "They may enroll in a different scheme, or re-apply only if the previous request was rejected or in a recovery phase."
+            ))
+
+        # Create microfinance record
         microfinance = self.env['microfinance'].create({
             'microfinance_scheme_id': self.microfinance_scheme_id.id,
-            'donee_id': self.partner_id.id
+            'donee_id': self.partner_id.id,
         })
 
         # Compute the scheme lines

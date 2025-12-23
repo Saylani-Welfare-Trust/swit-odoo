@@ -21,17 +21,15 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_donation(self):
         self.ensure_one()
 
-        # validate dates
         if self.start_date and self.end_date and self.start_date > self.end_date:
-            raise ValidationError("Start Date must be earlier than or equal to End Date.")
+            raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
         company = self.env.company
         if not (company.url and company.client_id and company.client_secret):
-            raise ValidationError("Missing URL, Client ID, or Client Secret in Donation Authorization settings.")
+            raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
-        parsed = urlparse(base_url)
-        origin_host = parsed.hostname or ''
+        origin_host = urlparse(base_url).hostname or ''
 
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
@@ -43,100 +41,68 @@ class APIDonationWizard(models.TransientModel):
             'Content-Type': 'application/json',
         })
 
-        # authenticate
-        token = None
-        try:
-            token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
-        except ValidationError:
-            raise
-        except Exception as e:
-            _logger.exception('Authentication failed')
-            raise ValidationError(_('Authentication failed: %s') % str(e))
-
+        token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
         session.headers.update({'authorization': f'bearer {token}'})
 
-        # build payload
         payload = {'status': 'success'}
         if self.start_date:
             payload['startDate'] = self._date_to_iso_z(self.start_date)
         if self.end_date:
             payload['endDate'] = self._date_to_iso_z(self.end_date)
 
-        # fetch donations
-        try:
-            donations_info = self._fetch_donations(session, donate_url, payload)
-        except ValidationError:
-            raise
-        except Exception as e:
-            _logger.exception('Failed to fetch donations')
-            raise ValidationError(_('Failed to fetch donations: %s') % str(e))
-
+        donations_info = self._fetch_donations(session, donate_url, payload)
         if not donations_info:
             return True
 
-        # prepare caches & config
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
-        company_currency = self.env.company.currency_id
+        company_currency = company.currency_id
 
-        # simple caches
         currency_cache = {}
         conversion_cache = {}
         product_config_cache = {}
 
-        new_donations = []
         debit_accumulator = {}
         credit_accumulator = {}
+        new_donations = []
 
-        # process donations within a DB savepoint; create journal in atomic block
         with self.env.cr.savepoint():
             for info in donations_info:
-                import_id = info.get('_id') or ''
+                import_id = info.get('_id')
                 if not import_id:
-                    _logger.warning('Skipping donation without import id: %s', info)
                     continue
 
-                # skip existing
-                if self.env['api.donation'].search([('import_id', '=', import_id)], limit=1):
+                if self.env['api.donation'].search_count([('import_id', '=', import_id)]):
                     continue
 
-                donation_vals = self._prepare_donation_vals(info, conversion_cache, currency_cache)
-
-                if not donation_vals:
+                vals = self._prepare_donation_vals(info, conversion_cache, currency_cache)
+                if not vals:
                     continue
 
-                donation = self.env['api.donation'].create(donation_vals)
+                donation = self.env['api.donation'].create(vals)
                 new_donations.append(donation)
 
-                # accumulate journal lines only if configuration exists
                 if gateway_config and journal:
-                    try:
-                        self._accumulate_from_donation(donation, gateway_config, company_currency,
-                                                        product_config_cache, debit_accumulator, credit_accumulator,
-                                                        currency_cache)
-                    except Exception:
-                        _logger.exception('Failed to accumulate donation %s', donation.id)
+                    self._accumulate_from_donation(
+                        donation, gateway_config, company_currency,
+                        product_config_cache, debit_accumulator,
+                        credit_accumulator, currency_cache
+                    )
 
-            # create grouped journal move if we have accumulations
             if gateway_config and journal and (debit_accumulator or credit_accumulator):
-                try:
-                    move = self._create_grouped_journal_move(journal, debit_accumulator, credit_accumulator,
-                                                             company_currency)
-                    
-                    fetch_history = self.env['fetch.history'].create({
-                        'start_date': self.start_date,
-                        'end_date': self.end_date,
-                        'journal_entry_id': move.id
-                    })
+                move = self._create_grouped_journal_move(
+                    journal, debit_accumulator,
+                    credit_accumulator, company_currency
+                )
 
-                    # link move to created donations
-                    for d in new_donations:
-                        d.fetch_history_id = fetch_history.id
-                except ValidationError:
-                    raise
-                except Exception as e:
-                    _logger.exception('Journal creation failed')
-                    raise ValidationError(_('Journal Entry creation failed: %s') % str(e))
+                history = self.env['fetch.history'].create({
+                    'start_date': self.start_date,
+                    'end_date': self.end_date,
+                    'journal_entry_id': move.id,
+                })
+
+                for d in new_donations:
+                    d.fetch_history_id = history.id
 
     # ---------------------- Helpers: HTTP & fetch ----------------------
     def _authenticate(self, session, url, client_id, client_secret):
@@ -392,64 +358,58 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Helpers: create grouped journal move ----------------------
     def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency):
-        journal_lines = []
-        company_currency_id = company_currency.id
+        lines = []
+        currency = company_currency
 
-        # Add debit lines
         for (account_id, currency_id), vals in debit_accumulator.items():
-            line_vals = {
+            lines.append((0, 0, {
                 'account_id': account_id,
-                'debit': vals.get('debit_base', 0.0),
+                'debit': vals['debit_base'],
                 'credit': 0.0,
-                'name': 'Donation Import - Grouped Debit',
-            }
-            if currency_id != company_currency_id:
-                line_vals['currency_id'] = currency_id
-                line_vals['amount_currency'] = vals.get('amount_currency', 0.0)
-            journal_lines.append((0, 0, line_vals))
+                'currency_id': currency_id if currency_id != currency.id else False,
+                'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
+                'name': 'Donation Import - Debit',
+            }))
 
-        # Add credit lines
         for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
-            line_vals = {
+            line = {
                 'account_id': account_id,
                 'debit': 0.0,
-                'credit': vals.get('credit_base', 0.0),
-                'name': 'Donation Import - Grouped Credit',
+                'credit': vals['credit_base'],
+                'currency_id': currency_id if currency_id != currency.id else False,
+                'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
+                'name': 'Donation Import - Credit',
             }
-            if currency_id != company_currency_id:
-                line_vals['currency_id'] = currency_id
-                line_vals['amount_currency'] = vals.get('amount_currency', 0.0)
             if analytic_id:
-                line_vals['analytic_distribution'] = {str(analytic_id): 100}
-            journal_lines.append((0, 0, line_vals))
+                line['analytic_distribution'] = {str(analytic_id): 100}
+            lines.append((0, 0, line))
 
-        # Calculate the exact difference (no rounding)
-        debit_total = sum(l[2].get('debit', 0.0) for l in journal_lines)
-        credit_total = sum(l[2].get('credit', 0.0) for l in journal_lines)
-        difference = debit_total - credit_total  # can be positive or negative
+        debit_total = sum(l[2]['debit'] for l in lines)
+        credit_total = sum(l[2]['credit'] for l in lines)
 
-        # If difference exists, post to the difference account
-        if abs(difference) > 0:  # post even tiny differences
-            difference_account = self.env['account.account'].search([('code', '=', self.env.company.difference_account_prefix)], limit=1)
-            if not difference_account:
-                raise ValidationError("Difference account with code '999999' not found.")
+        difference = currency.round(debit_total - credit_total)
 
-            diff_line = {
-                'account_id': difference_account.id,
-                'name': 'Difference Adjustment',
+        if not currency.is_zero(difference):
+            diff_account = self.env['account.account'].search(
+                [('code', '=', self.env.company.difference_account_prefix)], limit=1
+            )
+            if not diff_account:
+                raise ValidationError(_("Difference account not found."))
+
+            lines.append((0, 0, {
+                'account_id': diff_account.id,
                 'debit': difference < 0 and abs(difference) or 0.0,
                 'credit': difference > 0 and difference or 0.0,
-            }
-            journal_lines.append((0, 0, diff_line))
+                'name': 'Difference Adjustment',
+            }))
 
-        move_vals = {
+        move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
-            'ref': f"Donation Import {fields.Datetime.now()}",
-            'date': fields.Date.today(),
             'journal_id': journal.id,
-            'line_ids': journal_lines,
-        }
-
-        move = self.env['account.move'].sudo().create(move_vals)
+            'date': fields.Date.today(),
+            'ref': f"Donation Import {fields.Datetime.now()}",
+            'line_ids': lines,
+        })
+        
         move.action_post()
         return move

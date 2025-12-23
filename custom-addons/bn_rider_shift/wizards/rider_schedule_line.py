@@ -16,6 +16,7 @@ state_selection = [
     ('donation_not_collected', 'Donation not collected'),
     ('donation_collected', 'Donation collected'),
     ('donation_submit', 'Donation submit'),
+    ('pending', 'Pending'),
     ('paid', 'Paid')
 ]
 
@@ -46,10 +47,25 @@ class RiderScheduleLine(models.TransientModel):
     amount = fields.Float('Amount')
     counterfeit_notes = fields.Float('Counter Feit Notes')
 
+    remarks = fields.Text('Remarks')
+
 
     def mark_as_done(self):
         self.state = 'donation_collected'
         self.rider_collection_id.state = 'donation_collected'
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'rider.schedule',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
+            'res_id': self.rider_schedule_id.id,
+            'target': 'current'
+        }
+    
+    def mark_as_pending(self):
+        self.state = 'pending'
+        self.rider_collection_id.state = 'pending'
 
         return {
             'type': 'ir.actions.act_window',

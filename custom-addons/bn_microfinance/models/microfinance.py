@@ -41,6 +41,7 @@ state_selection = [
     ('mem_approve', 'Member Approval'),
     ('approve', 'Approved'),
     ('wfd', 'Waiting For Delivery'),
+    ('treasury', 'Treasury'),
     ('in_recovery', 'In Recovery'),
     ('recover', 'Temp Recovered'),
     ('fully_recover', 'Fully Recovered'),
@@ -107,8 +108,10 @@ class Microfinance(models.Model):
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
     
-    family_cnic = fields.Binary('Family CNIC')
-    family_cnic_name = fields.Char('Family CNIC Name')
+    guarantor_1 = fields.Binary('Guarantor 1')
+    guarantor_1_name = fields.Char('Guarantor 1 Name')
+    guarantor_2 = fields.Binary('Guarantor 2')
+    guarantor_2_name = fields.Char('Guarantor 2 Name')
     
     pdc_attachment = fields.Binary('PDC')
     pdc_attachment_name = fields.Char('PDC File Name')
@@ -349,6 +352,14 @@ class Microfinance(models.Model):
 
     def action_approve(self):
         self.state = 'approve'
+        # Auto-trigger the approval certificate report
+        return self.env.ref('bn_microfinance.microfinance_approval_certificate_report_action').report_action(self)
+
+    def action_move_to_treasury(self):
+        """Move to treasury state for cash asset type"""
+        if self.asset_type != 'cash':
+            raise ValidationError("This action is only for Cash asset type.")
+        self.state = 'treasury'
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
@@ -359,18 +370,34 @@ class Microfinance(models.Model):
         self.state = 'wfd'
 
     def action_sd_slip(self):
-        self.env['microfinance.installment'].create({
-            'payment_type': 'security',
-            'amount': self.security_deposit,
-            'microfinance_id': self.id,
-            'donee_id': self.donee_id.id,
-            'date': fields.Date.today()
-        })
+        # Check if security deposit installment already exists for this microfinance
+        existing_installment = self.env['microfinance.installment'].search([
+            ('microfinance_id', '=', self.id),
+            ('payment_type', '=', 'security')
+        ], limit=1)
         
-        return self.env.ref('bn_microfinance.security_deposit_report_action').report_action(self)
+        if existing_installment:
+            # Use existing installment
+            installment = existing_installment
+        else:
+            # Create new installment
+            installment = self.env['microfinance.installment'].create({
+                'payment_type': 'security',
+                'amount': self.security_deposit,
+                'microfinance_id': self.id,
+                'donee_id': self.donee_id.id,
+                'date': fields.Date.today()
+            })
+        
+        return self.env.ref('bn_microfinance.microfinance_receipt_report_action').report_action(installment)
+
+    def action_print_installment_plan(self):
+        """Print the installment plan report"""
+        return self.env.ref('bn_microfinance.microfinance_installment_plan_report_action').report_action(self)
 
     def action_move_to_done(self):
-        if not self.delivery_date:
+        # For cash asset type coming from treasury, delivery date is optional
+        if self.asset_type != 'cash' and not self.delivery_date:
             raise ValidationError('Please select a Delivery Date.')
         
         if self.asset_type == 'movable_asset':

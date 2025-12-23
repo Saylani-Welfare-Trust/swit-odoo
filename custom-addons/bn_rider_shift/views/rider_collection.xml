@@ -21,6 +21,7 @@
                             <field name="submission_time" />
                             <field name="amount" />
                             <field name="counterfeit_notes" />
+                            <field name="remarks" />
                         </group>
                         <group name="rider_collection_col_2">
                             <field name="shop_name" />

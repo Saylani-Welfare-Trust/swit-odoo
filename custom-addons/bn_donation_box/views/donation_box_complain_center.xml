@@ -12,6 +12,8 @@
                     
                     <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="box_status != 'return' or status == 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary" invisible="box_status != 'broken' or status == 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+
                     <field name="status" widget="statusbar" statusbar_visible="draft, process, resolved"/>
                 </header>
 
@@ -77,6 +79,9 @@
         <field name="model">donation.box.complain.center</field>
         <field name="arch" type="xml">
             <tree>
+                <header>
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                </header>
                 <field name="rider_id" string="Rider" />
                 <field name="donation_box_registration_installation_id" />
                 <field name="lot_id" string="Box No." />

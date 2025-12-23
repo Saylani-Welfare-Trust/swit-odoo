@@ -16,6 +16,7 @@ state_selection = [
     ('donation_not_collected', 'Donation not collected'),
     ('donation_collected', 'Donation collected'),
     ('donation_submit', 'Donation submit'),
+    ('pending', 'Pending'),
     ('paid', 'Paid')
 ]
 
@@ -45,6 +46,8 @@ class RiderCollection(models.Model):
 
     amount = fields.Float('Amount')
     counterfeit_notes = fields.Float('Counter Feit Notes')
+
+    remarks = fields.Text('Remarks')
 
 
     @api.model

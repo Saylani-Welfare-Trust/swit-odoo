@@ -7,6 +7,7 @@ box_status_selection = [
     ('broken', 'Broken'),
     ('robbery', 'Robbery'),
     ('return', 'Return'),
+    ('repaired', 'Repaired'),
 ]
 
 status_selection = [
@@ -189,7 +190,9 @@ class DonationBoxComplain(models.Model):
             product = serial_used.product_id
 
             # 3. Determine scrap location
-            scrap_location = self.env.ref("stock.stock_location_scrapped", raise_if_not_found=False)
+            scrap_location = self.env['stock.location'].search([
+                ('scrap_location', '=', True),
+            ], limit=1)
             if not scrap_location:
                 raise ValidationError("Scrap location not configured in the system.")
 
@@ -229,3 +232,74 @@ class DonationBoxComplain(models.Model):
             'res_id': self.scrap_picking_id.id,
             'target': 'current'
         }
+
+    def action_repair(self):
+        """
+        Repair broken donation boxes (single or bulk).
+        Once repaired, the box becomes available in stock for re-allocation and installation.
+        """
+        broken_records = self.filtered(lambda r: r.box_status == 'broken')
+        
+        if not broken_records:
+            raise ValidationError("No broken boxes selected for repair. Only boxes with 'Broken' status can be repaired.")
+
+        for rec in broken_records:
+            # 1. Change box status to 'repaired'
+            rec.box_status = 'repaired'
+            
+            # 2. Make the lot available again for re-allocation
+            if rec.lot_id:
+                # Reset lot flags so it becomes available in stock
+                rec.lot_id.lot_consume = False
+                rec.lot_id.is_not_return = False
+            
+            # 3. If there's a scrap record, we need to reverse the scrap
+            # by creating a stock move from scrap location back to stock
+            if rec.scrap_picking_id:
+                scrap = rec.scrap_picking_id
+
+                # Get the original stock location for this product (usually warehouse stock)
+                stock_location = scrap.location_id
+
+                if stock_location:
+                    # Original scrap move
+                    scrap_move = scrap
+                    if scrap_move.state == 'done':
+                        # Create a reverse move from scrap location → stock location
+                        reverse_move_vals = {
+                            'name': f'Repair Return: {rec.lot_id.name}',
+                            'product_id': scrap_move.product_id.id,
+                            'product_uom_qty': scrap_move.scrap_qty,
+                            'product_uom': scrap_move.product_uom_id.id,
+                            'location_id': scrap_move.scrap_location_id.id,   # Scrap location
+                            'location_dest_id': scrap.location_id.id,          # Internal stock
+                            'lot_ids': [(4, rec.lot_id.id)],
+                            'origin': f'Repair - {rec.name or rec.lot_id.name}',
+                        }
+
+                        reverse_move = self.env['stock.move'].create(reverse_move_vals)
+                        reverse_move._action_confirm()
+                        reverse_move._action_assign()
+                        reverse_move._action_done()
+                else: raise ValidationError("Cannot determine stock location to reverse scrap operation.")
+
+            # 4. Reopen the installation record so box can be re-allocated
+            if rec.donation_box_registration_installation_id:
+                # Reset the installation status to allow re-allocation
+                rec.donation_box_registration_installation_id.status = 'available'
+            
+            # 5. Update complain status to resolved
+            rec.status = 'resolved'
+        
+        # Return notification for bulk operations
+        if len(broken_records) > 1:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Repair Successful',
+                    'message': f'{len(broken_records)} boxes have been repaired and are now available for re-allocation.',
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }

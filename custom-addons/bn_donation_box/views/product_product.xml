@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='options']" position="inside">
                 <span class="d-inline-flex">
-                    <field name="is_donation_box" on_change="1" field_id="is_donation_box"/>
+                    <field name="is_donation_box" on_change="1" field_id="is_donation_box" readonly="0"/>
                     <label for="is_donation_box"/>
                 </span>
             </xpath>

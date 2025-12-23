@@ -445,6 +445,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
     /**
      * Handle found microfinance record
+     * - Loads ALL unpaid installment lines (sorted by due_date)
+     * - Adds product with suggested amount (first due installment or current month if exists)
+     * - POS user can modify the amount, payment will adjust installments accordingly
      */
     async handleMicrofinanceLines(record, selectedOrder) {
         if (!record.microfinance_line_ids || !record.microfinance_line_ids.length) {
@@ -455,40 +458,17 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return;
         }
 
+        // Fetch ALL unpaid lines (paid_amount = 0 or partial), sorted by due_date
         const lines = await this.orm.searchRead(
             'microfinance.line',
-            [['id', 'in', record.microfinance_line_ids], ['paid_amount', '=', 0]],
-            ['id', 'amount', 'due_date'],
-            {}
+            [['id', 'in', record.microfinance_line_ids], ['state', '!=', 'paid']],
+            ['id', 'amount', 'paid_amount', 'due_date', 'remaining_amount'],
+            { order: 'due_date asc' }
         );
 
         if (!lines.length) {
             this.notification.add(
                 "No unpaid microfinance installments found",
-                { type: 'warning' }
-            );
-            return;
-        }
-
-        // Current date values
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        // Filter only lines due THIS month
-        const dueThisMonth = lines.filter(l => {
-            if (!l.due_date) return false;
-
-            // parse in a safe way to prevent timezone shift
-            const [year, month, day] = l.due_date.split("-").map(Number);
-            const due = new Date(year, month - 1, day);
-
-            return due.getMonth() === currentMonth && due.getFullYear() === currentYear;
-        });
-
-        if (!dueThisMonth.length) {
-            this.notification.add(
-                "No microfinance installments due this month",
                 { type: 'warning' }
             );
             return;
@@ -523,24 +503,50 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return;
         }
 
-        let microfinanceLineIds = [];
+        // Current date values
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-        // Add all installments due this month
-        for (const line of dueThisMonth) {
-            const orderline = selectedOrder.add_product(product, {
-                quantity: 1,
-                price_extra: line.amount
-            });
+        // Find installment due this month (if any) to use as default amount
+        let suggestedAmount = 0;
+        const dueThisMonth = lines.find(l => {
+            if (!l.due_date) return false;
+            const [year, month, day] = l.due_date.split("-").map(Number);
+            return month - 1 === currentMonth && year === currentYear;
+        });
 
-            microfinanceLineIds.push({ id: line.id, amount: line.amount });
+        if (dueThisMonth) {
+            // Use remaining amount of current month installment as suggestion
+            suggestedAmount = dueThisMonth.remaining_amount || (dueThisMonth.amount - (dueThisMonth.paid_amount || 0));
+        } else {
+            // No due this month, use first unpaid line's remaining amount as suggestion
+            const firstUnpaid = lines[0];
+            suggestedAmount = firstUnpaid.remaining_amount || (firstUnpaid.amount - (firstUnpaid.paid_amount || 0));
         }
 
+        // Prepare all unpaid lines data for payment processing
+        let allUnpaidLines = lines.map(line => ({
+            id: line.id,
+            amount: line.amount,
+            paid_amount: line.paid_amount || 0,
+            remaining_amount: line.remaining_amount || (line.amount - (line.paid_amount || 0)),
+            due_date: line.due_date
+        }));
+
+        // Add single product line with suggested amount (POS user can modify)
+        selectedOrder.add_product(product, {
+            quantity: 1,
+            price_extra: suggestedAmount
+        });
+
         this.notification.add(
-            `Added ${dueThisMonth.length} installment(s) due this month`,
-            { type: "success" }
+            `Loaded ${lines.length} unpaid installment(s). Suggested amount: ${suggestedAmount}. You can modify the amount.`,
+            { type: "info" }
         );
 
-        return microfinanceLineIds;
+        // Return all unpaid lines for payment processing
+        return allUnpaidLines;
     }
     
     async handleMicrofinanceRecoveryLines(record, selectedOrder) {

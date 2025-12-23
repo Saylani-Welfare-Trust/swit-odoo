@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_customization.TicketScreen" t-inherit="point_of_sale.TicketScreen" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('subpads')]" position="replace">
+            <div class="subpads d-flex">
+                <Numpad buttons="getNumpadButtons()"/>
+                <!-- <Numpad buttons="getNumpadButtons()" class="'max-width-325px'"/> -->
+            </div>
+        </xpath>
+    </t>
+
+</templates>
