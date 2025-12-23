@@ -180,7 +180,7 @@ class DonationBoxComplain(models.Model):
                 raise ValidationError("No completed Stock Picking found for this box.")
 
             # 2. Find move line for the selected serial
-            serial_used = picking.move_line_ids.filtered(
+            serial_used = picking.move_ids_without_package.filtered(
                 lambda ml: rec.lot_id.id in ml.lot_ids.ids 
             )
 
