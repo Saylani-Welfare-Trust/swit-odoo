@@ -9,6 +9,7 @@
         'purchase_requisition'
     ],
     'data': [
+        'data/sequence.xml',
         'views/blanket_order.xml',
         'views/purchase_requisition_type.xml',
     ],

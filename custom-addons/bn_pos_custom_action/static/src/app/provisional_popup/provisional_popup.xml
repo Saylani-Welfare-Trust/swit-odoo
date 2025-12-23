@@ -6,7 +6,7 @@
             <div class="modal-header drag-handle">
                 <h4 class="modal-title"><t t-esc="this.title" /></h4>
             </div>
-            <main class="modal-body" t-if="this.action_type != 'mf'">
+            <main class="modal-body" t-if="this.action_type != 'mf' and this.action_type != 'dd_update'">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Customer</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
@@ -68,8 +68,76 @@
                     </div>
                 </div>
             </main>
+
+            <!-- Direct Deposit Update - Search Step -->
+            <main class="modal-body" t-if="this.action_type == 'dd_update' and this.state.dd_step == 'search'">
+                <div class="row mb-3 text-start">
+                    <div class="col-4 fw-semibold">DD Reference</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control"
+                            t-att-value="this.state.dd_reference"
+                            t-on-change="updateDDReference"
+                            placeholder="e.g., DD/0001"/>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Direct Deposit Update - Action Step -->
+            <main class="modal-body" t-if="this.action_type == 'dd_update' and this.state.dd_step == 'action'">
+                <div class="mb-3">
+                    <div class="alert alert-info mb-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Reference:</strong> <t t-esc="this.state.dd_record.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Status:</strong> 
+                                <span class="badge" t-attf-class="bg-{{ this.state.dd_record.state == 'draft' ? 'secondary' : this.state.dd_record.state == 'clear' ? 'success' : this.state.dd_record.state == 'not_clear' ? 'danger' : 'primary' }}">
+                                    <t t-esc="this.state.dd_record.state.toUpperCase()"/>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mt-2" t-if="this.state.dd_record.donor_id">
+                            <div class="col-6">
+                                <strong>Donor:</strong> <t t-esc="this.state.dd_record.donor_id[1]"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Amount:</strong> <t t-esc="this.state.dd_record.amount"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <t t-set="actions" t-value="this.getDDActions()"/>
+                    <t t-if="actions.length > 0">
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <t t-foreach="actions" t-as="action" t-key="action.id">
+                                <button type="button" 
+                                    t-attf-class="btn {{ action.class }} btn-lg"
+                                    t-on-click="() => this.executeDDAction(action.id)">
+                                    <t t-esc="action.label"/>
+                                </button>
+                            </t>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="alert alert-warning text-center">
+                            <t t-esc="this.getDDNoActionMessage()"/>
+                        </div>
+                    </t>
+                </div>
+            </main>
+
             <footer class="footer modal-footer">
-                <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
+                <t t-if="this.action_type == 'dd_update' and this.state.dd_step == 'action'">
+                    <div class="button btn btn-lg btn-secondary" t-on-click="backToSearch">Back</div>
+                </t>
+                <t t-elif="this.action_type == 'dd_update' and this.state.dd_step == 'search'">
+                    <div class="button btn btn-lg btn-primary" t-on-click="confirm">Search</div>
+                </t>
+                <t t-else="">
+                    <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
+                </t>
                 <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
             </footer>
         </div>

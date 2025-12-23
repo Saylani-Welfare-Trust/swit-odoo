@@ -14,7 +14,9 @@
         'data/sequence.xml',
         'security/ir.model.access.csv',
         'views/direct_deposit.xml',
-        'reports/direct_deposit_report.xml',
+        'reports/direct_deposit_provisional_report.xml',
+        'reports/direct_deposit_duplicate_report.xml',
+
     ],
     'auto_install': False,
     'application': False,

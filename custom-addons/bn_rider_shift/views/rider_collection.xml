@@ -59,7 +59,7 @@
     </record>
 
     <record id="rider_collection_action" model="ir.actions.act_window">
-        <field name="name">Rider Shift</field>
+        <field name="name">Rider Collection</field>
         <field name="res_model">rider.collection</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

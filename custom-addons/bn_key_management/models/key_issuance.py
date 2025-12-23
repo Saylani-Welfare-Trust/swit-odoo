@@ -7,7 +7,8 @@ key_selection = [
     ('issued', 'Issued'),
     ('donation_receive', 'Donation Received'),
     ('returned', 'Returned'),
-    ('overdue', 'Overdue')
+    ('overdue', 'Overdue'),
+    ('pending', 'Pending'),
 ]
 
 
@@ -25,6 +26,7 @@ class KeyIssuance(models.Model):
     rider_name = fields.Char(related='rider_id.name', string="Rider", store=True)
 
     issued_on = fields.Datetime(string="Issued On", default=fields.Datetime.now)
+    issue_date = fields.Date(string="Issued On", default=fields.Date.today)
     returned_on = fields.Datetime(string="Returned On")
     
     state = fields.Selection(selection=key_selection, default='draft', string="Status")
@@ -60,8 +62,8 @@ class KeyIssuance(models.Model):
 
     def action_return(self):
         for record in self:
-            if not record.donation_amount:
-                raise ValidationError(str(f'Please enter the Amount of Donation Collected against key ( {self.key_id.name} )'))
+            # if not record.donation_amount:
+            #     raise ValidationError(str(f'Please enter the Amount of Donation Collected against key ( {self.key_id.name} )'))
 
             record.state = 'returned'
             record.returned_on = fields.Datetime.now()

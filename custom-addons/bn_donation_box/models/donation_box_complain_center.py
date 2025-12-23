@@ -256,14 +256,13 @@ class DonationBoxComplain(models.Model):
             # 3. If there's a scrap record, we need to reverse the scrap
             # by creating a stock move from scrap location back to stock
             if rec.scrap_picking_id:
-                scrap = rec.scrap_picking_id
+                scrap_move = rec.scrap_picking_id
 
                 # Get the original stock location for this product (usually warehouse stock)
-                stock_location = scrap.location_id
+                stock_location = scrap_move.location_id
 
                 if stock_location:
                     # Original scrap move
-                    scrap_move = scrap
                     if scrap_move.state == 'done':
                         # Create a reverse move from scrap location → stock location
                         reverse_move_vals = {
@@ -272,7 +271,7 @@ class DonationBoxComplain(models.Model):
                             'product_uom_qty': scrap_move.scrap_qty,
                             'product_uom': scrap_move.product_uom_id.id,
                             'location_id': scrap_move.scrap_location_id.id,   # Scrap location
-                            'location_dest_id': scrap.location_id.id,          # Internal stock
+                            'location_dest_id': scrap_move.location_id.id,          # Internal stock
                             'lot_ids': [(4, rec.lot_id.id)],
                             'origin': f'Repair - {rec.name or rec.lot_id.name}',
                         }

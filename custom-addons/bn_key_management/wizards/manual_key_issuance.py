@@ -19,10 +19,18 @@ class ManualKeyIssuance(models.TransientModel):
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
     
-    key_name = fields.Char(string="Key")
+    lot_id = fields.Many2one('stock.lot', string="Box No.", domain="[('id', 'in', available_lot_ids)]")
+    available_lot_ids = fields.Many2many('stock.lot', string="Available Lots", compute="_compute_available_lot_ids")
 
     date = fields.Date('Date')
 
+
+    @api.depends('action_type')
+    def _compute_available_lot_ids(self):
+        for rec in self:
+            # Get all lot_ids from key records that are in 'available' state
+            available_keys = self.env['key'].search([('state', '=', 'available'), ('lot_id', '!=', False)])
+            rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
 
     @api.depends('date')
     def _set_rider_domain(self):
@@ -34,14 +42,14 @@ class ManualKeyIssuance(models.TransientModel):
                 rec.rider_ids = [(6, 0, [])]
 
     def _get_key(self):
-        """Search for key by name"""
-        if not self.key_name:
-            raise ValidationError('Please enter a Key name')
+        """Search for key by lot_id"""
+        if not self.lot_id:
+            raise ValidationError('Please select a Box No.')
         
-        key = self.env['key'].search([('name', '=', self.key_name)], limit=1)
+        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
         
         if not key:
-            raise ValidationError(f'Key "{self.key_name}" not found')
+            raise ValidationError(f'Key with Box No. "{self.lot_id.name}" not found')
         
         return key
 

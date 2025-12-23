@@ -11,7 +11,7 @@
                 <field name="lock_no" />
                 <field name="name" string="Tag" />
                 <field name="key_bunch_id" string="Key Bunch" />
-                <field name="state" widget="badge" decoration-info="state == 'issued'" decoration-success="state == 'available'" />
+                <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state == 'issued'" decoration-success="state == 'available'" />
             </tree>
         </field>
     </record>
@@ -36,6 +36,7 @@
                         <group name="key_col_1">
                             <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
                             <field name="lock_no" readonly="1" />
+                            <field name="reason" readonly="state != 'pending'" required="state == 'pending'" />
                         </group>
                         <group name="key_col_2">
                             <field name="name" string="Tag" readonly="1" />

@@ -19,13 +19,13 @@ class RiderSchedule(models.TransientModel):
         return super(RiderSchedule, self).create(vals)
 
     def action_check_shift(self):
-        today = fields.Date.today()
+        # today = fields.Date.today()
         employee = self.env.user.employee_id
 
         # Find today's shift
         rider_shift_obj = self.env['rider.schedule.day'].search([
             ('rider_shift_id.rider_id', '=', employee.id),
-            ('date', '<=', today)
+            # ('date', '=', today)
         ])
         if not rider_shift_obj:
             raise UserError(_("No shift found for today. Please check your schedule."))
@@ -38,9 +38,10 @@ class RiderSchedule(models.TransientModel):
             # 🔹 Fetch existing collections for these lot_ids
             existing_collections = self.env['rider.collection'].search([
                 ('rider_id', '=', employee.id),
-                ('date', '<=', today),
+                ('date', '=', obj.date),
+                # ('date', '<=', today),
                 ('lot_id', 'in', lot_ids.ids),
-                ('state', 'not in', ['donation_submit', 'paid']),
+                ('state', 'not in', ['pending', 'donation_submit', 'paid']),
             ])
 
             # Get already existing lot_ids
@@ -72,7 +73,8 @@ class RiderSchedule(models.TransientModel):
 
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
-                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
+                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
+                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
                         finalized_missing_lot_ids.append(missing_lot_id)
 
                 boxes = self.env['donation.box.registration.installation'].search([
