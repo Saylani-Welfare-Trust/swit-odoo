@@ -181,7 +181,7 @@ class DonationBoxComplain(models.Model):
 
             # 2. Find move line for the selected serial
             serial_used = picking.move_line_ids.filtered(
-                lambda ml: ml.lot_id.id == rec.lot_id.id
+                lambda ml: rec.lot_id.id in ml.lot_ids.ids 
             )
 
             if not serial_used:
