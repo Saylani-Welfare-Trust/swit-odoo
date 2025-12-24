@@ -367,7 +367,89 @@ class Microfinance(models.Model):
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         
+        # Create picking for movable assets (don't validate - manual validation triggers done)
+        if self.asset_type == 'movable_asset':
+            self._create_microfinance_picking()
+        
         self.state = 'wfd'
+
+    def _create_microfinance_picking(self):
+        """Create stock picking for movable asset microfinance - to be validated manually"""
+        if not self.in_recovery:
+            product_quantity = self.product_id.qty_available
+            
+            if product_quantity <= 0:
+                self.asset_availability = 'not_available'
+                raise ValidationError('Not enough stock available.')
+            
+            stock_quant = self.env['stock.quant'].search([
+                ('location_id', '=', self.warehouse_location_id.id),
+                ('product_id', '=', self.product_id.id),
+                ('inventory_quantity_auto_apply', '>', 0)
+            ], limit=1)
+
+            if not stock_quant:
+                raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
+            
+            location_id = self.warehouse_location_id.id
+        else:
+            # Recovery case - use recovered location
+            location_id = self.recovered_location_id.id
+        
+        # Create stock move
+        move_name = f'Re-Return Product of Loan {self.name}' if self.in_recovery else f'Decrease stock for Loan {self.name}'
+        stock_move = self.env['stock.move'].create({
+            'name': move_name,
+            'product_id': self.product_id.id,
+            'product_uom': self.product_id.uom_id.id,
+            'product_uom_qty': 1,
+            'location_id': location_id,
+            'location_dest_id': self.env.ref('stock.stock_location_customers').id,
+            'state': 'draft',
+        })
+        
+        # Create picking
+        picking = self.env['stock.picking'].create({
+            'partner_id': self.donee_id.id,
+            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+            'move_ids_without_package': [(6, 0, [stock_move.id])],
+            'origin': self.name
+        })
+        
+        # Confirm and assign the picking (but don't validate - that's manual)
+        stock_move._action_confirm()
+        stock_move._action_assign()
+        picking.action_confirm()
+        
+        # Store picking reference
+        self.picking_id = picking.id
+        
+        return picking
+
+    def _complete_after_picking(self):
+        """Called when the picking is validated to complete the microfinance record"""
+        # Compute installments
+        if not self.in_recovery:
+            self.compute_installment()
+        else:
+            self.compute_recovery_installment()
+        
+        self.state = 'done'
+
+    def action_view_picking(self):
+        """Open the picking form view"""
+        self.ensure_one()
+        if not self.picking_id:
+            raise ValidationError("No delivery picking found for this record.")
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Delivery',
+            'res_model': 'stock.picking',
+            'res_id': self.picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_sd_slip(self):
         # Check if security deposit installment already exists for this microfinance
@@ -396,72 +478,17 @@ class Microfinance(models.Model):
         return self.env.ref('bn_microfinance.microfinance_installment_plan_report_action').report_action(self)
 
     def action_move_to_done(self):
+        """Manual done action - only for non-movable asset types (cash, etc.)
+        For movable assets, done is triggered automatically when picking is validated.
+        """
+        if self.asset_type == 'movable_asset':
+            raise ValidationError('For movable assets, please validate the delivery picking to complete the record.')
+        
         # For cash asset type coming from treasury, delivery date is optional
         if self.asset_type != 'cash' and not self.delivery_date:
             raise ValidationError('Please select a Delivery Date.')
         
-        if self.asset_type == 'movable_asset':
-            if not self.in_recovery:
-                product_quantity = self.product_id.qty_available
-                
-                if product_quantity > 0:
-                    stock_quant = self.env['stock.quant'].search([
-                        ('location_id', '=', self.warehouse_location_id.id),
-                        ('product_id', '=',  self.product_id.id),
-                        ('inventory_quantity_auto_apply', '>', 0)
-                    ], limit=1)
-
-
-                    if not stock_quant:
-                        raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
-                    else:
-                        stock_move = self.env['stock.move'].create({
-                            'name': f'Decrease stock for Loan {self.name}',
-                            'product_id': self.product_id.id,
-                            'product_uom': self.product_id.uom_id.id,
-                            'product_uom_qty': 1,
-                            'location_id': self.warehouse_location_id.id,
-                            'location_dest_id': self.env.ref('stock.stock_location_customers').id,
-                            'state': 'draft',  # Initial state is draft
-                        })
-                        
-                        picking = self.env['stock.picking'].create({
-                            'partner_id': self.donee_id.id,
-                            'picking_type_id': self.env.ref('stock.picking_type_out').id,
-                            'move_ids_without_package': [(6, 0, [stock_move.id])],
-                            'origin': self.name
-                        })
-
-                        stock_move._action_confirm()
-                        stock_move._action_assign()
-                        
-                        picking.action_confirm()
-                        picking.button_validate()
-                else:
-                    self.asset_availability = 'not_available'
-
-                    raise ValidationError('Not enough stock available.')
-            else:
-                stock_move = self.env['stock.move'].create({
-                    'name': f'Re-Return Product of Loan {self.name}',
-                    'product_id': self.product_id.id,
-                    'product_uom': self.product_id.uom_id.id,
-                    'product_uom_qty': 1,  # Decrease 1 unit
-                    'location_id': self.recovered_location_id.id,
-                    'location_dest_id': self.env.ref('stock.stock_location_customers').id,
-                    'state': 'draft',
-                })
-                picking = self.env['stock.picking'].create({
-                    'partner_id': self.donee_id.id,  # Link to customer
-                    'picking_type_id': self.env.ref('stock.picking_type_out').id,  # Outgoing picking type
-                    'move_ids_without_package': [(6, 0, [stock_move.id])],  # Associate the stock move with the picking
-                    'origin': self.name
-                })
-                stock_move._action_confirm()
-                stock_move._action_assign()
-                picking.action_confirm()
-                picking.button_validate()
-
+        # Compute installments
         if not self.in_recovery:
             self.compute_installment()
         else:

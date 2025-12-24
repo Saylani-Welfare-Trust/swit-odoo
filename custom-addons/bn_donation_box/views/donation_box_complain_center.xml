@@ -10,9 +10,9 @@
                     <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved']" />
                     <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved']" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
                     
-                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="box_status != 'return' or status == 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="box_status not in ['return','missing'] or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
-                    <button name="action_repair" string="Repair" type="object" class="btn-primary" invisible="box_status != 'broken' or status == 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary"  invisible="box_status != 'broken' or status != 'resolved'"  groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, process, resolved"/>
                 </header>
@@ -24,8 +24,11 @@
                         <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
                             <field name="return_picking_id" string="Return" widget="statinfo"/>
                         </button>
-                        <button name="action_scrap_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not scrap_picking_id">
+                        <button name="action_scrap_picking" type="object" class="oe_stat_button" icon="fa-trash" invisible="not scrap_picking_id">
                             <field name="scrap_picking_id" string="Scrap" widget="statinfo"/>
+                        </button>
+                        <button name="action_scrap_return_move" type="object" class="oe_stat_button" icon="fa-undo" invisible="not scrap_return_picking_id">
+                            <field name="scrap_return_picking_id" string="Scrap Return" widget="statinfo"/>
                         </button>
                     </div>
 

@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError,UserError
 
 
 status_selection = [
@@ -121,6 +121,7 @@ class DonationBoxRequest(models.Model):
 
         Picking = self.env['stock.picking']
         Move = self.env['stock.move']
+        MoveLine = self.env['stock.move.line']
 
         # create picking
         picking_vals = {
@@ -131,7 +132,7 @@ class DonationBoxRequest(models.Model):
         }
         picking = Picking.create(picking_vals)
 
-        # create moves
+        # create moves with move lines - each line gets its own move with correct lot
         for line in self.donation_box_request_line_ids:
             move_vals = {
                 'name': line.product_id.display_name,
@@ -142,37 +143,22 @@ class DonationBoxRequest(models.Model):
                 'location_dest_id': self.destination_location_id.id,
                 'picking_id': picking.id,
             }
+            move = Move.create(move_vals)
+            
+            # Create move line directly linked to this move with correct lot
+            MoveLine.create({
+                'move_id': move.id,
+                'picking_id': picking.id,
+                'product_id': line.product_id.id,
+                'product_uom_id': line.product_id.uom_id.id,
+                'quantity': 1.0,
+                'lot_id': line.lot_id.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.destination_location_id.id,
+            })
 
-            Move.create(move_vals)
-
-        # confirm & assign
+        # confirm & validate
         picking.action_confirm()
-        picking.action_assign()
-
-        # add move lines with lot and qty_done
-        mls = []
-        for move in picking.move_ids_without_package:
-            # match the request line for same product that has not been processed yet
-            box_line = self.donation_box_request_line_ids.filtered(lambda l: l.product_id == move.product_id and not hasattr(l,'used'))
-            if box_line:
-                box = box_line[0]
-                # mark as used in this loop so we don't reuse same line for duplicate products
-                box.used = True
-                mlvals = {
-                    'move_id': move.id,
-                    'picking_id': picking.id,
-                    'product_id': move.product_id.id,
-                    'product_uom_id': move.product_uom.id,
-                    'qty_done': 1.0,
-                    'lot_id': box.lot_id.id,
-                    'location_id': move.source_location_id.id,
-                    'location_dest_id': move.destination_location_id.id,
-                }
-                mls.append((0,0,mlvals))
-        if mls:
-            picking.write({'move_line_ids_without_package': mls})
-
-        # final validation
         picking.button_validate()
 
         self.status = 'approved'

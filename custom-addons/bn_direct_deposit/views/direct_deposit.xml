@@ -15,9 +15,9 @@
                 <field name="user_id" string="Created By" readonly="1"/>
                 <field name="create_date" string="Created On" readonly="1"/>
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state == 'not_clear'" decoration-success="state == 'clear'" />
-                <button name="action_clear" type="object" icon="fa-check" title="Clear" invisible="1" />
-                <button name="action_not_clear" type="object" icon="fa-times" title="Not Clear" invisible="1" />
-                <button name="action_transfer_to_dhs" type="object" icon="fa-arrow-right" title="Transfer to DHS" invisible="1" />
+                <button name="action_clear" type="object" icon="fa-check" title="Clear" invisible="state != 'draft'" />
+                <button name="action_not_clear" type="object" icon="fa-times" title="Not Clear" invisible="state != 'draft'" />
+                <!-- <button name="action_transfer_to_dhs" type="object" icon="fa-arrow-right" title="Transfer to DHS" invisible="state != 'clear' or dhs_ids" /> -->
             </tree>
         </field>
     </record>
@@ -28,9 +28,9 @@
         <field name="arch" type="xml">
             <form create="0" edit="0" delete="0">
                 <header>
-                    <!-- <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Not Clear" name="action_not_clear" type="object" invisible="state != 'draft'"/>
-                    <button string="Transfer to DHS" name="action_transfer_to_dhs" type="object" class="oe_highlight" invisible="state != 'clear' or dhs_ids"/> -->
+                    <!-- <button string="Transfer to DHS" name="action_transfer_to_dhs" type="object" class="oe_highlight" invisible="state != 'clear' or dhs_ids"/> -->
                     
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, clear, not_clear" /> 
@@ -56,11 +56,13 @@
                             <field name="donor_contact" readonly="1"/>
                         </group>
                         <group name="direct_deposit_col_2">
+
                             <field name="currency_id" invisible="1"/>
                             <field name="transaction_ref" />
                             <field name="user_id" readonly="1" string="Created By"/>
                             <field name="analytic_account_id" string="Branch Location" readonly="1"/>
                             <field name="create_date" string="Created On" readonly="1"/>
+                            <field name="transfer_to_dhs" readonly="1"/>
                         </group>
                     </group>
 

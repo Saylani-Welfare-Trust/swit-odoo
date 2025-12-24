@@ -33,7 +33,9 @@
                     <button string="Move to Treasury" name="action_move_to_treasury" type="object" class="oe_highlight" invisible="state != 'approve' or in_recovery or asset_type != 'cash'" />
                     <button string="SD Slip" name="action_sd_slip" type="object" invisible="state != 'approve' or in_recovery" />
                     
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery or asset_type == 'cash'" groups="stock.group_stock_user"/>
+                    <!-- For movable assets: No Done button - auto done when picking validated -->
+                    <!-- For non-movable/non-cash assets in WFD: Show Done button -->
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery or asset_type in ['cash', 'movable_asset']" groups="stock.group_stock_user"/>
                     <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'treasury' or in_recovery or asset_type != 'cash'"/>
                     <button string="Receipt" name="action_receipt" type="object" invisible="state not in ['wfd', 'treasury'] or in_recovery" />
 
@@ -53,6 +55,13 @@
                 <sheet>
                     <field name="in_recovery" invisible="1" />
                     <widget name="web_ribbon" title="In Recovery" invisible="not in_recovery"/>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck" 
+                                invisible="not picking_id">
+                            <field name="picking_id" widget="statinfo" string="Delivery"/>
+                        </button>
+                    </div>
 
                     <div class="oe_title">
                         <label for="name" string="Name"/>

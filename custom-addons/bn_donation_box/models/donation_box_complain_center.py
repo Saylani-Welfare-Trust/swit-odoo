@@ -1,5 +1,5 @@
 from odoo import fields, models, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError,UserError
 
 
 box_status_selection = [
@@ -26,8 +26,10 @@ class DonationBoxComplain(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", compute="_set_registration_id", tracking=True)
+    stored_registration_id = fields.Many2one('donation.box.registration.installation', string="Stored Registration", tracking=True)
     return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True)
     scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True)
+    scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True)
 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
     
@@ -55,11 +57,18 @@ class DonationBoxComplain(models.Model):
 
 
     def action_process(self):
+        # Store the registration ID before it gets closed during resolve
+        if self.donation_box_registration_installation_id:
+            self.stored_registration_id = self.donation_box_registration_installation_id.id
         self.status = 'process'
     
     def action_resolve(self):
+        # Use stored_registration_id as it persists after resolve
+        registration = self.stored_registration_id or self.donation_box_registration_installation_id
+        
         if self.box_status != 'return':
-            self.donation_box_registration_installation_id.status = 'close'
+            if registration:
+                registration.status = 'close'
             self.lot_id.is_not_return = True
 
         if self.box_status == 'broken':
@@ -82,7 +91,9 @@ class DonationBoxComplain(models.Model):
             if not rec.lot_id:
                 raise ValidationError("Please select a Serial (Lot) to return.")
 
-            registration = rec.donation_box_registration_installation_id
+            # Use stored_registration_id as it persists even after installation is closed
+            registration = rec.stored_registration_id or rec.donation_box_registration_installation_id
+        
             if not registration:
                 raise ValidationError("No installation record found for this serial.")
 
@@ -155,6 +166,8 @@ class DonationBoxComplain(models.Model):
             
             # 9. Lot consume
             rec.lot_id.lot_consume = False
+            rec.lot_id.is_not_return = False
+
 
     def action_scrap(self):
         """Scrap the selected serial (lot) instead of returning picking."""
@@ -163,7 +176,7 @@ class DonationBoxComplain(models.Model):
             if not rec.lot_id:
                 raise ValidationError("Please select a Serial (Lot) to scrap.")
 
-            registration = rec.donation_box_registration_installation_id
+            registration = rec.stored_registration_id or rec.donation_box_registration_installation_id
             if not registration:
                 raise ValidationError("No installation record found for this serial.")
 
@@ -233,6 +246,15 @@ class DonationBoxComplain(models.Model):
             'target': 'current'
         }
 
+    def action_scrap_return_move(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.scrap_return_picking_id.id,
+            'target': 'current'
+        }
+
     def action_repair(self):
         """
         Repair broken donation boxes (single or bulk).
@@ -254,38 +276,98 @@ class DonationBoxComplain(models.Model):
                 rec.lot_id.is_not_return = False
             
             # 3. If there's a scrap record, we need to reverse the scrap
-            # by creating a stock move from scrap location back to stock
+            # by creating an internal transfer from scrap location back to stock
             if rec.scrap_picking_id:
-                scrap_move = rec.scrap_picking_id
+                scrap_record = rec.scrap_picking_id
 
-                # Get the original stock location for this product (usually warehouse stock)
-                stock_location = scrap_move.location_id
+                # Get the warehouse's stock location (lot_stock_id)
+                warehouse = self.env['stock.warehouse'].search([
+                    ('company_id', '=', scrap_record.company_id.id)
+                ], limit=1)
+                
+                if not warehouse:
+                    raise ValidationError("No warehouse found for this company.")
+                
+                stock_location = warehouse.lot_stock_id
 
-                if stock_location:
-                    # Original scrap move
-                    if scrap_move.state == 'done':
-                        # Create a reverse move from scrap location → stock location
-                        reverse_move_vals = {
-                            'name': f'Repair Return: {rec.lot_id.name}',
-                            'product_id': scrap_move.product_id.id,
-                            'product_uom_qty': scrap_move.scrap_qty,
-                            'product_uom': scrap_move.product_uom_id.id,
-                            'location_id': scrap_move.scrap_location_id.id,   # Scrap location
-                            'location_dest_id': scrap_move.location_id.id,          # Internal stock
-                            'lot_ids': [(4, rec.lot_id.id)],
-                            'origin': f'Repair - {rec.name or rec.lot_id.name}',
-                        }
+                if not stock_location:
+                    raise ValidationError("Cannot determine stock location from warehouse.")
 
-                        reverse_move = self.env['stock.move'].create(reverse_move_vals)
-                        reverse_move._action_confirm()
-                        reverse_move._action_assign()
-                        reverse_move._action_done()
-                else: raise ValidationError("Cannot determine stock location to reverse scrap operation.")
+                # Only process if scrap was done
+                if scrap_record.state == 'done':
+                    # Get internal transfer picking type
+                    picking_type = self.env['stock.picking.type'].search([
+                        ('code', '=', 'internal'),
+                        ('warehouse_id', '=', warehouse.id),
+                    ], limit=1)
+                    
+                    if not picking_type:
+                        # Fallback: get any internal picking type
+                        picking_type = self.env['stock.picking.type'].search([
+                            ('code', '=', 'internal'),
+                            ('company_id', '=', scrap_record.company_id.id),
+                        ], limit=1)
+                    
+                    if not picking_type:
+                        raise ValidationError("No internal transfer picking type found.")
+
+                    # 1. Create the picking (internal transfer)
+                    picking_vals = {
+                        'picking_type_id': picking_type.id,
+                        'location_id': scrap_record.scrap_location_id.id,  # From scrap location
+                        'location_dest_id': stock_location.id,             # To warehouse stock
+                        'origin': f'Repair - {rec.name or rec.lot_id.name}',
+                        'company_id': scrap_record.company_id.id,
+                    }
+                    picking = self.env['stock.picking'].create(picking_vals)
+
+                    # 2. Create the stock move
+                    move_vals = {
+                        'name': f'Repair Return: {rec.lot_id.name}',
+                        'product_id': scrap_record.product_id.id,
+                        'product_uom_qty': scrap_record.scrap_qty,
+                        'product_uom': scrap_record.product_uom_id.id,
+                        'location_id': scrap_record.scrap_location_id.id,
+                        'location_dest_id': stock_location.id,
+                        'picking_id': picking.id,
+                        'origin': f'Repair - {rec.name or rec.lot_id.name}',
+                    }
+                    move = self.env['stock.move'].create(move_vals)
+
+                    # 3. Create the move line with lot and quantity BEFORE confirming
+                    move_line = self.env['stock.move.line'].create({
+                        'move_id': move.id,
+                        'picking_id': picking.id,
+                        'product_id': scrap_record.product_id.id,
+                        'product_uom_id': scrap_record.product_uom_id.id,
+                        'quantity': scrap_record.scrap_qty,
+                        'lot_id': rec.lot_id.id,
+                        'location_id': scrap_record.scrap_location_id.id,
+                        'location_dest_id': stock_location.id,
+                    })
+
+                    # 4. Confirm the picking
+                    picking.action_confirm()
+                    picking.action_assign()
+
+                    # 5. Ensure the move line has the lot assigned (in case it got reset)
+                    if not move_line.lot_id:
+                        move_line.lot_id = rec.lot_id.id
+                    
+                    # Set quantity done on move
+                    move.quantity = scrap_record.scrap_qty
+
+                    # 6. Validate the picking with immediate transfer context
+                    picking.with_context(skip_backorder=True).button_validate()
+
+                    # Store the scrap return picking reference
+                    rec.scrap_return_picking_id = picking.id
 
             # 4. Reopen the installation record so box can be re-allocated
             if rec.donation_box_registration_installation_id:
+                # raise UserError(_("Reopening the installation record is not allowed."))
                 # Reset the installation status to allow re-allocation
-                rec.donation_box_registration_installation_id.status = 'available'
+                rec.donation_box_registration_installation_id.status = 'close'
             
             # 5. Update complain status to resolved
             rec.status = 'resolved'

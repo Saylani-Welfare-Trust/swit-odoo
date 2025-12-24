@@ -27,12 +27,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.orderLines = this.props.orderLines;
         this.action_type = this.props.action_type;
         
-        // Set title based on action type
-        if (this.action_type === 'dd_update') {
-            this.title = "Update Direct Deposit Record";
-        } else {
-            this.title = this.props.title || "Provisional Order Details";
-        }
+        this.title = this.props.title || "Provisional Order Details";
         
         this.state = useState({
             microfinance_request_no: '',
@@ -41,11 +36,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             total: parseFloat(this.props.amount) || 0,
             address: this.props.address || "",   
             transaction_ref: this.props.transaction_ref || "",
-            
-            // DD Update specific state
-            dd_reference: '',
-            dd_record: null,
-            dd_step: 'search',  // 'search' or 'action'
+            transfer_to_dhs: false,
         });
     }
 
@@ -67,8 +58,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.transaction_ref = event.target.value;
     }
 
-    updateDDReference(event) {
-        this.state.dd_reference = event.target.value;
+    updateTransferToDHS(event) {
+        this.state.transfer_to_dhs = event.target.checked;
     }
 
     prepareOrderLines(orderLines) {
@@ -248,6 +239,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
                 'user_id': userId,
+                'transfer_to_dhs': this.state.transfer_to_dhs,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
@@ -267,139 +259,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.pos.add_new_order();
             })
         }
-
-        // Direct Deposit Update
-        if (this.action_type === 'dd_update') {
-            if (this.state.dd_step === 'search') {
-                await this.searchDDRecord();
-            } else if (this.state.dd_step === 'action') {
-                // This is handled by action buttons, not confirm
-            }
-        }
-    }
-
-    /**
-     * Search for DD record by reference
-     */
-    async searchDDRecord() {
-        if (!this.state.dd_reference) {
-            this.notification.add(
-                _t("Please enter a Direct Deposit reference"),
-                { type: 'warning' }
-            );
-            return;
-        }
-
-        const records = await this.orm.searchRead(
-            'direct.deposit',
-            [['name', '=', this.state.dd_reference.trim()]],
-            ['id', 'name', 'state', 'donor_id', 'amount', 'dhs_ids'],
-            { limit: 1 }
-        );
-
-        if (!records.length) {
-            this.notification.add(
-                _t("Record '%s' not found", this.state.dd_reference),
-                { type: 'warning' }
-            );
-            return;
-        }
-
-        this.state.dd_record = records[0];
-        this.state.dd_step = 'action';
-    }
-
-    /**
-     * Get available actions for the DD record based on its state
-     */
-    getDDActions() {
-        const record = this.state.dd_record;
-        if (!record) return [];
-
-        const actions = [];
-
-        // If state is 'draft' - show Clear and Not Clear options
-        if (record.state === 'draft') {
-            actions.push({ id: 'action_clear', label: '✓ Clear', class: 'btn-success' });
-            actions.push({ id: 'action_not_clear', label: '✗ Not Clear', class: 'btn-danger' });
-        }
-
-        // If state is 'clear' and no DHS records - show Transfer to DHS option
-        if (record.state === 'clear' && (!record.dhs_ids || record.dhs_ids.length === 0)) {
-            actions.push({ id: 'action_transfer_to_dhs', label: '→ Transfer to DHS', class: 'btn-primary' });
-        }
-
-        return actions;
-    }
-
-    /**
-     * Get message when no actions available
-     */
-    getDDNoActionMessage() {
-        const record = this.state.dd_record;
-        if (!record) return '';
-
-        if (record.state === 'not_clear') {
-            return _t("This record is marked as 'Not Clear'. No further actions available.");
-        } else if (record.state === 'transferred') {
-            return _t("This record has already been transferred to DHS.");
-        } else if (record.state === 'clear' && record.dhs_ids && record.dhs_ids.length > 0) {
-            return _t("This record has already been transferred to DHS.");
-        }
-        return _t("No actions available for this record.");
-    }
-
-    /**
-     * Execute DD action
-     */
-    async executeDDAction(action) {
-        const recordId = this.state.dd_record.id;
-
-        try {
-            if (action === 'action_clear') {
-                await this.orm.call('direct.deposit', 'action_clear', [[recordId]]);
-                this.notification.add(
-                    _t("Record marked as Clear successfully!"),
-                    { type: 'success' }
-                );
-                // Close popup first, then print report
-                this.cancel();
-                // Print the Direct Deposit duplicate report
-                try {
-                    await this.report.doAction("bn_direct_deposit.report_direct_deposit_duplicate", [recordId]);
-                } catch (reportError) {
-                    console.warn("Report print error:", reportError);
-                }
-                return;
-            } else if (action === 'action_not_clear') {
-                await this.orm.call('direct.deposit', 'action_not_clear', [[recordId]]);
-                this.notification.add(
-                    _t("Record marked as Not Clear successfully!"),
-                    { type: 'success' }
-                );
-            } else if (action === 'action_transfer_to_dhs') {
-                await this.orm.call('direct.deposit', 'action_transfer_to_dhs', [[recordId]]);
-                this.notification.add(
-                    _t("Record transferred to DHS successfully!"),
-                    { type: 'success' }
-                );
-            }
-
-            this.cancel();
-        } catch (error) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Error"),
-                body: error.message || _t("An error occurred while processing the action.")
-            });
-        }
-    }
-
-    /**
-     * Go back to search step
-     */
-    backToSearch() {
-        this.state.dd_record = null;
-        this.state.dd_step = 'search';
     }
 
     /**
