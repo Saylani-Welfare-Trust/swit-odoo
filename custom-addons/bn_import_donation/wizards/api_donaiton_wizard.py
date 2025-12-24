@@ -135,7 +135,7 @@ class APIDonationWizard(models.TransientModel):
         unique_currencies = set()
         unique_import_ids = set()
         unique_country_codes = set()
-        donor_details = []  # Store donor details for simpler processing
+        unique_mobiles = set()
         
         for info in donations_info:
             if info.get('_id'):
@@ -146,17 +146,10 @@ class APIDonationWizard(models.TransientModel):
             donor = info.get('donor_details') or {}
             if donor.get('country'):
                 unique_country_codes.add(donor.get('country'))
-            
-            # Store donor details for later processing
-            if donor.get('phone') and donor.get('country'):
+            if donor.get('phone'):
                 mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-                donor_details.append({
-                    'mobile': mobile,
-                    'country_code': donor.get('country'),
-                    'name': donor.get('name', ''),
-                    'email': donor.get('email', ''),
-                    'cnic': donor.get('cnic', '')
-                })
+                if mobile:
+                    unique_mobiles.add(mobile)
 
         # Bulk fetch currencies
         currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
@@ -184,21 +177,21 @@ class APIDonationWizard(models.TransientModel):
             )
             existing_import_ids = {r['import_id'] for r in existing_records}
         
-        # Bulk fetch existing partners - SIMPLER APPROACH
+        # Bulk fetch existing partners - SIMPLER AND SAFER APPROACH
         partner_cache = {}
-        if donor_details:
-            # Get all mobile numbers to search
-            mobile_numbers = [d['mobile'] for d in donor_details if d['mobile']]
+        if unique_mobiles:
+            # Get donor category
+            donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
             
-            if mobile_numbers:
-                # Search partners by mobile number first (most specific)
-                existing_partners = self.env['res.partner'].search_read(
-                    [('mobile', 'in', mobile_numbers), ('category_id.name', 'in', ['Donor'])],
-                    ['id', 'mobile', 'country_code_id']
-                )
-                
-                # Cache the partners by mobile
-                for partner in existing_partners:
+            # Search partners by mobile number
+            existing_partners = self.env['res.partner'].search_read(
+                [('mobile', 'in', list(unique_mobiles))],
+                ['id', 'mobile', 'country_code_id', 'category_id']
+            )
+            
+            # Filter to only include donors and cache them
+            for partner in existing_partners:
+                if donor_category and donor_category.id in (partner.get('category_id') or []):
                     key = (partner.get('mobile'), partner.get('country_code_id'))
                     partner_cache[key] = partner['id']
         
@@ -240,7 +233,6 @@ class APIDonationWizard(models.TransientModel):
                 individual_category.id if individual_category else False
             ],
             'default_partner_id': default_partner_id,
-            'donor_details': donor_details,  # Store for later use
         }
 
     # ---------------------- Bulk Processing ----------------------
@@ -311,9 +303,16 @@ class APIDonationWizard(models.TransientModel):
         created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'))
         updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'))
         
-        # Get currency and conversion rate
+        # Get currency and conversion rate - ensure we have a valid currency
         currency_name = info.get('currency', '') or ''
         conv_rate = all_data['conversion_rates'].get(currency_name, 1.0)
+        
+        # Validate currency exists
+        if currency_name and currency_name not in all_data['currency_by_name']:
+            _logger.warning(f"Currency {currency_name} not found in system, using company currency")
+            # Use company currency as fallback
+            currency_name = self.env.company.currency_id.name
+            conv_rate = 1.0
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0)
@@ -439,11 +438,13 @@ class APIDonationWizard(models.TransientModel):
         currency_name = donation_vals.get('currency', '')
         currency_rec = all_data['currency_by_name'].get(currency_name)
         if not currency_rec:
+            _logger.warning(f"Currency {currency_name} not found for donation")
             return
         
         # Get debit account from cache
         debit_account_id = all_data['gateway_currency_lines'].get(currency_name)
         if not debit_account_id:
+            _logger.warning(f"Debit account not found for currency {currency_name}")
             return
         
         is_foreign = currency_rec != company_currency
@@ -455,6 +456,7 @@ class APIDonationWizard(models.TransientModel):
             
             config = all_data['gateway_product_lines'].get(product_name)
             if not config:
+                _logger.warning(f"Product config not found for {product_name}")
                 continue
             
             credit_account_id = config['account_id']
@@ -462,17 +464,28 @@ class APIDonationWizard(models.TransientModel):
             
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
+            
+            # Apply rounding at the item level
+            if is_foreign:
+                # Round foreign amount to currency precision
+                item_total = currency_rec.round(item_total)
+            
             item_total_base = item_total * conv_rate
+            # Round base amount to company currency precision
+            item_total_base = company_currency.round(item_total_base)
+            
+            # Ensure we have a currency ID
+            currency_id = currency_rec.id if currency_rec else company_currency.id
             
             # Accumulate debit
-            debit_key = (debit_account_id, currency_rec.id)
+            debit_key = (debit_account_id, currency_id)
             d = debit_accumulator[debit_key]
             d['debit_base'] += item_total_base
             if is_foreign:
                 d['amount_currency'] += item_total
             
             # Accumulate credit
-            credit_key = (credit_account_id, currency_rec.id, analytic_id)
+            credit_key = (credit_account_id, currency_id, analytic_id)
             c = credit_accumulator[credit_key]
             c['credit_base'] += item_total_base
             if is_foreign:
@@ -494,9 +507,22 @@ class APIDonationWizard(models.TransientModel):
         try:
             # Most common format first
             if 'T' in iso_str:
-                return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                # Handle ISO format with Z or timezone
+                if 'Z' in iso_str:
+                    return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
+                    return datetime.fromisoformat(iso_str).replace(tzinfo=None)
+                else:
+                    return datetime.fromisoformat(iso_str)
             else:
-                return datetime.strptime(iso_str, '%Y-%m-%d %H:%M:%S')
+                # Try common date formats
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        return datetime.strptime(iso_str, fmt)
+                    except ValueError:
+                        continue
+                # Fallback to naive parsing
+                return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
         except Exception:
             _logger.debug('Failed to parse datetime: %s', iso_str)
             return None
@@ -507,73 +533,181 @@ class APIDonationWizard(models.TransientModel):
         lines = []
         currency = company_currency
         
-        # Calculate totals
-        total_debit = sum(v['debit_base'] for v in debit_accumulator.values())
-        total_credit = sum(v['credit_base'] for v in credit_accumulator.values())
+        # Calculate totals with proper rounding
+        total_debit = currency.round(sum(v['debit_base'] for v in debit_accumulator.values()))
+        total_credit = currency.round(sum(v['credit_base'] for v in credit_accumulator.values()))
         
-        # Add debit lines
+        _logger.info(f"Total Debit: {total_debit}, Total Credit: {total_credit}")
+        
+        # Add debit lines with proper rounding
         for (account_id, currency_id), vals in debit_accumulator.items():
-            if vals['debit_base'] > 0:
-                lines.append((0, 0, {
+            debit_amount = currency.round(vals['debit_base'])
+            if debit_amount > 0:
+                line_currency_id = currency_id or currency.id
+                line_vals = {
                     'account_id': account_id,
-                    'debit': vals['debit_base'],
+                    'debit': debit_amount,
                     'credit': 0.0,
-                    'currency_id': currency_id if currency_id != currency.id else currency.id,
-                    'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
-                    'name': 'Donation Import',
-                }))
+                    'currency_id': line_currency_id,
+                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
+                    'name': 'Donation Import - Debit',
+                }
+                lines.append((0, 0, line_vals))
         
-        # Add credit lines
+        # Add credit lines with proper rounding
         for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
-            if vals['credit_base'] > 0:
+            credit_amount = currency.round(vals['credit_base'])
+            if credit_amount > 0:
+                line_currency_id = currency_id or currency.id
                 line_vals = {
                     'account_id': account_id,
                     'debit': 0.0,
-                    'credit': vals['credit_base'],
-                    'currency_id': currency_id if currency_id != currency.id else currency.id,
-                    'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
-                    'name': 'Donation Import',
+                    'credit': credit_amount,
+                    'currency_id': line_currency_id,
+                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
+                    'name': 'Donation Import - Credit',
                 }
                 if analytic_id:
                     line_vals['analytic_distribution'] = {str(analytic_id): 100}
                 lines.append((0, 0, line_vals))
         
-        # Handle rounding difference
-        difference = currency.round(total_debit - total_credit)
+        # Recalculate totals from lines to ensure accuracy
+        line_debits = sum(line[2]['debit'] for line in lines)
+        line_credits = sum(line[2]['credit'] for line in lines)
+        
+        _logger.info(f"Line Debits: {line_debits}, Line Credits: {line_credits}")
+        
+        # Calculate difference with proper rounding
+        difference = currency.round(line_debits - line_credits)
+        
+        _logger.info(f"Difference: {difference}")
+        
+        # Handle rounding difference - use a more robust approach
         if not currency.is_zero(difference):
-            diff_account = self._get_difference_account()
-            lines.append((0, 0, {
-                'account_id': diff_account.id,
-                'debit': difference if difference > 0 else 0.0,
-                'credit': abs(difference) if difference < 0 else 0.0,
-                'name': 'Rounding Difference',
-            }))
+            # Get rounding difference account
+            diff_account = self._get_rounding_difference_account(journal)
+            
+            # Determine which side needs adjustment
+            if difference > 0:
+                # Debits > Credits, need to add credit
+                adjust_line = {
+                    'account_id': diff_account.id,
+                    'debit': 0.0,
+                    'credit': abs(difference),
+                    'currency_id': currency.id,
+                    'amount_currency': 0.0,
+                    'name': 'Rounding Adjustment',
+                }
+            else:
+                # Credits > Debits, need to add debit
+                adjust_line = {
+                    'account_id': diff_account.id,
+                    'debit': abs(difference),
+                    'credit': 0.0,
+                    'currency_id': currency.id,
+                    'amount_currency': 0.0,
+                    'name': 'Rounding Adjustment',
+                }
+            
+            lines.append((0, 0, adjust_line))
+            
+            # Recalculate after adjustment
+            final_debits = sum(line[2]['debit'] for line in lines)
+            final_credits = sum(line[2]['credit'] for line in lines)
+            
+            _logger.info(f"Final Debits: {final_debits}, Final Credits: {final_credits}")
+            
+            # Double check the balance
+            if not currency.is_zero(final_debits - final_credits):
+                _logger.error(f"Still unbalanced! Debits: {final_debits}, Credits: {final_credits}")
+                raise ValidationError(_("Journal entry cannot be balanced. Please check the amounts."))
         
         # Create and post move
-        move = self.env['account.move'].sudo().create({
-            'move_type': 'entry',
-            'journal_id': journal.id,
-            'date': fields.Date.today(),
-            'ref': f"Donation Import {fields.Date.today()}",
-            'line_ids': lines,
-        })
-        
-        move.action_post()
-        return move
+        try:
+            move_vals = {
+                'move_type': 'entry',
+                'journal_id': journal.id,
+                'date': fields.Date.today(),
+                'ref': f"Donation Import {fields.Date.today()}",
+                'line_ids': lines,
+                'currency_id': currency.id,
+            }
+            
+            move = self.env['account.move'].sudo().create(move_vals)
+            
+            # Validate balance before posting
+            if not move.is_valid:
+                _logger.error(f"Journal entry {move.id} is not balanced before posting")
+                # Try to auto-balance
+                move._auto_balance_foreign_currencies()
+                
+            move.action_post()
+            
+            # Verify after posting
+            if not move.is_valid:
+                raise ValidationError(_("Journal entry is not balanced after posting."))
+                
+            return move
+            
+        except Exception as e:
+            _logger.error(f"Failed to create journal entry: {str(e)}")
+            raise ValidationError(_("Failed to create journal entry: %s") % str(e))
 
-    def _get_difference_account(self):
-        """Get difference account with fallback"""
+    def _get_rounding_difference_account(self, journal):
+        """Get rounding difference account with proper fallbacks"""
+        # First try journal's default account
+        if journal.default_account_id:
+            return journal.default_account_id
+        
+        # Try company's difference account
+        company = self.env.company
+        if company.difference_account_prefix:
+            diff_account = self.env['account.account'].search([
+                ('code', 'like', f"{company.difference_account_prefix}%"),
+                ('company_id', '=', company.id)
+            ], limit=1)
+            if diff_account:
+                return diff_account
+        
+        # Try expense rounding account
         diff_account = self.env['account.account'].search([
-            ('code', '=', self.env.company.difference_account_prefix)
+            ('account_type', 'in', ['expense', 'income']),
+            ('name', 'ilike', 'rounding'),
+            ('company_id', '=', company.id)
         ], limit=1)
         
         if not diff_account:
+            # Last resort: get any expense account
             diff_account = self.env['account.account'].search([
-                ('account_type', 'in', ['expense', 'income']),
-                ('name', 'ilike', 'rounding')
+                ('account_type', '=', 'expense'),
+                ('company_id', '=', company.id)
             ], limit=1)
             
-        if not diff_account:
-            raise ValidationError(_("Difference account not found. Please configure a rounding difference account."))
+            if not diff_account:
+                raise ValidationError(_(
+                    "No suitable rounding difference account found. "
+                    "Please configure a default account on journal '%s' or "
+                    "set up a rounding difference account." % journal.name
+                ))
         
         return diff_account
+
+    # ---------------------- Validation ----------------------
+    def _validate_accumulators(self, debit_accumulator, credit_accumulator, company_currency):
+        """Validate that accumulators are balanced"""
+        total_debit = company_currency.round(sum(v['debit_base'] for v in debit_accumulator.values()))
+        total_credit = company_currency.round(sum(v['credit_base'] for v in credit_accumulator.values()))
+        
+        difference = company_currency.round(total_debit - total_credit)
+        
+        if not company_currency.is_zero(difference):
+            _logger.warning(f"Accumulators unbalanced by {difference}. Debits: {total_debit}, Credits: {total_credit}")
+            
+            # Try to find which currency is causing the issue
+            for (account_id, currency_id), vals in debit_accumulator.items():
+                _logger.debug(f"Debit: Account={account_id}, Currency={currency_id}, Amount={vals['debit_base']}")
+            
+            for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
+                _logger.debug(f"Credit: Account={account_id}, Currency={currency_id}, Analytic={analytic_id}, Amount={vals['credit_base']}")
+        
+        return difference
