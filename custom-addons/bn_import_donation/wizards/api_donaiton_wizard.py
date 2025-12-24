@@ -366,7 +366,7 @@ class APIDonationWizard(models.TransientModel):
                 'account_id': account_id,
                 'debit': vals['debit_base'],
                 'credit': 0.0,
-                'currency_id': currency_id if currency_id != currency.id else False,
+                'currency_id': currency_id if currency_id != currency.id else currency.id,
                 'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
                 'name': 'Donation Import - Debit',
             }))
@@ -376,7 +376,7 @@ class APIDonationWizard(models.TransientModel):
                 'account_id': account_id,
                 'debit': 0.0,
                 'credit': vals['credit_base'],
-                'currency_id': currency_id if currency_id != currency.id else False,
+                'currency_id': currency_id if currency_id != currency.id else currency.id,
                 'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
                 'name': 'Donation Import - Credit',
             }
