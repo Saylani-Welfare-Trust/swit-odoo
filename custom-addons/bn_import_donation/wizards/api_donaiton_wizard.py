@@ -135,7 +135,7 @@ class APIDonationWizard(models.TransientModel):
         unique_currencies = set()
         unique_import_ids = set()
         unique_country_codes = set()
-        donor_details = []  # Store donor details for simpler processing
+        unique_mobiles = set()
         
         for info in donations_info:
             if info.get('_id'):
@@ -146,17 +146,10 @@ class APIDonationWizard(models.TransientModel):
             donor = info.get('donor_details') or {}
             if donor.get('country'):
                 unique_country_codes.add(donor.get('country'))
-            
-            # Store donor details for later processing
-            if donor.get('phone') and donor.get('country'):
+            if donor.get('phone'):
                 mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-                donor_details.append({
-                    'mobile': mobile,
-                    'country_code': donor.get('country'),
-                    'name': donor.get('name', ''),
-                    'email': donor.get('email', ''),
-                    'cnic': donor.get('cnic', '')
-                })
+                if mobile:
+                    unique_mobiles.add(mobile)
 
         # Bulk fetch currencies
         currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
@@ -186,21 +179,17 @@ class APIDonationWizard(models.TransientModel):
         
         # Bulk fetch existing partners - SIMPLER APPROACH
         partner_cache = {}
-        if donor_details:
-            # Get all mobile numbers to search
-            mobile_numbers = [d['mobile'] for d in donor_details if d['mobile']]
+        if unique_mobiles:
+            # Search partners by mobile number
+            existing_partners = self.env['res.partner'].search_read(
+                [('mobile', 'in', list(unique_mobiles))],
+                ['id', 'mobile', 'country_code_id']
+            )
             
-            if mobile_numbers:
-                # Search partners by mobile number first (most specific)
-                existing_partners = self.env['res.partner'].search_read(
-                    [('mobile', 'in', mobile_numbers), ('category_id.name', 'in', ['Donor'])],
-                    ['id', 'mobile', 'country_code_id']
-                )
-                
-                # Cache the partners by mobile
-                for partner in existing_partners:
-                    key = (partner.get('mobile'), partner.get('country_code_id'))
-                    partner_cache[key] = partner['id']
+            # Cache partners by (mobile, country_id)
+            for partner in existing_partners:
+                key = (partner.get('mobile'), partner.get('country_code_id'))
+                partner_cache[key] = partner['id']
         
         # Pre-fetch gateway config data
         gateway_currency_lines = {}
@@ -240,7 +229,6 @@ class APIDonationWizard(models.TransientModel):
                 individual_category.id if individual_category else False
             ],
             'default_partner_id': default_partner_id,
-            'donor_details': donor_details,  # Store for later use
         }
 
     # ---------------------- Bulk Processing ----------------------
@@ -252,8 +240,6 @@ class APIDonationWizard(models.TransientModel):
         
         # Prepare bulk create data
         donations_to_create = []
-        partner_to_create = []
-        partner_mapping = {}
         
         for info_idx, info in enumerate(donations_info):
             import_id = info.get('_id')
@@ -261,7 +247,7 @@ class APIDonationWizard(models.TransientModel):
                 continue
 
             # Prepare donation values efficiently
-            donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping)
+            donation_vals = self._prepare_donation_vals_fast(info, all_data)
             if donation_vals:
                 donations_to_create.append(donation_vals)
                 
@@ -271,23 +257,6 @@ class APIDonationWizard(models.TransientModel):
                         donation_vals, all_data, company_currency,
                         debit_accumulator, credit_accumulator
                     )
-        
-        # Bulk create partners first
-        if partner_to_create:
-            created_partners = self.env['res.partner'].create(partner_to_create)
-            # Register partners in bulk
-            created_partners.action_register()
-            # Update mapping with new IDs
-            for idx, partner in enumerate(created_partners):
-                original_idx = partner_to_create[idx].get('original_index')
-                if original_idx is not None:
-                    partner_mapping[original_idx] = partner.id
-        
-        # Update partner IDs in donation values
-        for donation_val in donations_to_create:
-            if 'partner_key' in donation_val:
-                donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
-                del donation_val['partner_key']
         
         # Bulk create donations
         if donations_to_create:
@@ -302,7 +271,7 @@ class APIDonationWizard(models.TransientModel):
             }
         }
 
-    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping):
+    def _prepare_donation_vals_fast(self, info, all_data):
         """Prepare donation values with optimized lookups"""
         if info.get('status') != 'success':
             return None
@@ -311,9 +280,16 @@ class APIDonationWizard(models.TransientModel):
         created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'))
         updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'))
         
-        # Get currency and conversion rate
+        # Get currency and conversion rate - ensure we have a valid currency
         currency_name = info.get('currency', '') or ''
         conv_rate = all_data['conversion_rates'].get(currency_name, 1.0)
+        
+        # Validate currency exists
+        if currency_name and currency_name not in all_data['currency_by_name']:
+            _logger.warning(f"Currency {currency_name} not found in system, using company currency")
+            # Use company currency as fallback
+            currency_name = self.env.company.currency_id.name
+            conv_rate = 1.0
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0)
@@ -321,37 +297,58 @@ class APIDonationWizard(models.TransientModel):
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
-        donor_id = None
-        partner_key = None
+        donor_id = all_data['default_partner_id']  # Default to anonymous donor
         
         if donor.get('name', ''):
             mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
             country_code = donor.get('country', '')
             country_id = all_data['country_by_code'].get(country_code)
             
-            # Check cache first - simpler approach
-            if mobile:
-                # Try to find by mobile number in cache
-                for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile:  # Compare mobile numbers
-                        donor_id = cached_id
-                        break
-            
-            if not donor_id:
-                # Create new partner
-                partner_vals = {
-                    'name': donor.get('name', ''),
-                    'mobile': mobile,
-                    'email': donor.get('email', ''),
-                    'country_code_id': country_id,
-                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    'original_index': len(partner_to_create)  # Store index for mapping
-                }
-                partner_to_create.append(partner_vals)
-                # Temporary key for later mapping
-                partner_key = len(partner_to_create) - 1
-        else:
-            donor_id = all_data['default_partner_id']
+            # Check if partner exists in cache
+            if mobile and country_id:
+                cache_key = (mobile, country_id)
+                if cache_key in all_data['partner_cache']:
+                    # Partner exists in cache, use it
+                    donor_id = all_data['partner_cache'][cache_key]
+                    _logger.info(f"Found existing donor in cache: {donor_id} for mobile {mobile}")
+                else:
+                    # Partner doesn't exist in cache, check database
+                    existing_partner = self.env['res.partner'].search([
+                        ('mobile', '=', mobile),
+                        ('country_code_id', '=', country_id)
+                    ], limit=1)
+                    
+                    if existing_partner:
+                        # Partner exists in database, use it
+                        donor_id = existing_partner.id
+                        all_data['partner_cache'][cache_key] = donor_id
+                        _logger.info(f"Found existing donor in database: {donor_id} for mobile {mobile}")
+                    else:
+                        # Partner doesn't exist, create new one
+                        try:
+                            # Get valid category IDs
+                            category_ids = [cid for cid in all_data['donor_category_ids'] if cid]
+                            
+                            new_partner = self.env['res.partner'].create({
+                                'name': donor.get('name', ''),
+                                'mobile': mobile,
+                                'email': donor.get('email', ''),
+                                'country_code_id': country_id,
+                                'category_id': [(6, 0, category_ids)] if category_ids else False,
+                            })
+                            
+                            # Register the new partner
+                            if hasattr(new_partner, 'action_register'):
+                                new_partner.action_register()
+                            
+                            donor_id = new_partner.id
+                            all_data['partner_cache'][cache_key] = donor_id
+                            _logger.info(f"Created new donor: {donor_id} for mobile {mobile}")
+                            
+                        except Exception as e:
+                            _logger.error(f"Failed to create partner for mobile {mobile}: {str(e)}")
+                            # Use default partner if creation fails
+                            donor_id = all_data['default_partner_id']
         
         # Prepare donation items
         items = info.get('items') or []
@@ -420,16 +417,9 @@ class APIDonationWizard(models.TransientModel):
             'qurbani_country': donor.get('qurbaniCountry', ''),
             'qurbani_city': donor.get('qurbaniCity', ''),
             'qurbani_day': donor.get('qurbaniDay', ''),
+            'donor_id': donor_id,
             'donation_item_ids': [(0, 0, it) for it in orm_items],
         }
-        
-        # Set donor_id - either from cache, from new partner, or default
-        if donor_id:
-            donation_vals['donor_id'] = donor_id
-        elif partner_key is not None:
-            donation_vals['partner_key'] = partner_key
-        else:
-            donation_vals['donor_id'] = all_data['default_partner_id']
         
         return donation_vals
 
@@ -439,11 +429,13 @@ class APIDonationWizard(models.TransientModel):
         currency_name = donation_vals.get('currency', '')
         currency_rec = all_data['currency_by_name'].get(currency_name)
         if not currency_rec:
+            _logger.warning(f"Currency {currency_name} not found for donation")
             return
         
         # Get debit account from cache
         debit_account_id = all_data['gateway_currency_lines'].get(currency_name)
         if not debit_account_id:
+            _logger.warning(f"Debit account not found for currency {currency_name}")
             return
         
         is_foreign = currency_rec != company_currency
@@ -455,6 +447,7 @@ class APIDonationWizard(models.TransientModel):
             
             config = all_data['gateway_product_lines'].get(product_name)
             if not config:
+                _logger.warning(f"Product config not found for {product_name}")
                 continue
             
             credit_account_id = config['account_id']
@@ -462,17 +455,28 @@ class APIDonationWizard(models.TransientModel):
             
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
+            
+            # Apply rounding at the item level
+            if is_foreign:
+                # Round foreign amount to currency precision
+                item_total = currency_rec.round(item_total)
+            
             item_total_base = item_total * conv_rate
+            # Round base amount to company currency precision
+            item_total_base = company_currency.round(item_total_base)
+            
+            # Ensure we have a currency ID
+            currency_id = currency_rec.id if currency_rec else company_currency.id
             
             # Accumulate debit
-            debit_key = (debit_account_id, currency_rec.id)
+            debit_key = (debit_account_id, currency_id)
             d = debit_accumulator[debit_key]
             d['debit_base'] += item_total_base
             if is_foreign:
                 d['amount_currency'] += item_total
             
             # Accumulate credit
-            credit_key = (credit_account_id, currency_rec.id, analytic_id)
+            credit_key = (credit_account_id, currency_id, analytic_id)
             c = credit_accumulator[credit_key]
             c['credit_base'] += item_total_base
             if is_foreign:
@@ -494,9 +498,22 @@ class APIDonationWizard(models.TransientModel):
         try:
             # Most common format first
             if 'T' in iso_str:
-                return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                # Handle ISO format with Z or timezone
+                if 'Z' in iso_str:
+                    return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
+                    return datetime.fromisoformat(iso_str).replace(tzinfo=None)
+                else:
+                    return datetime.fromisoformat(iso_str)
             else:
-                return datetime.strptime(iso_str, '%Y-%m-%d %H:%M:%S')
+                # Try common date formats
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        return datetime.strptime(iso_str, fmt)
+                    except ValueError:
+                        continue
+                # Fallback to naive parsing
+                return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
         except Exception:
             _logger.debug('Failed to parse datetime: %s', iso_str)
             return None
@@ -507,31 +524,38 @@ class APIDonationWizard(models.TransientModel):
         lines = []
         currency = company_currency
         
-        # Calculate totals
-        total_debit = sum(v['debit_base'] for v in debit_accumulator.values())
-        total_credit = sum(v['credit_base'] for v in credit_accumulator.values())
+        # Calculate totals with proper rounding
+        total_debit = currency.round(sum(v['debit_base'] for v in debit_accumulator.values()))
+        total_credit = currency.round(sum(v['credit_base'] for v in credit_accumulator.values()))
         
-        # Add debit lines
+        _logger.info(f"Total Debit: {total_debit}, Total Credit: {total_credit}")
+        
+        # Add debit lines with proper rounding
         for (account_id, currency_id), vals in debit_accumulator.items():
-            if vals['debit_base'] > 0:
-                lines.append((0, 0, {
+            debit_amount = currency.round(vals['debit_base'])
+            if debit_amount > 0:
+                line_currency_id = currency_id or currency.id
+                line_vals = {
                     'account_id': account_id,
-                    'debit': vals['debit_base'],
+                    'debit': debit_amount,
                     'credit': 0.0,
-                    'currency_id': currency_id if currency_id != currency.id else currency.id,
-                    'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
+                    'currency_id': line_currency_id,
+                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
                     'name': 'Donation Import',
-                }))
+                }
+                lines.append((0, 0, line_vals))
         
-        # Add credit lines
+        # Add credit lines with proper rounding
         for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
-            if vals['credit_base'] > 0:
+            credit_amount = currency.round(vals['credit_base'])
+            if credit_amount > 0:
+                line_currency_id = currency_id or currency.id
                 line_vals = {
                     'account_id': account_id,
                     'debit': 0.0,
-                    'credit': vals['credit_base'],
-                    'currency_id': currency_id if currency_id != currency.id else currency.id,
-                    'amount_currency': vals['amount_currency'] if currency_id != currency.id else 0.0,
+                    'credit': credit_amount,
+                    'currency_id': line_currency_id,
+                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
                     'name': 'Donation Import',
                 }
                 if analytic_id:
@@ -540,40 +564,80 @@ class APIDonationWizard(models.TransientModel):
         
         # Handle rounding difference
         difference = currency.round(total_debit - total_credit)
-        if not currency.is_zero(difference):
-            diff_account = self._get_difference_account()
-            lines.append((0, 0, {
-                'account_id': diff_account.id,
-                'debit': difference if difference > 0 else 0.0,
-                'credit': abs(difference) if difference < 0 else 0.0,
-                'name': 'Rounding Difference',
-            }))
         
-        # Create and post move
-        move = self.env['account.move'].sudo().create({
+        if not currency.is_zero(difference):
+            # Get rounding account
+            diff_account = self._get_rounding_difference_account(journal)
+            
+            if difference > 0:
+                # Debits > Credits, add credit line
+                lines.append((0, 0, {
+                    'account_id': diff_account.id,
+                    'debit': 0.0,
+                    'credit': abs(difference),
+                    'currency_id': currency.id,
+                    'amount_currency': 0.0,
+                    'name': 'Rounding Adjustment',
+                }))
+            else:
+                # Credits > Debits, add debit line
+                lines.append((0, 0, {
+                    'account_id': diff_account.id,
+                    'debit': abs(difference),
+                    'credit': 0.0,
+                    'currency_id': currency.id,
+                    'amount_currency': 0.0,
+                    'name': 'Rounding Adjustment',
+                }))
+        
+        # Create move
+        move_vals = {
             'move_type': 'entry',
             'journal_id': journal.id,
             'date': fields.Date.today(),
             'ref': f"Donation Import {fields.Date.today()}",
             'line_ids': lines,
-        })
+            'currency_id': currency.id,
+        }
         
+        move = self.env['account.move'].sudo().create(move_vals)
         move.action_post()
         return move
 
-    def _get_difference_account(self):
-        """Get difference account with fallback"""
+    def _get_rounding_difference_account(self, journal):
+        """Get rounding difference account with fallbacks"""
+        # First try journal's default account
+        if journal.default_account_id:
+            return journal.default_account_id
+        
+        # Try company's difference account
+        company = self.env.company
+        if company.difference_account_prefix:
+            diff_account = self.env['account.account'].search([
+                ('code', 'like', f"{company.difference_account_prefix}%"),
+                ('company_id', '=', company.id)
+            ], limit=1)
+            if diff_account:
+                return diff_account
+        
+        # Try expense rounding account
         diff_account = self.env['account.account'].search([
-            ('code', '=', self.env.company.difference_account_prefix)
+            ('account_type', 'in', ['expense', 'income']),
+            ('name', 'ilike', 'rounding'),
+            ('company_id', '=', company.id)
         ], limit=1)
         
         if not diff_account:
+            # Last resort: get any expense account
             diff_account = self.env['account.account'].search([
-                ('account_type', 'in', ['expense', 'income']),
-                ('name', 'ilike', 'rounding')
+                ('account_type', '=', 'expense'),
+                ('company_id', '=', company.id)
             ], limit=1)
             
-        if not diff_account:
-            raise ValidationError(_("Difference account not found. Please configure a rounding difference account."))
+            if not diff_account:
+                raise ValidationError(_(
+                    "No suitable rounding difference account found. "
+                    "Please configure a default account on journal '%s'." % journal.name
+                ))
         
         return diff_account
