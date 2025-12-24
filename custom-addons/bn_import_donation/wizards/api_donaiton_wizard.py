@@ -198,7 +198,7 @@ class APIDonationWizard(models.TransientModel):
             'import_id': info.get('_id', ''),
             'remarks': info.get('remarks', ''),
             'total_amount': total_amount,          # ALWAYS foreign amount
-            'currency_id': currency.id,             # REQUIRED
+            # 'currency_id': currency.id,             # REQUIRED
             'donor': info.get('donor', ''),
             'donation_type': info.get('donation_type', ''),
             'donation_from': info.get('donation_from', ''),
