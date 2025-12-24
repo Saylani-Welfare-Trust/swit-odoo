@@ -635,16 +635,26 @@ class APIDonationWizard(models.TransientModel):
             
             move = self.env['account.move'].sudo().create(move_vals)
             
-            # Validate balance before posting
-            if not move.is_valid:
+            # Validate balance before posting - check if move is balanced
+            if not self._is_move_balanced(move):
                 _logger.error(f"Journal entry {move.id} is not balanced before posting")
-                # Try to auto-balance
-                move._auto_balance_foreign_currencies()
+                # Check individual line balances
+                for line in move.line_ids:
+                    _logger.debug(f"Line: Account={line.account_id.code}, Debit={line.debit}, Credit={line.credit}")
+                
+                # Try to fix by ensuring all lines have currency
+                for line in move.line_ids:
+                    if not line.currency_id:
+                        line.currency_id = currency.id
+                
+                # Recalculate
+                move.line_ids._onchange_amount_currency()
+                move._recompute_dynamic_lines(recompute_all_taxes=True)
                 
             move.action_post()
             
             # Verify after posting
-            if not move.is_valid:
+            if not self._is_move_balanced(move):
                 raise ValidationError(_("Journal entry is not balanced after posting."))
                 
             return move
@@ -652,6 +662,19 @@ class APIDonationWizard(models.TransientModel):
         except Exception as e:
             _logger.error(f"Failed to create journal entry: {str(e)}")
             raise ValidationError(_("Failed to create journal entry: %s") % str(e))
+
+    def _is_move_balanced(self, move):
+        """Check if a journal move is balanced"""
+        total_debit = sum(move.line_ids.mapped('debit'))
+        total_credit = sum(move.line_ids.mapped('credit'))
+        currency = move.currency_id or move.company_currency_id
+        
+        # Check if debits and credits are equal (with tolerance for rounding)
+        difference = currency.round(total_debit - total_credit)
+        
+        _logger.debug(f"Move balance check: Debits={total_debit}, Credits={total_credit}, Difference={difference}")
+        
+        return currency.is_zero(difference)
 
     def _get_rounding_difference_account(self, journal):
         """Get rounding difference account with proper fallbacks"""
