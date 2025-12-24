@@ -21,11 +21,13 @@
                             <field name="contact_number" readonly="1" />
                             <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
                             <field name="counterfeit_notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                            <field name="remarks" />
                             <field name="submission_time" readonly="1" />
                             <field name="state" widget="badge" decoration-info="state == 'donation_collected'"  decoration-success="state in ['donation_submit', 'paid']" readonly="1" />
                             
-                            <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['donation_collected', 'donation_submit', 'paid']" />
-                            <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['donation_not_collected', 'donation_submit', 'paid']" />
+                            <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['pending', 'donation_collected', 'donation_submit', 'paid']" />
+                            <button name="mark_as_pending" string="Mark as Pending" type="object" class="btn-primary" invisible="state in ['pending', 'donation_submit', 'paid']" />
+                            <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" />
                         </tree>
                     </field>
                 </sheet>

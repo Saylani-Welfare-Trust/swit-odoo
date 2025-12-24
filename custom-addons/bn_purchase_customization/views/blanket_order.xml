@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_requisition.menu_purchase_requisition_pro_mgt" model="ir.ui.menu">
+        <field name="name">Purchase Request / Blanket Orders</field>
+    </record>
+    
+    <record id="purchase_requisition.action_purchase_requisition" model="ir.actions.act_window">
+        <field name="name">Purchase Request / Blanket Orders</field>
+    </record>
+
+    <record id="purchase_requisition_purchase_order_form_inherit_bn_purchase_customization" model="ir.ui.view">
+        <field name="name">purchase.requisition.purchase.order.form.inherit.bn.purchase.customization</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase_requisition.purchase_order_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='requisition_id']" position="attributes">
+                <attribute name="string">Purchase Request / Blanket Order</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

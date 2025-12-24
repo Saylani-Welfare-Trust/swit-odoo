@@ -23,6 +23,4 @@
     ],
     'auto_install': False,
     'application': True,
-    'post_init_hook': 'post_init_direct_deposit_account_setup',
-
 } # type: ignore

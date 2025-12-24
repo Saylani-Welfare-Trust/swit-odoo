@@ -4,6 +4,18 @@ import { Order } from "@point_of_sale/app/store/models";
 import { patch } from "@web/core/utils/patch";
 
 patch(Order.prototype, {
+    // This sends data to the backend when order is validated
+    export_as_JSON() {
+        const json = super.export_as_JSON(...arguments);
+        
+        json.bank_name = this.bank_name || false;
+        json.cheque_number = this.cheque_number || false;
+        json.cheque_date = this.cheque_date || false;
+        json.qr_code = this.qr_code || false;
+        
+        return json;
+    },
+    // This is for printing receipts
     export_for_printing() {
         return {
             ...super.export_for_printing(),

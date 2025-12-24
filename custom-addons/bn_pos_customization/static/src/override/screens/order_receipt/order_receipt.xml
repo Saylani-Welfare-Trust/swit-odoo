@@ -148,7 +148,22 @@
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.cheque_date"/>
+                                    <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
+
+                                    <t t-set="day" t-value="dateObj.getDate()"/>
+                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
+
+                                    <t t-set="hours" t-value="dateObj.getHours()"/>
+                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+
+                                    <t t-esc="
+                                        (day &lt; 10 ? '0' : '') + day + '-' +
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                        (minutes &lt; 10 ? '0' : '') + minutes
+                                    "/>
                                 </h4>
                             </div>
                         </div>
@@ -160,10 +175,21 @@
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
                                     <t t-set="dateObj" t-value="new Date(date_format)"/>
+
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                                     <t t-set="year" t-value="dateObj.getFullYear()"/>
-                                    <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' + (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+
+                                    <t t-set="hours" t-value="dateObj.getHours()"/>
+                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+
+                                    <t t-esc="
+                                        (day &lt; 10 ? '0' : '') + day + '-' +
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                        (minutes &lt; 10 ? '0' : '') + minutes
+                                    "/>
                                 </h4>
                             </div>
                         </div>
@@ -367,7 +393,22 @@
                             </div>
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.cheque_date"/>
+                                    <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
+
+                                    <t t-set="day" t-value="dateObj.getDate()"/>
+                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
+
+                                    <t t-set="hours" t-value="dateObj.getHours()"/>
+                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+
+                                    <t t-esc="
+                                        (day &lt; 10 ? '0' : '') + day + '-' +
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                        (minutes &lt; 10 ? '0' : '') + minutes
+                                    "/>
                                 </h4>
                             </div>
                         </div>
@@ -379,10 +420,21 @@
                             <div class="col-8">
                                 <h4 class="fs-5 fw-medium">
                                     <t t-set="dateObj" t-value="new Date(date_format)"/>
+
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                                     <t t-set="year" t-value="dateObj.getFullYear()"/>
-                                    <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' + (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+
+                                    <t t-set="hours" t-value="dateObj.getHours()"/>
+                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+
+                                    <t t-esc="
+                                        (day &lt; 10 ? '0' : '') + day + '-' +
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                        (minutes &lt; 10 ? '0' : '') + minutes
+                                    "/>
                                 </h4>
                             </div>
                         </div>

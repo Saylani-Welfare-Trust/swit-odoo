@@ -16,6 +16,7 @@ state_selection = [
     ('donation_not_collected', 'Donation not collected'),
     ('donation_collected', 'Donation collected'),
     ('donation_submit', 'Donation submit'),
+    ('pending', 'Pending'),
     ('paid', 'Paid')
 ]
 
@@ -26,8 +27,8 @@ class RiderScheduleLine(models.TransientModel):
 
 
     shop_name = fields.Char('Shop Name')
-    contact_person = fields.Char(string="Contact Person")
-    contact_number = fields.Char(string="Contact Number")
+    contact_person = fields.Char('Contact Person')
+    contact_number = fields.Char('Contact Number')
     box_location = fields.Char(string="Box Location")
 
     lot_id = fields.Many2one('stock.lot', string="Box No.")
@@ -46,10 +47,37 @@ class RiderScheduleLine(models.TransientModel):
     amount = fields.Float('Amount')
     counterfeit_notes = fields.Float('Counter Feit Notes')
 
+    remarks = fields.Text('Remarks')
+
 
     def mark_as_done(self):
         self.state = 'donation_collected'
         self.rider_collection_id.state = 'donation_collected'
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'rider.schedule',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
+            'res_id': self.rider_schedule_id.id,
+            'target': 'current'
+        }
+    
+    def mark_as_pending(self):
+        if not self.remarks:
+            raise ValidationError('Please enter the remarks first.')
+
+        self.state = 'pending'
+        self.rider_collection_id.state = 'pending'
+        self.rider_collection_id.remarks = self.remarks
+
+        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
+
+        key.state = 'pending'
+
+        key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', '=', 'issued')], limit=1)
+
+        key_issuance.state = 'pending'
 
         return {
             'type': 'ir.actions.act_window',

@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <template id="microfinance_approval_certificate_template">
+            <t t-call="web.external_layout">
+                <main>
+                    <t t-foreach="docs" t-as="doc">
+                        <div class="page">
+                            <style>
+                                .compact-section {
+                                    margin-bottom: 12px;
+                                }
+                                .compact-row {
+                                    margin-bottom: 6px;
+                                }
+                                .tight-padding {
+                                    padding: 6px !important;
+                                }
+                                .no-margin {
+                                    margin: 0;
+                                }
+                                .signature-line {
+                                    width: 180px;
+                                    border-top: 2px solid #333;
+                                    margin-top: 5px;
+                                }
+                                .info-box {
+                                    border: 1px solid #000;
+                                    padding: 10px;
+                                    margin-bottom: 12px;
+                                    font-size: 11px;
+                                }
+                                .flex-container {
+                                    display: flex;
+                                    width: 100%;
+                                }
+                                .flex-column {
+                                    width: 50%;
+                                }
+                                .flex-left {
+                                    padding-right: 10px;
+                                }
+                                .flex-right {
+                                    padding-left: 10px;
+                                }
+                                .flex-row {
+                                    display: flex;
+                                    margin-bottom: 6px;
+                                }
+                                .flex-label {
+                                    width: 45%;
+                                    font-size: 11px;
+                                    font-weight: normal;
+                                }
+                                .flex-value {
+                                    width: 55%;
+                                    font-size: 11px;
+                                    font-weight: 500;
+                                }
+                                .table-bordered-custom {
+                                    border-collapse: collapse !important;
+                                    border-spacing: 0 !important;
+                                    border: 1px solid #000 !important;
+                                    font-size: 11px;
+                                    width: 100%;
+                                }
+                                .table-bordered-custom th,
+                                .table-bordered-custom td {
+                                    border: 1px solid #000 !important;
+                                    padding: 6px !important;
+                                }
+                                .table-bordered-custom th {
+                                    background-color: #f5f5f5;
+                                    font-weight: bold;
+                                }
+                                .text-center {
+                                    text-align: center !important;
+                                }
+                                .text-right {
+                                    text-align: right !important;
+                                }
+                                .text-uppercase {
+                                    text-transform: uppercase !important;
+                                }
+                                .fw-bold {
+                                    font-weight: bold !important;
+                                }
+                                .mb-1 {
+                                    margin-bottom: 0.25rem !important;
+                                }
+                                .tight-margin {
+                                    margin-left: 8px;
+                                    margin-right: 8px;
+                                }
+                                .certificate-header {
+                                    text-align: center;
+                                    margin-bottom: 20px;
+                                    padding: 15px;
+                                    border: 2px solid #000;
+                                    background-color: #f9f9f9;
+                                }
+                                .certificate-title {
+                                    font-size: 22px;
+                                    font-weight: bold;
+                                    text-transform: uppercase;
+                                    margin-bottom: 5px;
+                                }
+                                .certificate-subtitle {
+                                    font-size: 14px;
+                                    color: #555;
+                                }
+                                .approval-badge {
+                                    display: inline-block;
+                                    padding: 8px 20px;
+                                    background-color: #28a745;
+                                    color: white;
+                                    font-weight: bold;
+                                    font-size: 14px;
+                                    border-radius: 5px;
+                                    margin-top: 10px;
+                                }
+                                .summary-box {
+                                    border: 2px solid #000;
+                                    padding: 15px;
+                                    margin-top: 15px;
+                                    font-size: 12px;
+                                    background-color: #fafafa;
+                                }
+                                .summary-row {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-bottom: 8px;
+                                    padding-bottom: 5px;
+                                    border-bottom: 1px dashed #ccc;
+                                }
+                                .summary-row:last-child {
+                                    border-bottom: none;
+                                    margin-bottom: 0;
+                                }
+                            </style>
+
+                            <!-- Certificate Header -->
+                            <div class="certificate-header">
+                                <div class="certificate-title">Microfinance Approval Certificate</div>
+                                <div class="certificate-subtitle">Official Approval Document</div>
+                                <div class="approval-badge">✓ APPROVED</div>
+                            </div>
+
+                            <!-- Reference & Date Section -->
+                            <div class="compact-section tight-margin">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h6 class="fw-bold mb-1 no-margin" style="font-size: 14px;">
+                                        Reference: <t t-esc="doc.name"/>
+                                    </h6>
+                                    <h6 class="fw-bold mb-1 no-margin" style="font-size: 12px;">
+                                        Date: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y')"/>
+                                    </h6>
+                                </div>
+                            </div>
+
+                            <!-- Applicant Information Section -->
+                            <div class="info-box compact-section">
+                                <h6 class="fw-bold" style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                                    Applicant Information
+                                </h6>
+                                <div class="flex-container">
+                                    <!-- Left Column -->
+                                    <div class="flex-column flex-left">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Donee Name:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.name or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">CNIC #:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.cnic_no or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Phone:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.phone or doc.donee_id.mobile or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Address:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.street or '-'"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column -->
+                                    <div class="flex-column flex-right">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Scheme:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.microfinance_scheme_id.name or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Application For:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.microfinance_scheme_line_id.name or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Asset Type:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.asset_type"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Installment Type:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.installment_type"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Product/Loan Details Section -->
+                            <div class="info-box compact-section">
+                                <h6 class="fw-bold" style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                                    Loan / Product Details
+                                </h6>
+                                <div class="flex-container">
+                                    <!-- Left Column -->
+                                    <div class="flex-column flex-left">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Product:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.product_id.name or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Product Amount:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.product_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Security Deposit:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.security_deposit" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Donor Contribution:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.donor_contribution" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column -->
+                                    <div class="flex-column flex-right">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Total Amount:</div>
+                                            <div class="flex-value fw-bold">
+                                                <span t-field="doc.total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Installment Amount:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Installment Period:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.installment_period"/> Months
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Approval Summary -->
+                            <div class="summary-box tight-margin">
+                                <h6 class="fw-bold text-center" style="font-size: 13px; margin-bottom: 15px;">
+                                    Approval Summary
+                                </h6>
+                                <div class="summary-row">
+                                    <span><strong>Application Reference:</strong></span>
+                                    <span><t t-esc="doc.name"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Applicant Name:</strong></span>
+                                    <span><t t-esc="doc.donee_id.name or '-'"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Approved Product:</strong></span>
+                                    <span><t t-esc="doc.product_id.name or '-'"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Total Loan Amount:</strong></span>
+                                    <span><span t-field="doc.total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Monthly Installment:</strong></span>
+                                    <span><span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Number of Installments:</strong></span>
+                                    <span><t t-esc="doc.installment_period"/></span>
+                                </div>
+                            </div>
+
+                            <!-- Terms & Conditions -->
+                            <div class="compact-section tight-margin" style="margin-top: 20px;">
+                                <h6 class="fw-bold" style="font-size: 11px; margin-bottom: 8px;">Terms &amp; Conditions:</h6>
+                                <ul style="font-size: 10px; margin: 0; padding-left: 15px;">
+                                    <li>This certificate confirms the approval of the microfinance application.</li>
+                                    <li>The applicant must pay the security deposit before receiving the product/loan.</li>
+                                    <li>Installments must be paid on time as per the agreed schedule.</li>
+                                    <li>Failure to pay installments may result in recovery action.</li>
+                                    <li>This certificate is valid only for the mentioned application.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Signature Section -->
+                            <div class="compact-section tight-margin" style="margin-top: 40px;">
+                                <div class="flex-container">
+                                    <div class="flex-column flex-left">
+                                        <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px; padding-top: 5px; text-align: center;">
+                                            Applicant Signature
+                                        </div>
+                                    </div>
+                                    <div class="flex-column" style="text-align: center;">
+                                        <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px; padding-top: 5px; text-align: center; margin-left: auto; margin-right: auto;">
+                                            HOD Signature
+                                        </div>
+                                    </div>
+                                    <div class="flex-column flex-right" style="text-align: right;">
+                                        <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px; padding-top: 5px; text-align: center; margin-left: auto;">
+                                            Authorized Signature
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Print Date -->
+                            <div class="tight-margin" style="margin-top: 30px; font-size: 10px; color: #666; text-align: center;">
+                                <span>This is a computer-generated certificate. Print Date: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %H:%M')"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </main>
+            </t>
+        </template>
+
+        <record id="microfinance_approval_certificate_report_action" model="ir.actions.report">
+            <field name="name">Approval Certificate</field>
+            <field name="model">microfinance</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_microfinance.microfinance_approval_certificate_template</field>
+            <field name="report_file">bn_microfinance.microfinance_approval_certificate_template</field>
+            <field name="binding_model_id" ref="bn_microfinance.model_microfinance"/>
+            <field name="binding_type">report</field>
+        </record>
+    </data>
+</odoo>

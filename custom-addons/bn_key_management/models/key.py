@@ -5,7 +5,8 @@ from odoo.exceptions import ValidationError
 key_status = [
     ('draft', 'Draft'),
     ('available', 'Available'),
-    ('issued', 'Issued')
+    ('issued', 'Issued'),
+    ('pending', 'Pending'),
 ]
 
 
@@ -27,6 +28,8 @@ class Key(models.Model):
     state = fields.Selection(selection=key_status, default='draft', string="Status")
 
     key_issuance_ids = fields.One2many('key.issuance', 'key_id', string="Key Issued")
+
+    reason = fields.Text('Reason')
 
 
     @api.onchange('key_bunch_id')

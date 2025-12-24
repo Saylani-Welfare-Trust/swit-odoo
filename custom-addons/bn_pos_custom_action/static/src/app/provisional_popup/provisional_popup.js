@@ -27,14 +27,16 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.orderLines = this.props.orderLines;
         this.action_type = this.props.action_type;
         
+        this.title = this.props.title || "Provisional Order Details";
+        
         this.state = useState({
             microfinance_request_no: '',
-
-            amount: parseFloat(this.props.amount),
+            amount: parseFloat(this.props.amount) || 0,
             service_charges: 0,
-            total: parseFloat(this.props.amount),
+            total: parseFloat(this.props.amount) || 0,
             address: this.props.address || "",   
-            transaction_ref: this.props.transaction_ref || "",         
+            transaction_ref: this.props.transaction_ref || "",
+            transfer_to_dhs: false,
         });
     }
 
@@ -54,6 +56,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     
     updateTransactionRef(event) {
         this.state.transaction_ref = event.target.value;
+    }
+
+    updateTransferToDHS(event) {
+        this.state.transfer_to_dhs = event.target.checked;
     }
 
     prepareOrderLines(orderLines) {
@@ -233,6 +239,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
                 'user_id': userId,
+                'transfer_to_dhs': this.state.transfer_to_dhs,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
@@ -243,7 +250,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     
                     this.cancel()
                     
-                    this.report.doAction("bn_direct_deposit.report_direct_deposit", [
+                    this.report.doAction("bn_direct_deposit.report_direct_deposit_provisional", [
                         data.id,
                     ]);
                 }

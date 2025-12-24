@@ -21,6 +21,7 @@
                             <field name="submission_time" />
                             <field name="amount" />
                             <field name="counterfeit_notes" />
+                            <field name="remarks" />
                         </group>
                         <group name="rider_collection_col_2">
                             <field name="shop_name" />
@@ -50,6 +51,7 @@
                 <field name="contact_number" string="Contact Number" />
                 <field name="amount" />
                 <field name="counterfeit_notes" />
+                <field name="remarks" />
                 <field name="submission_time" />
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />
             </tree>
@@ -57,7 +59,7 @@
     </record>
 
     <record id="rider_collection_action" model="ir.actions.act_window">
-        <field name="name">Rider Shift</field>
+        <field name="name">Rider Collection</field>
         <field name="res_model">rider.collection</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

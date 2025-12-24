@@ -20,27 +20,22 @@ class POSOrder(models.Model):
 
 
     def _order_fields(self, ui_order):
-        # raise ValidationError('Hit')
-
         """To get the value of field in pos session to pos order"""
         res = super(POSOrder, self)._order_fields(ui_order)
 
-        res['bank_name'] = ui_order.get('bank_name')
-        res['cheque_number'] = ui_order.get('cheque_number')
-        res['qr_code'] = ui_order.get('qr_code')
-        res['cheque_date'] = ui_order.get('cheque_date')
+        res['bank_name'] = ui_order.get('bank_name') or False
+        res['cheque_number'] = ui_order.get('cheque_number') or False
+        res['qr_code'] = ui_order.get('qr_code') or False
+        res['cheque_date'] = ui_order.get('cheque_date') or False
 
-        if self.pos_cheque_id:
-            self.pos_cheque_id.bank_name = self.bank_name
-            self.pos_cheque_id.name = self.cheque_number
-            self.pos_cheque_id.date = self.cheque_date
-        elif not ui_order.get('qr_code') and 'cheque_number' in ui_order and ui_order.get('cheque_number'):
+        # Create pos.cheque record if cheque_number is provided and not a QR code payment
+        cheque_number = ui_order.get('cheque_number')
+        if cheque_number and not ui_order.get('qr_code'):
             cheque = self.env['pos.cheque'].create({
-                'bank_name': ui_order.get('bank_name'),
-                'name': ui_order.get('cheque_number'),
-                'date': ui_order.get('cheque_date'),
+                'bank_name': ui_order.get('bank_name') or False,
+                'name': cheque_number,
+                'date': ui_order.get('cheque_date') or False,
             })
-
             res['pos_cheque_id'] = cheque.id
         
         return res

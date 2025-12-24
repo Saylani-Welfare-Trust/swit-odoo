@@ -36,4 +36,15 @@
         </field>
     </record>
 
+    <record id="point_of_sale_view_pos_order_filter_inherit_bn_pos_order" model="ir.ui.view">
+        <field name="name">point.of.sale.view.pos.order.filter.inherit.bn.pos.order</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="mobile" />
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

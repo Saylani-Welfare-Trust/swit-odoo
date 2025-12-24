@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='options']" position="inside">
                 <span class="d-inline-flex">
-                    <field name="is_microfinance" on_change="1" field_id="is_microfinance"/>
+                    <field name="is_microfinance" on_change="1" field_id="is_microfinance" readonly="0" />
                     <label for="is_microfinance"/>
                 </span>
             </xpath>

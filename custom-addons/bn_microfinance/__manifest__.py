@@ -24,6 +24,8 @@
         'reports/microfinance_pdc_template_report.xml',
         'reports/microfinance_receipt_report.xml',
         'reports/microfinance_security_deposit_report.xml',
+        'reports/microfinance_installment_plan_report.xml',
+        'reports/microfinance_approval_certificate_report.xml',
     ],
     'auto_install': False,
     'application': True,

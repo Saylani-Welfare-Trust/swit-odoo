@@ -1,5 +1,6 @@
+import pprint
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 status_selection = [       
@@ -53,27 +54,44 @@ class DonationHomeService(models.Model):
         self.total_amount = self.amount + self.service_charges
     
     def action_cancel(self):
-        """Cancel DHS and safely reverse done pickings."""
-        
         def _create_return_for_picking(picking):
-            """Create and validate a return picking programmatically."""
             ReturnWizard = self.env['stock.return.picking']
-            return_wizard = ReturnWizard.with_context(
+
+            wizard = ReturnWizard.with_context(
                 active_id=picking.id,
                 active_ids=[picking.id],
             ).create({'picking_id': picking.id})
 
-            # returns (action_dict, list_of_created_picking_ids)
-            action_dict, picking_ids = return_wizard._create_returns()
-            return_picking = self.env['stock.picking'].browse(picking_ids)
+            # Encode quantities (THIS SATISFIES VALIDATION)
+            for line in wizard.product_return_moves:
+                line.quantity = line.move_id.product_uom_qty
 
-            # Force done
+            # _create_returns() returns (action, picking_id) - picking_id is a single int, not a list
+            action_result = wizard._create_returns()
+            # Get the return picking ID from the action result
+            if isinstance(action_result, tuple):
+                return_picking_id = action_result[0]
+            else:
+                # In some versions, it might return an action dict
+                return_picking_id = action_result.get('res_id')
+            
+            # raise UserError(pprint.pformat(return_picking_id))
+            return_picking = self.env['stock.picking'].browse(return_picking_id)
+            
+            return_picking.action_confirm()
+            
+            # Only assign if there are moves to assign
+            if return_picking.move_ids:
+                try:
+                    return_picking.action_assign()
+                except Exception:
+                    pass  # Continue even if assignment fails
+            
+            # Set quantities on move lines for validation
             for move in return_picking.move_ids:
                 move.quantity = move.product_uom_qty
 
-            return_picking.action_confirm()
             return_picking.button_validate()
-            return return_picking
 
         for picking in [self.picking_id, self.second_picking_id]:
             if picking:
@@ -81,8 +99,10 @@ class DonationHomeService(models.Model):
                     _create_return_for_picking(picking)
                 elif picking.state not in ['cancel', 'done']:
                     picking.action_cancel()
-        
+
         self.state = 'cancel'
+
+
     
     def action_gate_out(self):
         """Confirm donation and create stock picking if stockable product lines exist."""

@@ -112,6 +112,6 @@
         name="History"
         action="key_issuance_action"
         parent="key_issuance_menu"
-        sequence="2"/>
+        sequence="3"/>
 
 </odoo>

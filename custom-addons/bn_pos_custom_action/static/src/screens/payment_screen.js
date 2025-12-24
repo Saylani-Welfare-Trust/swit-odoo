@@ -219,22 +219,58 @@ patch(PaymentScreen.prototype, {
                     const partnerId = currentOrder.get_partner()?.id || null;
                     const microfinanceId = mfData.microfinance_id || null;
                     
-                    // Calculate total amount from all lines
-                    let totalAmount = 0;
-                    for (const line of microfinanceLineIds) {
-                        totalAmount += line.amount || 0;
+                    // Get the actual paid amount from the order line (user may have modified it)
+                    let actualPaidAmount = 0;
+                    const orderLines = currentOrder.get_orderlines();
+                    for (const ol of orderLines) {
+                        // Find Microfinance Installment product line
+                        if (ol.product && ol.product.display_name === 'Microfinance Installment') {
+                            actualPaidAmount += ol.get_price_with_tax();
+                        }
                     }
                     
-                    // Update microfinance lines as paid
+                    console.log("🟢 [Microfinance] Actual paid amount from order:", actualPaidAmount);
+                    console.log("🟢 [Microfinance] Unpaid lines to process:", microfinanceLineIds);
+                    
+                    // Distribute payment across installment lines (sorted by due_date - already sorted)
+                    let remainingPayment = actualPaidAmount;
+                    let processedLines = 0;
+                    
                     for (const line of microfinanceLineIds) {
+                        if (remainingPayment <= 0) break;
+                        
+                        const lineRemaining = line.remaining_amount || (line.amount - (line.paid_amount || 0));
+                        
+                        if (lineRemaining <= 0) continue; // Skip fully paid lines
+                        
+                        let paymentForThisLine = 0;
+                        let newState = 'unpaid';
+                        
+                        if (remainingPayment >= lineRemaining) {
+                            // Full payment for this line
+                            paymentForThisLine = lineRemaining;
+                            remainingPayment -= lineRemaining;
+                            newState = 'paid';
+                        } else {
+                            // Partial payment for this line
+                            paymentForThisLine = remainingPayment;
+                            remainingPayment = 0;
+                            newState = 'partial';
+                        }
+                        
+                        const newPaidAmount = (line.paid_amount || 0) + paymentForThisLine;
+                        
                         await this.env.services.orm.write(
                             'microfinance.line',
                             [line.id],
                             {
-                                paid_amount: line.amount,
-                                state: 'paid',
+                                paid_amount: newPaidAmount,
+                                state: newState,
                             }
                         );
+                        
+                        console.log(`🟢 [Microfinance] Line ${line.id}: paid ${paymentForThisLine}, new total: ${newPaidAmount}, state: ${newState}`);
+                        processedLines++;
                     }
                     
                     // Create microfinance.installment record for tracking the installment payment
@@ -249,7 +285,7 @@ patch(PaymentScreen.prototype, {
                                 cheque_date: currentOrder.cheque_date || false,
                                 microfinance_id: microfinanceId,
                                 donee_id: partnerId,
-                                amount: totalAmount,
+                                amount: actualPaidAmount,
                                 date: new Date().toISOString().split('T')[0],
                                 state: 'paid',
                             }]
@@ -261,7 +297,7 @@ patch(PaymentScreen.prototype, {
                     }
                     
                     this.env.services.notification.add(
-                        `Processed ${microfinanceLineIds.length} microfinance instalments`,
+                        `Processed payment of ${actualPaidAmount} across ${processedLines} installment(s)`,
                         { type: 'success' }
                     );
                 } else {

@@ -21,7 +21,7 @@ class DirectDeposit(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
     name = fields.Char('Name', default="New")
-
+    transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
@@ -73,6 +73,7 @@ class DirectDeposit(models.Model):
             'donor_id': data['donor_id'],
             'user_id': user_id,
             'transaction_ref': transaction_ref,
+            'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
         })
 
@@ -175,9 +176,10 @@ class DirectDeposit(models.Model):
         self._create_invoice()
 
         self.state = 'clear'
-        
+        if self.transfer_to_dhs:
+            self.action_transfer_to_dhs()
         # Auto-print report when transitioning to clear (duplicate watermark)
-        return self.env.ref('bn_direct_deposit.report_direct_deposit').report_action(self, data={'is_duplicate': True, 'ids': self.ids})
+        return self.env.ref('bn_direct_deposit.report_direct_deposit_duplicate').report_action(self, data={'is_duplicate': True, 'ids': self.ids})
 
     def action_not_clear(self):
         self.state = 'not_clear'
@@ -249,24 +251,24 @@ class DirectDeposit(models.Model):
             
             created_dhs_ids.append(dhs_consu.id)
         self.state = 'transferred'
-        # if len(self.dhs_ids) == 1:
-        #         # Open single DHS record
-        #         return {
-        #             "type": "ir.actions.act_window",
-        #             "res_model": "donation.home.service",
-        #             "view_mode": "form",
-        #             "res_id": self.dhs_ids.id,   
-        #             "target": "current",
-        #         }
-        # else:
-        #         # Show list of DHS records
-        #         return {
-        #             "type": "ir.actions.act_window",
-        #             "res_model": "donation.home.service",
-        #             "view_mode": "tree,form",
-        #             "domain": [('id', 'in', self.dhs_ids.ids)],  
-        #             "target": "current",
-        #         }
+        if len(self.dhs_ids) == 1:
+                # Open single DHS record
+                return {
+                    "type": "ir.actions.act_window",
+                    "res_model": "donation.home.service",
+                    "view_mode": "form",
+                    "res_id": self.dhs_ids.id,   
+                    "target": "current",
+                }
+        else:
+                # Show list of DHS records
+                return {
+                    "type": "ir.actions.act_window",
+                    "res_model": "donation.home.service",
+                    "view_mode": "tree,form",
+                    "domain": [('id', 'in', self.dhs_ids.ids)],  
+                    "target": "current",
+                }
 
         
     def action_show_invoice(self):

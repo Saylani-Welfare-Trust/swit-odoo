@@ -5,6 +5,8 @@ class POSOrder(models.Model):
     _inherit = 'pos.order'
 
 
+    mobile = fields.Char(related='partner_id.mobile', string="Mobile No.")
+
     state = fields.Selection(
         [('draft', 'New'), ('cancel', 'Cancelled'), ('refund_request', 'Refund Request'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced')],
         'Status', readonly=True, copy=False, default='draft', index=True)
