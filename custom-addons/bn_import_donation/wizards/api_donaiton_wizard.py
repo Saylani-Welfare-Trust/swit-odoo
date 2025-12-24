@@ -313,36 +313,26 @@ class APIDonationWizard(models.TransientModel):
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
+        mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
+        country_code = donor.get('country', '')
+        country_id = all_data['country_by_code'].get(country_code)
         donor_id = None
         partner_key = None
         donor_id = all_data['donor_map'].get((mobile, country_id))
         
         if not donor_id and donor.get('name', ''):
-            mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-            country_code = donor.get('country', '')
-            country_id = all_data['country_by_code'].get(country_code)
-            
-            # Check cache first - simpler approach
-            if mobile:
-                # Try to find by mobile number in cache
-                for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
-                        donor_id = cached_id
-                        break
-            
-            if not donor_id:
-                # Create new partner
-                partner_vals = {
-                    'name': donor.get('name', ''),
-                    'mobile': mobile,
-                    'email': donor.get('email', ''),
-                    'country_code_id': country_id,
-                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    # 'original_index': len(partner_to_create)  # Store index for mapping
-                }
-                partner_to_create.append(partner_vals)
-                # Temporary key for later mapping
-                partner_key = len(partner_to_create) - 1
+            # Create new partner
+            partner_vals = {
+                'name': donor.get('name', ''),
+                'mobile': mobile,
+                'email': donor.get('email', ''),
+                'country_code_id': country_id,
+                'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
+                # 'original_index': len(partner_to_create)  # Store index for mapping
+            }
+            partner_to_create.append(partner_vals)
+            # Temporary key for later mapping
+            partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
         
