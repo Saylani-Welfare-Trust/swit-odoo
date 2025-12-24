@@ -337,7 +337,7 @@ class APIDonationWizard(models.TransientModel):
                         break
             
             if not donor_id:
-                raise ValidationError(str(mobile)+" "+str(country_id))
+                raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
 
                 # Create new partner
                 partner_vals = {
