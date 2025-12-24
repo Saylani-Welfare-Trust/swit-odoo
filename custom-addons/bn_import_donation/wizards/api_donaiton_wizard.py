@@ -193,7 +193,8 @@ class APIDonationWizard(models.TransientModel):
             for partner in existing_partners:
                 if donor_category and donor_category.id in (partner.get('category_id') or []):
                     country_code_id = partner.get('country_code_id')
-                    key = (partner.get('mobile'), country_code_id[0])
+                    country_code_id = country_code_id[0] if country_code_id else False
+                    key = (partner.get('mobile'), country_code_id)
                     partner_cache[key] = partner['id']
         
         # Pre-fetch gateway config data
