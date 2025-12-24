@@ -130,57 +130,53 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk Data Pre-fetching ----------------------
     def _prefetch_all_data(self, donations_info, gateway_config, company_currency):
-        unique_import_ids = set()
+        """Prefetch all required data in bulk to minimize database queries"""
+        # Extract all unique values for bulk queries
         unique_currencies = set()
+        unique_import_ids = set()
         unique_country_codes = set()
         unique_mobiles = set()
-
+        
         for info in donations_info:
             if info.get('_id'):
-                unique_import_ids.add(info['_id'])
-
+                unique_import_ids.add(info.get('_id'))
             if info.get('currency'):
-                unique_currencies.add(info['currency'])
-
+                unique_currencies.add(info.get('currency'))
+            
             donor = info.get('donor_details') or {}
             if donor.get('country'):
-                unique_country_codes.add(donor['country'])
-
+                unique_country_codes.add(donor.get('country'))
             if donor.get('phone'):
-                mobile = donor['phone'][-10:]
-                unique_mobiles.add(mobile)
+                mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
+                if mobile:
+                    unique_mobiles.add(mobile)
 
-        # -------------------------
-        # Currency
-        # -------------------------
+        # Bulk fetch currencies
         currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
         currency_by_name = {c.name: c for c in currencies}
-
+        
+        # Bulk fetch conversion rates
         conversion_rates = {}
-        for c in currencies:
-            rate = c.rate_ids.sorted('name', reverse=True)[:1]
-            conversion_rates[c.name] = rate.company_rate if rate else 1.0
-
-        # -------------------------
-        # Countries
-        # -------------------------
+        for currency in currencies:
+            if currency.rate_ids:
+                latest_rate = currency.rate_ids.sorted('name', reverse=True)[0]
+                conversion_rates[currency.name] = float(latest_rate.company_rate or 1.0)
+            else:
+                conversion_rates[currency.name] = 1.0
+        
+        # Bulk fetch countries
         countries = self.env['res.country'].search([('code', 'in', list(unique_country_codes))])
         country_by_code = {c.code: c.id for c in countries}
-
-        # -------------------------
-        # Existing Donations
-        # -------------------------
-        existing_import_ids = {
-            r['import_id']
-            for r in self.env['api.donation'].search_read(
-                [('import_id', 'in', list(unique_import_ids))],
+        
+        # Bulk fetch existing donations to avoid duplicates
+        existing_import_ids = set()
+        if unique_import_ids:
+            existing_records = self.env['api.donation'].search_read(
+                [('import_id', 'in', list(unique_import_ids))], 
                 ['import_id']
             )
-        }
-
-        # -------------------------
-        # EXISTING DONORS (KEY FIX)
-        # -------------------------
+            existing_import_ids = {r['import_id'] for r in existing_records}
+        
         donor_category = self.env.ref('bn_profile_management.donor_partner_category', False)
 
         donor_map = {}
@@ -196,36 +192,45 @@ class APIDonationWizard(models.TransientModel):
 
             for d in donors:
                 donor_map[(d['mobile'], d['country_code_id'] and d['country_code_id'][0])] = d['id']
-
-        # -------------------------
-        # Gateway Config
-        # -------------------------
-        gateway_currency_lines = {
-            l.currency_id.name: l.account_id.id
-            for l in gateway_config.gateway_config_currency_ids
-        } if gateway_config else {}
-
-        gateway_product_lines = {
-            l.name: {
-                'account_id': l.account_id.id,
-                'analytic_id': l.analytic_account_id.id if l.analytic_account_id else False
-            }
-            for l in gateway_config.gateway_config_line_ids
-        } if gateway_config else {}
-
+        
+        # Pre-fetch gateway config data
+        gateway_currency_lines = {}
+        if gateway_config:
+            for line in gateway_config.gateway_config_currency_ids:
+                gateway_currency_lines[line.currency_id.name] = line.account_id.id
+        
+        gateway_product_lines = {}
+        if gateway_config:
+            for line in gateway_config.gateway_config_line_ids:
+                gateway_product_lines[line.name] = {
+                    'account_id': line.account_id.id,
+                    'analytic_id': line.analytic_account_id.id if line.analytic_account_id else False
+                }
+        
+        # Get donor category IDs
+        donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
+        individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
+        
+        # Default partner for missing donors
         default_partner = self.env['res.partner'].search(
-            [('primary_registration_id', '=', '2025-9999998-9')], limit=1
+            [('primary_registration_id', '=', '2025-9999998-9')], 
+            limit=1
         )
-
+        default_partner_id = default_partner.id if default_partner else False
+        
         return {
             'currency_by_name': currency_by_name,
             'conversion_rates': conversion_rates,
             'country_by_code': country_by_code,
             'existing_import_ids': existing_import_ids,
-            'donor_map': donor_map,          # ✅ IMPORTANT
+            'donor_map': donor_map,
             'gateway_currency_lines': gateway_currency_lines,
             'gateway_product_lines': gateway_product_lines,
-            'default_partner_id': default_partner.id if default_partner else False,
+            'donor_category_ids': [
+                donor_category.id if donor_category else False,
+                individual_category.id if individual_category else False
+            ],
+            'default_partner_id': default_partner_id,
         }
 
     # ---------------------- Bulk Processing ----------------------
@@ -313,14 +318,15 @@ class APIDonationWizard(models.TransientModel):
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
+        donor_id = None
+        partner_key = None
         mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
         country_code = donor.get('country', '')
         country_id = all_data['country_by_code'].get(country_code)
-        donor_id = None
-        partner_key = None
-        donor_id = all_data['donor_map'].get((mobile, country_id))
         
-        if not donor_id and donor.get('name', ''):
+        donor_id = all_data['donor_map'].get((mobile, country_id))
+
+        if not donor_id and donor.get('name'):
             # Create new partner
             partner_vals = {
                 'name': donor.get('name', ''),
