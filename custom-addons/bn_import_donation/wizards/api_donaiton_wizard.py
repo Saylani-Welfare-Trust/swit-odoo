@@ -332,7 +332,7 @@ class APIDonationWizard(models.TransientModel):
             if mobile:
                 # Try to find by mobile number in cache
                 for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile and cached_key[1] == country_code:  # Compare mobile numbers
+                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
                         donor_id = cached_id
                         break
             
