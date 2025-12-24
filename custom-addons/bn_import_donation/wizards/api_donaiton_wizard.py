@@ -192,7 +192,8 @@ class APIDonationWizard(models.TransientModel):
             # Filter to only include donors and cache them
             for partner in existing_partners:
                 if donor_category and donor_category.id in (partner.get('category_id') or []):
-                    key = (partner.get('mobile'), partner.get('country_code_id')[0])
+                    country_code_id = partner.get('country_code_id')
+                    key = (partner.get('mobile'), country_code_id[0])
                     partner_cache[key] = partner['id']
         
         # Pre-fetch gateway config data
