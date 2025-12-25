@@ -283,16 +283,25 @@ class APIDonationWizard(models.TransientModel):
 
             partner_to_create[:] = unique_partners
 
-            raise ValidationError(str(partner_to_create))
+            # 🔹 Filter out partners that already exist
+            partners_to_create_final = []
+            for vals in partner_to_create:
+                existing_partner = self.env['res.partner'].search([
+                    '|',
+                    ('email', '=', vals.get('email')),
+                    ('mobile', '=', vals.get('mobile')),
+                ], limit=1)
+                if not existing_partner:
+                    partners_to_create_final.append(vals)
+                else:
+                    _logger.info(f"Partner already exists: {existing_partner.name}")
 
-            created_partners = self.env['res.partner'].create(partner_to_create)
-            # Register partners in bulk
-            created_partners.action_register()
-            # Update mapping with new IDs
-            # for idx, partner in enumerate(created_partners):
-            #     original_idx = partner_to_create[idx].get('original_index')
-            #     if original_idx is not None:
-            #         partner_mapping[original_idx] = partner.id
+            if partners_to_create_final:
+                created_partners = self.env['res.partner'].create(partners_to_create_final)
+                # Register partners in bulk
+                created_partners.action_register()
+
+            # raise ValidationError(str(partner_to_create))
         
         # Update partner IDs in donation values
         for donation_val in donations_to_create:
