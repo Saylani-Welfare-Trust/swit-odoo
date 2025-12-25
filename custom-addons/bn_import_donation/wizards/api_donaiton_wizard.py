@@ -192,7 +192,9 @@ class APIDonationWizard(models.TransientModel):
             # Filter to only include donors and cache them
             for partner in existing_partners:
                 if donor_category and donor_category.id in (partner.get('category_id') or []):
-                    key = (partner.get('mobile'), partner.get('country_code_id'))
+                    country_code_id = partner.get('country_code_id')
+                    country_code_id = country_code_id[0] if country_code_id else False
+                    key = (partner.get('mobile'), country_code_id)
                     partner_cache[key] = partner['id']
         
         # Pre-fetch gateway config data
@@ -266,14 +268,40 @@ class APIDonationWizard(models.TransientModel):
         
         # Bulk create partners first
         if partner_to_create:
-            created_partners = self.env['res.partner'].create(partner_to_create)
-            # Register partners in bulk
-            created_partners.action_register()
-            # Update mapping with new IDs
-            # for idx, partner in enumerate(created_partners):
-            #     original_idx = partner_to_create[idx].get('original_index')
-            #     if original_idx is not None:
-            #         partner_mapping[original_idx] = partner.id
+            # 🔹 Deduplicate partner_to_create (mobile + country)
+            seen = set()
+            unique_partners = []
+
+            for vals in partner_to_create:
+                key = (
+                    vals.get('mobile'),
+                    vals.get('country_code_id')
+                )
+                if key not in seen:
+                    seen.add(key)
+                    unique_partners.append(vals)
+
+            partner_to_create[:] = unique_partners
+
+            # 🔹 Filter out partners that already exist
+            partners_to_create_final = []
+            for vals in partner_to_create:
+                existing_partner = self.env['res.partner'].search([
+                    '|',
+                    ('email', '=', vals.get('email')),
+                    ('mobile', '=', vals.get('mobile')),
+                ], limit=1)
+                if not existing_partner:
+                    partners_to_create_final.append(vals)
+                else:
+                    _logger.info(f"Partner already exists: {existing_partner.name}")
+
+            if partners_to_create_final:
+                created_partners = self.env['res.partner'].create(partners_to_create_final)
+                # Register partners in bulk
+                created_partners.action_register()
+
+            # raise ValidationError(str(partner_to_create))
         
         # Update partner IDs in donation values
         for donation_val in donations_to_create:
@@ -329,14 +357,17 @@ class APIDonationWizard(models.TransientModel):
             country_id = all_data['country_by_code'].get(country_code)
             
             # Check cache first - simpler approach
-            if mobile:
+            if mobile and country_id:
+                
                 # Try to find by mobile number in cache
                 for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile:  # Compare mobile numbers
+                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
                         donor_id = cached_id
                         break
             
             if not donor_id:
+                # raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
+
                 # Create new partner
                 partner_vals = {
                     'name': donor.get('name', ''),
