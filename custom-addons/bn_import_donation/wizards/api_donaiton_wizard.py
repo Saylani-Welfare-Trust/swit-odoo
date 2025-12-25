@@ -239,59 +239,72 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk Processing ----------------------
     def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data):
+        """Process donations in bulk with optimized operations"""
         new_donation_ids = []
         debit_accumulator = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
         credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0, 'analytic_account_id': False})
-
+        
+        # Prepare bulk create data
         donations_to_create = []
         partner_to_create = []
         partner_mapping = {}
-
-        # 🔑 NEW: in-memory dedup cache
-        new_partner_cache = {}  # (mobile, country_id) -> partner_key
-
+        
         for info_idx, info in enumerate(donations_info):
             import_id = info.get('_id')
             if not import_id or import_id in all_data['existing_import_ids']:
                 continue
 
-            donation_vals = self._prepare_donation_vals_fast(
-                info,
-                all_data,
-                info_idx,
-                partner_to_create,
-                partner_mapping,
-                new_partner_cache
-            )
-
+            # Prepare donation values efficiently
+            donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping)
             if donation_vals:
                 donations_to_create.append(donation_vals)
-
+                
+                # Accumulate journal lines if gateway config exists
                 if gateway_config and journal:
                     self._accumulate_donation_lines_fast(
-                        donation_vals,
-                        all_data,
-                        company_currency,
-                        debit_accumulator,
-                        credit_accumulator
+                        donation_vals, all_data, company_currency,
+                        debit_accumulator, credit_accumulator
                     )
-
+        
+        # Bulk create partners first
         if partner_to_create:
+            # 🔹 Deduplicate partner_to_create (mobile + country)
+            seen = set()
+            unique_partners = []
+
+            for vals in partner_to_create:
+                key = (
+                    vals.get('mobile'),
+                    vals.get('country_code_id')
+                )
+                if key not in seen:
+                    seen.add(key)
+                    unique_partners.append(vals)
+
+            partner_to_create[:] = unique_partners
+            
+            raise ValidationError(partner_to_create)
+
             created_partners = self.env['res.partner'].create(partner_to_create)
+            # Register partners in bulk
             created_partners.action_register()
-
-            for idx, partner in enumerate(created_partners):
-                partner_mapping[idx] = partner.id
-
+            # Update mapping with new IDs
+            # for idx, partner in enumerate(created_partners):
+            #     original_idx = partner_to_create[idx].get('original_index')
+            #     if original_idx is not None:
+            #         partner_mapping[original_idx] = partner.id
+        
+        # Update partner IDs in donation values
         for donation_val in donations_to_create:
             if 'partner_key' in donation_val:
                 donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
-                donation_val.pop('partner_key', None)
-
+                del donation_val['partner_key']
+        
+        # Bulk create donations
         if donations_to_create:
             new_donations = self.env['api.donation'].create(donations_to_create)
             new_donation_ids = new_donations.ids
-
+        
         return {
             'new_donations': new_donation_ids,
             'accumulators': {
@@ -300,7 +313,7 @@ class APIDonationWizard(models.TransientModel):
             }
         }
 
-    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, new_partner_cache):
+    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping):
         """Prepare donation values with optimized lookups"""
         if info.get('status') != 'success':
             return None
@@ -344,23 +357,20 @@ class APIDonationWizard(models.TransientModel):
                         break
             
             if not donor_id:
-                raise ValidationError(str(new_partner_cache)+" "+str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
+                # raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
 
-                identity = (mobile, country_id)
-
-                if identity in new_partner_cache:
-                    partner_key = new_partner_cache[identity]
-                else:
-                    partner_vals = {
-                        'name': donor.get('name'),
-                        'mobile': mobile,
-                        'email': donor.get('email'),
-                        'country_code_id': country_id,
-                        'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    }
-                    partner_to_create.append(partner_vals)
-                    partner_key = len(partner_to_create) - 1
-                    new_partner_cache[identity] = partner_key
+                # Create new partner
+                partner_vals = {
+                    'name': donor.get('name', ''),
+                    'mobile': mobile,
+                    'email': donor.get('email', ''),
+                    'country_code_id': country_id,
+                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
+                    # 'original_index': len(partner_to_create)  # Store index for mapping
+                }
+                partner_to_create.append(partner_vals)
+                # Temporary key for later mapping
+                partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
         
