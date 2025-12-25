@@ -283,7 +283,7 @@ class APIDonationWizard(models.TransientModel):
 
             partner_to_create[:] = unique_partners
 
-            # raise ValidationError(str(partner_to_create))
+            raise ValidationError(str(partner_to_create))
 
             created_partners = self.env['res.partner'].create(partner_to_create)
             # Register partners in bulk
