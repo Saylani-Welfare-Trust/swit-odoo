@@ -332,7 +332,7 @@ class APIDonationWizard(models.TransientModel):
             
             # Check cache first - simpler approach
             if mobile and country_id:
-                raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id)+" "+str(country_code))
+                raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
                 
                 # Try to find by mobile number in cache
                 for cached_key, cached_id in all_data['partner_cache'].items():
