@@ -268,11 +268,11 @@ class APIDonationWizard(models.TransientModel):
         
         # Bulk create partners first
         if partner_to_create:
-            # raise ValidationError(str(partner_to_create))
-            for partner in partner_to_create:
-                created_partner = self.env['res.partner'].create(partner)
-                # Register partners in bulk
-                created_partner.action_register()
+            raise ValidationError(str(partner_to_create))
+
+            created_partners = self.env['res.partner'].create(partner_to_create)
+            # Register partners in bulk
+            created_partners.action_register()
             # Update mapping with new IDs
             # for idx, partner in enumerate(created_partners):
             #     original_idx = partner_to_create[idx].get('original_index')
