@@ -28,8 +28,11 @@
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book">
+                        <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book" invisible="not journal_entry_id">
                             <field name="journal_entry_id" widget="statinfo"/>
+                        </button>
+                        <button name="action_show_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not picking_id">
+                            <field name="picking_id" widget="statinfo"/>
                         </button>
                     </div>
 
@@ -57,7 +60,6 @@
                                     <field name="cnic_no" />
                                     <field name="email" />
                                     <field name="product" string="Product / Course" />
-                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Fund Utilization" />
                                     <field name="amount" readonly="1" />
                                     <field name="reference" />
                                     <field name="reason" readonly="1" />
@@ -79,7 +81,6 @@
                                     <field name="cnic_no" />
                                     <field name="email" />
                                     <field name="product" string="Product / Course" />
-                                    <field name="analytic_account_id" string="Fund Utilization" />
                                     <field name="amount" />
                                     <field name="reference" />
 

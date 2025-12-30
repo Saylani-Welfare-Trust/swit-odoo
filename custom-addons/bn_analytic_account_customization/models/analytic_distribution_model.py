@@ -8,6 +8,14 @@ class AnalyticDistributionModel(models.Model):
 
 
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
+    
+    product_id = fields.Many2many(
+        'product.product',
+        string='Product',
+        ondelete='cascade',
+        check_company=True,
+        help="Select a product for which the analytic distribution will be used (e.g. create new customer invoice or Sales order if we select this product, it will automatically take this as an analytic account)",
+    )
 
 
     @api.model
@@ -25,6 +33,7 @@ class AnalyticDistributionModel(models.Model):
         domain = []
         for fname, value in vals.items():
             domain += self._create_domain(fname, value) or []
+
         best_score = 0
         res = {}
         fnames = set(self._get_fields_to_check())
@@ -32,12 +41,30 @@ class AnalyticDistributionModel(models.Model):
         for rec in self.search(domain):
             try:
                 score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
+                
                 if score > best_score:
                     res = rec.analytic_distribution
                     best_score = score
             except NonMatchingDistribution:
                 continue
         return res
+    
+    def _check_score(self, key, value):
+        self.ensure_one()
+
+        if key == 'company_id':
+            if not self.company_id or value == self.company_id.id:
+                return 1 if self.company_id else 0.5
+            raise NonMatchingDistribution
+        if not self[key]:
+            return 0
+        if value and ((self[key].id in value) if isinstance(value, (list, tuple))
+                      else (value.startswith(self[key])) if key.endswith('_prefix')
+                      else (value == self[key].id) if key != 'product_id' else  (value in self[key].ids)
+                      ):
+            return 1
+        
+        raise NonMatchingDistribution
     
     @api.onchange('analytic_account_id')
     def _onchange_analytic_account_id(self):

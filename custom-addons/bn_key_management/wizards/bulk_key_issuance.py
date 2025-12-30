@@ -54,6 +54,15 @@ class BulkKeyIssuance(models.TransientModel):
             # raise ValidationError(f'Key Group Info: {group.read()[0]}')
             for key in group.key_ids:
                 if key.state == 'available':
+                    # 🔍 Check if already issued today
+                    existing_issue = self.env['key.issuance'].search([
+                        ('key_id', '=', key.id),
+                        ('issue_date', '=', self.date)
+                    ], limit=1)
+
+                    if existing_issue:
+                        continue
+                    
                     key_issuance_obj = self.env['key.issuance'].create({
                         'rider_id': self.rider_id.id,
                         'key_id': key.id

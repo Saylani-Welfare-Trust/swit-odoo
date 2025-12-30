@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_purchase_order_form_inherit_bn_purchase_customization" model="ir.ui.view">
+        <field name="name">purchase.purchase.order.form.inherit.bn.purchase.customization</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button name="action_open_comparative_analysis" type="object" class="oe_stat_button" icon="fa-list-alt" invisible="not comparative_count">
+                    <field name="comparative_count" string="Comparative Orders" widget="statinfo"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

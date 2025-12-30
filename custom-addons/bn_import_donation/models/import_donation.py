@@ -23,6 +23,10 @@ class ImportDonation(models.Model):
 
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
+    picking_id = fields.Many2one('stock.picking', string="Picking")
+    picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_import_donation.online_donation_stock_picking_type', raise_if_not_found=False).id)
+    source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
+    destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -222,23 +226,6 @@ class ImportDonation(models.Model):
 
                     config_line = self.gateway_config_id.gateway_config_line_ids.filtered(lambda x: x.name == product)
                     product_id = config_line.mapped('product_id')
-                    analytic_id = config_line.mapped('analytic_account_id.id')
-
-                    if not analytic_id:
-                        InvalidDonation.create({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': product,
-                            'date': date,
-                            'amount': amount,
-                            'reference': reference,
-                            'reason': f'No fund utilization configured for product "{product}".',
-                        })
-                        continue
 
                     if not product_id:
                         InvalidDonation.create({
@@ -249,7 +236,6 @@ class ImportDonation(models.Model):
                             'cnic_no': cnic,
                             'email': email,
                             'product': product,
-                            'analytic_account_id': analytic_id[0],
                             'date': date,
                             'amount': amount,
                             'reference': reference,
@@ -280,7 +266,6 @@ class ImportDonation(models.Model):
                         'cnic_no': cnic,
                         'email': email,
                         'product': product,
-                        'analytic_account_id': analytic_id[0],
                         'date': date,
                         'amount': amount,
                         'reference': reference,
@@ -305,6 +290,12 @@ class ImportDonation(models.Model):
         default_partner = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
         credit_groups = {}
         total_amount = 0.0
+        
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+
+        picking = False
+        stock_move_map = {}
 
         for line in self.valid_import_donation_ids:
             # Resolve partner (prefer mobile match)
@@ -316,9 +307,9 @@ class ImportDonation(models.Model):
             if not config_line:
                 raise ValidationError(f"Missing configuration for: {line.product}")
 
-            fund_utilization = config_line.analytic_account_id.id or False
-            account_id = config_line.account_id.id
-            product_id = config_line.product_id.id if config_line.product_id else False
+            product = config_line.product_id if config_line.product_id else False
+            product_id = product.id if product else False
+            account_id = config_line.product_id.property_account_income_id.id
 
             if line.is_student:
                 # Handle Course (Fee Box)
@@ -332,7 +323,6 @@ class ImportDonation(models.Model):
                     'donor_id': partner.id,
                     'journal_id': journal.id,
                     'product_id': course_id.id,
-                    'analytic_account_id': fund_utilization,
                     'date': line.date,
                     'amount': line.amount,
                     'reference': line.reference,
@@ -340,7 +330,6 @@ class ImportDonation(models.Model):
                     'is_fee': True
                 })
                 fee_box.action_confirm()
-
             else:
                 # Handle Donation
                 donation = self.env['donation'].create({
@@ -348,7 +337,6 @@ class ImportDonation(models.Model):
                     'donor_id': partner.id,
                     'journal_id': journal.id,
                     'product_id': product_id,
-                    'analytic_account_id': fund_utilization,
                     'date': line.date,
                     'amount': line.amount,
                     'reference': line.reference,
@@ -356,10 +344,48 @@ class ImportDonation(models.Model):
                 })
                 donation.action_confirm()
 
+            # ----------------------------
+            # STOCK LOGIC (ONLY PRODUCT)
+            # ----------------------------
+            if product.detailed_type == 'product':
+                stock_move_map.setdefault(product, {
+                    'product': product,
+                    'qty': 0.0
+                })
+                stock_move_map[product]['qty'] += 1.0  # qty per line
+
+                if not picking:
+                    picking = StockPicking.create({
+                        'picking_type_id': self.picking_type_id.id,
+                        'location_id': self.source_location_id.id,
+                        'location_dest_id': self.destination_location_id.id,
+                        'origin': self.name,
+                    })
+
             # Consolidate amounts by (account, analytic)
-            key = (account_id, fund_utilization)
+            key = account_id
             credit_groups[key] = credit_groups.get(key, 0.0) + line.amount
             total_amount += line.amount
+
+        # ----------------------------
+        # CREATE STOCK MOVES
+        # ----------------------------
+        if picking:
+            for data in stock_move_map.values():
+                StockMove.create({
+                    'name': data['product'].name,
+                    'product_id': data['product'].id,
+                    'product_uom_qty': data['qty'],
+                    'quantity': data['qty'],
+                    'product_uom': data['product'].uom_id.id,
+                    'picking_id': picking.id,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.destination_location_id.id,
+                })
+
+            picking.action_confirm()
+            picking.action_assign()
+            picking.button_validate()
 
         # Build journal entry lines
         debit_line = (0, 0, {
@@ -373,9 +399,8 @@ class ImportDonation(models.Model):
                 'account_id': acc_id,
                 'name': 'Various Donations',
                 'credit': amt,
-                'analytic_distribution': {str(analytic_id): 100} if analytic_id else {},
             })
-            for (acc_id, analytic_id), amt in credit_groups.items()
+            for acc_id, amt in credit_groups.items()
         ]
 
         # Create and post journal entry
@@ -387,7 +412,7 @@ class ImportDonation(models.Model):
             'line_ids': [debit_line] + credit_lines,
         })
 
-        journal_entry.action_post()
+        # journal_entry.action_post()
         self.journal_entry_id = journal_entry.id
         self.state = 'upload'
 
@@ -396,6 +421,13 @@ class ImportDonation(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'account.move',
             'view_mode': 'form',
-            'res_id': self.journal_entry_id.id,
-            'target': 'new'
+            'res_id': self.journal_entry_id.id
+        }
+
+    def action_show_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.picking_id.id
         }

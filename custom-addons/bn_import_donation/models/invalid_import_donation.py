@@ -15,7 +15,6 @@ class InvalidImportDonation(models.Model):
     cnic_no = fields.Char('CNIC No.', size=15)
     email = fields.Char('Email')
     product = fields.Char('Product')
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
     date = fields.Char('Date')
     amount = fields.Float('Amount')
     reference = fields.Char('Reference')

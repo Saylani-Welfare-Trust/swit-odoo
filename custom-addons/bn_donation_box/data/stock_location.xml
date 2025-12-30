@@ -5,7 +5,7 @@
     
         <record id="donation_box_stock_location" model="stock.location">
             <field name="name">Donation Box</field>
-            <field name="usage">transit</field>
+            <field name="usage">customer</field>
             <field name="location_id" ref="__custom__.wh" />
         </record>
     

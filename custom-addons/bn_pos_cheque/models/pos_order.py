@@ -48,31 +48,32 @@ class POSOrder(models.Model):
         data = []
         
         for order in orders:
-            status = ""
+            if order.pos_cheque_id:
+                status = ""
 
-            if order.cheque_state == "draft":
-                status = "Pending"
-            elif order.cheque_state == "bounce":
-                status = "Bounce"
-            elif order.cheque_state == "cancel":
-                status = "Cancelled"
-            
+                if order.cheque_state == "draft":
+                    status = "Pending"
+                elif order.cheque_state == "bounce":
+                    status = "Bounce"
+                elif order.cheque_state == "cancel":
+                    status = "Cancelled"
+                
 
-            temp = {
-                "id": order.id,
-                "name": order.name,
-                "date": order.date_order,
-                "ref": order.pos_reference,
-                "customer": order.partner_id.name,
-                "partner_id": order.partner_id.id,
-                "amount": order.amount_total,
-                "cheque_number": order.cheque_number,
-                "bank_name": order.bank_name,
-                "bounce_count": order.bounce_count,
-                "status":status
-            }
+                temp = {
+                    "id": order.id,
+                    "name": order.name,
+                    "date": order.date_order,
+                    "ref": order.pos_reference,
+                    "customer": order.partner_id.name,
+                    "partner_id": order.partner_id.id,
+                    "amount": order.amount_total,
+                    "cheque_number": order.cheque_number,
+                    "bank_name": order.bank_name,
+                    "bounce_count": order.bounce_count,
+                    "status":status
+                }
 
-            data.append(temp)
+                data.append(temp)
         
         return {
             "orders": data,
@@ -97,7 +98,7 @@ class POSOrder(models.Model):
                     "amount":i.amount_total,
                     "cheque_number":i.cheque_number,
                     "bankname":i.bank_name,
-                    "status":i.cheque_status
+                    "status":i.cheque_state
                 }
                 data.append(temp)
 

@@ -33,7 +33,14 @@ class RiderSchedule(models.TransientModel):
         line_vals = []
 
         for obj in rider_shift_obj:
-            lot_ids = obj.key_bunch_id.key_ids.mapped('lot_id')
+            key_ids = self.env['key.issuance'].search([
+                ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
+                ('state', 'in', ['issued', 'overdue']),
+                ('issue_date', '=', obj.date),
+            ])
+
+            lot_ids = key_ids.mapped('lot_id')
+            # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
 
             # 🔹 Fetch existing collections for these lot_ids
             existing_collections = self.env['rider.collection'].search([
@@ -78,7 +85,8 @@ class RiderSchedule(models.TransientModel):
                         finalized_missing_lot_ids.append(missing_lot_id)
 
                 boxes = self.env['donation.box.registration.installation'].search([
-                    ('lot_id', 'in', finalized_missing_lot_ids)
+                    ('lot_id', 'in', finalized_missing_lot_ids),
+                    ('status', '!=', 'close')
                 ])
 
                 for box in boxes:

@@ -16,6 +16,10 @@ class APIDonationWizard(models.TransientModel):
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
 
+    picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_import_donation.online_donation_stock_picking_type', raise_if_not_found=False).id)
+    source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
+    destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
+
     # ---------------------- Public entry point ----------------------
     def action_fetch_donation(self):
         self.ensure_one()
@@ -58,12 +62,13 @@ class APIDonationWizard(models.TransientModel):
                 result['accumulators']['debit'],
                 result['accumulators']['credit'], 
                 company_currency
-            )
+            ) 
 
             history = self.env['fetch.history'].create({
                 'start_date': self.start_date,
                 'end_date': self.end_date,
                 'journal_entry_id': move.id,
+                'picking_id': result['picking_id'] if result.get('picking_id') else False,
             })
 
             # Bulk update fetch history
@@ -206,10 +211,7 @@ class APIDonationWizard(models.TransientModel):
         gateway_product_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_line_ids:
-                gateway_product_lines[line.name] = {
-                    'account_id': line.account_id.id,
-                    'analytic_id': line.analytic_account_id.id if line.analytic_account_id else False
-                }
+                gateway_product_lines[line.name] = { 'account_id': line.product_id.property_account_income_id.id }
         
         # Get donor category IDs
         donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
@@ -242,7 +244,12 @@ class APIDonationWizard(models.TransientModel):
         """Process donations in bulk with optimized operations"""
         new_donation_ids = []
         debit_accumulator = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
-        credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0, 'analytic_account_id': False})
+        credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0})
+
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+
+        stock_accumulator = defaultdict(float)
         
         # Prepare bulk create data
         donations_to_create = []
@@ -265,6 +272,23 @@ class APIDonationWizard(models.TransientModel):
                         donation_vals, all_data, company_currency,
                         debit_accumulator, credit_accumulator
                     )
+
+            items = info.get('items') or []
+            for it in items:
+                item_name = ''
+                item_data = it.get('item', {})
+                if isinstance(item_data, dict) and 'en' in item_data:
+                    item_name = item_data.get('en', {}).get('name', '')
+
+                # Find product from gateway config
+                product_line = gateway_config.gateway_config_line_ids.filtered(
+                    lambda l: l.name == item_name
+                )
+                product = product_line.product_id if product_line else False
+
+                if product and product.detailed_type == 'product':
+                    qty = float(it.get('qty') or 1.0)
+                    stock_accumulator[product.id] += qty
         
         # Bulk create partners first
         if partner_to_create:
@@ -314,12 +338,45 @@ class APIDonationWizard(models.TransientModel):
             new_donations = self.env['api.donation'].create(donations_to_create)
             new_donation_ids = new_donations.ids
         
+        picking = False
+
+        if stock_accumulator:
+            picking_type = self.picking_type_id
+            if not picking_type:
+                raise ValidationError(_("Stock Picking Type is missing."))
+
+            picking = StockPicking.create({
+                'picking_type_id': picking_type.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.destination_location_id.id,
+                'origin': f"API Donation {fields.Date.today()}",
+            })
+
+            for product_id, qty in stock_accumulator.items():
+                product = self.env['product.product'].browse(product_id)
+
+                StockMove.create({
+                    'name': product.display_name,
+                    'product_id': product.id,
+                    'product_uom_qty': qty,
+                    'quantity': qty,   # 🔑 IMPORTANT
+                    'product_uom': product.uom_id.id,
+                    'picking_id': picking.id,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.destination_location_id.id,
+                })
+
+            picking.action_confirm()
+            picking.action_assign()
+            picking.button_validate()
+
         return {
             'new_donations': new_donation_ids,
             'accumulators': {
                 'debit': dict(debit_accumulator),
                 'credit': dict(credit_accumulator)
-            }
+            },
+            'picking_id': picking.id if picking else False
         }
 
     def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping):
@@ -491,7 +548,6 @@ class APIDonationWizard(models.TransientModel):
                 continue
             
             credit_account_id = config['account_id']
-            analytic_id = config['analytic_id']
             
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
@@ -516,12 +572,11 @@ class APIDonationWizard(models.TransientModel):
                 d['amount_currency'] += item_total
             
             # Accumulate credit
-            credit_key = (credit_account_id, currency_id, analytic_id)
+            credit_key = (credit_account_id, currency_id)
             c = credit_accumulator[credit_key]
             c['credit_base'] += item_total_base
             if is_foreign:
                 c['amount_currency'] -= item_total
-            c['analytic_account_id'] = analytic_id
 
     # ---------------------- Optimized Helper Methods ----------------------
     def _date_to_iso_z(self, date_val):
@@ -560,139 +615,108 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Journal Entry Creation ----------------------
     def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency):
-        """Create journal entry with optimized line creation"""
+        """Create journal entry safely (currency constraint compliant)"""
+
         lines = []
-        currency = company_currency
-        
-        # Calculate totals with proper rounding
-        total_debit = currency.round(sum(v['debit_base'] for v in debit_accumulator.values()))
-        total_credit = currency.round(sum(v['credit_base'] for v in credit_accumulator.values()))
-        
-        _logger.info(f"Total Debit: {total_debit}, Total Credit: {total_credit}")
-        
-        # Add debit lines with proper rounding
+        company_currency_id = company_currency.id
+
+        # -----------------------------
+        # Debit lines
+        # -----------------------------
         for (account_id, currency_id), vals in debit_accumulator.items():
-            debit_amount = currency.round(vals['debit_base'])
-            if debit_amount > 0:
-                line_currency_id = currency_id or currency.id
-                line_vals = {
+            debit_amount = company_currency.round(vals['debit_base'])
+            if not debit_amount:
+                continue
+
+            # Company currency line
+            if currency_id == company_currency_id:
+                lines.append((0, 0, {
                     'account_id': account_id,
                     'debit': debit_amount,
                     'credit': 0.0,
-                    'currency_id': line_currency_id,
-                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
                     'name': 'Donation Import - Debit',
-                }
-                lines.append((0, 0, line_vals))
-        
-        # Add credit lines with proper rounding
-        for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
-            credit_amount = currency.round(vals['credit_base'])
-            if credit_amount > 0:
-                line_currency_id = currency_id or currency.id
-                line_vals = {
+                }))
+            # Foreign currency line
+            else:
+                lines.append((0, 0, {
+                    'account_id': account_id,
+                    'debit': debit_amount,
+                    'credit': 0.0,
+                    'currency_id': currency_id,
+                    'amount_currency': company_currency.round(vals['amount_currency']),
+                    'name': 'Donation Import - Debit',
+                }))
+
+        # -----------------------------
+        # Credit lines
+        # -----------------------------
+        for (account_id, currency_id), vals in credit_accumulator.items():
+            credit_amount = company_currency.round(vals['credit_base'])
+            if not credit_amount:
+                continue
+
+            # Company currency line
+            if currency_id == company_currency_id:
+                lines.append((0, 0, {
                     'account_id': account_id,
                     'debit': 0.0,
                     'credit': credit_amount,
-                    'currency_id': line_currency_id,
-                    'amount_currency': currency.round(vals['amount_currency']) if line_currency_id != currency.id else 0.0,
                     'name': 'Donation Import - Credit',
-                }
-                if analytic_id:
-                    line_vals['analytic_distribution'] = {str(analytic_id): 100}
-                lines.append((0, 0, line_vals))
-        
-        # Recalculate totals from lines to ensure accuracy
-        line_debits = sum(line[2]['debit'] for line in lines)
-        line_credits = sum(line[2]['credit'] for line in lines)
-        
-        _logger.info(f"Line Debits: {line_debits}, Line Credits: {line_credits}")
-        
-        # Calculate difference with proper rounding
-        difference = currency.round(line_debits - line_credits)
-        
-        _logger.info(f"Difference: {difference}")
-        
-        # Handle rounding difference - use a more robust approach
-        if not currency.is_zero(difference):
-            # Get rounding difference account
+                }))
+            # Foreign currency line
+            else:
+                lines.append((0, 0, {
+                    'account_id': account_id,
+                    'debit': 0.0,
+                    'credit': credit_amount,
+                    'currency_id': currency_id,
+                    'amount_currency': company_currency.round(vals['amount_currency']),  # already negative
+                    'name': 'Donation Import - Credit',
+                }))
+
+        if not lines:
+            raise ValidationError(_("No journal lines to create."))
+
+        # -----------------------------
+        # Balance check before create
+        # -----------------------------
+        total_debit = sum(l[2]['debit'] for l in lines)
+        total_credit = sum(l[2]['credit'] for l in lines)
+        diff = company_currency.round(total_debit - total_credit)
+
+        if not company_currency.is_zero(diff):
             diff_account = self._get_rounding_difference_account(journal)
-            
-            # Determine which side needs adjustment
-            if difference > 0:
-                # Debits > Credits, need to add credit
-                adjust_line = {
+
+            if diff > 0:
+                # Need credit
+                lines.append((0, 0, {
                     'account_id': diff_account.id,
                     'debit': 0.0,
-                    'credit': abs(difference),
-                    'currency_id': currency.id,
-                    'amount_currency': 0.0,
+                    'credit': abs(diff),
                     'name': 'Rounding Adjustment',
-                }
+                }))
             else:
-                # Credits > Debits, need to add debit
-                adjust_line = {
+                # Need debit
+                lines.append((0, 0, {
                     'account_id': diff_account.id,
-                    'debit': abs(difference),
+                    'debit': abs(diff),
                     'credit': 0.0,
-                    'currency_id': currency.id,
-                    'amount_currency': 0.0,
                     'name': 'Rounding Adjustment',
-                }
-            
-            lines.append((0, 0, adjust_line))
-            
-            # Recalculate after adjustment
-            final_debits = sum(line[2]['debit'] for line in lines)
-            final_credits = sum(line[2]['credit'] for line in lines)
-            
-            _logger.info(f"Final Debits: {final_debits}, Final Credits: {final_credits}")
-            
-            # Double check the balance
-            if not currency.is_zero(final_debits - final_credits):
-                _logger.error(f"Still unbalanced! Debits: {final_debits}, Credits: {final_credits}")
-                raise ValidationError(_("Journal entry cannot be balanced. Please check the amounts."))
-        
-        # Create and post move
-        try:
-            move_vals = {
-                'move_type': 'entry',
-                'journal_id': journal.id,
-                'date': fields.Date.today(),
-                'ref': f"Donation Import {fields.Date.today()}",
-                'line_ids': lines,
-                'currency_id': currency.id,
-            }
-            
-            move = self.env['account.move'].sudo().create(move_vals)
-            
-            # Validate balance before posting - check if move is balanced
-            if not self._is_move_balanced(move):
-                _logger.error(f"Journal entry {move.id} is not balanced before posting")
-                # Check individual line balances
-                for line in move.line_ids:
-                    _logger.debug(f"Line: Account={line.account_id.code}, Debit={line.debit}, Credit={line.credit}")
-                
-                # Try to fix by ensuring all lines have currency
-                for line in move.line_ids:
-                    if not line.currency_id:
-                        line.currency_id = currency.id
-                
-                # Recalculate
-                move.line_ids._onchange_amount_currency()
-                move._recompute_dynamic_lines(recompute_all_taxes=True)
-                
-            move.action_post()
-            
-            # Verify after posting
-            if not self._is_move_balanced(move):
-                raise ValidationError(_("Journal entry is not balanced after posting."))
-                
-            return move
-            
-        except Exception as e:
-            _logger.error(f"Failed to create journal entry: {str(e)}")
-            raise ValidationError(_("Failed to create journal entry: %s") % str(e))
+                }))
+
+        # -----------------------------
+        # Create & Post Move
+        # -----------------------------
+        move = self.env['account.move'].sudo().create({
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': fields.Date.today(),
+            'ref': f"Donation Import {fields.Date.today()}",
+            'line_ids': lines,
+        })
+
+        # move.action_post()
+        return move
 
     def _is_move_balanced(self, move):
         """Check if a journal move is balanced"""
@@ -761,7 +785,7 @@ class APIDonationWizard(models.TransientModel):
             for (account_id, currency_id), vals in debit_accumulator.items():
                 _logger.debug(f"Debit: Account={account_id}, Currency={currency_id}, Amount={vals['debit_base']}")
             
-            for (account_id, currency_id, analytic_id), vals in credit_accumulator.items():
-                _logger.debug(f"Credit: Account={account_id}, Currency={currency_id}, Analytic={analytic_id}, Amount={vals['credit_base']}")
+            for (account_id, currency_id), vals in credit_accumulator.items():
+                _logger.debug(f"Credit: Account={account_id}, Currency={currency_id}, Amount={vals['credit_base']}")
         
         return difference

@@ -29,7 +29,7 @@ class ManualKeyIssuance(models.TransientModel):
     def _compute_available_lot_ids(self):
         for rec in self:
             # Get all lot_ids from key records that are in 'available' state
-            available_keys = self.env['key'].search([('state', '=', 'available'), ('lot_id', '!=', False)])
+            available_keys = self.env['key'].search([('state', '!=', 'draft'), ('lot_id', '!=', False)])
             rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
 
     @api.depends('date')
@@ -85,7 +85,7 @@ class ManualKeyIssuance(models.TransientModel):
 
         key_issuance = self.env['key.issuance'].search([
             ('key_id', '=', key.id),
-            ('state', '=', 'donation_receive')
+            ('state', 'in', ['donation_receive', 'pending'])
         ], limit=1)
         
         if key_issuance:

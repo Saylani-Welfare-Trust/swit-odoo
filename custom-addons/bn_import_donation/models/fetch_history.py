@@ -10,8 +10,17 @@ class FetchHistory(models.Model):
     end_date = fields.Date('End Date')
 
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
+    picking_id = fields.Many2one('stock.picking', string="Picking")
 
 
+    def show_stock_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.picking_id.id,
+            'target': 'current',
+        }
 
     def show_journal_entry(self):
         return {

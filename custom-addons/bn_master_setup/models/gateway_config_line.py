@@ -9,7 +9,5 @@ class GatewayConfigLine(models.Model):
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
 
     product_id = fields.Many2one('product.product', string="Product")
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
-    account_id = fields.Many2one('account.account', string="Credit Account")
     
     name = fields.Char('Product Name')

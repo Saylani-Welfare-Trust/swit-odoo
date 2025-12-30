@@ -10,13 +10,13 @@
                     <field name="action_type" options="{'horizontal': True}" widget="radio" />
                     <group>
                         <group name="bulk_key_issuance_col_1">
-                            <field name="date" />
+                            <field name="date" required="1" />
                             <field name="rider_ids" invisible="1" />
                             <field name="domain_key_bunch_ids" invisible="1" />
-                            <field name="rider_id" domain="[('id', 'in', rider_ids)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" />
+                            <field name="rider_id" domain="[('id', 'in', rider_ids)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" />
                         </group>
                         <group name="bulk_key_issuance_col_2">
-                            <field name="key_bunch_ids" domain="[('id', 'in', domain_key_bunch_ids)]" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Bunchs" />
+                            <field name="key_bunch_ids" domain="[('id', 'in', domain_key_bunch_ids)]" required="1" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Bunchs" />
                         </group>
                     </group>
                 </sheet>

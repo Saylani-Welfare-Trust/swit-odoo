@@ -9,6 +9,21 @@
             <xpath expr="//field[@name='product_categ_id']" position="after">
                 <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" />
             </xpath>
+
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="widget">many2many_tags</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_account_analytic_distribution_model_tree_inherit_bn_analytic_account_customization" model="ir.ui.view">
+        <field name="name">account.analytic.distribution.model.tree.inherit.bn.analytic.account.customization</field>
+        <field name="model">account.analytic.distribution.model</field>
+        <field name="inherit_id" ref="account.account_analytic_distribution_model_tree_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="widget">many2many_tags</attribute>
+            </xpath>
         </field>
     </record>
 

@@ -10,7 +10,6 @@
                 <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="debit_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="credit_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </tree>
         </field>
     </record>

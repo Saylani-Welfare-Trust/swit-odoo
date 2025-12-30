@@ -10,8 +10,10 @@
     ],
     'data': [
         'data/sequence.xml',
-        'views/blanket_order.xml',
+        'security/group.xml',
+        'views/purchase_requisition.xml',
         'views/purchase_requisition_type.xml',
+        'views/purchase_order.xml',
     ],
     'auto_install': False,
     'application': False,

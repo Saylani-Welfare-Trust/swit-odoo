@@ -16,7 +16,6 @@ class Donation(models.Model):
     journal_id = fields.Many2one('account.journal', string="Journal")
     product_id = fields.Many2one('product.product', string="Product")
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
     company_id = fields.Many2one('res.company', string="Company", default=lambda self: self.env.user.company_id.id)
     currency_id = fields.Many2one(related='company_id.currency_id', string="Currency")
 

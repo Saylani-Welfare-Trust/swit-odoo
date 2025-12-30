@@ -264,7 +264,7 @@ class PosSession(models.Model):
             self.sudo()._post_statement_difference(cash_difference_before_statements, False)
             
             if self.move_id.line_ids:
-                self.move_id.sudo().with_company(self.company_id)._post()
+                # self.move_id.sudo().with_company(self.company_id)._post()
                 
                 # We need to write the price_subtotal and price_total here because if we do it earlier 
                 # the compute functions will overwrite it here /account/models/account_move_line.py _compute_totals
@@ -292,7 +292,7 @@ class PosSession(models.Model):
         """Find which payment method a receivable line belongs to."""
         if not line.name:
             return None
-            
+        # raise UserError(str("LINE NAME: " + str(line.name) + " PAYMENT METHODS: " + str(self.payment_method_ids.read())))
         line_name_lower = line.name.lower()
         
         # Check each payment method for name matching
@@ -334,14 +334,20 @@ class PosSession(models.Model):
             payment_breakdown = {int(pm_id): {'restricted': vals.get('restricted', []) or [], 'unrestricted': vals.get('unrestricted', []) or [], 'neutral': vals.get('neutral', []) or []} for pm_id, vals in computed.items()}
 
         # raise ValidationError(str(payment_breakdown))
-
+        # raise ValidationError(account_move.line_ids.mapped("account_id.name"))
         receivable_lines = account_move.line_ids.filtered(
-            # lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
-            lambda l: l.account_id.account_type == 'asset_current' and l.debit > 0
+            lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
+            # lambda l: l.account_id.account_type == 'asset_current' and l.debit > 0
         )
 
-        # raise ValidationError(str(receivable_lines))
-
+        # raise ValidationError(
+        #     f"""
+        # Receivable Lines: {receivable_lines}
+        # Breakdown: {payment_breakdown}
+        # Payment Methods IDs: {self.payment_method_ids.ids}
+        # Payment Methods Names: {self.payment_method_ids.mapped('name')}
+        # """
+        # )
         payment_method_amounts = self._group_receivable_lines_by_payment_method(receivable_lines)
         receivable_lines.unlink()
 
@@ -364,7 +370,7 @@ class PosSession(models.Model):
     def _group_receivable_lines_by_payment_method(self, receivable_lines):
         """Group receivable lines by their corresponding payment method."""
         payment_method_amounts = {}
-        
+        # raise ValidationError(str("RECEIVABLE LINES: " + str(receivable_lines)))
         for line in receivable_lines:
             payment_method = self._find_payment_method_for_receivable_line(line)
             # raise UserError(str("LINE: " + str(line.name) + " METHOD: " + str(payment_method.name if payment_method else "None")))
@@ -390,7 +396,8 @@ class PosSession(models.Model):
             'move_id': account_move.id
         }
 
-        # raise ValidationError(str(payment_method_amounts) + "----" + str(payment_breakdown))
+        # Debug: raise before account selection
+        # raise ValidationError("Product split debug:\n" + str(payment_method_amounts) + "\n----\n" + str(payment_breakdown))
 
         for pm_id, pm_data in payment_method_amounts.items():
             payment_method = pm_data['method']
