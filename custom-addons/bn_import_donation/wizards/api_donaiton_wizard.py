@@ -16,9 +16,9 @@ class APIDonationWizard(models.TransientModel):
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
 
-    picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_import_donation.online_donation_stock_picking_type', raise_if_not_found=False).id)
-    source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
-    destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
+    # picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_import_donation.online_donation_stock_picking_type', raise_if_not_found=False).id)
+    # source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
+    # destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
 
     # ---------------------- Public entry point ----------------------
     def action_fetch_donation(self):
