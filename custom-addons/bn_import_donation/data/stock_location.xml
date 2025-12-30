@@ -3,8 +3,8 @@
 
     <data noupdate="1">
     
-        <record id="donation_box_stock_location" model="stock.location">
-            <field name="name">Donation Box</field>
+        <record id="online_donation_stock_location" model="stock.location">
+            <field name="name">Online Donation</field>
             <field name="usage">customer</field>
             <field name="location_id" ref="__custom__.wh" />
         </record>

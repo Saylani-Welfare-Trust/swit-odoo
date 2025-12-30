@@ -28,7 +28,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     donor_id = fields.Many2one('res.partner', string="Donor", tracking=True)
     installation_category_id = fields.Many2one('installation.category', string="Installation Category", tracking=True)
     product_id = fields.Many2one('product.product', string="Box Category")
-    country_id = fields.Many2one('res.country', string="Phone Code")
+    country_id = fields.Many2one(related='donor_id.country_code_id', string="Phone Code", store=True, tracking=True)
     
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     installer_id = fields.Many2one('hr.employee', string="Installer", tracking=True)
@@ -42,7 +42,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     name = fields.Char('Name', default="New")
     request_no = fields.Char(related='donation_box_request_id.name', string="Request No.", store=True)
     shop_name = fields.Char('Shop Name', tracking=True)
-    contact_no = fields.Char('Contact No', size=10, tracking=True)
+    contact_no = fields.Char(related='donor_id.mobile', string="Contact No", size=10, store=True, tracking=True)
     location = fields.Char('Requested Location', tracking=True)
     contact_person = fields.Char('Contact Person', tracking=True)
     old_box_no = fields.Char('Old Box No.')

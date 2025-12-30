@@ -22,7 +22,7 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="replace">
-                <field name="state" widget="statusbar" statusbar_visible="draft,refund_request,cfo_approval,paid,done"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,refund_request,cfo_approval,paid,done,refund"/>
             </xpath>
 
             <xpath expr="//header//button[@name='refund']" position="attributes">

@@ -6,8 +6,8 @@
         <field name="model">key.issuance</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0">
-                <field name="key_id" string="Key" />
-                <field name="rider_id" string="Rider" />
+                <field name="key_name" string="Key" />
+                <field name="rider_name" string="Rider" />
                 <field name="issued_on" />
                 <field name="returned_on" />
                 <field name="state" widget="badge" decoration-info="state == 'returned'" decoration-success="state == 'issued'" decoration-danger="state == 'overdue'" />
@@ -36,7 +36,8 @@
 
                     <group>
                         <group name="key_inssuance_col_1">
-                            <field name="key_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Key" readonly="1" />
+                            <field name="key_name" string="Key" readonly="1" />
+                            <field name="key_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Key" readonly="1" invisible="1" />
                             <field name="returned_on" readonly="1" />
                         </group>
                         <group name="key_inssuance_col_2">

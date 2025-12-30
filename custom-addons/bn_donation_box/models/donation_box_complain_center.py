@@ -60,6 +60,10 @@ class DonationBoxComplain(models.Model):
         # Store the registration ID before it gets closed during resolve
         if self.donation_box_registration_installation_id:
             self.stored_registration_id = self.donation_box_registration_installation_id.id
+
+        if self.box_status == 'repaired':
+            raise ValidationError("Please contact your firendly administrator as you cannot set box status directly to 'Repaired'.")
+        
         self.status = 'process'
     
     def action_resolve(self):
@@ -70,6 +74,8 @@ class DonationBoxComplain(models.Model):
             if registration:
                 registration.status = 'close'
             self.lot_id.is_not_return = True
+
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
 
         if self.box_status == 'broken':
             self.action_scrap()
@@ -85,21 +91,18 @@ class DonationBoxComplain(models.Model):
                 rec.donation_box_registration_installation_id = self.env['donation.box.registration.installation'].search([('lot_id', '=', rec.lot_id.id), ('status', '=', 'available')], order='id desc', limit=1).id
 
     def action_return(self):
-        """Perform a serial-based stock return for the donation box."""
+        """Return ONLY the selected serial (lot) from a multi-line picking."""
         for rec in self:
 
             if not rec.lot_id:
                 raise ValidationError("Please select a Serial (Lot) to return.")
 
-            # Use stored_registration_id as it persists even after installation is closed
             registration = rec.stored_registration_id or rec.donation_box_registration_installation_id
-        
             if not registration:
                 raise ValidationError("No installation record found for this serial.")
 
-            # 1. Find original picking (delivery)
+            # 1️⃣ Find original picking
             picking = registration.donation_box_request_id.picking_id
-
             if not picking or picking.state != "done":
                 picking = self.env['stock.picking'].search([
                     ('origin', '=', registration.donation_box_request_id.name),
@@ -109,65 +112,68 @@ class DonationBoxComplain(models.Model):
             if not picking:
                 raise ValidationError("No completed Stock Picking found for this box.")
 
-            # 2. Create return wizard
+            # 2️⃣ Find the exact move line for this serial
+            original_ml = picking.move_line_ids.filtered(
+                lambda ml: ml.lot_id.id == rec.lot_id.id
+            )
+
+            if not original_ml:
+                raise ValidationError("This serial does not belong to the selected picking.")
+
+            original_ml = original_ml[0]
+            product = original_ml.product_id
+
+            # 3️⃣ Create return wizard
             return_wizard = self.env['stock.return.picking'].create({
                 'picking_id': picking.id,
             })
 
-            # 3. Keep only the selected serial
-            serial_used = picking.move_line_ids.filtered(lambda ml: ml.lot_id.id == rec.lot_id.id)
-            if not serial_used:
-                raise ValidationError("This serial does not belong to the selected picking.")
-
-            # Update return lines
+            # 4️⃣ Return ONLY this product
             for line in return_wizard.product_return_moves:
-                if line.product_id == serial_used.product_id:
-                    line.quantity = 1
-                else:
-                    line.quantity = 0
+                line.quantity = 1 if line.product_id.id == product.id else 0
 
-            # 4. Create the return picking
-            res = return_wizard.create_returns()   # res = {'res_id': return picking ID}
+            # 5️⃣ Create return picking
+            res = return_wizard.create_returns()
             return_picking = self.env['stock.picking'].browse(res['res_id'])
 
-            # 5. Assign the same serial number to return move line
-            return_move_line = return_picking.move_line_ids.filtered(
-                lambda ml: ml.product_id == serial_used.product_id
+            # 6️⃣ KEEP ONLY the move of selected product
+            return_move = return_picking.move_ids_without_package.filtered(
+                lambda m: m.product_id.id == product.id
             )
 
-            if not return_move_line:
-                # create move line if missing
-                return_move_line = self.env['stock.move.line'].create({
-                    'move_id': return_picking.move_ids_without_package.filtered(
-                        lambda m: m.product_id == serial_used.product_id
-                    ).id,
-                    'picking_id': return_picking.id,
-                    'product_id': serial_used.product_id.id,
-                    'product_uom_id': serial_used.product_uom_id.id,
-                    'quantity': 1,
-                    'lot_id': rec.lot_id.id,
-                    'location_id': picking.location_dest_id.id,
-                    'location_dest_id': picking.location_id.id,
-                })
-            else:
-                # update existing move line
-                return_move_line.lot_id = rec.lot_id.id
-                return_move_line.quantity = 1
+            if not return_move:
+                raise ValidationError("Return move not generated.")
 
-            # 6. Validate the return picking
+            # Delete other product moves completely
+            (return_picking.move_ids_without_package - return_move).unlink()
+
+            # 7️⃣ Fix move line (SERIAL SAFE)
+            return_ml = return_move.move_line_ids[:1]
+
+            # Remove extra move lines
+            (return_move.move_line_ids - return_ml).unlink()
+
+            return_ml.write({
+                'lot_id': rec.lot_id.id,
+                'quantity': 1,
+            })
+
+            # 8️⃣ Validate return picking
             return_picking.button_validate()
 
-            # 7. Close installation
+            # 9️⃣ Close installation & complaint
             registration.status = 'close'
-
-            # 8. Close complain
             rec.status = 'resolved'
             rec.return_picking_id = return_picking.id
-            
-            # 9. Lot consume
-            rec.lot_id.lot_consume = False
-            rec.lot_id.is_not_return = False
 
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+
+            # 🔟 Reset lot flags
+            rec.lot_id.write({
+                'lot_consume': False,
+                'location_id': self.donation_box_request_id.source_location_id.id,
+                'is_not_return': False,
+            })
 
     def action_scrap(self):
         """Scrap the selected serial (lot) instead of returning picking."""
@@ -260,10 +266,10 @@ class DonationBoxComplain(models.Model):
         Repair broken donation boxes (single or bulk).
         Once repaired, the box becomes available in stock for re-allocation and installation.
         """
-        broken_records = self.filtered(lambda r: r.box_status == 'broken')
+        broken_records = self.filtered(lambda r: r.box_status in ['broken', 'repaired'])
         
         if not broken_records:
-            raise ValidationError("No broken boxes selected for repair. Only boxes with 'Broken' status can be repaired.")
+            raise ValidationError("No broken boxes selected for repair. Only boxes with 'Broken' or 'Repaired' status can be repaired.")
 
         for rec in broken_records:
             # 1. Change box status to 'repaired'
@@ -369,7 +375,10 @@ class DonationBoxComplain(models.Model):
                 # Reset the installation status to allow re-allocation
                 rec.donation_box_registration_installation_id.status = 'close'
             
-            # 5. Update complain status to resolved
+            # 5. Delete the key record as a result it will be unlink from the bunch too
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+
+            # 6. Update complain status to resolved
             rec.status = 'resolved'
         
         # Return notification for bulk operations

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_requisition.menu_purchase_requisition_pro_mgt" model="ir.ui.menu">
+        <field name="name">Purchase Request / Blanket Orders</field>
+        <field name="sequence">-1</field>
+    </record>
+    
+    <record id="purchase_requisition.action_purchase_requisition" model="ir.actions.act_window">
+        <field name="name">Purchase Request / Blanket Orders</field>
+    </record>
+
+    <record id="purchase_requisition_purchase_order_form_inherit_bn_purchase_customization" model="ir.ui.view">
+        <field name="name">purchase.requisition.purchase.order.form.inherit.bn.purchase.customization</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase_requisition.purchase_order_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='requisition_id']" position="attributes">
+                <attribute name="string">Purchase Request / Blanket Order</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_requisition_view_purchase_requisition_form_inherit_bn_purchse_customization" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.purchase.requisition.form.inherit.bn.purchse.customization</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button string="HOD Approval" name="action_hod_approval" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_purchase_customization.purchase_hod_group" />
+                <button string="Member Approval" name="action_mem_approval" type="object" class="oe_highlight" invisible="state != 'hod_approval'" groups="bn_purchase_customization.purchase_member_group" />
+            </xpath>
+
+            <xpath expr="//button[@name='action_in_progress']" position="attributes">
+                <attribute name="invisible">state != 'mem_approval'</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="replace">
+                <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,mem_approval,in_progress,open,done" invisible="type_id.name == 'Blanket Order' or is_quantity_copy == 'none'"/>
+            </xpath>
+            
+            <xpath expr="//field[@name='state_blanket_order']" position="attributes">
+                <attribute name="invisible">type_id.name == 'Purchase Request' or is_quantity_copy != 'none'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

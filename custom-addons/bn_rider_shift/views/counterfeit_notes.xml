@@ -6,7 +6,7 @@
         <field name="model">counterfeit.notes</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
-                <field name="rider_id" />
+                <field name="rider_name" string="Rider" />
                 <field name="lot_id" string="Box No." />
                 <field name="submission_time" />
                 <field name="amount" />

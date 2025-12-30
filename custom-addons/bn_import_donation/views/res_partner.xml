@@ -13,7 +13,6 @@
                         <field name="name" />
                         <field name="donor_id" />
                         <field name="gateway_config_id" />
-                        <field name="analytic_account_id" string="Fund Utilization" />
                         <field name="journal_id" string="Journal" />
                         <field name="amount" />
                         <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
@@ -51,7 +50,6 @@
                         <field name="name" />
                         <field name="donor_id" />
                         <field name="gateway_config_id" />
-                        <field name="analytic_account_id" string="Fund Utilization" />
                         <field name="journal_id" string="Journal" />
                         <field name="amount" />
                         <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />

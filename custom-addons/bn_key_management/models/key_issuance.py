@@ -16,17 +16,18 @@ class KeyIssuance(models.Model):
     _name = 'key.issuance'
     _description = 'Key Issuance'
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = 'rider_name'
+    _rec_name = 'key_name'
 
 
     key_id = fields.Many2one('key', string="Key", tracking=True)
     rider_id = fields.Many2one(related='key_id.rider_id', string="Rider", store=True)
     donation_box_registration_installation_id = fields.Many2one(related='key_id.donation_box_registration_installation_id', string="Donation Box Registartion / Installation", store=True)
     
-    rider_name = fields.Char(related='rider_id.name', string="Rider", store=True)
+    key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
+    rider_name = fields.Char(related='rider_id.name', string="Rider Name", store=True)
 
     issued_on = fields.Datetime(string="Issued On", default=fields.Datetime.now)
-    issue_date = fields.Date(string="Issued On", default=fields.Date.today)
+    issue_date = fields.Date(string="Issued Date", default=fields.Date.today())
     returned_on = fields.Datetime(string="Returned On")
     
     state = fields.Selection(selection=key_selection, default='draft', string="Status")
@@ -113,7 +114,7 @@ class KeyIssuance(models.Model):
                 "body": f"Please enter the correct amount collected against {data['box_no']}",
             }
 
-        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', '=', 'issued')], limit=1)
+        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', 'in', ['issued', 'overdue'])], limit=1)
 
         if not key_obj:
             return {

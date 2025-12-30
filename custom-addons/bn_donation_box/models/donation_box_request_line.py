@@ -23,7 +23,7 @@ class DonationBoxRequestLine(models.Model):
         compute="_compute_allowed_lot_ids",
         store=False
     )
-
+    
 
     @api.depends('product_id', 'donation_box_request_id.source_location_id')
     def _compute_allowed_lot_ids(self):

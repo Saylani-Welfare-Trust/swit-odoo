@@ -10,7 +10,6 @@
                 <field name="name" />
                 <field name="donor_id" />
                 <field name="gateway_config_id" />
-                <field name="analytic_account_id" string="Fund Utilization" />
                 <field name="journal_id" string="Journal" />
                 <field name="amount" />
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
@@ -40,7 +39,6 @@
                         <group name="donation_col_1">
                             <field name="is_fee" invisible="1" />
                             <field name="donor_id" domain="[('category_id.name', '=', ['Donor'])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
-                            <field name="analytic_account_id" string="Fund Utilization" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
                             <label for="product_id" string="Product" invisible="is_fee" />
                             <label for="product_id" string="Course" invisible="not is_fee" />
                             <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" nolabel="1" />

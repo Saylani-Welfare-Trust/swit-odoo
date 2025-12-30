@@ -35,7 +35,6 @@ class DonationBoxRequest(models.Model):
     donation_box_registration_installation_ids = fields.One2many('donation.box.registration.installation', 'donation_box_request_id', string='Donation Box Registration/Installation')
 
 
-
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
@@ -49,6 +48,15 @@ class DonationBoxRequest(models.Model):
     def action_draft(self):
         self.env['donation.box.registration.installation'].search([('donation_box_request_id', '=', self.id)]).unlink()
         self.env['key'].search([('donation_box_request_id', '=', self.id)]).unlink()
+
+        lot_ids = []
+
+        for line in self.donation_box_request_line_ids:
+            lot_ids.append(line.lot_id.id)
+
+        for lot in self.env['stock.lot'].browse(lot_ids):
+            lot.lot_consume = False
+            lot.location_id = self.source_location_id.id
 
         self.status = 'draft'
     

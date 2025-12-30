@@ -75,7 +75,7 @@ class RiderScheduleLine(models.TransientModel):
 
         key.state = 'pending'
 
-        key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', '=', 'issued')], limit=1)
+        key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', 'in', ['issued', 'overdue'])], limit=1)
 
         key_issuance.state = 'pending'
 

@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+
+    <template id="microfinance_application_form">
+         <t t-call="web.html_container">
+            <div class="print">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.internal_layout">
+                        <style>
+                            /* BASE64 Embedded Font - CRITICAL FOR PDF */
+                            @font-face {
+                                font-family: 'JameelNooriNastaleeq';
+                                src: url('/bn_profile_management/static/src/fonts/JameelNooriNastaleeqRegular.ttf') format('truetype');
+                                font-weight: normal;
+                                font-style: normal;
+                                font-display: swap;
+                            }
+                            
+                            /* REMOVE ALL OTHER font-family DECLARATIONS - Keep only these */
+                            body, div, table, tr, td, th, p, span, h2, h4, input, .print, .page {
+                                font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', Arial, sans-serif !important;
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            
+                            .urdu-text, .urdu-text * {
+                                font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
+                                direction: rtl !important;
+                                text-align: right !important;
+                                <!--unicode-bidi: embed !important;-->
+                            }
+                            
+                            /* Force ALL tables to RTL */
+                            table, tr, td, th {
+                                direction: rtl !important;
+                                text-align: right !important;
+                                <!--unicode-bidi: embed !important;-->
+                                border-collapse: collapse !important;
+                            }
+                            
+                            /* CRITICAL PRINT STYLES FOR PDF GENERATION */
+                            @media print {
+                                @page {
+                                    margin: 0.5cm;
+                                    size: A4 portrait;
+                                }
+                                
+                                * {
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                    color-adjust: exact !important;
+                                }
+                                
+                                /* Force font for ALL elements in print */
+                                * {
+                                    font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', Arial, sans-serif !important;
+                                }
+                                
+                                /* Ultra-strong RTL enforcement for PDF */
+                                body {
+                                    <!--direction: rtl !important;-->
+                                    <!--text-align: right !important;-->
+                                        direction: ltr !important;
+                                    text-align: left !important;
+                                    <!--unicode-bidi: embed !important;-->
+                                }
+                                
+                                
+                                .urdu-text {
+                                    direction: rtl !important;
+                                    text-align: right !important;
+                                    font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic' !important;
+                                    line-height: 2.3 !important;
+                                    word-spacing: 1px !important;
+                                }
+
+                                .urdu-text * {
+                                    direction: rtl !important;
+                                    text-align: right !important;
+                                }
+
+                                .urdu-text h2,
+                                .urdu-text h4 {
+                                    text-align: center !important;
+                                }
+                                .urdu-text table {
+                                    direction: rtl !important;
+                                    width: 100% !important;
+                                }
+
+                                .urdu-text th,
+                                .urdu-text td {
+                                    text-align: left !important;
+                                    vertical-align: middle !important;
+                                    padding: 8px !important;
+                                }
+                                .urdu-text p,
+                                .urdu-text span {
+                                    white-space: normal !important;
+                                    overflow: visible !important;
+                                }
+                        
+                                
+                                /* Table fixes for PDF */
+                                table {
+                                    direction: rtl !important;
+                                    width: 100% !important;
+                                    border-collapse: collapse !important;
+                                }
+                                
+                                td, th {
+                                    border: 1px solid #000 !important;
+                                    padding: 8px !important;
+                                    text-align: right !important;
+                                    direction: rtl !important;
+                                }
+                                
+                                .page {
+                                    page-break-inside: avoid !important;
+                                    min-height: 100vh !important;
+                                }
+                                
+                                .page-break {
+                                    page-break-before: always !important;
+                                    page-break-inside: avoid !important;
+                                }
+                                
+                                /* Prevent text overflow */
+                                td, th {
+                                    word-wrap: break-word !important;
+                                    overflow-wrap: break-word !important;
+                                    white-space: normal !important;
+                                }
+                                
+                                /* Fix for checkboxes */
+                                input[type="checkbox"] {
+                                    margin: 0 5px !important;
+                                    transform: scale(1.2) !important;
+                                }
+                            }
+                            
+                            /* Screen-only styles */
+                            @media screen {
+                                .cnic-image-container {
+                                    display: flex;
+                                    align-items: center;
+                                    margin-bottom: 10px;
+                                }
+                                
+                                .cnic-image {
+                                    width: 100px;
+                                    height: 60px;
+                                    border: 1px solid #000;
+                                    margin-left: 10px;
+                                }
+                                
+                                .compact-table {
+                                    font-size: 11px;
+                                }
+                                
+                                .compact-table th {
+                                    padding: 6px !important;
+                                }
+                            }
+                        </style>
+
+                        <section name="print_detail">
+                            <div class="row">
+                                <!-- Left Column for Details -->
+                                <div class="col-8">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>Application No. : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-if="o.microfinance_line_ids">
+                                                <t t-esc="o.microfinance_line_ids[-1].name"/>
+                                            </t>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>Master Donee No. : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-esc="o.primary_registration_id"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>Donee Name : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-esc="o.name"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>Mobile Number : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>CNIC No. : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-esc="o.cnic_no or 'N/A'"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Right Column for Image -->
+                                <div class="col-4 text-center">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <span/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <t t-if="o.image_1920">
+                                                <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 120px; height: 120px; border: 1px solid #000; object-fit: cover;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <div style="width: 120px; height: 120px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">
+                                                    <span>No Image</span>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <!--<br/>-->
+                        <!--<br/>-->
+                        <div style="direction: rtl; font-family: 'JameelNooriNastaleeq';" class="urdu-text">
+                            <head>
+                                <div style="text-align: center;" class="urdu-text" dir="rtl">
+                                    <h2>سیلانی ویلفیئر فارم</h2>
+                                    <p>یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                                </div>
+                                <hr/>
+                            </head>
+                        
+                            <div class="page">
+                            <!-- Important Notes Section -->
+                            <div style="border: 1px solid black; padding: 10px; margin-bottom: 15px;">
+                                <h4 style="text-align:center; background-color: black; color: white; padding: 5px;" class="urdu-text">
+                                    اہم ہدایات
+                                </h4>
+                                <p style="text-align: center;" class="urdu-text">
+                                    یاد رہے! دین اسلام کے مال دار افراد کو زکوٰۃ و خیرات کے ذریعے مستحق افراد تک پہنچانے
+                                    کا حکم دیا گیا ہے تاکہ مستحق افراد اس فرم سے اپنی ضروریات کو پورا کر سکیں۔ سلیانی
+                                    ویلفیئر بغیر بطور فیس یہ مدد پہنچانے کا کام کر رہی ہے، اگر آپ بھی یہ نیکی کا کام
+                                    کرنا چاہتے ہیں تو۔
+                                </p>
+
+                                <p style="text-align: center; border: 2px solid black; padding: 10px; border-radius: 20px;background-color: #f8f8f8; display: inline-block;" class="urdu-text">
+                                    <span style="font-weight: bold;">نوٹ:</span>
+                                    نام، دستخط دیے گئے تمام کالم ٹھیک طور پر مکمل کریں۔ ہماری انفارمی ٹیم تصدیق کرنے کے
+                                    لیے آپ کے دیے گئے پتہ پر جائے گی۔ اگر فراہم کردہ معلومات میں کوئی بھی غلطی ہوئی تو
+                                    ادارہ آپ کے خلاف قانونی کارروائی کرنے کا حق محفوظ رکھتا ہے۔
+                                </p>
+                            </div>
+                            
+                            <div style="border: 2px solid black; padding: 15px; border-radius: 20px;background-color: #f8f8f8; position: relative; margin-bottom: 15px;" class="urdu-text">
+                                <span style="background-color: black; color: white; display: inline-block;padding: 5px 15px; font-size: 18px; font-weight: bold; border-radius: 5px;position: absolute; right: 10px; top: -15px;">
+                                    محترم سائلین کو اہم تنبیہ فرمائیں
+                                </span>
+                                <p style="margin-top: 30px; line-height: 1.6;">
+                                    اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق ماررہے ہیں۔
+                                    یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کو یہ رقم / مدد ادارے سے
+                                    وصول کی اس کا نقصان آپ کو یہ ہو سکتا ہے ۔ (مشاہدے کی بات ہے ) کہ آپ کسی بھی تکلیف
+                                    میں مبتلا ہو سکتے ہیں، بیماری ، ایکسیڈینٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی
+                                    ایسی آفت جس کا آپ تصور نہیں کر سکتے، بلا کی طرح آپ پر نازل
+                                    ہو سکتی ہے اور جس سے آپ بے سکون ہو جائینگے (الامان والحفیظ) ۔ اللہ عزوجل ہم سب کی
+                                    مدد فرمائے ہر مسلمان کی پریشانیاں دور کریے۔ (آمین) سیلانی ویلفیئر ان شاء اللہ عزوجل
+                                    آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے، اللہ عزوجل سیلانی ویلفیئر کو
+                                    بھی مستحقین تک ان کی لاتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ
+                                    قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں امید ہے کہ آپ ان پر عمل کرینگے اور
+                                    ہمارے اسٹاف کے ساتھ تعاون کرینگے۔
+                                </p>
+                            </div>
+
+                            <!-- Personal Information Table -->
+                            <div style="margin-bottom: 15px;">
+                                <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">ملازمت کی تفصیلات / کاروباری معلومات</h4>
+                                <table style="width: 100%; border-collapse: collapse; border: 1px solid black;" class="compact-table">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" colspan="3" class="urdu-text">
+                                            :کمپنی کا نام
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            کمپنی کا پتہ:
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            ماہانہ تنخواہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            نوکری کا دورانیہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            عہدہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            کمپنی کا فون نمبر :
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- تعلیم کی تفصیلات -->
+                            <div style="margin-bottom: 15px;">
+                                <h4 style="text-align: center;" class="urdu-text">تعلیم کی تفصیلات</h4>
+                                <table style="width: 100%; border-collapse: collapse;" class="compact-table">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            سال:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            ادارہ:
+                                        </th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                            تعلیم:
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- مکان کی ملکیت / رہائش کی تفصیلات -->
+                            <div style="margin-bottom: 15px;">
+                                <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">مکان کی ملکیت / رہائش کی تفصیلات</h4>
+                                <table style="width: 100%; border-collapse: collapse;" class="compact-table">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">:رینٹل / مشترکہ دورانیه</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:فون نمبر</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:رهائش کی قسم</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">مالک مکان کا نام:</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">6 ماہ کا مجموعی گیس کابل ( ٹوٹل ):</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">6 ماہ کا مجموعی بجلی کا بل ( ٹوٹل ) :</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">ماہانہ کرایه:</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">دیگر معلومات / مالک مکان کا پتہ:</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">مالک مکان کا موبائل نمبر:</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">مالک مکان کا شناختی کارڈ نمبر :</th>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- فیملی ممبرز کی تفصیل -->
+                            <div style="margin-bottom: 15px;">
+                                <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">فیملی ممبرز کی تفصیل</h4>
+                                <table style="width: 100%; border-collapse: collapse;" class="compact-table">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">تفصیلات کے ساتھ انحصار کرنے والوں کی تعداد:</th>
+                                    </tr>
+                                </table>
+                                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                    <tr>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">ماہانہ آمدنی</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">تعلیم</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">رشته</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">عمر</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">مکمل نام</th>
+                                        <th style="border: 1px solid black; padding: 8px;" class="urdu-text">نمبر شمار</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                        <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    
+                        <!-- PAGE BREAK -->
+                        <div class="page-break"/>
+                    
+                        <div class="page">
+                        <!-- گھر کے ارکان کو کمان -->
+                        
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">تفصیلات کے ساتھ گھر کے ارکان کو کمان</h4>
+                        
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">ماہانہ آمدنی</th>
+                        
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">تعلیم</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">رشته</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">عمر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">مکمل نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">نمبر شمار</th>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                    <td style="border: 1px solid black; padding: 8px; height: 20px;"/>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- دیگر مالی معلومات -->
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">دیگر مالی معلومات</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">اکاؤنٹ نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">بینک کا نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                        <input type="checkbox">yes</input>
+                                        <input type="checkbox">No</input>
+                                        :بینک اکاؤنٹ
+                                    </th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">ماہانہ گھر یلو اخراجات:</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">ماہانہ آمدنی</th>
+                                </tr>
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">بقایہ رقم</th>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="3" class="urdu-text">ادارے کا نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                        <input type="checkbox">yes</input>
+                                        <input type="checkbox">No</input>:کوئی اور قرض
+                                    </th>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- دیگر معلومات -->
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">دیگر معلوماتت</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:ڈرائیونگ لائسنس نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:تفصیلات</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                        <input type="checkbox">yes</input>
+                                        <input type="checkbox">No</input>
+                                        :کیا آپ نے بھی سیلانی ویلفیئر انٹرنیشنل
+                                        ٹرسٹ میں اپلائی کیا ہے
+                                    </th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">
+                                        <input type="checkbox">yes</input>
+                                        <input type="checkbox">No</input>:کسی دوسری تنظیم سے امداد
+                                    </th>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- تفصیلات کی درخواست کریں -->
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">تفصیلات کی درخواست کریں</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:مداد کی قسم متوقع ہے</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:کفالت / مدد کی مدت متوقع</th>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- گارنٹر کی تفصیلات (First Guarantor) -->
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="text-align: center; margin-bottom: 10px;" class="urdu-text">گارنٹر کی تفصیلات</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:شناختی کارڈ نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:والد / شریک حیات کا نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:2ضامن نمبر</th>
+                                </tr>
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">پتہ</th>
+                                </tr>
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:موبائل نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:موبائل نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">:لینڈ لائن نمبر</th>
+                                </tr>
+                            </table>
+                            
+                            <!-- Second Guarantor -->
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:شناختی کارڈ نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:والد / شریک حیات کا نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:نام</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:2ضامن نمبر</th>
+                                </tr>
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">پتہ</th>
+                                </tr>
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:موبائل نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" class="urdu-text">:موبائل نمبر</th>
+                                    <th style="border: 1px solid black; padding: 8px;" colspan="2" class="urdu-text">:لینڈ لائن نمبر</th>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- آفس کے استعمال کے لئے -->
+                        <div style="margin-bottom: 20px; text-align: center;">
+                            <h4 style="text-align: center; border: 2px solid black; padding: 10px; border-radius: 20px;                                   display: inline-block; margin-bottom: 15px;" class="urdu-text">
+                                آفس کے استعمال کے لئے
+                            </h4>
+                            <div style="direction: rtl; text-align: right;" class="urdu-text">
+                                <span>فارم نمبر:_____________________</span><br/>
+                                <span>وصول کنندہ:____________________________________</span><br/>
+                                <span>دستخط:_________________________</span><br/>
+                                <span>انٹرویو:</span>
+                                <span style="display: inline-block; margin-right: 10px;">
+                                    <input type="checkbox">ہاں</input>
+                                    <input type="checkbox">نہیں</input>
+                                </span>
+                                <span>انٹرویو کی تاریخ: ______________________</span>
+                                <br/>
+                                <span style="direction: rtl; display: block; margin-top: 10px;">تاثرات:</span>
+                                <div style="border: 1px solid #000; height: 50px; margin-top: 5px;"/>
+                                <br/>
+                                <span>انٹرویو کا نتیجہ:</span>
+                                <span style="display: inline-block; margin-right: 10px;">
+                                    <input type="checkbox">ہاں</input>
+                                    <input type="checkbox">نہیں</input>
+                                </span>
+                                <br/>
+                                <span>رقم: _____________________________________</span><br/>
+                                <span>ماہانہ قسط: ________________________________________</span><br/>
+                                <span>ادائیگی کی تاریخ: __________________________________</span>
+                                <br/><br/>
+                                <span>دستخط انچارج: ______________________________________________________________</span><br/>
+                                <span>دستخط ہیڈ آفس ڈیپارٹمنٹ: _________________________________________________________________</span>
+                            </div>
+                        </div>
+                        
+                        <!-- ٹرسٹی اپرول اور تاثرات -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="text-align: center;">
+                                <h4 style="text-align: center; background-color: black; color: white;padding: 10px 20px; border-radius: 20px; display: inline-block;" class="urdu-text">
+                                    ٹرسٹی اپرول اور تاثرات
+                                </h4>
+                            </div>
+                            <div style="direction:rtl; margin-top:10px; text-align: right;" class="urdu-text">
+                                <div style="border: 1px solid #000; height: 80px; margin-top: 5px;"/>
+                            </div>
+                            <br/>
+                            <div style="direction:rtl; text-align:left; padding-left:134px;" class="urdu-text">
+                                <span>دستخط:______________________</span>
+                            </div>
+                        </div>
+                        
+                        <!-- ٹرسٹی اپرول اور تاثرات (Second) -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="text-align: center;">
+                                <h4 style="text-align: center; background-color: black; color: white;padding: 10px 20px; border-radius: 20px; display: inline-block;" class="urdu-text">
+                                    ٹرسٹی اپرول اور تاثرات
+                                </h4>
+                            </div>
+                            <div style="direction:rtl; margin-top:10px; text-align: right;" class="urdu-text">
+                                <div style="border: 1px solid #000; height: 80px; margin-top: 5px;"/>
+                            </div>
+                            <br/>
+                            <div style="direction:rtl; text-align:left; padding-left:134px;" class="urdu-text">
+                                <span>دستخط:______________________</span>
+                            </div>
+                        </div>
+                        
+                        <!-- برکتیں حاصل کرنے کے کچھ روحانی ذرائع -->
+                        <div style="margin-bottom: 20px;" class="urdu-text">
+                            <h2 style="text-align: center; background-color: black; color: white;padding: 10px 20px; border-radius: 20px; display: inline-block; margin-bottom: 15px;">
+                                برکتیں حاصل کرنے کے کچھ روحانی ذرائع
+                            </h2>
+
+                            <div style="margin-top: 20px;">
+                                <input type="checkbox" style="margin-right: 40px;"/>
+                                <span>نماز پنجگانہ اور قرآن کی تلاوت کا معمول ہے ؟ (اگر نہیں تو فوری شروع کیجئے)
+                                </span>
+                                <br/>
+                                <input type="checkbox" style="margin-right: 10px; margin-top: 10px;"/>
+                                <span>کم از کم ہفتہ وار دینی بیانات اور دروس کو پڑھنے کا معمول ہے۔ (اگر نہیں تو فوری
+                                    شروع کیجئے)
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- نوٹ -->
+                        <div style="margin-bottom: 20px;">
+                            <p style="display: inline-block; line-height: 1.6;" class="urdu-text">
+                                <span style="font-weight: bold; background-color:black; padding: 10px 20px; border-radius: 20px; color:white; margin-left:10px;">
+                                    نوٹ:
+                                </span>
+                                برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
+                            </p>
+                        </div>
+                        
+                        <!-- حلف نامہ -->
+                        <div style="margin-bottom: 20px;">
+                            <p style="display: inline-block; line-height: 1.6;" class="urdu-text">
+                                <span style="font-weight: bold; background-color:black; padding: 10px 20px; border-radius: 20px; color:white; margin-left:10px;">
+                                    حلف نامه:
+                                </span>
+                                میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کی کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
+                            </p>
+                        </div>
+                        
+                        <!-- Signatures -->
+                        <div style="margin-top: 50px; direction: rtl; text-align: right;" class="urdu-text">
+                            <span style="margin-right:20px;">دستخط درخواست گزارن: _________________</span><br/>
+                            <span>دستخط درخواست وصول کننده : _________________</span><br/>
+                            <span>دستخط شعبه ذمه دارن: _________________</span>
+                        </div>
+                        </div>
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <record id="action_report_microfinance_application_form" model="ir.actions.report">
+        <field name="name">MicroFinance Application Form</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">bn_profile_management.microfinance_application_form</field>
+        <field name="report_file">bn_profile_management.microfinance_application_form</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="binding_model_id" ref="model_res_partner"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

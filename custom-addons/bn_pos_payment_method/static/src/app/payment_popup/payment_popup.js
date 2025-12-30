@@ -67,11 +67,22 @@ export class PaymentPopup extends AbstractAwaitablePopup {
         }
     }
 
-    async confirm(){
+    async confirm() {
+        // Validation: all visible fields must be filled
+        if (this.is_bank) {
+            if (!this.state.bank_name || !this.state.number || !this.state.date) {
+                this.notification.add(_t("Please fill Bank Name, Cheque Number, and Date."), { type: "danger" });
+                return;
+            }
+        } else {
+            if (!this.state.number || !this.state.date) {
+                this.notification.add(_t("Please fill QR Code Number and Date."), { type: "danger" });
+                return;
+            }
+        }
+
         this.pos.addedOtherInfo = true;
-
         const selectedOrder = this.pos.get_order();
-
         if (this.is_bank) {
             selectedOrder.set_bank_name(this.state.bank_name);
             selectedOrder.set_cheque_number(this.state.number);
@@ -80,7 +91,6 @@ export class PaymentPopup extends AbstractAwaitablePopup {
             selectedOrder.set_qr_code(this.state.number);
             selectedOrder.set_cheque_date(this.state.date);
         }
-        
         this.props.close();
     }
 
