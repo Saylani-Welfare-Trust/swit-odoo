@@ -128,7 +128,7 @@ class KeyIssuance(models.Model):
             ('contact_person', '=', data['contact_person']),
             ('contact_no', '=', data['contact_number']),
             ('location', '=', data['box_location']),
-        ])
+        ], limit=1)
 
         if not data['check_validation']:
             key_obj.donation_amount = data['amount']

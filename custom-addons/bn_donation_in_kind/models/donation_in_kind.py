@@ -48,6 +48,8 @@ class DonationInKind(models.Model):
     account_move_id = fields.Many2one('account.move', string='Account Move')
     reverse_account_move_id = fields.Many2one('account.move', string='Reverse Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
+    picking_list_id = fields.Many2one('stock.picking', string='Picking List', domain="[('picking_type_id', '=', picking_type_id)]")
+    account_move_list_id = fields.Many2one('account.move', string='Account Move List')
 
     name = fields.Char('Name', default="New")
 
@@ -415,7 +417,7 @@ class DonationInKind(models.Model):
                     'credit': 0.0,
                 },
                 {
-                    'account_id': record.credit_account_id.id,
+                    'account_id': record.product_id.property_account_income_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
                     'name': f'Item {record.name}',

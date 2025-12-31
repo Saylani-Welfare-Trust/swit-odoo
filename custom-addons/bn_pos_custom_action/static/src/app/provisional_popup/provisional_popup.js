@@ -63,6 +63,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     }
 
     prepareOrderLines(orderLines) {
+        console.log('Hit Lines');
+
         return orderLines.map(line => (
                 {
                     product_id: line.product.id,
