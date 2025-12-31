@@ -13,12 +13,14 @@ status_selection = [
 class DirectDeposit(models.Model):
     _name = 'direct.deposit'
     _description = "Direct Deposit"
+    _order = "id desc"
 
 
     donor_id = fields.Many2one('res.partner', string="Donor")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
+    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
 
     name = fields.Char('Name', default="New")
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
@@ -28,16 +30,13 @@ class DirectDeposit(models.Model):
     transaction_ref = fields.Char('Transaction Reference')
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
+    picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    donor_contact = fields.Char(string="Donor Contact", compute='_compute_donor_contact', store=False)
+    mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
     
     dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
-
-    def _compute_donor_contact(self):
-        for rec in self:
-            rec.donor_contact = rec.donor_id.mobile or rec.donor_id.phone or ''
 
 
     @api.model
@@ -64,6 +63,7 @@ class DirectDeposit(models.Model):
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
+                'remarks': line['remarks'],
             }))
 
         # -------------------------
@@ -167,19 +167,55 @@ class DirectDeposit(models.Model):
         move = self.env["account.move"].create(move_vals)
 
         # journal entry is parked (not posted)
-        move.action_post()  # uncomment if you want posting
+        # move.action_post()  # uncomment if you want posting
 
         self.move_id = move.id
 
+    def _create_stock_picking(self):
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+
+        picking_type = self.env.ref('stock.picking_type_out')
+        destination_location = self.env.ref('stock.stock_location_customers')
+
+        picking = StockPicking.create({
+            'picking_type_id': picking_type.id,
+            'location_id': picking_type.default_location_src_id.id,
+            'location_dest_id': destination_location.id,
+            'origin': self.name,
+        })
+
+        for line in self.direct_deposit_line_ids:
+            if line.product_id.detailed_type != 'product':
+                continue
+
+            StockMove.create({
+                'name': line.product_id.name,
+                'product_id': line.product_id.id,
+                'product_uom_qty': line.quantity,
+                'quantity': line.quantity,
+                'product_uom': line.product_id.uom_id.id,
+                'picking_id': picking.id,
+                'location_id': picking.location_id.id,
+                'location_dest_id': destination_location.id,
+            })
+
+        picking.action_confirm()
+        picking.action_assign()
+        picking.button_validate()
+
+        self.picking_id = picking.id
 
     def action_clear(self):
-        self._create_invoice()
-
-        self.state = 'clear'
         if self.transfer_to_dhs:
             self.action_transfer_to_dhs()
+        else:
+            self._create_invoice()
+            self._create_stock_picking()
+
+        self.state = 'clear'
         # Auto-print report when transitioning to clear (duplicate watermark)
-        return self.env.ref('bn_direct_deposit.report_direct_deposit_duplicate').report_action(self, data={'is_duplicate': True, 'ids': self.ids})
+        return self.env.ref('bn_direct_deposit.report_direct_deposit_duplicate').report_action(self)
 
     def action_not_clear(self):
         self.state = 'not_clear'
@@ -202,7 +238,7 @@ class DirectDeposit(models.Model):
             lambda l: l.product_id.type == 'service'
         )
         consu_lines = self.direct_deposit_line_ids.filtered(
-            lambda l: l.product_id.detailed_type == 'consu'
+            lambda l: l.product_id.detailed_type == 'product'
         )
         
         created_dhs_ids = []
@@ -269,8 +305,7 @@ class DirectDeposit(models.Model):
                     "domain": [('id', 'in', self.dhs_ids.ids)],  
                     "target": "current",
                 }
-
-        
+   
     def action_show_invoice(self):
         return {
             "name": _("Invoice"),
@@ -278,6 +313,14 @@ class DirectDeposit(models.Model):
             "res_model": "account.move",
             "view_mode": "form",
             "res_id": self.move_id.id,
+        }
+        
+    def action_show_picking(self):
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "stock.picking",
+            "view_mode": "form",
+            "res_id": self.picking_id.id,
         }
 
     def action_show_dhs_records(self):

@@ -68,6 +68,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     product_id: line.product.id,
                     quantity: line.quantity,
                     price: line.price,
+                    remarks: line.customerNote
                 }
             )
         );
@@ -88,6 +89,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
         // Donation Home Service
         if (this.action_type === 'dhs') {
+            console.log(this.orderLines);
+
             const payload ={
                 'donor_id': this.donor_id,
                 'address': this.state.address,

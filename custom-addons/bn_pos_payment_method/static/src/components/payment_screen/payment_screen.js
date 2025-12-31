@@ -8,6 +8,8 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async addNewPaymentLine(paymentMethod) {
+        console.log(paymentMethod);
+
         if (paymentMethod.show_popup) {
             await this.popup.add(PaymentPopup, {
                 title: paymentMethod.name,
@@ -34,9 +36,6 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        console.log('Hit New');
-        console.log(currentOrder);
-
         if (currentOrder.donation_in_kind) {
             const donor_id = currentOrder.partner.id;
             const orderLines = currentOrder.get_orderlines();
@@ -53,7 +52,10 @@ patch(PaymentScreen.prototype, {
                         body: data.body,
                     });
                 }
-                else if (data.status === 'success') {
+                
+                if (data.status === 'success') {
+                    currentOrder.set_source_document(data.origin)
+
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });

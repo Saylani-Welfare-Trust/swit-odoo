@@ -33,6 +33,7 @@
                             <field name="odoo_auth_institution_key" password="True" />
                         </group>
                         <group name="welfare_api_auth_endpoints_col_2" string="Endpoints">
+                            <field name="create_application_endpoint" />
                             <field name="search_endpoint" />
                             <field name="check_donee_endpoint" />
                             <field name="create_donee_endpoint" />

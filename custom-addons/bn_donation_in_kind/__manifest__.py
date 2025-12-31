@@ -9,6 +9,7 @@
         'bn_import_donation'
     ],
     'data': [
+        'data/sequence.xml',
         'security/ir.model.access.csv',
         'views/donation_in_kind.xml',
         'views/res_partner.xml',

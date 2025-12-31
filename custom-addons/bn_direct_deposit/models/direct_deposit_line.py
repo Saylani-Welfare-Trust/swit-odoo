@@ -13,3 +13,5 @@ class DirectDepositLine(models.Model):
     quantity = fields.Integer('Quantity', default=1)
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
+
+    remarks = fields.Char('Remarks')
