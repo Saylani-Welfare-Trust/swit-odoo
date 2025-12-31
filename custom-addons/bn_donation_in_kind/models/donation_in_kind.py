@@ -46,7 +46,6 @@ class DonationInKind(models.Model):
     journal_id = fields.Many2one('account.journal', string='Journal', default=lambda self: self.default_set_value('journal_id'))
     debit_account_id = fields.Many2one('account.account', string='Account (Dr)', required=True, domain="[('account_type', 'in', ['asset_receivable', 'asset_cash', 'asset_current', 'asset_non_current', 'asset_prepayments', 'asset_fixed'])]", default=lambda self: self.default_set_value('debit_account_id'))
     account_move_id = fields.Many2one('account.move', string='Account Move')
-    reverse_account_move_id = fields.Many2one('account.move', string='Reverse Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
     picking_list_id = fields.Many2one('stock.picking', string='Picking List', domain="[('picking_type_id', '=', picking_type_id)]")
     account_move_list_id = fields.Many2one('account.move', string='Account Move List')
@@ -343,28 +342,6 @@ class DonationInKind(models.Model):
                 vendor_location_id = False
             if not vendor_location_id:
                 raise ValidationError('Please Select Vendor Location')
-            if record.account_move_id:
-                reverse_account_id = self.env['account.move.reversal'].sudo().search([('move_ids', 'in', [record.account_move_id.id])])
-                
-                if reverse_account_id:
-                    raise ValidationError('A reversal already exists for this account move, operation cannot be completed.')
-                
-                account_move_reversal = self.env['account.move.reversal'].sudo().create({
-                    'journal_id': record.journal_id.id,
-                    'date': fields.Date.today(),
-                    'move_type': 'entry',
-                    'move_ids': [(4, record.account_move_id.id)]
-                })
-                
-                if account_move_reversal:
-                    account_move_reversal.refund_moves()
-                
-                reverse_id = self.env['account.move'].sudo().search([('reversed_entry_id', '=', record.account_move_id.id)], limit=1)
-                
-                if reverse_id:
-                    record.write({
-                        'reverse_account_move_id': reverse_id.id
-                    })
             
             quantity_list = []
             avg_price_list = []
@@ -472,16 +449,6 @@ class DonationInKind(models.Model):
                 'res_model': 'account.move',
                 'type': 'ir.actions.act_window',
                 'res_id': record.account_move_id.id,
-            }
-
-    def action_reverse_journal_entries(self):
-        for record in self:
-            return {
-                'name': _('Journal Entries'),
-                'view_mode': 'form',
-                'res_model': 'account.move',
-                'type': 'ir.actions.act_window',
-                'res_id': record.reverse_account_move_id.id,
             }
     
     def action_journal_entries_2(self):
