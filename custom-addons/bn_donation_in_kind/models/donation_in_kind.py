@@ -130,7 +130,7 @@ class DonationInKind(models.Model):
             
             box_lines = [
                 {
-                    'account_id': record.debit_account_id.id,
+                    'account_id': record.product_id.property_account_income_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
                     'name': 'Box',
@@ -138,7 +138,7 @@ class DonationInKind(models.Model):
                     'credit': 0.0,
                 },
                 {
-                    'account_id': record.product_id.property_account_income_id.id,
+                    'account_id': record.debit_account_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
                     'name': 'Box',
