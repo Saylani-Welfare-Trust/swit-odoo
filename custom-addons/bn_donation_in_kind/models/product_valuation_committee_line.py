@@ -18,8 +18,9 @@ class ProductValuationCommitteeLine(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     donation_in_kind_id = fields.Many2one('donation.in.kind', string="Donation In Kind")
     donation_in_kind_line_id = fields.Many2one('donation.in.kind.line', string='Donation In Kind Line')
-    location_id = fields.Many2one(comodel_name='stock.location', string='Location', required=True,domain="[('usage', '=', 'internal')]",default=lambda self: self.default_set_value('location_id'))
-
+    location_id = fields.Many2one('stock.location', string='Location', required=True,domain="[('usage', '=', 'internal')]",default=lambda self: self.default_set_value('location_id'))
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
+    
     quantity = fields.Float('Quantity')
     avg_price = fields.Float('Average Price', required=True)
 
