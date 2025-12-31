@@ -7,10 +7,10 @@ class DonationInKindLine(models.Model):
 
 
     def default_set_value(self, name):
-        product_stock_move_config = self.env['product.stock.move.config'].sudo().search([], limit=1)
-        if product_stock_move_config:
+        donation_in_kind_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
+        if donation_in_kind_config:
             field_map = {
-                'location_id': product_stock_move_config.location_id.id
+                'location_id': donation_in_kind_config.location_id.id
             }
             return field_map.get(name, False)
         return False
