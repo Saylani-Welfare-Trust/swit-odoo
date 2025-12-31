@@ -276,8 +276,6 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
-        # raise UserError(str(data))
-
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------
@@ -287,7 +285,7 @@ class DonationHomeService(models.Model):
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
-                'remarks': line['remarks'] if line.get('remarks') else '',
+                'remarks': line['remarks'],
             }))
 
         # -------------------------

@@ -43,7 +43,7 @@ class DonationInKindLine(models.Model):
     def constraint_product_id(self):
         for record in self:
             if record.product_id:
-                record.avg_price = record.product_id.lst_price
+                record.avg_price = record.product_id.standard_price
             else:
                 record.avg_price = 0
 

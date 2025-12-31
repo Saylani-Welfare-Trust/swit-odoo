@@ -18,3 +18,10 @@ class PosPaymentMethod(models.Model):
         # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
         help="Account for unrestricted receivable amounts"
     )
+
+    neutral_account_id = fields.Many2one(
+        'account.account',
+        string='Neutral Receivable Account',
+        # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
+        help="Account for neutral receivable amounts"
+    )

@@ -27,14 +27,14 @@
                             }
                         </style>
                         
-                        <div class="watermark" style="padding-top: 600px; padding-right: 250px;">PROVISION</div>
+                        <div class="watermark" style="padding-top: 600px; padding-right: 250px;">PROVISIONAL</div>
                         
                         <div class="mt-5 clearfix"/>
 
                         <div class="row mb-4">
                             <div class="col-6 text-start">
                                 <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; margin: 3px;">
-                                    Provision Receipt (DHS)
+                                    Provisional Receipt (DHS)
                                 </h1>
                             </div>
                             
@@ -167,7 +167,11 @@
                                 </div>
                         
                             </div>
-                        </div>         
+                        </div>
+
+                        <div style="text-align: center; font-size: 12px;">
+                            Powered by BytesNode
+                        </div>
                     </t>
                 </t>
             </t>

@@ -4,20 +4,23 @@
         <template id="pos_donation_receipt_template">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="order">
+                    <!-- Set Payment Method -->
+                    <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
+
                     <div class="page">
                         <style>
-                            .page {
-                                position: relative;
-                                padding: 10px;
+                            h1 {
+                                font-size: 1.5em;
+                                margin: 3px;
                             }
 
                             .watermark {
-                                position: absolute;
-                                top: 50%;
+                                position: fixed; /* appears on every page */
+                                top: 32%;
                                 left: 50%;
                                 transform: translate(-50%, -50%) rotate(-30deg);
-                                font-size: 100px;
-                                color: rgba(200, 200, 200, 0.25);
+                                font-size: 110px;
+                                color: rgba(200, 200, 200, 0.15);
                                 font-weight: bold;
                                 white-space: nowrap;
                                 pointer-events: none;
@@ -25,346 +28,168 @@
                                 z-index: 0;
                             }
 
-                            h1 {
-                                font-size: 1.5em;
-                                color: #222;
-                                margin: 0;
-                            }
-
-                            .text-transform {
-                                text-transform: uppercase;
-                                margin-top: 15px;
-                                margin-bottom: 0px;
-                                font-size: 16px;
-                            }
-
-                            .div-box {
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                            }
-
-                            .service_margin {
-                                margin: 0;
-                            }
-
-                            .donation-receipt-container {
-                                width: 100%;
-                                max-width: 1200px;
-                                margin: 0 auto;
-                                position: relative;
-                                z-index: 1;
-                            }
-
-                            /* Labels and values */
                             .label-field {
                                 width: 40%;
-                                font-size: 12px;
                                 font-weight: normal;
+                                padding-right: 5px;
                             }
 
                             .value-field {
                                 width: 60%;
-                                font-size: 12px;
                                 font-weight: 500;
                             }
 
-                            /* Table styling */
                             table {
                                 width: 100%;
                                 border-collapse: collapse;
-                                font-size: 12px;
                                 margin-top: 10px;
                             }
 
-                            table th,
-                            table td {
+                            table, th, td {
                                 border: 1px solid #000;
+                            }
+
+                            th, td {
                                 padding: 5px;
-                                text-align: left;
+                                text-align: center;
                                 font-size: 12px;
                             }
 
-                            table th {
-                                font-weight: bold;
-                                background-color: #f5f5f5;
-                            }
-
                             tfoot th, tfoot td {
-                                border-top: 2px solid #000 !important;
                                 font-weight: bold;
-                            }
-
-                            .text-left {
-                                text-align: left;
-                            }
-
-                            .text-right {
-                                text-align: right;
+                                border-top: 2px solid #000 !important;
                             }
                         </style>
 
+                        <!-- Watermark -->
                         <div class="watermark">DUPLICATE</div>
 
-                        <div class="donation-receipt-container">
-                            <!-- Header -->
-                            <div class="div-box service_margin">
-                                <h1 class="text-transform">Donation Receipt</h1>
-                                <h6 class="text-transform">
-                                    <t t-if="order.company_id.name"><t t-esc="order.company_id.name"/></t>
-                                    <t t-if="order.user_id.branch_name">(<t t-esc="order.user_id.branch_name"/>)</t>
-                                </h6>
+                        <!-- Header -->
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                            <div>
+                                <h1 class="text-transform" style="font-size: 12px; font-weight:bold;">DONATION RECEIPT</h1>
+
                             </div>
+                            <div style="text-align:right;">
+                                <h1 class="text-transform" style="font-size: 12px;">
+                                    SAYLANI WELFARE INTERNATIONAL TRUST
+                                    <t t-if="order.user_id.branch_name">
+                                        (<t t-esc="order.user_id.branch_name"/>)
+                                    </t>
+                                </h1>
+                            </div>
+                        </div>
 
-                            <!-- Donor Info Section -->
-                            <div class="service_margin" style="border: 2px solid #000; padding: 15px; margin-top: 10px;">
-                                <div style="display: flex; width: 100%;">
-                                    <!-- Left Column -->
-                                    <div style="width: 50%; padding-right: 15px;">
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">DN #:</div>
-                                            <div class="value-field">
-                                                <t t-set="city_code" t-value="order.user_id.branch_code or 'UNK'"/>
-                                                <t t-set="branch_code" t-value="order.company_id.name[:3].upper() or 'UNK'"/>
-                                                <t t-set="current_year" t-value="order.date_order and order.date_order.year or ''"/>
-                                                <t t-set="random_no" t-value="order.name and order.name[-4:] or '0000'"/>
-                                                <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
-                                            </div>
-                                        </div>
+                        <!-- Donor Info -->
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <div style="width:50%;">
+                                
 
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Donor:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.partner_id.name"><t t-esc="order.partner_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Cell #:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.partner_id.mobile"><t t-esc="order.partner_id.mobile"/></t>
-                                                <t t-else="">
-                                                    <t t-if="order.partner_id.phone"><t t-esc="order.partner_id.phone"/></t>
-                                                    <t t-else="">-</t>
-                                                </t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Payment Method:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.payment_ids[0]"><t t-esc="order.payment_ids[0].payment_method_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Total Amount:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.amount_total">
-                                                    <span t-field="order.amount_total" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
-                                                </t>
-                                                <t t-else="">0.00 - RS</t>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Right Column -->
-                                    <div style="width: 50%; padding-left: 15px;">
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Receipt Date:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.date_order">
-                                                    <t t-esc="order.date_order" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Receipt By:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.user_id.name"><t t-esc="order.user_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Printed Date:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.date_order">
-                                                    <t t-esc="order.date_order" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Printed By:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.user_id.name"><t t-esc="order.user_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
+                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
+                                    <div class="label-field">DN #:</div>
+                                    <div class="value-field">
+                                        <t t-set="city_code" t-value="order.user_id.branch_code or 'UNK'"/>
+                                        <t t-set="branch_code" t-value="order.company_id.name[:3].upper() or 'UNK'"/>
+                                        <t t-set="current_year" t-value="order.date_order and order.date_order.year or ''"/>
+                                        <t t-set="random_no" t-value="order.name and order.name[-4:] or '0000'"/>
+                                        <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
                                     </div>
                                 </div>
+
+
+
+                                
+                                <div style="display:flex; margin-bottom:5px;font-size: 12px;">
+                                    <div class="label-field">Donor Name:</div>
+                                    <div class="value-field"><t t-esc="order.partner_id.name or '-'"/></div>
+                                </div>
+                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                    <div class="label-field">Payment Method:</div>
+                                    <div class="value-field"><t t-esc="payment_method"/></div>
+                                </div>
+
+                                <t t-if="payment_method == 'Cheque'">
+                                    <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                        <div class="label-field">Bank Name:</div>
+                                        <div class="value-field">
+                                            <t t-esc="order.bank_name or '-'"/>
+                                        </div>
+                                    </div> 
+                                </t>
+
+                                <t t-if="payment_method == 'Credit Card'">
+                                    <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                        <div class="label-field">Reference No:</div>
+                                        <div class="value-field">
+                                            <t t-esc="order.name or '-'"/>
+                                        </div>
+                                    </div>
+                                </t>
                             </div>
 
-                            <!-- Donation Lines Table -->
+                            <div style="width:50%;">
+                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                    <div class="label-field">Date &amp; Time:</div>
+                                    <div class="value-field">
+                                        <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/>
+                                    </div>
+                                </div>
+                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                    <div class="label-field">Contact No:</div>
+                                    <div class="value-field">
+                                        <t t-if="order.partner_id.country_id">
+                                            <t t-esc="order.partner_id.country_id.name"/> 
+                                        </t>
+                                        <t t-esc="order.partner_id.mobile or order.partner_id.phone"/>
+                                    </div>
+                                </div>
+                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
+                                    <div class="label-field">Total Amount:</div>
+                                    <div class="value-field">Rs <t t-esc="int(order.amount_total or 0)"/></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:10px;">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Account Title</th>
+                                        <th>Product</th>
                                         <th>Quantity</th>
-                                        <th>Rate</th>
-                                        <th>Amount</th>
+                                        <t t-if="payment_method != 'Donation In Kind'">
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                        </t>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="order.lines" t-as="line" t-key="line.id">
                                         <tr>
-                                            <td class="text-left">
-                                                <t t-if="line.product_id.name"><t t-esc="line.product_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </td>
-                                            <td class="text-right">
-                                                <t t-if="line.qty"><t t-esc="line.qty"/></t>
-                                                <t t-else="">-</t>
-                                            </td>
-                                            <td class="text-right">
-                                                <t t-if="line.price_unit">
-                                                    <span t-field="line.price_unit" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </td>
-                                            <td class="text-right">
-                                                <t t-if="line.price_subtotal">
-                                                    <span t-field="line.price_subtotal" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </td>
+                                            <td><t t-esc="line.full_product_name"/></td>
+                                            <td><t t-esc="int(line.qty)"/></td>
+                                            <t t-if="payment_method != 'Donation In Kind'">
+                                                <td>Rs <t t-esc="int(line.price_unit)"/></td>
+                                                <td>Rs <t t-esc="int(line.price_subtotal)"/></td>
+                                            </t>
                                         </tr>
                                     </t>
                                 </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th class="text-left">Entered By:</th>
-                                        <td class="text-right">
-                                            <t t-if="order.user_id.name"><t t-esc="order.user_id.name"/></t>
-                                            <t t-else="">-</t>
-                                        </td>
-                                        <th class="text-left">Total Amount:</th>
-                                        <td class="text-right">
-                                            <t t-if="order.amount_total">
-                                                <span t-field="order.amount_total" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
-                                            </t>
-                                            <t t-else="">0.00</t>
-                                        </td>
-                                    </tr>
-                                </tfoot>
                             </table>
+                            
+                        </div>
 
-                            <!-- Duplicate Receipt Section -->
-                            <div class="service_margin" style="border: 2px solid #000; padding: 15px; margin-top: 10px;">
-                                <div style="display: flex; width: 100%;">
-                                    <!-- Left Column -->
-                                    <div style="width: 50%; padding-right: 15px;">
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">DN #:</div>
-                                            <div class="value-field">
-                                                <t t-set="city_code" t-value="order.user_id.branch_code or 'UNK'"/>
-                                                <t t-set="branch_code" t-value="order.company_id.name[:3].upper() or 'UNK'"/>
-                                                <t t-set="current_year" t-value="order.date_order and order.date_order.year or ''"/>
-                                                <t t-set="random_no" t-value="order.name and order.name[-4:] or '0000'"/>
-                                                <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
-                                            </div>
-                                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                            <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
+                            <div>Total Amount: <strong>Rs <t t-esc="int(order.amount_total or 0)"/></strong></div>
+                        </div>
 
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Donor:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.partner_id.name"><t t-esc="order.partner_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Cell #:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.partner_id.mobile"><t t-esc="order.partner_id.mobile"/></t>
-                                                <t t-else="">
-                                                    <t t-if="order.partner_id.phone"><t t-esc="order.partner_id.phone"/></t>
-                                                    <t t-else="">-</t>
-                                                </t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Payment Method:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.payment_ids[0]"><t t-esc="order.payment_ids[0].payment_method_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Total Amount:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.amount_total">
-                                                    <span t-field="order.amount_total" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
-                                                </t>
-                                                <t t-else="">0.00 - RS</t>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Right Column -->
-                                    <div style="width: 50%; padding-left: 15px;">
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Receipt Date:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.date_order">
-                                                    <t t-esc="order.date_order" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Receipt By:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.user_id.name"><t t-esc="order.user_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Printed Date:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.date_order">
-                                                    <t t-esc="order.date_order" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; margin-bottom: 5px;">
-                                            <div class="label-field">Printed By:</div>
-                                            <div class="value-field">
-                                                <t t-if="order.user_id.name"><t t-esc="order.user_id.name"/></t>
-                                                <t t-else="">-</t>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div style="text-align: center; font-size: 12px;">
+                            Powered by BytesNode
                         </div>
                     </div>
                 </t>
             </t>
         </template>
-
 
         <record id="pos_donation_receipt_report" model="ir.actions.report">
             <field name="name">Duplicate Donation Receipt</field>

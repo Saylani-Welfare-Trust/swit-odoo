@@ -39,6 +39,7 @@
                             <field name="create_donee_endpoint" />
                             <field name="mark_application_endpoint" />
                             <field name="welfare_institution_endpoint" />
+                            <field name="mark_institution_application_endpoint" />
                         </group>
                     </group>
                 </page>
