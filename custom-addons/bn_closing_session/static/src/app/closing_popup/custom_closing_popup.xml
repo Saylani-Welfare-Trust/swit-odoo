@@ -103,7 +103,7 @@
                                 </tr>
 
                                 <tr>
-                                    <td class="px-1 py-1">Neutral Amount</td>
+                                    <td class="px-1 py-1">Non-Donation Amount</td>
                                     <td class="px-1 py-1"
                                         t-esc="formatCurrencyNeutral(props.default_cash_details.breakdown.neutral)"/>
 
@@ -264,7 +264,7 @@
 
 
                                     <tr>
-                                        <td class="px-1 py-1">Neutral Amount</td>
+                                        <td class="px-1 py-1">Non-Donation Amount</td>
 
                                         <td class="px-1 py-1"
                                             t-esc="formatCurrencyNeutral(pm.breakdown.neutral)"/>
