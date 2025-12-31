@@ -15,6 +15,7 @@ status_selection = [
 
 class DonationHomeService(models.Model):
     _name = 'donation.home.service'
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = "Donation Home Service"
 
 
@@ -22,6 +23,7 @@ class DonationHomeService(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
     # direct_deposit_id = fields.Many2one('direct.deposit', string="Direct Deposit")
 
     name = fields.Char('Name', default="New")
@@ -283,6 +285,7 @@ class DonationHomeService(models.Model):
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
+                'remarks': line['remarks'],
             }))
 
         # -------------------------
@@ -372,7 +375,7 @@ class DonationHomeService(models.Model):
         
         if service_charges and float(service_charges) > 0:
             service_product = self.env['product.product'].search([
-                ('name', '=', 'Service Charges'),
+                ('name', '=', 'Donation Home Service Charges'),
                 ('type', '=', 'service'),
                 ('available_in_pos', '=', True)
             ], limit=1)

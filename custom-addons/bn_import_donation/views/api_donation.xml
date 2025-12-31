@@ -138,7 +138,7 @@
     </record>
 
     <record id="action_api_donation" model="ir.actions.act_window">
-        <field name="name">Donation Data</field>
+        <field name="name">Donation</field>
         <field name="res_model">api.donation</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

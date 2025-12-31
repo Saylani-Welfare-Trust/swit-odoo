@@ -8,201 +8,160 @@
                     <t t-call="web.external_layout">
                         <div class="page" style="position: relative;">
                             <style>
-                            .watermark {
-                                position: fixed;
-                                top: 50%;
-                                left: 50%;
-                                transform: translate(-50%, 500%) rotate(-45deg);
-                                font-size: 100px;
-                                font-weight: bold;
-                                color: rgba(180, 180, 180, 0.35);
-                                z-index: 999;
-                                pointer-events: none;
-                                white-space: nowrap;
-                            }
-                            .page-content {
-                                position: relative;
-                                z-index: 1;
-                                margin-top: 360px;
-                            }
-                            .compact-section {
-                                margin-bottom: 15px;
-                            }
-                            .compact-row {
-                                margin-bottom: 8px;
-                            }
-                            .table-container {
-                                max-height: 180px;
-                                overflow-y: auto;
-                                margin-bottom: 15px;
-                            }
-                            .tight-padding {
-                                padding: 8px !important;
-                            }
-                            .no-margin {
-                                margin: 0;
-                            }
-                            .signature-line {
-                                width: 200px;
-                                border-top: 2px solid #333;
-                                margin-top: 5px;
-                            }
+                                h1 {
+                                    font-size: 1.5em;
+                                    margin: 3px;
+                                }
+
+                                .watermark {
+                                    position: fixed; /* important: appears on every page */
+                                    top: 50%;        /* vertical center */
+                                    left: 50%;       /* horizontal center */
+                                    transform: translate(-50%, -50%) rotate(-30deg); /* center + rotate */
+                                    font-size: 150px;
+                                    color: rgba(200, 200, 200, 0.15); /* lighter for printing */
+                                    font-weight: bold;
+                                    white-space: nowrap;
+                                    pointer-events: none; /* don't block clicks */
+                                    user-select: none;
+                                    z-index: 0; /* behind all content */
+                                }
                             </style>
-
-                            <t t-set="watermark_text" t-value="'DUPLICATE'"/>
-                            <div class="watermark"><t t-esc="watermark_text"/></div>
                             
-                            <div class="page-content">
-                                <!-- Header -->
-                                <div class="row compact-section">
-                                    <div class="col-5">
-                                        <h4 class="fw-bold text-uppercase mb-2 no-margin">
-                                            Deposit CERTIFICATE
-                                        </h4>
-                                    </div>
-                                    <div class="col-7 text-end">
-                                        <p class="text-muted mb-2" style="font-size: 13px;">
-                                            This certificate acknowledges the collection from deposit
-                                        </p>
-                                    </div>
+                            <div class="watermark" style="padding-top: 600px; padding-right: 250px;">DUPLICATE</div>
+                            
+                            <div class="mt-5 clearfix"/>
+
+                            <div class="row mb-4">
+                                <div class="col-6 text-start">
+                                    <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; margin: 3px;">
+                                        Provision Receipt (DHS)
+                                    </h1>
+                                </div>
+                                
+                                <div class="col-6 position-relative">
+                                    <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; position: absolute; right: 5px; margin: 3px; white-space: nowrap;">
+                                        Saylani Welfare International Trust
+                                        <t t-if="o.env.user.employee_id.analytic_account_id">
+                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.code"/>)
+                                        </t>
+                                        
+                                    </h1>
                                 </div>
 
-                                <!-- Certificate Info -->
-                                <div class="bg-light p-3 border-start border-5 mb-3 compact-section">
-                                    <h5 class="fw-bold mb-2 no-margin">Certificate Information</h5>
-                                    <div class="row compact-row">
-                                        <div class="col-6 pe-3">
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Certificate Date:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.create_date.strftime('%d-%m-%Y') if o.create_date else '--'"/>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Receipt #:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.name or '--'"/>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-6 ps-3">
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Donor Name:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.donor_id.name or '-'"/>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Amount:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.amount or '0.00'"/>
-                                                </div>
-                                            </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-6 pe-3">
+                                    <t t-import="datetime"/>
+                                    
+                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;">DHS #:</div>
+                                        <div class="w-60 fw-semibold small">
+                                            <t t-esc="o.name or '--'"/>
                                         </div>
                                     </div>
+                                    
+                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;">Donor Name:</div>
+                                        <div class="w-60 fw-semibold small">
+                                            <t t-esc="o.donor_id.name or '-'"/>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex mb-2" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;">
+                                            Transaction No.
+                                        </div>
+                                        <div class="w-60 fw-semibold small" style="border-bottom: 1px solid black;">
+                                            <t t-esc="o.transaction_ref or ''"/>
+                                        </div>
+                                    </div>                                  
                                 </div>
+                            
+                                <div class="col-6 ps-0">
+                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;">Date &amp; Time:</div>
+                                        <div class="w-60 small">
+                                            <t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/>
+                                        </div>
+                                    </div>
 
-                                <!-- Deposit Details -->
-                                <div class="compact-section">
-                                    <h5 class="fw-bold mb-2 no-margin">Deposit Details</h5>
-                                    <div class="table-container">
-                                        <table class="table table-bordered border-2" style="font-size: 13px;">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-center fw-bold tight-padding">Product</th>
-                                                    <th class="text-center fw-bold tight-padding">Quantity</th>
-                                                    <th class="text-center fw-bold tight-padding">Amount Collected</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="o.direct_deposit_line_ids" t-as="line">
-                                                    <tr class="bg-light">
-                                                        <td class="text-center tight-padding">
-                                                            <t t-esc="line.product_id.name"/>
-                                                        </td>
-                                                        <td class="text-center tight-padding">
-                                                            <t t-esc="line.quantity"/>
-                                                        </td>
-                                                        <td class="text-center fw-bold tight-padding">
-                                                            <t t-esc="line.amount"/>
-                                                        </td>
-                                                    </tr>
+                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;"> Donor Contact No:</div>
+                                        <div class="w-60 fw-semibold small">
+
+                                            <t t-if="o.mobile">
+                                                <t t-if="o.donor_id.country_code_id">
+                                                    <t t-esc="o.donor_id.country_code_id.name"/> 
                                                 </t>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <!-- Donor Information -->
-                                <div class="bg-light p-3 border-start border-5 compact-section">
-                                    <h5 class="fw-bold mb-2 no-margin">Donor Information</h5>
-                                    <div class="row compact-row">
-                                        <div class="col-6 pe-3">
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Donor Name:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.donor_id.name or '-'"/>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Cell #:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.donor_id.mobile or o.donor_id.phone or '--'"/>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-6 ps-3">
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Address:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.donor_id.street or '-'"/>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex mb-2">
-                                                <div class="w-50" style="font-size: 13px;">Email:</div>
-                                                <div class="w-50 fw-semibold" style="font-size: 13px;">
-                                                    <t t-esc="o.donor_id.email or '--'"/>
-                                                </div>
-                                            </div>
+                                                <t t-esc="o.mobile"/>
+                                            </t>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Footer -->
-                                <div class="mt-4">
-                                    <div class="border-top border-2 pt-3">
-                                        <!-- Certificate Note -->
-                                        <p class="text-center text-muted fst-italic mb-2" style="font-size: 12px;">
-                                            This certificate is digitally generated and serves as an official acknowledgment of the deposit collection.
-                                        </p>
-
-                                        <!-- Signature Section -->
-                                        <div class="mt-3">
-                                            <div class="d-flex justify-content-start">
-                                                <div class="signature-line">
-                                                    <p class="mb-0 text-muted mt-1" style="font-size: 12px;">
-                                                        Authorized Signature
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <!-- Powered By Section -->
-                                            <div class="text-center mt-3">
-                                                <p class="mb-1 text-muted" style="font-size: 12px;">
-                                                    Powered by <strong>BytesNode</strong>
-                                                </p>
-                                                <p class="mb-0 text-muted" style="font-size: 11px;">
-                                                    Mobile No. --- 03170295857 |
-                                                    Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com |
-                                                    Website --- bytesnode.com
-                                                </p>
-                                            </div>
+                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
+                                        <div class="w-40 small" style="padding-right: 5px;">Amount:</div>
+                                        <div class="w-60 fw-semibold small">
+                                            <t t-esc="o.amount or '0.00'"/>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="mb-4">
+                                <h4 class="fw-bold mb-3">Donation Home Service Details</h4>
+                                <table class="table table-bordered border-2">
+                                    <thead class="text-black">
+                                        <tr>
+                                            <th class="text-center fw-bold">Product</th>
+                                            <th class="text-center fw-bold">Quantity</th>
+                                            <th class="text-center fw-bold">Rate</th>
+                                            <th class="text-center fw-bold">Amount Collected</th>
+                                            <th class="text-center fw-bold">Remark</th> 
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        <t t-foreach="o.direct_deposit_line_ids" t-as="line" t-key="line.id">
+                                            <tr class="bg-light">
+                                                <td class="text-center py-2">
+                                                    <t t-esc="line.product_id.name"/>
+                                                </td>
+                                                <td class="text-center py-2">
+                                                    <t t-esc="line.quantity"/>
+                                                </td>
+                                                <td class="text-center py-2">
+                                                    <t t-esc="line.product_id.list_price"/> 
+                                                </td>
+                                                <td class="text-center fw-bold py-2">
+                                                    <t t-esc="line.amount"/>
+                                                </td>
+                                                <td class="text-center py-2">
+                                                    <t t-esc="line.remarks or '-'"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mb-4">
+                                <div class="col-12" style="font-size: 1em;">              
+                            
+                                    <div class="d-flex mb-2">
+                                        <div style="width: 200px;">Entered by:</div>
+                                        <div style="border-bottom: 1px solid black; width: 200px;">
+                                            <t t-esc="o.env.user.name"/>
+                                        </div>
+                                    </div>
+                            
+                                    <div class="d-flex mb-2">
+                                        <div style="width: 200px;">Amount:</div>
+                                        <div style="border-bottom: 1px solid black; width: 200px;">
+                                            Rs <t t-esc="o.amount or '0.00'"/>
+                                        </div>
+                                    </div>
+                            
+                                </div>
+                            </div>         
                         </div>
                     </t>
                 </t>

@@ -723,7 +723,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const serviceProduct = await this.orm.searchRead(
                 'product.product',
                 [
-                    ['name', '=', 'Donation Home Service charges'],
+                    ['name', '=', 'Donation Home Service Charges'],
                     ['type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],

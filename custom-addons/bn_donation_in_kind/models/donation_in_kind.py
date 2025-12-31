@@ -34,8 +34,7 @@ class DonationInKind(models.Model):
                 'location_id': product_stock_move_config.location_id.id,
                 'picking_type_id': product_stock_move_config.picking_type_id.id,
                 'journal_id': product_stock_move_config.journal_id.id,
-                'debit_account_id': product_stock_move_config.debit_account_id.id,
-                'credit_account_id': product_stock_move_config.credit_account_id.id
+                'debit_account_id': product_stock_move_config.debit_account_id.id
             }
             return field_map.get(name, False)
         return False
@@ -46,7 +45,6 @@ class DonationInKind(models.Model):
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
     journal_id = fields.Many2one('account.journal', string='Journal', default=lambda self: self.default_set_value('journal_id'))
     debit_account_id = fields.Many2one('account.account', string='Account (Dr)', required=True, domain="[('account_type', 'in', ['asset_receivable', 'asset_cash', 'asset_current', 'asset_non_current', 'asset_prepayments', 'asset_fixed'])]", default=lambda self: self.default_set_value('debit_account_id'))
-    credit_account_id = fields.Many2one('account.account', string='Account (Cr)', required=True, domain="[('account_type', 'in', ['income', 'income_other'])]", default=lambda self: self.default_set_value('credit_account_id'))
     account_move_id = fields.Many2one('account.move', string='Account Move')
     reverse_account_move_id = fields.Many2one('account.move', string='Reverse Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
@@ -138,7 +136,7 @@ class DonationInKind(models.Model):
                     'credit': 0.0,
                 },
                 {
-                    'account_id': record.credit_account_id.id,
+                    'account_id': record.product_id.property_account_income_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
                     'name': 'Box',
@@ -502,7 +500,7 @@ class DonationInKind(models.Model):
                 'quantity': line['quantity']
             })
 
-        
         return {
-            "status": "success"
+            "status": "success",
+            "origin": self.name
         }

@@ -8,7 +8,9 @@
     'depends': [
         'point_of_sale'
     ],
-    'data': [],
+    'data': [
+        'views/pos_order.xml',
+    ],
     'auto_install': False,
     'application': False,
     'assets': {
@@ -23,6 +25,7 @@
             'bn_pos_custom_action/static/src/app/receiving_popup/receiving_popup.xml',
             'bn_pos_custom_action/static/src/screens/**/*',
             'bn_pos_custom_action/static/src/override/app/**/*',
+            'bn_pos_custom_action/static/src/models/*',
         ],
     },
 }

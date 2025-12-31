@@ -23,6 +23,7 @@ class ResCompany(models.Model):
     odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key', tracking=True)
     
     search_endpoint = fields.Char('Search Endpoint', tracking=True)
+    create_application_endpoint = fields.Char('Create Application Endpoint', tracking=True)
     check_donee_endpoint = fields.Char('Check Donee Endpoint', tracking=True)
     create_donee_endpoint = fields.Char('Create Donee Endpoint', tracking=True)
     mark_application_endpoint = fields.Char('Mark Application Endpoint', tracking=True)

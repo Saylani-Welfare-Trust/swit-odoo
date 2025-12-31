@@ -69,7 +69,6 @@
                         <group>
                             <field name="location_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="quantity" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" />
-                            <field name="credit_account_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="journal_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="account_move_id" invisible="1" />
                             <field name="picking_id" invisible="1" />

@@ -16,13 +16,13 @@
         'views/direct_deposit.xml',
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
-
     ],
     'auto_install': False,
     'application': False,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_direct_deposit/static/src/app/**/*',
+            'bn_direct_deposit/static/src/screens/*',
         ],
     },
 } # type: ignore
