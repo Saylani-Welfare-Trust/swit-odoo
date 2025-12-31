@@ -50,6 +50,9 @@
                         <button name="action_reverse_journal_entries" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reverse_account_move_id == False">
                             <field name="reverse_account_move_id" widget="statinfo"/>
                         </button>
+                        <button name="action_journal_entries_2" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="account_move_list_id == False">
+                            <field name="account_move_list_id" widget="statinfo"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">

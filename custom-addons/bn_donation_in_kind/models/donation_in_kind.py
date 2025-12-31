@@ -483,6 +483,16 @@ class DonationInKind(models.Model):
                 'type': 'ir.actions.act_window',
                 'res_id': record.reverse_account_move_id.id,
             }
+    
+    def action_journal_entries_2(self):
+        for record in self:
+            return {
+                'name': _('Journal Entries'),
+                'view_mode': 'form',
+                'res_model': 'account.move',
+                'type': 'ir.actions.act_window',
+                'res_id': record.account_move_list_id.id,
+            }
 
     def action_draft(self):
         for record in self:
