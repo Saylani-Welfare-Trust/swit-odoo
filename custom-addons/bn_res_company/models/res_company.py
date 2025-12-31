@@ -28,8 +28,7 @@ class ResCompany(models.Model):
     create_donee_endpoint = fields.Char('Create Donee Endpoint', tracking=True)
     mark_application_endpoint = fields.Char('Mark Application Endpoint', tracking=True)
     welfare_institution_endpoint = fields.Char('Welfare Institution Endpoint')
-
-
+    mark_institution_application_endpoint = fields.Char('Mark Institution Application Endpoint')
     # attachment size limit
     max_file_size = fields.Float('Max File Size (MB)', default=5)
     

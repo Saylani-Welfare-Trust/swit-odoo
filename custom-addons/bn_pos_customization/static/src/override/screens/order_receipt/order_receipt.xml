@@ -3,7 +3,8 @@
 
     <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('pos-receipt')]" position="replace">
-            <div class="pos-receipt" style="page-break-inside: avoid; min-height: 0;">
+            <div class="pos-receipt" style="page-break-inside: avoid; min-height: 0; font-family: Arial, sans-serif;">
+
                 <t t-set="company" t-value="props.data.headerData.company"/>
                 <t t-set="order" t-value="props.data"/>
                 <t t-set="partner" t-value="props.data.partner"/>
@@ -13,440 +14,151 @@
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
 
-                <div class="row" style="margin-top: 360px; font-size: 10px !important; transform: scale(0.99); transform-origin: top;">
+                <!-- Top Space -->
+                <div style="height: 360px;"></div>
+
+                <!-- Header Row -->
+                <div class="row" style="font-size: 14px; transform: scale(0.99); transform-origin: top;">
                     <div class="col-4">
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="order.receive_voucher">Receipt Voucher</h1>
                         <h1 class="fs-3 fw-bold text-uppercase" t-if="!order.receive_voucher">Donation Receipt</h1>
                     </div>
                     <div class="col-8 text-end">
-                        <b><span class="fw-bold text-uppercase">
+                        <b class="fw-bold text-uppercase">
                             <t t-if="company.name"><t t-esc="company.name"/></t>
                             <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
-                        </span></b>
+                        </b>
                     </div>
                 </div>
 
                 <!-- Donor & Receipt Info -->
-                <div class="row  p-2" style="font-size: 7px !important; line-height: 1.1; margin-top: 2px;">
+                <div class="row p-2" style="font-size: 14px; line-height: 1.1;">
+                    <!-- Left Column -->
                     <div class="col-6">
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">DN #:</h4>
-                            </div>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">DN #:</div>
                             <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                                    <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
-                                    <t t-set="current_year" t-value="new Date().getFullYear()"/>
-                                    <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
-                                    <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Donor:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="partner.name">
-                                        <t t-esc="partner.name"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </h4>
+                                <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
+                                <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
+                                <t t-set="current_year" t-value="new Date().getFullYear()"/>
+                                <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
+                                <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cell #:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="partner.mobile">
-                                        <t t-esc="partner.mobile"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-if="partner.phone">
-                                            <t t-esc="partner.phone"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </t>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Payment Method:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="payment.name">
-                                        <t t-esc="payment.name"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </h4>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Donor Name:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-if="partner.name"><t t-esc="partner.name"/></t>
+                                <t t-else="">-</t>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Total Amount:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.amount_total">
-                                        <t t-esc="format_currency_amount"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
-                                    </t>
-                                </h4>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Payment Method:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-if="payment.name"><t t-esc="payment.name"/></t>
+                                <t t-else="">-</t>
                             </div>
                         </div>
+
+                        <!-- Conditional Bank / Reference -->
+                        <t t-if="payment.name == 'Cheque'">
+                            <div class="row mb-1" t-if="order.bank_name">
+                                <div class="col-4 fw-medium">Bank Name:</div>
+                                <div class="col-8 fw-medium"><t t-esc="order.bank_name"/></div>
+                            </div>
+                        </t>
+
+                        <t t-if="payment.name == 'Credit Card'">
+                            <div class="row mb-1" t-if="order.bank_name">
+                                <div class="col-4 fw-medium">Reference No:</div>
+                                <div class="col-8 fw-medium"><t t-esc="order.bank_name"/></div>
+                            </div>
+                        </t>
                     </div>
 
+                    <!-- Right Column -->
                     <div class="col-6">
-                        <div class="row" t-if="order.bank_name">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Bank Name:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.bank_name"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row" t-if="order.cheque_number">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque No.:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.cheque_number"/>
-                                </h4>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Date Time:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-set="dateObj" t-value="new Date(date_format)"/>
+                                <t t-set="day" t-value="dateObj.getDate()"/>
+                                <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                <t t-set="year" t-value="dateObj.getFullYear()"/>
+                                <t t-set="hours" t-value="dateObj.getHours()"/>
+                                <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+                                <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
+                                           (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                           (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                           (minutes &lt; 10 ? '0' : '') + minutes"/>
                             </div>
                         </div>
-                        
-                        <div class="row" t-if="order.qr_code">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">QR Code:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.qr_code"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row" t-if="order.cheque_date">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque Date:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
 
-                                    <t t-set="day" t-value="dateObj.getDate()"/>
-                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
-
-                                    <t t-set="hours" t-value="dateObj.getHours()"/>
-                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-
-                                    <t t-esc="
-                                        (day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                        (minutes &lt; 10 ? '0' : '') + minutes
-                                    "/>
-                                </h4>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Contact No:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
+                                <t t-else="">
+                                    <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
+                                    <t t-else="">-</t>
+                                </t>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Date Time:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="dateObj" t-value="new Date(date_format)"/>
 
-                                    <t t-set="day" t-value="dateObj.getDate()"/>
-                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
-
-                                    <t t-set="hours" t-value="dateObj.getHours()"/>
-                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-
-                                    <t t-esc="
-                                        (day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                        (minutes &lt; 10 ? '0' : '') + minutes
-                                    "/>
-                                </h4>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Total Amount:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
+                                <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Items Table -->
-                <table class="table table-bordered text-center" style="font-size: 12px !important; margin-top: 2px !important; line-height: 1;">
+                <table class="table table-bordered text-center mt-1" style="font-size: 14px; line-height: 1; page-break-inside: avoid;">
                     <thead>
                         <tr>
-                            <th style="padding: 2px;">Account Title</th>
-                            <th style="padding: 2px;">Quantity</th>
-                            <th style="padding: 2px;">Rate</th>
-                            <th style="padding: 2px;">Amount</th>
-                            <th style="padding: 2px;">Customer Note</th>
+                            <th class="py-1">Product</th>
+                            <th class="py-1">Quantity</th>
+                            <th class="py-1">Rate</th>
+                            <th class="py-1">Amount</th>
+                            <th class="py-1">Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
                         <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                             <tr style="page-break-inside: avoid;">
-                                <td class="text-start" style="padding: 2px;">
-                                    <t t-if="line.productName">
-                                        <t t-esc="line.productName"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </td>
-                                <td class="text-end" style="padding: 2px;">
-                                    <t t-if="line.qty">
-                                        <t t-esc="line.qty"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </td>
-                                <td class="text-end" style="padding: 2px;">
-                                    <t t-if="line.unitPrice">
-                                        <t t-esc="line.unitPrice"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </td>
-                                <td class="text-end" style="padding: 2px;">
-                                    <t t-if="line.price">
-                                        <t t-esc="line.price"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </td>
-                                <td class="text-start" style="padding: 2px;">
-                                    <t t-if="line.customerNote">
-                                        <t t-esc="line.customerNote"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </td>
+                                <td class="text-start py-1"><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
+                                <td class="text-end py-1"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
+                                <td class="text-end py-1"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
+                                <td class="text-end py-1"><t t-if="line.price"><t t-esc="line.price"/></t><t t-else="">-</t></td>
+                                <td class="text-start py-1"><t t-if="line.customerNote"><t t-esc="line.customerNote"/></t><t t-else="">-</t></td>
                             </tr>
                         </t>
                     </tbody>
                 </table>
 
-                <!-- Amount in words & Footer -->
-                <table class="table table-bordered" style="font-size: 12px !important; margin-top: 1px !important;">
-                    <tfoot>
-                        <tr>
-                            <th class="text-start" style="padding: 2px;">Enter By</th>
-                            <td class="text-start" style="padding: 2px;">
-                                <t t-if="order.cashier">
-                                    <t t-esc="order.cashier"/>
-                                </t>
-                                <t t-else="">-</t>
-                            </td>
-                            <th class="text-start" style="padding: 2px;">Total Amount</th>
-                            <td class="text-end" style="padding: 2px;">
-                                <t t-if="order.amount_total">
-                                    <t t-esc="format_currency_amount"/>
-                                </t>
-                                <t t-else="">
-                                    <t t-esc="format_currency_amount_zero"/>
-                                </t>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <hr class="border-top border-2 border-dark" style="margin: 3px 0;"/>
-
-                <!-- Donor & Receipt Info (Duplicate) -->
-                <div class="row  p-2" style="font-size: 7px !important; line-height: 1.1; margin-top: 2px !important;">
+                <div class="row p-2" style="font-size: 14px; line-height: 1.1;">
                     <div class="col-6">
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">DN #:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                                    <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
-                                    <t t-set="current_year" t-value="new Date().getFullYear()"/>
-                                    <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
-                                    <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Donor:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="partner.name">
-                                        <t t-esc="partner.name"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </h4>
-                            </div>
+                        <!-- Conditional Bank / Reference -->
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Enter By:</div>
+                            <div class="col-8 fw-medium"><t t-esc="order.cashier"/></div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cell #:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="partner.mobile">
-                                        <t t-esc="partner.mobile"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-if="partner.phone">
-                                            <t t-esc="partner.phone"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </t>
-                                </h4>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Payment Method:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="payment.name">
-                                        <t t-esc="payment.name"/>
-                                    </t>
-                                    <t t-else="">-</t>
-                                </h4>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Total Amount:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-if="order.amount_total">
-                                        <t t-esc="format_currency_amount"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-esc="format_currency_amount_zero"/>
-                                    </t>
-                                </h4>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-6">
-                        <div class="row" t-if="order.bank_name">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Bank Name:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.bank_name"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row" t-if="order.cheque_number">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque No.:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.cheque_number"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row" t-if="order.qr_code">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">QR Code:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-esc="order.qr_code"/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row" t-if="order.cheque_date">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Cheque Date:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
-
-                                    <t t-set="day" t-value="dateObj.getDate()"/>
-                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
-
-                                    <t t-set="hours" t-value="dateObj.getHours()"/>
-                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-
-                                    <t t-esc="
-                                        (day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                        (minutes &lt; 10 ? '0' : '') + minutes
-                                    "/>
-                                </h4>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
-                                <h4 class="fs-5 fw-medium">Date Time:</h4>
-                            </div>
-                            <div class="col-8">
-                                <h4 class="fs-5 fw-medium">
-                                    <t t-set="dateObj" t-value="new Date(date_format)"/>
-
-                                    <t t-set="day" t-value="dateObj.getDate()"/>
-                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
-
-                                    <t t-set="hours" t-value="dateObj.getHours()"/>
-                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-
-                                    <t t-esc="
-                                        (day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                        (minutes &lt; 10 ? '0' : '') + minutes
-                                    "/>
-                                </h4>
-                            </div>
+                        <div class="row mb-1">
+                            <div class="col-4 fw-medium">Total Amount:</div>
+                            <div class="col-8 fw-medium"><t t-esc="order.amount_total"/></div>
                         </div>
                     </div>
                 </div>
-                <div style="page-break-inside: avoid; margin-top: 2px !important;">
-                    <p style="font-size: 8px !important; text-align: center; margin: 1px 0; line-height: 1; transform: scale(0.95); transform-origin: center;">
-                        Powered by BytesNode
-                    </p>
-                    <p style="font-size: 8px !important; text-align: center; margin: 0; line-height: 1; transform: scale(0.95); transform-origin: center;">
-                        Mobile No. --- 03170295857 | Email --- syedowaisnoor.devex@gmail.com or info@bytesnode.com | Website --- bytesnode.com
-                    </p>
+
+                <div class="text-center mt-1" style="font-size: 12px; line-height: 1; page-break-inside: avoid;">
+                    Powered by BytesNode
                 </div>
 
             </div>

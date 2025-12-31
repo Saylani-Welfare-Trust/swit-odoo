@@ -613,8 +613,7 @@ class PosSession(models.Model):
         return payment_method.restricted_account_id or self.company_id.account_default_pos_restricted_receivable_account_id
     
     def _get_neutral_receivable_account(self, payment_method):
-        return payment_method.receivable_account_id or self.company_id.account_default_pos_receivable_account_id
-
+        return payment_method.neutral_account_id or self.company_id.account_default_pos_neutrnal_receivable_account_id
     
     def _get_unrestricted_receivable_account(self, payment_method):
         """Returns the default pos receivable account if no receivable_account_id is set on the payment method."""

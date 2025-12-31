@@ -10,6 +10,7 @@
                 <field name="account_default_pos_receivable_account_id" />
                 <field name="account_default_pos_restricted_receivable_account_id" />
                 <field name="account_default_pos_unrestricted_receivable_account_id" />
+                <field name="account_default_pos_neutrnal_receivable_account_id" />
                 <field name="restricted_category" />
                 <field name="unrestricted_category" />
             </xpath>

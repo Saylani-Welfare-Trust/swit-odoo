@@ -18,6 +18,13 @@ class ResCompany(models.Model):
         # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
         help="Account for unrestricted receivable amounts"
     )
+    
+    account_default_pos_neutrnal_receivable_account_id = fields.Many2one(
+        'account.account',
+        string='Neutral Receivable Account',
+        # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
+        help="Account for neutral receivable amounts"
+    )
 
     restricted_category = fields.Char('Restricted Category')
     unrestricted_category = fields.Char('Unrestricted Category')

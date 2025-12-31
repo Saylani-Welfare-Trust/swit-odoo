@@ -68,8 +68,6 @@ patch(PaymentScreen.prototype, {
     },
 
     prepareOrderLines(orderLines) {
-        console.log('Hit Lines 2');
-
         return orderLines.map(line => (
                 {
                     product_id: line.product.id,
