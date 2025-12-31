@@ -6,8 +6,18 @@ class DonationInKindLine(models.Model):
     _description = "Donation In Kind Line"
 
 
+    def default_set_value(self, name):
+        product_stock_move_config = self.env['product.stock.move.config'].sudo().search([], limit=1)
+        if product_stock_move_config:
+            field_map = {
+                'location_id': product_stock_move_config.location_id.id
+            }
+            return field_map.get(name, False)
+        return False
+
     product_id = fields.Many2one('product.product', string="Product")
     donation_in_kind_id = fields.Many2one('donation.in.kind', string="Donation In Kind")
+    location_id = fields.Many2one(comodel_name='stock.location', string='Location', required=True, domain="[('usage', '=', 'internal')]", default=lambda self: self.default_set_value('location_id'))
 
     quantity = fields.Float('Quantity')
     avg_price = fields.Float('Average Price', required=True)
