@@ -10,6 +10,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'security/group.xml',
         'security/ir.model.access.csv',
         'views/donation_in_kind.xml',
         'views/res_partner.xml',
