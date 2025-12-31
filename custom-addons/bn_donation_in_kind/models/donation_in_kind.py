@@ -50,6 +50,7 @@ class DonationInKind(models.Model):
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
     picking_list_id = fields.Many2one('stock.picking', string='Picking List', domain="[('picking_type_id', '=', picking_type_id)]")
     account_move_list_id = fields.Many2one('account.move', string='Account Move List')
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     name = fields.Char('Name', default="New")
 
