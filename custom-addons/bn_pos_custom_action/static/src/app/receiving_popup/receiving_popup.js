@@ -710,6 +710,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process dhs lines and add products to POS order
      */
     async processDHSLines(record, selectedOrder) {
+        console.log('DHS');
+
         if (!this.hasDHSLines(record)) {
             return;
         }
@@ -719,7 +721,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         
         // Add service charge line if present
         if (record.service_charges && parseFloat(record.service_charges) > 0) {
-            console.log('DHS');
+            console.log('DHS 1');
             
             // Fetch the service product
             const serviceProduct = await this.orm.searchRead(
