@@ -719,6 +719,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         
         // Add service charge line if present
         if (record.service_charges && parseFloat(record.service_charges) > 0) {
+            console.log('DHS');
+            
             // Fetch the service product
             const serviceProduct = await this.orm.searchRead(
                 'product.product',
@@ -731,6 +733,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 { limit: 1 }
             );
             
+            console.log(serviceProduct);
+
             if (serviceProduct.length) {
                 // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
