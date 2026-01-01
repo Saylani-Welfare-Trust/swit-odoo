@@ -285,7 +285,7 @@ class DonationHomeService(models.Model):
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
-                'remarks': line['remarks'],
+                'remarks': line['remarks'] if line.get('remarks') else '',
             }))
 
         # -------------------------
