@@ -8,6 +8,12 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
+    get checkDonationBoxAccess(){
+        // console.log(this);
+
+        return this.pos._donationBox || false;
+    },
+
     async clickRecordDonation() {
         await this.orm.call('rider.collection', "get_rider_collection", []).then((data) => {
             if (data.status === 'error') {

@@ -10,6 +10,12 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
+    get checkDonationHomeServiceAccess(){
+        // console.log(this);
+
+        return this.pos._donationHomeService || false;
+    },
+
     get checkProduct() {
         const orderlines = this.pos.get_order().get_orderlines();
 

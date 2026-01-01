@@ -1,8 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="donation_in_kind_menu_group" model="res.groups">
+        <field name="name">Menu</field>
+    </record>
+
     <record id="donation_in_kind_valuation_committee_group" model="res.groups">
         <field name="name">Donation In Kind / Valuation Committee</field>
+    </record>
+
+    <record id="donation_in_kind_box_validate_group" model="res.groups">
+        <field name="name">Donation In Kind / Box Validate</field>
+    </record>
+
+    <record id="donation_in_kind_open_box_group" model="res.groups">
+        <field name="name">Donation In Kind / Open Box</field>
     </record>
 
 </odoo>

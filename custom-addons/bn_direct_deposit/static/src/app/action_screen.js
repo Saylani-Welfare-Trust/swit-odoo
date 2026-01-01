@@ -8,6 +8,12 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
+    get checkDirectDepositAccess(){
+        // console.log(this);
+
+        return this.pos._directDeposit || false;
+    },
+
     get checkProduct() {
         const orderlines = this.pos.get_order().get_orderlines();
 
