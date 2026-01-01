@@ -146,6 +146,7 @@ class MicrofinanceInstallment(models.Model):
                 'donee_id': microfinance_request.donee_id.id,
                 'deposit_id': security_deposit.id,
                 'amount': security_deposit.amount,
+                'state': security_deposit.state,
                 'deposit_exists': True
             }
         

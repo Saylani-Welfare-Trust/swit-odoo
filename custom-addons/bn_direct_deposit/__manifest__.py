@@ -12,6 +12,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'security/group.xml',
         'security/ir.model.access.csv',
         'views/direct_deposit.xml',
         'reports/direct_deposit_provisional_report.xml',

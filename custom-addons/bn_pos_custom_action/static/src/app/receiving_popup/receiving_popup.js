@@ -479,7 +479,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             'product.product',
             [
                 ['name', '=', 'Microfinance Installment'],
-                ['type', '=', 'service'],
+                ['detailed_type', '=', 'service'],
                 ['available_in_pos', '=', true]
             ],
             ['id'],
@@ -602,7 +602,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             'product.product',
             [
                 ['name', '=', 'Microfinance Installment'],
-                ['type', '=', 'service'],
+                ['detailed_type', '=', 'service'],
                 ['available_in_pos', '=', true]
             ],
             ['id'],
@@ -724,13 +724,13 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 'product.product',
                 [
                     ['name', '=', 'Donation Home Service Charges'],
-                    ['type', '=', 'service'],
+                    ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
                 ['id'],
                 { limit: 1 }
             );
-            
+
             if (serviceProduct.length) {
                 // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(serviceProduct[0].id);

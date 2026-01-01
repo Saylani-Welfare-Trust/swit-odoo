@@ -30,16 +30,21 @@ class ReturnMicrofinanceProduct(models.TransientModel):
             'partner_id': self.donee_id.id,
             'picking_type_id': self.env.ref('stock.picking_type_in').id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
-            'origin': self.source_document
+            'origin': self.source_document,
+            'location_id': self.env.ref('stock.stock_location_customers').id,
+            'location_dest_id': self.destination_location_id.id,
+
         })
         
         picking.action_confirm()
         picking.action_assign()
-        picking.button_validate()
+        # picking.button_validate()
 
 
         self.microfinance_id.write({
             'recovered_location_id': self.destination_location_id.id,
             'recovery_remarks': self.remarks,
-            'state': 'recover'
+            # 'state': 'recover',
+            'picking_ids': [(4, picking.id)]
+            
         })

@@ -24,5 +24,9 @@
     <record id="donation_box_complain_center_resolve_group" model="res.groups">
         <field name="name">Complain Center / Resolve</field>
     </record>
+    
+    <record id="donation_box_pos_action_group" model="res.groups">
+        <field name="name">Donation Box / POS Action</field>
+    </record>
 
 </odoo>

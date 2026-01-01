@@ -201,7 +201,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'product.product',
                 [
                     ['name', '=', 'Microfinance Security Deposit'],
-                    ['type', '=', 'service'],
+                    ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
                 ['id'],

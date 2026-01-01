@@ -22,4 +22,8 @@
         <field name="name">Donation Home Service / Cancel Rights</field>
     </record>
 
+    <record id="donation_home_service_pos_action_group" model="res.groups">
+        <field name="name">Donation Home Service / POS Action</field>
+    </record>
+
 </odoo>

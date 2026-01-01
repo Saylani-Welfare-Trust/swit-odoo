@@ -14,7 +14,7 @@ class StockPicking(models.Model):
                 # Search for microfinance record with this origin
                 microfinance = self.env['microfinance'].search([
                     ('name', '=', picking.origin),
-                    ('state', '=', 'wfd')
+                    # ('state', '=', 'wfd')
                 ], limit=1)
                 
                 if microfinance:

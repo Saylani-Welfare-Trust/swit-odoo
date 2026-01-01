@@ -376,7 +376,7 @@ class DonationHomeService(models.Model):
         if service_charges and float(service_charges) > 0:
             service_product = self.env['product.product'].search([
                 ('name', '=', 'Donation Home Service Charges'),
-                ('type', '=', 'service'),
+                ('detailed_type', '=', 'service'),
                 ('available_in_pos', '=', True)
             ], limit=1)
             

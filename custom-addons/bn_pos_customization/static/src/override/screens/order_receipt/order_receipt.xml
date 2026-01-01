@@ -12,10 +12,10 @@
                 <t t-set="payment" t-value="props.data.paymentlines[0]"/>
                 <t t-set="date_format" t-value="order.date" />
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
-                <t t-set="format_currency_amount" t-value="props.formatCurrency(order.amount_total)" />
+                <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total))" />
 
                 <!-- Top Space -->
-                <div style="height: 360px;"></div>
+                <div style="height: 460px;"></div>
 
                 <!-- Header Row -->
                 <div class="row" style="font-size: 14px; transform: scale(0.99); transform-origin: top;">
@@ -26,10 +26,13 @@
                     <div class="col-8 text-end">
                         <b class="fw-bold text-uppercase">
                             <t t-if="company.name"><t t-esc="company.name"/></t>
+                            <br/>
                             <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
                         </b>
                     </div>
                 </div>
+
+                <br/>
 
                 <!-- Donor & Receipt Info -->
                 <div class="row p-2" style="font-size: 14px; line-height: 1.1;">
@@ -63,17 +66,21 @@
                         </div>
 
                         <!-- Conditional Bank / Reference -->
-                        <t t-if="payment.name == 'Cheque'">
+                        <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
                             <div class="row mb-1" t-if="order.bank_name">
                                 <div class="col-4 fw-medium">Bank Name:</div>
                                 <div class="col-8 fw-medium"><t t-esc="order.bank_name"/></div>
                             </div>
+                            <div class="row mb-1" t-if="order.cheque_number">
+                                <div class="col-4 fw-medium">Cheque No.:</div>
+                                <div class="col-8 fw-medium"><t t-esc="order.cheque_number"/></div>
+                            </div>
                         </t>
 
-                        <t t-if="payment.name == 'Credit Card'">
-                            <div class="row mb-1" t-if="order.bank_name">
+                        <t t-if="!order.is_bank &amp;&amp; !order.is_donation_in_kind">
+                            <div class="row mb-1" t-if="order.qr_code">
                                 <div class="col-4 fw-medium">Reference No:</div>
-                                <div class="col-8 fw-medium"><t t-esc="order.bank_name"/></div>
+                                <div class="col-8 fw-medium"><t t-esc="order.qr_code"/></div>
                             </div>
                         </t>
                     </div>
@@ -115,6 +122,23 @@
                                 <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                             </div>
                         </div>
+                        
+                        <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
+                            <div class="col-4 fw-medium">Cheque Date:</div>
+                            <div class="col-8 fw-medium">
+                                <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
+                                <t t-set="day" t-value="dateObj.getDate()"/>
+                                <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                <t t-set="year" t-value="dateObj.getFullYear()"/>
+                                <t t-set="hours" t-value="dateObj.getHours()"/>
+                                <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+                                <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
+                                           (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                           (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                           (minutes &lt; 10 ? '0' : '') + minutes"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -124,8 +148,8 @@
                         <tr>
                             <th class="py-1">Product</th>
                             <th class="py-1">Quantity</th>
-                            <th class="py-1">Rate</th>
-                            <th class="py-1">Amount</th>
+                            <th class="py-1" t-if="!order.is_donation_in_kind">Rate</th>
+                            <th class="py-1" t-if="!order.is_donation_in_kind">Amount</th>
                             <th class="py-1">Remarks</th>
                         </tr>
                     </thead>
@@ -134,8 +158,8 @@
                             <tr style="page-break-inside: avoid;">
                                 <td class="text-start py-1"><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                 <td class="text-end py-1"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
-                                <td class="text-end py-1"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
-                                <td class="text-end py-1"><t t-if="line.price"><t t-esc="line.price"/></t><t t-else="">-</t></td>
+                                <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
+                                <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.price"><t t-esc="line.price"/></t><t t-else="">-</t></td>
                                 <td class="text-start py-1"><t t-if="line.customerNote"><t t-esc="line.customerNote"/></t><t t-else="">-</t></td>
                             </tr>
                         </t>
@@ -144,21 +168,17 @@
 
                 <div class="row p-2" style="font-size: 14px; line-height: 1.1;">
                     <div class="col-6">
-                        <!-- Conditional Bank / Reference -->
                         <div class="row mb-1">
                             <div class="col-4 fw-medium">Enter By:</div>
                             <div class="col-8 fw-medium"><t t-esc="order.cashier"/></div>
                         </div>
-
+                    </div>
+                    <div class="col-6">
                         <div class="row mb-1">
                             <div class="col-4 fw-medium">Total Amount:</div>
-                            <div class="col-8 fw-medium"><t t-esc="order.amount_total"/></div>
+                            <div class="col-8 fw-medium"><t t-esc="format_currency_amount"/></div>
                         </div>
                     </div>
-                </div>
-
-                <div class="text-center mt-1" style="font-size: 12px; line-height: 1; page-break-inside: avoid;">
-                    Powered by BytesNode
                 </div>
 
             </div>

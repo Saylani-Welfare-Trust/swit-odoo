@@ -9,6 +9,8 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 patch(Order.prototype, {
     export_for_printing() {
+        console.log(this);
+
         return {
             ...super.export_for_printing(),
             
@@ -19,7 +21,9 @@ patch(Order.prototype, {
             },
             branch_code: this.cashier.branch_code,
             branch_name: this.cashier.branch_name,
-            receive_voucher: this.pos.receive_voucher
+            receive_voucher: this.pos.receive_voucher,
+            is_bank: this.paymentlines[0].payment_method.is_bank,
+            is_donation_in_kind: this.paymentlines[0].payment_method.is_donation_in_kind,
         };
     },
 
