@@ -178,6 +178,16 @@ class DirectDeposit(models.Model):
         picking_type = self.env.ref('stock.picking_type_out')
         destination_location = self.env.ref('stock.stock_location_customers')
 
+        # ✅ Filter only storable products
+        product_lines = self.direct_deposit_line_ids.filtered(
+            lambda l: l.product_id and l.product_id.detailed_type == 'product'
+        )
+
+        # ❌ Do nothing if no product-type lines
+        if not product_lines:
+            return False
+
+        # ✅ Create picking ONLY if product lines exist
         picking = StockPicking.create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
@@ -185,12 +195,9 @@ class DirectDeposit(models.Model):
             'origin': self.name,
         })
 
-        for line in self.direct_deposit_line_ids:
-            if line.product_id.detailed_type != 'product':
-                continue
-
+        for line in product_lines:
             StockMove.create({
-                'name': line.product_id.name,
+                'name': line.product_id.display_name,
                 'product_id': line.product_id.id,
                 'product_uom_qty': line.quantity,
                 'quantity': line.quantity,
