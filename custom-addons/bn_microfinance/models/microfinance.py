@@ -67,7 +67,7 @@ class Microfinance(models.Model):
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string="Microfinance Scheme Line")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
-    picking_id = fields.Many2one('stock.picking', string="Picking")
+    picking_ids = fields.Many2many('stock.picking', string="Picking")
     sd_slip_id = fields.Many2one('microfinance.installment', 'SD Slip')
     recovered_location_id = fields.Many2one('stock.location', string="Recovery Location")
     warehouse_location_id = fields.Many2one('stock.location', string="Warehouse Location")
@@ -422,7 +422,7 @@ class Microfinance(models.Model):
         picking.action_confirm()
         
         # Store picking reference
-        self.picking_id = picking.id
+        self.picking_ids = [(4, picking.id)]
         
         return picking
 
@@ -438,18 +438,19 @@ class Microfinance(models.Model):
 
     def action_view_picking(self):
         """Open the picking form view"""
-        self.ensure_one()
-        if not self.picking_id:
+        # self.ensure_one()
+        if not self.picking_ids:
             raise ValidationError("No delivery picking found for this record.")
         
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Delivery',
+            'name': 'Deliveries',
             'res_model': 'stock.picking',
-            'res_id': self.picking_id.id,
-            'view_mode': 'form',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.picking_ids.ids)],
             'target': 'current',
         }
+
 
     def action_sd_slip(self):
         # Check if security deposit installment already exists for this microfinance

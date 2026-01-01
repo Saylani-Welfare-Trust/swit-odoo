@@ -3,7 +3,7 @@
 
     <t t-name="bn_microfinance.MicrofinanceButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordMF()">
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-if="checkMicrofinanceAccess" t-on-click="() => this.clickRecordMF()">
                 <i class="fa fa-money me-1 text-success" role="img" aria-label="Microfinance" title="Microfinance"/>
                 Microfinance
             </button>

@@ -20,5 +20,9 @@
     <record id="microfinance_write_off_approval_group" model="res.groups">
         <field name="name">Microfinance / Write Off Approval</field>
     </record>
+    
+    <record id="microfinance_pos_action_group" model="res.groups">
+        <field name="name">Microfinance / POS Action</field>
+    </record>
 
 </odoo>
