@@ -2,192 +2,234 @@
 <odoo>
 
     <data>
+        <!-- DHS Receipt Template -->
         <template id="bn_donation_home_service.donation_home_service_receipt_template">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-call="web.external_layout">
                         <style>
+                            /* Global Styles */
+                            body {
+                                font-family: Arial, sans-serif;
+                                font-size: 12px;
+                                line-height: 1.1;
+                            }
+
                             h1 {
-                                font-size: 1.5em;
-                                margin: 3px;
+                                font-size: 1.3em;
+                                margin: 0;
                             }
 
                             .watermark {
-                                position: fixed; /* important: appears on every page */
-                                top: 50%;        /* vertical center */
-                                left: 50%;       /* horizontal center */
-                                transform: translate(-50%, -50%) rotate(-30deg); /* center + rotate */
-                                font-size: 150px;
-                                color: rgba(200, 200, 200, 0.15); /* lighter for printing */
+                                position: fixed;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%) rotate(-30deg);
+                                font-size: 120px;
+                                color: rgba(200, 200, 200, 0.15);
                                 font-weight: bold;
-                                white-space: nowrap;
-                                pointer-events: none; /* don't block clicks */
+                                pointer-events: none;
                                 user-select: none;
-                                z-index: 0; /* behind all content */
+                                z-index: 0;
+                            }
+
+                            .table td, .table th {
+                                padding: 2px 4px;
+                                border: 1px solid #000;
+                                font-size: 12px;
+                            }
+
+                            .fw-bold {
+                                font-weight: bold;
+                            }
+
+                            .text-center {
+                                text-align: center;
+                            }
+
+                            .text-start {
+                                text-align: left;
+                            }
+
+                            .text-end {
+                                text-align: right;
+                            }
+
+                            .mb-1 {
+                                margin-bottom: 2px;
+                            }
+
+                            .mb-2 {
+                                margin-bottom: 4px;
+                            }
+
+                            .mb-3 {
+                                margin-bottom: 6px;
+                            }
+
+                            .mb-4 {
+                                margin-bottom: 8px;
+                            }
+
+                            .mt-1 {
+                                margin-top: 2px;
+                            }
+
+                            .mt-2 {
+                                margin-top: 4px;
+                            }
+
+                            .mt-3 {
+                                margin-top: 6px;
+                            }
+
+                            .p-1 {
+                                padding: 2px;
+                            }
+
+                            .p-2 {
+                                padding: 4px;
+                            }
+
+                            .pos-section {
+                                page-break-inside: avoid;
                             }
                         </style>
-                        
-                        <div class="watermark" style="padding-top: 600px; padding-right: 250px;">PROVISIONAL</div>
-                        
-                        <div class="mt-5 clearfix"/>
 
-                        <div class="row mb-4">
+                        <!-- Watermark -->
+                        <div class="watermark">PROVISIONAL</div>
+
+                        <!-- Top spacing for page -->
+                        <div style="height: 30px;"></div>
+
+                        <!-- Header Row -->
+                        <div class="row mb-3 pos-section">
                             <div class="col-6 text-start">
-                                <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; margin: 3px;">
-                                    Provisional Receipt (DHS)
-                                </h1>
+                                <h1>Provisional Receipt (DHS)</h1>
                             </div>
-                            
-                            <div class="col-6 position-relative">
-                                <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; position: absolute; right: 5px; margin: 3px; white-space: nowrap;">
+                            <div class="col-6 text-end">
+                                <span class="fw-bold">
                                     Saylani Welfare International Trust
                                     <t t-if="o.env.user.employee_id.analytic_account_id">
                                         (<t t-esc="o.env.user.employee_id.analytic_account_id.code"/>)
                                     </t>
-                                    
-                                </h1>
+                                </span>
                             </div>
-
                         </div>
-                        <div class="row mb-4">
-                            <div class="col-6 pe-3">
-                                <t t-import="datetime"/>
-                                
-                                <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                    <div class="w-40 small" style="padding-right: 5px;">DHS #:</div>
-                                    <div class="w-60 fw-semibold small">
-                                        <t t-esc="o.name or '--'"/>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                    <div class="w-40 small" style="padding-right: 5px;">Donor Name:</div>
-                                    <div class="w-60 fw-semibold small">
-                                        <t t-esc="o.donor_id.name or '-'"/>
-                                    </div>
-                                </div>
-                                
-                            </div>
-                        
-                            <div class="col-6 ps-0">
-                                <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                    <div class="w-40 small" style="padding-right: 5px;">Date &amp; Time:</div>
-                                    <div class="w-60 small">
-                                        <t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/>
-                                    </div>
-                                </div>
 
-                                <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                    <div class="w-40 small" style="padding-right: 5px;">Contact No:</div>
-                                    <div class="w-60 fw-semibold small">
-
+                        <!-- Donor & Receipt Info -->
+                        <div class="row mb-3 pos-section">
+                            <!-- Left Column -->
+                            <div class="col-6 text-start">
+                                <div class="row mb-1">
+                                    <div class="col-5 fw-bold">DHS #:</div>
+                                    <div class="col-7"><t t-esc="o.name or '--'"/></div>
+                                </div>
+                                <div class="row mb-1">
+                                    <div class="col-5 fw-bold">Donor Name:</div>
+                                    <div class="col-7"><t t-esc="o.donor_id.name or '-'"/></div>
+                                </div>
+                                <div class="row mb-1">
+                                    <div class="col-5 fw-bold">Contact No:</div>
+                                    <div class="col-7">
                                         <t t-if="o.mobile">
-                                            <t t-if="o.donor_id.country_code_id">
-                                                <t t-esc="o.donor_id.country_code_id.name"/> 
-                                            </t>
+                                            <t t-if="o.donor_id.country_code_id"><t t-esc="o.donor_id.country_code_id.name"/> </t>
                                             <t t-esc="o.mobile"/>
                                         </t>
+                                        <t t-else="">-</t>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                    <div class="w-40 small" style="padding-right: 5px;">Total Amount:</div>
-                                    <div class="w-60 fw-semibold small">
-                                        <t t-esc="o.total_amount or '0.00'"/>
-                                    </div>
+                            <!-- Right Column -->
+                            <div class="col-6 text-end">
+                                <div class="row mb-1">
+                                    <div class="col-5 fw-bold">Date & Time:</div>
+                                    <div class="col-7"><t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/></div>
+                                </div>
+                                <div class="row mb-1">
+                                    <div class="col-5 fw-bold">Total Amount:</div>
+                                    <div class="col-7 fw-bold">Rs <t t-esc="o.total_amount or '0.00'"/></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <h4 class="fw-bold mb-3">Donation Home Service Details</h4>
-                            <table class="table table-bordered border-2">
-                                <thead class="text-black">
-                                    <tr>
-                                        <th class="text-center fw-bold">Product</th>
-                                        <th class="text-center fw-bold">Quantity</th>
-                                        <th class="text-center fw-bold">Rate</th>
-                                        <th class="text-center fw-bold">Amount Collected</th>
-                                        <th class="text-center fw-bold">Remark</th> 
+                        <!-- Items Table -->
+                        <div class="mb-3 pos-section">
+                            <h4 class="fw-bold mb-2">Donation Home Service Details</h4>
+                            <table class="table" style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr class="text-center fw-bold">
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Rate</th>
+                                        <th>Amount</th>
+                                        <th>Remark</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="o.donation_home_service_line_ids" t-as="line" t-key="line.id">
-                                        <tr class="bg-light">
-                                            <td class="text-center py-2">
-                                                <t t-esc="line.product_id.name"/>
-                                            </td>
-                                            <td class="text-center py-2">
-                                                <t t-esc="line.quantity"/>
-                                            </td>
-                                            <td class="text-center py-2">
-                                                <t t-esc="line.product_id.list_price"/> 
-                                            </td>
-                                            <td class="text-center fw-bold py-2">
-                                                <t t-esc="line.amount"/>
-                                            </td>
-                                            <td class="text-center py-2">
-                                                <t t-esc="line.remarks or '-'"/>
-                                            </td>
+                                        <tr style="page-break-inside: avoid;">
+                                            <td class="text-start"><t t-esc="line.product_id.name"/></td>
+                                            <td class="text-end"><t t-esc="line.quantity"/></td>
+                                            <td class="text-end"><t t-esc="line.product_id.list_price"/></td>
+                                            <td class="text-end fw-bold"><t t-esc="line.amount"/></td>
+                                            <td class="text-start"><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
                             </table>
                         </div>
-                        <div class="mb-4">
-                            <div class="col-12" style="font-size: 1em;"> 
-                        
-                                <div class="d-flex mb-2">
-                                    <div style="width: 200px;">Service Charges:</div>
-                                    <div>
-                                        Rs <t t-esc="o.service_charges or '0.00'"/>
-                                        <span style="font-style: italic; font-size: 0.9em;"></span>
+
+                        <!-- Summary Section -->
+                        <div class="mb-3 pos-section">
+                            <div class="row">
+                                <div class="col-6 text-start">
+                                    <div class="row mb-1">
+                                        <div class="col-5 fw-bold">Service Charges:</div>
+                                        <div class="col-7">Rs <t t-esc="o.service_charges or '0.00'"/></div>
+                                    </div>
+                                    <div class="row mb-1">
+                                        <div class="col-5 fw-bold">Donor Address:</div>
+                                        <div class="col-7"><t t-esc="o.donor_id.street or ''"/></div>
+                                    </div>
+                                    <div class="row mb-1">
+                                        <div class="col-5 fw-bold">Entered By:</div>
+                                        <div class="col-7"><t t-esc="o.env.user.name"/></div>
                                     </div>
                                 </div>
-                        
-                                <div class="d-flex mb-2">
-                                    <div style="width: 200px;">Donor Address:</div>
-                                    <div style="border-bottom: 1px solid black; width: 400px;">
-                                        <t t-esc="o.donor_id.street or ''"/>
-                                    </div>
-                                </div>                
-                        
-                                <div class="d-flex mb-2">
-                                    <div style="width: 200px;">Entered by:</div>
-                                    <div style="border-bottom: 1px solid black; width: 200px;">
-                                        <t t-esc="o.env.user.name"/>
+                                <div class="col-6 text-end">
+                                    <div class="row mb-1">
+                                        <div class="col-5 fw-bold">Total Amount:</div>
+                                        <div class="col-7 fw-bold">Rs <t t-esc="o.total_amount or '0.00'"/></div>
                                     </div>
                                 </div>
-                        
-                                <div class="d-flex mb-2">
-                                    <div style="width: 200px;">Total Amount:</div>
-                                    <div style="border-bottom: 1px solid black; width: 200px;">
-                                        Rs <t t-esc="o.total_amount or '0.00'"/>
-                                    </div>
-                                </div>
-                        
                             </div>
                         </div>
 
-                        <div style="text-align: center; font-size: 12px;">
+                        <!-- Footer -->
+                        <div class="text-center mt-3">
                             Powered by BytesNode
                         </div>
+
                     </t>
                 </t>
             </t>
         </template>
 
+        <!-- A5 Paper Format -->
         <record id="report_donation_home_service_paperformat" model="report.paperformat">
-            <field name="name">A4 - Donation Home Service Receipt Format</field>
-            <field name="format">A4</field>
+            <field name="name">A5 - Donation Home Service Receipt</field>
+            <field name="format">A5</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">85</field>
+            <field name="margin_top">20</field>
             <field name="margin_bottom">15</field>
-            <field name="margin_left">18</field>
-            <field name="margin_right">14</field>
-            <field name="header_spacing">35</field>
+            <field name="margin_left">10</field>
+            <field name="margin_right">10</field>
+            <field name="header_spacing">10</field>
         </record>
 
+        <!-- Report Action -->
         <record id="report_donation_home_service" model="ir.actions.report">
             <field name="name">Donation Home Service Receipt</field>
             <field name="model">donation.home.service</field>
@@ -200,5 +242,4 @@
             <field name="paperformat_id" ref="report_donation_home_service_paperformat"/>
         </record>
     </data>
-    
 </odoo>
