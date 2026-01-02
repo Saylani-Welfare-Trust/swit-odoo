@@ -8,7 +8,7 @@
 }
 
 @page {
-    margin-top: 460px;
+    margin-top: 360px;
     padding: 0; /* A4 page margins */
 }
 
@@ -28,7 +28,7 @@
         color: black !important;
     }
     .render-container .pos-receipt {
-        width: 210mm !important;
+        width: 200mm !important;
         min-height: auto !important; /* important: do not force 297mm */
         margin: 0 auto !important;
         padding: 10mm; /* optional */
