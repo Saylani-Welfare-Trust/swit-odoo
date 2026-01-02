@@ -108,7 +108,7 @@
                                 <!-- Right Column -->
                                 <div class="col-6 text-end">
                                     <div class="row mb-1">
-                                        <div class="col-5 fw-bold">Date & Time:</div>
+                                        <div class="col-5 fw-bold">Date &amp; Time:</div>
                                         <div class="col-7"><t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/></div>
                                     </div>
                                     <div class="row mb-1">
