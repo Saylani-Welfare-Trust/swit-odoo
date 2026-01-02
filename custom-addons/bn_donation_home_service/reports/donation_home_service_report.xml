@@ -7,6 +7,7 @@
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-call="web.external_layout">
+
                         <style>
                             /* Global Styles */
                             body {
@@ -39,178 +40,138 @@
                                 font-size: 12px;
                             }
 
-                            .fw-bold {
-                                font-weight: bold;
-                            }
+                            .fw-bold { font-weight: bold; }
+                            .text-center { text-align: center; }
+                            .text-start { text-align: left; }
+                            .text-end { text-align: right; }
+                            .mb-1 { margin-bottom: 2px; }
+                            .mb-2 { margin-bottom: 4px; }
+                            .mb-3 { margin-bottom: 6px; }
+                            .mb-4 { margin-bottom: 8px; }
+                            .mt-1 { margin-top: 2px; }
+                            .mt-2 { margin-top: 4px; }
+                            .mt-3 { margin-top: 6px; }
+                            .p-1 { padding: 2px; }
+                            .p-2 { padding: 4px; }
+                            .pos-section { page-break-inside: avoid; }
 
-                            .text-center {
-                                text-align: center;
-                            }
-
-                            .text-start {
-                                text-align: left;
-                            }
-
-                            .text-end {
-                                text-align: right;
-                            }
-
-                            .mb-1 {
-                                margin-bottom: 2px;
-                            }
-
-                            .mb-2 {
-                                margin-bottom: 4px;
-                            }
-
-                            .mb-3 {
-                                margin-bottom: 6px;
-                            }
-
-                            .mb-4 {
-                                margin-bottom: 8px;
-                            }
-
-                            .mt-1 {
-                                margin-top: 2px;
-                            }
-
-                            .mt-2 {
-                                margin-top: 4px;
-                            }
-
-                            .mt-3 {
-                                margin-top: 6px;
-                            }
-
-                            .p-1 {
-                                padding: 2px;
-                            }
-
-                            .p-2 {
-                                padding: 4px;
-                            }
-
-                            .pos-section {
-                                page-break-inside: avoid;
+                            /* Flex wrapper for dynamic top spacing */
+                            .receipt-wrapper {
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: flex-start; /* default, changes if needed */
+                                min-height: calc(100vh - 20px); /* adjust for top header space */
                             }
                         </style>
 
-                        <!-- Watermark -->
-                        <div class="watermark">PROVISIONAL</div>
-
-                        <!-- Top spacing for page -->
-                        <div style="height: 30px;"></div>
-
-                        <!-- Header Row -->
-                        <div class="row mb-3 pos-section">
-                            <div class="col-6 text-start">
+                        <!-- Top predefined header with watermark -->
+                        <div class="header-top" style="position: relative; height: 80px; width: 100%;">
+                            <div class="watermark">PROVISIONAL</div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; text-align: center;">
                                 <h1>Provisional Receipt (DHS)</h1>
-                            </div>
-                            <div class="col-6 text-end">
                                 <span class="fw-bold">
                                     Saylani Welfare International Trust
                                     <t t-if="o.env.user.employee_id.analytic_account_id">
-                                        (<t t-esc="o.env.user.employee_id.analytic_account_id.code"/>)
+                                        (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
                                     </t>
                                 </span>
                             </div>
                         </div>
 
-                        <!-- Donor & Receipt Info -->
-                        <div class="row mb-3 pos-section">
-                            <!-- Left Column -->
-                            <div class="col-6 text-start">
-                                <div class="row mb-1">
-                                    <div class="col-5 fw-bold">DHS #:</div>
-                                    <div class="col-7"><t t-esc="o.name or '--'"/></div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-5 fw-bold">Donor Name:</div>
-                                    <div class="col-7"><t t-esc="o.donor_id.name or '-'"/></div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-5 fw-bold">Contact No:</div>
-                                    <div class="col-7">
-                                        <t t-if="o.mobile">
-                                            <t t-if="o.donor_id.country_code_id"><t t-esc="o.donor_id.country_code_id.name"/> </t>
-                                            <t t-esc="o.mobile"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Main content wrapper -->
+                        <div class="receipt-wrapper">
 
-                            <!-- Right Column -->
-                            <div class="col-6 text-end">
-                                <div class="row mb-1">
-                                    <div class="col-5 fw-bold">Date & Time:</div>
-                                    <div class="col-7"><t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/></div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-5 fw-bold">Total Amount:</div>
-                                    <div class="col-7 fw-bold">Rs <t t-esc="o.total_amount or '0.00'"/></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Items Table -->
-                        <div class="mb-3 pos-section">
-                            <h4 class="fw-bold mb-2">Donation Home Service Details</h4>
-                            <table class="table" style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr class="text-center fw-bold">
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>Rate</th>
-                                        <th>Amount</th>
-                                        <th>Remark</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="o.donation_home_service_line_ids" t-as="line" t-key="line.id">
-                                        <tr style="page-break-inside: avoid;">
-                                            <td class="text-start"><t t-esc="line.product_id.name"/></td>
-                                            <td class="text-end"><t t-esc="line.quantity"/></td>
-                                            <td class="text-end"><t t-esc="line.product_id.list_price"/></td>
-                                            <td class="text-end fw-bold"><t t-esc="line.amount"/></td>
-                                            <td class="text-start"><t t-esc="line.remarks or '-'"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Summary Section -->
-                        <div class="mb-3 pos-section">
-                            <div class="row">
+                            <!-- Donor & Receipt Info -->
+                            <div class="row mb-3 pos-section">
+                                <!-- Left Column -->
                                 <div class="col-6 text-start">
                                     <div class="row mb-1">
-                                        <div class="col-5 fw-bold">Service Charges:</div>
-                                        <div class="col-7">Rs <t t-esc="o.service_charges or '0.00'"/></div>
+                                        <div class="col-5 fw-bold">DHS #:</div>
+                                        <div class="col-7"><t t-esc="o.name or '--'"/></div>
                                     </div>
                                     <div class="row mb-1">
-                                        <div class="col-5 fw-bold">Donor Address:</div>
-                                        <div class="col-7"><t t-esc="o.donor_id.street or ''"/></div>
+                                        <div class="col-5 fw-bold">Donor Name:</div>
+                                        <div class="col-7"><t t-esc="o.donor_id.name or '-'"/></div>
                                     </div>
                                     <div class="row mb-1">
-                                        <div class="col-5 fw-bold">Entered By:</div>
-                                        <div class="col-7"><t t-esc="o.env.user.name"/></div>
+                                        <div class="col-5 fw-bold">Contact No:</div>
+                                        <div class="col-7">
+                                            <t t-if="o.mobile">
+                                                <t t-if="o.donor_id.country_code_id"><t t-esc="o.donor_id.country_code_id.name"/> </t>
+                                                <t t-esc="o.mobile"/>
+                                            </t>
+                                            <t t-else="">-</t>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- Right Column -->
                                 <div class="col-6 text-end">
+                                    <div class="row mb-1">
+                                        <div class="col-5 fw-bold">Date & Time:</div>
+                                        <div class="col-7"><t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/></div>
+                                    </div>
                                     <div class="row mb-1">
                                         <div class="col-5 fw-bold">Total Amount:</div>
                                         <div class="col-7 fw-bold">Rs <t t-esc="o.total_amount or '0.00'"/></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Footer -->
-                        <div class="text-center mt-3">
-                            Powered by BytesNode
-                        </div>
+                            <!-- Items Table -->
+                            <div class="mb-3 pos-section">
+                                <h4 class="fw-bold mb-2">Donation Home Service Details</h4>
+                                <table class="table" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr class="text-center fw-bold">
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                            <th>Remark</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.donation_home_service_line_ids" t-as="line" t-key="line.id">
+                                            <tr style="page-break-inside: avoid;">
+                                                <td class="text-start"><t t-esc="line.product_id.name"/></td>
+                                                <td class="text-end"><t t-esc="line.quantity"/></td>
+                                                <td class="text-end"><t t-esc="line.product_id.list_price"/></td>
+                                                <td class="text-end fw-bold"><t t-esc="line.amount"/></td>
+                                                <td class="text-start"><t t-esc="line.remarks or '-'"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Summary Section -->
+                            <div class="mb-3 pos-section">
+                                <div class="row">
+                                    <div class="col-6 text-start">
+                                        <div class="row mb-1">
+                                            <div class="col-5 fw-bold">Service Charges:</div>
+                                            <div class="col-7">Rs <t t-esc="o.service_charges or '0.00'"/></div>
+                                        </div>
+                                        <div class="row mb-1">
+                                            <div class="col-5 fw-bold">Donor Address:</div>
+                                            <div class="col-7"><t t-esc="o.donor_id.street or ''"/></div>
+                                        </div>
+                                        <div class="row mb-1">
+                                            <div class="col-5 fw-bold">Entered By:</div>
+                                            <div class="col-7"><t t-esc="o.env.user.name"/></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <div class="row mb-1">
+                                            <div class="col-5 fw-bold">Total Amount:</div>
+                                            <div class="col-7 fw-bold">Rs <t t-esc="o.total_amount or '0.00'"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div> <!-- End of receipt-wrapper -->
 
                     </t>
                 </t>
