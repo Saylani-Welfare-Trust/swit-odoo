@@ -14,9 +14,6 @@
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total))" />
 
-                <!-- Top Space -->
-                <div style="height: 460px;"></div>
-
                 <div style="
                     min-height: calc(100vh - 460px);
                     display: flex;
@@ -187,7 +184,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </xpath>
