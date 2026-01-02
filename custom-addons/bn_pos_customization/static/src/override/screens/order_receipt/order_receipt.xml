@@ -128,8 +128,8 @@
                             </div>
                             
                             <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                                <div class="col-4 fw-medium">Cheque Date:</div>
-                                <div class="col-8 fw-medium">
+                                <div class="col-4 fw-medium" t-if="order.cheque_date">Cheque Date:</div>
+                                <div class="col-8 fw-medium" t-if="order.cheque_date">
                                     <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
