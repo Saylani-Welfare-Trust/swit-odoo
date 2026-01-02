@@ -147,7 +147,7 @@
                     </div>
 
                     <!-- Items Table -->
-                    <table class="table table-bordered text-center mt-1" style="font-size: 14px; line-height: 1; page-break-inside: avoid;">
+                    <table class="table table-bordered text-center mt-1" style="font-size: 14px; line-height: 1; page-break-inside: auto;">
                         <thead>
                             <tr>
                                 <th class="py-1">Product</th>
@@ -159,7 +159,7 @@
                         </thead>
                         <tbody>
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                                <tr style="page-break-inside: avoid;">
+                                <tr style="page-break-inside: auto;">
                                     <td class="text-start py-1"><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
