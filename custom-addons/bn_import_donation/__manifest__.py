@@ -26,4 +26,4 @@
     ],
     'auto_install': False,
     'application': True,
-}
+} # type: ignore
