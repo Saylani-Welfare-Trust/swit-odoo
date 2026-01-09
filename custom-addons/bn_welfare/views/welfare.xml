@@ -42,7 +42,7 @@
                         <group name="welfare_col_1">
                             <field name="employee_category_id" invisible="1" />
                             <field name="is_synced" readonly="1" invisible="1" />
-
+                            <field name="is_individual" widget="boolean_toggle" invisible="1"/>
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register')]" readonly="state in ['recurring', 'disbursed']" required="1" />
                             <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'inquiry'" />
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
@@ -236,13 +236,39 @@
         </field>
     </record>
 
-    <record id="welfare_action" model="ir.actions.act_window">
+    <!-- <record id="welfare_action" model="ir.actions.act_window">
         <field name="name">Welfare</field>
         <field name="res_model">welfare</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's create a Disbursement Request....
+            </p>
+        </field>
+    </record> -->
+
+    <record id="welfare_action_individual" model="ir.actions.act_window">
+        <field name="name">Individual Disbursement</field>
+        <field name="res_model">welfare</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[("is_individual", "=", True)]</field>
+        <field name="context">{'default_is_individual': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create an Individual Disbursement Request....
+            </p>
+        </field>
+    </record>
+
+    <record id="welfare_action_institution" model="ir.actions.act_window">
+        <field name="name">Institution Disbursement</field>
+        <field name="res_model">welfare</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[("is_individual", "=", False)]</field>
+        <field name="context">{'default_is_individual': False, 'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create an Institution Disbursement Request....
             </p>
         </field>
     </record>
@@ -252,13 +278,43 @@
         name="Welfare"
         web_icon="bn_welfare,static/description/icon.png"
         groups="bn_welfare.welfare_group"
+        action="welfare_action_institution"
         sequence="6"/>
 
     <menuitem
         id="disbursement_request_menu"
         name="Disbursement Request"
-        action="welfare_action"
         parent="welfare_menu"
         sequence="0"/>
 
+    <menuitem
+        id="disbursement_request_menu_individual"
+        name="Individual Disbursement"
+        parent="disbursement_request_menu"
+        action="welfare_action_individual"
+        sequence="1"/>
+
+    <menuitem
+        id="disbursement_request_menu_institution"
+        name="Institution Disbursement"
+        parent="disbursement_request_menu"
+        action="welfare_action_institution"
+        sequence="2"/>
+    <menuitem    
+        id="menu_fetch_institution_applications"
+        name="Fetch Institution Applications"
+        parent="welfare_menu"
+        sequence="100"/>
+    <menuitem    
+        id="fetch_institution_applications"
+        name="Fetch"
+        parent="menu_fetch_institution_applications"
+        action="action_fetch_institution_applications"
+        sequence="100"/>
+
+    <menuitem id="menu_welfare_institution_fetch_log" 
+        name="Logs"
+        parent="menu_fetch_institution_applications" 
+        action="action_welfare_institution_fetch_log" 
+        sequence="99"/>
 </odoo>

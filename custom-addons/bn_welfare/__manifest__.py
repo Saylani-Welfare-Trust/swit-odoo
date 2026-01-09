@@ -13,12 +13,14 @@
     'data': [
         'data/sequence.xml',
         'data/hr_employee_category.xml',
+        'data/server_action_fetch_welfare.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/welfare.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',
+        'views/welfare_institution_fetch_log.xml',
     ],
     'auto_install': False,
     'application': True,
@@ -27,4 +29,4 @@
             'bn_welfare/static/src/app/**/*',
         ],
     }
-}
+} # type: ignore

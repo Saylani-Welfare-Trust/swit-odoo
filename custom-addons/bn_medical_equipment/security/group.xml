@@ -25,5 +25,9 @@
     <record id="medical_equipment_delete_access_group" model="res.groups">
         <field name="name">Medical Equipment / Delete Access</field>
     </record>
+    
+    <record id="medical_equipment_pos_action_group" model="res.groups">
+        <field name="name">Medical Equipment / POS Action</field>
+    </record>
 
 </odoo>

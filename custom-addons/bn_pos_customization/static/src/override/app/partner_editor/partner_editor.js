@@ -119,17 +119,18 @@ patch(PartnerDetailsEdit.prototype, {
                 ['mobile', '=', mobile], 
                 ['category_id.name', 'in', ['Donor']],
                 ['category_id.name', 'in', ['Individual']],
-                ['state', '=','register']);  // Use array with correct structure
+                );  // Use array with correct structure
         } else if (donor_type === 'coorporate') {
             domain.push('|', 
                 ['mobile', '=', mobile], 
                 ['cnic_no', '=', cnic_no], 
                 ['category_id.name', 'in', ['Donor']],
                 ['category_id.name', 'in', ['Coorporate / Institute']],
-                ['state', '=','register']); 
+                ); 
         }
-
+        
         const res_partner = await this.orm.call('res.partner', 'search', [domain]);
+        console.log('res_partner', res_partner);
 
         if (res_partner && res_partner.length > 0) {
             return this.popup.add(ErrorPopup, {

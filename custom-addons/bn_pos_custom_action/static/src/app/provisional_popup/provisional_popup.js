@@ -157,6 +157,15 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 payload.microfinance_id = data.id;  // Store microfinance_id for creating record if needed
                 payload.amount = data.amount;  // Store amount from microfinance request
 
+                if (data.state === 'paid') {
+                    this.notification.add(_t("Security deposit already paid"), {
+                        type: "info",
+                    });
+                    
+                    this.cancel();
+                    return;
+                }
+
                 if (data.deposit_exists) {
                     this.notification.add(_t("Existing deposit found"), {
                         type: "info",
@@ -196,7 +205,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             //         // ]);
             //     }
             // });
-                
+
             const securityProduct = await this.orm.searchRead(
                 'product.product',
                 [
