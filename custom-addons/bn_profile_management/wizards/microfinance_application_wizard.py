@@ -19,8 +19,6 @@ class MicrofinanceApplicationWizard(models.TransientModel):
             ('donee_id', '=', self.partner_id.id),
             ('microfinance_scheme_id', '=', self.microfinance_scheme_id.id),
             ('state', '!=', 'rejected'),
-            ('in_recovery', '=', False),
-
         ], limit=1)
 
         if existing:
