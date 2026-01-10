@@ -2,185 +2,161 @@
 <odoo>
 
     <data>
-        <template id="direct_deposit_receipt_template_provisional">
+        <!-- ===================== -->
+        <!-- Direct Deposit Receipt -->
+        <!-- ===================== -->
+        <template id="bn_direct_deposit.direct_deposit_receipt_template_provisional">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-call="web.external_layout">
-                        <div class="page" style="position: relative;">
+
+                        <!-- PAGE WRAPPER -->
+                        <div class="page" style="margin-top: 360px; position:relative;">
+
+                            <!-- ===== STYLES ===== -->
                             <style>
-                                h1 {
-                                    font-size: 1.5em;
-                                    margin: 3px;
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    font-size: 11px;
                                 }
 
+                                h1 {
+                                    font-size: 14px;
+                                    font-weight: bold;
+                                    margin: 2px 0;
+                                }
+
+                                h4 {
+                                    font-size: 12px;
+                                    margin: 6px 0;
+                                    font-weight: bold;
+                                }
+
+                                table {
+                                    font-size: 11px;
+                                    border-collapse: collapse;
+                                }
+
+                                th, td {
+                                    padding: 3px 4px !important;
+                                }
+
+                                /* ✅ FIXED WATERMARK */
                                 .watermark {
-                                    position: fixed; /* important: appears on every page */
-                                    top: 50%;        /* vertical center */
-                                    left: 50%;       /* horizontal center */
-                                    transform: translate(-50%, -50%) rotate(-30deg); /* center + rotate */
-                                    font-size: 150px;
-                                    color: rgba(200, 200, 200, 0.15); /* lighter for printing */
+                                    position: absolute; /* was fixed */
+                                    top: 120px;         /* adjust if needed */
+                                    left: 50%;
+                                    transform: translateX(-50%) rotate(-30deg);
+                                    font-size: 80px;
+                                    color: rgba(200, 200, 200, 0.15);
                                     font-weight: bold;
                                     white-space: nowrap;
-                                    pointer-events: none; /* don't block clicks */
-                                    user-select: none;
-                                    z-index: 0; /* behind all content */
+                                    pointer-events: none;
+                                    z-index: 0;
                                 }
                             </style>
-                            
-                            <div class="watermark" style="padding-top: 600px; padding-right: 250px;">PROVISIONAL</div>
-                            
-                            <div class="mt-5 clearfix"/>
 
-                            <div class="row mb-4">
-                                <div class="col-6 text-start">
-                                    <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; margin: 3px;">
-                                        Provisional Receipt
-                                    </h1>
+                            <!-- ===== WATERMARK ===== -->
+                            <div class="watermark">PROVISIONAL</div>
+
+                            <!-- ===== HEADER ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <h1>Provisional Receipt</h1>
                                 </div>
-                                
-                                <div class="col-6 position-relative">
-                                    <h1 class="text-transform" style="font-size: 1.5em; font-weight: bold; color: black; position: absolute; right: 5px; margin: 3px; white-space: nowrap;">
-                                        Saylani Welfare International Trust
+                                <div class="col-6 text-end">
+                                    <h1>
+                                        Saylani Welfare International Trust<br/>
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
-                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.code"/>)
+                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
                                         </t>
-                                        
                                     </h1>
                                 </div>
-
                             </div>
-                            <div class="row mb-4">
-                                <div class="col-6 pe-3">
-                                    <t t-import="datetime"/>
-                                    
-                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;">DHS #:</div>
-                                        <div class="w-60 fw-semibold small">
-                                            <t t-esc="o.name or '--'"/>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;">Donor Name:</div>
-                                        <div class="w-60 fw-semibold small">
-                                            <t t-esc="o.donor_id.name or '-'"/>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex mb-2" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;">
-                                            Transaction No.
-                                        </div>
-                                        <div class="w-60 fw-semibold small" style="border-bottom: 1px solid black;">
-                                            <t t-esc="o.transaction_ref or ''"/>
-                                        </div>
-                                    </div>                                  
+
+                            <hr style="margin:4px 0"/>
+
+                            <!-- ===== BASIC INFO ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>Transaction No.:</strong> <t t-esc="o.transaction_ref or ''"/></div>
                                 </div>
-                            
-                                <div class="col-6 ps-0">
-                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;">Date &amp; Time:</div>
-                                        <div class="w-60 small">
-                                            <t t-esc="o.create_date and o.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/>
-                                        </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong>Date:</strong>
+                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
                                     </div>
-
-                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;"> Donor Contact No:</div>
-                                        <div class="w-60 fw-semibold small">
-
-                                            <t t-if="o.mobile">
-                                                <t t-if="o.donor_id.country_code_id">
-                                                    <t t-esc="o.donor_id.country_code_id.name"/> 
-                                                </t>
-                                                <t t-esc="o.mobile"/>
-                                            </t>
-                                        </div>
+                                    <div>
+                                        <strong>Contact No.:</strong>
+                                        <t t-esc="o.mobile or '-'"/>
                                     </div>
-
-                                    <div class="d-flex mb-1" style="font-size: 1.2em;">
-                                        <div class="w-40 small" style="padding-right: 5px;">Amount:</div>
-                                        <div class="w-60 fw-semibold small">
-                                            <t t-esc="o.amount or '0.00'"/>
-                                        </div>
+                                    <div>
+                                        <strong>Total Amount:</strong>
+                                        <t t-esc="o.amount or '0.00'"/>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-4">
-                                <h4 class="fw-bold mb-3">Donation Home Service Details</h4>
-                                <table class="table table-bordered border-2">
-                                    <thead class="text-black">
+                            <!-- ===== ITEMS ===== -->
+                            <h4>Direct Deposit Details</h4>
+
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Rate</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.direct_deposit_line_ids" t-as="line">
                                         <tr>
-                                            <th class="text-center fw-bold">Product</th>
-                                            <th class="text-center fw-bold">Quantity</th>
-                                            <th class="text-center fw-bold">Rate</th>
-                                            <th class="text-center fw-bold">Amount Collected</th>
-                                            <th class="text-center fw-bold">Remark</th> 
+                                            <td><t t-esc="line.product_id.name"/></td>
+                                            <td class="text-end"><t t-esc="line.quantity"/></td>
+                                            <td class="text-end"><t t-esc="line.product_id.list_price"/></td>
+                                            <td class="text-end"><t t-esc="line.amount"/></td>
+                                            <td><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
+                                    </t>
+                                </tbody>
+                            </table>
 
-                                        <t t-foreach="o.direct_deposit_line_ids" t-as="line" t-key="line.id">
-                                            <tr class="bg-light">
-                                                <td class="text-center py-2">
-                                                    <t t-esc="line.product_id.name"/>
-                                                </td>
-                                                <td class="text-center py-2">
-                                                    <t t-esc="line.quantity"/>
-                                                </td>
-                                                <td class="text-center py-2">
-                                                    <t t-esc="line.product_id.list_price"/> 
-                                                </td>
-                                                <td class="text-center fw-bold py-2">
-                                                    <t t-esc="line.amount"/>
-                                                </td>
-                                                <td class="text-center py-2">
-                                                    <t t-esc="line.remarks or '-'"/>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mb-4">
-                                <div class="col-12" style="font-size: 1em;">              
-                            
-                                    <div class="d-flex mb-2">
-                                        <div style="width: 200px;">Entered by:</div>
-                                        <div style="border-bottom: 1px solid black; width: 200px;">
-                                            <t t-esc="o.env.user.name"/>
-                                        </div>
-                                    </div>
-                            
-                                    <div class="d-flex mb-2">
-                                        <div style="width: 200px;">Amount:</div>
-                                        <div style="border-bottom: 1px solid black; width: 200px;">
-                                            Rs <t t-esc="o.amount or '0.00'"/>
-                                        </div>
-                                    </div>
-                            
+                            <hr style="margin:4px 0"/>
+
+                            <!-- ===== TOTALS ===== -->
+                            <div class="row">
+                                <div class="col-6">
+                                    <div><strong>Entered By:</strong> <t t-esc="o.env.user.name"/></div>
                                 </div>
-                            </div>         
-                        </div>
+                                <div class="col-6 text-end">
+                                    <div><strong>Total Amount:</strong> Rs <t t-esc="o.amount or 0.0"/></div>
+                                </div>
+                            </div>
 
-                        <div style="text-align: center; font-size: 12px;">
-                            Powered by BytesNode
-                        </div>
+                        </div> <!-- END PAGE -->
+
                     </t>
                 </t>
             </t>
         </template>
 
+        <!-- ===================== -->
+        <!-- A5 Paper Format -->
+        <!-- ===================== -->
         <record id="report_direct_deposit_paperformat" model="report.paperformat">
-            <field name="name">A4 - Direct Deposit Receipt Format</field>
-            <field name="format">A4</field>
+            <field name="name">A5 - Direct Deposit Receipt</field>
+            <field name="format">A5</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">85</field>
-            <field name="margin_bottom">15</field>
-            <field name="margin_left">18</field>
-            <field name="margin_right">14</field>
-            <field name="header_spacing">35</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">8</field>
+            <field name="margin_right">8</field>
+            <field name="header_spacing">10</field>
+            <field name="dpi">90</field>
         </record>
 
         <record id="report_direct_deposit_provisional" model="ir.actions.report">
@@ -194,6 +170,6 @@
             <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
             <field name="paperformat_id" ref="report_direct_deposit_paperformat"/>
         </record>
+
     </data>
-    
 </odoo>

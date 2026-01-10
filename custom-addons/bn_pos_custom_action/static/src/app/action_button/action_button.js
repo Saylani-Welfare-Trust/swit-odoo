@@ -31,6 +31,7 @@ export class ActionButton extends Component {
         // if (!this.selectedOrderline) {
         //     return;
         // }
+        // console.log(this);
 
         this.popup.add(ActionScreen);
     }
