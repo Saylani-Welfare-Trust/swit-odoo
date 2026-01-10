@@ -4,11 +4,6 @@ from odoo import models, fields
 class PosPaymentMethod(models.Model):
     _inherit = 'pos.payment.method'
 
-    skip_slip_input = fields.Boolean(
-        string='Skip Slip Input in Closing',
-        help="If checked, this payment method will not require slip number and payment breakdown in closing session. All payments will be managed as a single total, like the default Odoo flow."
-    )
-
 
     restricted_account_id = fields.Many2one(
         'account.account',
@@ -30,5 +25,3 @@ class PosPaymentMethod(models.Model):
         # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
         help="Account for neutral receivable amounts"
     )
-
-    

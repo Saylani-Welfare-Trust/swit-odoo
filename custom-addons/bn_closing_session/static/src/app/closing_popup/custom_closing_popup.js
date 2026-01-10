@@ -58,22 +58,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             };
         };
 
-        // Helper to check if slip input should be shown for a payment method
-        this.shouldShowSlipInput = (pm) => {
-            if (!pm) return false;
-            return !(pm.skip_slip_input === true || pm.skip_slip_input === 'true');
-        };
-
-        // Helper to check if difference should be shown for a payment method
-        this.shouldShowDifference = (pm) => {
-            if (!pm) return true;
-            // For skip_slip_input, do not show difference (always zero)
-            if (pm.skip_slip_input === true || pm.skip_slip_input === 'true') {
-                return false;
-            }
-            return true;
-        };
-
         // 🔥 Cleanup after UI mounts
         onMounted(async () => {
             try {
@@ -111,37 +95,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     canConfirm() {
-        // Only require confirmation if any non-skip payment method has a nonzero difference
-        const cash = this.props.default_cash_details;
-        const cashDiff = this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(cashDiff)) {
-            return false;
-        }
-        for (const pm of this.props.other_payment_methods || []) {
-            if (this.shouldShowDifference(pm) && !this.env.utils.floatIsZero(this.getDifference(pm.id))) {
-                return false;
-            }
-        }
         return Object.values(this.state.payments)
             .map(v => v.counted)
             .every(this.env.utils.isValidFloat);
     }
 
     async confirm() {
-        // Only show difference confirmation if any non-skip payment method has a nonzero difference
-        const cash = this.props.default_cash_details;
-        const cashDiff = this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;
-        let hasDiff = false;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(cashDiff)) {
-            hasDiff = true;
-        }
-        for (const pm of this.props.other_payment_methods || []) {
-            if (this.shouldShowDifference(pm) && !this.env.utils.floatIsZero(this.getDifference(pm.id))) {
-                hasDiff = true;
-                break;
-            }
-        }
-        if (!this.pos.config.cash_control || !hasDiff) {
+        if (!this.pos.config.cash_control || this.env.utils.floatIsZero(this.getMaxDifference())) {
             await this.closeSession();
             return;
         }
@@ -175,18 +135,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (!this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) {
             return NaN;
         }
+
         let expectedAmount = 0;
-        let pm = null;
         if (paymentId === this.props.default_cash_details?.id) {
             expectedAmount = this.props.default_cash_details?.amount || 0;
-            pm = this.props.default_cash_details;
         } else {
-            pm = (this.props.other_payment_methods || []).find((m) => m.id === paymentId);
+            const pm = (this.props.other_payment_methods || []).find((m) => m.id === paymentId);
             expectedAmount = pm?.amount || 0;
-        }
-        // For skip_slip_input, always return 0
-        if (pm && (pm.skip_slip_input === true || pm.skip_slip_input === 'true')) {
-            return 0;
         }
         return this.getEffectiveCounted(paymentId) - expectedAmount;
     }
