@@ -300,19 +300,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'microfinance',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donee_id', 'microfinance_line_ids', 'microfinance_recovery_line_ids'],
+                ['name', 'state', 'donee_id', 'microfinance_line_ids'],
                 { limit: 1 }
             );
             // console.log(record);
             if (!record.length) return this.handleRecordNotFound();
-            
-            if (record[0].microfinance_recovery_line_ids && record[0].microfinance_recovery_line_ids.length > 0) {
-            this.notification.add(
-                "Recovery lines are created for this record. You cannot process installments.",
-                { type: 'danger' }
-            );
-            return;
-        }
             if (record[0].state !== 'done') {
                 this.notification.add("Unauthorized Request State", { type: 'warning' });
                 return;
@@ -738,7 +730,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 ['id'],
                 { limit: 1 }
             );
-            
+
             if (serviceProduct.length) {
                 // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
