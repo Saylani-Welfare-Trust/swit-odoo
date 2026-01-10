@@ -19,10 +19,11 @@
                                 <th class="text-start">Payment Method</th>
                                 <th class="text-start">Expected</th>
                                 <th class="text-start">Difference</th>
-                                <th  class="text-start" style="width:20%">Count</th>
-                                <th class="text-start">Slip No.</th>
-                                <th class="text-start">Amount</th>
-                                <th class="text-start">Action</th>
+                                <!-- Remove Count column, and conditionally show slip columns -->
+                                <!-- Count column removed -->
+                                <th class="text-start" t-if="shouldShowSlipInput(pm)">Slip No.</th>
+                                <th class="text-start" t-if="shouldShowSlipInput(pm)">Amount</th>
+                                <th class="text-start" t-if="shouldShowSlipInput(pm)">Action</th>
                             </tr>
                         </thead>
                         <t t-if="pos.config.cash_control">
@@ -46,15 +47,15 @@
                                     <td class="px-1 py-1" t-esc="env.utils.formatCurrency(getRestrictedDifference(props.default_cash_details.id))"
                                         t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getRestrictedDifference(props.default_cash_details.id))}"/>
                                     <td class="text-center px-1 py-1">----</td>
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Slip No."
                                             t-model="state.newLines[props.default_cash_details.id].restricted.ref"/>
                                     </td>
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Amount"
                                             t-model="state.newLines[props.default_cash_details.id].restricted.amount"/>
                                     </td>
-                                    <td class="text-center px-1 py-1">
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <button class="btn btn-secondary" 
                                             t-on-click="() => handleAddLine(props.default_cash_details.id, 'restricted')">➕</button>
                                     </td>
@@ -65,9 +66,9 @@
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="text-center px-1 py-1">----</td>
-                                    <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
-                                    <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
-                                    <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                    <td class="text-center px-1 py-1 text-dark" t-if="shouldShowSlipInput(props.default_cash_details)"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end px-1 py-1 text-dark" t-if="shouldShowSlipInput(props.default_cash_details)"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)"><button class="btn btn-danger" 
                                         t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'restricted')">❌</button></td>
                                 </tr>
 
@@ -77,15 +78,15 @@
                                     <td class="px-1 py-1" t-esc="env.utils.formatCurrency(getUnrestrictedDifference(props.default_cash_details.id))"
                                         t-att-class="{'warning text-danger fw-bolder': !env.utils.floatIsZero(getUnrestrictedDifference(props.default_cash_details.id))}"/>
                                     <td class="text-center px-1 py-1">----</td>
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Slip No."
                                             t-model="state.newLines[props.default_cash_details.id].unrestricted.ref"/>
                                     </td>
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Amount"
                                             t-model="state.newLines[props.default_cash_details.id].unrestricted.amount"/>
                                     </td>
-                                    <td class="text-center px-1 py-1">
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <button class="btn btn-secondary" 
                                             t-on-click="() => handleAddLine(props.default_cash_details.id, 'unrestricted')">➕</button>
                                     </td>
@@ -96,9 +97,9 @@
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="text-center px-1 py-1">----</td>
                                     <td class="text-center px-1 py-1">----</td>
-                                    <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
-                                    <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
-                                    <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                    <td class="text-center px-1 py-1 text-dark" t-if="shouldShowSlipInput(props.default_cash_details)"><t t-esc="line?.ref || ''"/></td>
+                                    <td class="text-end px-1 py-1 text-dark" t-if="shouldShowSlipInput(props.default_cash_details)"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)"><button class="btn btn-danger" 
                                         t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
                                 </tr>
 
@@ -113,17 +114,17 @@
 
                                     <td class="text-center px-1 py-1">----</td>
 
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Slip No."
                                             t-model="state.newLines[props.default_cash_details.id].neutral.ref"/>
                                     </td>
 
-                                    <td class="px-1 py-1">
+                                    <td class="px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <input class="form-control" placeholder="Amount"
                                             t-model="state.newLines[props.default_cash_details.id].neutral.amount"/>
                                     </td>
 
-                                    <td class="text-center px-1 py-1">
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <button class="btn btn-secondary"
                                             t-on-click="() => handleAddLine(props.default_cash_details.id, 'neutral')">➕</button>
                                     </td>
@@ -136,11 +137,13 @@
                                     <td class="px-1 py-1">----</td>
                                     <td class="px-1 py-1">----</td>
 
-                                    <td class="px-1 py-1 text-dark"><t t-esc="line.ref"/></td>
-                                    <td class="px-1 py-1 text-end text-dark"
-                                        t-esc="formatCurrencyNeutral(line.amount)"/>
-
-                                    <td class="text-center px-1 py-1">
+                                    <td class="px-1 py-1 text-dark" t-if="shouldShowSlipInput(props.default_cash_details)">
+                                        <t t-esc="line.ref"/>
+                                    </td>
+                                    <td class="px-1 py-1 text-end text-dark" t-if="shouldShowSlipInput(props.default_cash_details)">
+                                        <t t-esc="formatCurrencyNeutral(line.amount)"/>
+                                    </td>
+                                    <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(props.default_cash_details)">
                                         <button class="btn btn-danger"
                                             t-on-click="() => handleRemoveLine(props.default_cash_details.id, line.id, line.record_id, 'neutral')">❌</button>
                                     </td>
@@ -206,15 +209,15 @@
                                         <td class="px-1 py-1" t-if="_showDiff" t-esc="env.utils.formatCurrency(getRestrictedDifference(pm.id))"
                                             t-att-class="{'warning text-danger fw-bolder': getRestrictedDifference(pm.id)}"/>
                                         <td class="text-center px-1 py-1">----</td>
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Slip No."
                                                 t-model="state.newLines[pm.id].restricted.ref"/>
                                         </td>
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Amount"
                                                 t-model="state.newLines[pm.id].restricted.amount"/>
                                         </td>
-                                        <td class="text-center px-1 py-1">
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <button class="btn btn-secondary" 
                                                 t-on-click="() => handleAddLine(pm.id, 'restricted')">➕</button>
                                         </td>
@@ -225,9 +228,9 @@
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="text-center px-1 py-1">----</td>
-                                        <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
-                                        <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
-                                        <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                        <td class="text-center px-1 py-1 text-dark" t-if="shouldShowSlipInput(pm)"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end px-1 py-1 text-dark" t-if="shouldShowSlipInput(pm)"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)"><button class="btn btn-danger" 
                                             t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'restricted')">❌</button></td>
                                     </tr>
 
@@ -237,15 +240,15 @@
                                         <td class="px-1 py-1" t-if="_showDiff" t-esc="env.utils.formatCurrency(getUnrestrictedDifference(pm.id))"
                                             t-att-class="{'warning text-danger fw-bolder': getUnrestrictedDifference(pm.id)}"/>
                                         <td class="text-center px-1 py-1">----</td>
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Slip No."
                                                 t-model="state.newLines[pm.id].unrestricted.ref"/>
                                         </td>
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Amount"
                                                 t-model="state.newLines[pm.id].unrestricted.amount"/>
                                         </td>
-                                        <td class="text-center px-1 py-1">
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <button class="btn btn-secondary" 
                                                 t-on-click="() => handleAddLine(pm.id, 'unrestricted')">➕</button>
                                         </td>
@@ -256,9 +259,9 @@
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="text-center px-1 py-1">----</td>
                                         <td class="text-center px-1 py-1">----</td>
-                                        <td class="text-center px-1 py-1 text-dark"><t t-esc="line?.ref || ''"/></td>
-                                        <td class="text-end px-1 py-1 text-dark"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
-                                        <td class="text-center px-1 py-1"><button class="btn btn-danger" 
+                                        <td class="text-center px-1 py-1 text-dark" t-if="shouldShowSlipInput(pm)"><t t-esc="line?.ref || ''"/></td>
+                                        <td class="text-end px-1 py-1 text-dark" t-if="shouldShowSlipInput(pm)"><t t-esc="env.utils.formatCurrency(line?.amount || 0)"/></td>
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)"><button class="btn btn-danger" 
                                             t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'unrestricted')">❌</button></td>
                                     </tr>
 
@@ -275,17 +278,17 @@
 
                                         <td class="text-center px-1 py-1">----</td>
 
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Slip No."
                                                 t-model="state.newLines[pm.id].neutral.ref"/>
                                         </td>
 
-                                        <td class="px-1 py-1">
+                                        <td class="px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <input class="form-control" placeholder="Amount"
                                                 t-model="state.newLines[pm.id].neutral.amount"/>
                                         </td>
 
-                                        <td class="text-center px-1 py-1">
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <button class="btn btn-secondary"
                                                 t-on-click="() => handleAddLine(pm.id, 'neutral')">➕</button>
                                         </td>
@@ -297,11 +300,13 @@
                                         <td class="px-1 py-1">----</td>
                                         <td class="px-1 py-1">----</td>
 
-                                        <td class="px-1 py-1 text-dark"><t t-esc="line.ref"/></td>
-                                        <td class="px-1 py-1 text-end text-dark"
-                                            t-esc="formatCurrencyNeutral(line.amount)"/>
-
-                                        <td class="text-center px-1 py-1">
+                                        <td class="px-1 py-1 text-dark" t-if="shouldShowSlipInput(pm)">
+                                            <t t-esc="line.ref"/>
+                                        </td>
+                                        <td class="px-1 py-1 text-end text-dark" t-if="shouldShowSlipInput(pm)">
+                                            <t t-esc="formatCurrencyNeutral(line.amount)"/>
+                                        </td>
+                                        <td class="text-center px-1 py-1" t-if="shouldShowSlipInput(pm)">
                                             <button class="btn btn-danger"
                                                 t-on-click="() => handleRemoveLine(pm.id, line.id, line.record_id, 'neutral')">❌</button>
                                         </td>
