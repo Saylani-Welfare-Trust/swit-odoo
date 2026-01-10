@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Member Approval User Group -->
+    <record id="member_approval_group_user" model="res.groups">
+        <field name="name"> Member Approval User</field>
+        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
+        <field name="comment">Basic user access to Member Approval module</field>
+    </record>
+
+    <!-- HOD Group -->
+    <record id="member_approval_group_hod" model="res.groups">
+        <field name="name">Member Approval HOD</field>
+        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
+        <!-- <field name="implied_ids" eval="[(4, ref('member_approval_group_user'))]"/> -->
+        <field name="comment">HOD can approve in-budget internal transfer requests</field>
+    </record>
+
+    <!-- CFO Group -->
+    <record id="member_approval_group_cfo" model="res.groups">
+        <field name="name">Member Approval CFO</field>
+        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
+        <!-- <field name="implied_ids" eval="[(4, ref('member_approval_group_user'))]"/> -->
+        <field name="comment">CFO can approve out-of-budget internal transfer requests</field>
+    </record>
+
+    <!-- COO Group -->
+    <record id="member_approval_group_coo" model="res.groups">
+        <field name="name">Member Approval COO</field>
+        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
+        <!-- <field name="implied_ids" eval="[(4, ref('member_approval_group_user'))]"/> -->
+        <field name="comment">COO can approve out-of-budget internal transfer requests</field>
+    </record>
+
+    <!-- Manager Group -->
+    <record id="member_approval_group_manager" model="res.groups">
+        <field name="name">Member Approval Manager</field>
+        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
+        <!-- <field name="implied_ids" eval="[(4, ref('member_approval_group_hod')), (4, ref('member_approval_group_cfo')), (4, ref('member_approval_group_coo'))]"/> -->
+        <field name="comment">Full access to Member Approval module</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <!-- Tree View -->
+    <record id="material_request_view_tree" model="ir.ui.view">
+        <field name="name">material.request.view.tree</field>
+        <field name="model">material.request</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="request_date"/>
+                <field name="source_location_id"/>
+                <field name="dest_location_id"/>
+                <field name="total_amount"/>
+                <field name="is_in_budget"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ['budget_check', 'hod_approval', 'committee_approval']"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="material_request_view_form" model="ir.ui.view">
+        <field name="name">material.request.view.form</field>
+        <field name="model">material.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Check Budget" name="action_check_budget" type="object"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button string="HOD Approve" name="action_hod_approve" type="object"
+                            class="oe_highlight" invisible="state != 'hod_approval'"/>
+                    <button string="CFO Approve" name="action_cfo_approve" type="object"
+                            class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
+                    <button string="COO Approve" name="action_coo_approve" type="object"
+                            class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
+                    <button string="Reject" name="action_reject" type="object"
+                            invisible="state not in ['hod_approval', 'committee_approval']"/>
+                    <button string="Reset to Draft" name="action_reset_to_draft" type="object"
+                            invisible="state not in ['rejected']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck"
+                                invisible="not picking_id">
+                            <field name="picking_id" widget="statinfo" string="Transfer"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Reference"/>
+                        <h1><field name="name" class="oe_inline" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group name="request_info">
+                            <field name="user_id"/>
+                            <field name="request_date"/>
+                            <field name="source_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="dest_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                        </group>
+                        <group name="budget_info">
+                            <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="budget_position_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="total_amount"/>
+                            <field name="budget_amount" invisible="state == 'draft'"/>
+                            <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <group invisible="state != 'committee_approval'">
+                        <group string="Committee Approval Status">
+                            <field name="cfo_approved" widget="boolean_toggle" readonly="1"/>
+                            <field name="coo_approved" widget="boolean_toggle" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Products" name="products">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="product_id" domain="[('detailed_type', '=', 'product')]"/>
+                                    <field name="product_uom_id" />
+                                    <field name="quantity" readonly="0"/>
+                                    <field name="unit_price" readonly="0"/>
+                                    <field name="subtotal"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Remarks" name="remarks">
+                            <group>
+                                <field name="remarks" readonly="state == 'done'" placeholder="Enter any remarks..."/>
+                            </group>
+                            <group invisible="state != 'rejected'">
+                                <field name="rejection_reason"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="material_request_view_search" model="ir.ui.view">
+        <field name="name">material.request.view.search</field>
+        <field name="model">material.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="source_location_id"/>
+                <field name="dest_location_id"/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="HOD Approval" name="filter_hod" domain="[('state', '=', 'hod_approval')]"/>
+                <filter string="Committee Approval" name="filter_committee" domain="[('state', '=', 'committee_approval')]"/>
+                <filter string="Done" name="filter_done" domain="[('state', '=', 'done')]"/>
+                <filter string="Rejected" name="filter_rejected" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <filter string="In Budget" name="filter_in_budget" domain="[('is_in_budget', '=', True)]"/>
+                <filter string="Out of Budget" name="filter_out_budget" domain="[('is_in_budget', '=', False), ('state', '!=', 'draft')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Requested By" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Request Date" name="group_date" context="{'group_by': 'request_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="material_request_action" model="ir.actions.act_window">
+        <field name="name">Material Request</field>
+        <field name="res_model">material.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Internal Transfer Request
+            </p>
+            <p>
+                Create internal transfer requests with budget checking and multi-level approval workflow.
+            </p>
+        </field>
+    </record>
+
+    <!-- Root Menu -->
+    <menuitem
+        id="material_request_menu_root"
+        name="Material Requests"
+        web_icon="bn_material_request,static/description/icon.png"
+        sequence="50"/>
+
+    <!-- Main Menu -->
+    <menuitem
+        id="material_request_menu_main"
+        name="Transfer Requests"
+        parent="material_request_menu_root"
+        action="material_request_action"
+        sequence="10"/>
+
+</odoo>
