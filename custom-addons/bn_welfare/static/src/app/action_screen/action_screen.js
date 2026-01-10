@@ -8,12 +8,6 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
-    get checkWelfareAccess(){
-        // console.log(this);
-
-        return this.pos._welfare || false;
-    },
-
     async clickRecordWF() {
         const { confirmed, payload: selectedOption } = await this.popup.add(
             SelectionPopup,

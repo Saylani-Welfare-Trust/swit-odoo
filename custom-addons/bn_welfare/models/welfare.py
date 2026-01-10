@@ -5,7 +5,6 @@ import requests
 
 import logging
 from dateutil.relativedelta import relativedelta
-import json
 
 _logger = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ class Welfare(models.Model):
     donee_id = fields.Many2one('res.partner', string="Donee")
     employee_id = fields.Many2one('hr.employee', string="Employee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
-    is_individual = fields.Boolean('Is Individual', default=False) 
+
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
     
     name = fields.Char('Name', default="NEW")
@@ -185,55 +184,37 @@ class Welfare(models.Model):
         
         return super(Welfare, self).create(vals)
     
-    def clean_url(self, url) :
-        return (
-            url.strip()
-            .replace('\u200b', '')   # zero-width space
-            .replace('\ufeff', '')   # BOM
-            .replace('\u00a0', '')   # non-breaking space
-        )
-
-    
-    def _make_sadqa_api_call(self, endpoint, method='POST', data=None):
+    def _make_sadqa_api_call(self, endpoint, method='GET', data=None):
         """Make API call to Sadqa Jaria portal"""
         # base_url = 'https://backend.switsjmm.com'
         url = f"{self.env.company.welfare_url}{endpoint}"
         headers = self._get_sadqa_api_headers()
 
-        url = self.clean_url(url)
-        if data is not None:
-            try:
-                # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
-                data = json.loads(json.dumps(data, default=str))
-            except Exception as e:
-                _logger.error("Failed to prepare JSON payload: %s", e)
-                raise UserError(_("Failed to prepare request payload: %s") % e)
+
         # raise UserError(
         #     f"API Request Failed\n\n"
         #     f"URL: {url}\n"
         #     f"Headers: {headers}"
-        #     f"Data: {data}\n"
         # )
-        _logger.info(f"Making Sadqa Jaria API call to {url} with method {method} and data: {data}")
         try:
-            if data is None :
-                response = requests.post(url, headers=headers, timeout=30)
-            else :
+            if method.upper() == 'GET':
+                response = requests.get(url, headers=headers, timeout=30)
+            elif method.upper() == 'POST':
                 response = requests.post(url, headers=headers, json=data, timeout=30)
-
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
             
             response.raise_for_status()
             result = response.json()
-            _logger.info(f" URL: {url} Data: {data}  api response : {result}")
-            # raise ValidationError(str(result))
+            # raise exceptions.ValidationError(str("result",result))
 
             
-            if not result.get('json', {}):
+            if not result.get('success'):
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
             # raise exceptions.ValidationError(str("result",result))
                 
-            return result.get('json', {})
+            return result
             
         except requests.exceptions.RequestException as e:
             _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
@@ -245,16 +226,9 @@ class Welfare(models.Model):
     def _check_donee_exists_in_portal(self):
         """Check if donee already exists in portal"""
         try:
-            data={
-                    "json":{
-                    "odooId": self.donee_id.id
-                    }
-                }    
-            _logger.info(f"Donee checking query peremeters: {data}")
-            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}','POST', data) # type: ignore
-            # _logger.info(f"Donee found in portal: {result}")
-            # raise UserError(str(result))
-            return result
+            # _logger.info(f"Donee not found in portal: {self.donee_id.id}")
+            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}{self.donee_id.id}')
+            return result.get('data')
         except Exception as e:
             _logger.info(f"Donee not found in portal: {str(e)}")
             return None
@@ -275,43 +249,35 @@ class Welfare(models.Model):
                 message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
 
         else:
-            donee_in_portal = self._create_donee_in_portal()
-        # Check for applications
-        application = self._search_portal_applications()
-        # _logger.info(f"Applications found: {application}")    
-        app_state = application.get('status') if application else None
-        if app_state == 'inquiry_complete': # type: ignore
-            self.write({
-                "state":"inquiry"
-            })
+                message = "❌ Donee not found in portal"
             
-            result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
-            message += f" | 📋 {result['message']} "
-        else : message += f" | 📋 No applications found"     # type: ignore
+            # Check for applications
+                applications = self._search_portal_applications()
+        
+                if applications:
+                   message += f" | 📋 {len(applications)} application(s) found"
+            
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""
         for app in applications:
             # Match by CNIC (most reliable)
-            # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-            if app.get('odooId') == self.id:
+            if self.cnic_no and app.get('cnic') == self.cnic_no:
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
+            # Match by name and WhatsApp
+            if (app.get('name') == self.donee_id.name and 
+                app.get('whatsapp') == self.donee_id.mobile):
+                return app
         return None
     
     def _search_portal_applications(self):
         """Search for matching applications in portal"""
         try:
             result = self._make_sadqa_api_call(self.env.company.search_endpoint)
-            applications = result
+            applications = result.get('data', [])
             
             if applications:
-                _logger.info(f"Unsynced applications found: {applications}")
                 # Find matching application based on donee information
                 matching_app = self._find_matching_application(applications)
                 return matching_app
@@ -321,79 +287,51 @@ class Welfare(models.Model):
             _logger.warning(f"No unsynced applications found: {str(e)}")
             return None
 
-    def _mark_application_synced(self):
+    def _mark_application_synced(self, portal_application_id):
         """Mark application as synced in portal"""
         data = {
-                "json":{
-
-                "odooId": self.id
-            }
+            "applicationId": portal_application_id,
+            "odooId": str(self.id)
         }
+        
         result = self._make_sadqa_api_call(self.env.company.mark_application_endpoint, 'POST', data)
-        return result
+        return result.get('data')
 
     def _handle_existing_application(self, portal_application):
         """Handle existing application found in portal"""
         # Mark application as synced in portal
-        synced_application = self._mark_application_synced()
+        synced_application = self._mark_application_synced(portal_application.get('id'))
         
         # Update disbursement record with portal information
-        # self.write({
-        #     'portal_application_id': portal_application.get('id'),
-        #     'portal_donee_id': portal_application.get('doneeId', ''),
-        #     'is_synced': True,
-        #     'last_sync_date': fields.Datetime.now(),
-        #     # 'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
-        # })
+        self.write({
+            'portal_application_id': portal_application.get('id'),
+            'portal_donee_id': synced_application.get('doneeId', ''),
+            'is_synced': True,
+            'last_sync_date': fields.Datetime.now(),
+            'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
+        })
         
         return {
             'action': 'linked_existing',
             'application_id': portal_application.get('id'),
             'message': f"✅ Existing application linked successfully. Application ID: {portal_application.get('id')}",
-            'details': f"Donee: {portal_application.get('name')}"
+            'details': f"Donee: {portal_application.get('name')}, CNIC: {portal_application.get('cnic')}"
         }
     
     def _create_donee_in_portal(self):
         """Create donee in Sadqa Jaria portal"""
         data = {
-                "json":{
-                "name": self.donee_id.name or '',
-                "whatsapp": self.donee_id.mobile or '',
-                "cnic": (
-                    self.donee_id.cnic_no.replace("-", "")
-                    if self.donee_id.cnic_no else ""
-                ),            
-                "odooId": self.donee_id.id
-            }
+            "name": self.donee_id.name or '',
+            "whatsapp": self.donee_id.mobile or '',
+            "cnic": (
+                self.donee_id.cnic_no.replace("-", "")
+                if self.donee_id.cnic_no else ""
+            ),            
+            "odooId": str(self.donee_id.id)
         }
-        # raise UserError(str(data))
+        
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
-        return result
-
-    def create_portal_application(self):
-        """Create application in Sadqa Jaria portal"""
-        self.ensure_one()
-        data = {
-            "json": {
-                "applicationData": {
-                    "odooId": self.id,
-                    "doneeOdooId": self.donee_id.id,
-                    "inquiryOfficerOdooId": self.employee_id.id,
-                    "form": {
-                        "category": "Individual",  # fix
-                        "subcategory": "General Aid",  # fix
-                        "propertyName*": "anything"  # fix
-                    }
-                }
-            }
-        }
-        result = self._make_sadqa_api_call(
-            self.env.company.create_application_endpoint,  # endpoint from res.company
-            'POST',
-            data
-        )
-        return result
-
+        return result.get('data')
 
     def _handle_new_application(self, existing_donee):
         """Handle creation of new application/donee in portal"""
@@ -402,23 +340,19 @@ class Welfare(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
         
         # Update disbursement record with portal information
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
             'is_synced': True,
             'last_sync_date': fields.Datetime.now(),
-            'portal_application_id': portal_application_id
+            'portal_application_id': f"CREATED_{fields.Datetime.now().strftime('%Y%m%d_%H%M%S')}"
         }
         
         self.write(update_vals)
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
-        message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal"
         
         return {
             'action': action,
@@ -491,8 +425,15 @@ class Welfare(models.Model):
             
             # Step 1: Check if donee already exists in portal
             existing_donee = self._check_donee_exists_in_portal()
-
-            result = self._handle_new_application(existing_donee)
+            
+            # Step 2: Search for matching applications in portal
+            portal_application = self._search_portal_applications()
+            
+            # Step 3: Handle based on what we found
+            if portal_application:
+                result = self._handle_existing_application(portal_application)
+            else:
+                result = self._handle_new_application(existing_donee)
             
             # Step 4: Update sync status and details
             self._update_sync_status_success(result)

@@ -3,7 +3,7 @@
 
     <t t-name="bn_welfare.WelfareButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
         <xpath expr="//main" position="inside">
-            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-if="checkWelfareAccess" t-on-click="() => this.clickRecordWF()">
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-on-click="() => this.clickRecordWF()">
                 <i class="fa fa-heart me-1 text-danger" role="img" aria-label="Welfare" title="Welfare"/>
                 Welfare
             </button>
