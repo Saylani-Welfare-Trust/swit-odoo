@@ -11,6 +11,7 @@
                 <field name="restricted_account_id" groups="account.group_account_readonly" invisible="split_transactions" placeholder="Leave empty to use the default account from the company setting"/>
                 <field name="unrestricted_account_id" groups="account.group_account_readonly" invisible="split_transactions" placeholder="Leave empty to use the default account from the company setting"/>
                 <field name="neutral_account_id" groups="account.group_account_readonly" invisible="split_transactions" placeholder="Leave empty to use the default account from the company setting"/>
+                <field name="skip_slip_input"/>
             </xpath>
 
         </field>
