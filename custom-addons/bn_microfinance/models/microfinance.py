@@ -194,6 +194,34 @@ class Microfinance(models.Model):
     household_member = fields.Integer('Household members')
 
     family_line_ids = fields.One2many('microfinance.family', 'microfinance_id', string='Family Lines')
+    
+    show_warehouse_location = fields.Boolean(
+        compute="_compute_show_warehouse_location",
+        store=False
+    )
+
+    require_warehouse_location = fields.Boolean(
+        compute="_compute_require_warehouse_location",
+        store=False
+    )
+
+    @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
+    def _compute_show_warehouse_location(self):
+        for rec in self:
+            rec.show_warehouse_location = (
+                rec.state in ['approve', 'done', 'in_recovery', 'recover']
+                and rec.asset_type == 'movable_asset'
+                and rec.product_id
+                and not rec.in_recovery
+            )
+
+    @api.depends('asset_type', 'asset_availability')
+    def _compute_require_warehouse_location(self):
+        for rec in self:
+            rec.require_warehouse_location = (
+                rec.asset_type == 'movable_asset'
+                and rec.asset_availability == 'available'
+            )
 
 
     @api.depends('microfinance_scheme_id')
