@@ -20,7 +20,7 @@ class PosSession(models.Model):
         order_total = 0.0
         
         # for order in orders.filtered(lambda o: o.state == 'paid'):
-        for order in orders.filtered(lambda o: o.state in ['cfo_approval', 'paid']):
+        for order in orders.filtered(lambda o: o.state in ['refund', 'paid']):
             order_restricted_amount = 0.0
             order_unrestricted_amount = 0.0
             order_neutral_amount = 0.0
