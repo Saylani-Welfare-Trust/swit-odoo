@@ -20,7 +20,7 @@ class PosSession(models.Model):
         order_total = 0.0
         
         # for order in orders.filtered(lambda o: o.state == 'paid'):
-        for order in orders.filtered(lambda o: o.state in ['cfo_approval', 'paid']):
+        for order in orders.filtered(lambda o: o.state in ['refund', 'paid']):
             order_restricted_amount = 0.0
             order_unrestricted_amount = 0.0
             order_neutral_amount = 0.0
@@ -156,20 +156,35 @@ class PosSession(models.Model):
                 'payment_amount': total_default_cash_payment_amount,
                 'moves': cash_in_out_list,
                 'id': default_cash_payment_method_id.id,
-                'breakdown': breakdown_dict.get(default_cash_payment_method_id.id, {'restricted': 0.0, 'unrestricted': 0.0})
+                'breakdown': breakdown_dict.get(default_cash_payment_method_id.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
+                'skip_slip_input': default_cash_payment_method_id.skip_slip_input,
             }
+            
 
         other_payment_methods = []
         for pm in other_payment_method_ids:
             payments_pm = orders.payment_ids.filtered(lambda p: p.payment_method_id == pm)
-            other_payment_methods.append({
-                'name': pm.name,
-                'amount': sum(payments_pm.mapped('amount')),
-                'number': len(payments_pm),
-                'id': pm.id,
-                'type': pm.type,
-                'breakdown': breakdown_dict.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0})
-            })
+            if pm.skip_slip_input:
+                # Provide breakdown, but no slip input and no difference handling
+                other_payment_methods.append({
+                    'name': pm.name,
+                    'amount': sum(payments_pm.mapped('amount')),
+                    'number': len(payments_pm),
+                    'id': pm.id,
+                    'type': pm.type,
+                    'breakdown': breakdown_dict.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
+                    'skip_slip_input': True,
+                })
+            else:
+                other_payment_methods.append({
+                    'name': pm.name,
+                    'amount': sum(payments_pm.mapped('amount')),
+                    'number': len(payments_pm),
+                    'id': pm.id,
+                    'type': pm.type,
+                    'breakdown': breakdown_dict.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
+                    'skip_slip_input': False,
+                })
 
         return {
             'orders_details': {
@@ -286,8 +301,6 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
-    
-
     def _find_payment_method_for_receivable_line(self, line):
         """Find which payment method a receivable line belongs to."""
         if not line.name:
@@ -326,12 +339,39 @@ class PosSession(models.Model):
 
         # 🔥 Decide source of breakdown
         if lines:
-            # Keep frontend format (don’t aggregate)
-            payment_breakdown = {int(pm_id): vals for pm_id, vals in lines.items()}
+            payment_breakdown = {}
+            for pm_id, vals in lines.items():
+                pm = self.env['pos.payment.method'].browse(int(pm_id))
+                if pm:
+                    if pm.skip_slip_input:
+                        # Auto-allocate: use the backend breakdown to create a single entry for each type
+                        backend_breakdown = self._compute_closing_details().get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0})
+                        payment_breakdown[int(pm_id)] = {
+                            'restricted': [{'amount': backend_breakdown.get('restricted', 0.0), 'ref': ''}] if backend_breakdown.get('restricted', 0.0) else [],
+                            'unrestricted': [{'amount': backend_breakdown.get('unrestricted', 0.0), 'ref': ''}] if backend_breakdown.get('unrestricted', 0.0) else [],
+                            'neutral': [{'amount': backend_breakdown.get('neutral', 0.0), 'ref': ''}] if backend_breakdown.get('neutral', 0.0) else [],
+                        }
+                    else:
+                        payment_breakdown[int(pm_id)] = vals
         else:
-            # backend fallback: computed already returns the desired lists
             computed = self._compute_payment_breakdown()
-            payment_breakdown = {int(pm_id): {'restricted': vals.get('restricted', []) or [], 'unrestricted': vals.get('unrestricted', []) or [], 'neutral': vals.get('neutral', []) or []} for pm_id, vals in computed.items()}
+            payment_breakdown = {}
+            for pm_id, vals in computed.items():
+                pm = self.env['pos.payment.method'].browse(int(pm_id))
+                if pm:
+                    if pm.skip_slip_input:
+                        backend_breakdown = self._compute_closing_details().get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0})
+                        payment_breakdown[int(pm_id)] = {
+                            'restricted': [{'amount': backend_breakdown.get('restricted', 0.0), 'ref': ''}] if backend_breakdown.get('restricted', 0.0) else [],
+                            'unrestricted': [{'amount': backend_breakdown.get('unrestricted', 0.0), 'ref': ''}] if backend_breakdown.get('unrestricted', 0.0) else [],
+                            'neutral': [{'amount': backend_breakdown.get('neutral', 0.0), 'ref': ''}] if backend_breakdown.get('neutral', 0.0) else [],
+                        }
+                    else:
+                        payment_breakdown[int(pm_id)] = {
+                            'restricted': vals.get('restricted', []) or [],
+                            'unrestricted': vals.get('unrestricted', []) or [],
+                            'neutral': vals.get('neutral', []) or []
+                        }
 
         # raise ValidationError(str(payment_breakdown))
         # raise ValidationError(account_move.line_ids.mapped("account_id.name"))
