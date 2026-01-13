@@ -17,7 +17,7 @@
                                 <t t-esc="docs.env.company.name"/>
                             </h2>
                             <p class="mb-1"><t t-esc="docs.env.company.street"/></p>
-                            <p class="mb-0">UAN: (+92-21) 111-722-626 | www.saylaniwelfare.com</p>
+                            <p class="mb-0">UAN: (021) 111-729-526 | www.saylaniwelfare.com</p>
                         </t>
                     </div>
 
