@@ -34,7 +34,7 @@ class POSCheque(models.Model):
     @api.depends('name')
     def _set_details(self):
         for rec in self:
-            pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)])
+            pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
 
             rec.donor_id = pos_order.partner_id.id
             rec.analytic_account_id = pos_order.analytic_account_id.id
