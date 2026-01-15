@@ -9,6 +9,7 @@
                 <field name="name" />
                 <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="amount" />
+                <field name="transaction_ref" />
                 <field name="analytic_account_id" string="Branch Location" />
                 <field name="user_id" string="Created By" />
                 <field name="create_date" string="Created On" />
@@ -59,6 +60,7 @@
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
                                 <field style="width: 70% !important;" name="mobile" readonly="1" nolabel="1" />
                             </div>
+                            <field name="address" />
                         </group>
                         <group name="direct_deposit_col_2">
 
@@ -83,6 +85,7 @@
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">
+                                <field name="service_charges" readonly="1"/>
                                 <field name="amount" readonly="1"/>
                             </group>
                         </page>

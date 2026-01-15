@@ -12,6 +12,20 @@
                     <label for="is_medical_equipment"/>
                 </span>
             </xpath>
+
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page name="medical_equipment" string="Medical Equipment">
+                    <group>
+                        <group name="medical_equipment_col_1">
+                            <field name="is_medical_approval" />
+                            <field name="security_deposit" />
+                        </group>
+                        <group name="medical_equipment_col_2">
+                            <field name="recovery_period" />
+                        </group>
+                    </group>
+                </page>
+            </xpath>
         </field>
     </record>
 

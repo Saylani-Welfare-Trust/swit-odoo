@@ -8,6 +8,7 @@ cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 status_selection = [       
     ('draft', 'Draft'),
+    ('approved', 'Approved'),
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
@@ -43,6 +44,7 @@ class MedicalEquipment(models.Model):
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
+    is_approval = fields.Boolean('Is Approval')
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
@@ -202,6 +204,16 @@ class MedicalEquipment(models.Model):
         # Optional: Validate the picking automatically
         # stock_picking.button_validate()
         return True
+    
+    def action_approval(self):
+        self.is_approval = False
+
+        for line in self.medical_equipment_line_ids:
+            if line.product_id.is_medical_approval:
+                self.is_approval = True
+
+        if not self.is_approval:
+            self.state = 'approved'
         
     def action_show_picking(self):
         return {

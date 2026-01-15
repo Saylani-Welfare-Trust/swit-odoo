@@ -252,6 +252,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'order_lines': this.prepareOrderLines(this.orderLines),
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
+                'address': this.state.address,
+                'service_charges': this.state.service_charges,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {

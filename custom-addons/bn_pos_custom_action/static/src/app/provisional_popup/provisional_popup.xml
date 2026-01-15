@@ -31,7 +31,7 @@
                             t-on-change="updateTransferToDHS"/>
                     </div>
                 </div>
-                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'" >
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'" >
                     <div class="col-4 fw-semibold">Address</div>
                     <div class="col-8">
                         <input type="text"
@@ -47,7 +47,7 @@
                     <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
 
-                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'">
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'">
                     <div class="col-4 fw-semibold">Service Charges</div>
                     <div class="col-8">
                         <input type="number" class="form-control form-control-sm"
