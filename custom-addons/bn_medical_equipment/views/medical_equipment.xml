@@ -20,6 +20,7 @@
             <form>
                 <header>
                     <field name="is_donee_register" invisible="1" />
+                    <field name="is_approval" invisible="1" />
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
                     
                     <button string="Approval" name="action_approval" type="object" class="oe_highlight" invisible="is_approval or state != 'draft'" />
