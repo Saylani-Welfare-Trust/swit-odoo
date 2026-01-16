@@ -105,7 +105,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             // wf_request_type: 'one_time' or 'recurring'
             const isRecurring = this.wf_request_type === 'recurring';
             // console.log("Welfare Request Type:", this.wf_request_type, "Is Recurring:", isRecurring);
-            
+
             const record = await this.orm.searchRead(
                 'welfare',
                 [['name', '=', this.state.record_number]],
@@ -114,9 +114,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             );
 
             if (!record.length) return this.handleRecordNotFound();
-            
+
             const welfareRecord = record[0];
-            
+
             // Validate state based on request type
             if (!isRecurring) {
                 // One-time: state must be 'approve' (not 'recurring', not 'disbursed')
@@ -153,20 +153,41 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     return;
                 }
 
+                // Fetch disbursement_category_id.name as well
                 const lines = await this.orm.searchRead(
                     'welfare.line',
                     [
                         ['id', 'in', welfareRecord.welfare_line_ids],
                         ['order_type', 'in', ['one_time', 'both']]
                     ],
-                    ['id', 'product_id', 'amount', 'collection_date'],
+                    ['id', 'product_id', 'amount', 'collection_date', 'disbursement_category_id'],
                     {}
                 );
 
-                // Filter by current month
+                // Fetch category names for all lines (if not already present)
+                // We'll need to fetch the category name for each line
+                // To optimize, fetch all category ids in one go
+                const categoryIds = [...new Set(lines.map(l => l.disbursement_category_id && l.disbursement_category_id[0]).filter(Boolean))];
+                let categoryMap = {};
+                if (categoryIds.length) {
+                    const categories = await this.orm.searchRead(
+                        'disbursement.category',
+                        [['id', 'in', categoryIds]],
+                        ['id', 'name'],
+                        {}
+                    );
+                    for (const cat of categories) {
+                        categoryMap[cat.id] = cat.name;
+                    }
+                }
+
+                // Filter by current month and skip 'In Kind' category
                 const dueThisMonth = lines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
+                    // Skip if category is 'In Kind'
+                    const catId = l.disbursement_category_id && l.disbursement_category_id[0];
+                    if (catId && categoryMap[catId] === 'In Kind') return false;
                     return month - 1 === currentMonth && year === currentYear;
                 });
 
@@ -176,9 +197,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 }
 
                 // Add products to POS order
-                console.log(dueThisMonth);
                 for (const line of dueThisMonth) {
-                
                     if (line.product_id && line.product_id[0]) {
                         const product = this.pos.db.get_product_by_id(line.product_id[0]);
                         if (product) {
@@ -208,19 +227,37 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         ['welfare_id', '=', welfareRecord.id],
                         ['state', '!=', 'disbursed']
                     ],
-                    ['id', 'product_id', 'amount', 'collection_date', 'state'],
+                    ['id', 'product_id', 'amount', 'collection_date', 'state', 'disbursement_category_id'],
                     {}
                 );
+
+                // Fetch category names for all lines (if not already present)
+                const categoryIds = [...new Set(recurringLines.map(l => l.disbursement_category_id && l.disbursement_category_id[0]).filter(Boolean))];
+                let categoryMap = {};
+                if (categoryIds.length) {
+                    const categories = await this.orm.searchRead(
+                        'disbursement.category',
+                        [['id', 'in', categoryIds]],
+                        ['id', 'name'],
+                        {}
+                    );
+                    for (const cat of categories) {
+                        categoryMap[cat.id] = cat.name;
+                    }
+                }
 
                 if (!recurringLines.length) {
                     this.notification.add("No pending recurring welfare lines found", { type: 'warning' });
                     return;
                 }
 
-                // Filter by current month
+                // Filter by current month and skip 'In Kind' category
                 const dueThisMonth = recurringLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
+                    // Skip if category is 'In Kind'
+                    const catId = l.disbursement_category_id && l.disbursement_category_id[0];
+                    if (catId && categoryMap[catId] === 'In Kind') return false;
                     return month - 1 === currentMonth && year === currentYear;
                 });
 
@@ -265,7 +302,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             // Add extra order data for payment_screen handling
             this.addWelfareExtraOrderData(selectedOrder, welfareRecord, isRecurring, welfareLineIds, recurringLineIds);
-            
+
             super.confirm();
 
         } catch (error) {
@@ -429,7 +466,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             // console.log(record);
 
-            if (!['draft', 'return'].includes(record[0].state)) {
+            if (!['sd_received', 'return'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }

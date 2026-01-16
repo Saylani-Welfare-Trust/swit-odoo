@@ -14,7 +14,7 @@
             </xpath>
 
             <xpath expr="//page[@name='general_information']" position="after">
-                <page name="medical_equipment" string="Medical Equipment">
+                <page name="medical_equipment" string="Medical Equipment" invisible="not is_medical_equipment">
                     <group>
                         <group name="medical_equipment_col_1">
                             <field name="is_medical_approval" />

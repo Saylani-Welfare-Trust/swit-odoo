@@ -6,9 +6,9 @@
             <div class="modal-header drag-handle">
                 <h4 class="modal-title"><t t-esc="this.title" /></h4>
             </div>
-            <main class="modal-body" t-if="this.action_type != 'mf'">
+            <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
                 <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Customer</div>
+                    <div class="col-4 fw-semibold">Donor</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
                 </div>
                 
@@ -22,8 +22,14 @@
                             placeholder="Enter transaction reference"/>
                     </div>
                 </div>
+
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Amount</div>
+                    <div class="col-8 fw-bold" t-esc="this.state.amount"/>
+                </div>
+
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
-                    <div class="col-4 fw-semibold">Transfer to DHS</div>
+                    <div class="col-4 fw-semibold">Check Box for DHS</div>
                     <div class="col-8">
                         <input type="checkbox"
                             class="form-check-input"
@@ -40,11 +46,6 @@
                             t-on-change="updateAddress"
                             placeholder="Enter address"/>
                     </div>
-                </div>
-
-                <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Amount</div>
-                    <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
 
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'">
@@ -74,6 +75,19 @@
                             t-att-value="this.state.microfinance_request_no"
                             t-on-change="updateMicrofinanceRequestNo"
                             placeholder="Enter Microfinance Requets No."/>
+                    </div>
+                </div>
+            </main>
+            
+            <main class="modal-body" t-if="this.action_type == 'me'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.medical_equipment_request_no"
+                            t-on-change="updateMedicalEquipmentRequestNo"
+                            placeholder="Enter Medical Equipment Requets No."/>
                     </div>
                 </div>
             </main>

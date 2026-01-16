@@ -14,14 +14,14 @@
             </xpath>
 
             <xpath expr="//page[@name='general_information']" position="after">
-                <page name="medical_equipment" string="Medical Equipment">
+                <page name="medical_equipment" string="Medical Equipment" invisible="not is_medical_equipment">
                     <group>
                         <group name="medical_equipment_col_1">
-                            <field name="is_medical_approval" />
-                            <field name="security_deposit" />
+                            <field name="is_medical_approval" readonly="0" />
+                            <field name="security_deposit" readonly="0" />
                         </group>
                         <group name="medical_equipment_col_2">
-                            <field name="recovery_period" />
+                            <field name="recovery_period" readonly="0" />
                         </group>
                     </group>
                 </page>

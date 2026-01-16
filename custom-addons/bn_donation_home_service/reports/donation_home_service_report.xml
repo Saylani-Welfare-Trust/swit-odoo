@@ -125,7 +125,7 @@
                             <!-- ===== TOTALS ===== -->
                             <div class="row">
                                 <div class="col-6">
-                                    <!-- <div><strong>Service Charges:</strong> Rs <t t-esc="o.service_charges or 0.0"/></div> -->
+                                    <div><strong>Service Charges:</strong> Rs <t t-esc="'{:,.2f}'.format(o.service_charges or 0.0)"/></div>
                                     <div><strong>Address:</strong> <t t-esc="o.donor_id.street or '-'"/></div>
                                 </div>
                                 <div class="col-6 text-end">
