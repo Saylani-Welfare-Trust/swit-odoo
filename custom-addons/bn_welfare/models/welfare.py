@@ -201,6 +201,10 @@ class Welfare(models.Model):
         headers = self._get_sadqa_api_headers()
 
         url = self.clean_url(url)
+        # raise UserError(
+        #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
+        #         % (url, headers, data)
+        #     )
         if data is not None:
             try:
                 # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
@@ -387,6 +391,7 @@ class Welfare(models.Model):
                 }
             }
         }
+        # raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
