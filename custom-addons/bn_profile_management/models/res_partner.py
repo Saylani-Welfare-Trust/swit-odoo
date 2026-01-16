@@ -202,7 +202,9 @@ class ResPartner(models.Model):
     
     def action_welfare_application(self):
         return self.env['welfare'].create({
-            'donee_id': self.id
+            'donee_id': self.id,
+            'is_individual': True if 'Individual' in self.category_id.mapped('name') else False,
+            
         })
     
     # def action_register(self):

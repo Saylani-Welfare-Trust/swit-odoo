@@ -9,6 +9,7 @@ cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 status_selection = [       
     ('draft', 'Draft'),
     ('approved', 'Approved'),
+    ('sd_received', 'Security Received'),
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
@@ -25,6 +26,7 @@ class MedicalEquipment(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
+    sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
 
     name = fields.Char('Name', default="New")
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
@@ -45,6 +47,8 @@ class MedicalEquipment(models.Model):
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
     is_approval = fields.Boolean('Is Approval')
+
+    approval_count = fields.Integer('Approval Count')
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
@@ -167,9 +171,7 @@ class MedicalEquipment(models.Model):
         # Ensure we're working with a single record
         self.ensure_one()
         
-      
         operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
-      
         
         # Prepare stock picking values
         picking_vals = {
@@ -212,8 +214,10 @@ class MedicalEquipment(models.Model):
             if line.product_id.is_medical_approval:
                 self.is_approval = True
 
-        if not self.is_approval:
+        if not self.is_approval or self.approval_count == 1:
             self.state = 'approved'
+
+        self.approval_count += 1
         
     def action_show_picking(self):
         return {

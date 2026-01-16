@@ -156,7 +156,7 @@ class WelfareInstitutionFetchLog(models.Model):
                 'bank_account': 'yes' if rec.get('form', {}).get('accountDetails', {}).get('accountType') else 'no',
                 'bank_name': rec.get('form', {}).get('accountDetails', {}).get('accountTitle'),
                 'account_no': rec.get('form', {}).get('accountDetails', {}).get('accountNumber'),
-                'state': 'hod_approve' if rec.get('status') == 'hod-review' else 'draft',
+                'state': 'inquiry',
                 'portal_application_id': rec.get('token'),
                 'hod_remarks': rec.get('hodReviews', [{}])[0].get('comments', ''),
             }

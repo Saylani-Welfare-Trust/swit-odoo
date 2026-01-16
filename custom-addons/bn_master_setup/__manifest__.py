@@ -11,6 +11,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/group.xml',
+        'data/disbursement_category.xml',
         'views/location_option.xml',
         'views/installation_category.xml',
         'views/header_type.xml',

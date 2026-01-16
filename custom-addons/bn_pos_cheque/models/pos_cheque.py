@@ -22,6 +22,8 @@ class POSCheque(models.Model):
     
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
+    order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
+
     bank_name = fields.Char('Bank Name')
 
     date = fields.Date('Date')
@@ -40,6 +42,13 @@ class POSCheque(models.Model):
             rec.analytic_account_id = pos_order.analytic_account_id.id
             
             rec.amount = pos_order.amount_total
+
+            branch_code = pos_order.user_id.employee_id.analytic_account_id.code
+            company = pos_order.company_id.name[:3].upper()
+            order_date = pos_order.date_order and pos_order.date_order.year or ''
+            order_ref = pos_order.name and pos_order.name[-4:] or '0000'
+
+            rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
     def action_show_pos_order(self):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])

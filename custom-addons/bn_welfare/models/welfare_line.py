@@ -44,12 +44,34 @@ class WelfareLine(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string="Disbursement Application Type")
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        default=lambda self: self.env.company,
+        required=True
+    )
+
+
     marriage_date = fields.Date('Marriage Date', default=fields.Date.today())
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
+    quantity = fields.Float('Quantity', default=1.0)
+    amount = fields.Float(
+        'Amount',
+        related='product_id.list_price',
+        store=True,
+    )
 
-    amount = fields.Monetary('Amount', currency_field='currency_id')
+    total_amount = fields.Float(
+        'Total Amount',
+        compute='_compute_total_amount',
+        store=True
+    )
 
-
+    @api.depends('quantity', 'amount')
+    def _compute_total_amount(self):
+        for rec in self:
+            rec.total_amount = rec.quantity * rec.amount
+            
     @api.depends('disbursement_application_type_id')
     def _compute_product_domain(self):
         for rec in self:
