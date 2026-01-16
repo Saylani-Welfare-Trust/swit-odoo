@@ -54,7 +54,6 @@
                             <field name="cnic_no" readonly="0" required="1" />
                             <field name="street" string="Address" readonly="0" required="1" />
                             <field name="city" required="1" readonly="0" />
-                            <field name="sd_slip_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="state != 'sd_received'" required="state == 'sd_received'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
@@ -133,6 +132,6 @@
         name="Operations"
         action="donaiton_box_operation_action"
         parent="medical_equipment_menu"
-        sequence="2"/>
+        sequence="1"/>
 
 </odoo>

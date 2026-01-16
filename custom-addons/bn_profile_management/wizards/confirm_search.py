@@ -21,7 +21,6 @@ search_type_selection = [
 ]
 
 
-
 class ConfirmSearch(models.TransientModel):
     _name = 'confirm.search'
     _description = "Confirm Search"
@@ -37,7 +36,6 @@ class ConfirmSearch(models.TransientModel):
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
-    category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
 
 
     def return_donee_form(self, donee=None):
@@ -77,12 +75,7 @@ class ConfirmSearch(models.TransientModel):
                 }
         elif self.donee_registration_type == 'welfare':
             if donee:
-                donee.category_id = [(6, 0, [
-                                             self.env.ref('bn_profile_management.donee_partner_category').id,
-                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
-                                             self.env.ref('bn_profile_management.welfare_partner_category').id
-                                             ])
-                                    ]
+                donee.category_id = [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.welfare_partner_category').id])]
 
                 self.env.cr.commit()
 
@@ -103,12 +96,7 @@ class ConfirmSearch(models.TransientModel):
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': '[("category_id.name", "in", ["Donee"])]',
                     'context': {
-                        'default_category_id': [(6, 0, [
-                                             self.env.ref('bn_profile_management.donee_partner_category').id,
-                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
-                                             self.env.ref('bn_profile_management.welfare_partner_category').id
-                                             ])
-                                    ],
+                        'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.welfare_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
                         'default_country_code_id': self.country_code_id.id,

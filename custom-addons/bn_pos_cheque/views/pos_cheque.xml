@@ -6,7 +6,6 @@
         <field name="model">pos.cheque</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
-                <field name="order_reference" />
                 <field name="donor_id" />
                 <field name="amount" />
                 <field name="analytic_account_id" string="Branch" />

@@ -34,13 +34,11 @@
                     <button string="Check Budget" name="action_check_budget" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
-                            class="oe_highlight" invisible="state != 'budget_check'"/>
-                    <button string="Move to Committee Approval" name="action_committee_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
+                            class="oe_highlight" invisible="state != 'hod_approval'"/>
                     <button string="CFO Approve" name="action_cfo_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
+                            class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
                     <button string="COO Approve" name="action_coo_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
+                            class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
                     <button string="Reject" name="action_reject" type="object"
                             invisible="state not in ['hod_approval', 'committee_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
@@ -61,14 +59,13 @@
                     <group>
                         <group name="request_info">
                             <field name="user_id"/>
-                            <field name="department_id"/>
                             <field name="request_date"/>
                             <field name="source_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <field name="dest_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                         </group>
                         <group name="budget_info">
-                            <!-- <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/> -->
-                            <field name="budget_id" options="{'no_create': True, 'no_edit': True}" domain="[('state', '=', 'done')]" readonly="state != 'draft'"/>
+                            <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="budget_position_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <field name="total_amount"/>
                             <field name="budget_amount" invisible="state == 'draft'"/>
                             <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>
@@ -95,6 +92,9 @@
                         <page string="Remarks" name="remarks">
                             <group>
                                 <field name="remarks" readonly="state == 'done'" placeholder="Enter any remarks..."/>
+                            </group>
+                            <group invisible="state != 'rejected'">
+                                <field name="rejection_reason"/>
                             </group>
                         </page>
                     </notebook>
@@ -151,7 +151,6 @@
         id="material_request_menu_root"
         name="Material Requests"
         web_icon="bn_material_request,static/description/icon.png"
-        groups="bn_material_request.menu_group_user"
         sequence="50"/>
 
     <!-- Main Menu -->
