@@ -55,6 +55,7 @@ state_selection = [
 
 
 class Microfinance(models.Model):
+
     _name = 'microfinance'
     _description = "Microfinance"
 
@@ -335,6 +336,83 @@ class Microfinance(models.Model):
             if not self.is_valid_cnic_format(self.landlord_cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')            
 
+    def _create_microfinance_accounting_entries(self):
+            """Create accounting entries for asset, receivable, and income."""
+
+            product = self.product_id
+            company = self.env.company
+
+            asset_cost = product.lst_price
+            receivable_amount = self.total_amount
+            difference = receivable_amount - asset_cost
+
+            # ---- Correct Accounts ----
+
+            # Asset valuation account (must exist)
+            asset_account = (
+                product.categ_id.property_stock_valuation_account_id
+            )
+
+            # Partner (Microfinance / Donee) receivable account
+            receivable_account = self.donee_id.property_account_receivable_id
+
+            # Income account from product category
+            income_account = product.categ_id.property_account_income_categ_id
+
+            if not asset_account:
+                raise ValidationError("Stock valuation account is not set on product category.")
+
+            if not receivable_account:
+                raise ValidationError("Receivable account is not set on donee/partner.")
+
+            if not income_account:
+                raise ValidationError("Income account is not set on product category.")
+
+            # ---- Journal ----
+            journal = self.env['account.journal'].search(
+                [('type', '=', 'sale'), ('company_id', '=', company.id)],
+                limit=1
+            )
+
+            if not journal:
+                raise ValidationError("Sales journal not found.")
+
+            # ---- Journal Entry ----
+            move_vals = {
+                'ref': self.name,
+                'date': fields.Date.context_today(self),
+                'journal_id': journal.id,
+                'line_ids': [
+                    # Credit asset cost
+                    (0, 0, {
+                        'name': f'Asset Cost for {product.display_name}',
+                        'account_id': asset_account.id,
+                        'credit': asset_cost,
+                        'debit': 0.0,
+                    }),
+
+                    # Debit receivable (application amount)
+                    (0, 0, {
+                        'name': f'Receivable from Microfinance for {product.display_name}',
+                        'account_id': receivable_account.id,
+                        'partner_id': self.donee_id.id,
+                        'debit': receivable_amount,
+                        'credit': 0.0,
+                    }),
+
+                    # Difference → Income / Loss
+                    (0, 0, {
+                        'name': f'Microfinance Margin for {product.display_name}',
+                        'account_id': income_account.id,
+                        'credit': difference if difference > 0 else 0.0,
+                        'debit': abs(difference) if difference < 0 else 0.0,
+                    }),
+                ]
+            }
+
+            move = self.env['account.move'].create(move_vals)
+            move.action_post()
+    
     def action_move_to_hod(self):
         self.state = 'hod_approve'
 
@@ -461,7 +539,11 @@ class Microfinance(models.Model):
             self.compute_installment()
         else:
             self.compute_recovery_installment()
-        
+
+
+        # Custom logic for moveable assets: create accounting entries
+        # self._create_microfinance_accounting_entries()
+
         self.state = 'done'
 
     def action_view_picking(self):
@@ -512,17 +594,21 @@ class Microfinance(models.Model):
         """
         if self.asset_type == 'movable_asset':
             raise ValidationError('For movable assets, please validate the delivery picking to complete the record.')
-        
+
         # For cash asset type coming from treasury, delivery date is optional
         if self.asset_type != 'cash' and not self.delivery_date:
             raise ValidationError('Please select a Delivery Date.')
-        
+
         # Compute installments
         if not self.in_recovery:
             self.compute_installment()
         else:
             self.compute_recovery_installment()
-        
+
+
+        # Accounting entries for non-movable assets
+        # self._create_microfinance_accounting_entries()
+
         self.state = 'done'
 
     def action_receipt(self):

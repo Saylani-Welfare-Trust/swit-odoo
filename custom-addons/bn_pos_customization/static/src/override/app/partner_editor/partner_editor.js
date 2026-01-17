@@ -87,6 +87,15 @@ patch(PartnerDetailsEdit.prototype, {
                 processedChanges[key] = value;
             }
         }
+
+        // Mobile number length validation
+        const mobile_no = processedChanges.mobile ? processedChanges.mobile.toString() : '';
+        if (mobile_no && mobile_no.length !== 10) {
+            return this.popup.add(ErrorPopup, {
+                title: _t("Validation Error"),
+                body: _t("Mobile number must be exactly 10 digits."),
+            });
+        }
         if (
             processedChanges.state_id &&
             this.pos.states.find((state) => state.id === processedChanges.state_id)

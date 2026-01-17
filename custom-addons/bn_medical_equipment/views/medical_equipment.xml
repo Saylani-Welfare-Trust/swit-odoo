@@ -20,12 +20,16 @@
             <form>
                 <header>
                     <field name="is_donee_register" invisible="1" />
+                    <field name="is_approval" invisible="1" />
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
-
+                    
+                    <button string="Approval" name="action_approval" type="object" class="oe_highlight" invisible="is_approval or state != 'draft'" />
+                    <button string="Second Approval" name="action_approval" type="object" class="oe_highlight" invisible="not is_approval or state != 'draft'" />
+                    
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'payment_received'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'validate'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, payment_received, validate,return,payment_return," />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, approved, payment_received, validate,return,payment_return," />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -50,6 +54,7 @@
                             <field name="cnic_no" readonly="0" required="1" />
                             <field name="street" string="Address" readonly="0" required="1" />
                             <field name="city" required="1" readonly="0" />
+                            <field name="sd_slip_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="state != 'sd_received'" required="state == 'sd_received'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
@@ -128,6 +133,6 @@
         name="Operations"
         action="donaiton_box_operation_action"
         parent="medical_equipment_menu"
-        sequence="1"/>
+        sequence="2"/>
 
 </odoo>

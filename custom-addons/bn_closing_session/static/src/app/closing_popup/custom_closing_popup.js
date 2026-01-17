@@ -111,9 +111,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     canConfirm() {
-        console.log('Hit');
-        console.log(this);
-        
         // Only require confirmation if any non-skip payment method has a nonzero difference
         const cash = this.props.default_cash_details;
         const cashDiff = cash && this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;
@@ -126,14 +123,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             }
         }
         return Object.values(this.state.payments)
-        .map(v => v.counted)
-        .every(this.env.utils.isValidFloat);
+            .map(v => v.counted)
+            .every(this.env.utils.isValidFloat);
     }
 
     async confirm() {
-        console.log('Hit');
-        console.log(this);
-
         // Only show difference confirmation if any non-skip payment method has a nonzero difference
         const cash = this.props.default_cash_details;
         const cashDiff = cash && this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;

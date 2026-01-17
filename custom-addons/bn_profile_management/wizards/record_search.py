@@ -43,6 +43,7 @@ class RecordSearch(models.TransientModel):
 
     is_welfare = fields.Boolean('Is Welfare')
     is_microfinance = fields.Boolean('Is Microfinance')
+    category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
 
 
     @api.constrains('cnic_no')
@@ -87,6 +88,7 @@ class RecordSearch(models.TransientModel):
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
                 'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
+                'default_category': self.category,
             },
             'target': 'new',
         }

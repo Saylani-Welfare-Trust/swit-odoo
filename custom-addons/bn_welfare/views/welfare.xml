@@ -20,16 +20,18 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
-                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
+                    <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
+                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" />
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
                     <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
                     
                     <button string="Reject" name="action_reject" type="object" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, send_for_inquiry, inquiry, hod_approve, mem_approve, approve, disbursed" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>
 
                 <sheet>
@@ -43,14 +45,17 @@
                             <field name="employee_category_id" invisible="1" />
                             <field name="is_synced" readonly="1" invisible="1" />
                             <field name="is_individual" widget="boolean_toggle" invisible="1"/>
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register')]" readonly="state in ['recurring', 'disbursed']" required="1" />
-                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'inquiry'" />
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
+                                domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
+                                ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
+                                readonly="state in ['recurring', 'disbursed']" required="1" />
+                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="cnic_expiration_date" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="hod_remarks" readonly="state != 'inquiry'" required="state == 'hod_approve'"  />
+                            <field name="hod_remarks" readonly="state != 'committee_approval'" required="state == 'hod_approve'"/>
                             <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'mem_approve'" />
                         </group>
                         <group name="welfare_col_2">
@@ -70,7 +75,7 @@
                     </group>
                     <notebook>
                         <page name="welfare_line" string="Disbursement Items">
-                            <field name="welfare_line_ids" readonly="state != 'draft'">
+                            <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
                                 <tree editable="bottom">
                                     <field name="product_domain" column_invisible="1" />
 
@@ -83,7 +88,9 @@
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
                                     <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
-                                    <field name="amount" />
+                                    <field name="quantity" />   
+                                    <field name="amount" readonly="1" />
+                                    <field name="total_amount" readonly="0" />
                                 </tree>
                             </field>
                         </page>
@@ -96,7 +103,10 @@
                                     <field name="collection_point" />
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_date" />
+                                    <field name='quantity' />
                                     <field name="amount" />
+                                    <field name="show_deliver_button" column_invisible="1"/>
+                                    <button name="action_delivered" type="object" string="Mark as Delivered" class="oe_highlight" invisible=" not show_deliver_button"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" />
                                 </tree>
                             </field>
@@ -265,7 +275,7 @@
         <field name="res_model">welfare</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[("is_individual", "=", False)]</field>
-        <field name="context">{'default_is_individual': False, 'create': False}</field>
+        <field name="context">{'default_is_individual': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's create an Institution Disbursement Request....

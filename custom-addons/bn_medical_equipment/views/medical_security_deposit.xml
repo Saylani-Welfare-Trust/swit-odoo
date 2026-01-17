@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="medical_security_deposit_view_tree" model="ir.ui.view">
+        <field name="name">medical.security.deposit.view.tree</field>
+        <field name="model">medical.security.deposit</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0">
+                <field name="name" />
+                <field name="date" />
+                <field name="payment_method" />
+                <field name="donee_id" />
+                <field name="cnic_no" />
+                <field name="bank_name" />
+                <field name="cheque_no" />
+                <field name="cheque_date" />
+                <field name="amount" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'paid'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="medical_security_deposit_action" model="ir.actions.act_window">
+        <field name="name">Security Receipts</field>
+        <field name="res_model">medical.security.deposit</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for a Security Deposit....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="medical_security_deposit_menu"
+        name="Security Receipt"
+        action="medical_security_deposit_action"
+        parent="bn_medical_equipment.medical_equipment_menu"
+        sequence="1"/>
+
+</odoo>

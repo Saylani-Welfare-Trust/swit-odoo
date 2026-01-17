@@ -21,6 +21,7 @@
     ],
     'data': [
         'security/groups.xml',
+        'security/record_rule.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
         'views/material_request_views.xml',
