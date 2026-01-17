@@ -12,6 +12,7 @@ class MemberApproval(models.Model):
     
     # Request Details
     user_id = fields.Many2one('res.users', string='Requested By', default=lambda self: self.env.user, readonly=True, tracking=True)
+    department_id = fields.Many2one(related='user_id.employee_id.department_id', string="Department", store=True)
     request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
     
     # Source and Destination Locations
@@ -31,14 +32,14 @@ class MemberApproval(models.Model):
     )
     
     # Budget Related
-    analytic_account_id = fields.Many2one(
-        'account.analytic.account', 
-        string='Analytic Account',
-        help='Analytic account for budget checking',
-        tracking=True
-    )
-    budget_position_id = fields.Many2one(
-        'account.budget.post',
+    # analytic_account_id = fields.Many2one(
+    #     'account.analytic.account', 
+    #     string='Analytic Account',
+    #     help='Analytic account for budget checking',
+    #     tracking=True
+    # )
+    budget_id = fields.Many2one(
+        'budget.budget',
         string='Budgetary Position',
         help='Budgetary position to check against',
         tracking=True
@@ -86,65 +87,103 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
     def action_check_budget(self):
-        """Check if the request is within budget"""
+        """Check budget per analytic account (supports multiple lines)"""
         self.ensure_one()
-        
+
         if not self.line_ids:
             raise ValidationError(_('Please add at least one product line.'))
-        
-        # Check budget availability
-        available_budget = 0.0
-        is_in_budget = False
-        
-        if self.analytic_account_id and self.budget_position_id:
-            # Search for active budget lines
+
+        if not self.budget_id:
+            raise ValidationError(_('Please select a Budgetary Position.'))
+
+        today = fields.Date.today()
+
+        # ----------------------------------------
+        # STEP 1: Build analytic-wise totals
+        # ----------------------------------------
+        analytic_amount_map = {}  # {analytic_account: total_amount}
+
+        for line in self.line_ids:
+            analytic_line = self.env['analytical.product.line'].search([
+                ('product_id', '=', line.product_id.id)
+            ], limit=1)
+
+            if not analytic_line or not analytic_line.analytic_account_id:
+                raise ValidationError(
+                    _('Product "%s" is not linked to any Analytic Account.')
+                    % line.product_id.display_name
+                )
+
+            analytic = analytic_line.analytic_account_id
+            analytic_amount_map.setdefault(analytic, 0.0)
+            analytic_amount_map[analytic] += line.subtotal
+
+        # ----------------------------------------
+        # STEP 2: Budget check per analytic account
+        # ----------------------------------------
+        total_available_budget = 0.0
+        is_in_budget = True
+
+        for analytic_account, required_amount in analytic_amount_map.items():
             budget_lines = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', self.analytic_account_id.id),
-                ('general_budget_id', '=', self.budget_position_id.id),
-                ('date_from', '<=', fields.Date.today()),
-                ('date_to', '>=', fields.Date.today()),
+                ('analytic_account_id', '=', analytic_account.id),
+                ('budget_id', '=', self.budget_id.id),
+                ('date_from', '<=', today),
+                ('date_to', '>=', today),
                 # ('budget_id.state', '=', 'validate'),
             ])
-            
-            if budget_lines:
-                # Calculate remaining budget (planned - practical)
-                for line in budget_lines:
-                    available_budget += line.planned_amount - abs(line.practical_amount)
-                
-                # Check if total amount is within budget
-                is_in_budget = self.total_amount <= available_budget
-        
+
+            if not budget_lines:
+                raise ValidationError(
+                    _('No active budget found for Analytic Account: %s')
+                    % analytic_account.display_name
+                )
+
+            available_budget = sum(
+                line.planned_amount - abs(line.practical_amount)
+                for line in budget_lines
+            )
+
+            total_available_budget += available_budget
+
+            if required_amount > available_budget:
+                is_in_budget = False
+
+        # ----------------------------------------
+        # STEP 3: Update request
+        # ----------------------------------------
         self.write({
-            'budget_amount': available_budget,
+            'budget_amount': total_available_budget,
             'is_in_budget': is_in_budget,
             'state': 'budget_check',
         })
-        # raise UserError(str(available_budget))
-        
-        # Auto-transition based on budget check
-        if is_in_budget:
-            self.state = 'hod_approval'
-        else:
-            self.state = 'committee_approval'
-        
+
+        # Auto workflow
+        # self.state = 'hod_approval' if is_in_budget else 'committee_approval'
+
         return True
 
     def action_hod_approve(self):
         """HOD approves the request - creates internal transfer"""
         self.ensure_one()
-        if self.state != 'hod_approval':
+        if self.state != 'budget_check':
             raise ValidationError(_('This request is not in HOD Approval state.'))
-        # Create internal transfer
-        self._create_internal_transfer()
-        # Do not set state to done here; will be set when picking is validated
-        return True
+        
+        if self.department_id and self.department_id.manager_id.id != self.env.user.id:
+            raise ValidationError(_('This request can only be approved by its respected Manager.'))
+
+        if self.is_in_budget:
+            # Create internal transfer
+            self._create_internal_transfer()
+
+        self.state = 'hod_approval'
 
     def action_cfo_approve(self):
         """CFO approves the request"""
         self.ensure_one()
         
-        if self.state != 'committee_approval':
-            raise ValidationError(_('This request is not in Committee Approval state.'))
+        if self.state != 'committee_approval' or self.cfo_approved:
+            raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         
         self.cfo_approved = True
         self._check_committee_approval()
@@ -155,8 +194,8 @@ class MemberApproval(models.Model):
         """COO approves the request"""
         self.ensure_one()
         
-        if self.state != 'committee_approval':
-            raise ValidationError(_('This request is not in Committee Approval state.'))
+        if self.state != 'committee_approval' or self.coo_approved:
+            raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         
         self.coo_approved = True
         self._check_committee_approval()
@@ -210,9 +249,11 @@ class MemberApproval(models.Model):
         """Reject the request"""
         self.ensure_one()
         
-        if not self.rejection_reason:
+        if not self.remarks:
             raise ValidationError(_('Please provide a rejection reason.'))
         
+        self.picking_id.action_cancel()
+
         self.state = 'rejected'
         
         return True
@@ -248,5 +289,8 @@ class MemberApproval(models.Model):
             'target': 'current',
         }
 
-
-
+    def action_committee_approve(self):
+        if self.state != 'hod_approval':
+            raise ValidationError(_('This request is not in HOD Approval state.'))
+        
+        self.state = 'committee_approval'
