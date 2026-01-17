@@ -610,7 +610,7 @@ class Welfare(models.Model):
                         'disbursement_application_type_id': line.disbursement_application_type_id.id,
                         'quantity': line.quantity,
                         'collection_point': line.collection_point,
-                        'amount': line.amount,
+                        'amount': line.total_amount,
                     })
 
                     month += 1

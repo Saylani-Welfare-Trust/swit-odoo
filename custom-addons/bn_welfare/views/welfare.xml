@@ -105,7 +105,8 @@
                                     <field name="collection_date" />
                                     <field name='quantity' />
                                     <field name="amount" />
-                                    <button name="action_delivered" type="object" string="Mark as Delivered" class="oe_highlight" invisible=" not disbursement_category_id.name != 'In-Kind'"/>
+                                    <field name="show_deliver_button" column_invisible="1"/>
+                                    <button name="action_delivered" type="object" string="Mark as Delivered" class="oe_highlight" invisible=" not show_deliver_button"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" />
                                 </tree>
                             </field>

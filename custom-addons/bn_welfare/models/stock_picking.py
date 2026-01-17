@@ -24,5 +24,6 @@ class StockPicking(models.Model):
                     if welfare.welfare_recurring_line_ids and all(l.state == 'disbursed' for l in welfare.welfare_recurring_line_ids):
                         welfare.state = 'disbursed'
                     if not welfare.welfare_recurring_line_ids:
+                        # raise Warning(welfare.welfare_recurring_line_ids)
                         welfare.state = 'disbursed'
         return res

@@ -35,12 +35,27 @@ class WelfareRecurringLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     quantity = fields.Float('Quantity', default=1.0)
     state = fields.Selection(selection=state_selection, string="Order Type")
-    
+    show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
+
     @api.depends('welfare_id')
     def _compute_name(self):
             for rec in self:
                 rec.name = rec.welfare_id.name if rec.welfare_id else ''
     
+    @api.depends('disbursement_category_id', 'state')
+    def _compute_show_deliver_button(self):
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        for rec in self:
+            rec.show_deliver_button = False
+            if rec.disbursement_category_id:
+                if in_kind_category and rec.disbursement_category_id.id == in_kind_category.id:
+                    # Only show if state is not delivered or disbursed
+                    if rec.state not in ['delivered', 'disbursed']:
+                        rec.show_deliver_button = True
+                elif cash_category and rec.disbursement_category_id.id == cash_category.id:
+                    rec.show_deliver_button = False
+
     def action_delivered(self):
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
             if self.disbursement_category_id == in_kind_category:        
