@@ -35,10 +35,8 @@ loan_tenure_selection = [
 
 state_selection = [
     ('draft', 'Draft'),
-    ('completed', 'Completed'),
     ('send_for_inquiry', 'Send for Inquiry'),
     ('inquiry', 'Inquiry Officer'),
-    ('committee_approval', 'Committee Approval'),
     ('hod_approve', 'HOD Approval'),
     ('mem_approve', 'Member Approval'),
     ('approve', 'Approved'),
@@ -203,10 +201,6 @@ class Welfare(models.Model):
         headers = self._get_sadqa_api_headers()
 
         url = self.clean_url(url)
-        # raise UserError(
-        #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
-        #         % (url, headers, data)
-        #     )
         if data is not None:
             try:
                 # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
@@ -393,7 +387,6 @@ class Welfare(models.Model):
                 }
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
@@ -468,9 +461,7 @@ class Welfare(models.Model):
                 'title': title,
                 'message': message,
                 'type': type,
-                'sticky': False,
-                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
-
+                'sticky': True,
             }
         }
     
@@ -543,49 +534,9 @@ class Welfare(models.Model):
     def action_approve(self):
         for line in self.welfare_line_ids:
             if line.order_type == 'recurring':
-                if self.env['welfare.recurring.line'].search_count([
-                    ('donee_id', '=', self.donee_id.id),
-                    ('disbursement_category_id', '=', line.disbursement_category_id.id),
-                    ('state', '=', 'draft')
-                ]):
+                if self.env['welfare.recurring.line'].search_count([('donee_id', '=', self.donee_id.id), ('disbursement_category_id', '=', line.disbursement_category_id.id), ('state', '=', 'draft')]):
                     raise ValidationError(f"There are recurring disbursement requests in process for {line.disbursement_category_id.name}. Please complete them first.")
-            # Use external id for 'In Kind' category
-            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
-            if not line.order_type == 'recurring' and line.disbursement_category_id.id == in_kind_category.id:
-                StockPicking = self.env['stock.picking']
-                StockMove = self.env['stock.move']
-                StockMoveLine = self.env['stock.move.line']
-                # You may want to adjust picking_type_id, location_id, location_dest_id as per your setup
-                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
-                location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
-                picking_vals = {
-                    'partner_id': self.donee_id.id,
-                    'picking_type_id': self.env.ref('stock.picking_type_out').id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                    'origin': self.name,
-                }
-                picking = StockPicking.create(picking_vals)
-                move_vals = {
-                    'name': line.product_id.display_name,
-                    'product_id': line.product_id.id,
-                    'product_uom_qty': line.quantity,
-                    'product_uom': line.product_id.uom_id.id,
-                    'picking_id': picking.id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                }
-                move = StockMove.create(move_vals)
-                move_line_vals = {
-                    'move_id': move.id,
-                    'product_id': line.product_id.id,
-                    'product_uom_id': line.product_id.uom_id.id,
-                    'quantity': line.quantity,
-                    'picking_id': picking.id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                }
-                StockMoveLine.create(move_line_vals)
+    
         self.state = 'approve'
 
     def action_reject(self):
@@ -608,19 +559,12 @@ class Welfare(models.Model):
                         'analytic_account_id': line.analytic_account_id.id,
                         'disbursement_category_id': line.disbursement_category_id.id,
                         'disbursement_application_type_id': line.disbursement_application_type_id.id,
-                        'quantity': line.quantity,
+                        
                         'collection_point': line.collection_point,
-                        'amount': line.total_amount,
+                        'amount': line.amount,
                     })
 
                     month += 1
 
 
         self.state = 'recurring'
-        
-    def action_committee_approval(self):
-        self.state = 'committee_approval'
-    def action_complete(self):
-        if not self.welfare_line_ids:
-            raise ValidationError(_('You must add Welfare Line before completing.'))
-        self.state = 'completed'

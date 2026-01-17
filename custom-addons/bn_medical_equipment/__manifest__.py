@@ -17,7 +17,6 @@
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
         'views/medical_equipment.xml',
-        'views/medical_security_deposit.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/res_partner.xml',

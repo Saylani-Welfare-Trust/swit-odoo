@@ -29,7 +29,7 @@ patch(PaymentScreen.prototype, {
                     let newState;
                     
                     // Condition 1: If state is 'draft', update to 'payment'
-                    if (currentState === 'approved') {
+                    if (currentState === 'draft') {
                         // Check for negative quantities
                         const hasNegativeQty = currentOrder
                             .get_orderlines()
@@ -69,7 +69,7 @@ patch(PaymentScreen.prototype, {
                         );
                         
                         // Show appropriate notification based on state change
-                        if (currentState === 'approved') {
+                        if (currentState === 'draft') {
                             this.env.services.notification.add(
                                 `Medical equipment ${medicalData.record_number} marked as paid`,
                                 { type: 'success' }

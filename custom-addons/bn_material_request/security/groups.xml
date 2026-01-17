@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Menu Group -->
-    <record id="menu_group_user" model="res.groups">
-        <field name="name">Material Request / Menu</field>
-        <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
-        <field name="comment">Basic user access to Member Approval module</field>
-    </record>
-
     <!-- Member Approval User Group -->
     <record id="member_approval_group_user" model="res.groups">
-        <field name="name">Member Approval User</field>
+        <field name="name"> Member Approval User</field>
         <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
         <field name="comment">Basic user access to Member Approval module</field>
     </record>

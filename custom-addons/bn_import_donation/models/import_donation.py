@@ -24,21 +24,10 @@ class ImportDonation(models.Model):
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
-    
-    def _default_picking_type(self):
-        picking_type = self.env.ref(
-            'bn_import_donation.online_donation_stock_picking_type',
-            raise_if_not_found=False
-        )
-        return picking_type.id if picking_type else False
-    
-    picking_type_id = fields.Many2one(
-        'stock.picking.type',
-        string="Picking Type",
-        default=_default_picking_type 
-    )
+    picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_import_donation.online_donation_stock_picking_type', raise_if_not_found=False).id)
     source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
     destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
+
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
     file_name = fields.Char('File Name')
@@ -46,10 +35,6 @@ class ImportDonation(models.Model):
 
     invalid_import_donation_ids = fields.One2many('invalid.import.donation', 'import_donation_id', string="Invalid Import Donations")
     valid_import_donation_ids = fields.One2many('valid.import.donation', 'import_donation_id', string="Valid Import Donations")
-
-    
-
-
 
 
     def action_draft(self):

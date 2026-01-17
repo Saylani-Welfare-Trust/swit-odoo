@@ -22,16 +22,12 @@ class DirectDeposit(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
 
-    address = fields.Char('Address')
     name = fields.Char('Name', default="New")
-    transaction_ref = fields.Char('Transaction Reference')
-
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
-    
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
-    
+
     amount = fields.Monetary('Amount', currency_field='currency_id')
-    service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
+    transaction_ref = fields.Char('Transaction Reference')
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
@@ -55,8 +51,6 @@ class DirectDeposit(models.Model):
 
     @api.model
     def create_dd_record(self, data):
-        address = data.get('address')
-        service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
 
@@ -78,8 +72,6 @@ class DirectDeposit(models.Model):
         dd = self.create({
             'donor_id': data['donor_id'],
             'user_id': user_id,
-            'address': address,
-            'service_charges': service_charges,
             'transaction_ref': transaction_ref,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
@@ -264,7 +256,7 @@ class DirectDeposit(models.Model):
             dhs_service = DHS.create({
                 'donor_id': self.donor_id.id,
                 'amount': service_amount,
-                'address': self.address or self.donor_id.street or '',
+                'address': self.donor_id.street or '',
                 'direct_deposit_id': self.id,
                 'state': 'gate_in',
             })
@@ -288,7 +280,6 @@ class DirectDeposit(models.Model):
                 'amount': consu_amount,
                 'address': self.donor_id.street or '',
                 'direct_deposit_id': self.id,
-                'service_charges': self.service_charges,
                 'state': 'draft',
             })
             

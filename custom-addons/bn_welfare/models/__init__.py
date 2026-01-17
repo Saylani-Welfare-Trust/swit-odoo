@@ -7,4 +7,3 @@ from . import microfinance_guarantor
 from . import product_product
 from . import product_template
 from . import welfare_institute_fetch
-from . import stock_picking

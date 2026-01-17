@@ -24,7 +24,6 @@
                             <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" readonly="1"/> <field style="width: 70% !important;" name="mobile_no" readonly="1" invisible="search_type != 'mobile_no'"/></div>
                             <field name="cnic_no" invisible="search_type != 'cnic_no'" readonly="1" />
                             
-                            <field name="category" invisible="registration_type != 'donee'" readonly="1" />
                             <field name="donee_registration_type" invisible="registration_type != 'donee'" readonly="1" />
                         </group>
                     </group>
