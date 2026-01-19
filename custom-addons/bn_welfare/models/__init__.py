@@ -8,3 +8,8 @@ from . import product_product
 from . import product_template
 from . import welfare_institute_fetch
 from . import stock_picking
+from . import welfare_committee_member
+from . import welfare_teacher
+from . import welfare_inquiry_report
+from . import welfare_masjid
+from . import welfare_madarsa
