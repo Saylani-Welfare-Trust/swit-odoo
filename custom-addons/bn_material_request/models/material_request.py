@@ -169,7 +169,7 @@ class MemberApproval(models.Model):
         if self.state != 'budget_check':
             raise ValidationError(_('This request is not in HOD Approval state.'))
         
-        if self.department_id and self.department_id.manager_id.id != self.env.user.id:
+        if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
 
         if self.is_in_budget:
