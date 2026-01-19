@@ -208,7 +208,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         ['welfare_id', '=', welfareRecord.id],
                         ['state', '!=', 'disbursed']
                     ],
-                    ['id', 'product_id', 'amount', 'collection_date', 'state'],
+                    ['id', 'product_id', 'amount', 'quantity', 'collection_date', 'state', 'disbursement_category_id'],
                     {}
                 );
 
