@@ -29,4 +29,4 @@
             'bn_pos_custom_action/static/src/models/*',
         ],
     },
-}
+} # type: ignore

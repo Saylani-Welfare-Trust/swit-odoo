@@ -174,7 +174,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
                     return;
                 }
-
+                console.log(dueThisMonth);
                 // Add products to POS order
                 console.log(dueThisMonth);
                 for (const line of dueThisMonth) {
@@ -182,11 +182,12 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     if (line.product_id && line.product_id[0]) {
                         const product = this.pos.db.get_product_by_id(line.product_id[0]);
                         if (product) {
+                            // Use amount as-is, do not multiply by quantity
                             selectedOrder.add_product(product, {
                                 quantity: 1,
-                                price_extra: line.amount || product.lst_price,
+                                price_extra: line.total_amount ,
                             });
-                            welfareLineIds.push({ id: line.id, amount: line.amount });
+                            welfareLineIds.push({ id: line.id, amount: line.total_amount });
                         }
                     }
                 }
@@ -234,9 +235,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     if (line.product_id && line.product_id[0]) {
                         const product = this.pos.db.get_product_by_id(line.product_id[0]);
                         if (product) {
+
                             selectedOrder.add_product(product, {
                                 quantity: 1,
-                                price_extra: line.amount || product.lst_price,
+                                price_extra: line.amount ,
                             });
                             recurringLineIds.push({ id: line.id, amount: line.amount });
                         }
@@ -358,7 +360,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const microfinanceRecoveryLineIds = await this.handleMicrofinanceRecoveryLines(record[0], selectedOrder);
 
             // Add partner to order
-            console.log(record);
+            // console.log(record);
             if (record[0].donee_id && record[0].donee_id[0]) {
                 const partnerId = record[0].donee_id[0];
                 let partner = await this.getOrLoadPartner(partnerId);
