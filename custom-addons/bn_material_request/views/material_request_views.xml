@@ -34,15 +34,15 @@
                     <button string="Check Budget" name="action_check_budget" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
-                            class="oe_highlight" invisible="state != 'budget_check'"/>
-                    <button string="Move to Committee Approval" name="action_committee_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
-                    <button string="CFO Approve" name="action_cfo_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
-                    <button string="COO Approve" name="action_coo_approve" type="object"
-                            class="oe_highlight" invisible="is_in_budget"/>
+                            class="oe_highlight" invisible="state!='hod_approval'"/>
+                            <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
+                                class="oe_highlight" invisible="is_in_budget or state != 'committee_approval'"/> -->
+                            <button string="CFO Approve" name="action_cfo_approve" type="object"
+                                class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
+                            <button string="COO Approve" name="action_coo_approve" type="object"
+                                class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
                     <button string="Reject" name="action_reject" type="object"
-                            invisible="state not in ['hod_approval', 'committee_approval']"/>
+                            invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,done"/>
@@ -64,11 +64,10 @@
                             <field name="department_id"/>
                             <field name="request_date"/>
                             <field name="source_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
-                            <field name="dest_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="dest_location_domain" invisible="1"/>
+                            <field name="dest_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/>
                         </group>
                         <group name="budget_info">
-                            <!-- <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/> -->
-                            <field name="budget_id" options="{'no_create': True, 'no_edit': True}" domain="[('state', '=', 'done')]" readonly="state != 'draft'"/>
                             <field name="total_amount"/>
                             <field name="budget_amount" invisible="state == 'draft'"/>
                             <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>
@@ -85,16 +84,32 @@
                             <field name="line_ids" readonly="state != 'draft'">
                                 <tree editable="bottom">
                                     <field name="product_id" domain="[('detailed_type', '=', 'product')]"/>
+                                    <field name="analytic_account_id"/>
+                                    <field name="budget_id"/>
                                     <field name="product_uom_id" />
                                     <field name="quantity" readonly="0"/>
                                     <field name="unit_price" readonly="0"/>
+                                    <field name="is_shariah_compliant" readonly="1"/>
                                     <field name="subtotal"/>
                                 </tree>
                             </field>
                         </page>
                         <page string="Remarks" name="remarks">
                             <group>
-                                <field name="remarks" readonly="state == 'done'" placeholder="Enter any remarks..."/>
+                                <field name="committee_remarks" 
+                                    readonly="state == 'done'" 
+                                    required="state == 'committee_approval'" 
+                                    placeholder="Enter any remarks..."/>
+                                <field name="cfo_remarks" 
+                                    readonly="state == 'done'" 
+                                    placeholder="Enter any remarks..."/>
+                                <field name="coo_remarks" 
+                                    readonly="state == 'done'" 
+                                    placeholder="Enter any remarks..."/>
+                                <field name="rejection_reason" 
+                                    readonly="state == 'done'" 
+                                    required="state == 'rejected'" 
+                                    placeholder="Enter rejection reason..."/>
                             </group>
                         </page>
                     </notebook>

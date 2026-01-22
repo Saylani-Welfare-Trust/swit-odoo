@@ -45,8 +45,8 @@
                             <field name="dest_journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                         </group>
                         <group name="journal_transfer_col_2">
-                            <field name="date" />
-                            <field name="amount" />
+                            <field name="date" required="1" />
+                            <field name="amount" required="1" />
                         </group>
                     </group>
                 </sheet>

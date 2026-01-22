@@ -78,6 +78,9 @@ class Welfare(models.Model):
 
     hod_remarks = fields.Text('HOD Remarks')
     member_remarks = fields.Text('Member Remarks')
+    committee_remarks = fields.Text('Committee Remarks')
+    rejection_remarks = fields.Text('Rejection Remarks')
+    
     portal_last_sync_message = fields.Text('Portal Last Sync Message')
 
     application_form = fields.Binary('Application Form')
@@ -111,6 +114,11 @@ class Welfare(models.Model):
     portal_sync_status = fields.Selection(selection=portal_sync_selection, string='Portal Sync Status', default='not_synced')
 
     portal_review_notes = fields.Text('Review Notes')
+    inquiry_media = fields.Html(
+        string="Inquiry Media",
+        sanitize=False,   # IMPORTANT
+    )
+
 
     # Employee Informaiton Fields
     designation = fields.Char('Designation') 
@@ -218,6 +226,26 @@ class Welfare(models.Model):
         string='Madrasa Details'
     )
     
+    show_disburse_button = fields.Boolean(
+        compute="_compute_show_disburse_button",
+        store=False
+    )
+
+    def _compute_show_disburse_button(self):
+        for rec in self:
+            has_recurring = any(
+                line.order_type == 'recurring'
+                for line in rec.welfare_line_ids
+            )
+
+            # Visibility logic
+            if has_recurring:
+                # Show ONLY in recurring state
+                rec.show_disburse_button = rec.state == 'recurring'
+            else:
+                # Show ONLY in approve state
+                rec.show_disburse_button = rec.state == 'approve'
+
     # Add this method to handle data parsing
     def _parse_form_data(self, rec):
         """Parse form data based on category"""
@@ -390,15 +418,28 @@ class Welfare(models.Model):
         application = self._search_portal_applications()
         # _logger.info(f"Applications found: {application}")    
         app_state = application.get('status') if application else None
+        inquiry_reports = application.get('inquiryReports') if application else None
+        all_media = []
+        all_remarks = []
+        if isinstance(inquiry_reports, list):
+            for report in inquiry_reports:
+                media = report.get('media') if isinstance(report, dict) else None
+                remarks = report.get('remarks') if isinstance(report, dict) else None
+                if media:
+                    for url in media:
+                        all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
+                if remarks:
+                    all_remarks.append(remarks)
+        # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
         if app_state == 'inquiry_complete': # type: ignore
-            self.write({
-                "state":"inquiry"
-            })
-            
+            self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
+            self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
+            self.write({"state":"inquiry"})
             result = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state} "
             message += f" | 📋 {result['message']} "
-        else : message += f" | 📋 No applications found"     # type: ignore
+        else:
+            message += f" | 📋 No applications found"     # type: ignore
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _find_matching_application(self, applications):
@@ -492,7 +533,31 @@ class Welfare(models.Model):
                     "form": {
                         "category": "Individual",  # fix
                         "subcategory": "General Aid",  # fix
-                        "propertyName*": "anything"  # fix
+                        "donee": self.donee_id.name,
+                        "cnic_no": self.cnic_no,
+                        "father_name": self.father_name,
+                        "date": str(self.date) if self.date else None,
+                        "monthly_income": self.monthly_income,
+                        "monthly_salary": self.monthly_salary,
+                        "loan_request_amount": self.loan_request_amount,
+                        "dependent_person": self.dependent_person,
+                        "household_member": self.household_member,
+                        "residence_type": self.residence_type,
+                        "company_name": self.company_name,
+                        "company_address": self.company_address,
+                        "service_duration": self.service_duration,
+                        "bank_account": self.bank_account,
+                        "bank_name": self.bank_name,
+                        "account_no": self.account_no,
+                        "aid_from_other_organization": self.aid_from_other_organization,
+                        "have_applied_swit": self.have_applied_swit,
+                        "driving_license": self.driving_license,
+                        "security_offered": self.security_offered,
+                        "other_loan": self.other_loan,
+                        "outstanding_amount": self.outstanding_amount,
+                        "monthly_household_expense": self.monthly_household_expense,
+                        "details_1": self.details_1,
+                        "details_2": self.details_2,  
                     }
                 }
             }
@@ -653,46 +718,11 @@ class Welfare(models.Model):
                     ('state', '=', 'draft')
                 ]):
                     raise ValidationError(f"There are recurring disbursement requests in process for {line.disbursement_category_id.name}. Please complete them first.")
-            # Use external id for 'In Kind' category
-            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
-            if not line.order_type == 'recurring' and line.disbursement_category_id.id == in_kind_category.id:
-                StockPicking = self.env['stock.picking']
-                StockMove = self.env['stock.move']
-                StockMoveLine = self.env['stock.move.line']
-                # You may want to adjust picking_type_id, location_id, location_dest_id as per your setup
-                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
-                location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
-                picking_vals = {
-                    'partner_id': self.donee_id.id,
-                    'picking_type_id': self.env.ref('stock.picking_type_out').id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                    'origin': self.name,
-                }
-                picking = StockPicking.create(picking_vals)
-                move_vals = {
-                    'name': line.product_id.display_name,
-                    'product_id': line.product_id.id,
-                    'product_uom_qty': line.quantity,
-                    'product_uom': line.product_id.uom_id.id,
-                    'picking_id': picking.id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                }
-                move = StockMove.create(move_vals)
-                move_line_vals = {
-                    'move_id': move.id,
-                    'product_id': line.product_id.id,
-                    'product_uom_id': line.product_id.uom_id.id,
-                    'quantity': line.quantity,
-                    'picking_id': picking.id,
-                    'location_id': location_src.id if location_src else False,
-                    'location_dest_id': location_dest.id if location_dest else False,
-                }
-                StockMoveLine.create(move_line_vals)
         self.state = 'approve'
 
     def action_reject(self):
+        if not self.rejection_remarks:
+            raise ValidationError('Please enter Rejection Remarks before rejection.')
         self.state = 'reject'
 
     def action_create_recurring_order(self):
@@ -723,8 +753,13 @@ class Welfare(models.Model):
         self.state = 'recurring'
         
     def action_committee_approval(self):
+        if not self.committee_remarks:
+            raise ValidationError(_('Please enter Committee Remarks before approval.'))
         self.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))
         self.state = 'completed'
+    
+    def action_disburse(self):
+        self.state = 'disbursed'

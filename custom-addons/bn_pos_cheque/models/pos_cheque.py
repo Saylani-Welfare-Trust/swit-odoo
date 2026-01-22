@@ -15,6 +15,7 @@ class POSCheque(models.Model):
     _description = "POS Cheque"
 
 
+    bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Acccount", compute="_set_details", store=True)
     

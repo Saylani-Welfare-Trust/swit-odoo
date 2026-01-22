@@ -214,7 +214,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             const securityProduct = await this.orm.searchRead(
                 'product.product',
                 [
-                    ['name', '=', 'Medical Equipment Security Deposit'],
+                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
                     ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
@@ -229,7 +229,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 if (!product) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t("Medical Equipment Security Deposit product not loaded in POS session."),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
                     });
                     
                     return
@@ -337,10 +337,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             //     }
             // });
 
+            // console.log('Hitting Provisional Popup');
+            // console.log(this);
+
             const securityProduct = await this.orm.searchRead(
                 'product.product',
                 [
-                    ['name', '=', 'Microfinance Security Deposit'],
+                    ['name', '=', this.pos.company.microfinance_security_depsoit_product],
                     ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
@@ -355,7 +358,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 if (!product) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t("Microfinance Security Deposit product not loaded in POS session."),
+                        body: _t(`${this.pos.company.microfinance_security_depsoit_product} product not loaded in POS session.`),
                     });
                     
                     return

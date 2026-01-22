@@ -12,22 +12,24 @@ status_selection = [
 
 class JournalTransfer(models.TransientModel):
     _name = "journal.transfer"
-    _description = "Journal Transfer Wizard"
+    _description = "Journal Transfer"
 
 
     name = fields.Char('Name', default="New")
 
     move_id = fields.Many2one('account.move', string="Account Move")
 
-    date = fields.Date('Transfer Date', required=True)
+    date = fields.Date('Transfer Date')
     
-    source_journal_id = fields.Many2one('account.journal', string="Source Journal", required=True, domain=[('type','in',['bank','cash'])])
-    dest_journal_id = fields.Many2one('account.journal', string="Destination Journal", required=True, domain=[('type','in',['bank','cash'])])
+    source_journal_id = fields.Many2one('account.journal', string="Source Journal")
+    dest_journal_id = fields.Many2one('account.journal', string="Destination Journal")
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
+
+    pos_move_id = fields.Many2one('account.move', string="Account Move")
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
-    amount = fields.Monetary('Amount', required=True, currency_field='currency_id')
+    amount = fields.Monetary('Amount', currency_field='currency_id')
     
 
     @api.constrains('source_journal_id','dest_journal_id')
@@ -86,3 +88,48 @@ class JournalTransfer(models.TransientModel):
             "view_mode": "form",
             "res_id": self.move_id.id,
         }
+    
+    def _cron_pull_pos_entries(self):
+        records = []
+
+        # 🔥 Fetch POS journal safely
+        pos_journal = self.env['account.journal'].search([
+            ('type', '=', 'general'),
+            ('code', '=', 'POS'),
+        ], limit=1)
+
+        if not pos_journal:
+            return
+
+        # 🔥 Avoid duplicate DB calls
+        existing_move_ids = set(
+            self.search([]).mapped('pos_move_id').ids
+        )
+
+        moves = self.env['account.move'].search([
+            ('journal_id', '=', pos_journal.id),
+            ('id', 'not in', list(existing_move_ids)),
+            ('state', '=', 'posted'),
+        ])
+
+
+        for move in moves:
+            # raise UserError(str(move.name)+" "+str(move.line_ids))
+        
+            # 🔥 Pull only meaningful debit lines (receivable preferred)
+            debit_lines = move.line_ids.filtered(
+                lambda l: l.debit > 0 and l.account_id.account_type == 'asset_receivable'
+            )
+        
+            for line in debit_lines:
+                records.append({
+                    'pos_move_id': move.id,
+                    'source_journal_id': move.journal_id.id,
+                    'amount': line.debit,
+                })
+
+        # raise UserError(str(records))
+    
+        if records:
+            self.create(records)
+                
