@@ -8,10 +8,11 @@
         <field name="arch" type="xml">
             <xpath expr="//page[@name='branches']" position="after">
                 <page name="product_configuration" string="Product Configuration">
-                    <group>
+                    <group string="Product Configuraiton">
                         <group name="product_configuration_col_1">
                             <field name="donation_box_product" />
                             <field name="donation_home_service_product" />
+                            <field name="medical_equipment_security_depsoit_product" />
                         </group>
                         <group name="product_configuration_col_1">
                             <field name="microfinance_security_depsoit_product" />

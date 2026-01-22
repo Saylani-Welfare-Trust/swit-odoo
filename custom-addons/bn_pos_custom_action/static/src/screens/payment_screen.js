@@ -335,12 +335,16 @@ patch(PaymentScreen.prototype, {
                 if (welfareId) {
                     if (!isRecurring) {
                         // One-time disbursement: Update welfare.state to 'disbursed'
-                        await this.env.services.orm.write(
-                            'welfare',
-                            [welfareId],
-                            { state: 'disbursed' }
-                        );
-
+                        const welfareLineIds = wfData.welfare_line_ids || [];
+                        if (welfareLineIds.length > 0) {
+                            for (const line of welfareLineIds) {
+                                await this.env.services.orm.write(
+                                    'welfare.line',
+                                    [line.id],
+                                    { state: 'disbursed' }
+                                );
+                            }
+                        }
                         this.env.services.notification.add(
                             `Welfare ${wfData.record_number} one-time disbursement completed`,
                             { type: 'success' }
@@ -362,31 +366,6 @@ patch(PaymentScreen.prototype, {
                                 `Processed ${recurringLineIds.length} recurring welfare disbursement(s)`,
                                 { type: 'success' }
                             );
-
-                            // Check if ALL recurring lines are now disbursed
-                            const remainingLines = await this.env.services.orm.searchRead(
-                                'welfare.recurring.line',
-                                [
-                                    ['welfare_id', '=', welfareId],
-                                    ['state', '!=', 'disbursed']
-                                ],
-                                ['id'],
-                                {}
-                            );
-
-                            // If no remaining lines, update welfare.state to 'disbursed'
-                            if (remainingLines.length === 0) {
-                                await this.env.services.orm.write(
-                                    'welfare',
-                                    [welfareId],
-                                    { state: 'disbursed' }
-                                );
-
-                                this.env.services.notification.add(
-                                    `Welfare ${wfData.record_number} fully disbursed (all recurring lines completed)`,
-                                    { type: 'success' }
-                                );
-                            }
                         }
                     }
                 }

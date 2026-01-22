@@ -39,6 +39,8 @@ patch(ActionScreen.prototype, {
             });
         }
 
+        console.log(this);
+
         if (!orderLines || orderLines.length === 0) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Error"),

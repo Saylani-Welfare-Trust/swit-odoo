@@ -16,6 +16,7 @@
         'views/res_config_setting.xml',
         'views/pos_session_slip.xml',
         'views/pos_session.xml',
+        'views/account_journal.xml',
     ],
     'auto_install': False,
     'application': False,
