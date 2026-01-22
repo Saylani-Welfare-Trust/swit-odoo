@@ -53,6 +53,15 @@ class MedicalEquipment(models.Model):
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
 
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
+
     @api.depends('date_of_birth')
     def _compute_age(self):
         for record in self:

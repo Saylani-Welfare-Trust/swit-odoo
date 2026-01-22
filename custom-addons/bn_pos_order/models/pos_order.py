@@ -1,4 +1,7 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
+
+import re
 
 
 class POSOrder(models.Model):
@@ -13,6 +16,15 @@ class POSOrder(models.Model):
     
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
     
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
 
     def action_refund_request(self):
         self.state = 'refund_request'

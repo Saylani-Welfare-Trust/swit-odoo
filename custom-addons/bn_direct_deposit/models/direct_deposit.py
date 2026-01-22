@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
+import re
+
 
 status_selection = [       
     ('draft', 'Draft'),
@@ -43,6 +45,15 @@ class DirectDeposit(models.Model):
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
 
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
 
     @api.model
     def create(self, vals):

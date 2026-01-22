@@ -1,5 +1,7 @@
-from odoo import models, fields
+from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+
+import re
 
 
 class InvalidImportDonation(models.Model):
@@ -24,6 +26,15 @@ class InvalidImportDonation(models.Model):
     create_record = fields.Boolean('Create Contact', default=False)
     hide_button = fields.Boolean('Hide Button', default=False)
 
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
 
     def action_approve(self):
         donation_id = self.env['donation'].search([('transaction_id', '=', self.transaction_id)])

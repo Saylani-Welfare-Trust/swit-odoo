@@ -88,6 +88,15 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
 
 
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
+
     @api.depends('name', 'category_id')
     def _set_donee_required_fields(self):
         for rec in self:

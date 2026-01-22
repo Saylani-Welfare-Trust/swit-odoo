@@ -22,6 +22,16 @@ class MicrofinanceGuarantor(models.Model):
     relation = fields.Char('Relation')
     occupation = fields.Char('Occupation')
 
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
+
     @api.constrains('cnic_no')
     def _check_cnic_format(self):
         for record in self:
