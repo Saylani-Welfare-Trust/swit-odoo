@@ -59,6 +59,24 @@
                     </div>
                 </div>
 
+                <div class="row mb-2 text-start"
+                    t-if="this.action_type === 'dd'">
+                    <div class="col-4 fw-semibold">Bank</div>
+                    <div class="col-8">
+                        <select class="form-select form-select-sm"
+                                t-on-change="onBankChange">
+                            <option value="">Select Bank</option>
+
+                            <t t-foreach="this.props.bank_id" t-as="bank" t-key="bank.id">
+                                <option t-att-value="bank.id"
+                                        t-att-selected="bank.id === this.state.selected_bank_id">
+                                    <t t-esc="bank.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'">
                     <div class="col-4 fw-semibold">Total</div>
                     <div class="col-8 fw-bold" t-esc="this.state.total"/>

@@ -57,6 +57,7 @@ class DirectDeposit(models.Model):
     @api.model
     def create_dd_record(self, data):
         address = data.get('address')
+        bank_id = data.get('bank_id')
         service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
@@ -78,6 +79,7 @@ class DirectDeposit(models.Model):
         # -------------------------
         dd = self.create({
             'donor_id': data['donor_id'],
+            'bank_id': bank_id,
             'user_id': user_id,
             'address': address,
             'service_charges': service_charges,
@@ -366,7 +368,7 @@ class DirectDeposit(models.Model):
                 "target": "current",
             }
         
-    def _get_bank_list(self):
+    def get_bank_list(self):
         bank_list = [
             {'id': bank.id, 'name': bank.name}
             for bank in self.env['account.journal'].search([])

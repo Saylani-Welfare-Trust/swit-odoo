@@ -23,6 +23,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.title = this.props.title || "Provisional Order Details";
         
         this.donor_id = this.props.donor_id;
+        this.bank_id = this.props.bank_id;
         this.donor_name = this.props.donor_name;
         this.orderLines = this.props.orderLines;
         this.action_type = this.props.action_type;
@@ -38,6 +39,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             address: this.props.address || "",   
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
+            selected_bank_id: false,
         });
     }
 
@@ -65,6 +67,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
     updateTransferToDHS(event) {
         this.state.transfer_to_dhs = event.target.checked;
+    }
+
+    onBankChange(ev) {
+        const bankId = parseInt(ev.target.value) || null;
+        this.state.selected_bank_id = bankId;
+
+        console.log("Selected Bank ID:", bankId);
     }
 
     prepareOrderLines(orderLines) {
@@ -381,6 +390,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
+                'bank_id': this.state.selected_bank_id,
                 'transaction_ref': this.state.transaction_ref,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
