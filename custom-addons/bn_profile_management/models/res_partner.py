@@ -327,15 +327,10 @@ class ResPartner(models.Model):
             if is_donee and is_individual and not rec.date_of_birth:
                 raise ValidationError('Please specify your Date of Birth...')
 
-            if (is_microfinance or is_welfare) and rec.date_of_birth and rec.age and rec.age < 18:
-                if is_microfinance:
-                    raise ValidationError(
-                        'Cannot register the Person for Microfinance as his/her age is below 18.'
-                    )
-                if is_welfare:
-                    raise ValidationError(
-                        'Cannot register the Person for Welfare as his/her age is below 18.'
-                    )
+            if is_microfinance and rec.date_of_birth and rec.age and rec.age < 18:
+                raise ValidationError(
+                    'Cannot register the Person for Microfinance as his/her age is below 18.'
+                )
 
             if is_donee and rec.cnic_expiration:
                 from dateutil.relativedelta import relativedelta

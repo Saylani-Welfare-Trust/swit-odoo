@@ -16,7 +16,6 @@ class DirectDeposit(models.Model):
     _order = "id desc"
 
 
-    bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
@@ -365,12 +364,3 @@ class DirectDeposit(models.Model):
                 "domain": [('id', 'in', dhs_record_ids)],
                 "target": "current",
             }
-        
-    def _get_bank_list(self):
-        bank_list = [
-            {'id': bank.id, 'name': bank.name}
-            for bank in self.env['account.journal'].search([])
-            if bank.show_in_pos
-        ]
-
-        return bank_list

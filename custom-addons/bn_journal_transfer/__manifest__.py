@@ -10,7 +10,6 @@
     ],
     'data': [
         'data/sequence.xml',
-        'data/schedule_action.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/journal_transfer.xml'

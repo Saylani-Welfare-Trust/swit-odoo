@@ -146,66 +146,67 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             let welfareLineIds = [];
             let recurringLineIds = [];
 
-            // Helper to group lines by product and sum quantity/amount
-            function groupLinesByProduct(lines, isRecurring) {
-                const grouped = {};
-                for (const line of lines) {
-                    const productId = line.product_id && line.product_id[0];
-                    if (!productId) continue;
-                    if (!grouped[productId]) {
-                        grouped[productId] = {
-                            productId,
-                            quantity: 0,
-                            amount: 0,
-                            ids: [],
-                        };
-                    }
-                    grouped[productId].quantity += line.quantity || 1;
-                    grouped[productId].amount += isRecurring ? (line.amount || 0) : (line.total_amount || 0);
-                    grouped[productId].ids.push(line.id);
-                }
-                return Object.values(grouped);
-            }
-
             if (!isRecurring) {
+                // One-time: Fetch welfare_line_ids where order_type='one_time' and collection_date month = current month
                 if (!welfareRecord.welfare_line_ids || !welfareRecord.welfare_line_ids.length) {
                     this.notification.add("No welfare lines found for this record", { type: 'warning' });
                     return;
                 }
+
+                // Fetch disbursement_category_id.name as well
                 const lines = await this.orm.searchRead(
                     'welfare.line',
                     [
                         ['id', 'in', welfareRecord.welfare_line_ids],
-                        ['order_type', 'in', ['one_time']],
-                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['order_type', 'in', ['one_time', 'both']]
                     ],
-                    ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id'],
+                    ['id', 'product_id', 'total_amount', 'quantity', 'collection_date', 'disbursement_category_id'],
                     {}
                 );
+
+                // Fetch category names for all lines (if not already present)
+                // We'll need to fetch the category name for each line
+                // To optimize, fetch all category ids in one go
+                const categoryIds = [...new Set(lines.map(l => l.disbursement_category_id && l.disbursement_category_id[0]).filter(Boolean))];
+                let categoryMap = {};
+                if (categoryIds.length) {
+                    const categories = await this.orm.searchRead(
+                        'disbursement.category',
+                        [['id', 'in', categoryIds]],
+                        ['id', 'name'],
+                        {}
+                    );
+                    for (const cat of categories) {
+                        categoryMap[cat.id] = cat.name;
+                    }
+                }
+
+                // Filter by current month and skip 'In Kind' category
                 const dueThisMonth = lines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    // Skip if category is 'In Kind'
+                    const catId = l.disbursement_category_id && l.disbursement_category_id[0];
+                    if (catId && categoryMap[catId] === 'In Kind') return false;
+                    return month - 1 === currentMonth && year === currentYear;
                 });
+
                 if (!dueThisMonth.length) {
                     this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
                     return;
                 }
-                // Group and add to POS
-                const grouped = groupLinesByProduct(dueThisMonth, false);
-                for (const group of grouped) {
-                    const product = this.pos.db.get_product_by_id(group.productId);
-                    if (product) {
-                        // Calculate per-unit price and price_extra
-                        const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
-                        const priceExtra = perUnitPrice - product.lst_price;
-                        selectedOrder.add_product(product, {
-                            quantity: group.quantity,
-                            price_extra: priceExtra,
-                        });
-                        for (const id of group.ids) {
-                            welfareLineIds.push({ id, amount: group.amount });
+                console.log(dueThisMonth);
+                // Add products to POS order
+                for (const line of dueThisMonth) {
+                    if (line.product_id && line.product_id[0]) {
+                        const product = this.pos.db.get_product_by_id(line.product_id[0]);
+                        if (product) {
+                            // Use amount as-is, do not multiply by quantity
+                            selectedOrder.add_product(product, {
+                                quantity: 1,
+                                price_extra: line.total_amount ,
+                            });
+                            welfareLineIds.push({ id: line.id, amount: line.total_amount });
                         }
                     }
                 }
@@ -213,54 +214,81 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     this.notification.add("No products could be added from welfare lines", { type: 'warning' });
                     return;
                 }
+
                 this.notification.add(
-                    `Added ${grouped.length} one-time welfare item(s)`,
+                    `Added ${welfareLineIds.length} one-time welfare item(s)`,
                     { type: "success" }
                 );
+
             } else {
+                // Recurring: Fetch from welfare.recurring.line by welfare_id, current month, state != 'disbursed'
                 const recurringLines = await this.orm.searchRead(
                     'welfare.recurring.line',
                     [
                         ['welfare_id', '=', welfareRecord.id],
-                        ['state', '!=', 'disbursed'],
-                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['state', '!=', 'disbursed']
                     ],
                     ['id', 'product_id', 'amount', 'quantity', 'collection_date', 'state', 'disbursement_category_id'],
                     {}
                 );
+
+                // Fetch category names for all lines (if not already present)
+                const categoryIds = [...new Set(recurringLines.map(l => l.disbursement_category_id && l.disbursement_category_id[0]).filter(Boolean))];
+                let categoryMap = {};
+                if (categoryIds.length) {
+                    const categories = await this.orm.searchRead(
+                        'disbursement.category',
+                        [['id', 'in', categoryIds]],
+                        ['id', 'name'],
+                        {}
+                    );
+                    for (const cat of categories) {
+                        categoryMap[cat.id] = cat.name;
+                    }
+                }
+
+                if (!recurringLines.length) {
+                    this.notification.add("No pending recurring welfare lines found", { type: 'warning' });
+                    return;
+                }
+
+                // Filter by current month and skip 'In Kind' category
                 const dueThisMonth = recurringLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    // Skip if category is 'In Kind'
+                    const catId = l.disbursement_category_id && l.disbursement_category_id[0];
+                    if (catId && categoryMap[catId] === 'In Kind') return false;
+                    return month - 1 === currentMonth && year === currentYear;
                 });
+
                 if (!dueThisMonth.length) {
                     this.notification.add("No recurring welfare lines due this month", { type: 'warning' });
                     return;
                 }
-                // Group and add to POS
-                const grouped = groupLinesByProduct(dueThisMonth, true);
-                for (const group of grouped) {
-                    const product = this.pos.db.get_product_by_id(group.productId);
-                    if (product) {
-                        // Calculate per-unit price and price_extra
-                        const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
-                        const priceExtra = perUnitPrice - product.lst_price;
-                        selectedOrder.add_product(product, {
-                            quantity: group.quantity,
-                            price_extra: priceExtra,
-                        });
-                        for (const id of group.ids) {
-                            recurringLineIds.push({ id, amount: group.amount });
+
+                // Add products to POS order
+                for (const line of dueThisMonth) {
+                    if (line.product_id && line.product_id[0]) {
+                        const product = this.pos.db.get_product_by_id(line.product_id[0]);
+                        if (product) {
+
+                            selectedOrder.add_product(product, {
+                                quantity: 1,
+                                price_extra: line.amount ,
+                            });
+                            recurringLineIds.push({ id: line.id, amount: line.amount });
                         }
                     }
                 }
+
                 if (!recurringLineIds.length) {
                     this.notification.add("No products could be added from recurring lines", { type: 'warning' });
                     return;
                 }
+
                 this.notification.add(
-                    `Added ${grouped.length} recurring welfare item(s)`,
+                    `Added ${recurringLineIds.length} recurring welfare item(s)`,
                     { type: "success" }
                 );
             }
@@ -497,7 +525,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         const mfProduct = await this.orm.searchRead(
             'product.product',
             [
-                ['name', '=', this.pos.company.microfinance_intallement_product],
+                ['name', '=', 'Microfinance Installment'],
                 ['detailed_type', '=', 'service'],
                 ['available_in_pos', '=', true]
             ],
@@ -508,7 +536,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (!mfProduct.length) {
             await this.popup.add(ErrorPopup, {
                 title: "Error",
-                body: `${this.pos.company.microfinance_intallement_product} product not found or not available in POS.`
+                body: "Microfinance Installment product not found or not available in POS."
             });
             return;
         }
@@ -620,7 +648,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         const mfProduct = await this.orm.searchRead(
             'product.product',
             [
-                ['name', '=', this.pos.company.microfinance_intallement_product],
+                ['name', '=', 'Microfinance Installment'],
                 ['detailed_type', '=', 'service'],
                 ['available_in_pos', '=', true]
             ],
@@ -631,7 +659,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (!mfProduct.length) {
             await this.popup.add(ErrorPopup, {
                 title: "Error",
-                body: `${this.pos.company.microfinance_intallement_product} product not found or not available in POS.`
+                body: "Microfinance Installment product not found or not available in POS."
             });
             return;
         }
@@ -742,7 +770,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const serviceProduct = await this.orm.searchRead(
                 'product.product',
                 [
-                    ['name', '=', this.pos.company.donation_home_service_product],
+                    ['name', '=', 'Donation Home Service Charges'],
                     ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
@@ -757,7 +785,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 if (!product) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t(`${this.pos.company.donation_home_service_product} product not loaded in POS session.`),
+                        body: _t("Donation Home Service Receipt product not loaded in POS session."),
                     });
                     
                     return

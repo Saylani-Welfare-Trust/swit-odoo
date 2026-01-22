@@ -7,7 +7,6 @@ class POSSessionSlip(models.Model):
     _description = "POS Session Slip"
 
 
-    bank_id = fields.Many2one('account.journal', string="Bank")
     session_id = fields.Many2one('pos.session', string="Session")
     pos_payment_method_id = fields.Many2one('pos.payment.method', string="Payment Method")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
@@ -25,11 +24,9 @@ class POSSessionSlip(models.Model):
                 "status": "error"
             }
 
-        # raise ValidationError(str(session_id) + "----" + str(data))
         # raise ValidationError(str(session_id) + "----" + str(data) + "----" + str(pos_payment_method.name))
 
         record = self.create({
-            'bank_id': data['bank_id'],
             'pos_payment_method_id': data['payment_method_id'],
             'type': self.env.company.unrestricted_category if data['type'] == 'unrestricted' else self.env.company.restricted_category if data['type'] == 'restricted' else "Uncategorized",
             'slip_no': data['ref'],

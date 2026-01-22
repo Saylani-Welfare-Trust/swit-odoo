@@ -5,4 +5,3 @@ from . import res_company
 from . import res_config_setting
 from . import pos_session_slip
 from . import pos_config
-from . import account_journal

@@ -31,7 +31,6 @@
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
                     <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
-                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="not show_disburse_button" />
                     
                     <button string="Reject" name="action_reject" type="object" />
 
@@ -61,12 +60,8 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'inquiry'" required="state == 'committee_approval'" />
                             <field name="hod_remarks" readonly="state != 'committee_approval'" required="state == 'hod_approve'"/>
                             <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'mem_approve'" />
-                            <field name="rejection_remarks" readonly="state == 'reject'"  />
-                            <field name="show_disburse_button" invisible="1"  />
-
                         </group>
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
@@ -83,8 +78,6 @@
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
-                            <field name="portal_review_notes" readonly="1" />
-                            <field name="inquiry_media" widget="html" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -104,12 +97,7 @@
                                     <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
                                     <field name="quantity" />   
                                     <field name="amount" readonly="1" />
-                                    <field name="fixed_amount_check" column_invisible="1" />
-                                    <field name="total_amount" readonly="fixed_amount_check" />
-                                    <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_delivered" type="object" string="Mark as Delivered" class="oe_highlight" invisible=" not show_deliver_button"/>
-                                    <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
-
+                                    <field name="total_amount" readonly="0" />
                                 </tree>
                             </field>
                         </page>
@@ -139,6 +127,7 @@
                                 </group>
                                 <group name="portal_details_col_2">
                                     <field name="portal_donee_id" readonly="1" />
+                                    <field name="portal_review_notes" readonly="1" />
                                 </group>
                             </group>
                         </page>

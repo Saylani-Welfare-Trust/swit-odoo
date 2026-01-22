@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="session_id" column_invisible="1" />
-                <field name="bank_id" />
                 <field name="pos_payment_method_id" />
                 <field name="type" />
                 <field name="slip_no" />

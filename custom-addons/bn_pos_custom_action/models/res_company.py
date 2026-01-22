@@ -5,11 +5,9 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
 
-    donation_box_product = fields.Char('Donation Box', tracking=True)
+    donation_box_product = fields.Char('Donation Box Product Name', tracking=True)
     
-    donation_home_service_product = fields.Char('Donation Home Service', tracking=True)
+    donation_home_service_product = fields.Char('Donation Home Service Product Name', tracking=True)
     
-    microfinance_intallement_product = fields.Char('Microfinance Installement', tracking=True)
-    microfinance_security_depsoit_product = fields.Char('Microfinance Security Deposit', tracking=True)
-    
-    medical_equipment_security_depsoit_product = fields.Char('Medical Equipment Security Deposit', tracking=True)
+    microfinance_intallement_product = fields.Char('Microfinance Installement Product Name', tracking=True)
+    microfinance_security_depsoit_product = fields.Char('Microfinance Security Deposit Product Name', tracking=True)

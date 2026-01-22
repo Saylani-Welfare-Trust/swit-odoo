@@ -94,5 +94,4 @@ class WelfareRecurringLine(models.Model):
                     'recurring_line_id': self.id,
                 }
                 StockMoveLine.create(move_line_vals)
-                picking.action_assign()
                 self.state = 'delivered'
