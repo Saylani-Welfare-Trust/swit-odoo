@@ -13,6 +13,7 @@ patch(PaymentScreen.prototype, {
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
             const equipmentId = medicalData.equipment_id;
+            const securityDepositId = medicalData.security_deposit_id;
             
             if (equipmentId) {
                 // First, get the current state of the medical equipment record
@@ -29,7 +30,7 @@ patch(PaymentScreen.prototype, {
                     let newState;
                     
                     // Condition 1: If state is 'draft', update to 'payment'
-                    if (currentState === 'approved') {
+                    if (currentState === 'sd_received') {
                         // Check for negative quantities
                         const hasNegativeQty = currentOrder
                             .get_orderlines()
@@ -87,8 +88,27 @@ patch(PaymentScreen.prototype, {
                     console.error("❌ [Medical Equipment] Equipment record not found");
                 }
             } else {
+                if (securityDepositId) {
+                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+
+                    const payload = {
+                        deposit_id: securityDepositId,
+                        payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                        bank_name: currentOrder.bank_name,
+                        cheque_no: currentOrder.cheque_number,
+                        cheque_date: currentOrder.cheque_date,
+                        state: 'paid',
+                    }
+
+                    await this.env.services.orm.call(
+                        'medical.security.deposit', "set_security_depsoit_values",
+                        [payload]
+                    );
+                }
+
                 console.error("❌ [Medical Equipment] No equipment ID found");
             }
+            
         }
         // Only process donation home service if order has extra_data with dhs
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {

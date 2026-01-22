@@ -73,17 +73,41 @@ class MedicalSecurityDeposit(models.Model):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.model
+    def set_security_depsoit_values(self, data):
+        security_deposit = self.search(
+            [('id', '=', data.get('deposit_id')), ('state', 'in', ['draft', 'pending'])],
+            limit=1
+        )
+
+        if security_deposit:
+            security_deposit.payment_method = data.get('payment_method')
+            security_deposit.bank_name = data.get('bank_name')
+            security_deposit.cheque_no = data.get('cheque_no')
+            security_deposit.cheque_date = data.get('cheque_date')
+            security_deposit.state = data.get('state')
+
+            security_deposit.medical_equipment_id.sd_slip_id = security_deposit.id
+            security_deposit.medical_equipment_id.state = 'sd_received'
+
+    @api.model
     def get_medical_equipment_security_deposit(self, data):
-        medical_equipment_request = self.env['medical.equipment'].search([('name', '=', data['medical_equipment_request_no'])])
+
+        medical_equipment_request = self.env['medical.equipment'].search(
+            [('name', '=', data['medical_equipment_request_no'])],
+            limit=1
+        )
 
         if not medical_equipment_request:
             return {
                 'status': "error",
-                'body': "No request found against enter number."
+                'body': "No request found against entered number."
             }
 
-        security_deposit = self.search([('medical_equipment_id', '=', medical_equipment_request.id), ('payment_type', '=', 'security')])
-        
+        security_deposit = self.search(
+            [('medical_equipment_id', '=', medical_equipment_request.id)],
+            limit=1
+        )
+
         if security_deposit:
             return {
                 'status': "success",
@@ -94,18 +118,25 @@ class MedicalSecurityDeposit(models.Model):
                 'state': security_deposit.state,
                 'deposit_exists': True
             }
-        
-        amount = 0
 
-        for line in medical_equipment_request.medical_equipment_line_ids:
-            amount = line.product_id.security_deposit
+        # ✅ calculate amount properly
+        amount = sum(
+            line.product_id.security_deposit
+            for line in medical_equipment_request.medical_equipment_line_ids
+        )
 
-        # Return medical equipment info even if no deposit exists, so POS can create it
+        # ✅ create with ALL values
+        deposit = self.create({
+            'medical_equipment_id': medical_equipment_request.id,
+            'donee_id': medical_equipment_request.donee_id.id,
+            'amount': amount,
+        })
+
         return {
             'status': "success",
             'id': medical_equipment_request.id,
             'donee_id': medical_equipment_request.donee_id.id,
-            'deposit_id': False,
+            'deposit_id': deposit.id,
             'amount': amount,
             'deposit_exists': False
         }

@@ -14,6 +14,8 @@ status_selection = [
     ('validate', 'Validate'),
     ('return', 'Return'),
     ('payment_return','Payment Return'),
+    ('waiting_for_inventory_approval', 'Waiting for Inventory Approval'),
+    ('recovered', 'Recovered'),
 ]
 
 
@@ -26,6 +28,7 @@ class MedicalEquipment(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
+    recovery_picking_id = fields.Many2one('stock.picking', string="Recovery Picking")
     sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
 
     name = fields.Char('Name', default="New")
@@ -247,6 +250,29 @@ class MedicalEquipment(models.Model):
             'res_id': self.return_picking_id.id,
             'target': 'current',
         }
+    
+    def action_show_recovery_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Recovery',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.recovery_picking_id.id,
+            'target': 'current',
+        }
+    
+    def action_show_sd_slip(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Recovery',
+            'res_model': 'medical.security.deposit',
+            'view_mode': 'form',
+            'res_id': self.sd_slip_id.id,
+            'context': {
+                'edit': 0
+            },
+            'target': 'current',
+        }
 
     @api.model
     def create_me_record(self, data):
@@ -328,3 +354,43 @@ class MedicalEquipment(models.Model):
             'products': products_data,
             'success': True
         }
+    
+    def action_recovery(self):
+        """
+        Automatically create recovery picking and update state
+        """
+        self.ensure_one()
+        
+        if not self.picking_id:
+            raise ValidationError('No stock picking found to return. Please validate the equipment first.')
+        if self.return_picking_id:
+            raise ValidationError('This record picking has already been recovered.')
+        
+        if self.picking_id.state != 'done':
+            raise ValidationError('Stock picking must be validated before returning.')
+        
+        # Create return wizard and generate recovery picking
+        return_wizard = self.env['stock.return.picking'].with_context(
+            active_id=self.picking_id.id,
+            active_ids=[self.picking_id.id],
+            active_model='stock.picking'
+        ).create({})
+        
+        # Create the recovery picking
+        result = return_wizard.create_returns()
+        
+        if result and result.get('res_id'):
+            recovery_picking = self.env['stock.picking'].browse(result['res_id'])
+            recovery_picking.origin = self.name
+            recovery_picking.is_medical_recovery = True
+            
+            # Update medical equipment record
+            self.write({
+                'recovery_picking_id': recovery_picking.id,
+                'state': 'waiting_for_inventory_approval'
+            })
+            
+            # Show success message and open the recovery picking
+            return True
+        
+        raise ValidationError('Failed to create recovery picking.')

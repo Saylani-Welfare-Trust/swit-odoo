@@ -155,7 +155,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
             let record = null
 
-            const data = await this.orm.call('medical.equipment', "get_medical_equipment_security_deposit", [payload]);
+            const data = await this.orm.call('medical.security.deposit', "get_medical_equipment_security_deposit", [payload]);
             
             if (data.status === 'error') {
                 this.popup.add(ErrorPopup, {
@@ -184,6 +184,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     this.notification.add(_t("Existing deposit found"), {
                         type: "info",
                     });
+
+                    this.cancel();
+                    return
                 } else {
                     this.notification.add(_t("Security deposit will be created upon payment"), {
                         type: "info",
