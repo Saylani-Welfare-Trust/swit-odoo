@@ -44,13 +44,13 @@
                     <button string="Fully Recoverd" name="action_fully_recovered" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
                     <button string="Write Off Request" name="action_write_off_request" type="object" class="oe_highlight" invisible="state != 'fully_recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
                     <button string="Approve" name="action_right_of_approve" invisible="state not in ['right_granted', 'right_of_approval_1'] or not in_recovery" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_group" />
-                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval_1'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
+                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval_1','right_of_approval_2'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
 
                     <button string="Send for Recovery" name="action_send_to_recovery" type="object" invisible="in_recovery or state != 'done'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, wfd, treasury, done, reject" invisible="in_recovery or asset_type == 'cash'" />
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, treasury, done, reject" invisible="in_recovery or asset_type != 'cash'" />
-                    <field name="state" widget="statusbar" statusbar_visible="in_recovery, recover, right_granted, right_of_approval_1, right_of_approval_2, fully_recover, done" invisible="not in_recovery" />
+                    <field name="state" widget="statusbar" statusbar_visible="in_recovery, recover,right_of_approval_1, right_of_approval_2, fully_recover, done" invisible="not in_recovery" />
                 </header>
                 <sheet>
                     <field name="in_recovery" invisible="1" />

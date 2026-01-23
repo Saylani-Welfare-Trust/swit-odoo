@@ -45,7 +45,7 @@ state_selection = [
     ('in_recovery', 'In Recovery'),
     ('recover', 'Temp Recovered'),
     ('fully_recover', 'Fully Recovered'),
-    ('right_granted', 'Right Granted'),
+    # ('right_granted', 'Right Granted'),
     ('right_of_approval_1', 'Write Off Approval 1'),
     ('right_of_approval_2', 'Write Off Approval 2'),
     ('done', 'Done'),
@@ -675,7 +675,7 @@ class Microfinance(models.Model):
             
         self.recovery_remarks = ''
 
-        self.state= 'fully_recovered'
+        self.state= 'reject'
 
     def compute_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
