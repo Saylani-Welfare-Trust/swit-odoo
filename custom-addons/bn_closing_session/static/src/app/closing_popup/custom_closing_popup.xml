@@ -22,7 +22,7 @@
                                 <tr class="text-dark">
                                     <th>Payment Method</th>
                                     <th>Expected</th>
-                                    <th>Difference</th>
+                                    <th t-if="shouldShowSlipHeaders()">Difference</th>
                                     <th>Bank</th>
                                     <th>Slip No.</th>
                                     <th t-if="shouldShowSlipHeaders()">Amount</th>
@@ -51,16 +51,21 @@
                                                 <t t-if="type==='neutral'">Non-Donation Amount</t>
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown[type])"/>
-                                            <td t-esc="env.utils.formatCurrency(
-                                                type==='restricted'?getRestrictedDifference(props.default_cash_details.id):
-                                                type==='unrestricted'?getUnrestrictedDifference(props.default_cash_details.id):
-                                                getNeutralDifference(props.default_cash_details.id)
-                                            )"
-                                            t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(
-                                                type==='restricted'?getRestrictedDifference(props.default_cash_details.id):
-                                                type==='unrestricted'?getUnrestrictedDifference(props.default_cash_details.id):
-                                                getNeutralDifference(props.default_cash_details.id)
-                                            )}"/>
+                                            <t t-if="shouldShowSlipInput(props.default_cash_details)">
+                                                <td t-esc="env.utils.formatCurrency(
+                                                    type==='restricted'?getRestrictedDifference(props.default_cash_details.id):
+                                                    type==='unrestricted'?getUnrestrictedDifference(props.default_cash_details.id):
+                                                    getNeutralDifference(props.default_cash_details.id)
+                                                )"
+                                                t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(
+                                                    type==='restricted'?getRestrictedDifference(props.default_cash_details.id):
+                                                    type==='unrestricted'?getUnrestrictedDifference(props.default_cash_details.id):
+                                                    getNeutralDifference(props.default_cash_details.id)
+                                                )}"/>
+                                            </t>
+                                            <t t-else="">
+                                                <td/>
+                                            </t>
                                             <td>
                                                 <select class="form-select form-select-sm"
                                                     t-model="state.newLines[props.default_cash_details.id][type].bank">
@@ -90,7 +95,12 @@
                                         </tr>
 
                                         <tr t-foreach="state.lines[props.default_cash_details.id][type]||[]" t-as="line" t-key="line.id">
-                                            <td colspan="3">----</td>
+                                            <t t-if="shouldShowSlipInput(props.default_cash_details)">
+                                                <td colspan="3">----</td>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="2">----</td>
+                                            </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
                                             <!-- Amount column only if header exists -->
@@ -126,16 +136,21 @@
                                                 <t t-if="type==='neutral'">Non-Donation Amount</t>
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(pm.breakdown[type])"/>
-                                            <td t-esc="env.utils.formatCurrency(
-                                                type==='restricted'?getRestrictedDifference(pm.id):
-                                                type==='unrestricted'?getUnrestrictedDifference(pm.id):
-                                                getNeutralDifference(pm.id)
-                                            )"
-                                            t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(
-                                                type==='restricted'?getRestrictedDifference(pm.id):
-                                                type==='unrestricted'?getUnrestrictedDifference(pm.id):
-                                                getNeutralDifference(pm.id)
-                                            )}"/>
+                                            <t t-if="shouldShowSlipInput(pm)">
+                                                <td t-esc="env.utils.formatCurrency(
+                                                    type==='restricted'?getRestrictedDifference(pm.id):
+                                                    type==='unrestricted'?getUnrestrictedDifference(pm.id):
+                                                    getNeutralDifference(pm.id)
+                                                )"
+                                                t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(
+                                                    type==='restricted'?getRestrictedDifference(pm.id):
+                                                    type==='unrestricted'?getUnrestrictedDifference(pm.id):
+                                                    getNeutralDifference(pm.id)
+                                                )}"/>
+                                            </t>
+                                            <t t-else="">
+                                                <td/>
+                                            </t>
                                             <td>
                                                 <select class="form-select form-select-sm"
                                                     t-model="state.newLines[pm.id][type].bank">
@@ -165,7 +180,12 @@
                                         </tr>
 
                                         <tr t-foreach="state.lines[pm.id][type]||[]" t-as="line" t-key="line.id">
-                                            <td colspan="3">----</td>
+                                            <t t-if="shouldShowSlipInput(pm)">
+                                                <td colspan="3">----</td>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="2">----</td>
+                                            </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
                                             <!-- Amount column only if header exists -->
