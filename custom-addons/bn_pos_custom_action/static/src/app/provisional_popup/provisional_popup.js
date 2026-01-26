@@ -328,29 +328,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     }
                 }
             }
-            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
-            //     if (data.status === 'error') {
-            //         this.popup.add(ErrorPopup, {
-            //             title: _t("Error"),
-            //             body: data.body,
-            //         });
-            //     }
-            //     else if (data.status === 'success') {
-            //         record = data
-
-            //         payload.security_deposit_id = data.deposit_id
-
-            //         this.notification.add(_t("Operation Successful"), {
-            //             type: "info",
-            //         });
-            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-            //         //     data.id,
-            //         // ]);
-            //     }
-            // });
-
-            // console.log('Hitting Provisional Popup');
-            // console.log(this);
 
             const securityProduct = await this.orm.searchRead(
                 'product.product',

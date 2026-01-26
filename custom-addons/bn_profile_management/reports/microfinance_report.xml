@@ -146,8 +146,7 @@
 
                             </p>
                         </div>
-                        <!-- Warning Box -->
-                        <div style="text-align:right; border:2px solid black; padding:15px; border-radius:20px; background:#f8f8f8; position:relative; margin-bottom:15px;">
+                        <!-- <div style="text-align:right; border:2px solid black; padding:15px; border-radius:20px; background:#f8f8f8; position:relative; margin-bottom:15px;">
                             <span style="background:black;color:white;padding:5px 15px;font-size:18px;font-weight:bold;border-radius:5px;position:absolute;right:10px;top:-15px;">
                                 محترم سائلین کو اہم تنبیہ
                             </span>
@@ -166,10 +165,53 @@
                                 اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے، اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
 
                             </p>
+                        </div> -->
 
 
+                        <div style="
+                            text-align:right;
+                            border:2px solid black;
+                            padding:20px;
+                            border-radius:20px;
+                            background:#f8f8f8;
+                            position:relative;
+                            margin-bottom:20px;
+                        ">
+                        
+                            <span style="
+                                background:black;
+                                color:white;
+                                padding:6px 18px;
+                                font-size:18px;
+                                font-weight:bold;
+                                border-radius:6px;
+                                position:absolute;
+                                right:15px;
+                                top:-16px;
+                                white-space:nowrap;
+                            ">
+                                محترم سائلین کو اہم تنبیہ
+                            </span>
+                        
+                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
+                                اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے۔
+                            </p>
+                        
+                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;     margin-right:560px; ">
+                                (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے۔
+                            </p>
+                        
+                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
+                                بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے۔
+                            </p>
+                        
+                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
+                                اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
+                            </p>
+                        
                         </div>
 
+                       
                         <!-- Job / Business Info -->
                         
                         

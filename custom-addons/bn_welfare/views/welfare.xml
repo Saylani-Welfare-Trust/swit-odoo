@@ -6,6 +6,9 @@
         <field name="model">welfare</field>
         <field name="arch" type="xml">
             <tree>
+                <header>
+                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')"/>
+                </header>
                 <field name="name" />
                 <field name="donee_id" />
                 <field name="date" />

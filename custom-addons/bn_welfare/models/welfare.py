@@ -523,7 +523,7 @@ class Welfare(models.Model):
 
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
-        self.ensure_one()
+        # self.ensure_one()
         data = {
             "json": {
                 "applicationData": {
@@ -651,51 +651,53 @@ class Welfare(models.Model):
         }
 
     def action_send_for_inquiry(self):
-        self.ensure_one()
-        
-        # Validate required fields
-        if not self.name:
-            return self._show_notification('Error', 'Donee name is required for portal sync', 'danger')
-        
-        if not self.cnic_no and not self.donee_id.mobile:
-            return self._show_notification('Error', 'CNIC or WhatsApp / Mobile number is required for portal sync', 'danger')
-        
-        try:
-            # Set status to syncing
-            self.write({
-                'portal_sync_status': 'syncing',
-                'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}"
-            })
-            
-            # Step 1: Check if donee already exists in portal
-            existing_donee = self._check_donee_exists_in_portal()
+        if not self:
+            raise UserError("Please select at least one record.")
 
-            result = self._handle_new_application(existing_donee)
-            
-            # Step 4: Update sync status and details
-            self._update_sync_status_success(result)
-            
-            # Step 5: Create chatter message
-            self._create_sync_chatter_message(result)
+        invalid = self.filtered(lambda r: r.state != 'completed')
+        if invalid:
+            raise UserError("Some selected records are not completed and cannot be processed.")
 
-            self.state = 'send_for_inquiry'
-            
-            return self._show_notification('Success', result['message'], 'success')
-            
-        except Exception as e:
-            error_message = f"Portal sync failed: {str(e)}"
-            
-            # Update error status
-            self.write({
-                'portal_sync_status': 'error',
-                'portal_last_sync_message': error_message,
-                'is_synced': False
-            })
-            
-            # Create error chatter message
-            self.message_post(body=f"❌ Portal sync failed: {str(e)}")
-            
-            return self._show_notification('Error', error_message, 'danger')
+        success_msgs = []
+        error_msgs = []
+
+        for rec in self:
+            if not rec.name:
+                error_msgs.append(f"[{rec.display_name}] Donee name is required.")
+                continue
+            if not rec.cnic_no and not rec.donee_id.mobile:
+                error_msgs.append(f"[{rec.display_name}] CNIC or WhatsApp/Mobile is required.")
+                continue
+            try:
+                rec.write({
+                    'portal_sync_status': 'syncing',
+                    'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}"
+                })
+                existing_donee = rec._check_donee_exists_in_portal()
+                result = rec._handle_new_application(existing_donee)
+                rec._update_sync_status_success(result)
+                rec._create_sync_chatter_message(result)
+                rec.state = 'send_for_inquiry'
+                success_msgs.append(f"[{rec.display_name}] {result['message']}")
+            except Exception as e:
+                error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
+                rec.write({
+                    'portal_sync_status': 'error',
+                    'portal_last_sync_message': error_message,
+                    'is_synced': False
+                })
+                rec.message_post(body=f"❌ {error_message}")
+                error_msgs.append(error_message)
+
+        summary = ""
+        if success_msgs:
+            summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
+        if error_msgs:
+            summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
+        if not summary:
+            summary = "No records processed."
+
+        return self._show_notification('Send for Inquiry Results', summary, 'info')
     
     def action_move_to_hod(self):
         if not self.hod_remarks:
