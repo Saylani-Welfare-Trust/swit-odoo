@@ -109,7 +109,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'welfare',
                 [['name', '=', this.state.record_number]],
-                ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids'],
+                ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids', 'order_type'],
                 { limit: 1 }
             );
 
@@ -182,9 +182,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     {}
                 );
                 // Filter by main welfare order_type
+                // console.log("Welfare Record Order Type:", welfareRecord);
                 const filteredLines = welfareRecord.order_type === 'one_time'
                     ? lines.filter(l => true) // all lines, since order_type is now on welfare
                     : [];
+                // console.log("Filtered Lines:", filteredLines);
                 const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
@@ -852,7 +854,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         const equipmentLines = await this.orm.searchRead(
             'medical.equipment.line',
             [['id', 'in', record.medical_equipment_line_ids]],
-            ['product_id', 'quantity', 'amounts'],
+            ['product_id', 'quantity', 'security_deposit'],
             {}
         );
         
@@ -902,7 +904,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         else if (product.lst_price <= 0) {
             selectedOrder.add_product(product, {
                 quantity: quantity || 1,
-                price_extra: line.amount || line.amounts || product.lst_price,
+                price_extra: line.security_deposit || product.lst_price,
             });
         }
         

@@ -358,10 +358,11 @@ patch(PaymentScreen.prototype, {
                         const welfareLineIds = wfData.welfare_line_ids || [];
                         if (welfareLineIds.length > 0) {
                             for (const line of welfareLineIds) {
-                                await this.env.services.orm.write(
+                                // Call the server-side action_disbursed method if needed
+                                await this.env.services.orm.call(
                                     'welfare.line',
-                                    [line.id],
-                                    { state: 'disbursed' }
+                                    'action_disbursed',
+                                    [[line.id]]
                                 );
                             }
                         }
@@ -375,17 +376,13 @@ patch(PaymentScreen.prototype, {
                         
                         if (recurringLineIds.length > 0) {
                             for (const line of recurringLineIds) {
-                                await this.env.services.orm.write(
+                                // Call the server-side action_disbursed method if needed
+                                await this.env.services.orm.call(
                                     'welfare.recurring.line',
-                                    [line.id],
-                                    { state: 'disbursed' }
+                                    'action_disbursed',
+                                    [[line.id]]
                                 );
                             }
-
-                            this.env.services.notification.add(
-                                `Processed ${recurringLineIds.length} recurring welfare disbursement(s)`,
-                                { type: 'success' }
-                            );
                         }
                     }
                 }

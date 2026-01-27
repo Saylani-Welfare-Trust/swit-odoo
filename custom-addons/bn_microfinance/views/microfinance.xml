@@ -39,12 +39,17 @@
                     <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'treasury' or in_recovery or asset_type != 'cash'"/>
                     <button string="Receipt" name="action_receipt" type="object" invisible="state not in ['wfd', 'treasury'] or in_recovery" />
 
-                    <button string="Temporary Recovery" name="action_temporary_recovery" type="object" class="oe_highlight" invisible="state != 'in_recovery' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state not in ['recover', 'right_of_approval_2'] or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Fully Recoverd" name="action_fully_recovered" type="object" class="oe_highlight" invisible="state != 'recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Write Off Request" name="action_write_off_request" type="object" class="oe_highlight" invisible="state != 'fully_recover' or not in_recovery" groups="bn_microfinance.microfinance_recovery_group" />
-                    <button string="Approve" name="action_right_of_approve" invisible="state not in ['right_granted', 'right_of_approval_1'] or not in_recovery" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_group" />
-                    <button string="Reject" name="action_right_of_reject" invisible="state not in ['right_of_approval_1','right_of_approval_2'] or not in_recovery" type="object" groups="bn_microfinance.microfinance_write_off_approval_group" />
+
+                    <!-- Updated Recovery Process Buttons -->
+                    <button name="action_temp_recovered" invisible="state != 'in_recovery'" string="Temporary Recovered" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_recovery_group"/>
+                    <button name="action_fully_recovered" invisible="state != 'recover'" string="Fully Recovered" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_recovery_group"/>
+                    <button name="action_move_to_done" invisible="state != 'recover'" string="Move to Done" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_recovery_group"/>
+                    <button name="request_write_off" invisible="state != 'fully_recover'" string="Write Off Request" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_recovery_group"/>
+                    <button name="action_right_of_granted" invisible="state != 'right_of_approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_1_group"/>
+                    <button name="action_right_of_granted" invisible="state != 'right_of_approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_microfinance.microfinance_write_off_approval_2_group"/>
+                    <button name="action_right_of_rejected" invisible="state != 'right_of_approval_1'" string="Reject" type="object" groups="bn_microfinance.microfinance_write_off_approval_1_group"/>
+                    <button name="action_right_of_rejected" invisible="state != 'right_of_approval_2'" string="Reject" type="object" groups="bn_microfinance.microfinance_write_off_approval_2_group"/>
+                    <!-- <field name="state" widget="statusbar" statusbar_visible="in_recovery,recover,fully_recover"/> -->
 
                     <button string="Send for Recovery" name="action_send_to_recovery" type="object" invisible="in_recovery or state != 'done'" />
 
@@ -111,10 +116,10 @@
                             
                             <field name="hod_remarks" invisible="state not in ['hod_approve','reject']" />
                             <field name="mem_remarks" invisible="state not in ['hod_approve','mem_approve','reject']" />
-                            <field name="remarks" invisible="in_recovery" readonly="state == 'done'" />
+                            <field name="remarks" invisible="not in_recovery" readonly="state == 'done'" />
                             <field name="recovery_remarks" invisible="not in_recovery" />
-                            <field name="member_right_of_remarks" invisible="state != 'right_of_approval_1' or not in_recovery" />
-                            <field name="cfo_right_of_remarks" invisible="state != 'right_of_approval_2' or not in_recovery" />
+                            <field name="member_right_of_remarks" invisible="state != 'right_of_approval_1' or not in_recovery" required="state == 'right_of_approval_1' and in_recovery" />
+                            <field name="cfo_right_of_remarks" invisible="state != 'right_of_approval_2' or not in_recovery" required="state == 'right_of_approval_2' and in_recovery"/>
                         </group>
                     </group>
 

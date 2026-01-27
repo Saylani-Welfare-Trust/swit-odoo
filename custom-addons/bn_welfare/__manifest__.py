@@ -14,7 +14,7 @@
         'data/sequence.xml',
         'data/hr_employee_category.xml',
         'data/server_action_fetch_welfare.xml',
-        'data/ir_cron_auto_auto_deliver.xml',
+        'data/ir_cron_auto_deliver.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/welfare.xml',

@@ -15,7 +15,7 @@ order_type_selection = [
 
 state_selection = [
     ('draft', 'Draft'),
-    ('delivered', 'Delivered'),
+    ('delivered', 'Delivery Created'),
     ('disbursed', 'Disbursed'),
 ]
 
@@ -43,7 +43,7 @@ class WelfareLine(models.Model):
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
-    state = fields.Selection(selection=state_selection, string="State")
+    state = fields.Selection(selection=state_selection, string="State", default='draft')
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
@@ -79,13 +79,17 @@ class WelfareLine(models.Model):
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
-        lines = self.search([('collection_date', '=', today), ('state', '!=', 'delivered')])
+        lines = self.search([('collection_date', '=', today), 
+                                    ('state', '=', 'draft'),
+                                    ( 'disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id)])        
         for line in lines:
-            try:
-                line.action_delivered()
-            except Exception as e:
-                # Optionally log error
-                pass
+            if line.welfare_id.order_type == 'one_time' :
+                try:
+                    line.action_delivered()
+                except Exception as e:
+                    # Optionally log error
+                    pass
+                
     @api.depends('disbursement_category_id', 'welfare_id.order_type')
     def _compute_show_deliver_button(self):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
@@ -145,6 +149,8 @@ class WelfareLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.welfare_id.name,
+                    'welfare_line_id': self.id,
+
                 }
                 picking = StockPicking.create(picking_vals)
                 move_vals = {
@@ -165,7 +171,6 @@ class WelfareLine(models.Model):
                     'picking_id': picking.id,
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
-                    'welfare_line_id': self.id,
                 }
                 StockMoveLine.create(move_line_vals)
                 picking.action_assign()

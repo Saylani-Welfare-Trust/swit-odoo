@@ -57,7 +57,6 @@ portal_sync_selection = [
 order_type_selection = [
     ('one_time', 'One Time'),
     ('recurring', 'Recurring'),
-    ('both', 'Both'),
 ]
 
 class Welfare(models.Model):
@@ -251,12 +250,11 @@ class Welfare(models.Model):
                 lines = rec.welfare_recurring_line_ids
                 if lines and all(l.state == 'disbursed' for l in lines):
                     rec.state = 'disbursed'
+    
     def _compute_show_disburse_button(self):
         for rec in self:
-            has_recurring = any(
-                line.order_type == 'recurring'
-                for line in rec.welfare_line_ids
-            )
+            
+            has_recurring = rec.order_type == 'recurring'
 
             # Visibility logic
             if has_recurring:
@@ -720,26 +718,27 @@ class Welfare(models.Model):
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     
     def action_move_to_hod(self):
-        if not self.hod_remarks:
-            raise ValidationError('Please enter HOD Remarks!')
+        # if not self.hod_remarks:
+        #     raise ValidationError('Please enter HOD Remarks!')
         
         self.state = 'hod_approve'
     
     def action_move_to_member(self):
-        if not self.member_remarks:
-            raise ValidationError('Please enter Member Remarks!')
+        # if not self.member_remarks:
+        #     raise ValidationError('Please enter Member Remarks!')
         
         self.state = 'mem_approve'
     
     def action_approve(self):
-        for line in self.welfare_line_ids:
-            if line.order_type == 'recurring':
+    
+        if self.order_type == 'recurring':
+            for line in self.welfare_line_ids:
                 if self.env['welfare.recurring.line'].search_count([
                     ('donee_id', '=', self.donee_id.id),
                     ('disbursement_category_id', '=', line.disbursement_category_id.id),
                     ('state', '=', 'draft')
                 ]):
-                    raise ValidationError(f"There are recurring disbursement requests in process for {line.disbursement_category_id.name}. Please complete them first.")
+                    pass  
         self.state = 'approve'
 
     def action_reject(self):
@@ -749,7 +748,9 @@ class Welfare(models.Model):
 
     def action_create_recurring_order(self):
         for line in self.welfare_line_ids:
-            if line.order_type != 'recurring':
+            # if line.order_type != 'recurring':
+            #     raise ValidationError('This request does not belong to recurring order.')
+            if self.order_type != 'recurring':
                 raise ValidationError('This request does not belong to recurring order.')
             
             if line.recurring_duration:
@@ -775,8 +776,8 @@ class Welfare(models.Model):
         self.state = 'recurring'
         
     def action_committee_approval(self):
-        if not self.committee_remarks:
-            raise ValidationError(_('Please enter Committee Remarks before approval.'))
+        # if not self.committee_remarks:
+        #     raise ValidationError(_('Please enter Committee Remarks before approval.'))
         self.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:

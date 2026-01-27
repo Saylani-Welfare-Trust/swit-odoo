@@ -1,9 +1,12 @@
 from odoo import models, fields,api
+# from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
 
 
 state_selection = [
     ('draft', 'Draft'),
-    ('delivered', 'Delivered'),
+    ('delivered', 'Delivery Created'),
     ('disbursed', 'Disbursed'),
 ]
 
@@ -35,19 +38,24 @@ class WelfareRecurringLine(models.Model):
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
     quantity = fields.Float('Quantity', default=1.0)
-    state = fields.Selection(selection=state_selection, string="Order Type")
+    state = fields.Selection(selection=state_selection, string="State", default='draft')
+    
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
-        lines = self.search([('collection_date', '=', today), ('state', '!=', 'delivered')])
+        lines = self.search([('collection_date', '=', today), 
+                             ('state', '=', 'draft'),
+                             ( 'disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id)])
+        # _logger.info(f"rec_line: {lines.read()}")
         for line in lines:
-            try:
-                line.action_delivered()
-            except Exception as e:
-                # Optionally log error
-                pass
+            if line.welfare_id.order_type == 'recurring':
+                try:
+                    line.action_delivered()
+                except Exception as e:
+                    # Optionally log error
+                    pass
 
     def action_disbursed(self):
         # If you have delivery logic, add here. For now, just mark as delivered.
@@ -89,6 +97,7 @@ class WelfareRecurringLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.name,
+                    'recurring_line_id': self.id,
                 }
                 picking = StockPicking.create(picking_vals)
                 move_vals = {
@@ -109,7 +118,6 @@ class WelfareRecurringLine(models.Model):
                     'picking_id': picking.id,
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
-                    'recurring_line_id': self.id,
                 }
                 StockMoveLine.create(move_line_vals)
                 picking.action_assign()

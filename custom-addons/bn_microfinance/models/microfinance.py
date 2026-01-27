@@ -45,10 +45,10 @@ state_selection = [
     ('in_recovery', 'In Recovery'),
     ('recover', 'Temp Recovered'),
     ('fully_recover', 'Fully Recovered'),
-    # ('right_granted', 'Right Granted'),
     ('right_of_approval_1', 'Write Off Approval 1'),
     ('right_of_approval_2', 'Write Off Approval 2'),
     ('done', 'Done'),
+    ('right_granted', 'Right Granted'),
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
@@ -544,7 +544,7 @@ class Microfinance(models.Model):
         # Custom logic for moveable assets: create accounting entries
         # self._create_microfinance_accounting_entries()
 
-        self.state = 'done'
+        self.state = 'recover'
 
     def action_view_picking(self):
         """Open the picking form view"""
@@ -588,94 +588,9 @@ class Microfinance(models.Model):
         """Print the installment plan report"""
         return self.env.ref('bn_microfinance.microfinance_installment_plan_report_action').report_action(self)
 
-    def action_move_to_done(self):
-        """Manual done action - only for non-movable asset types (cash, etc.)
-        For movable assets, done is triggered automatically when picking is validated.
-        """
-        if self.asset_type == 'movable_asset':
-            raise ValidationError('For movable assets, please validate the delivery picking to complete the record.')
-
-        # For cash asset type coming from treasury, delivery date is optional
-        if self.asset_type != 'cash' and not self.delivery_date:
-            raise ValidationError('Please select a Delivery Date.')
-
-        # Compute installments
-        if not self.in_recovery:
-            self.compute_installment()
-        else:
-            self.compute_recovery_installment()
-
-
-        # Accounting entries for non-movable assets
-        # self._create_microfinance_accounting_entries()
-
-        self.state = 'done'
-
     def action_receipt(self):
         return self.env.ref('bn_microfinance.microfinance_receipt_report_action').report_action(self.sd_slip_id)
 
-    def action_temporary_recovery(self):
-        if self.asset_type == 'movable_asset':
-            product_line = None
-
-            if self.microfinance_scheme_line_id:
-                microfinance_scheme_line = self.env['microfinance.scheme.line'].browse(self.microfinance_scheme_line_id.id)
-                product_line = self.env['loan.product.line'].search([
-                    ('microfinance_scheme_line_id', '=', microfinance_scheme_line.id),
-                    ('product_id', '=', self.product_id.id)
-                ], limit=1)
-
-            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
-            form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
-            
-            action['views'] = [
-                [form_view_id, 'form']
-            ]
-
-            if product_line.product_id:
-                action['context'] = {
-                    'default_donee_id': self.donee_id.id,
-                    'default_product_domain': self.product_domain.ids,
-                    'default_source_document': self.name,
-                    'default_microfinance_id': self.id
-                }
-
-            return action
-        else:
-            self.state = 'recover'
-
-    def action_fully_recovered(self):
-        self.state = 'fully_recover'
-
-    def action_write_off_request(self):
-        if not self.recovery_remarks:
-            raise ValidationError('Please provide recovery remarks.')
-        
-        self.member_right_of_remarks = ''
-        self.cfo_right_of_remarks = ''
-
-        self.state = 'right_of_approval_1'
-
-    def action_right_of_approve(self):
-        if self.state == 'right_granted':
-            self.state = 'right_of_approval_1'
-        elif self.state == 'right_of_approval_1':
-            self.state = 'right_of_approval_2'
-        else:
-            self.state = 'right_granted'
-
-    def action_right_of_reject(self):
-        if self.state == 'right_of_approval_1':
-            if not self.member_right_of_remarks:
-                raise ValidationError('Please provide member remarks.')
-            
-        if self.state == 'right_of_approval_2':
-            if not self.cfo_right_of_remarks:
-                raise ValidationError('Please provide CFO remarks.')
-            
-        self.recovery_remarks = ''
-
-        self.state= 'reject'
 
     def compute_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
@@ -781,3 +696,69 @@ class Microfinance(models.Model):
             vals['name'] += self.env['ir.sequence'].next_by_code(sequence_code) or _('New')
         
         return super(Microfinance, self).create(vals)
+    
+    # --- Recovery Process: New Methods and State Flow ---
+    def action_temp_recovered(self):
+        if self.asset_type == 'movable_asset':
+            if self.microfinance_scheme_line_id:
+                microfinance_scheme_line = self.env['microfinance.scheme.line'].browse(self.microfinance_scheme_line_id.id)
+                product_line = self.env['loan.product.line'].search([
+                    ('microfinance_scheme_line_id', '=', microfinance_scheme_line.id),
+                    ('product_id', '=', self.product_id.id)
+                ], limit=1)
+
+            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
+            form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
+            action['views'] = [
+                [form_view_id, 'form']
+            ]
+            if product_line and product_line.product_id:
+                action['context'] = {
+                    'default_donee_id': self.donee_id.id,
+                    'default_product_domain': self.product_domain.ids,
+                    'default_source_document': self.name,
+                    'default_microfinance_id': self.id
+                }
+            return action
+        else:
+            self.state = 'recover'
+
+    def action_fully_recovered(self):
+        self.state = 'fully_recover'
+
+    def action_move_to_done(self):
+
+        if self.asset_type != 'cash' and not self.delivery_date:
+            raise ValidationError('Please select a Delivery Date.')
+        if not self.in_recovery:
+            self.compute_installment()
+        else:
+            self.compute_recovery_installment()
+        self.state = 'done'
+
+    def request_write_off(self):
+        if not self.remarks:
+            raise ValidationError('Please provide remarks')
+        self.member_right_of_remarks = False
+        self.cfo_right_of_remarks = False
+        self.state = 'right_of_approval_1'
+
+    def action_right_of_granted(self):
+        if self.state == 'right_of_approval_1':
+            self.state = 'right_of_approval_2'
+        elif self.state == 'right_of_approval_2':
+            self.state = 'right_granted'
+
+    def action_right_of_rejected(self):
+        if self.state == 'right_of_approval_1':
+            if not self.member_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            self.remarks = False
+            self.state = 'fully_recover'
+        if self.state == 'right_of_approval_2':
+            if not self.member_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            if not self.cfo_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            self.remarks = False
+            self.state = 'fully_recover'
