@@ -54,12 +54,20 @@ portal_sync_selection = [
     ('error', 'Sync Error'),
 ]
 
+order_type_selection = [
+    ('one_time', 'One Time'),
+    ('recurring', 'Recurring'),
+    ('both', 'Both'),
+]
 
 class Welfare(models.Model):
+
+
     _name = 'welfare'
     _description = "Welfare"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
+    order_type = fields.Selection(order_type_selection, string="Order Type")
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     employee_id = fields.Many2one('hr.employee', string="Employee")
@@ -231,6 +239,18 @@ class Welfare(models.Model):
         store=False
     )
 
+    @api.model
+    def _auto_disburse_if_all_lines_delivered(self):
+        records = self.search([('state', 'in', ['recurring', 'approve'])])
+        for rec in records:
+            if rec.order_type == 'one_time':
+                lines = rec.welfare_line_ids
+                if lines and all(l.state == 'disbursed' for l in lines):
+                    rec.state = 'disbursed'
+            elif rec.order_type == 'recurring':
+                lines = rec.welfare_recurring_line_ids
+                if lines and all(l.state == 'disbursed' for l in lines):
+                    rec.state = 'disbursed'
     def _compute_show_disburse_button(self):
         for rec in self:
             has_recurring = any(
@@ -765,3 +785,26 @@ class Welfare(models.Model):
     
     def action_disburse(self):
         self.state = 'disbursed'
+        
+    def action_reverse_state(self):
+        state_flow = [
+            'draft',
+            'completed',
+            'send_for_inquiry',
+            'inquiry',
+            'committee_approval',
+            'hod_approve',
+            'mem_approve',
+            'approve',
+            'recurring',
+            'disbursed',
+        ]
+        for rec in self:
+            if rec.state in ['draft', 'disbursed', 'reject','recurring','approve']:
+                continue
+            try:
+                idx = state_flow.index(rec.state)
+                if idx > 0:
+                    rec.state = state_flow[idx-1]
+            except Exception:
+                pass

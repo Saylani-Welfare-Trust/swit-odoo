@@ -26,6 +26,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button string="Reverse State" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
@@ -50,6 +51,7 @@
                     <group>
                         <group name="welfare_col_1">
                             <field name="employee_category_id" invisible="1" />
+                            <field name="order_type" readonly=" state not in ['disbursed','recurring', 'disbursed']" />
                             <field name="is_synced" readonly="1" invisible="1" />
                             <field name="is_individual" widget="boolean_toggle" invisible="1"/>
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
@@ -64,9 +66,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'inquiry'" required="state == 'committee_approval'" />
-                            <field name="hod_remarks" readonly="state != 'committee_approval'" required="state == 'hod_approve'"/>
-                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'mem_approve'" />
+                            <field name="committee_remarks" readonly="state != 'inquiry'" required="state == 'hod_approve'" />
+                            <field name="hod_remarks" readonly="state != 'committee_approval'" required="state == 'mem_approve'"/>
+                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'approve'" />
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 
@@ -96,8 +98,8 @@
                                 <tree editable="bottom">
                                     <field name="product_domain" column_invisible="1" />
 
-                                    <field name="order_type" />
-                                    <field name="recurring_duration" invisible="order_type != 'recurring'" />
+                                    <!-- order_type moved to main welfare model -->
+                                    <field name="recurring_duration" invisible="parent.order_type != 'recurring'" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />

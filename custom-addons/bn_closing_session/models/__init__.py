@@ -6,3 +6,4 @@ from . import res_config_setting
 from . import pos_session_slip
 from . import pos_config
 from . import account_journal
+from . import account_move_line

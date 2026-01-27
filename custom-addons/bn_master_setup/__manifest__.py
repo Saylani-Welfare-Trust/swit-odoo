@@ -21,6 +21,8 @@
         'views/disbursement_application_type.xml',
         'views/direct_deposit_account_setup.xml',
         'views/donation_in_kind_config.xml',
+        'views/city.xml',
+        'views/bank.xml',
     ],
     'auto_install': False,
     'application': True,

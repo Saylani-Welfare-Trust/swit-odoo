@@ -75,6 +75,7 @@ class PosSession(models.Model):
                 'amount': slip.amount or 0.0,
                 'ref': slip.slip_no or '',
                 'record_id': slip.id,
+                'bank_id': slip.bank_id.id if slip.bank_id else False,
             }
 
             if slip.type == restricted:
@@ -339,16 +340,34 @@ class PosSession(models.Model):
                 # AUTO MODE: skip_amount_input
                 if pm.skip_amount_input:
                     backend = self._compute_closing_details().get(pm.id, {})
-                    refs = self.env['pos.session.slip'].search([
+                    slips = self.env['pos.session.slip'].search([
                         ('session_id', '=', self.id),
                         ('pos_payment_method_id', '=', pm.id)
-                    ]).mapped('slip_no')
+                    ])
+
+                    refs = slips.mapped('slip_no')
                     ref_str = ",".join(filter(None, refs))
 
+                    bank_id = slips[:1].bank_id.id if slips and slips[:1].bank_id else False
+
                     payment_breakdown[int(pm_id)] = {
-                        'restricted': [{'amount': backend.get('restricted', 0.0), 'ref': ref_str}] if backend.get('restricted') else [],
-                        'unrestricted': [{'amount': backend.get('unrestricted', 0.0), 'ref': ref_str}] if backend.get('unrestricted') else [],
-                        'neutral': [{'amount': backend.get('neutral', 0.0), 'ref': ref_str}] if backend.get('neutral') else [],
+                        'restricted': [{
+                            'amount': backend.get('restricted', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('restricted') else [],
+
+                        'unrestricted': [{
+                            'amount': backend.get('unrestricted', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('unrestricted') else [],
+
+                        'neutral': [{
+                            'amount': backend.get('neutral', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('neutral') else [],
                     }
         else:
             payment_breakdown = self._compute_payment_breakdown()
@@ -380,12 +399,14 @@ class PosSession(models.Model):
                     if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
                         continue
                     ref = entry.get('ref', '')
+                    bank_id = entry.get('bank_id', '')
                     account = account_getter(pm)
                     self._create_receivable_line(
                         account_move,
                         account,
                         amount,
-                        f"{self.name} - {key.title()} {pm.name} - {ref}".strip()
+                        f"{self.name} - {self._get_restricted_category() if key == 'restricted' else self._get_unrestricted_category() if key == 'unrestricted' else 'Non Donation'} {pm.name} - {ref}".strip(),
+                        bank_id=bank_id
                     )
 
     def _group_receivable_lines_by_payment_method(self, receivable_lines):
@@ -408,7 +429,7 @@ class PosSession(models.Model):
         
         return payment_method_amounts
 
-    def _create_receivable_line(self, account_move, account, amount, name):
+    def _create_receivable_line(self, account_move, account, amount, name, bank_id=None):
         return self.env['account.move.line'].create({
             'move_id': account_move.id,
             'name': name,
@@ -416,6 +437,7 @@ class PosSession(models.Model):
             'debit': amount,
             'credit': 0.0,
             'partner_id': False,
+            'bank_journal_id': bank_id,
         })
     
     def _create_split_account_payment(self, payment, amounts):
@@ -545,7 +567,7 @@ class PosSession(models.Model):
                     account_move,
                     self._get_restricted_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Restricted {payment_method.name}"
+                    f"Difference - {self._get_restricted_category()} {payment_method.name}"
                 )
 
             # Unrestricted difference entries
@@ -557,7 +579,7 @@ class PosSession(models.Model):
                     account_move,
                     self._get_unrestricted_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Unrestricted {payment_method.name}"
+                    f"Difference - {self._get_unrestricted_category()} {payment_method.name}"
                 )
             # Neutral difference
             for entry in breakdown.get("neutral", []):
@@ -568,7 +590,7 @@ class PosSession(models.Model):
                     account_move,
                     self._get_neutral_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Neutral {payment_method.name}"
+                    f"Difference - Non Donation {payment_method.name}"
                 )
 
     def _reconcile_account_move_lines(self, data):

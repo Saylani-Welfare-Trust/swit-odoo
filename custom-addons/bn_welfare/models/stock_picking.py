@@ -21,7 +21,7 @@ class StockPicking(models.Model):
                         recurring_lines = picking.move_line_ids.mapped('recurring_line_id').filtered(lambda l: l and l.state != 'disbursed')
                         # raise Warning(f"Recurring lines: {recurring_lines}\nWelfare name: {welfare.name}")
                         for line in recurring_lines:
-                            line.state = 'disbursed'                
+                            line.action_disbursed()
                     # -------------------------------------------------
                     # CASE 2: No recurring lines → use welfare_line_id
                     # -------------------------------------------------
@@ -29,5 +29,5 @@ class StockPicking(models.Model):
                         welfare_lines = (
                             picking.move_line_ids.mapped('welfare_line_id').filtered(lambda l: l and l.state != 'disbursed'))
                         for line in welfare_lines:
-                            line.state = 'disbursed'
+                            line.action_disbursed()
         return res

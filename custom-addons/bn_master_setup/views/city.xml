@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="city_view_tree" model="ir.ui.view">
+        <field name="name">city.view.tree</field>
+        <field name="model">city</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+    
+    <record id="city_action" model="ir.actions.act_window">
+        <field name="name">City</field>
+        <field name="res_model">city</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new city....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="city_menu"
+        name="City"
+        action="city_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="5"/>
+
+</odoo>

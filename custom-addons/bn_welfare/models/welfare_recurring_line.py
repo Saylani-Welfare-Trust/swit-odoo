@@ -14,6 +14,7 @@ collection_point_selection = [
 
 
 class WelfareRecurringLine(models.Model):
+
     _name = 'welfare.recurring.line'
     _description = "Welfare Recurring Line"
 
@@ -36,7 +37,24 @@ class WelfareRecurringLine(models.Model):
     quantity = fields.Float('Quantity', default=1.0)
     state = fields.Selection(selection=state_selection, string="Order Type")
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
+    
+    @api.model
+    def _auto_mark_as_delivered_today(self):
+        today = fields.Date.today()
+        lines = self.search([('collection_date', '=', today), ('state', '!=', 'delivered')])
+        for line in lines:
+            try:
+                line.action_delivered()
+            except Exception as e:
+                # Optionally log error
+                pass
 
+    def action_disbursed(self):
+        # If you have delivery logic, add here. For now, just mark as delivered.
+        self.state = 'disbursed'
+        if self.welfare_id:
+            self.welfare_id._auto_disburse_if_all_lines_delivered()
+    
     @api.depends('welfare_id')
     def _compute_name(self):
             for rec in self:

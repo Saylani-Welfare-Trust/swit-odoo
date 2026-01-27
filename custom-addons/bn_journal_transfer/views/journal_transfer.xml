@@ -5,13 +5,15 @@
         <field name="name">journal.transfer.view.tree</field>
         <field name="model">journal.transfer</field>
         <field name="arch" type="xml">
-            <tree>
-                <field name="name" />
+            <tree editable="bottom">
+                <field name="name" readonly="1" />
                 <field name="date" />
+                <field name="descripiton" />
                 <field name="source_journal_id" />
                 <field name="dest_journal_id" />
-                <field name="amount" />
-                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" />
+                <field name="user_id" string="Opened By" readonly="1" />
+                <field name="amount" readonly="1" />
+                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
             </tree>
         </field>
     </record>
@@ -57,7 +59,8 @@
     <record id="journal_transfer_action" model="ir.actions.act_window">
         <field name="name">Journal Transfer</field>
         <field name="res_model">journal.transfer</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="view_mode">tree,form</field> -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...

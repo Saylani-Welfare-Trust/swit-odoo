@@ -9,14 +9,15 @@ status_selection = [
 ]
 
 
-
 class JournalTransfer(models.TransientModel):
     _name = "journal.transfer"
     _description = "Journal Transfer"
 
 
     name = fields.Char('Name', default="New")
+    descripiton = fields.Char('Description')
 
+    user_id = fields.Many2one('res.users', string="User")
     move_id = fields.Many2one('account.move', string="Account Move")
 
     date = fields.Date('Transfer Date')
@@ -115,6 +116,8 @@ class JournalTransfer(models.TransientModel):
 
         for move in moves:
             # raise UserError(str(move.name)+" "+str(move.line_ids))
+
+            pos_session = self.env['pos.session'].search([('name', '=', move.ref)])
         
             # 🔥 Pull only meaningful debit lines (receivable preferred)
             debit_lines = move.line_ids.filtered(
@@ -124,8 +127,11 @@ class JournalTransfer(models.TransientModel):
             for line in debit_lines:
                 records.append({
                     'pos_move_id': move.id,
+                    'descripiton': line.name or move.ref or move.name,
                     'source_journal_id': move.journal_id.id,
+                    'dest_journal_id': line.bank_journal_id.id,
                     'amount': line.debit,
+                    'user_id': pos_session.user_id.id,
                 })
 
         # raise UserError(str(records))

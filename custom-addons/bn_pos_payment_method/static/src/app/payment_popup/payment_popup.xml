@@ -7,7 +7,7 @@
                 <h4 class="modal-title"><t t-esc="this.title" /></h4>
             </div>
             <main class="modal-body">
-                <div class="row mb-2 text-start" t-if="this.is_bank">
+                <!-- <div class="row mb-2 text-start" t-if="this.is_bank">
                     <div class="col-4 fw-semibold">Bank</div>
                     <div class="col-8">
                         <input type="text"
@@ -15,6 +15,23 @@
                             t-att-value="this.state.bank_name"
                             t-on-change="updateBankName"
                             placeholder="Enter Bank Name"/>
+                    </div>
+                </div> -->
+
+                <div class="row mb-2 text-start" t-if="this.is_bank">
+                    <div class="col-4 fw-semibold">Bank</div>
+                    <div class="col-8">
+                        <select class="form-control form-control-sm"
+                                t-on-change="updateBank">
+                            <option value="">Select Bank</option>
+
+                            <t t-foreach="state.banks" t-as="bank" t-key="bank.id">
+                                <option t-att-value="bank.id"
+                                        t-att-selected="bank.name === state.bank_name">
+                                    <t t-esc="bank.name"/>
+                                </option>
+                            </t>
+                        </select>
                     </div>
                 </div>
                 

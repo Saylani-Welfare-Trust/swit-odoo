@@ -176,13 +176,16 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     'welfare.line',
                     [
                         ['id', 'in', welfareRecord.welfare_line_ids],
-                        ['order_type', 'in', ['one_time']],
                         ['disbursement_category_id.name', '=', 'Cash'],
                     ],
                     ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id'],
                     {}
                 );
-                const dueThisMonth = lines.filter(l => {
+                // Filter by main welfare order_type
+                const filteredLines = welfareRecord.order_type === 'one_time'
+                    ? lines.filter(l => true) // all lines, since order_type is now on welfare
+                    : [];
+                const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
                     // Only include if not disbursed
@@ -201,7 +204,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
                         const priceExtra = perUnitPrice - product.lst_price;
                         selectedOrder.add_product(product, {
-                            quantity: -1 * group.quantity,
+                            quantity: group.quantity,
                             price_extra: priceExtra,
                         });
                         for (const id of group.ids) {
@@ -247,7 +250,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
                         const priceExtra = perUnitPrice - product.lst_price;
                         selectedOrder.add_product(product, {
-                            quantity: -1 * group.quantity,
+                            quantity: group.quantity,
                             price_extra: priceExtra,
                         });
                         for (const id of group.ids) {

@@ -40,7 +40,7 @@ class WelfareLine(models.Model):
 
     product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
 
-    order_type = fields.Selection(selection=order_type_selection, string="Order Type")
+    # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State")
@@ -76,7 +76,17 @@ class WelfareLine(models.Model):
         store=True
     )
     
-    @api.depends('disbursement_category_id', 'order_type')
+    @api.model
+    def _auto_mark_as_delivered_today(self):
+        today = fields.Date.today()
+        lines = self.search([('collection_date', '=', today), ('state', '!=', 'delivered')])
+        for line in lines:
+            try:
+                line.action_delivered()
+            except Exception as e:
+                # Optionally log error
+                pass
+    @api.depends('disbursement_category_id', 'welfare_id.order_type')
     def _compute_show_deliver_button(self):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
         cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
@@ -86,7 +96,7 @@ class WelfareLine(models.Model):
                 if rec.welfare_id.state == 'approve':
                     if in_kind_category and rec.disbursement_category_id.id == in_kind_category.id:
                         # Only show if state is not delivered or disbursed
-                        if rec.order_type == "one_time" and rec.state not in ['delivered', 'disbursed']:
+                        if rec.welfare_id.order_type == "one_time" and rec.state not in ['delivered', 'disbursed']:
                             rec.show_deliver_button = True
                     elif cash_category and rec.disbursement_category_id.id == cash_category.id:
                         rec.show_deliver_button = False
@@ -113,7 +123,13 @@ class WelfareLine(models.Model):
             
             if category_id:
                 rec.product_domain = str([('categ_id', '=', category_id), ('is_welfare', '=', True)])
-                
+       
+    def action_disbursed(self):
+        # If you have delivery logic, add here. For now, just mark as delivered.
+        self.state = 'disbursed'
+        if self.welfare_id:
+            self.welfare_id._auto_disburse_if_all_lines_delivered()
+                            
     def action_delivered(self):
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
             if self.disbursement_category_id == in_kind_category:        
