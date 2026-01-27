@@ -26,11 +26,11 @@
                     <button string="Approval" name="action_approval" type="object" class="oe_highlight" invisible="is_approval or state != 'draft'" />
                     <button string="Second Approval" name="action_approval" type="object" class="oe_highlight" invisible="not is_approval or state != 'draft'" />
                     
-                    <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'payment_received'" />
+                    <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received'" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'validate'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, approved, payment_received, validate, return, payment_return," />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, approved, sd_received, validate, return, payment_return," />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -58,21 +58,21 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
-                            <field name="cnic_no" readonly="0" required="1" />
-                            <field name="street" string="Address" readonly="0" required="1" />
-                            <field name="city" required="1" readonly="0" />
+                            <field name="cnic_no" readonly="state != 'draft'" required="1" />
+                            <field name="street" string="Address" readonly="state != 'draft'" required="1" />
+                            <field name="city" required="1" readonly="state != 'draft'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="0" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1" /> 
-                                <field style="width: 70% !important;" name="mobile" readonly="0" nolabel="1" required="1" />
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1" /> 
+                                <field style="width: 70% !important;" name="mobile" readonly="state != 'draft'" nolabel="1" required="1" />
                             </div>
-                            <field name="gender" required="1" readonly="0" />
-                            <field name="date_of_birth" required="1" readonly="0" />
+                            <field name="gender" required="1" readonly="state != 'draft'" />
+                            <field name="date_of_birth" required="1" readonly="state != 'draft'" />
                             <field name="age" readonly="1" />
-                            <field name="donee_id" string="Donee" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="1" />
+                            <field name="donee_id" string="Donee" readonly="state != 'draft'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="1" />
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
@@ -82,9 +82,10 @@
                             <field name="medical_equipment_line_ids">
                                 <tree editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
+                                    <field name="medical_equipment_category_id" string="Master Product" options="{'no_quick_create': True, 'no_create_edit': True}"/>
                                     <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>
                                     <field name="quantity"/>
-                                    <field name="amounts" readonly="1"/>
+                                    <field name="security_deposit" readonly="1"/>
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">

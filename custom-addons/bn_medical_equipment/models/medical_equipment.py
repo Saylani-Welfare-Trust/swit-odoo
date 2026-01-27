@@ -107,13 +107,13 @@ class MedicalEquipment(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
-    @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
+    @api.depends('medical_equipment_line_ids.security_deposit', 'medical_equipment_line_ids.quantity')
     def _compute_total_amount(self):
         for record in self:
             total = 0.0
             for line in record.medical_equipment_line_ids:
-                # Use 'amount' instead of 'amounts'
-                total += line.amounts * line.quantity
+                # Use 'amount' instead of 'security_deposit'
+                total += line.security_deposit * line.quantity
             record.total_amount = total
 
     @api.depends('donee_id')
@@ -223,7 +223,7 @@ class MedicalEquipment(models.Model):
         self.is_approval = False
 
         for line in self.medical_equipment_line_ids:
-            if line.product_id.is_medical_approval:
+            if line.medical_equipment_category_id.is_medical_approval:
                 self.is_approval = True
 
         if not self.is_approval or self.approval_count == 1:
@@ -304,7 +304,7 @@ class MedicalEquipment(models.Model):
                 else:
                     total_price_incl_tax += tax.amount
 
-            line.amount = total_price_incl_tax * line.quantity
+            line.security_deposit = total_price_incl_tax * line.quantity
 
         me.calculate_amount()
        

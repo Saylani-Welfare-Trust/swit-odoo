@@ -21,6 +21,7 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/res_partner.xml',
+        'views/medical_equipment_category.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -23,6 +23,7 @@
         'views/donation_in_kind_config.xml',
         'views/city.xml',
         'views/bank.xml',
+        'views/medical_equipment_category.xml',
     ],
     'auto_install': False,
     'application': True,
