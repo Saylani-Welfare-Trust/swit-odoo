@@ -730,7 +730,6 @@ class Welfare(models.Model):
         self.state = 'mem_approve'
     
     def action_approve(self):
-    
         if self.order_type == 'recurring':
             for line in self.welfare_line_ids:
                 if self.env['welfare.recurring.line'].search_count([
@@ -738,8 +737,11 @@ class Welfare(models.Model):
                     ('disbursement_category_id', '=', line.disbursement_category_id.id),
                     ('state', '=', 'draft')
                 ]):
-                    pass  
+                    pass
         self.state = 'approve'
+
+        # Trigger the welfare collection report for printing/giving to the person
+        return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
 
     def action_reject(self):
         if not self.rejection_remarks:

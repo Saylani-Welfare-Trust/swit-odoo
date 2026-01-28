@@ -29,6 +29,8 @@
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received'" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'validate'" />
+                    <button string="Refund" name="action_refund" type="object" invisible="state != 'return'" />
+                    <button string="Donate" name="action_donate" type="object" invisible="state != 'return'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, approved, sd_received, validate, return, payment_return," />
                 </header>

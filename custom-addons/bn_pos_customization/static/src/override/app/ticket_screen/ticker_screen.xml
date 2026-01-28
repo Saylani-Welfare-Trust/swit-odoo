@@ -8,6 +8,8 @@
                 <!-- <Numpad buttons="getNumpadButtons()" class="'max-width-325px'"/> -->
             </div>
         </xpath>
+
+        <xpath expr="//div[@class='control-buttons d-flex flex-wrap border-bottom overflow-hidden bg-300']" position="replace" />
     </t>
 
 </templates>

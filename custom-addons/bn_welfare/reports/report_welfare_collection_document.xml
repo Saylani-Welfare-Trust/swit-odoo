@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_welfare_collection_document">
+        <t t-call="web.external_layout">
+            <main>
+                <t t-foreach="docs" t-as="welfare">
+                    <div class="page">
+                        <style>
+                            .compact-section { margin-bottom: 12px; }
+                            .compact-row { margin-bottom: 6px; }
+                            .tight-padding { padding: 6px !important; }
+                            .no-margin { margin: 0; }
+                            .signature-line { width: 180px; border-top: 2px solid #333; margin-top: 5px; }
+                            .info-box { border: 1px solid #000; padding: 10px; margin-bottom: 12px; font-size: 11px; }
+                            .flex-container { display: flex; width: 100%; }
+                            .flex-column { width: 50%; }
+                            .flex-left { padding-right: 10px; }
+                            .flex-right { padding-left: 10px; }
+                            .flex-row { display: flex; margin-bottom: 6px; }
+                            .flex-label { width: 45%; font-size: 11px; font-weight: normal; }
+                            .flex-value { width: 55%; font-size: 11px; font-weight: 500; }
+                            .table-bordered-custom { border-collapse: collapse !important; border-spacing: 0 !important; border: 1px solid #000 !important; font-size: 11px; }
+                            .table-bordered-custom th, .table-bordered-custom td { border: 1px solid #000 !important; padding: 6px !important; }
+                            .w-full { width: 25% !important; }
+                            .text-center { text-align: center !important; }
+                            .text-right { text-align: right !important; }
+                            .fw-bold { font-weight: bold !important; }
+                        </style>
+                        <!-- Header -->
+                        <div class="compact-section tight-margin">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h6 class="fw-bold text-uppercase mb-1 no-margin" style="font-size: 14px;">
+                                    Welfare Collection Receipt
+                                </h6>
+                                <h6 class="fw-bold text-uppercase mb-1 no-margin" style="font-size: 14px;">
+                                    <t t-esc="welfare.name"/>
+                                </h6>
+                            </div>
+                        </div>
+                        <!-- Info Section -->
+                        <div class="info-box compact-section">
+                            <div class="flex-container">
+                                <div class="flex-column flex-left">
+                                    <div class="flex-row"><div class="flex-label">Date:</div><div class="flex-value"><t t-esc="welfare.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Receipt #:</div><div class="flex-value"><t t-esc="welfare.name"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Donee Name:</div><div class="flex-value"><t t-esc="welfare.donee_id.name"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">CNIC #:</div><div class="flex-value"><t t-esc="welfare.cnic_no"/></div></div>
+                                </div>
+                                <div class="flex-column flex-right">
+                                    <div class="flex-row"><div class="flex-label">Order Type:</div><div class="flex-value"><t t-esc="welfare.order_type"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">State:</div><div class="flex-value"><t t-esc="welfare.state"/></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Welfare Lines Table -->
+                        <t t-if="welfare.order_type == 'one_time'">
+                            <h3>Welfare Lines</h3>
+                            <table class="table table-bordered-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Amount</th>
+                                        <th>Total</th>
+                                        <th>Collection Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="welfare.welfare_line_ids" t-as="line">
+                                        <tr>
+                                            <td><t t-esc="line.product_id.display_name"/></td>
+                                            <td class="text-center"><t t-esc="line.quantity"/></td>
+                                            <td class="text-right"><t t-esc="line.amount"/></td>
+                                            <td class="text-right"><t t-esc="line.total_amount"/></td>
+                                            <td class="text-center"><t t-esc="line.collection_date"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-if="welfare.order_type == 'recurring'">
+                            <h3>Recurring Welfare Lines</h3>
+                            <table class="table table-bordered-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Amount</th>
+                                        <th>Collection Date</th>
+                                        <th>State</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="welfare.welfare_recurring_line_ids" t-as="line">
+                                        <tr>
+                                            <td><t t-esc="line.product_id.display_name"/></td>
+                                            <td class="text-center"><t t-esc="line.quantity"/></td>
+                                            <td class="text-right"><t t-esc="line.amount"/></td>
+                                            <td class="text-center"><t t-esc="line.collection_date"/></td>
+                                            <td class="text-center"><t t-esc="line.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <!-- Amount in Words and Total
+                        <table class="table" style="margin-top: 8px; font-size: 11px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 50%; padding: 6px;">
+                                        <strong>Amount In Words:</strong>
+                                        <t t-esc="welfare.currency_id.amount_to_text(sum([l.total_amount for l in welfare.welfare_line_ids])) if welfare.order_type == 'one_time' else welfare.currency_id.amount_to_text(sum([l.amount for l in welfare.welfare_recurring_line_ids]))"/> Only
+                                    </td>
+                                    <td style="width: 50%; padding: 6px; text-align: right;">
+                                        <strong>Total Amount:</strong>
+                                        <t t-if="welfare.order_type == 'one_time'">
+                                            <t t-esc="sum([l.total_amount for l in welfare.welfare_line_ids])"/>
+                                        </t>
+                                        <t t-if="welfare.order_type == 'recurring'">
+                                            <t t-esc="sum([l.amount for l in welfare.welfare_recurring_line_ids])"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table> -->
+                    </div>
+                </t>
+            </main>
+        </t>
+    </template>
+    <record id="action_report_welfare_collection_document" model="ir.actions.report">
+        <field name="name">Welfare Collection</field>
+        <field name="model">welfare</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_welfare.report_welfare_collection_document</field>
+        <field name="report_file">welfare_collection</field>
+    </record>
+</odoo>

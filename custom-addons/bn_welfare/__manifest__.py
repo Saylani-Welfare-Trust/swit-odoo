@@ -22,6 +22,7 @@
         'views/product_template.xml',
         'views/record_search.xml',
         'views/welfare_institution_fetch_log.xml',
+        'reports/report_welfare_collection_document.xml',
     ],
     'auto_install': False,
     'application': True,

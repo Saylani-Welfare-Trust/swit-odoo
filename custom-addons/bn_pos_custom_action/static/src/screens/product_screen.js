@@ -1,5 +1,4 @@
 /** @odoo-module **/
-
 import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product_screen";
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
@@ -18,14 +17,17 @@ patch(ProductScreen.prototype, {
         }
         return false; // no line has price > 0
     },
-
+    
+    get isWelfareOrder() {
+        const order = this.pos.get_order();
+        return order && order.extra_data && order.extra_data.welfare;
+    },
     getNumpadButtons() {
-        return [
+        const buttons = [
             { value: "1" },
             { value: "2" },
             { value: "3" },
             { value: "quantity", text: _t("Qty") },
-            // { value: "quantity", text: _t("Qty"), disabled: !this.checkProductPrice },
             { value: "4" },
             { value: "5" },
             { value: "6" },
@@ -38,17 +40,24 @@ patch(ProductScreen.prototype, {
                 text: _t("Price"),
                 disabled: !this.pos.cashierHasPriceControlRights(),
             },
-            // {
-            //     value: "price",
-            //     text: _t("Price"),
-            //     disabled: !this.pos.cashierHasPriceControlRights() || this.checkProductPrice,
-            // },
             { value: "-", text: "+/-" },
             { value: "0" },
             { value: this.env.services.localization.decimalPoint },
-            // Unicode: https://www.compart.com/en/unicode/U+232B
             { value: "Backspace", text: "⌫" },
-        ].map((button) => ({
+            // Add your custom button here if needed, e.g.:
+            // { value: "custom_action", text: _t("Custom"), custom: true },
+        ];
+
+        if (this.isWelfareOrder) {
+            // Disable all except payment and custom action (adjust value as needed)
+            return buttons.map(btn => {
+                if (["payment", "custom_action"].includes(btn.value)) {
+                    return { ...btn, disabled: false };
+                }
+                return { ...btn, disabled: true };
+            });
+        }
+        return buttons.map((button) => ({
             ...button,
             class: this.pos.numpadMode === button.value ? "active border-primary" : "",
         }));

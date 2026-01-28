@@ -206,7 +206,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
                         const priceExtra = perUnitPrice - product.lst_price;
                         selectedOrder.add_product(product, {
-                            quantity: group.quantity,
+                            quantity: -1 * group.quantity,
                             price_extra: priceExtra,
                         });
                         for (const id of group.ids) {
@@ -252,7 +252,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
                         const priceExtra = perUnitPrice - product.lst_price;
                         selectedOrder.add_product(product, {
-                            quantity: group.quantity,
+                            quantity:-1 * group.quantity,
                             price_extra: priceExtra,
                         });
                         for (const id of group.ids) {

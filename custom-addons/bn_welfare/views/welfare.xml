@@ -26,7 +26,6 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Reverse State" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
@@ -35,9 +34,10 @@
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
                     <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
-                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="not show_disburse_button" />
+                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" />
+                    <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     
-                    <button string="Reject" name="action_reject" type="object" />
+                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['draft','approve','recurring','reject','disbursed']" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>
@@ -111,7 +111,7 @@
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />
                                     <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" invisible=" not show_deliver_button"/>
+                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
 
                                 </tree>
@@ -129,7 +129,7 @@
                                     <field name='quantity' />
                                     <field name="amount" />
                                     <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" invisible=" not show_deliver_button"/>
+                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State"/>
                                 </tree>
                             </field>

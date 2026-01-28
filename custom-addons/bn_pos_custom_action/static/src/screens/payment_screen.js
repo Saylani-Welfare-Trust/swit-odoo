@@ -46,8 +46,9 @@ patch(PaymentScreen.prototype, {
 
                         newState = 'payment_received';
                     }
-                    // Condition 2: If state is 'return', update to 'payment_return'
-                    else if (currentState === 'return') {
+                    // Condition 2: If state is 'refund', update to 'payment_return'
+                    else if (currentState === 'refund') {
+                    // else if (currentState === 'return') {
                         const checkUpdate = await this.processEquipmentLines(equipmentRecord[0], currentOrder);
                     
                         if (checkUpdate) {
@@ -75,9 +76,10 @@ patch(PaymentScreen.prototype, {
                                 `Medical equipment ${medicalData.record_number} marked as paid`,
                                 { type: 'success' }
                             );
-                        } else if (currentState === 'return') {
+                        } else if (currentState === 'refund') {
+                        // } else if (currentState === 'return') {
                             this.env.services.notification.add(
-                                `Medical equipment ${medicalData.record_number} return payment processed`,
+                                `Medical equipment ${medicalData.record_number} refund payment processed`,
                                 { type: 'success' }
                             );
                         }
@@ -502,5 +504,8 @@ patch(PaymentScreen.prototype, {
         // console.log("Equipment lines:", equipmentLines);
         
         return equipmentLines;
-    }
+    },
+    /**
+     * Returns true if the current order is a welfare order
+     */
 });

@@ -28,6 +28,14 @@ class POSOrder(models.Model):
                     )
 
     def action_reject(self):
+        pos_order = self.env['pos.order'].search([('id', '=', self.refunded_order_ids[0].id)])
+        
+        if pos_order:
+            if self.session_id.state == 'closing_control':
+                pos_order.state = 'paid'
+            else:
+                pos_order.state = 'done'
+        
         self.state = 'reject'
 
     # def action_refund_request(self):
