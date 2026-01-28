@@ -121,11 +121,8 @@ class JournalTransfer(models.TransientModel):
         
             # 🔥 Pull only meaningful debit lines (receivable preferred)
             debit_lines = move.line_ids.filtered(
-                lambda l: l.debit > 0
+                lambda l: l.debit > 0 and l.account_id.account_type == 'asset_receivable'
             )
-            # debit_lines = move.line_ids.filtered(
-            #     lambda l: l.debit > 0 and l.account_id.account_type == 'asset_receivable'
-            # )
         
             for line in debit_lines:
                 records.append({

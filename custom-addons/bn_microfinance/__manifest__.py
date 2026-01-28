@@ -14,6 +14,7 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
+        'data/account_account.xml',
         'views/microfinance.xml',
         'views/microfinance_installment.xml',
         'views/product_product.xml',
@@ -34,4 +35,4 @@
             'bn_microfinance/static/src/app/**/*',
         ],
     }
-}
+} # type: ignore

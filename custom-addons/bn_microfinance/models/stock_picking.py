@@ -19,6 +19,6 @@ class StockPicking(models.Model):
                 
                 if microfinance:
                     # Complete the microfinance record
-                    microfinance._complete_after_picking()
+                    microfinance._complete_application()
         
         return res

@@ -206,6 +206,27 @@ class Microfinance(models.Model):
         store=False
     )
 
+    bill_ids = fields.Many2many(
+        'account.move',
+        string='Vendor Bill',
+        readonly=True
+    )
+
+    def action_view_bill(self):
+        """Open the picking form view"""
+        # self.ensure_one()
+        if not self.bill_ids:
+            raise ValidationError("No Bills found")
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Deliveries',
+            'res_model': 'account.move',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.bill_ids.ids)],
+            'target': 'current',
+        }
+
     @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
     def _compute_show_warehouse_location(self):
         for rec in self:
@@ -462,10 +483,49 @@ class Microfinance(models.Model):
         return self.env.ref('bn_microfinance.microfinance_approval_certificate_report_action').report_action(self)
 
     def action_move_to_treasury(self):
-        """Move to treasury state for cash asset type"""
+        """Move to treasury state for cash asset type and create a bill for the donee."""
         if self.asset_type != 'cash':
             raise ValidationError("This action is only for Cash asset type.")
+        if not self.delivery_date:
+            raise ValidationError("Please select a Delivery Date.")
+        # Create a vendor bill (account.move) for the donee
+        expense_account = self.env.ref(
+            'bn_microfinance.account_microfinance_expense',
+            raise_if_not_found=False
+        )
+
+        if not expense_account:
+            raise ValidationError("Microfinance Expense account not found.")
+        move_vals = {
+            'move_type': 'in_invoice',  # Vendor Bill
+            'partner_id': self.donee_id.id,
+            'invoice_date': self.delivery_date,
+            'ref': self.name,
+            'invoice_line_ids': [
+                (0, 0, {
+                    'name': f'Cash Disbursement for {self.name}',
+                    'product_id': self.product_id.id,
+                    'quantity': 1,
+                    'price_unit': self.total_amount,
+                    'account_id': expense_account.id,
+                })
+            ]
+        }
+        bill = self.env['account.move'].create(move_vals)
+        # Optionally, you can post the bill automatically:
+        # bill.action_post()
+
         self.state = 'treasury'
+        self.bill_ids = [(4, bill.id)]
+
+        # return {
+        #     'type': 'ir.actions.act_window',
+        #     'name': 'Vendor Bill',
+        #     'res_model': 'account.move',
+        #     'view_mode': 'form',
+        #     'res_id': bill.id,
+        #     'target': 'current',
+        # }
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
@@ -532,19 +592,15 @@ class Microfinance(models.Model):
         
         return picking
 
-    def _complete_after_picking(self):
+    def _complete_application(self):
         """Called when the picking is validated to complete the microfinance record"""
         # Compute installments
         if not self.in_recovery:
             self.compute_installment()
+            self.state='done'
         else:
-            self.compute_recovery_installment()
-
-
-        # Custom logic for moveable assets: create accounting entries
-        # self._create_microfinance_accounting_entries()
-
-        self.state = 'recover'
+            # self.compute_recovery_installment()
+            self.state = 'recover'
 
     def action_view_picking(self):
         """Open the picking form view"""

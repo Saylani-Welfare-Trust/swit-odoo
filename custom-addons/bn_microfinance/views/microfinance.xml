@@ -66,6 +66,10 @@
                                 invisible="not picking_ids">
                             <field name="picking_ids" widget="statinfo" string="Delivery"/>
                         </button>
+                        <button name="action_view_bill" type="object" class="oe_stat_button" icon="fa-file-invoice-dollar" 
+                                invisible="not bill_ids">
+                            <field name="bill_ids" widget="statinfo" string="Bill"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
