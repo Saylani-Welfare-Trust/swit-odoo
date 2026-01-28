@@ -122,8 +122,8 @@
                             <field name="mem_remarks" invisible="state not in ['hod_approve','mem_approve','reject']" />
                             <field name="remarks" invisible="not in_recovery" readonly="state == 'done'" />
                             <field name="recovery_remarks" invisible="not in_recovery" />
-                            <field name="member_right_of_remarks" invisible="state != 'right_of_approval_1' or not in_recovery" required="state == 'right_of_approval_1' and in_recovery" />
-                            <field name="cfo_right_of_remarks" invisible="state != 'right_of_approval_2' or not in_recovery" required="state == 'right_of_approval_2' and in_recovery"/>
+                            <field name="member_right_of_remarks" invisible=" not in_recovery" required="state == 'right_of_approval_1' and in_recovery" />
+                            <field name="cfo_right_of_remarks" invisible="not in_recovery" required="state == 'right_of_approval_2' and in_recovery"/>
                         </group>
                     </group>
 
