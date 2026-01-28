@@ -489,10 +489,7 @@ class Microfinance(models.Model):
         if not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         # Create a vendor bill (account.move) for the donee
-        expense_account = self.env.ref(
-            'bn_microfinance.account_microfinance_expense',
-            raise_if_not_found=False
-        )
+        expense_account = self.product_id.property_account_expense_id if self.product_id.property_account_expense_id else self.product_id.categ_id.property_account_expense_categ_id
 
         if not expense_account:
             raise ValidationError("Microfinance Expense account not found.")
