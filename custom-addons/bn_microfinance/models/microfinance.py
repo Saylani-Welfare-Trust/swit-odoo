@@ -186,6 +186,7 @@ class Microfinance(models.Model):
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
     security_offered = fields.Char('Security Offered')
+    board_approval_document=fields.Binary('Board Approval Document')
 
     # Guarator Information
     guarantor_line_ids = fields.One2many('microfinance.guarantor', 'microfinance_id', string='Guarator Lines')

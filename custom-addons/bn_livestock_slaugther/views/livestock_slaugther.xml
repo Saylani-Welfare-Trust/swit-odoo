@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="livestock_slaugther_view_tree" model="ir.ui.view">
+        <field name="name">livestock.slaugther.view.tree</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="product_id" />
+                <field name="code" />
+                <field name="donee_id" />
+                <field name="location_id" />
+                <field name="quantity" />
+                <field name="price" />
+                <field name="ref" />
+                <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" readonly="1" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="livestock_slaugther_view_form" model="ir.ui.view">
+        <field name="name">livestock.slaugther.view.form</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight"/>
+                    <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="not_received,received"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="product_id"/>
+                        <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="livestock_slaugther_col_1">
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="code" />
+                        </group>
+                        <group name="livestock_slaugther_col_2">
+                            <field name="quantity" />
+                            <field name="price" />
+                            <field name="ref" />
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="livestock_slaugther_action" model="ir.actions.act_window">
+        <field name="name">Livestock Slaugther</field>
+        <field name="res_model">livestock.slaugther</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new livestock slaugther...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="livestock_menu"
+        name="Livestock"
+        web_icon="bn_livestock_slaugther,static/description/icon.png"
+        sequence="7"/>
+
+    <menuitem
+        id="slaugther_menu"
+        name="Slaugther"
+        action="livestock_slaugther_action"
+        parent="livestock_menu"
+        sequence="0"/>
+
+</odoo>

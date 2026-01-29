@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_livestock_slaugther,access.livestock.slaugther,bn_livestock_slaugther.model_livestock_slaugther,,1,1,1,1
+access_livestock_slaugther_wizard,access.livestock.slaugther.wizard,bn_livestock_slaugther.model_livestock_slaugther_wizard,,1,1,1,1
+access_livestock_cutting,access.livestock.cutting,bn_livestock_slaugther.model_livestock_cutting,,1,1,1,1
