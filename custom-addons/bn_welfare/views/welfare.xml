@@ -37,7 +37,7 @@
                     <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" />
                     <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     
-                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['draft','approve','recurring','reject','disbursed']" />
+                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>
