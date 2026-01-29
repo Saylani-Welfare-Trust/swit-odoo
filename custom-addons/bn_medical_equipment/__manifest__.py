@@ -7,7 +7,8 @@
     'category': 'BytesNode/Medical Equipment',
     'depends': [
         'bn_profile_management',
-        'bn_pos_custom_action'
+        'bn_pos_custom_action',
+        'bn_master_setup'
     ],
     'data': [
         'security/group.xml',
