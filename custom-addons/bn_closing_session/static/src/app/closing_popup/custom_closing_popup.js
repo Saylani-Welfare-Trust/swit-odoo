@@ -24,6 +24,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         "other_payment_methods",
         "is_manager",
         "amount_authorized_diff",
+        "bank_list",
         "id",
         "resolve",
         "zIndex",
@@ -32,7 +33,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         "cancelKey",
     ];
 
-    // --- setup() : make forEach safe even if other_payment_methods is null/undefined
     setup() {
         super.setup();
         this.pos = usePos();
@@ -44,40 +44,31 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
         this.state = useState({
             ...this.getInitialState(),
-            lines: {},       // all lines per payment method + type
-            newLines: {},    // new line inputs per payment method + type
+            lines: {},
+            newLines: {},
         });
 
         const initializePayment = (pm) => {
             if (!pm?.id) return;
             this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
             this.state.newLines[pm.id] = {
-                restricted: { amount: 0, ref: "", record_id: 0 },
-                unrestricted: { amount: 0, ref: "", record_id: 0 },
-                neutral: { amount: 0, ref: "", record_id: 0 },
+                restricted: { bank: "", amount: 0, ref: "", record_id: 0 },
+                unrestricted: { bank: "", amount: 0, ref: "", record_id: 0 },
+                neutral: { bank: "", amount: 0, ref: "", record_id: 0 },
             };
         };
 
-        // Helper to check if slip input should be shown for a payment method
-        this.shouldShowSlipInput = (pm) => {
-            if (!pm) return false;
-            return !(pm.skip_slip_input === true || pm.skip_slip_input === 'true');
+        this.shouldShowSlipInput = (pm) => pm && !(pm.skip_amount_input === true || pm.skip_amount_input === 'true');
+
+        this.shouldShowSlipHeaders = () => {
+            if (this.shouldShowSlipInput(this.props.default_cash_details)) return true;
+            return (this.props.other_payment_methods || []).some(pm => this.shouldShowSlipInput(pm));
         };
 
-        // Helper to check if difference should be shown for a payment method
-        this.shouldShowDifference = (pm) => {
-            if (!pm) return true;
-            // For skip_slip_input, do not show difference (always zero)
-            if (pm.skip_slip_input === true || pm.skip_slip_input === 'true') {
-                return false;
-            }
-            return true;
-        };
+        this.shouldShowDifference = (pm) => pm && !(pm.skip_amount_input === true || pm.skip_amount_input === 'true');
 
-        // 🔥 Cleanup after UI mounts
         onMounted(async () => {
             try {
-                // Delete all slips from backend
                 await this.orm.call("pos.session.slip", "delete_session_slips_for_session", [
                     this.pos.pos_session.id,
                 ]);
@@ -87,7 +78,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         });
 
         if (this.props.default_cash_details) initializePayment(this.props.default_cash_details);
-        (this.props.other_payment_methods || []).forEach((pm) => initializePayment(pm));
+        (this.props.other_payment_methods || []).forEach(initializePayment);
 
         this.handleAddLine = this.handleAddLine.bind(this);
         this.handleRemoveLine = this.handleRemoveLine.bind(this);
@@ -95,29 +86,20 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         this.confirm = useAsyncLockedMethod(this.confirm);
     }
 
-    // --- getInitialState(): guard other_payment_methods
     getInitialState() {
         const initialState = { notes: "", payments: {} };
-
         if (this.pos.config.cash_control && this.props.default_cash_details) {
             initialState.payments[this.props.default_cash_details.id] = { counted: "0" };
         }
-
-        (this.props.other_payment_methods || []).forEach((pm) => {
+        (this.props.other_payment_methods || []).forEach(pm => {
             if (pm?.id != null) initialState.payments[pm.id] = { counted: "0" };
         });
-
         return initialState;
     }
 
     canConfirm() {
-        console.log('Hit');
-        console.log(this);
-        
-        // Only require confirmation if any non-skip payment method has a nonzero difference
         const cash = this.props.default_cash_details;
-        const cashDiff = cash && this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(cashDiff)) {
+        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(this.getDifference(cash.id))) {
             return false;
         }
         for (const pm of this.props.other_payment_methods || []) {
@@ -125,20 +107,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 return false;
             }
         }
-        return Object.values(this.state.payments)
-        .map(v => v.counted)
-        .every(this.env.utils.isValidFloat);
+        return Object.values(this.state.payments).every(v => this.env.utils.isValidFloat(v.counted));
     }
 
     async confirm() {
-        console.log('Hit');
-        console.log(this);
-
-        // Only show difference confirmation if any non-skip payment method has a nonzero difference
         const cash = this.props.default_cash_details;
-        const cashDiff = cash && this.shouldShowDifference(cash) ? this.getDifference(cash.id) : 0;
         let hasDiff = false;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(cashDiff)) {
+        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(this.getDifference(cash.id))) {
             hasDiff = true;
         }
         for (const pm of this.props.other_payment_methods || []) {
@@ -147,20 +122,18 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 break;
             }
         }
-        if (!this.pos.config.cash_control || !hasDiff) {
-            await this.closeSession();
-            return;
-        }
+
+        if (!this.pos.config.cash_control || !hasDiff) return await this.closeSession();
+
         if (this.hasUserAuthority()) {
             const { confirmed } = await this.popup.add(ConfirmPopup, {
                 title: _t("Payments Difference"),
                 body: _t("Do you want to accept payments difference and post a profit/loss journal entry?"),
             });
-            if (confirmed) {
-                await this.closeSession();
-            }
+            if (confirmed) await this.closeSession();
             return;
         }
+
         await this.popup.add(ConfirmPopup, {
             title: _t("Payments Difference"),
             body: _t(
@@ -172,29 +145,20 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     getEffectiveCounted(paymentId) {
-        const counted = parseFloat(this.state.payments[paymentId]?.counted || 0);
-        return counted + this.getLinesTotal(paymentId);
+        return parseFloat(this.state.payments[paymentId]?.counted || 0) + this.getLinesTotal(paymentId);
     }
 
-    // --- getDifference(): don't crash if pm not found
     getDifference(paymentId) {
-        if (!this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) {
-            return NaN;
-        }
-        let expectedAmount = 0;
-        let pm = null;
-        if (paymentId === this.props.default_cash_details?.id) {
-            expectedAmount = this.props.default_cash_details?.amount || 0;
-            pm = this.props.default_cash_details;
-        } else {
-            pm = (this.props.other_payment_methods || []).find((m) => m.id === paymentId);
-            expectedAmount = pm?.amount || 0;
-        }
-        // For skip_slip_input, always return 0
-        if (pm && (pm.skip_slip_input === true || pm.skip_slip_input === 'true')) {
-            return 0;
-        }
-        return this.getEffectiveCounted(paymentId) - expectedAmount;
+        const payment = paymentId === this.props.default_cash_details?.id
+            ? this.props.default_cash_details
+            : (this.props.other_payment_methods || []).find(m => m.id === paymentId);
+
+        if (!payment || !this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) return NaN;
+
+        if (payment.skip_amount_input === true || payment.skip_amount_input === 'tru') return 0;
+
+        const expected = payment.amount || 0;
+        return this.getEffectiveCounted(paymentId) - expected;
     }
 
     _getPaymentMethod(paymentId) {
@@ -206,44 +170,39 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     getRestrictedDifference(paymentId) {
         const pm = this._getPaymentMethod(paymentId);
         const expected = pm?.breakdown?.restricted || 0;
-        const actual = (this.state.lines[paymentId]?.restricted || [])
-            .reduce((sum, line) => sum + (line.amount || 0), 0);
+        const actual = (this.state.lines[paymentId]?.restricted || []).reduce((sum, l) => sum + (l.amount || 0), 0);
         return actual - expected;
     }
 
     getUnrestrictedDifference(paymentId) {
         const pm = this._getPaymentMethod(paymentId);
         const expected = pm?.breakdown?.unrestricted || 0;
-        const actual = (this.state.lines[paymentId]?.unrestricted || [])
-            .reduce((sum, line) => sum + (line.amount || 0), 0);
+        const actual = (this.state.lines[paymentId]?.unrestricted || []).reduce((sum, l) => sum + (l.amount || 0), 0);
+        return actual - expected;
+    }
+
+    getNeutralDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.neutral || 0;
+        const actual = (this.state.lines[paymentId]?.neutral || []).reduce((sum, l) => sum + (l.amount || 0), 0);
         return actual - expected;
     }
 
     getLinesTotal(paymentId) {
-        const lines = this.state.lines[paymentId] || { restricted: [], unrestricted: [] };
-        const restrictedTotal = (lines.restricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
-        const unrestrictedTotal = (lines.unrestricted || []).reduce((sum, line) => sum + (line.amount || 0), 0);
-        const neutralTotal = (lines.neutral || []).reduce((sum, l) => sum + (l.amount || 0), 0);
-
-        return restrictedTotal + unrestrictedTotal + neutralTotal;
+        const lines = this.state.lines[paymentId] || { restricted: [], unrestricted: [], neutral: [] };
+        return ["restricted", "unrestricted", "neutral"].reduce(
+            (sum, type) => sum + (lines[type] || []).reduce((s, l) => s + (l.amount || 0), 0),
+            0
+        );
     }
 
-    getNeutralDifference(paymentId) {
-    const pm = this._getPaymentMethod(paymentId);
-    const expected = pm?.breakdown?.neutral || 0;
-    const actual = (this.state.lines[paymentId]?.neutral || [])
-        .reduce((sum, line) => sum + (line.amount || 0), 0);
-    return actual - expected;
-}
-
-    // Safely format amounts for neutral rows to avoid undefined/NaN reaching formatCurrency
     formatCurrencyNeutral(value) {
         const num = Number(value);
         return this.env.utils.formatCurrency(Number.isFinite(num) ? num : 0);
     }
 
     getMaxDifference() {
-        const diffs = Object.keys(this.state.payments || {}).map((id) => Math.abs(this.getDifference(parseInt(id))));
+        const diffs = Object.keys(this.state.payments || {}).map(id => Math.abs(this.getDifference(parseInt(id))));
         return diffs.length ? Math.max(...diffs) : 0;
     }
 
@@ -257,9 +216,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (!syncSuccess) return;
 
         if (this.pos.config.cash_control) {
-            const response = await this.orm.call("pos.session", "post_closing_cash_details", [this.pos.pos_session.id], {
-                counted_cash: parseFloat(this.state.payments[this.props.default_cash_details.id].counted),
-            });
+            const counted = parseFloat(this.state.payments[this.props.default_cash_details.id].counted);
+            const response = await this.orm.call("pos.session", "post_closing_cash_details", [
+                this.pos.pos_session.id,
+                counted
+            ]);
             if (!response.successful) return this.handleClosingError(response);
         }
 
@@ -269,34 +230,28 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 this.state.notes,
             ]);
         } catch (error) {
-            if (!error.data && error.data.message !== "This session is already closed.") {
-                throw error;
-            }
+            if (!error.data || error.data.message !== "This session is already closed.") throw error;
         }
 
-        console.log(this.state.lines);
-
         try {
-            const bankDiffPairs = this.props.other_payment_methods
+            const bankDiffPairs = (this.props.other_payment_methods || [])
                 .filter(pm => pm.type === "bank")
                 .map(pm => [pm.id, this.getDifference(pm.id)]);
 
             const response = await this.orm.call("pos.session", "close_session_from_ui", [
                 this.pos.pos_session.id,
                 bankDiffPairs,
-                this.state.lines,   // <-- 🔥 add your restricted/unrestricted lines here
+                this.state.lines,
             ]);
             if (!response.successful) return this.handleClosingError(response);
             this.pos.redirectToBackend();
         } catch (error) {
             if (error instanceof ConnectionLostError) throw error;
-            else {
-                await this.popup.add(ErrorPopup, {
-                    title: _t("Closing session error"),
-                    body: _t("An error has occurred when trying to close the session.\nYou will be redirected to the back-end to manually close the session."),
-                });
-                this.pos.redirectToBackend();
-            }
+            await this.popup.add(ErrorPopup, {
+                title: _t("Closing session error"),
+                body: _t("An error has occurred when trying to close the session.\nYou will be redirected to the back-end to manually close the session."),
+            });
+            this.pos.redirectToBackend();
         }
     }
 
@@ -309,99 +264,69 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (response.redirect) this.pos.redirectToBackend();
     }
 
-    // --- handleAddLine(): compute 'allowed' from cash OR matching other_payment_method
     async handleAddLine(paymentId, type = "restricted") {
-        const { amount, ref } = this.state.newLines[paymentId][type];
+        const { amount, ref, bank } = this.state.newLines[paymentId][type];
         const amountNum = parseFloat(amount);
 
-        // Basic validation
-        if (!amount || !ref || isNaN(amountNum)) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Invalid input"),
-                body: _t("Please enter a valid Amount and Ref."),
-            });
-            return;
+        const pm = paymentId === this.props.default_cash_details?.id
+            ? this.props.default_cash_details
+            : (this.props.other_payment_methods || []).find(m => m.id === paymentId);
+
+        // Only validate amount/ref & duplicates if skip_amount_input is true
+        if (!pm?.skip_amount_input) {
+            if (!amount || !ref || isNaN(amountNum)) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Invalid input"),
+                    body: _t("Please enter a valid Amount and Ref."),
+                });
+                return;
+            }
+
+            const duplicate = Object.values(this.state.lines[paymentId] || {}).flat().some(line => line.ref === ref);
+            if (duplicate) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Duplicate Ref"),
+                    body: _t("Slip No (Ref) must be unique for this payment method."),
+                });
+                return;
+            }
         }
 
-        // Duplicate slip check (within this payment method)
-        const duplicate = Object.values(this.state.lines[paymentId] || {})
-            .flat()
-            .some((line) => line.ref === ref);
-        if (duplicate) {
-            this.popup.add(ErrorPopup, {
-                title: _t("Duplicate Ref"),
-                body: _t("Slip No (Ref) must be unique for this payment method."),
-            });
-            return;
-        }
+        const currentTotal = (this.state.lines[paymentId][type] || []).reduce((sum, line) => sum + (line.amount || 0), 0);
 
-        // Sum current total for this type
-        const currentTotal = (this.state.lines[paymentId][type] || [])
-            .reduce((sum, line) => sum + (line.amount || 0), 0);
-
-        // 👉 Determine allowed based on matching payment method's breakdown
-        const isCash = paymentId === this.props.default_cash_details?.id;
-        const cashBreakdown = this.props.default_cash_details?.breakdown;
-        const pm = isCash ? null : (this.props.other_payment_methods || []).find((m) => m.id === paymentId);
-        const pmBreakdown = isCash ? cashBreakdown : pm?.breakdown;
-
-        // If no breakdown exists, don't enforce a cap (allowed = Infinity)
-        const allowed = pmBreakdown?.[type] ?? Number.POSITIVE_INFINITY;
-
+        const allowed = pm?.breakdown?.[type] ?? Number.POSITIVE_INFINITY;
         if (currentTotal + amountNum > allowed) {
             this.popup.add(ErrorPopup, {
                 title: _t("Limit exceeded"),
-                body: _t(
-                    `${type.charAt(0).toUpperCase() + type.slice(1)} amount cannot exceed ` +
-                    this.env.utils.formatCurrency(Number.isFinite(allowed) ? allowed : 0)
-                ),
+                body: _t(`${type.charAt(0).toUpperCase() + type.slice(1)} amount cannot exceed ` +
+                    this.env.utils.formatCurrency(Number.isFinite(allowed) ? allowed : 0)),
             });
             return;
         }
 
-        // Add line
-        const id = Date.now();
-        
-        const payload = {
-            payment_method_id: paymentId,
-            type: type,
-            amount: amountNum,
-            ref: ref
-        }
-        
-        const slip = await this.orm.call("pos.session.slip", "create_session_slip", [
-            this.pos.pos_session.id,
-            payload,
-        ]);
+        const pmBank = this.props.bank_list.find(b => b.id == bank);
+        const bank_name = pmBank ? pmBank.name : '';
+        const bank_id = pmBank ? pmBank.id : '';
 
-        if (slip.status == 'error') {
-            await this.popup.add(ErrorPopup, {
-                title: _t("Session Slip Error"),
-                body: _t("Unable to add slip to session please check your internet connection."),
-            });
+        const id = Date.now();
+        const payload = { bank_id: bank_id, payment_method_id: paymentId, type, amount: amountNum, ref };
+        const slip = await this.orm.call("pos.session.slip", "create_session_slip", [this.pos.pos_session.id, payload]);
+
+        if (slip.status === 'error') {
+            await this.popup.add(ErrorPopup, { title: _t("Session Slip Error"), body: _t("Unable to add slip to session please check your internet connection.") });
+        } else {
+            this.state.lines[paymentId][type].push({ id, bank: bank_name, amount: amountNum, ref, record_id: slip.id });
         }
-        
-        if (slip.status == 'success') {
-            this.state.lines[paymentId][type].push({ id, amount: amountNum, ref, record_id: slip.id });
-        }
-        
-        // Reset input
-        this.state.newLines[paymentId][type] = { amount: 0, ref: "" };
-        
+
+        this.state.newLines[paymentId][type] = { amount: 0, ref: "", bank: "" };
         this.setManualCashInput(amountNum);
     }
-    
+
     async handleRemoveLine(paymentId, lineId, record_id, type = "restricted") {
         const slip = await this.orm.call("pos.session.slip", "delete_session_slip", [record_id]);
-        
-        if (slip.status == 'error') {
-            await this.popup.add(ErrorPopup, {
-                title: _t("Session Slip Error"),
-                body: _t("Unable to add slip to session please check your internet connection."),
-            });
-        }
-
-        if (slip.status == 'success') {
+        if (slip.status === 'error') {
+            await this.popup.add(ErrorPopup, { title: _t("Session Slip Error"), body: _t("Unable to add slip to session please check your internet connection.") });
+        } else {
             this.state.lines[paymentId][type] = this.state.lines[paymentId][type].filter(line => line.id !== lineId);
         }
     }
@@ -413,20 +338,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     async openDetailsPopup() {
         const action = _t("Cash control - closing");
         this.hardwareProxy.openCashbox(action);
-        const { confirmed, payload } = await this.popup.add(MoneyDetailsPopup, {
-            moneyDetails: this.moneyDetails,
-            action,
-        });
+        const { confirmed, payload } = await this.popup.add(MoneyDetailsPopup, { moneyDetails: this.moneyDetails, action });
         if (confirmed) {
             const { total, moneyDetailsNotes, moneyDetails } = payload;
             this.state.payments[this.props.default_cash_details.id].counted = this.env.utils.formatCurrency(total, false);
             if (moneyDetailsNotes) this.state.notes = moneyDetailsNotes;
             this.moneyDetails = moneyDetails;
         }
-    }
-
-    async downloadSalesReport() {
-        return this.report.doAction("point_of_sale.sale_details_report", [this.pos.pos_session.id]);
     }
 
     async cancel() {

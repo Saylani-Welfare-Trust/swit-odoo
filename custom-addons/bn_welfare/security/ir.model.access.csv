@@ -3,3 +3,9 @@ access_welfare,welfare,bn_welfare.model_welfare,,1,1,1,1
 access_welfare_line,welfare.line,bn_welfare.model_welfare_line,,1,1,1,1
 access_welfare_recurring_line,welfare.recurring.line,bn_welfare.model_welfare_recurring_line,,1,1,1,1
 access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_welfare.model_welfare_institution_fetch_log,,1,1,1,1
+
+access_welfare_committee_member,welfare.committee.member,bn_welfare.model_welfare_committee_member,,1,1,1,1
+access_welfare_inquiry_report,welfare.inquiry.report,bn_welfare.model_welfare_inquiry_report,,1,1,1,1
+access_welfare_madrasa,welfare.madrasa,bn_welfare.model_welfare_madrasa,,1,1,1,1
+access_welfare_masjid,welfare.masjid,bn_welfare.model_welfare_masjid,,1,1,1,1
+access_welfare_teacher,welfare.teacher,bn_welfare.model_welfare_teacher,,1,1,1,1

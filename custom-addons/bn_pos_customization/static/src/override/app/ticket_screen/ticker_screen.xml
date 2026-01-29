@@ -8,6 +8,8 @@
                 <!-- <Numpad buttons="getNumpadButtons()" class="'max-width-325px'"/> -->
             </div>
         </xpath>
+
+        <xpath expr="//InvoiceButton" position="replace" />
     </t>
 
 </templates>

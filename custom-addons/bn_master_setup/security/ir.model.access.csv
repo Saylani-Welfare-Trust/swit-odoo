@@ -13,3 +13,6 @@ access_disbursement_application_type,access.disbursement.application.type,bn_mas
 access_disbursement_category,access.disbursement.category,bn_master_setup.model_disbursement_category,,1,1,1,1
 access_direct_deposit_account_setup,access.direct.deposit.account.setup,bn_master_setup.model_direct_deposit_account_setup,,1,1,1,1
 access_donation_in_kind_config,access.donation.in.kind.config,bn_master_setup.model_donation_in_kind_config,,1,1,1,0
+access_city,access.city,bn_master_setup.model_city,,1,1,1,1
+access_bank,access.bank,bn_master_setup.model_bank,,1,1,1,1
+access_medical_equipment_category,access.medical.equipment.category,bn_master_setup.model_medical_equipment_category,,1,1,1,1

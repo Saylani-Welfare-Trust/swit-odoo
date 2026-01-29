@@ -8,13 +8,14 @@ class DonationHomeServiceLine(models.Model):
 
 
     medical_equipment_id = fields.Many2one('medical.equipment', string="Donation Home Service")
-    product_id = fields.Many2one('product.product', string="Product")
+    medical_equipment_category_id = fields.Many2one('medical.equipment.category', string="Medical Equipment Category")
+    product_id = fields.Many2one(related='medical_equipment_category_id.product_id', string="Product", store=True)
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
     
     quantity = fields.Integer('Quantity', default=1)
-    amounts = fields.Float(
-        string='Amount', 
-        related='product_id.lst_price',
+    security_deposit = fields.Monetary(
+        string='Security Deposit', 
+        related='medical_equipment_category_id.security_deposit',
         readonly=True
     )
 

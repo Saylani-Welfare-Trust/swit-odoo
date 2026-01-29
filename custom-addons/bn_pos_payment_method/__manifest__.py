@@ -6,7 +6,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Payment Method Customization',
     'depends': [
-        'bn_pos_cheque'
+        'bn_pos_cheque',
+        'bn_master_setup',
     ],
     'data': [
         'views/pos_payment_method.xml'

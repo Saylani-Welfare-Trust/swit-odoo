@@ -17,8 +17,11 @@
         <field name="name">Microfinance / Recovery</field>
     </record>
     
-    <record id="microfinance_write_off_approval_group" model="res.groups">
-        <field name="name">Microfinance / Write Off Approval</field>
+    <record id="microfinance_write_off_approval_1_group" model="res.groups">
+        <field name="name">Microfinance / Write Off Approval 1</field>
+    </record>
+    <record id="microfinance_write_off_approval_2_group" model="res.groups">
+        <field name="name">Microfinance / Write Off Approval 2</field>
     </record>
     
     <record id="microfinance_pos_action_group" model="res.groups">

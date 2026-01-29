@@ -39,6 +39,11 @@ patch(ActionScreen.prototype, {
             });
         }
 
+        // console.log(this);
+        const bankList = await this.orm.call("direct.deposit", "get_bank_list", [[]]);
+
+        // console.log(bankList);
+
         if (!orderLines || orderLines.length === 0) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Error"),
@@ -50,6 +55,7 @@ patch(ActionScreen.prototype, {
 
         this.popup.add(ProvisionalPopup, {
             donor_id: donor.id,
+            bank_id: bankList,
             donor_name: donor.name,
             donor_address: donor.address,
             orderLines: orderLines,

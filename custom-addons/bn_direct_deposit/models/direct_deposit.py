@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
+import re
+
 
 status_selection = [       
     ('draft', 'Draft'),
@@ -16,18 +18,23 @@ class DirectDeposit(models.Model):
     _order = "id desc"
 
 
+    bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
 
+    address = fields.Char('Address')
     name = fields.Char('Name', default="New")
-    transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
-    state = fields.Selection(selection=status_selection, string="Status", default="draft")
-
-    amount = fields.Monetary('Amount', currency_field='currency_id')
     transaction_ref = fields.Char('Transaction Reference')
+
+    transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
+    
+    state = fields.Selection(selection=status_selection, string="Status", default="draft")
+    
+    amount = fields.Monetary('Amount', currency_field='currency_id')
+    service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
@@ -38,6 +45,15 @@ class DirectDeposit(models.Model):
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
 
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
 
     @api.model
     def create(self, vals):
@@ -51,6 +67,9 @@ class DirectDeposit(models.Model):
 
     @api.model
     def create_dd_record(self, data):
+        address = data.get('address')
+        bank_id = data.get('bank_id')
+        service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
 
@@ -71,7 +90,10 @@ class DirectDeposit(models.Model):
         # -------------------------
         dd = self.create({
             'donor_id': data['donor_id'],
+            'bank_id': bank_id,
             'user_id': user_id,
+            'address': address,
+            'service_charges': service_charges,
             'transaction_ref': transaction_ref,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
@@ -256,7 +278,7 @@ class DirectDeposit(models.Model):
             dhs_service = DHS.create({
                 'donor_id': self.donor_id.id,
                 'amount': service_amount,
-                'address': self.donor_id.street or '',
+                'address': self.address or self.donor_id.street or '',
                 'direct_deposit_id': self.id,
                 'state': 'gate_in',
             })
@@ -280,6 +302,7 @@ class DirectDeposit(models.Model):
                 'amount': consu_amount,
                 'address': self.donor_id.street or '',
                 'direct_deposit_id': self.id,
+                'service_charges': self.service_charges,
                 'state': 'draft',
             })
             
@@ -355,3 +378,12 @@ class DirectDeposit(models.Model):
                 "domain": [('id', 'in', dhs_record_ids)],
                 "target": "current",
             }
+        
+    def get_bank_list(self):
+        bank_list = [
+            {'id': bank.id, 'name': bank.name}
+            for bank in self.env['account.journal'].search([])
+            if bank.show_in_pos
+        ]
+
+        return bank_list

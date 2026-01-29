@@ -13,6 +13,7 @@ patch(PaymentScreen.prototype, {
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
             const equipmentId = medicalData.equipment_id;
+            const securityDepositId = medicalData.security_deposit_id;
             
             if (equipmentId) {
                 // First, get the current state of the medical equipment record
@@ -29,7 +30,7 @@ patch(PaymentScreen.prototype, {
                     let newState;
                     
                     // Condition 1: If state is 'draft', update to 'payment'
-                    if (currentState === 'draft') {
+                    if (currentState === 'sd_received') {
                         // Check for negative quantities
                         const hasNegativeQty = currentOrder
                             .get_orderlines()
@@ -45,8 +46,9 @@ patch(PaymentScreen.prototype, {
 
                         newState = 'payment_received';
                     }
-                    // Condition 2: If state is 'return', update to 'payment_return'
-                    else if (currentState === 'return') {
+                    // Condition 2: If state is 'refund', update to 'payment_return'
+                    else if (currentState === 'refund') {
+                    // else if (currentState === 'return') {
                         const checkUpdate = await this.processEquipmentLines(equipmentRecord[0], currentOrder);
                     
                         if (checkUpdate) {
@@ -69,14 +71,15 @@ patch(PaymentScreen.prototype, {
                         );
                         
                         // Show appropriate notification based on state change
-                        if (currentState === 'draft') {
+                        if (currentState === 'approved') {
                             this.env.services.notification.add(
                                 `Medical equipment ${medicalData.record_number} marked as paid`,
                                 { type: 'success' }
                             );
-                        } else if (currentState === 'return') {
+                        } else if (currentState === 'refund') {
+                        // } else if (currentState === 'return') {
                             this.env.services.notification.add(
-                                `Medical equipment ${medicalData.record_number} return payment processed`,
+                                `Medical equipment ${medicalData.record_number} refund payment processed`,
                                 { type: 'success' }
                             );
                         }
@@ -87,8 +90,27 @@ patch(PaymentScreen.prototype, {
                     console.error("❌ [Medical Equipment] Equipment record not found");
                 }
             } else {
+                if (securityDepositId) {
+                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+
+                    const payload = {
+                        deposit_id: securityDepositId,
+                        payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                        bank_name: currentOrder.bank_name,
+                        cheque_no: currentOrder.cheque_number,
+                        cheque_date: currentOrder.cheque_date,
+                        state: 'paid',
+                    }
+
+                    await this.env.services.orm.call(
+                        'medical.security.deposit', "set_security_depsoit_values",
+                        [payload]
+                    );
+                }
+
                 console.error("❌ [Medical Equipment] No equipment ID found");
             }
+            
         }
         // Only process donation home service if order has extra_data with dhs
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
@@ -335,12 +357,17 @@ patch(PaymentScreen.prototype, {
                 if (welfareId) {
                     if (!isRecurring) {
                         // One-time disbursement: Update welfare.state to 'disbursed'
-                        await this.env.services.orm.write(
-                            'welfare',
-                            [welfareId],
-                            { state: 'disbursed' }
-                        );
-
+                        const welfareLineIds = wfData.welfare_line_ids || [];
+                        if (welfareLineIds.length > 0) {
+                            for (const line of welfareLineIds) {
+                                // Call the server-side action_disbursed method if needed
+                                await this.env.services.orm.call(
+                                    'welfare.line',
+                                    'action_disbursed',
+                                    [[line.id]]
+                                );
+                            }
+                        }
                         this.env.services.notification.add(
                             `Welfare ${wfData.record_number} one-time disbursement completed`,
                             { type: 'success' }
@@ -351,40 +378,11 @@ patch(PaymentScreen.prototype, {
                         
                         if (recurringLineIds.length > 0) {
                             for (const line of recurringLineIds) {
-                                await this.env.services.orm.write(
+                                // Call the server-side action_disbursed method if needed
+                                await this.env.services.orm.call(
                                     'welfare.recurring.line',
-                                    [line.id],
-                                    { state: 'disbursed' }
-                                );
-                            }
-
-                            this.env.services.notification.add(
-                                `Processed ${recurringLineIds.length} recurring welfare disbursement(s)`,
-                                { type: 'success' }
-                            );
-
-                            // Check if ALL recurring lines are now disbursed
-                            const remainingLines = await this.env.services.orm.searchRead(
-                                'welfare.recurring.line',
-                                [
-                                    ['welfare_id', '=', welfareId],
-                                    ['state', '!=', 'disbursed']
-                                ],
-                                ['id'],
-                                {}
-                            );
-
-                            // If no remaining lines, update welfare.state to 'disbursed'
-                            if (remainingLines.length === 0) {
-                                await this.env.services.orm.write(
-                                    'welfare',
-                                    [welfareId],
-                                    { state: 'disbursed' }
-                                );
-
-                                this.env.services.notification.add(
-                                    `Welfare ${wfData.record_number} fully disbursed (all recurring lines completed)`,
-                                    { type: 'success' }
+                                    'action_disbursed',
+                                    [[line.id]]
                                 );
                             }
                         }
@@ -506,5 +504,8 @@ patch(PaymentScreen.prototype, {
         // console.log("Equipment lines:", equipmentLines);
         
         return equipmentLines;
-    }
+    },
+    /**
+     * Returns true if the current order is a welfare order
+     */
 });

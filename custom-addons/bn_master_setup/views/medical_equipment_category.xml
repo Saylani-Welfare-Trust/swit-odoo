@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="medical_equipment_category_view_tree" model="ir.ui.view">
+        <field name="name">medical.equipment.category.view.tree</field>
+        <field name="model">medical.equipment.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" string="Product" />
+                <field name="product_id" string="System Product" />
+                <field name="is_medical_approval" />
+                <field name="security_deposit" />
+            </tree>
+        </field>
+    </record>
+    
+    <record id="medical_equipment_category_action" model="ir.actions.act_window">
+        <field name="name">Medical Equipment Category</field>
+        <field name="res_model">medical.equipment.category</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new medical equipment category....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="medical_equipment_category_menu"
+        name="Medical Equipment Category"
+        action="medical_equipment_category_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="6"/>
+
+</odoo>

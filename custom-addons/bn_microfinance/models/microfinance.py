@@ -45,16 +45,17 @@ state_selection = [
     ('in_recovery', 'In Recovery'),
     ('recover', 'Temp Recovered'),
     ('fully_recover', 'Fully Recovered'),
-    ('right_granted', 'Right Granted'),
     ('right_of_approval_1', 'Write Off Approval 1'),
     ('right_of_approval_2', 'Write Off Approval 2'),
     ('done', 'Done'),
+    ('right_granted', 'Right Granted'),
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
 
 
 class Microfinance(models.Model):
+
     _name = 'microfinance'
     _description = "Microfinance"
 
@@ -205,6 +206,27 @@ class Microfinance(models.Model):
         store=False
     )
 
+    bill_ids = fields.Many2many(
+        'account.move',
+        string='Vendor Bill',
+        readonly=True
+    )
+
+    def action_view_bill(self):
+        """Open the picking form view"""
+        # self.ensure_one()
+        if not self.bill_ids:
+            raise ValidationError("No Bills found")
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Deliveries',
+            'res_model': 'account.move',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.bill_ids.ids)],
+            'target': 'current',
+        }
+
     @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
     def _compute_show_warehouse_location(self):
         for rec in self:
@@ -335,6 +357,83 @@ class Microfinance(models.Model):
             if not self.is_valid_cnic_format(self.landlord_cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')            
 
+    def _create_microfinance_accounting_entries(self):
+            """Create accounting entries for asset, receivable, and income."""
+
+            product = self.product_id
+            company = self.env.company
+
+            asset_cost = product.lst_price
+            receivable_amount = self.total_amount
+            difference = receivable_amount - asset_cost
+
+            # ---- Correct Accounts ----
+
+            # Asset valuation account (must exist)
+            asset_account = (
+                product.categ_id.property_stock_valuation_account_id
+            )
+
+            # Partner (Microfinance / Donee) receivable account
+            receivable_account = self.donee_id.property_account_receivable_id
+
+            # Income account from product category
+            income_account = product.categ_id.property_account_income_categ_id
+
+            if not asset_account:
+                raise ValidationError("Stock valuation account is not set on product category.")
+
+            if not receivable_account:
+                raise ValidationError("Receivable account is not set on donee/partner.")
+
+            if not income_account:
+                raise ValidationError("Income account is not set on product category.")
+
+            # ---- Journal ----
+            journal = self.env['account.journal'].search(
+                [('type', '=', 'sale'), ('company_id', '=', company.id)],
+                limit=1
+            )
+
+            if not journal:
+                raise ValidationError("Sales journal not found.")
+
+            # ---- Journal Entry ----
+            move_vals = {
+                'ref': self.name,
+                'date': fields.Date.context_today(self),
+                'journal_id': journal.id,
+                'line_ids': [
+                    # Credit asset cost
+                    (0, 0, {
+                        'name': f'Asset Cost for {product.display_name}',
+                        'account_id': asset_account.id,
+                        'credit': asset_cost,
+                        'debit': 0.0,
+                    }),
+
+                    # Debit receivable (application amount)
+                    (0, 0, {
+                        'name': f'Receivable from Microfinance for {product.display_name}',
+                        'account_id': receivable_account.id,
+                        'partner_id': self.donee_id.id,
+                        'debit': receivable_amount,
+                        'credit': 0.0,
+                    }),
+
+                    # Difference → Income / Loss
+                    (0, 0, {
+                        'name': f'Microfinance Margin for {product.display_name}',
+                        'account_id': income_account.id,
+                        'credit': difference if difference > 0 else 0.0,
+                        'debit': abs(difference) if difference < 0 else 0.0,
+                    }),
+                ]
+            }
+
+            move = self.env['account.move'].create(move_vals)
+            move.action_post()
+    
     def action_move_to_hod(self):
         self.state = 'hod_approve'
 
@@ -384,10 +483,46 @@ class Microfinance(models.Model):
         return self.env.ref('bn_microfinance.microfinance_approval_certificate_report_action').report_action(self)
 
     def action_move_to_treasury(self):
-        """Move to treasury state for cash asset type"""
+        """Move to treasury state for cash asset type and create a bill for the donee."""
         if self.asset_type != 'cash':
             raise ValidationError("This action is only for Cash asset type.")
+        if not self.delivery_date:
+            raise ValidationError("Please select a Delivery Date.")
+        # Create a vendor bill (account.move) for the donee
+        expense_account = self.product_id.property_account_expense_id if self.product_id.property_account_expense_id else self.product_id.categ_id.property_account_expense_categ_id
+
+        if not expense_account:
+            raise ValidationError("Microfinance Expense account not found.")
+        move_vals = {
+            'move_type': 'in_invoice',  # Vendor Bill
+            'partner_id': self.donee_id.id,
+            'invoice_date': self.delivery_date,
+            'ref': self.name,
+            'invoice_line_ids': [
+                (0, 0, {
+                    'name': f'Cash Disbursement for {self.name}',
+                    'product_id': self.product_id.id,
+                    'quantity': 1,
+                    'price_unit': self.total_amount,
+                    'account_id': expense_account.id,
+                })
+            ]
+        }
+        bill = self.env['account.move'].create(move_vals)
+        # Optionally, you can post the bill automatically:
+        # bill.action_post()
+
         self.state = 'treasury'
+        self.bill_ids = [(4, bill.id)]
+
+        # return {
+        #     'type': 'ir.actions.act_window',
+        #     'name': 'Vendor Bill',
+        #     'res_model': 'account.move',
+        #     'view_mode': 'form',
+        #     'res_id': bill.id,
+        #     'target': 'current',
+        # }
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
@@ -454,15 +589,15 @@ class Microfinance(models.Model):
         
         return picking
 
-    def _complete_after_picking(self):
+    def _complete_application(self):
         """Called when the picking is validated to complete the microfinance record"""
         # Compute installments
         if not self.in_recovery:
             self.compute_installment()
+            self.state='done'
         else:
-            self.compute_recovery_installment()
-        
-        self.state = 'done'
+            # self.compute_recovery_installment()
+            self.state = 'recover'
 
     def action_view_picking(self):
         """Open the picking form view"""
@@ -506,90 +641,9 @@ class Microfinance(models.Model):
         """Print the installment plan report"""
         return self.env.ref('bn_microfinance.microfinance_installment_plan_report_action').report_action(self)
 
-    def action_move_to_done(self):
-        """Manual done action - only for non-movable asset types (cash, etc.)
-        For movable assets, done is triggered automatically when picking is validated.
-        """
-        if self.asset_type == 'movable_asset':
-            raise ValidationError('For movable assets, please validate the delivery picking to complete the record.')
-        
-        # For cash asset type coming from treasury, delivery date is optional
-        if self.asset_type != 'cash' and not self.delivery_date:
-            raise ValidationError('Please select a Delivery Date.')
-        
-        # Compute installments
-        if not self.in_recovery:
-            self.compute_installment()
-        else:
-            self.compute_recovery_installment()
-        
-        self.state = 'done'
-
     def action_receipt(self):
         return self.env.ref('bn_microfinance.microfinance_receipt_report_action').report_action(self.sd_slip_id)
 
-    def action_temporary_recovery(self):
-        if self.asset_type == 'movable_asset':
-            product_line = None
-
-            if self.microfinance_scheme_line_id:
-                microfinance_scheme_line = self.env['microfinance.scheme.line'].browse(self.microfinance_scheme_line_id.id)
-                product_line = self.env['loan.product.line'].search([
-                    ('microfinance_scheme_line_id', '=', microfinance_scheme_line.id),
-                    ('product_id', '=', self.product_id.id)
-                ], limit=1)
-
-            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
-            form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
-            
-            action['views'] = [
-                [form_view_id, 'form']
-            ]
-
-            if product_line.product_id:
-                action['context'] = {
-                    'default_donee_id': self.donee_id.id,
-                    'default_product_domain': self.product_domain.ids,
-                    'default_source_document': self.name,
-                    'default_microfinance_id': self.id
-                }
-
-            return action
-        else:
-            self.state = 'recover'
-
-    def action_fully_recovered(self):
-        self.state = 'fully_recover'
-
-    def action_write_off_request(self):
-        if not self.recovery_remarks:
-            raise ValidationError('Please provide recovery remarks.')
-        
-        self.member_right_of_remarks = ''
-        self.cfo_right_of_remarks = ''
-
-        self.state = 'right_of_approval_1'
-
-    def action_right_of_approve(self):
-        if self.state == 'right_granted':
-            self.state = 'right_of_approval_1'
-        elif self.state == 'right_of_approval_1':
-            self.state = 'right_of_approval_2'
-        else:
-            self.state = 'right_granted'
-
-    def action_right_of_reject(self):
-        if self.state == 'right_of_approval_1':
-            if not self.member_right_of_remarks:
-                raise ValidationError('Please provide member remarks.')
-            
-        if self.state == 'right_of_approval_2':
-            if not self.cfo_right_of_remarks:
-                raise ValidationError('Please provide CFO remarks.')
-            
-        self.recovery_remarks = ''
-
-        self.state= 'fully_recovered'
 
     def compute_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
@@ -695,3 +749,69 @@ class Microfinance(models.Model):
             vals['name'] += self.env['ir.sequence'].next_by_code(sequence_code) or _('New')
         
         return super(Microfinance, self).create(vals)
+    
+    # --- Recovery Process: New Methods and State Flow ---
+    def action_temp_recovered(self):
+        if self.asset_type == 'movable_asset':
+            if self.microfinance_scheme_line_id:
+                microfinance_scheme_line = self.env['microfinance.scheme.line'].browse(self.microfinance_scheme_line_id.id)
+                product_line = self.env['loan.product.line'].search([
+                    ('microfinance_scheme_line_id', '=', microfinance_scheme_line.id),
+                    ('product_id', '=', self.product_id.id)
+                ], limit=1)
+
+            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
+            form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
+            action['views'] = [
+                [form_view_id, 'form']
+            ]
+            if product_line and product_line.product_id:
+                action['context'] = {
+                    'default_donee_id': self.donee_id.id,
+                    'default_product_domain': self.product_domain.ids,
+                    'default_source_document': self.name,
+                    'default_microfinance_id': self.id
+                }
+            return action
+        else:
+            self.state = 'recover'
+
+    def action_fully_recovered(self):
+        self.state = 'fully_recover'
+
+    def action_move_to_done(self):
+
+        if self.asset_type != 'cash' and not self.delivery_date:
+            raise ValidationError('Please select a Delivery Date.')
+        if not self.in_recovery:
+            self.compute_installment()
+        else:
+            self.compute_recovery_installment()
+        self.state = 'done'
+
+    def request_write_off(self):
+        if not self.remarks:
+            raise ValidationError('Please provide remarks')
+        self.member_right_of_remarks = False
+        self.cfo_right_of_remarks = False
+        self.state = 'right_of_approval_1'
+
+    def action_right_of_granted(self):
+        if self.state == 'right_of_approval_1':
+            self.state = 'right_of_approval_2'
+        elif self.state == 'right_of_approval_2':
+            self.state = 'right_granted'
+
+    def action_right_of_rejected(self):
+        if self.state == 'right_of_approval_1':
+            if not self.member_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            self.remarks = False
+            self.state = 'fully_recover'
+        if self.state == 'right_of_approval_2':
+            if not self.member_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            if not self.cfo_right_of_remarks:
+                raise ValidationError('Please provide remarks')
+            self.remarks = False
+            self.state = 'fully_recover'

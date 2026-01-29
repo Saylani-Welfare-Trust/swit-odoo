@@ -1,5 +1,5 @@
 from odoo.exceptions import AccessError, ValidationError, UserError
-from odoo.tools import float_is_zero
+from odoo.tools import float_compare, float_is_zero
 from odoo import models, fields, _
 
 import logging
@@ -53,47 +53,37 @@ class PosSession(models.Model):
         return breakdown_dict
 
     def _compute_payment_breakdown(self):
-        """Compute restricted/unrestricted payment breakdown using pos.session.slip records."""
         self.ensure_one()
         breakdown_dict = {}
 
-        # Fetch slips for this session
         slips = self.env['pos.session.slip'].search([
             ('session_id', '=', self.id)
         ])
 
         for slip in slips:
-            method_id = slip.pos_payment_method_id.id
+            pm_id = slip.pos_payment_method_id.id
+            breakdown_dict.setdefault(pm_id, {
+                'restricted': [],
+                'unrestricted': [],
+                'neutral': [],
+            })
 
-            # Initialize if not already present
-            if method_id not in breakdown_dict:
-                breakdown_dict[method_id] = {
-                    'restricted': [],
-                    'unrestricted': [],
-                    'neutral': [],
+            restricted = self._get_restricted_category()
+            unrestricted = self._get_unrestricted_category()
 
-                }
+            entry = {
+                'amount': slip.amount or 0.0,
+                'ref': slip.slip_no or '',
+                'record_id': slip.id,
+                'bank_id': slip.bank_id.id if slip.bank_id else False,
+            }
 
-            # Determine restricted/unrestricted account names
-            restricted = self._get_unrestricted_category()
-            unrestricted = self._get_restricted_category()
-
-            # Decide based on slip.type
             if slip.type == restricted:
-                breakdown_dict[method_id]['restricted'].append({
-                    'amount': slip.amount,
-                    'ref': slip.slip_no,
-                })
+                breakdown_dict[pm_id]['restricted'].append(entry)
             elif slip.type == unrestricted:
-                breakdown_dict[method_id]['unrestricted'].append({
-                    'amount': slip.amount,
-                    'ref': slip.slip_no,
-                })
-            else: 
-                breakdown_dict[method_id]['neutral'].append({
-                    'amount': slip.amount,
-                    'ref': slip.slip_no,
-                })
+                breakdown_dict[pm_id]['unrestricted'].append(entry)
+            else:
+                breakdown_dict[pm_id]['neutral'].append(entry)
 
         return breakdown_dict
 
@@ -157,14 +147,14 @@ class PosSession(models.Model):
                 'moves': cash_in_out_list,
                 'id': default_cash_payment_method_id.id,
                 'breakdown': breakdown_dict.get(default_cash_payment_method_id.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
-                'skip_slip_input': default_cash_payment_method_id.skip_slip_input,
+                'skip_amount_input': default_cash_payment_method_id.skip_amount_input,
             }
             
 
         other_payment_methods = []
         for pm in other_payment_method_ids:
             payments_pm = orders.payment_ids.filtered(lambda p: p.payment_method_id == pm)
-            if pm.skip_slip_input:
+            if pm.skip_amount_input:
                 # Provide breakdown, but no slip input and no difference handling
                 other_payment_methods.append({
                     'name': pm.name,
@@ -173,7 +163,7 @@ class PosSession(models.Model):
                     'id': pm.id,
                     'type': pm.type,
                     'breakdown': breakdown_dict.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
-                    'skip_slip_input': True,
+                    'skip_amount_input': True,
                 })
             else:
                 other_payment_methods.append({
@@ -183,8 +173,14 @@ class PosSession(models.Model):
                     'id': pm.id,
                     'type': pm.type,
                     'breakdown': breakdown_dict.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
-                    'skip_slip_input': False,
+                    'skip_amount_input': False,
                 })
+
+        bank_list = [
+            {'id': bank.id, 'name': bank.name}
+            for bank in self.env['account.journal'].search([])
+            if bank.show_in_pos
+        ]
 
         return {
             'orders_details': {
@@ -195,7 +191,8 @@ class PosSession(models.Model):
             'default_cash_details': default_cash_details,
             'other_payment_methods': other_payment_methods,
             'is_manager': self.user_has_groups("point_of_sale.group_pos_manager"),
-            'amount_authorized_diff': self.config_id.amount_authorized_diff if self.config_id.set_maximum_difference else None
+            'amount_authorized_diff': self.config_id.amount_authorized_diff if self.config_id.set_maximum_difference else None,
+            'bank_list': bank_list
         }
 
     def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
@@ -323,89 +320,94 @@ class PosSession(models.Model):
         return None
        
     def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
-        _logger.warning("Lines Receive from Component _create_account_move_with_split_receivables: %s", str(lines))
-        
-        original_data = super(PosSession, self)._create_account_move(
-            balancing_account, amount_to_balance, bank_payment_method_diffs
-        )
-
-        # raise ValidationError(str(lines))
-
+        """
+        Create account move for POS session with split receivable lines
+        """
+        original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
         account_move = self.move_id
-
-        # raise ValidationError(str(account_move.read()))
-
         payment_breakdown = {}
 
-        # 🔥 Decide source of breakdown
+        # Use UI lines if passed
         if lines:
-            payment_breakdown = {}
             for pm_id, vals in lines.items():
                 pm = self.env['pos.payment.method'].browse(int(pm_id))
-                if pm:
-                    if pm.skip_slip_input:
-                        # Auto-allocate: use the backend breakdown to create a single entry for each type
-                        backend_breakdown = self._compute_closing_details().get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0})
-                        payment_breakdown[int(pm_id)] = {
-                            'restricted': [{'amount': backend_breakdown.get('restricted', 0.0), 'ref': ''}] if backend_breakdown.get('restricted', 0.0) else [],
-                            'unrestricted': [{'amount': backend_breakdown.get('unrestricted', 0.0), 'ref': ''}] if backend_breakdown.get('unrestricted', 0.0) else [],
-                            'neutral': [{'amount': backend_breakdown.get('neutral', 0.0), 'ref': ''}] if backend_breakdown.get('neutral', 0.0) else [],
-                        }
-                    else:
-                        payment_breakdown[int(pm_id)] = vals
+                payment_breakdown[int(pm_id)] = {
+                    'restricted': vals.get('restricted', []),
+                    'unrestricted': vals.get('unrestricted', []),
+                    'neutral': vals.get('neutral', []),
+                }
+
+                # AUTO MODE: skip_amount_input
+                if pm.skip_amount_input:
+                    backend = self._compute_closing_details().get(pm.id, {})
+                    slips = self.env['pos.session.slip'].search([
+                        ('session_id', '=', self.id),
+                        ('pos_payment_method_id', '=', pm.id)
+                    ])
+
+                    refs = slips.mapped('slip_no')
+                    ref_str = ",".join(filter(None, refs))
+
+                    bank_id = slips[:1].bank_id.id if slips and slips[:1].bank_id else False
+
+                    payment_breakdown[int(pm_id)] = {
+                        'restricted': [{
+                            'amount': backend.get('restricted', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('restricted') else [],
+
+                        'unrestricted': [{
+                            'amount': backend.get('unrestricted', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('unrestricted') else [],
+
+                        'neutral': [{
+                            'amount': backend.get('neutral', 0.0),
+                            'ref': ref_str,
+                            'bank_id': bank_id,
+                        }] if backend.get('neutral') else [],
+                    }
         else:
-            computed = self._compute_payment_breakdown()
-            payment_breakdown = {}
-            for pm_id, vals in computed.items():
-                pm = self.env['pos.payment.method'].browse(int(pm_id))
-                if pm:
-                    if pm.skip_slip_input:
-                        backend_breakdown = self._compute_closing_details().get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0})
-                        payment_breakdown[int(pm_id)] = {
-                            'restricted': [{'amount': backend_breakdown.get('restricted', 0.0), 'ref': ''}] if backend_breakdown.get('restricted', 0.0) else [],
-                            'unrestricted': [{'amount': backend_breakdown.get('unrestricted', 0.0), 'ref': ''}] if backend_breakdown.get('unrestricted', 0.0) else [],
-                            'neutral': [{'amount': backend_breakdown.get('neutral', 0.0), 'ref': ''}] if backend_breakdown.get('neutral', 0.0) else [],
-                        }
-                    else:
-                        payment_breakdown[int(pm_id)] = {
-                            'restricted': vals.get('restricted', []) or [],
-                            'unrestricted': vals.get('unrestricted', []) or [],
-                            'neutral': vals.get('neutral', []) or []
-                        }
+            payment_breakdown = self._compute_payment_breakdown()
 
-        # raise ValidationError(str(payment_breakdown))
-        # raise ValidationError(account_move.line_ids.mapped("account_id.name"))
-        receivable_lines = account_move.line_ids.filtered(
-            lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
-            # lambda l: l.account_id.account_type == 'asset_current' and l.debit > 0
-        )
-
-        # raise ValidationError(
-        #     f"""
-        # Receivable Lines: {receivable_lines}
-        # Breakdown: {payment_breakdown}
-        # Payment Methods IDs: {self.payment_method_ids.ids}
-        # Payment Methods Names: {self.payment_method_ids.mapped('name')}
-        # """
-        # )
-        payment_method_amounts = self._group_receivable_lines_by_payment_method(receivable_lines)
+        # Remove combined receivable lines to replace with split
+        receivable_lines = account_move.line_ids.filtered(lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0)
         receivable_lines.unlink()
 
-        split_data = self._create_split_receivable_lines(account_move, payment_method_amounts, payment_breakdown)
+        # Create split receivable lines
+        self._create_split_receivable_lines(account_move, payment_breakdown)
+
+        # Create difference lines if any
         self._create_split_difference_lines(account_move, bank_payment_method_diffs, payment_breakdown)
 
-        for key in list(original_data.keys()):
-            if 'combine_receivables' in key or 'payment_method_to_receivable_lines' in key:
-                if hasattr(original_data[key], 'ids'):
-                    original_data[key] = self.env['account.move.line']
-                else:
-                    original_data[key] = {}
-
-        original_data['_split_data'] = split_data
-
-        # raise ValidationError(str(original_data))
-        
         return original_data
+
+
+    def _create_split_receivable_lines(self, account_move, payment_breakdown):
+        """Create split receivable lines per payment method."""
+        for pm_id, breakdown in payment_breakdown.items():
+            pm = self.env['pos.payment.method'].browse(pm_id)
+            for key, account_getter in [
+                ('restricted', self._get_restricted_receivable_account),
+                ('unrestricted', self._get_unrestricted_receivable_account),
+                ('neutral', self._get_neutral_receivable_account),
+            ]:
+                for entry in breakdown.get(key, []):
+                    amount = entry.get('amount', 0.0)
+                    if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
+                        continue
+                    ref = entry.get('ref', '')
+                    bank_id = entry.get('bank_id', '')
+                    account = account_getter(pm)
+                    self._create_receivable_line(
+                        account_move,
+                        account,
+                        amount,
+                        f"{self.name} - {self._get_restricted_category() if key == 'restricted' else self._get_unrestricted_category() if key == 'unrestricted' else 'Non Donation'} {pm.name} - {ref}".strip(),
+                        bank_id=bank_id
+                    )
 
     def _group_receivable_lines_by_payment_method(self, receivable_lines):
         """Group receivable lines by their corresponding payment method."""
@@ -426,91 +428,8 @@ class PosSession(models.Model):
                 payment_method_amounts[payment_method.id]['lines'].append(line)
         
         return payment_method_amounts
-           
-    def _create_split_receivable_lines(self, account_move, payment_method_amounts, payment_breakdown):
-        """Create restricted and unrestricted receivable lines with per-entry slip references."""
-        split_data = {
-            'restricted_lines': [],
-            'unrestricted_lines': [],
-            'neutral_lines': [],
-            'move_id': account_move.id
-        }
 
-        # Debug: raise before account selection
-        # raise ValidationError("Product split debug:\n" + str(payment_method_amounts) + "\n----\n" + str(payment_breakdown))
-
-        for pm_id, pm_data in payment_method_amounts.items():
-            payment_method = pm_data['method']
-            breakdown = payment_breakdown.get(pm_id, {})
-
-            # Restricted entries
-            for entry in breakdown.get("restricted", []):
-                amount = entry.get("amount", 0.0)
-                if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                    continue
-                ref = entry.get("ref") or ""
-                restricted_account = self._get_restricted_receivable_account(payment_method)
-                line = self._create_receivable_line(
-                    account_move,
-                    restricted_account,
-                    amount,
-                    f"{self.name} - Restricted {payment_method.name} - {ref}".strip()
-                )
-                split_data['restricted_lines'].append({
-                    'move_line_id': line.id,
-                    'amount': amount,
-                    'payment_method_id': payment_method.id,
-                    'account_id': restricted_account.id,
-                    'payment_method_name': payment_method.name,
-                    'ref': ref,
-                })
-
-            # Unrestricted entries
-            for entry in breakdown.get("unrestricted", []):
-                amount = entry.get("amount", 0.0)
-                if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                    continue
-                ref = entry.get("ref") or ""
-                unrestricted_account = self._get_unrestricted_receivable_account(payment_method)
-                line = self._create_receivable_line(
-                    account_move,
-                    unrestricted_account,
-                    amount,
-                    f"{self.name} - Unrestricted {payment_method.name} - {ref}".strip()
-                )
-                split_data['unrestricted_lines'].append({
-                    'move_line_id': line.id,
-                    'amount': amount,
-                    'payment_method_id': payment_method.id,
-                    'account_id': unrestricted_account.id,
-                    'payment_method_name': payment_method.name,
-                    'ref': ref,
-                })
-            # Neutral entries
-            for entry in breakdown.get("neutral", []):
-                amount = entry.get("amount", 0.0)
-                if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                    continue
-                ref = entry.get("ref") or ""
-                neutral_account = self._get_neutral_receivable_account(payment_method)
-                line = self._create_receivable_line(
-                    account_move,
-                    neutral_account,
-                    amount,
-                    f"{self.name} - Neutral {payment_method.name} - {ref}".strip()
-                )
-                split_data['neutral_lines'].append({
-                    'move_line_id': line.id,
-                    'amount': amount,
-                    'payment_method_id': payment_method.id,
-                    'account_id': neutral_account.id,
-                    'payment_method_name': payment_method.name,
-                    'ref': ref,
-                })
-        return split_data
-
-    def _create_receivable_line(self, account_move, account, amount, name):
-        """Helper to create a receivable journal item."""
+    def _create_receivable_line(self, account_move, account, amount, name, bank_id=None):
         return self.env['account.move.line'].create({
             'move_id': account_move.id,
             'name': name,
@@ -518,7 +437,112 @@ class PosSession(models.Model):
             'debit': amount,
             'credit': 0.0,
             'partner_id': False,
+            'bank_journal_id': bank_id,
         })
+    
+    def _create_split_account_payment(self, payment, amounts):
+        payment_method = payment.payment_method_id
+        if not payment_method.journal_id:
+            return self.env['account.move.line']
+
+        MoveLine = self.env['account.move.line']
+
+        # 🔥 Find the receivable line created in account.move
+        receivable_line = MoveLine.search([
+            ('move_id', '=', self.move_id.id),
+            ('partner_id', '=', payment.partner_id.id),
+            ('account_id.account_type', '=', 'receivable'),
+            ('balance', '=', amounts['amount_converted']),
+        ], limit=1)
+
+        if not receivable_line:
+            return MoveLine
+
+        destination_account = receivable_line.account_id
+
+        outstanding_account = (
+            payment_method.outstanding_account_id
+            or self.company_id.account_journal_payment_debit_account_id
+        )
+
+        # Refund / reversal handling
+        if float_compare(
+            amounts['amount'], 0, precision_rounding=self.currency_id.rounding
+        ) < 0:
+            outstanding_account, destination_account = destination_account, outstanding_account
+
+        account_payment = self.env['account.payment'].create({
+            'amount': abs(amounts['amount']),
+            'partner_id': payment.partner_id.id,
+            'journal_id': payment_method.journal_id.id,
+            'force_outstanding_account_id': outstanding_account.id,
+            'destination_account_id': destination_account.id,
+            'ref': _('%s POS payment of %s (%s)',
+                    payment_method.name,
+                    payment.partner_id.display_name,
+                    self.name),
+            'pos_payment_method_id': payment_method.id,
+            'pos_session_id': self.id,
+        })
+
+        account_payment.action_post()
+
+        # 🔥 Return line using EXACT SAME account
+        return account_payment.move_id.line_ids.filtered(
+            lambda l: l.account_id == destination_account
+        )
+    
+    def _create_combine_account_payment(self, payment_method, amounts, diff_amount):
+        MoveLine = self.env['account.move.line']
+
+        outstanding_account = (
+            payment_method.outstanding_account_id
+            or self.company_id.account_journal_payment_debit_account_id
+        )
+
+        # 🔥 Get receivable account from the already-created session move line
+        receivable_line = MoveLine.search([
+            ('move_id', '=', self.move_id.id),
+            ('account_id.account_type', '=', 'receivable'),
+            ('payment_id', '=', payment_method.id),
+            ('balance', '=', amounts['amount_converted']),
+        ], limit=1)
+
+        if not receivable_line:
+            return MoveLine
+
+        destination_account = receivable_line.account_id
+
+        # Refund / reversal
+        if float_compare(
+            amounts['amount'], 0,
+            precision_rounding=self.currency_id.rounding
+        ) < 0:
+            outstanding_account, destination_account = destination_account, outstanding_account
+
+        account_payment = self.env['account.payment'].create({
+            'amount': abs(amounts['amount']),
+            'journal_id': payment_method.journal_id.id,
+            'force_outstanding_account_id': outstanding_account.id,
+            'destination_account_id': destination_account.id,
+            'ref': _('Combine %s POS payments from %s', payment_method.name, self.name),
+            'pos_payment_method_id': payment_method.id,
+            'pos_session_id': self.id,
+            'company_id': self.company_id.id,
+        })
+
+        # Apply diff (rounding / bank diff)
+        if self.currency_id.compare_amounts(diff_amount, 0) != 0:
+            self._apply_diff_on_account_payment_move(
+                account_payment, payment_method, diff_amount
+            )
+
+        account_payment.action_post()
+
+        # 🔥 Return receivable line with SAME account
+        return account_payment.move_id.line_ids.filtered(
+            lambda l: l.account_id == destination_account
+        )
 
     def _create_split_difference_lines(self, account_move, bank_payment_method_diffs, payment_breakdown):
         """Create split difference lines for bank payment methods (per entry, like receivable splits)."""
@@ -543,7 +567,7 @@ class PosSession(models.Model):
                     account_move,
                     self._get_restricted_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Restricted {payment_method.name}"
+                    f"Difference - {self._get_restricted_category()} {payment_method.name}"
                 )
 
             # Unrestricted difference entries
@@ -555,7 +579,7 @@ class PosSession(models.Model):
                     account_move,
                     self._get_unrestricted_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Unrestricted {payment_method.name}"
+                    f"Difference - {self._get_unrestricted_category()} {payment_method.name}"
                 )
             # Neutral difference
             for entry in breakdown.get("neutral", []):
@@ -566,9 +590,8 @@ class PosSession(models.Model):
                     account_move,
                     self._get_neutral_receivable_account(payment_method),
                     abs(amount),
-                    f"Difference - Neutral {payment_method.name}"
+                    f"Difference - Non Donation {payment_method.name}"
                 )
-
 
     def _reconcile_account_move_lines(self, data):
         """Handle reconciliation for both original and split accounting."""

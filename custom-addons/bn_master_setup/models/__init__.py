@@ -12,3 +12,6 @@ from . import disbursement_category
 from . import disbursement_application_type
 from . import direct_deposit_account_setup
 from . import donation_in_kind_config
+from . import city
+from . import bank
+from . import medical_equipment_category

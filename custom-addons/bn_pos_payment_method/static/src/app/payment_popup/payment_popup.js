@@ -28,7 +28,11 @@ export class PaymentPopup extends AbstractAwaitablePopup {
             bank_name: this.props.bank_name || "",
             number: this.props.number || "",
             date: this.props.date || "",
+            banks: [],
+            selected_bank_id: null,
         });
+
+        this.loadBanks();
 
         // Today's date
         const today = new Date();
@@ -45,8 +49,32 @@ export class PaymentPopup extends AbstractAwaitablePopup {
         this.maxDate = endOfYear.toISOString().split("T")[0];
     }
 
-    updateBankName(event) {
-        this.state.bank_name = event.target.value;
+    async loadBanks() {
+        try {
+            const banks = await this.orm.call(
+                "bank",
+                "get_banks",
+                []
+            );
+            this.state.banks = banks;
+        } catch (error) {
+            this.notification.add(
+                _t("Failed to load banks"),
+                { type: "danger" }
+            );
+        }
+    }
+
+    // updateBankName(event) {
+    //     this.state.bank_name = event.target.value;
+    // }
+
+    updateBank(event) {
+        const bankId = parseInt(event.target.value);
+        const bank = this.state.banks.find(b => b.id === bankId);
+
+        this.state.selected_bank_id = bankId;
+        this.state.bank_name = bank ? bank.name : "";
     }
     
     updateNumber(event) {

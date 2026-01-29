@@ -23,6 +23,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.title = this.props.title || "Provisional Order Details";
         
         this.donor_id = this.props.donor_id;
+        this.bank_id = this.props.bank_id;
         this.donor_name = this.props.donor_name;
         this.orderLines = this.props.orderLines;
         this.action_type = this.props.action_type;
@@ -31,12 +32,14 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         
         this.state = useState({
             microfinance_request_no: '',
+            medical_equipment_request_no: '',
             amount: parseFloat(this.props.amount) || 0,
             service_charges: 0,
             total: parseFloat(this.props.amount) || 0,
             address: this.props.address || "",   
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
+            selected_bank_id: false,
         });
     }
 
@@ -50,6 +53,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.microfinance_request_no = event.target.value;
     }
 
+    updateMedicalEquipmentRequestNo(event) {
+        this.state.medical_equipment_request_no = event.target.value;
+    }
+
     updateAddress(event) {
         this.state.address = event.target.value;
     }
@@ -60,6 +67,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
     updateTransferToDHS(event) {
         this.state.transfer_to_dhs = event.target.checked;
+    }
+
+    onBankChange(ev) {
+        const bankId = parseInt(ev.target.value) || null;
+        this.state.selected_bank_id = bankId;
+
+        console.log("Selected Bank ID:", bankId);
     }
 
     prepareOrderLines(orderLines) {
@@ -114,6 +128,135 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
             })
+        }
+
+        // Medical Equipment
+        if (this.action_type == 'me') {
+            if (!this.state.medical_equipment_request_no) {
+                this.notification.add(
+                    "Please enter a Medical Equipment Request No.",
+                    { type: 'warning' }
+                );
+
+                return;
+            }
+
+            const payload = {
+                medical_equipment_request_no: this.state.medical_equipment_request_no,
+                amount: this.state.amount,
+                security_desposit: true
+            }
+
+            if (!selectedOrder.extra_data) {
+                selectedOrder.extra_data = {};
+            }
+
+            selectedOrder.extra_data.medical_equipment = payload
+
+            let record = null
+
+            const data = await this.orm.call('medical.security.deposit', "get_medical_equipment_security_deposit", [payload]);
+            
+            if (data.status === 'error') {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: data.body,
+                });
+                return;
+            }
+            
+            if (data.status === 'success') {
+                record = data;
+                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
+                payload.medical_equipment_id = data.id;  // Store microfinance_id for creating record if needed
+                payload.amount = data.amount;  // Store amount from microfinance request
+
+                if (data.state === 'paid') {
+                    this.notification.add(_t("Security deposit already paid"), {
+                        type: "info",
+                    });
+                    
+                    this.cancel();
+                    return;
+                }
+
+                if (data.deposit_exists) {
+                    this.notification.add(_t("Existing deposit found"), {
+                        type: "info",
+                    });
+
+                    this.cancel();
+                    return
+                } else {
+                    this.notification.add(_t("Security deposit will be created upon payment"), {
+                        type: "info",
+                    });
+                }
+                
+                // Set customer from donee_id
+                if (data.donee_id) {
+                    const partnerId = data.donee_id;
+                    let partner = await this.getOrLoadPartner(partnerId);
+                    if (partner) {
+                        this.assignPartnerToOrder(partner, selectedOrder);
+                    }
+                }
+            }
+            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
+            //     if (data.status === 'error') {
+            //         this.popup.add(ErrorPopup, {
+            //             title: _t("Error"),
+            //             body: data.body,
+            //         });
+            //     }
+            //     else if (data.status === 'success') {
+            //         record = data
+
+            //         payload.security_deposit_id = data.deposit_id
+
+            //         this.notification.add(_t("Operation Successful"), {
+            //             type: "info",
+            //         });
+            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
+            //         //     data.id,
+            //         // ]);
+            //     }
+            // });
+
+            const securityProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+        
+            if (securityProduct.length) {
+                // Get the product from POS DB
+                const product = this.pos.db.get_product_by_id(securityProduct[0].id);
+                
+                if (!product) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
+                    });
+                    
+                    return
+                }
+                
+                // Add product to order
+                selectedOrder.add_product(product, {
+                    quantity: 1,
+                    price_extra: record.amount,
+                });
+            }
+               
+            this.pos.receive_voucher = true
+
+            this.cancel()
         }
 
         // Microfinance
@@ -185,31 +328,11 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     }
                 }
             }
-            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
-            //     if (data.status === 'error') {
-            //         this.popup.add(ErrorPopup, {
-            //             title: _t("Error"),
-            //             body: data.body,
-            //         });
-            //     }
-            //     else if (data.status === 'success') {
-            //         record = data
-
-            //         payload.security_deposit_id = data.deposit_id
-
-            //         this.notification.add(_t("Operation Successful"), {
-            //             type: "info",
-            //         });
-            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-            //         //     data.id,
-            //         // ]);
-            //     }
-            // });
 
             const securityProduct = await this.orm.searchRead(
                 'product.product',
                 [
-                    ['name', '=', 'Microfinance Security Deposit'],
+                    ['name', '=', this.pos.company.microfinance_security_depsoit_product],
                     ['detailed_type', '=', 'service'],
                     ['available_in_pos', '=', true]
                 ],
@@ -224,7 +347,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 if (!product) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t("Microfinance Security Deposit product not loaded in POS session."),
+                        body: _t(`${this.pos.company.microfinance_security_depsoit_product} product not loaded in POS session.`),
                     });
                     
                     return
@@ -247,11 +370,14 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
+                'bank_id': this.state.selected_bank_id,
                 'transaction_ref': this.state.transaction_ref,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
+                'address': this.state.address,
+                'service_charges': this.state.service_charges,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {

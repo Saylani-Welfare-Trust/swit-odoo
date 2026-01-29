@@ -10,7 +10,7 @@
     ],
     'data': [
         'views/pos_order.xml',
-        # 'views/res_company.xml',
+        'views/res_company.xml',
     ],
     'auto_install': False,
     'application': False,

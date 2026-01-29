@@ -1,8 +1,12 @@
-from odoo import models, fields
+from odoo import models, fields,api
+# from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
 
 
 state_selection = [
     ('draft', 'Draft'),
+    ('delivered', 'Delivery Created'),
     ('disbursed', 'Disbursed'),
 ]
 
@@ -13,11 +17,14 @@ collection_point_selection = [
 
 
 class WelfareRecurringLine(models.Model):
+
     _name = 'welfare.recurring.line'
     _description = "Welfare Recurring Line"
 
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
+    name = fields.Char('Name', compute='_compute_name', store=True)
+        
     donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
@@ -30,5 +37,88 @@ class WelfareRecurringLine(models.Model):
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
+    quantity = fields.Float('Quantity', default=1.0)
+    state = fields.Selection(selection=state_selection, string="State", default='draft')
+    
+    show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
+    
+    @api.model
+    def _auto_mark_as_delivered_today(self):
+        today = fields.Date.today()
+        lines = self.search([('collection_date', '=', today), 
+                             ('state', '=', 'draft'),
+                             ( 'disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id)])
+        # _logger.info(f"rec_line: {lines.read()}")
+        for line in lines:
+            if line.welfare_id.order_type == 'recurring':
+                try:
+                    line.action_delivered()
+                except Exception as e:
+                    # Optionally log error
+                    pass
 
-    state = fields.Selection(selection=state_selection, string="Order Type")
+    def action_disbursed(self):
+        # If you have delivery logic, add here. For now, just mark as delivered.
+        self.state = 'disbursed'
+        if self.welfare_id:
+            self.welfare_id._auto_disburse_if_all_lines_delivered()
+    
+    @api.depends('welfare_id')
+    def _compute_name(self):
+            for rec in self:
+                rec.name = rec.welfare_id.name if rec.welfare_id else ''
+    
+    @api.depends('disbursement_category_id', 'state')
+    def _compute_show_deliver_button(self):
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        for rec in self:
+            rec.show_deliver_button = False
+            if rec.disbursement_category_id:
+                if in_kind_category and rec.disbursement_category_id.id == in_kind_category.id:
+                    # Only show if state is not delivered or disbursed
+                    if rec.state not in ['delivered', 'disbursed']:
+                        rec.show_deliver_button = True
+                elif cash_category and rec.disbursement_category_id.id == cash_category.id:
+                    rec.show_deliver_button = False
+
+    def action_delivered(self):
+            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
+            if self.disbursement_category_id == in_kind_category:        
+                StockPicking = self.env['stock.picking']
+                StockMove = self.env['stock.move']
+                StockMoveLine = self.env['stock.move.line']
+                # You may want to adjust picking_type_id, location_id, location_dest_id as per your setup
+                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
+                location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
+                picking_vals = {
+                    'partner_id': self.donee_id.id,
+                    'picking_type_id': self.env.ref('stock.picking_type_out').id,
+                    'location_id': location_src.id if location_src else False,
+                    'location_dest_id': location_dest.id if location_dest else False,
+                    'origin': self.name,
+                    'recurring_line_id': self.id,
+                }
+                picking = StockPicking.create(picking_vals)
+                move_vals = {
+                    'name': self.product_id.display_name,
+                    'product_id': self.product_id.id,
+                    'product_uom_qty': self.quantity,
+                    'product_uom': self.product_id.uom_id.id,
+                    'picking_id': picking.id,
+                    'location_id': location_src.id if location_src else False,
+                    'location_dest_id': location_dest.id if location_dest else False,
+                }
+                move = StockMove.create(move_vals)
+                move_line_vals = {
+                    'move_id': move.id,
+                    'product_id': self.product_id.id,
+                    'product_uom_id': self.product_id.uom_id.id,
+                    'quantity': self.quantity,
+                    'picking_id': picking.id,
+                    'location_id': location_src.id if location_src else False,
+                    'location_dest_id': location_dest.id if location_dest else False,
+                }
+                StockMoveLine.create(move_line_vals)
+                picking.action_assign()
+                self.state = 'delivered'

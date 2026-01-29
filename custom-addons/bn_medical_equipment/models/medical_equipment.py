@@ -8,10 +8,16 @@ cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 status_selection = [       
     ('draft', 'Draft'),
+    ('approved', 'Approved'),
+    ('sd_received', 'Security Received'),
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
+    ('refund', 'Refund'),
     ('payment_return','Payment Return'),
+    ('donate', 'Donate'),
+    ('waiting_for_inventory_approval', 'Waiting for Inventory Approval'),
+    ('recovered', 'Recovered'),
 ]
 
 
@@ -24,6 +30,8 @@ class MedicalEquipment(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
+    recovery_picking_id = fields.Many2one('stock.picking', string="Recovery Picking")
+    sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
 
     name = fields.Char('Name', default="New")
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
@@ -43,9 +51,21 @@ class MedicalEquipment(models.Model):
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
+    is_approval = fields.Boolean('Is Approval')
+
+    approval_count = fields.Integer('Approval Count')
 
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
 
     @api.depends('date_of_birth')
     def _compute_age(self):
@@ -89,13 +109,13 @@ class MedicalEquipment(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
-    @api.depends('medical_equipment_line_ids.amounts', 'medical_equipment_line_ids.quantity')
+    @api.depends('medical_equipment_line_ids.security_deposit', 'medical_equipment_line_ids.quantity')
     def _compute_total_amount(self):
         for record in self:
             total = 0.0
             for line in record.medical_equipment_line_ids:
-                # Use 'amount' instead of 'amounts'
-                total += line.amounts * line.quantity
+                # Use 'amount' instead of 'security_deposit'
+                total += line.security_deposit * line.quantity
             record.total_amount = total
 
     @api.depends('donee_id')
@@ -165,9 +185,7 @@ class MedicalEquipment(models.Model):
         # Ensure we're working with a single record
         self.ensure_one()
         
-      
         operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
-      
         
         # Prepare stock picking values
         picking_vals = {
@@ -202,6 +220,18 @@ class MedicalEquipment(models.Model):
         # Optional: Validate the picking automatically
         # stock_picking.button_validate()
         return True
+    
+    def action_approval(self):
+        self.is_approval = False
+
+        for line in self.medical_equipment_line_ids:
+            if line.medical_equipment_category_id.is_medical_approval:
+                self.is_approval = True
+
+        if not self.is_approval or self.approval_count == 1:
+            self.state = 'approved'
+
+        self.approval_count += 1
         
     def action_show_picking(self):
         return {
@@ -220,6 +250,29 @@ class MedicalEquipment(models.Model):
             'res_model': 'stock.picking',
             'view_mode': 'form',
             'res_id': self.return_picking_id.id,
+            'target': 'current',
+        }
+    
+    def action_show_recovery_picking(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Recovery',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': self.recovery_picking_id.id,
+            'target': 'current',
+        }
+    
+    def action_show_sd_slip(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Recovery',
+            'res_model': 'medical.security.deposit',
+            'view_mode': 'form',
+            'res_id': self.sd_slip_id.id,
+            'context': {
+                'edit': 0
+            },
             'target': 'current',
         }
 
@@ -253,7 +306,7 @@ class MedicalEquipment(models.Model):
                 else:
                     total_price_incl_tax += tax.amount
 
-            line.amount = total_price_incl_tax * line.quantity
+            line.security_deposit = total_price_incl_tax * line.quantity
 
         me.calculate_amount()
        
@@ -303,3 +356,121 @@ class MedicalEquipment(models.Model):
             'products': products_data,
             'success': True
         }
+    
+    def action_recovery(self):
+        """
+        Automatically create recovery picking and update state
+        """
+        self.ensure_one()
+        
+        if not self.picking_id:
+            raise ValidationError('No stock picking found to return. Please validate the equipment first.')
+        if self.return_picking_id:
+            raise ValidationError('This record picking has already been recovered.')
+        
+        if self.picking_id.state != 'done':
+            raise ValidationError('Stock picking must be validated before returning.')
+        
+        # Create return wizard and generate recovery picking
+        return_wizard = self.env['stock.return.picking'].with_context(
+            active_id=self.picking_id.id,
+            active_ids=[self.picking_id.id],
+            active_model='stock.picking'
+        ).create({})
+        
+        # Create the recovery picking
+        result = return_wizard.create_returns()
+        
+        if result and result.get('res_id'):
+            recovery_picking = self.env['stock.picking'].browse(result['res_id'])
+            recovery_picking.origin = self.name
+            recovery_picking.is_medical_recovery = True
+            
+            # Update medical equipment record
+            self.write({
+                'recovery_picking_id': recovery_picking.id,
+                'state': 'waiting_for_inventory_approval'
+            })
+            
+            # Show success message and open the recovery picking
+            return True
+        
+        raise ValidationError('Failed to create recovery picking.')
+    
+    def action_refund(self):
+        self.state = 'refund'
+    
+    def action_donate(self):
+        self.ensure_one()
+
+        if not self.medical_equipment_line_ids:
+            raise ValidationError(_("No medical equipment lines found."))
+
+        journal = self.env['account.journal'].search(
+            [('type', '=', 'general'), ('company_id', '=', self.env.company.id)],
+            limit=1
+        )
+
+        if not journal:
+            raise ValidationError(_("Please configure a General Journal."))
+
+        line_vals = []
+        total_amount = 0.0
+
+        for line in self.medical_equipment_line_ids:
+            product = line.product_id
+            amount = line.security_deposit * line.quantity
+
+            if not amount:
+                continue
+
+            income_account = (
+                product.property_account_income_id
+                or product.categ_id.property_account_income_categ_id
+            )
+            expense_account = (
+                product.property_account_expense_id
+                or product.categ_id.property_account_expense_categ_id
+            )
+
+            if not income_account or not expense_account:
+                raise ValidationError(
+                    _(f"Income or Expense account missing for product {product.display_name}")
+                )
+
+            # Debit → Expense
+            line_vals.append((0, 0, {
+                'name': f"Donation Expense - {product.name}",
+                'account_id': expense_account.id,
+                'debit': amount,
+                'credit': 0.0,
+            }))
+
+            # Credit → Income
+            line_vals.append((0, 0, {
+                'name': f"Donation Income - {product.name}",
+                'account_id': income_account.id,
+                'debit': 0.0,
+                'credit': amount,
+            }))
+
+            total_amount += amount
+
+        if not line_vals:
+            raise ValidationError(_("Nothing to post for donation."))
+
+        move_vals = {
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': fields.Date.today(),
+            'ref': f"Medical Equipment Donation - {self.name}",
+            'line_ids': line_vals,
+        }
+
+        move = self.env['account.move'].create(move_vals)
+        # DO NOT POST → parked entry
+
+        self.write({
+            'state': 'donate',
+            'move_id': move.id,
+        })

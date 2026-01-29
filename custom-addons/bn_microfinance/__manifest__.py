@@ -34,4 +34,4 @@
             'bn_microfinance/static/src/app/**/*',
         ],
     }
-}
+} # type: ignore

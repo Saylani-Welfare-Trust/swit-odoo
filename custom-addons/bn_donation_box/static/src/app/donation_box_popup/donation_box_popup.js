@@ -81,14 +81,14 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
 
             // 🔹 Search for "Donation Box Receipt" product
             const product_data = await this.orm.call('product.product', 'search_read', [
-                [['name', '=', 'Donation Box Receipt']],
+                [['name', '=', this.pos.company.donation_box_product]],
                 ['id', 'name']
             ]);
 
             if (!product_data.length) {
                 this.popup.add(ErrorPopup, {
                     title: _t("Error"),
-                    body: _t("Product 'Donation Box Receipt' not found. Please create it in Products."),
+                    body: _t(`Product ${this.pos.company.donation_box_product} not found. Please create it in Products.`),
                 });
                 return;
             }

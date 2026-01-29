@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="journal_transfer_view_tree" model="ir.ui.view">
+        <field name="name">journal.transfer.view.tree</field>
+        <field name="model">journal.transfer</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" readonly="1" />
+                <field name="date" />
+                <field name="descripiton" />
+                <field name="source_journal_id" />
+                <field name="dest_journal_id" />
+                <field name="user_id" string="Opened By" readonly="1" />
+                <field name="amount" readonly="1" />
+                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="journal_transfer_view_form" model="ir.ui.view">
+        <field name="name">journal.transfer.view.form</field>
+        <field name="model">journal.transfer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Cancel" name="action_cancel" type="object" invisible="state != 'draft'"/>
+                   
+                    <field name="state" widget="statusbar" statusbar_visible="draft, posted" /> 
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_show_entry" type="object" class="oe_stat_button" icon="fa-money" invisible="not move_id">
+                            <field name="move_id" string="Journal Entry" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Request No." />
+                        <h1><field name="name" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="journal_transfer_col_1">
+                            <field name="source_journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="dest_journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                        </group>
+                        <group name="journal_transfer_col_2">
+                            <field name="date" required="1" />
+                            <field name="amount" required="1" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="journal_transfer_action" model="ir.actions.act_window">
+        <field name="name">Journal Transfer</field>
+        <field name="res_model">journal.transfer</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for a new record...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="journal_transfer_menu"
+        name="Journal Transfer"
+        action="journal_transfer_action"
+        groups="journal_transfer_group"
+        parent="bn_pos_cheque.treasury_menu"
+        sequence="3"/>
+
+</odoo>

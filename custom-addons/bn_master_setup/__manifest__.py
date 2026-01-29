@@ -11,6 +11,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/group.xml',
+        'data/disbursement_category.xml',
         'views/location_option.xml',
         'views/installation_category.xml',
         'views/header_type.xml',
@@ -20,6 +21,9 @@
         'views/disbursement_application_type.xml',
         'views/direct_deposit_account_setup.xml',
         'views/donation_in_kind_config.xml',
+        'views/city.xml',
+        'views/bank.xml',
+        'views/medical_equipment_category.xml',
     ],
     'auto_install': False,
     'application': True,
