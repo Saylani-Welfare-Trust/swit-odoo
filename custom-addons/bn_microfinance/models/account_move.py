@@ -11,7 +11,7 @@ class AccountMove(models.Model):
                 microfinance = self.env['microfinance'].search([
                     ('name', '=', bill.ref)
                 ], limit=1)
-            if microfinance and microfinance.asset_type == 'cash':
-                    if microfinance.state in ['treasury']:
-                        microfinance._complete_application()
+                if microfinance and microfinance.asset_type == 'cash':
+                        if microfinance.state in ['treasury']:
+                            microfinance._complete_application()
         return res
