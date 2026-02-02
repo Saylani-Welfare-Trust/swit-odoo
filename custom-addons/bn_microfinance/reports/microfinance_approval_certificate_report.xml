@@ -223,12 +223,11 @@
                             </div>
 
                             <!-- Product/Loan Details Section -->
-                            <div class="info-box compact-section">
+                            <!-- <div class="info-box compact-section">
                                 <h6 class="fw-bold" style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
                                     Loan / Product Details
                                 </h6>
                                 <div class="flex-container">
-                                    <!-- Left Column -->
                                     <div class="flex-column flex-left">
                                         <div class="flex-row">
                                             <div class="flex-label">Product:</div>
@@ -256,7 +255,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Right Column -->
                                     <div class="flex-column flex-right">
                                         <div class="flex-row">
                                             <div class="flex-label">Total Amount:</div>
@@ -278,7 +276,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- Approval Summary -->
                             <div class="summary-box tight-margin">
@@ -302,13 +300,17 @@
                                     <span><span t-field="doc.total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
                                 </div>
                                 <div class="summary-row">
+                                    <span><strong>Security Deposit :</strong></span>
+                                    <span><span t-field="doc.security_deposit" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                                <div class="summary-row">
                                     <span><strong>Monthly Installment:</strong></span>
                                     <span><span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
                                 </div>
-                                <div class="summary-row">
+                                <!-- <div class="summary-row">
                                     <span><strong>Number of Installments:</strong></span>
                                     <span><t t-esc="doc.installment_period"/></span>
-                                </div>
+                                </div> -->
                             </div>
 
                             <!-- Terms & Conditions -->
@@ -316,6 +318,7 @@
                                 <h6 class="fw-bold" style="font-size: 11px; margin-bottom: 8px;">Terms &amp; Conditions:</h6>
                                 <ul style="font-size: 10px; margin: 0; padding-left: 15px;">
                                     <li>This certificate confirms the approval of the microfinance application.</li>
+                                    <li> The delivery will be made as per the delivery date.</li>
                                     <li>The applicant must pay the security deposit before receiving the product/loan.</li>
                                     <li>Installments must be paid on time as per the agreed schedule.</li>
                                     <li>Failure to pay installments may result in recovery action.</li>
@@ -323,7 +326,7 @@
                                 </ul>
                             </div>
 
-                            <!-- Signature Section -->
+                            <!-- Signature Section
                             <div class="compact-section tight-margin" style="margin-top: 40px;">
                                 <div class="flex-container">
                                     <div class="flex-column flex-left">
@@ -342,7 +345,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- Print Date -->
                             <div class="tight-margin" style="margin-top: 30px; font-size: 10px; color: #666; text-align: center;">

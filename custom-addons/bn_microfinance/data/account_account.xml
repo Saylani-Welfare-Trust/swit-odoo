@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="account_microfinance_expense" model="account.account">
+        <field name="name">Microfinance Expense</field>
+        <field name="code">MFEXP001</field>
+        <field name="account_type">expense</field>
+        <field name="reconcile">False</field>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
+</odoo>

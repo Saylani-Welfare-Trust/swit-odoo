@@ -124,6 +124,7 @@
                             <field name="recovery_remarks" invisible="not in_recovery" />
                             <field name="member_right_of_remarks" invisible=" not in_recovery" required="state == 'right_of_approval_1' and in_recovery" />
                             <field name="cfo_right_of_remarks" invisible="not in_recovery" required="state == 'right_of_approval_2' and in_recovery"/>
+                            <field name="board_approval_document" invisible="not in_recovery" required="state == 'right_of_approval_2' and in_recovery"/>
                         </group>
                     </group>
 

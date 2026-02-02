@@ -55,6 +55,8 @@ class MedicalEquipment(models.Model):
 
     approval_count = fields.Integer('Approval Count')
 
+    move_id = fields.Many2one('account.move', string="Account Move")
+
     medical_equipment_line_ids = fields.One2many('medical.equipment.line', 'medical_equipment_id', string="Medical Equipments")
 
 
@@ -273,6 +275,16 @@ class MedicalEquipment(models.Model):
             'context': {
                 'edit': 0
             },
+            'target': 'current',
+        }
+    
+    def action_show_move(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Journal Entry',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': self.move_id.id,
             'target': 'current',
         }
 
