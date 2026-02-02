@@ -347,6 +347,10 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         }
     }
 
+    async downloadSalesReport() {
+        return this.report.doAction("point_of_sale.sale_details_report", [this.pos.pos_session.id]);
+    }
+
     async cancel() {
         if (this.canCancel()) super.cancel();
     }
