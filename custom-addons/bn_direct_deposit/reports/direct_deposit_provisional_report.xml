@@ -117,8 +117,8 @@
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
-                                            <td class="text-end"><t t-esc="line.product_id.list_price"/></td>
-                                            <td class="text-end"><t t-esc="line.amount"/></td>
+                                            <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
+                                            <td class="text-end"><t t-esc="line.quantity*line.amount"/></td>
                                             <td><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
                                     </t>
