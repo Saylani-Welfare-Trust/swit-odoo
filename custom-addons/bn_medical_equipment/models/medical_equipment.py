@@ -421,5 +421,5 @@ class MedicalEquipment(models.Model):
             'context': {
                 'default_medical_equipment_id': self.id
             },
-            'target': 'current',
+            'target': 'new',
         }
