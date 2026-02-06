@@ -39,6 +39,8 @@ class MedicalEquipment(models.Model):
     city = fields.Char(related='donee_id.city', string="City", store=True)
     street = fields.Char(related='donee_id.street', string="Street", store=True)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
+    
+    remarks = fields.Text('Remarks')
 
     date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
 

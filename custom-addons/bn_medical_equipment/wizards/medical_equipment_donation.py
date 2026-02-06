@@ -10,6 +10,8 @@ class MedicalEquipmentDonation(models.TransientModel):
     medical_equipment_id = fields.Many2one('medical.equipment', string="Medical Equipment")
     product_id = fields.Many2one('product.product', string="Product")
 
+    
+
 
     def action_confirm(self):
         self.ensure_one()

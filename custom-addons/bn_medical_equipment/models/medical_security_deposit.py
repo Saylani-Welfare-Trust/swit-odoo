@@ -121,7 +121,7 @@ class MedicalSecurityDeposit(models.Model):
 
         # ✅ calculate amount properly
         amount = sum(
-            line.medical_equipment_category_id.security_deposit
+            line.quantity * line.medical_equipment_category_id.security_deposit
             for line in medical_equipment_request.medical_equipment_line_ids
         )
 
