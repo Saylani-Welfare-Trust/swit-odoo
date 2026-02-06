@@ -121,7 +121,11 @@ class MedicalSecurityDeposit(models.Model):
 
         # ✅ calculate amount properly
         amount = sum(
-            line.quantity * line.medical_equipment_category_id.security_deposit
+            line.medical_equipment_category_id.security_deposit
+            for line in medical_equipment_request.medical_equipment_line_ids
+        )
+        quantity = sum(
+            line.quantity
             for line in medical_equipment_request.medical_equipment_line_ids
         )
 
@@ -138,5 +142,6 @@ class MedicalSecurityDeposit(models.Model):
             'donee_id': medical_equipment_request.donee_id.id,
             'deposit_id': deposit.id,
             'amount': amount,
+            'quantity': quantity,
             'deposit_exists': False
         }
