@@ -133,7 +133,7 @@ class MedicalSecurityDeposit(models.Model):
         deposit = self.create({
             'medical_equipment_id': medical_equipment_request.id,
             'donee_id': medical_equipment_request.donee_id.id,
-            'amount': amount,
+            'amount': quantity*amount,
         })
 
         return {
