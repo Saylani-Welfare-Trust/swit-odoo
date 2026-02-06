@@ -37,7 +37,7 @@ class RiderSchedule(models.TransientModel):
             key_ids = self.env['key.issuance'].search([
                 ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
                 ('state', 'in', ['issued', 'overdue']),
-                ('issue_date', '=', obj.date),
+                ('issue_date', '<=', obj.date),
             ])
             
             lot_ids = key_ids.mapped('lot_id')
