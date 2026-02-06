@@ -413,76 +413,13 @@ class MedicalEquipment(models.Model):
         self.state = 'refund'
     
     def action_donate(self):
-        self.ensure_one()
-
-        if not self.medical_equipment_line_ids:
-            raise ValidationError(_("No medical equipment lines found."))
-
-        journal = self.env['account.journal'].search(
-            [('type', '=', 'general'), ('company_id', '=', self.env.company.id)],
-            limit=1
-        )
-
-        if not journal:
-            raise ValidationError(_("Please configure a General Journal."))
-
-        line_vals = []
-        total_amount = 0.0
-
-        for line in self.medical_equipment_line_ids:
-            product = line.product_id
-            amount = line.security_deposit * line.quantity
-
-            if not amount:
-                continue
-
-            income_account = (
-                product.property_account_income_id
-                or product.categ_id.property_account_income_categ_id
-            )
-            expense_account = (
-                product.property_account_expense_id
-                or product.categ_id.property_account_expense_categ_id
-            )
-
-            if not income_account or not expense_account:
-                raise ValidationError(
-                    _(f"Income or Expense account missing for product {product.display_name}")
-                )
-
-            # Debit → Expense
-            line_vals.append((0, 0, {
-                'name': f"Donation Expense - {product.name}",
-                'account_id': expense_account.id,
-                'debit': amount,
-                'credit': 0.0,
-            }))
-
-            # Credit → Income
-            line_vals.append((0, 0, {
-                'name': f"Donation Income - {product.name}",
-                'account_id': income_account.id,
-                'debit': 0.0,
-                'credit': amount,
-            }))
-
-            total_amount += amount
-
-        if not line_vals:
-            raise ValidationError(_("Nothing to post for donation."))
-
-        move_vals = {
-            'move_type': 'entry',
-            'journal_id': journal.id,
-            'date': fields.Date.today(),
-            'ref': f"Medical Equipment Donation - {self.name}",
-            'line_ids': line_vals,
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Product Wizard',
+            'res_model': 'medical.equipment.donation',
+            'view_mode': 'form',
+            'context': {
+                'default_medical_equipment_id': self.id
+            },
+            'target': 'current',
         }
-
-        move = self.env['account.move'].create(move_vals)
-        # DO NOT POST → parked entry
-
-        self.write({
-            'state': 'donate',
-            'move_id': move.id,
-        })

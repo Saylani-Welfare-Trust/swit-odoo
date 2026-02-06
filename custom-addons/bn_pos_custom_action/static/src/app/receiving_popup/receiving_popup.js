@@ -78,6 +78,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             
             await this.processWelfareRecord(selectedOrder);
         } 
+        if (this.action_type === 'ad') {    
+            this.pos.receive_voucher = true
+            await this.processAdvanceDonationRecord(selectedOrder);
+        } 
         // Process medical equipment records
         if (this.action_type === 'me') {
             this.pos.receive_voucher = true
@@ -100,6 +104,113 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Process Welfare record
      */
+    async processAdvanceDonationRecord(selectedOrder) {
+        try {
+            // Fetch advance donation record
+            const record = await this.orm.searchRead(
+                'advance.donation',
+                [['name', '=', this.state.record_number],
+                 ['state', '=', 'approved']
+            ],
+                ['id', 'name', 'state', 'customer_id', 'remaining_amount', 'product_id', 'total_product_amount', 'paid_amount'],
+                { limit: 1 }
+            );
+
+            if (!record.length) {
+                this.notification.add("Advance donation record not found", { type: 'warning' });
+                return;
+            }
+
+            const donationRecord = record[0];
+
+            // Validate state must be 'approved'
+            if (donationRecord.state !== 'approved') {
+                this.notification.add(
+                    `Unauthorized Request State: ${donationRecord.state}. Expected 'approved'.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+
+            // Check if there's remaining amount to pay
+            if (donationRecord.remaining_amount <= 0) {
+                this.notification.add("No remaining amount to pay for this donation", { type: 'warning' });
+                return;
+            }
+
+            // Get the product
+            if (!donationRecord.product_id || !donationRecord.product_id[0]) {
+                this.notification.add("No product found in advance donation record", { type: 'warning' });
+                return;
+            }
+
+            const product = this.pos.db.get_product_by_id(donationRecord.product_id[0]);
+            if (!product) {
+                this.notification.add("Product not found in POS database", { type: 'warning' });
+                return;
+            }
+
+            // Calculate amount per unit
+            // Since it's a donation payment, we want to collect the remaining amount
+            // We'll add the product with the remaining amount as the total
+            const remainingAmount = donationRecord.remaining_amount;
+            
+            // Add product to POS order
+            // We'll add it as a single line with the remaining amount
+            // Using negative quantity to indicate it's a payment/collection
+            selectedOrder.add_product(product, {
+                quantity: 1, // Negative indicates payment collection
+                price_extra: remainingAmount - product.lst_price, // Adjust price to match remaining amount
+            });
+
+            // Add partner to order if exists
+            if (donationRecord.customer_id && donationRecord.customer_id[0]) {
+                const partnerId = donationRecord.customer_id[0];
+                let partner = await this.getOrLoadPartner(partnerId);
+                if (partner) {
+                    this.assignPartnerToOrder(partner, selectedOrder);
+                }
+            }
+
+            // Add extra order data for payment_screen handling
+            this.addAdvanceDonationExtraOrderData(selectedOrder, donationRecord);
+
+            this.notification.add(
+                `Added advance donation: ${donationRecord.name} - Remaining: ${remainingAmount}`,
+                { type: "success" }
+            );
+
+            super.confirm();
+
+        } catch (error) {
+            this.handleProcessingError(error);
+        }
+    }
+
+    /**
+     * Add advance donation extra order data
+     */
+    addAdvanceDonationExtraOrderData(selectedOrder, record) {
+        if (!selectedOrder.extra_data) {
+            selectedOrder.extra_data = {};
+        }
+        
+        selectedOrder.extra_data.advance_donation = {
+            record_number: record.name,
+            donation_state: record.state,
+            donation_id: record.id,
+            remaining_amount: record.remaining_amount,
+            total_amount: record.total_product_amount,
+            paid_amount: record.paid_amount,
+            product_id: record.product_id[0],
+            customer_id: record.customer_id ? record.customer_id[0] : null,
+            scan_timestamp: new Date().toISOString(),
+        };
+        console.log("🟢 [Advance Donation] Added extra order data:", selectedOrder.extra_data);
+    }
+
+
+
     async processWelfareRecord(selectedOrder) {
         try {
             // wf_request_type: 'one_time' or 'recurring'
@@ -445,7 +556,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             // console.log(record);
 
-            if (!['sd_received', 'return'].includes(record[0].state)) {
+            // if (!['sd_received', 'return'].includes(record[0].state)) {
+            if (!['sd_received', 'refund'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }
@@ -896,16 +1008,46 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         const quantity = this.calculateProductQuantity(line, record);
         // console.log(`Adding product ${product.display_name} with price ${price}`);
          
-        if (product.lst_price > 0) {
-            selectedOrder.add_product(product, {
-                quantity: quantity || 1,
-            });
+        if (this.action_type === 'me') {
+            if (record.state == 'refund') {
+                if (product.lst_price > 0) {
+                    selectedOrder.add_product(product, {
+                        quantity: quantity * -1 || -1,
+                    });
+                }
+                else if (product.lst_price <= 0) {
+                    selectedOrder.add_product(product, {
+                        quantity: quantity * -1 || -1,
+                        price_extra: line.security_deposit || product.lst_price,
+                    });
+                }
+            } else {
+                if (product.lst_price > 0) {
+                    selectedOrder.add_product(product, {
+                        quantity: quantity || 1,
+                    });
+                }
+                else if (product.lst_price <= 0) {
+                    selectedOrder.add_product(product, {
+                        quantity: quantity || 1,
+                        price_extra: line.security_deposit || product.lst_price,
+                    });
+                }
+            }
         }
-        else if (product.lst_price <= 0) {
-            selectedOrder.add_product(product, {
-                quantity: quantity || 1,
-                price_extra: line.security_deposit || product.lst_price,
-            });
+        else {
+            if (product.lst_price > 0) {
+                selectedOrder.add_product(product, {
+                    quantity: quantity || 1,
+                });
+            }
+            else if (product.lst_price <= 0) {
+                selectedOrder.add_product(product, {
+                    quantity: quantity || 1,
+                    price_extra: line.security_deposit || product.lst_price,
+                });
+            }
+
         }
         
         // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+      <menuitem id="main_menu_advance_donation"
+            name="Advance Donation"
+            parent="bn_import_donation.import_donation_root_menu"/>
+
+      <menuitem id="menu_advance_donation"
+            name="Advance Donation"
+            parent="main_menu_advance_donation"
+            action="action_advance_donation"/>
+
+      <menuitem id="menu_advance_donation_receipt"
+            name="Donation Receipt"
+            parent="main_menu_advance_donation"
+            action="action_advance_donation_receipt"/>
+
+</odoo>

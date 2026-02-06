@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_medical_equipment,medical.equipment,bn_medical_equipment.model_medical_equipment,medical_equipment_admin_group,1,1,1,1
 access_medical_equipment_line,medical.equipment.line,bn_medical_equipment.model_medical_equipment_line,,1,1,1,1
 access_medical_security_deposit,medical.security.deposit,bn_medical_equipment.model_medical_security_deposit,,1,1,1,1
+access_medical_equipment_donation,medical.equipment.donation,bn_medical_equipment.model_medical_equipment_donation,,1,1,1,1

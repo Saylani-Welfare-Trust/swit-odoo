@@ -89,7 +89,19 @@ class Microfinance(models.Model):
     amount = fields.Monetary('Installement Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
     product_amount = fields.Monetary('Product Amount', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
     security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id', compute="_set_amount_and_sd", default=0, store=True)
-    donor_contribution = fields.Monetary('Contribution by Donor', currency_field='currency_id', default=0)
+    advance_donation_id = fields.Many2one(
+        'advance.donation',
+        string='Advance Donation',
+        domain="[('state','=','approved'), ('product_id','=',product_id)]"
+    )
+    used_advance_donation_line_id = fields.Many2one('advance.donation.line', string='Used Advance Donation Line', readonly=True, copy=False)
+    donor_contribution = fields.Monetary(
+        'Contribution by Donor',
+        currency_field='currency_id',
+        compute='_compute_donor_contribution',
+        store=True
+    )
+       
     total_amount = fields.Monetary('Total Amount', compute="_set_total_amount", store=True, currency_field='currency_id')
     installment_amount = fields.Monetary('Installment Amount', compute="_set_installment_amount", store=True, currency_field='currency_id')
 
@@ -227,7 +239,32 @@ class Microfinance(models.Model):
             'domain': [('id', 'in', self.bill_ids.ids)],
             'target': 'current',
         }
+    @api.depends('advance_donation_id')
+    def _compute_donor_contribution(self):
+        for rec in self:
+            donor_contribution = 0
+            used_line = None
+            if rec.advance_donation_id:
+                # Find the first eligible line
+                eligible_lines = rec.advance_donation_id.advance_donation_lines.filtered(lambda l: l.state == 'paid' and not l.is_disbursed)
+                if eligible_lines:
+                    used_line = eligible_lines[0]
+                    donor_contribution = used_line.paid_amount
+                    # Mark as disbursed
+                    # used_line.is_disbursed = True
+            rec.donor_contribution = donor_contribution
+            rec.used_advance_donation_line_id = used_line or False
+   
+    @api.onchange('advance_donation_id')
+    def _onchange_advance_donation_id(self):
+        for rec in self:
+            # reset previous used line
+            if rec.used_advance_donation_line_id:
+                rec.used_advance_donation_line_id.is_disbursed = False
+                rec.used_advance_donation_line_id = False
+                rec.donor_contribution = 0
 
+  
     @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
     def _compute_show_warehouse_location(self):
         for rec in self:
@@ -437,6 +474,7 @@ class Microfinance(models.Model):
     
     def action_move_to_hod(self):
         self.state = 'hod_approve'
+        self.used_advance_donation_line_id.is_disbursed = True
 
     def action_send_to_recovery(self):
         lines = []

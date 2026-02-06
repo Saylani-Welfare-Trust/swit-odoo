@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_advance_donation,advance.donation,model_advance_donation,,1,1,1,1
+access_advance_donation_line,advance.donation.line,model_advance_donation_line,,1,1,1,1
+access_advance_donation_receipt,advance.donation.receipt,model_advance_donation_receipt,,1,1,1,1
+access_advance_donation_slip_usage,advance.donation.slip.usage,model_advance_donation_slip_usage,,1,1,1,1

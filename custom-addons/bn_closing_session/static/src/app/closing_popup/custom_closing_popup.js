@@ -274,7 +274,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
         // Only validate amount/ref & duplicates if skip_amount_input is true
         if (!pm?.skip_amount_input) {
-            if (!amount || !ref || isNaN(amountNum)) {
+            if (amount === "" || !ref || isNaN(amountNum)) {
                 this.popup.add(ErrorPopup, {
                     title: _t("Invalid input"),
                     body: _t("Please enter a valid Amount and Ref."),
@@ -295,7 +295,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         const currentTotal = (this.state.lines[paymentId][type] || []).reduce((sum, line) => sum + (line.amount || 0), 0);
 
         const allowed = pm?.breakdown?.[type] ?? Number.POSITIVE_INFINITY;
-        if (currentTotal + amountNum > allowed) {
+        if (amountNum > 0 && currentTotal + amountNum > allowed) {
             this.popup.add(ErrorPopup, {
                 title: _t("Limit exceeded"),
                 body: _t(`${type.charAt(0).toUpperCase() + type.slice(1)} amount cannot exceed ` +

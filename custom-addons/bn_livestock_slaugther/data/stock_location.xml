@@ -8,6 +8,12 @@
             <field name="usage">transit</field>
             <field name="location_id" ref="__custom__.wh" />
         </record>
+        
+        <record id="livestock_cutting_location" model="stock.location">
+            <field name="name">Livestock Cutting</field>
+            <field name="usage">transit</field>
+            <field name="location_id" ref="__custom__.wh" />
+        </record>
     
     </data>
 

@@ -7,6 +7,8 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
+        // console.log("🟢 [PaymentScreen] validateOrder called with isForceValidate:", isForceValidate);
+        // console.log("🟢 [PaymentScreen] Current Order extra_data:", this.currentOrder.extra_data);
         const currentOrder = this.currentOrder;
         
         // Only process medical equipment if order has extra_data with medical_equipment
@@ -346,7 +348,74 @@ patch(PaymentScreen.prototype, {
             }
 
         }
+    
+        // ---------- Advance Donation Processing ----------
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.advance_donation) {
+            try {
+                console.log("🟢 [Advance Donation] Processing donation receipt...");
+                const donationData = currentOrder.extra_data.advance_donation;
 
+                // Find the donation line in the order
+                const donationLine = currentOrder.get_orderlines().find(line =>
+                    line.product && line.product.id === donationData.product_id 
+                );
+                console.log("🟢 [Advance Donation] Found donation line:", donationLine);
+                if (donationLine) {
+                    const donationAmount = Math.abs(donationLine.get_display_price());
+
+                    // Get payment method from order
+                    const paymentLines = currentOrder.get_paymentlines();
+                    if (paymentLines.length === 0) {
+                        throw new Error("No payment method found");
+                    }
+
+                    // Use the first payment method (you might want to handle multiple payments differently)
+                    const paymentMethod = paymentLines[0].payment_method;
+
+                    // Prepare data for register_pos_payment
+                    const data = {
+                        'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
+                        'is_donation_id': true,
+                        'donation_id': donationData.record_number,  // The donation name/ID
+                        'amount': donationAmount,
+                        'partner_id': donationData.customer_id || null,
+                    };
+                    console.log("🟢 [Advance Donation] Preparing to create donation receipt with data:", data);
+                    // Only add cheque fields if payment type is cheque
+                    if (data.payment_type === 'cheque') {
+                        data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback
+                        data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
+                        data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
+                    }
+
+                    const result = await this.env.services.orm.call(
+                        'advance.donation.receipt',
+                        'register_pos_payment',
+                        [data]
+                    );
+                    console.log("🟢 [Advance Donation] Donation receipt result:", result);
+                    if (result.status === 'success') {
+                        this.env.services.notification.add(
+                            `Donation receipt created for ${donationData.record_number}`,
+                            { type: 'success' }
+                        );
+
+                        // Also update the donation record's paid amount
+                        // await this.updateDonationPayment(donationData.donation_id, donationAmount);
+
+                    } else {
+                        throw new Error(result.body || 'Failed to create donation receipt');
+                    }
+                }
+            } catch (error) {
+                console.error("❌ [Advance Donation] Error creating donation receipt:", error);
+                this.env.services.notification.add(
+                    "Failed to create donation receipt. Order cannot be completed.",
+                    { type: 'warning' }
+                );
+                return; // Stop the order if donation receipt creation fails
+            }
+        }
         // --- WELFARE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
             try {
