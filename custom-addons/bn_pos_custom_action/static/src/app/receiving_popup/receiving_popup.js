@@ -1010,15 +1010,37 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
          
         if (this.action_type === 'me') {
             if (record.state == 'refund') {
-                if (product.lst_price > 0) {
+                console.log(this.pos.company);
+
+                // Fetch the service product
+                const serviceProduct = await this.orm.searchRead(
+                    'product.product',
+                    [
+                        ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
+                        ['detailed_type', '=', 'service'],
+                        ['available_in_pos', '=', true]
+                    ],
+                    ['id'],
+                    { limit: 1 }
+                );
+                
+                if (serviceProduct.length) {
+                    // Get the product from POS DB
+                    const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
+                    
+                    if (!product) {
+                        this.popup.add(ErrorPopup, {
+                            title: _t("Error"),
+                            body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
+                        });
+                        
+                        return
+                    }
+                    
+                    // Add product to order
                     selectedOrder.add_product(product, {
-                        quantity: quantity * -1 || -1,
-                    });
-                }
-                else if (product.lst_price <= 0) {
-                    selectedOrder.add_product(product, {
-                        quantity: quantity * -1 || -1,
-                        price_extra: line.security_deposit || product.lst_price,
+                        quantity: quantity * -1,
+                        price_extra: line.security_deposit,
                     });
                 }
             } else {
