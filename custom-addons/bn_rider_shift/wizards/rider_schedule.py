@@ -32,7 +32,6 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
 
-        raise UserError(str(rider_shift_obj))
 
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
@@ -41,6 +40,8 @@ class RiderSchedule(models.TransientModel):
                 ('issue_date', '=', obj.date),
             ])
 
+            raise UserError(str(key_ids))
+            
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
 
