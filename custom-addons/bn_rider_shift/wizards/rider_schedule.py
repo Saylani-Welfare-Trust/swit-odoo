@@ -39,10 +39,10 @@ class RiderSchedule(models.TransientModel):
                 ('issue_date', '=', obj.date),
             ])
 
-            raise UserError(str(rider_shift_obj))
-
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
+
+            raise UserError(str(key_ids))
 
             # 🔹 Fetch existing collections for these lot_ids
             existing_collections = self.env['rider.collection'].search([
