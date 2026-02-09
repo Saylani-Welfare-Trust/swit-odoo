@@ -9,7 +9,7 @@
         'bn_master_setup',
         'bn_profile_management',
         'bn_pos_order',
-        # 'bn_advance_donation',
+        'bn_advance_donation',
     ],
     'data': [
         'security/group.xml',
