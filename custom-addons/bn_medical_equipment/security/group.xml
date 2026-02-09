@@ -29,13 +29,5 @@
     <record id="medical_equipment_pos_action_group" model="res.groups">
         <field name="name">Medical Equipment / POS Action</field>
     </record>
-    
-    <record id="medical_equipment_pos_settle_action_group" model="res.groups">
-        <field name="name">Medical Equipment / POS Settle Action</field>
-    </record>
-    
-    <record id="medical_equipment_pos_security_deposit_action_group" model="res.groups">
-        <field name="name">Medical Equipment / POS Security Deposit Action</field>
-    </record>
 
 </odoo>

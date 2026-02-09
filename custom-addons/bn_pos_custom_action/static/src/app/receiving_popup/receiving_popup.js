@@ -131,7 +131,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 );
                 return;
             }
-            console.log("Advance Donation Record:", donationRecord);
 
             // Check if there's remaining amount to pay
             if (donationRecord.remaining_amount <= 0) {
