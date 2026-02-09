@@ -14,17 +14,47 @@ patch(ActionScreen.prototype, {
 
         return this.pos._medicalEquipment || false;
     },
+    
+    get checkMedicalEquipmentSettleOrderAccess(){
+        // console.log(this);
+
+        return this.pos._medicalEquipmentSettleOrder || false;
+    },
+    
+    get checkMedicalEquipmentSecurityDepositAccess(){
+        // console.log(this);
+
+        return this.pos._medicalEquipmentSecurityDeposit || false;
+    },
 
     async clickRecordME() {
         const { confirmed, payload: selectedOption } = await this.popup.add(
             SelectionPopup,
-            {
-                title: _t("Your Attention is Needed for a Medical Equipment Request!"),
-                list: [
-                    { id: "0", label: _t("Security Deposit"), item: "provisional_order" },
-                    { id: "1", label: _t("Settle Order"), item: "settle" },
-                ],
-            },
+            this.checkMedicalEquipmentSettleOrderAccess && this.checkMedicalEquipmentSecurityDepositAccess
+                ? {
+                    title: _t("Your Attention is Needed for a Medical Equipment Request!"),
+                    list: [
+                        { id: "0", label: _t("Security Deposit"), item: "provisional_order" },
+                        { id: "1", label: _t("Settle Order"), item: "settle" },
+                    ],
+                }
+                :
+                this.checkMedicalEquipmentSecurityDepositAccess 
+                    ? {
+                        title: _t("Your Attention is Needed for a Medical Equipment Request!"),
+                        list: [
+                            { id: "0", label: _t("Security Deposit"), item: "provisional_order" },
+                        ],
+                    }
+                    :
+                    this.checkMedicalEquipmentSettleOrderAccess 
+                        ? {
+                            title: _t("Your Attention is Needed for a Medical Equipment Request!"),
+                            list: [
+                                { id: "1", label: _t("Settle Order"), item: "settle" },
+                            ],
+                        }
+                        : {}
         );
 
         if (confirmed) {
