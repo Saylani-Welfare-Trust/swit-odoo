@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Welfare',
     'depends': [
-        # 'bn_microfinance',
+        'bn_microfinance',
         'bn_profile_management',
         'bn_analytic_account_customization'
     ],
