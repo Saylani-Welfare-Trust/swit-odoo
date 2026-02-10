@@ -6,7 +6,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Custom Button',
     'depends': [
-        'point_of_sale'
+        'point_of_sale',
+        'bn_welfare'
     ],
     'data': [
         'views/pos_order.xml',
