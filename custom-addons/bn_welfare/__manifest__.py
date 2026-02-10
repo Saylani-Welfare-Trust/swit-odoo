@@ -7,6 +7,8 @@
     'category': 'BytesNode/Welfare',
     'depends': [
         'bn_microfinance',
+        'bn_profile_management',
+        'bn_analytic_account_customization'
     ],
     'data': [
         'data/sequence.xml',
