@@ -7,7 +7,7 @@
     'category': 'BytesNode/Master Setup Backup',
     'depends': [
         'bn_analytic_account_customization',
-        'bn_medical_equipment',
+        'bn_medical_equipment'
     ],
     'data': [
         'security/ir.model.access.csv',
