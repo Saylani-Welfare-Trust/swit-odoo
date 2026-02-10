@@ -21,7 +21,6 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/res_partner.xml',
-        'views/medical_equipment_category.xml',
         'wizards/medical_equipment_donation.xml',
     ],
     'auto_install': False,
