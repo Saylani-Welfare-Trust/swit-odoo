@@ -11,6 +11,14 @@
                         <label for="product_id" />
                         <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('is_medical_equipment_donation', '=', True)]" /></h1>
                     </div>
+                    <group name="medical_equipment_donation">
+                        <group name="medical_equipment_donation_col_1">
+                            <field name="amount" />
+                        </group>
+                        <group name="medical_equipment_donation_col_2">
+                            <field name="remarks" />
+                        </group>
+                    </group>
                 </sheet>
                 <footer>
                     <button string="Confirm" name="action_confirm" type="object" class="btn-primary"/>

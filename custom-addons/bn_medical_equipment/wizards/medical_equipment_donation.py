@@ -9,14 +9,17 @@ class MedicalEquipmentDonation(models.TransientModel):
 
     medical_equipment_id = fields.Many2one('medical.equipment', string="Medical Equipment")
     product_id = fields.Many2one('product.product', string="Product")
+    currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
-    
+    remarks = fields.Text('Remarks')
+
+    amount = fields.Monetary('Amount', currency_field='currency_id')
 
 
     def action_confirm(self):
         self.ensure_one()
 
-        if not self.medical_equipment_line_ids:
+        if not self.medical_equipment_id.medical_equipment_line_ids:
             raise ValidationError(_("No medical equipment lines found."))
 
         journal = self.env['account.journal'].search(
@@ -33,7 +36,6 @@ class MedicalEquipmentDonation(models.TransientModel):
             raise ValidationError(_("Please configure a General Journal."))
 
         line_vals = []
-        total_amount = 0.0
 
         for line in self.medical_equipment_id.medical_equipment_line_ids:
             product = line.product_id
@@ -60,7 +62,7 @@ class MedicalEquipmentDonation(models.TransientModel):
             line_vals.append((0, 0, {
                 'name': f"Donation Expense - {product.name}",
                 'account_id': expense_account.id,
-                'debit': amount,
+                'debit': self.amount if self.amount else amount,
                 'credit': 0.0,
             }))
 
@@ -69,10 +71,8 @@ class MedicalEquipmentDonation(models.TransientModel):
                 'name': f"Donation Income - {product.name}",
                 'account_id': income_account.id,
                 'debit': 0.0,
-                'credit': amount,
+                'credit': self.amount if self.amount else amount,
             }))
-
-            total_amount += amount
 
         if not line_vals:
             raise ValidationError(_("Nothing to post for donation."))
@@ -81,7 +81,7 @@ class MedicalEquipmentDonation(models.TransientModel):
             'move_type': 'entry',
             'journal_id': journal.id,
             'date': fields.Date.today(),
-            'ref': f"Medical Equipment Donation - {self.name}",
+            'ref': f"Medical Equipment Donation - {self.medical_equipment_id.name}",
             'line_ids': line_vals,
         }
 
@@ -89,4 +89,5 @@ class MedicalEquipmentDonation(models.TransientModel):
         # DO NOT POST → parked entry
 
         self.medical_equipment_id.state = 'donate'
-        self.medical_equipment_id.state = move.id
+        self.medical_equipment_id.move_id = move.id
+        self.medical_equipment_id.remarks = self.remarks
