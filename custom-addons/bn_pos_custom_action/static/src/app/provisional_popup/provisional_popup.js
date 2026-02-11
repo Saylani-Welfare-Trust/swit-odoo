@@ -249,7 +249,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 
                 // Add product to order
                 selectedOrder.add_product(product, {
-                    quantity: 1,
+                    quantity: record.quantity,
                     price_extra: record.amount,
                 });
             }

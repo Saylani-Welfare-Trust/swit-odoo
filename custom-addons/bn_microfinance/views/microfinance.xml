@@ -89,6 +89,8 @@
                             <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state != 'draft'" />
                             <field name="product_amount" readonly="1" />
                             <field name="security_deposit" readonly="1" />
+                            <field name="advance_donation_id" readonly="state != 'draft'"  />
+                            <field name="used_advance_donation_line_id" readonly="1" invisible="1" />
                             <field name="donor_contribution" readonly="state != 'draft'" />
                             <field name="total_amount" />
                             <field name="amount" readonly="1" />

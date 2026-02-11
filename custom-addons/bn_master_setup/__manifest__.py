@@ -24,6 +24,8 @@
         'views/city.xml',
         'views/bank.xml',
         'views/medical_equipment_category.xml',
+        'views/product_master.xml',
+        'views/advance_donation_category.xml',
     ],
     'auto_install': False,
     'application': True,

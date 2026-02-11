@@ -11,6 +11,10 @@
                     <field name="is_medical_equipment" on_change="1" field_id="is_medical_equipment" readonly="0"/>
                     <label for="is_medical_equipment"/>
                 </span>
+                <span class="d-inline-flex">
+                    <field name="is_medical_equipment_donation" on_change="1" field_id="is_medical_equipment_donation" readonly="0"/>
+                    <label for="is_medical_equipment_donation"/>
+                </span>
             </xpath>
         </field>
     </record>

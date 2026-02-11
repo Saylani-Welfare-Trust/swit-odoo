@@ -41,6 +41,10 @@ class JournalTransfer(models.TransientModel):
 
     def action_transfer(self):
         self.ensure_one()
+
+        if self.state == 'posted':
+            raise UserError('Entry is already transfered')
+
         move_line_vals = [
             {
                 'account_id': self.dest_journal_id.default_account_id.id,
@@ -72,6 +76,9 @@ class JournalTransfer(models.TransientModel):
         self.state = 'posted'
 
     def action_cancel(self):
+        if self.state == 'cancel':
+            raise UserError('Entry is already cancelled')
+        
         self.state = 'cancel'
 
     @api.model

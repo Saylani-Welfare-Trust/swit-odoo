@@ -24,7 +24,7 @@
                     <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
                     <button string="Validate Picking" name="action_validate_picking" type="object" class="oe_highlight"/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="not_received,received"/>
+                    <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -66,7 +66,7 @@
         id="cutting_menu"
         name="Cutting"
         action="livestock_cutting_action"
-        parent="livestock_menu"
+        parent="bn_livestock_slaugther.livestock_menu"
         sequence="1"/>
 
 </odoo>

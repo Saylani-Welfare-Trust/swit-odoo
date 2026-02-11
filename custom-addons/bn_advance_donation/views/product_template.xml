@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_product_template_only_form_view_inherit_bbn_advance_donation" model="ir.ui.view">
+        <field name="name">product.product.template.only.form.view.inherit.bn.advance.donation</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='options']" position="inside">
+                <span class="d-inline-flex">
+                    <field name="is_advance_donation" on_change="1" field_id="is_advance_donation"/>
+                    <label for="is_advance_donation"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
+

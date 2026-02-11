@@ -15,3 +15,7 @@ from . import donation_in_kind_config
 from . import city
 from . import bank
 from . import medical_equipment_category
+from . import product_master
+from . import product_master_line
+from . import advance_donation_category
+from . import advance_donation_category_line

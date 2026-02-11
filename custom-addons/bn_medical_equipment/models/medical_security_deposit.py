@@ -124,12 +124,16 @@ class MedicalSecurityDeposit(models.Model):
             line.medical_equipment_category_id.security_deposit
             for line in medical_equipment_request.medical_equipment_line_ids
         )
+        quantity = sum(
+            line.quantity
+            for line in medical_equipment_request.medical_equipment_line_ids
+        )
 
         # ✅ create with ALL values
         deposit = self.create({
             'medical_equipment_id': medical_equipment_request.id,
             'donee_id': medical_equipment_request.donee_id.id,
-            'amount': amount,
+            'amount': quantity*amount,
         })
 
         return {
@@ -138,5 +142,6 @@ class MedicalSecurityDeposit(models.Model):
             'donee_id': medical_equipment_request.donee_id.id,
             'deposit_id': deposit.id,
             'amount': amount,
+            'quantity': quantity,
             'deposit_exists': False
         }

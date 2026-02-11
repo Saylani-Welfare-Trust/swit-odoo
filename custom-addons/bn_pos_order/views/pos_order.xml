@@ -37,7 +37,7 @@
             <xpath expr="//header" position="inside">
                 <!-- <button string="Refund Request" name="action_refund_request" type="object" invisible="state not in ['paid', 'done'] or not has_refundable_lines" /> -->
                 <button string="CFO Approval" name="action_cfo_approval" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_pos_order.pos_order_cfo_approval_group" />
-                <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_pos_order.pos_order_cfo_approval_group" />
             </xpath>
         </field>
     </record>

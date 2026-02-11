@@ -14,6 +14,9 @@
                 <field name="user_id" string="Opened By" readonly="1" />
                 <field name="amount" readonly="1" />
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
+
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                <button string="Cancel" name="action_cancel" type="object"/>
             </tree>
         </field>
     </record>

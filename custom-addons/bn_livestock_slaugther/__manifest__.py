@@ -7,13 +7,15 @@
     'category': 'BytesNode/Livestock Slaugther',
     'depends': [
         'stock',
-        'mail'
+        'mail',
+        'bn_master_setup',
     ],
     'data': [
         'data/stock_location.xml',
         'security/ir.model.access.csv',
         'views/livestock_slaugther.xml',
         'views/livestock_cutting.xml',
+        'views/livestock_cutting_material.xml',
         'wizards/livestock_slaugther.xml',
     ],
     'auto_install': False,

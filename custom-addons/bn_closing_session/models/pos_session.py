@@ -100,6 +100,9 @@ class PosSession(models.Model):
                 return 1
         return 0   # NEUTRAL
 
+    def _get_closed_orders(self):
+        # return self.order_ids.filtered(lambda o: o.state not in ['draft', 'cancel'])
+        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
 
     def get_closing_control_data(self):
         if not self.env.user.has_group('point_of_sale.group_pos_user'):

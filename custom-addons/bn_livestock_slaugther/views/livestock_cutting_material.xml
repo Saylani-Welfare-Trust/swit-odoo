@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="livestock_cutting_material_view_tree" model="ir.ui.view">
+        <field name="name">livestock.cutting.material.view.tree</field>
+        <field name="model">livestock.cutting.material</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="product_id" />
+                <field name="code" />
+                <field name="quantity" />
+                <field name="price" />
+                <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-info="state == 'in_progress'" decoration-success="state in ['received', 'done']" readonly="1" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="livestock_cutting_material_view_form" model="ir.ui.view">
+        <field name="name">livestock.cutting.material.view.form</field>
+        <field name="model">livestock.cutting.material</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'not_received'" />
+                    <button string="Update Inventory" name="action_update_inventory" invisible="state != 'not_received'" />
+                    <button string="Send to Goat &amp; Meat" name="action_send_to_goat_and_meat" invisible="state != 'not_received'" />
+
+                    <button string="Start Cutting" name="action_start" invisible="state != 'received'" />
+                    <button string="End Cutting" name="action_end" invisible="state != 'received'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="not_received, received, in_progress, done"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="product_id"/>
+                        <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="livestock_cutting_col_1">
+                            <field name="code" />
+                            <field name="quantity" />
+                            <field name="price" />
+                        </group>
+                        <group name="livestock_cutting_col_2">
+                            <field name="start_time" />
+                            <field name="end_time" />
+                            <field name="total_time" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="material_request" string="Material Request">
+                            <field name="livestock_cutting_material_line_ids" editable="bottom">
+                                <tree>
+                                    <field name="product_id" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="livestock_cutting_material_action" model="ir.actions.act_window">
+        <field name="name">Material Request</field>
+        <field name="res_model">livestock.cutting.material</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new livestock cutting material request...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="livestock_cutting_material_menu"
+        name="Material Request"
+        action="livestock_cutting_material_action"
+        parent="bn_livestock_slaugther.livestock_menu"
+        sequence="2"/>
+
+</odoo>

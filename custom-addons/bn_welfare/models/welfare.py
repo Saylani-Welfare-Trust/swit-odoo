@@ -60,8 +60,6 @@ order_type_selection = [
 ]
 
 class Welfare(models.Model):
-
-
     _name = 'welfare'
     _description = "Welfare"
     _inherit = ["mail.thread", "mail.activity.mixin"]

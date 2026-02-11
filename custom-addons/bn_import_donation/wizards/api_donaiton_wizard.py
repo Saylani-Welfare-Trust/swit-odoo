@@ -106,6 +106,8 @@ class APIDonationWizard(models.TransientModel):
                 resp.raise_for_status()
                 data = resp.json()
 
+                # raise ValidationError(str(data))
+
                 if not isinstance(data, dict) or 'donationsInfo' not in data:
                     _logger.error('Invalid donations payload: %s', data)
                     raise ValidationError(_('Invalid Donations Info'))
