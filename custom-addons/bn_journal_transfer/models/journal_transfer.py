@@ -21,6 +21,7 @@ class JournalTransfer(models.TransientModel):
     move_id = fields.Many2one('account.move', string="Account Move")
 
     date = fields.Date('Transfer Date')
+    accounting_date = fields.Date('Accounting Date')
     
     source_journal_id = fields.Many2one('account.journal', string="Source Journal")
     dest_journal_id = fields.Many2one('account.journal', string="Destination Journal")
@@ -40,40 +41,39 @@ class JournalTransfer(models.TransientModel):
                 raise UserError("Source and Destination journals must be different.")
 
     def action_transfer(self):
-        self.ensure_one()
+        for rec in self:
+            if rec.state == 'posted':
+                raise UserError('Entry is already transfered')
 
-        if self.state == 'posted':
-            raise UserError('Entry is already transfered')
+            move_line_vals = [
+                {
+                    'account_id': rec.dest_journal_id.default_account_id.id,
+                    'partner_id': False,
+                    'debit': rec.amount,
+                    'credit': 0.0,
+                    'name': f'Transfer from {rec.source_journal_id.name}',
+                },
+                {
+                    'account_id': rec.source_journal_id.default_account_id.id,
+                    'partner_id': False,
+                    'debit': 0.0,
+                    'credit': rec.amount,
+                    'name': f'Transfer to {rec.dest_journal_id.name}',
+                },
+            ]
 
-        move_line_vals = [
-            {
-                'account_id': self.dest_journal_id.default_account_id.id,
-                'partner_id': False,
-                'debit': self.amount,
-                'credit': 0.0,
-                'name': f'Transfer from {self.source_journal_id.name}',
-            },
-            {
-                'account_id': self.source_journal_id.default_account_id.id,
-                'partner_id': False,
-                'debit': 0.0,
-                'credit': self.amount,
-                'name': f'Transfer to {self.dest_journal_id.name}',
-            },
-        ]
+            move_vals = {
+                'date': rec.date,
+                'journal_id': rec.source_journal_id.id,
+                'line_ids': [(0,0,line) for line in move_line_vals],
+                'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
+            }
 
-        move_vals = {
-            'date': self.date,
-            'journal_id': self.source_journal_id.id,
-            'line_ids': [(0,0,line) for line in move_line_vals],
-            'ref': f'Transfer {self.amount} from {self.source_journal_id.name} to {self.dest_journal_id.name}'
-        }
+            move = rec.env['account.move'].create(move_vals)
+            rec.move_id = move.id
+            move.post()
 
-        move = self.env['account.move'].create(move_vals)
-        self.move_id = move.id
-        move.post()
-
-        self.state = 'posted'
+            rec.state = 'posted'
 
     def action_cancel(self):
         if self.state == 'cancel':
@@ -134,9 +134,11 @@ class JournalTransfer(models.TransientModel):
             for line in debit_lines:
                 records.append({
                     'pos_move_id': move.id,
+                    'accounting_date': move.date,
                     'descripiton': line.name or move.ref or move.name,
                     'source_journal_id': move.journal_id.id,
                     'dest_journal_id': line.bank_journal_id.id,
+                    'date': line.date,
                     'amount': line.debit,
                     'user_id': pos_session.user_id.id,
                 })
