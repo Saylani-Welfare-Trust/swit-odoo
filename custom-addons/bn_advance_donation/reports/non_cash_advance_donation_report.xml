@@ -1,0 +1,156 @@
+<odoo>
+    <template id="report_advance_donation_line_non_cash">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="line">
+                <div class="page">
+                    <div class="header">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
+                                <h4 style="color: #5D6D7E;">Individual Line Certificate</h4>
+                                <hr style="border: 2px solid #2E4053;"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donation Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Application No:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Line Serial No:</strong></td>
+                                    <td><span t-esc="line.serial_no"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Product:</strong></td>
+                                    <td><span t-esc="line.product_id.display_name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span t-if="line.state == 'paid'" style="color: #27AE60; font-weight: bold;">PAID</span>
+                                        <span t-if="line.state == 'partial'" style="color: #F39C12; font-weight: bold;">PARTIAL</span>
+                                        <span t-if="line.state == 'unpaid'" style="color: #E74C3C; font-weight: bold;">UNPAID</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donor Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Donor Name:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.donor_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Category:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.category_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contract Type:</strong></td>
+                                    <td><span t-esc="dict(line.advance_donation_id.fields_get(allfields=['contract_type'])['contract_type']['selection'])[line.advance_donation_id.contract_type]"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Approved Date:</strong></td>
+                                    <td><span t-esc="line.approved_date and line.approved_date.strftime('%Y-%m-%d') or 'Not Approved'"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Financial Details</h5>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="card" style="border: 2px solid #3498DB;">
+                                        <div class="card-body text-center">
+                                            <h6 style="color: #3498DB;">Total Amount</h6>
+                                            <h4 style="color: #2E4053;">
+                                                <span t-esc="'{:,.2f}'.format(line.amount)"/> 
+                                                <span t-esc="line.currency_id.symbol"/>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card" style="border: 2px solid #27AE60;">
+                                        <div class="card-body text-center">
+                                            <h6 style="color: #27AE60;">Paid Amount</h6>
+                                            <h4 style="color: #27AE60;">
+                                                <span t-esc="'{:,.2f}'.format(line.paid_amount)"/> 
+                                                <span t-esc="line.currency_id.symbol"/>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card" style="border: 2px solid #E74C3C;">
+                                        <div class="card-body text-center">
+                                            <h6 style="color: #E74C3C;">Remaining Amount</h6>
+                                            <h4 style="color: #E74C3C;">
+                                                <span t-esc="'{:,.2f}'.format(line.remaining_amount)"/> 
+                                                <span t-esc="line.currency_id.symbol"/>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4" t-if="line.is_disbursed">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h5><i class="fa fa-check-circle"></i> Disbursement Information</h5>
+                                <p><strong>Disbursed Amount:</strong> 
+                                    <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/> 
+                                    <span t-esc="line.currency_id.symbol"/>
+                                </p>
+                                <p><strong>Disbursement Status:</strong> 
+                                    <span style="color: #27AE60; font-weight: bold;">COMPLETED</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-5">
+                        <div class="col-6">
+                            <p><strong>Issue Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
+                            <p><strong>Issued By:</strong> <span t-esc="user.name"/></p>
+                        </div>
+                        <div class="col-6 text-right">
+                            <div style="border-top: 1px solid #000; width: 200px; margin-left: auto;">
+                                <p class="text-center mt-2"><strong>Authorized Signature</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <small style="color: #7F8C8D;">
+                                This is a computer-generated document. No signature is required.<br/>
+                                For any queries, please contact the administration office.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+    
+    <record id="action_report_advance_donation_line_non_cash" model="ir.actions.report">
+        <field name="name">Non-Cash Donation Line Report</field>
+        <field name="model">advance.donation.line</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_advance_donation.report_advance_donation_line_non_cash</field>
+        <field name="report_file">bn_advance_donation.report_advance_donation_line_non_cash</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Non-Cash Donation Line - %s-%s' % (object.advance_donation_id.name, object.serial_no)</field>
+    </record>
+</odoo>

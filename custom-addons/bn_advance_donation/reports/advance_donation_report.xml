@@ -1,0 +1,59 @@
+<odoo>
+    <template id="report_advance_donation_non_cash">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="donation">
+                <div class="page">
+                    <h2>Donation Registration Contract</h2>
+                    <p><strong>Application No:</strong> <span t-esc="donation.name"/></p>
+                    <p><strong>Donor:</strong> <span t-esc="donation.donor_id.name"/></p>
+                    <p><strong>Category:</strong> <span t-esc="donation.category_id.name"/></p>
+                    <p><strong>Contract Type:</strong> <span t-esc="dict(donation.fields_get(allfields=['contract_type'])['contract_type']['selection'])[donation.contract_type]"/></p>
+                    <p><strong>Status:</strong> <span t-esc="dict(donation.fields_get(allfields=['state'])['state']['selection'])[donation.state]"/></p>
+                    <p><strong>Start Date:</strong> <span t-esc="donation.contract_start_date"/></p>
+                    <p><strong>End Date:</strong> <span t-esc="donation.contract_end_date"/></p>
+                    <p><strong>Total Amount:</strong> <span t-esc="donation.total_product_amount"/> <span t-esc="donation.currency_id.symbol"/></p>
+                    <br/>
+                    <h4>Donation Details</h4>
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Serial No.</th>
+                                <th>Product</th>
+                                <th>Amount</th>
+                                <th>Paid</th>
+                                <th>Remaining</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="donation.advance_donation_lines" t-as="line">
+                                <tr>
+                                    <td><span t-esc="line.serial_no"/></td>
+                                    <td><span t-esc="line.product_id.display_name"/></td>
+                                    <td><span t-esc="line.amount"/> <span t-esc="donation.currency_id.symbol"/></td>
+                                    <td><span t-esc="line.paid_amount"/> <span t-esc="donation.currency_id.symbol"/></td>
+                                    <td><span t-esc="line.remaining_amount"/> <span t-esc="donation.currency_id.symbol"/></td>
+                                    <td><span t-esc="dict(line.fields_get(allfields=['state'])['state']['selection'])[line.state]"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <br/>
+                    <p><strong>Date:</strong> <span t-esc="time.strftime('%Y-%m-%d')"/></p>
+                    <p><strong>Signature:</strong> ___________________________</p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_advance_donation_non_cash" model="ir.actions.report">
+        <field name="name">Non-Cash Donation Report</field>
+        <field name="model">advance.donation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_advance_donation.report_advance_donation_non_cash</field>
+        <field name="report_file">bn_advance_donation.report_advance_donation_non_cash</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Non-Cash Donation - %s' % (object.name)</field>
+    </record>
+</odoo>

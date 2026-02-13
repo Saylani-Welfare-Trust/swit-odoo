@@ -25,6 +25,8 @@
             <form>
                 <header>
                     <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/>
+                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="state != 'draft'"/>
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_approved" invisible="state != 'approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_2"/>
@@ -32,7 +34,9 @@
                     <button name="action_rejected" invisible="state != 'approval_2'" string="Reject" type="object" groups="bn_advance_donation.group_adv_don_approval_2"/>
                     <button name="action_revert" invisible="state != 'approval_1'" string="Revert" type="object" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_revert" invisible="state != 'approval_2'" string="Revert" type="object" groups="bn_advance_donation.group_adv_don_approval_2"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,approval_1,approval_2,approved"/>
+                    <button name="action_print_non_cash_report" invisible="state != 'approved'" string="Print Non-Cash Donation Report" type="object" class="btn-primary"/>                    
+                    
+                    <field name="state" widget="statusbar"  statusbar_visible="draft,approval_1,approval_2,approved"/>
                 </header>
                 <sheet>
                     <field name="product_domain_ids" invisible="1"/>
@@ -72,8 +76,9 @@
                             <field name="contract_end_date" invisible="1"/>
                             <field name="no_of_days" readonly="1" force_save="1" invisible="contract_frequency == 'weekly' or contract_type == 'product'"/>
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
-                            <field name="total_no_of_product" readonly="contract_type == 'frequency' or state != 'draft'" force_save="1"/>
-                            <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
+                            <field name="total_no_of_product" readonly="contract_type == 'frequency' or state != 'draft'" force_save="1"/>                            <field name="total_balance" readonly="1" force_save="1"/>
+                            <field name="manual_payment_amount" readonly="state != 'draft'"/>
+                            <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                            <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -85,8 +90,13 @@
                                     <field name="amount"/>
                                     <field name="paid_amount" />
                                     <field name="remaining_amount"/>
+                                    <field name="date"  />
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                    <field name="disbursed_amount"/>
                                     <field name="is_disbursed"/>
+                                    <field name="disbursement_date"/>
+                                    <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
+                                    <!-- <field name="date_visibility" column_invisible="1"/> -->
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
@@ -101,6 +111,35 @@
                                     <field name="currency_id" column_invisible="1"/>
                                 </tree>
                             </field>
+                        </page>
+                        <page string="Used Donation Receipts">
+                            <field name="donation_slip_usage_lines">
+                                <tree>
+                                    <field name="donation_slip_id" string="Receipt Name"/>
+                                    <field name="receipt_date" string="Receipt Date"/>
+                                    <field name="receipt_payment_type" string="Payment Type"/>
+                                    <field name="receipt_total_amount" string="Total Receipt Amount"/>
+                                    <field name="usage_amount" string="Used Amount"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="donation_slip_id" readonly="1"/>
+                                        <field name="receipt_date" readonly="1"/>
+                                        <field name="receipt_payment_type" readonly="1"/>
+                                        <field name="receipt_total_amount" readonly="1"/>
+                                        <field name="usage_amount"/>
+                                    </group>
+                                </form>
+                            </field>
+                            <group>
+                                <group>
+                                    <field name="total_balance" string="Total Available Balance" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="paid_amount" string="Total Used Amount" readonly="1"/>
+                                </group>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

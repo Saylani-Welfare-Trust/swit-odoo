@@ -1,6 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-
+from datetime import timedelta
 
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
@@ -47,6 +47,11 @@ class AdvanceDonation(models.Model):
     total_product_amount = fields.Monetary('Total Amount', currency_field='currency_id')
     paid_amount = fields.Monetary('Paid Amount', compute='_compute_amount')
     remaining_amount = fields.Monetary('Remaining Amount', compute='_compute_amount')
+    
+    # New fields for balance management
+    total_balance = fields.Monetary('Total Balance', currency_field='currency_id', compute='_compute_total_balance', store=True)
+    manual_payment_amount = fields.Monetary('Manual Payment Amount', currency_field='currency_id', default=0 ,store=True)
+    available_balance = fields.Monetary('Available Balance', currency_field='currency_id', compute='_compute_available_balance', store=True)
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -95,19 +100,67 @@ class AdvanceDonation(models.Model):
             self.is_fully_disbursed = True
         else:
             self.is_fully_disbursed = False
+    
+    @api.depends('donor_id', 'donation_slip_ids')
+    def _compute_total_balance(self):
+        """Calculate total balance from all paid donation receipts for this donor"""
+        for rec in self:
+            if rec.donor_id:
+                # Get all paid donation receipts for this donor with remaining amount
+                donation_receipts = self.env['advance.donation.receipt'].search([
+                    ('donor_id', '=', rec.donor_id.id),
+                    ('state', '=', 'paid'),
+                    ('remaining_amount', '>', 0)
+                ])
+                rec.total_balance = sum(donation_receipts.mapped('remaining_amount'))
+            else:
+                rec.total_balance = 0
+    
+    @api.depends('total_balance', 'manual_payment_amount')
+    def _compute_available_balance(self):
+        """Calculate available balance after manual payment"""
+        for rec in self:
+            rec.available_balance = rec.total_balance - rec.manual_payment_amount
 
     def compute_donation(self):
         self.advance_donation_lines.unlink()
         amount = (self.product_id.lst_price / 100) * self.amount_percentage
 
-        for i in range(self.total_no_of_product):
-            self.advance_donation_lines.create({
-                'serial_no': i+1,
-                'product_id': self.product_id.id,
-                'amount': amount,
-                'remaining_amount': amount,
-                'advance_donation_id': self.id
-            })
+        # Prepare dates if frequency based
+        dates = []
+        if self.contract_type == 'frequency' and self.contract_start_date and self.contract_end_date:
+            start_date = fields.Date.from_string(self.contract_start_date)
+            end_date = fields.Date.from_string(self.contract_end_date)
+            if self.contract_frequency == 'daily':
+                delta = (end_date - start_date).days + 1
+                dates = [start_date + timedelta(days=i) for i in range(delta)]
+            elif self.contract_frequency == 'weekly':
+                delta = (end_date - start_date).days
+                weeks = int(delta / 7) + 1
+                dates = [start_date + timedelta(days=7 * i) for i in range(weeks)]
+
+        serial = 1
+        if self.contract_type == 'frequency' and dates:
+            for date in dates:
+                for _ in range(self.no_of_product):
+                    self.advance_donation_lines.create({
+                        'serial_no': serial,
+                        'product_id': self.product_id.id,
+                        'amount': amount,
+                        'remaining_amount': amount,
+                        'advance_donation_id': self.id,
+                        'date': date,
+                    })
+                    serial += 1
+        else:
+            for i in range(self.total_no_of_product):
+                self.advance_donation_lines.create({
+                    'serial_no': i + 1,
+                    'product_id': self.product_id.id,
+                    'amount': amount,
+                    'remaining_amount': amount,
+                    'advance_donation_id': self.id,
+                })
 
         self.total_product_amount = sum(line.amount for line in self.advance_donation_lines)
 
@@ -116,6 +169,12 @@ class AdvanceDonation(models.Model):
     def compute_product_domain(self):
         if self.category_id:
             self.product_domain_ids = self.category_id.category_lines.product_id
+
+    @api.onchange('donor_id')
+    def onchange_donor_id(self):
+        """Refresh balance when donor changes"""
+        self._compute_total_balance()
+        self._compute_available_balance()
 
     @api.onchange('contract_start_date', 'contract_end_date', 'contract_frequency')
     def compute_no_of_days(self):
@@ -146,7 +205,56 @@ class AdvanceDonation(models.Model):
 
 
     def action_send_for_approval(self):
+        # self._validate_manual_payment()
         self.write({'state': 'approval_1'})
+    
+    def _validate_manual_payment(self):
+        """Validate that manual payment doesn't exceed available balance"""
+        if self.manual_payment_amount > self.total_balance:
+            raise UserError(
+                f'Manual payment amount ({self.manual_payment_amount}) cannot be greater than '
+                f'total available balance ({self.total_balance})'
+            )
+        
+        if self.manual_payment_amount > self.remaining_amount:
+            # Allow partial payment but show warning
+            return True
+    
+    def action_apply_manual_payment(self):
+        """Apply manual payment to donation lines"""
+        self._validate_manual_payment()
+        if self.manual_payment_amount <= 0:
+            raise UserError('Please enter a valid payment amount')
+
+        # Get available receipts in FIFO order (oldest first)
+        available_receipts = self.env['advance.donation.receipt'].search([
+            ('donor_id', '=', self.donor_id.id),
+            ('state', '=', 'paid'),
+            ('remaining_amount', '>', 0)
+        ], order='date asc, id asc')
+        if not available_receipts:
+            raise UserError('No available donation receipts found for this donor')
+
+        # Apply FIFO logic to determine which receipts to use
+        receipts_to_use = self._get_receipts_for_payment(available_receipts, self.manual_payment_amount)
+
+        # Auto-attach the receipts to donation_slip_ids field
+        current_slips = list(self.donation_slip_ids.ids)
+        for receipt in receipts_to_use:
+            if receipt.id not in current_slips:
+                current_slips.append(receipt.id)
+
+        # Update donation_slip_ids which will trigger onchange_donation_slip_ids automatically
+        self.write({'donation_slip_ids': [(6, 0, current_slips)]})
+
+        # Now reset manual_payment_amount AFTER distribution
+        # self.manual_payment_amount = 0
+    
+    def action_refresh_balance(self):
+        """Refresh total balance computation"""
+        self._compute_total_balance()
+        self._compute_available_balance()
+        return True
 
     def action_approved(self):
         if self.state == 'approval_1':
@@ -180,14 +288,23 @@ class AdvanceDonation(models.Model):
 
 
     def onchange_donation_slip_ids(self):
+        # Reset all donation lines to unpaid state
         for rec in self.advance_donation_lines:
             rec.paid_amount = 0
             rec.remaining_amount = rec.amount
 
-        total_paid_from_slips = sum(self.donation_slip_ids.mapped('amount'))
-        remaining_value = total_paid_from_slips
+        # Use manual_payment_amount instead of total from all slips
+        payment_to_distribute = self.manual_payment_amount
+        remaining_value = payment_to_distribute
 
-        for donation_slip in self.donation_slip_ids:
+        # If no manual payment amount is set, don't distribute anything
+        if payment_to_distribute <= 0:
+            return
+
+        # Sort donation slips by date for FIFO logic
+        sorted_donation_slips = self.donation_slip_ids.sorted(lambda x: (x.date, x.id))
+
+        for donation_slip in sorted_donation_slips:
             donation_slip_remaining_amount = donation_slip.amount - donation_slip.used_amount
 
             if donation_slip_remaining_amount <= 0 or remaining_value <= 0:
@@ -217,7 +334,6 @@ class AdvanceDonation(models.Model):
                     'paid_amount': donation_line.paid_amount + amount_to_pay,
                     'remaining_amount': donation_line.remaining_amount - amount_to_pay
                 })
-
 
                 # Update remaining values
                 remaining_value -= amount_to_pay  # Deduct from the total remaining value
@@ -257,6 +373,33 @@ class AdvanceDonation(models.Model):
                donation_slip.write({'update_used_amount': True})
 
         return res
+    
+    def _get_receipts_for_payment(self, available_receipts, payment_amount):
+        """Get receipts needed for payment using FIFO basis"""
+        receipts_to_use = []
+        remaining_amount = payment_amount
+        
+        for receipt in available_receipts:
+            if remaining_amount <= 0:
+                break
+                
+            receipt_available = receipt.remaining_amount
+            if receipt_available > 0:
+                receipts_to_use.append(receipt)
+                remaining_amount -= receipt_available
+        
+        return receipts_to_use
+    
+    def get_used_receipts_data(self):
+        """Get data for used donation receipts"""
+        usage_lines = self.donation_slip_usage_lines
+        return [{
+            'receipt_name': line.donation_slip_id.name,
+            'receipt_amount': line.donation_slip_id.amount,
+            'used_amount': line.usage_amount,
+            'receipt_date': line.donation_slip_id.date,
+            'payment_type': line.donation_slip_id.payment_type,
+        } for line in usage_lines]
 
 
     def _compute_fully_paid(self):
@@ -272,3 +415,6 @@ class AdvanceDonation(models.Model):
             }
         else:
             self.is_fully_paid = False
+    
+    def action_print_non_cash_report(self):
+        return self.env.ref('bn_advance_donation.action_report_advance_donation_non_cash').report_action(self)

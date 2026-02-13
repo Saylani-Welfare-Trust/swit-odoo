@@ -97,13 +97,14 @@
                             <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
                                 <tree editable="bottom">
                                     <field name="product_domain" column_invisible="1" />
+                                    <field name="analytic_account_domain" column_invisible="1" />
 
                                     <field name="recurring_duration" invisible="parent.order_type != 'recurring'" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_point" />
-                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="collection_point == 'bank'" />
+                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
                                     <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
                                     <field name="quantity" />   

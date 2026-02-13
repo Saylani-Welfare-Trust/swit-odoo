@@ -24,4 +24,30 @@
         <field name="doall">False</field>
         <field name="active">True</field>
     </record>
+
+    <!-- Scheduled Action for Auto Creating Bills for Welfare Line (Cash + Bank) -->
+    <record id="ir_cron_auto_create_bills_welfare_line" model="ir.cron">
+        <field name="name">Auto Create Bills for Welfare Line (Cash + Bank)</field>
+        <field name="model_id" ref="model_welfare_line"/>
+        <field name="state">code</field>
+        <field name="code">model._auto_create_bills_for_cash_bank()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall">False</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Scheduled Action for Auto Creating Bills for Welfare Recurring Line (Cash + Bank) -->
+    <record id="ir_cron_auto_create_bills_welfare_recurring_line" model="ir.cron">
+        <field name="name">Auto Create Bills for Welfare Recurring Line (Cash + Bank)</field>
+        <field name="model_id" ref="model_welfare_recurring_line"/>
+        <field name="state">code</field>
+        <field name="code">model._auto_create_bills_for_cash_bank()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall">False</field>
+        <field name="active">True</field>
+    </record>
 </odoo>
