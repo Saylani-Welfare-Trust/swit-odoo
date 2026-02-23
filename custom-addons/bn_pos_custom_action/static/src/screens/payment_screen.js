@@ -348,20 +348,22 @@ patch(PaymentScreen.prototype, {
             }
 
         }
-    
+        console.log("🟢 [Advance Donation] Processing donation line:",currentOrder.get_orderlines());
         // ---------- Advance Donation Processing ----------
-        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.advance_donation) {
+        // Check for products with is_advance_donation field set to true
+        const donationLines = currentOrder.get_orderlines().filter(line =>
+            line.product && line.product.is_advance_donation === true
+        );
+
+        if (donationLines && donationLines.length > 0) {
             try {
                 console.log("🟢 [Advance Donation] Processing donation receipt...");
-                const donationData = currentOrder.extra_data.advance_donation;
-
-                // Find the donation line in the order
-                const donationLine = currentOrder.get_orderlines().find(line =>
-                    line.product && line.product.id === donationData.product_id 
-                );
-                console.log("🟢 [Advance Donation] Found donation line:", donationLine);
-                if (donationLine) {
+                
+                for (const donationLine of donationLines) {
+                    console.log("🟢 [Advance Donation] Processing donation line:", donationLine);
+                    
                     const donationAmount = Math.abs(donationLine.get_display_price());
+                    const partner = currentOrder.get_partner();
 
                     // Get payment method from order
                     const paymentLines = currentOrder.get_paymentlines();
@@ -375,12 +377,14 @@ patch(PaymentScreen.prototype, {
                     // Prepare data for register_pos_payment
                     const data = {
                         'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
-                        'is_donation_id': true,
-                        'donation_id': donationData.record_number,  // The donation name/ID
+                        'is_donation_id': false,
+                        'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
-                        'partner_id': donationData.customer_id || null,
+                        'donor_id': partner ? partner.id : null,
+                        'product_id': donationLine.product.id,
                     };
                     console.log("🟢 [Advance Donation] Preparing to create donation receipt with data:", data);
+                    
                     // Only add cheque fields if payment type is cheque
                     if (data.payment_type === 'cheque') {
                         data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback
@@ -396,13 +400,9 @@ patch(PaymentScreen.prototype, {
                     console.log("🟢 [Advance Donation] Donation receipt result:", result);
                     if (result.status === 'success') {
                         this.env.services.notification.add(
-                            `Donation receipt created for ${donationData.record_number}`,
+                            `Donation receipt created for ${donationLine.product.display_name}`,
                             { type: 'success' }
                         );
-
-                        // Also update the donation record's paid amount
-                        // await this.updateDonationPayment(donationData.donation_id, donationAmount);
-
                     } else {
                         throw new Error(result.body || 'Failed to create donation receipt');
                     }

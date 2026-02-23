@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_product_template_only_form_view_inherit_bn_inventory_customization" model="ir.ui.view">
+        <field name="name">product.product.template.only.form.view.inherit.bn.inventory.customization</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='options']" position="inside">
+                <span class="d-inline-flex">
+                    <field name="is_receive_by_weight" on_change="1" field_id="is_receive_by_weight"/>
+                    <label for="is_receive_by_weight"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

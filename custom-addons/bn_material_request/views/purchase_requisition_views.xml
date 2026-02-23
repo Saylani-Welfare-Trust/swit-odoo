@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Purchase Requisition Form to add vendor field and Create RFQs button -->
+    <record id="view_purchase_requisition_form_inherit_vendor" model="ir.ui.view">
+        <field name="name">purchase.requisition.form.inherit.vendor</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add Create RFQs button in header -->
+            <xpath expr="//header" position="inside">
+                <button string="Create RFQs for Vendors" 
+                        name="action_create_multi_vendor_rfqs" 
+                        type="object"
+                        class="btn-primary" 
+                        icon="fa-clone"
+                        invisible="state not in ['in_progress', 'open']"
+                        help="Create multiple RFQs (Purchase Orders) for different vendors with same products"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

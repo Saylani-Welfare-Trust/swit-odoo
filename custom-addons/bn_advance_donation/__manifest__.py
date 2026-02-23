@@ -17,6 +17,7 @@
         'data/sequences.xml',
         'reports/advance_donation_report.xml',
         'reports/non_cash_advance_donation_report.xml',
+        'wizard/partial_payment.xml',
         'views/advance_donation.xml',
         'views/donation_receipt.xml',
         'views/product_template.xml',

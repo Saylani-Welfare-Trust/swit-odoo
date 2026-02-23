@@ -88,6 +88,7 @@ class WelfareRecurringLine(models.Model):
         for line in lines:
             try:
                 line._create_bill()
+                line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
             except Exception as e:
                 # Log error but continue processing other lines
                 pass

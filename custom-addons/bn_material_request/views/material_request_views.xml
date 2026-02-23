@@ -10,6 +10,7 @@
             <tree>
                 <field name="name"/>
                 <field name="user_id"/>
+                <field name="request_type" invisible="1"/>
                 <field name="request_date"/>
                 <field name="source_location_id"/>
                 <field name="dest_location_id"/>
@@ -53,6 +54,14 @@
                                 invisible="not picking_id">
                             <field name="picking_id" widget="statinfo" string="Transfer"/>
                         </button>
+                        <button name="action_view_purchase_request" type="object" class="oe_stat_button" icon="fa-shopping-cart"
+                                invisible="not purchase_request_id">
+                            <field name="purchase_request_id" widget="statinfo" string="Purchase Request"/>
+                        </button>
+                        <button name="action_view_auto_purchase_request" type="object" class="oe_stat_button" icon="fa-exclamation-triangle"
+                                invisible="not auto_purchase_request_id">
+                            <field name="auto_purchase_request_id" widget="statinfo" string="Auto PR (Shortage)"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <label for="name" string="Reference"/>
@@ -60,14 +69,15 @@
                     </div>
                     <group>
                         <group name="request_info">
-                            <field name="user_id"/>
-                            <field name="department_id"/>
-                            <field name="request_date"/>
-                            <field name="source_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="request_type" invisible="1" readonly="state != 'draft'"/>
+                            <field name="request_date" invisible="1"/>
+                            <field name="source_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <field name="dest_location_domain" invisible="1"/>
-                            <field name="dest_location_id" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/>
+                            <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/>
                         </group>
                         <group name="budget_info">
+                            <field name="user_id"/>
+                            <field name="department_id"/>
                             <field name="total_amount"/>
                             <field name="budget_amount" invisible="state == 'draft'"/>
                             <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>

@@ -25,8 +25,10 @@
             <form>
                 <header>
                     <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/>
-                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="state != 'draft'"/>
+                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0"/>
+                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0"/>
+                    <!-- <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/> -->
+                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1"/>
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_approved" invisible="state != 'approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_2"/>
@@ -36,7 +38,7 @@
                     <button name="action_revert" invisible="state != 'approval_2'" string="Revert" type="object" groups="bn_advance_donation.group_adv_don_approval_2"/>
                     <button name="action_print_non_cash_report" invisible="state != 'approved'" string="Print Non-Cash Donation Report" type="object" class="btn-primary"/>                    
                     
-                    <field name="state" widget="statusbar"  statusbar_visible="draft,approval_1,approval_2,approved"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approval_1,approval_2,approved"/>
                 </header>
                 <sheet>
                     <field name="product_domain_ids" invisible="1"/>
@@ -55,6 +57,7 @@
                             <field name="contract_type" required="1" readonly="state != 'draft'"/>
                             <field name="contract_frequency" required="1" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
                             <field name="total_product_amount" readonly="1" force_save="1"/>
+                            <field name="remaining_amount"/>
                             <field name="donation_slip_ids" domain="[('state', '=', 'paid'), ('donor_id', '=', donor_id), ('remaining_amount', '>', 0)]" invisible="is_fully_paid == True" widget="many2many_tags" options="{'no_create': True, 'no_edit': True}"  readonly="state != 'draft'" force_save="1"/>
                             <field name="donation_slip_ids" domain="[('state', '=', 'paid'), ('donor_id', '=', donor_id), ('remaining_amount', '>', 0), ('id', 'in', donation_slip_ids)]" invisible="is_fully_paid == False" widget="many2many_tags" options="{'no_create': True, 'no_edit': True}"  readonly="state != 'draft'" force_save="1"/>
                             <field name="approval_1_remarks" invisible="state not in ('approval_1', 'rejected')" force_save="1" readonly="state in ('rejected', 'draft')"/>
@@ -76,9 +79,11 @@
                             <field name="contract_end_date" invisible="1"/>
                             <field name="no_of_days" readonly="1" force_save="1" invisible="contract_frequency == 'weekly' or contract_type == 'product'"/>
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
-                            <field name="total_no_of_product" readonly="contract_type == 'frequency' or state != 'draft'" force_save="1"/>                            <field name="total_balance" readonly="1" force_save="1"/>
-                            <field name="manual_payment_amount" readonly="state != 'draft'"/>
-                            <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                            <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
+                            <field name="total_no_of_product" readonly="contract_type == 'frequency' or state != 'draft'" force_save="1"/>                            
+                            <field name="total_balance" readonly="1" force_save="1"/>
+                            <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
+                            <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
+                            <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -119,6 +124,7 @@
                                     <field name="receipt_date" string="Receipt Date"/>
                                     <field name="receipt_payment_type" string="Payment Type"/>
                                     <field name="receipt_total_amount" string="Total Receipt Amount"/>
+                                    <field name="receipt_remaining_amount" readonly="1"/>
                                     <field name="usage_amount" string="Used Amount"/>
                                     <field name="currency_id" column_invisible="1"/>
                                 </tree>
@@ -128,7 +134,8 @@
                                         <field name="receipt_date" readonly="1"/>
                                         <field name="receipt_payment_type" readonly="1"/>
                                         <field name="receipt_total_amount" readonly="1"/>
-                                        <field name="usage_amount"/>
+                                        <field name="receipt_remaining_amount" readonly="1"/>
+                                        <field name="usage_amount" readonly="1"/>
                                     </group>
                                 </form>
                             </field>

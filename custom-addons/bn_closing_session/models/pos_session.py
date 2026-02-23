@@ -1,6 +1,6 @@
-from odoo.exceptions import AccessError, ValidationError, UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tools import float_compare, float_is_zero
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 
 import logging
 
@@ -102,7 +102,7 @@ class PosSession(models.Model):
 
     def _get_closed_orders(self):
         # return self.order_ids.filtered(lambda o: o.state not in ['draft', 'cancel'])
-        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
+        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid', 'done'])
 
     def get_closing_control_data(self):
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
@@ -777,6 +777,23 @@ class PosSession(models.Model):
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         
         return vals
+    
+    def action_show_payments_list(self):
+        return {
+            'name': _('Payments'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'pos.payment',
+            'view_mode': 'tree,form',
+            'domain': [('session_id', '=', self.id)],
+            'context': {'search_default_group_by_payment_method': 1}
+        }
+    
+    @api.depends('order_ids.payment_ids.amount')
+    def _compute_total_payments_amount(self):
+        result = self.env['pos.payment']._read_group([('session_id', 'in', self.ids)], ['session_id'], ['amount:sum'])
+        session_amount_map = {session.id: amount for session, amount in result}
+        for session in self:
+            session.total_payments_amount = session_amount_map.get(session.id) or 0
     
     def show_session_slip(self):
         return {

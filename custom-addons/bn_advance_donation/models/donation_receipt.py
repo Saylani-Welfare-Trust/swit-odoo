@@ -138,124 +138,124 @@ class DonationReceipt(models.Model):
 
 
     def action_paid(self):
-        if self.product_id:
-            credit_account = self.product_id.categ_id.property_account_income_categ_id or self.product_id.property_account_income_id
-            debit_account = self.product_id.categ_id.property_account_expense_categ_id or self.product_id.property_account_expense_id
-        else:
-            raise UserError('No product selected for account determination.')
+        # if self.product_id:
+        #     credit_account = self.product_id.categ_id.property_account_income_categ_id or self.product_id.property_account_income_id
+        #     debit_account = self.product_id.categ_id.property_account_expense_categ_id or self.product_id.property_account_expense_id
+        # else:
+        #     raise UserError('No product selected for account determination.')
 
-        if not credit_account:
-            raise UserError('No Credit Account found on product or category.')
-        if not debit_account:
-            raise UserError('No Debit Account found on product or category.')
+        # if not credit_account:
+        #     raise UserError('No Credit Account found on product or category.')
+        # if not debit_account:
+        #     raise UserError('No Debit Account found on product or category.')
         
-        if self.donation_id:
-            donation_lines = self.donation_id.advance_donation_lines
-            unpaid_donation_lines = donation_lines.filtered(lambda r: r.state != 'paid')
-            total_remaining_amount = sum(unpaid_donation_lines.mapped('remaining_amount'))
+        # if self.donation_id:
+        #     donation_lines = self.donation_id.advance_donation_lines
+        #     unpaid_donation_lines = donation_lines.filtered(lambda r: r.state != 'paid')
+        #     total_remaining_amount = sum(unpaid_donation_lines.mapped('remaining_amount'))
 
-            if self.amount > total_remaining_amount:
-                raise UserError(
-                    f'You cannot pay more than the remaining amount. Remaining Amount: {total_remaining_amount}')
-            self.donation_id.donation_slip_ids = [(4, self.id)]
+        #     if self.amount > total_remaining_amount:
+        #         raise UserError(
+        #             f'You cannot pay more than the remaining amount. Remaining Amount: {total_remaining_amount}')
+        #     self.donation_id.donation_slip_ids = [(4, self.id)]
 
-        if self.payment_type == 'cash':
-            # credit_account = self.env.ref('bn_advance_donation.cash_payment_credit_account').account_id
-            # debit_account = self.env.ref('bn_advance_donation.cash_payment_debit_account').account_id
+        # if self.payment_type == 'cash':
+        #     # credit_account = self.env.ref('bn_advance_donation.cash_payment_credit_account').account_id
+        #     # debit_account = self.env.ref('bn_advance_donation.cash_payment_debit_account').account_id
 
-            # if not credit_account:
-            #     raise UserError('No Credit Account found')
-            # if not debit_account:
-            #     raise UserError('No Debit Account found')
+        #     # if not credit_account:
+        #     #     raise UserError('No Credit Account found')
+        #     # if not debit_account:
+        #     #     raise UserError('No Debit Account found')
 
-            move_lines = [
-                {
-                    'name': f'{self.name}',
-                    'account_id': credit_account.id,
-                    'credit': self.amount,
-                    'debit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                },
-                {
-                    'name': f'{self.name}',
-                    'account_id': debit_account.id,
-                    'debit': self.amount,
-                    'credit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                }
-            ]
-            move = self.env['account.move'].create({
-                'ref': f'{self.name}',
-                'partner_id': self.donor_id.id,
-                'line_ids': [(0, 0, line) for line in move_lines],
-                'date': fields.Date.today(),
-                'move_type': 'entry',
-            })
+        #     move_lines = [
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': credit_account.id,
+        #             'credit': self.amount,
+        #             'debit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         },
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': debit_account.id,
+        #             'debit': self.amount,
+        #             'credit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         }
+        #     ]
+        #     move = self.env['account.move'].create({
+        #         'ref': f'{self.name}',
+        #         'partner_id': self.donor_id.id,
+        #         'line_ids': [(0, 0, line) for line in move_lines],
+        #         'date': fields.Date.today(),
+        #         'move_type': 'entry',
+        #     })
 
-            move.action_post()
+        #     move.action_post()
 
-        if self.payment_type == 'cheque':
-            # credit_account = self.env.ref('bn_advance_donation.cheque_payment_credit_account_first').account_id
-            # debit_account = self.env.ref('bn_advance_donation.cheque_payment_debit_account_first').account_id
+        # if self.payment_type == 'cheque':
+        #     # credit_account = self.env.ref('bn_advance_donation.cheque_payment_credit_account_first').account_id
+        #     # debit_account = self.env.ref('bn_advance_donation.cheque_payment_debit_account_first').account_id
 
-            move_lines = [
-                {
-                    'name': f'{self.name}',
-                    'account_id': credit_account.id,
-                    'credit': self.amount,
-                    'debit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                },
-                {
-                    'name': f'{self.name}',
-                    'account_id': debit_account.id,
-                    'debit': self.amount,
-                    'credit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                }
-            ]
-            move = self.env['account.move'].create({
-                'ref': f'{self.name}',
-                'partner_id': self.donor_id.id,
-                'line_ids': [(0, 0, line) for line in move_lines],
-                'date': fields.Date.today(),
-                'move_type': 'entry',
-            })
-            move.action_post()
+        #     move_lines = [
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': credit_account.id,
+        #             'credit': self.amount,
+        #             'debit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         },
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': debit_account.id,
+        #             'debit': self.amount,
+        #             'credit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         }
+        #     ]
+        #     move = self.env['account.move'].create({
+        #         'ref': f'{self.name}',
+        #         'partner_id': self.donor_id.id,
+        #         'line_ids': [(0, 0, line) for line in move_lines],
+        #         'date': fields.Date.today(),
+        #         'move_type': 'entry',
+        #     })
+        #     move.action_post()
 
-            # credit_account = self.env.ref('bn_advance_donation.cheque_payment_credit_account_second').account_id
-            # debit_account = self.env.ref('bn_advance_donation.cheque_payment_debit_account_second').account_id
+        #     # credit_account = self.env.ref('bn_advance_donation.cheque_payment_credit_account_second').account_id
+        #     # debit_account = self.env.ref('bn_advance_donation.cheque_payment_debit_account_second').account_id
 
-            move_lines = [
-                {
-                    'name': f'{self.name}',
-                    'account_id': credit_account.id,
-                    'credit': self.amount,
-                    'debit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                },
-                {
-                    'name': f'{self.name}',
-                    'account_id': debit_account.id,
-                    'debit': self.amount,
-                    'credit': 0.0,
-                    'partner_id': self.donor_id.id,
-                    'currency_id': self.currency_id.id if self.currency_id else None,
-                }
-            ]
-            move = self.env['account.move'].create({
-                'ref': f'{self.name}',
-                'partner_id': self.donor_id.id,
-                'line_ids': [(0, 0, line) for line in move_lines],
-                'date': fields.Date.today(),
-                'move_type': 'entry',
-            })
-            move.action_post()
+        #     move_lines = [
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': credit_account.id,
+        #             'credit': self.amount,
+        #             'debit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         },
+        #         {
+        #             'name': f'{self.name}',
+        #             'account_id': debit_account.id,
+        #             'debit': self.amount,
+        #             'credit': 0.0,
+        #             'partner_id': self.donor_id.id,
+        #             'currency_id': self.currency_id.id if self.currency_id else None,
+        #         }
+        #     ]
+        #     move = self.env['account.move'].create({
+        #         'ref': f'{self.name}',
+        #         'partner_id': self.donor_id.id,
+        #         'line_ids': [(0, 0, line) for line in move_lines],
+        #         'date': fields.Date.today(),
+        #         'move_type': 'entry',
+        #     })
+        #     move.action_post()
 
         self.write({'state': 'paid'})
 

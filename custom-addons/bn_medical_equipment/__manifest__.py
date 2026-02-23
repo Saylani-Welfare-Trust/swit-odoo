@@ -8,7 +8,7 @@
     'depends': [
         'bn_profile_management',
         'bn_pos_custom_action',
-        'stock'
+        'stock',
     ],
     'data': [
         'security/group.xml',

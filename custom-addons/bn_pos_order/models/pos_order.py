@@ -31,7 +31,7 @@ class POSOrder(models.Model):
         pos_order = self.env['pos.order'].search([('id', '=', self.refunded_order_ids[0].id)])
         
         if pos_order:
-            if self.session_id.state == 'closing_control':
+            if self.session_id.state != 'closed':
                 pos_order.state = 'paid'
             else:
                 pos_order.state = 'done'

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="receive_by_weight_view_form" model="ir.ui.view">
+        <field name="name">receive.by.weight.view.form</field>
+        <field name="model">receive.by.weight</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="total_weight" readonly="1" force_save="True"/>
+                        <field name="bill_amount" readonly="1" force_save="True"/>
+
+                        <field name="line_ids" no_label="1">
+                            <tree editable="bottom" create="0" delete="0">
+                                <field name="allowed_product_ids" column_invisible="1"/>
+                                <field name="product_id" options="{'no_create': True}" domain="[('id', 'in', allowed_product_ids)]" readonly="1" force_save="1"/>
+                                <field name="livestock_product_id" domain="[('is_livestock', '=', True)]" options="{'no_create': True}" readonly="0" force_save="1"/>
+
+                                <field name="weight" sum="Total" force_save="1"/>
+                            </tree>
+                        </field>
+                    </group>
+
+                    <footer>
+                        <button name="action_receive" type="object" string="Receive" class="btn-primary" />
+                        <button string="Cancel" class="btn-secondary" special="cancel" />
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_receive_by_weight" model="ir.actions.act_window">
+        <field name="name">Receive by Weight</field>
+        <field name="res_model">receive.by.weight</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

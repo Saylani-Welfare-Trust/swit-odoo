@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="meat_department_view_tree" model="ir.ui.view">
+        <field name="name">meat.department.view.tree</field>
+        <field name="model">meat.department</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="product_id"/>
+                <field name="product_code"/>
+                <field name="quantity"/>
+                <field name="price"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="meat_department_view_form" model="ir.ui.view">
+        <field name="name">meat.department.view.form</field>
+        <field name="model">meat.department</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="product_id"/>
+                        <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="meat_department_col_1">
+                            <field name="quantity" />
+                            <field name="price"/>
+                        </group>
+                        <group name="meat_department_col_2">
+                            <field name="product_code" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="meat_department_action" model="ir.actions.act_window">
+        <field name="name">Meat Department</field>
+        <field name="res_model">meat.department</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new meat department...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="meat_department_menu"
+        name="Meat Department"
+        action="meat_department_action"
+        parent="bn_livestock_slaugther.livestock_menu"
+        sequence="2"/>
+
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_view_picking_form_inherit_bn_inventory_customization" model="ir.ui.view">
+        <field name="name">stock.view.picking.form.inherit.bn.inventory.customization</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button string="Receive By Weight" name="action_recieve_by_weight" type="object" class="oe_highlight"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

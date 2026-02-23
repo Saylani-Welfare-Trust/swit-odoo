@@ -65,6 +65,7 @@ class WelfareLine(models.Model):
     )
     fixed_amount_check = fields.Boolean('Fixed Amount Check', default=False, compute='_compute_fixed_amount_check')
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
+    is_collection_point_readonly = fields.Boolean(string="Is Collection Point Readonly", compute='_compute_is_collection_point_readonly', store=False)
 
     marriage_date = fields.Date('Marriage Date', default=fields.Date.today())
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
@@ -121,6 +122,7 @@ class WelfareLine(models.Model):
         for line in lines:
             try:
                 line._create_bill()
+                line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
             except Exception as e:
                 # Log error but continue processing other lines
                 _logger.error(f"Error creating bill for Welfare Line ID {line.id}: {str(e)}")
@@ -194,6 +196,11 @@ class WelfareLine(models.Model):
     def _compute_fixed_amount_check(self):
         for rec in self:
             rec.fixed_amount_check = rec.disbursement_category_id.name =="In Kind"
+
+    @api.depends('disbursement_category_id')
+    def _compute_is_collection_point_readonly(self):
+        for rec in self:
+            rec.is_collection_point_readonly = rec.disbursement_category_id.name == "In Kind"
 
     @api.depends('quantity', 'amount')
     def _compute_total_amount(self):

@@ -18,6 +18,7 @@
         'stock',
         'base_account_budget',
         'mail',
+        'purchase_requisition',
     ],
     'data': [
         'security/groups.xml',
@@ -25,6 +26,8 @@
         'security/ir.model.access.csv',
         'data/sequence.xml',
         'views/material_request_views.xml',
+        'views/purchase_requisition_views.xml',
+        'views/wizard_views.xml',
     ],
     'installable': True,
     'application': True,

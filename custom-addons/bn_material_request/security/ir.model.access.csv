@@ -1,3 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_material_request,material.request,model_material_request,,1,1,1,1
 access_material_request_line,material.request.line,model_material_request_line,,1,1,1,1
+access_vendor_selection_wizard,vendor.selection.wizard,model_vendor_selection_wizard,,1,1,1,1
+access_rfq_price_wizard,rfq.price.wizard,model_rfq_price_wizard,,1,1,1,1
+access_rfq_price_wizard_line,rfq.price.wizard.line,model_rfq_price_wizard_line,,1,1,1,1
+access_rfq_price_wizard_rfq_line,rfq.price.wizard.rfq.line,model_rfq_price_wizard_rfq_line,,1,1,1,1
