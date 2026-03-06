@@ -19,6 +19,10 @@
             <field name="name">Donation Box Rider</field>
         </record>
         
+        <record id="donation_box_complain_officer_hr_employee_category" model="hr.employee.category">
+            <field name="name">Complain Officer</field>
+        </record>
+        
         <record id="installer_hr_employee_category" model="hr.employee.category">
             <field name="name">Installer</field>
         </record>

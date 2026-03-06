@@ -36,6 +36,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/accounting_report_views.xml',
+        'views/account_payment_view.xml',
         'report/trial_balance.xml',
         'report/general_ledger_templates.xml',
         'report/financial_report_template.xml',
@@ -46,6 +47,7 @@
         'report/aged_payable_templates.xml',
         'report/aged_receivable_templates.xml',
         'report/tax_report_templates.xml',
+        'report/account_payment_report.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Livestock Variants -->
+        <record id="livestock_variant_sadqa" model="livestock.variant">
+            <field name="name">Sadqa</field>
+        </record>
+
+        <record id="livestock_variant_aqiqa" model="livestock.variant">
+            <field name="name">Aqiqa</field>
+        </record>
+
+        <record id="livestock_variant_qurbani" model="livestock.variant">
+            <field name="name">Qurbani</field>
+        </record>
+
+        <!-- Product Attribute for Weight Range -->
+        <record id="product_attribute_weight_range" model="product.attribute">
+            <field name="name">Weight Range</field>
+            <field name="create_variant">always</field>
+            <field name="display_type">radio</field>
+        </record>
+
+        <!-- Attribute Values with Weight Ranges -->
+        <record id="product_attribute_value_small" model="product.attribute.value">
+            <field name="name">Small (10-20 kg)</field>
+            <field name="attribute_id" ref="product_attribute_weight_range"/>
+            <field name="from_kg">10</field>
+            <field name="to_kg">20</field>
+        </record>
+
+        <record id="product_attribute_value_medium" model="product.attribute.value">
+            <field name="name">Medium (20-30 kg)</field>
+            <field name="attribute_id" ref="product_attribute_weight_range"/>
+            <field name="from_kg">20</field>
+            <field name="to_kg">30</field>
+        </record>
+
+        <record id="product_attribute_value_large" model="product.attribute.value">
+            <field name="name">Large (30-50 kg)</field>
+            <field name="attribute_id" ref="product_attribute_weight_range"/>
+            <field name="from_kg">30</field>
+            <field name="to_kg">50</field>
+        </record>
+
+        <record id="product_attribute_value_xlarge" model="product.attribute.value">
+            <field name="name">Extra Large (50-100 kg)</field>
+            <field name="attribute_id" ref="product_attribute_weight_range"/>
+            <field name="from_kg">50</field>
+            <field name="to_kg">100</field>
+        </record>
+
+    </data>
+</odoo>

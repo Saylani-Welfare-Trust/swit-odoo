@@ -34,10 +34,18 @@ class BulkKeyIssuance(models.TransientModel):
             else:
                 rec.rider_ids = [(6, 0, [])]
 
-    @api.depends('date')
+    @api.depends('date', 'rider_id')
     def _set_location_domain(self):
         for rec in self:
-            if rec.date:
+            if rec.date and rec.rider_id:
+                # Filter schedule days by both date and rider
+                schedule_days = self.env['rider.schedule.day'].search([
+                    ('date', '=', rec.date),
+                    ('rider_shift_id.rider_id', '=', rec.rider_id.id)
+                ])
+                rec.domain_key_bunch_ids = [(6, 0, schedule_days.mapped('key_bunch_id').ids)]
+            elif rec.date:
+                # If only date is selected, show all bunches for that date
                 schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
                 rec.domain_key_bunch_ids = [(6, 0, schedule_days.mapped('key_bunch_id').ids)]
             else:

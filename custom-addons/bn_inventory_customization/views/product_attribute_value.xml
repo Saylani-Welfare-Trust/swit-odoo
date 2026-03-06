@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add Weight Range Fields to Product Attribute Values (in tree view on attribute form) -->
+    <record id="product_attribute_value_form_view_inherit" model="ir.ui.view">
+        <field name="name">product.attribute.form.inherit.weight.range</field>
+        <field name="model">product.attribute</field>
+        <field name="inherit_id" ref="product.product_attribute_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='attribute_values']//field[@name='value_ids']//tree//field[@name='name']"
+                   position="after">
+                <field name="from_kg" optional="show"/>
+                <field name="to_kg" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

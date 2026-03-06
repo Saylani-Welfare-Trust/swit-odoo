@@ -18,6 +18,7 @@ class RFQPriceWizardRFQLine(models.TransientModel):
     is_nearest_date = fields.Boolean(string='Nearest Date', compute='_compute_checks', store=False)
     is_minimum_total = fields.Boolean(string='Minimum Total', compute='_compute_checks', store=False)
     is_selected = fields.Boolean(string='Selected', compute='_compute_checks', store=False)
+    select_for_confirm = fields.Boolean(string='Select for Confirmation', default=False, help='Check to confirm this entire RFQ')
 
     @api.depends('wizard_id.line_ids.price_unit', 'wizard_id.line_ids.product_qty')
     def _compute_total_amount(self):
@@ -72,6 +73,7 @@ class RFQPriceWizardLine(models.TransientModel):
     product_uom_id = fields.Many2one('uom.uom', string='UoM', readonly=True)
     price_unit = fields.Float(string='Unit Price', digits='Product Price')
     rfq_line_id = fields.Many2one('purchase.order.line', string='RFQ Line', readonly=True)
+    to_confirm = fields.Boolean(string='Confirm', default=False, help='Select this line to confirm in the RFQ')
 
 
 class RFQPriceWizard(models.TransientModel):
@@ -85,6 +87,7 @@ class RFQPriceWizard(models.TransientModel):
     total_lines = fields.Integer(compute='_compute_total_lines', string='Total Products')
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ', compute='_compute_selected_rfq', store=False)
     selected_rfq_name = fields.Char(string='Selected RFQ Name', compute='_compute_selected_rfq', store=False)
+    remarks = fields.Text(string='Remarks', help='These remarks will be posted to all RFQs (confirmed or updated)')
 
     @api.depends('rfq_ids')
     def _compute_rfq_count(self):
@@ -152,16 +155,11 @@ class RFQPriceWizard(models.TransientModel):
         return res
 
     def action_update_prices(self):
-        """Update prices in all RFQs and confirm the selected one (with both checks)"""
+        """Update prices in all RFQs without confirmation"""
         self.ensure_one()
         
         if not self.line_ids:
             raise ValidationError(_('No price lines to update.'))
-        
-        # Check if there's a selected RFQ (with both nearest date and minimum total)
-        # If multiple RFQs qualify, only the first one will be selected
-        if not self.selected_rfq_id:
-            raise ValidationError(_('No RFQ qualifies with both Nearest Date and Minimum Total. Please ensure at least one RFQ has both conditions met.'))
         
         # Validate that all lines have required data
         invalid_lines = self.line_ids.filtered(lambda l: not l.rfq_line_id or not l.rfq_id)
@@ -197,32 +195,134 @@ class RFQPriceWizard(models.TransientModel):
         # Post message to all updated RFQs
         for rfq in updated_rfqs:
             rfq_lines_in_wizard = self.line_ids.filtered(lambda l: l.rfq_id == rfq)
-            message = '<p><b>Prices Updated via Bulk Entry:</b></p><ul>'
+            message = 'Prices Updated via Bulk Entry\n\n'
+            message += 'Updated Products:\n'
             for wiz_line in rfq_lines_in_wizard:
-                message += f'<li>{wiz_line.product_id.display_name}: {wiz_line.price_unit:.2f} {rfq.currency_id.symbol or ""}</li>'
-            message += '</ul>'
+                message += f'  - {wiz_line.product_id.display_name}: {wiz_line.price_unit:.2f} {rfq.currency_id.symbol or ""}\n'
+            
             # Add expected date info if set
             if rfq.id in rfq_date_map:
-                message += f'<p><b>Expected Delivery Date:</b> {rfq_date_map[rfq.id].strftime("%Y-%m-%d")}</p>'
+                message += f'\nExpected Delivery Date: {rfq_date_map[rfq.id].strftime("%d %B %Y")}'
             
-            # Mark if this is the selected RFQ
-            if rfq == self.selected_rfq_id:
-                message += '<p><b>✓ Selected RFQ (Nearest Date + Minimum Total) - Confirmed</b></p>'
+            # Add remarks if provided
+            if self.remarks:
+                message += f'\n\nRemarks:\n{self.remarks}'
             
             rfq.message_post(body=message)
         
-        # Confirm ONLY the selected RFQ (the one with both checks)
-        try:
-            if hasattr(self.selected_rfq_id, 'button_confirm'):
-                self.selected_rfq_id.button_confirm()
-                confirm_message = _('RFQ %s has been confirmed.') % self.selected_rfq_id.name
-            else:
-                confirm_message = _('Note: button_confirm method not available.')
-        except Exception as e:
-            confirm_message = _('Error confirming RFQ: %s') % str(e)
-        
         # Show success message and close wizard
-        message = _('Updated %d price(s) for %d RFQ(s). %s') % (updated_count, len(updated_rfqs), confirm_message)
+        message = _('Updated %d price(s) for %d RFQ(s).') % (updated_count, len(updated_rfqs))
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': message,
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def action_confirm_selected(self):
+        """Confirm selected lines from RFQs with remarks validation"""
+        self.ensure_one()
+        
+        # Get RFQs selected at RFQ level (entire RFQ)
+        rfqs_selected_entirely = self.rfq_line_ids.filtered(lambda l: l.select_for_confirm).mapped('rfq_id')
+        
+        # Get lines marked for confirmation at line level
+        lines_to_confirm = self.line_ids.filtered(lambda l: l.to_confirm)
+        
+        # Combine: if RFQ is selected entirely, include all its lines
+        all_lines_to_confirm = lines_to_confirm
+        for rfq in rfqs_selected_entirely:
+            rfq_lines = self.line_ids.filtered(lambda l: l.rfq_id == rfq and not l.to_confirm)
+            all_lines_to_confirm |= rfq_lines
+        
+        if not all_lines_to_confirm:
+            raise ValidationError(_('Please select at least one RFQ or line to confirm.'))
+        
+        # Check if any non-suggested RFQ is being confirmed - if so, remarks are mandatory
+        suggested_rfq_id = self.selected_rfq_id.id if self.selected_rfq_id else False
+                
+        if  not self.remarks:
+            raise ValidationError(_('Remarks are required when confirming non-suggested RFQs.'))
+        
+        # Group lines by RFQ
+        rfqs_to_confirm = {}
+        for line in all_lines_to_confirm:
+            if line.rfq_id.id not in rfqs_to_confirm:
+                rfqs_to_confirm[line.rfq_id.id] = {
+                    'rfq': line.rfq_id,
+                    'lines': self.env['rfq.price.wizard.line'],
+                    'is_entire_rfq': line.rfq_id in rfqs_selected_entirely
+                }
+            rfqs_to_confirm[line.rfq_id.id]['lines'] |= line
+        
+        # Process each RFQ
+        confirmed_rfqs = []
+        
+        for rfq_id, data in rfqs_to_confirm.items():
+            rfq = data['rfq']
+            selected_lines = data['lines']
+            is_entire_rfq = data['is_entire_rfq']
+            
+            # Get all order lines from this RFQ
+            all_order_lines = rfq.order_line
+            selected_order_line_ids = selected_lines.mapped('rfq_line_id').ids
+            
+            # Find lines to remove (not selected) - only if not confirming entire RFQ
+            lines_to_remove = self.env['purchase.order.line']
+            if not is_entire_rfq:
+                lines_to_remove = all_order_lines.filtered(lambda l: l.id not in selected_order_line_ids)
+            
+            # Save removed lines info BEFORE unlinking
+            removed_lines_info = []
+            if lines_to_remove:
+                for line in lines_to_remove:
+                    removed_lines_info.append({
+                        'name': line.product_id.display_name,
+                        'qty': line.product_qty,
+                    })
+                lines_to_remove.unlink()
+            
+            # Prepare confirmation message
+            message = 'RFQ Confirmed via Bulk Confirmation\n\n'
+            
+            # Status badges
+            if is_entire_rfq:
+                message += 'Status: Entire RFQ Confirmed\n'
+            
+            if rfq_id == suggested_rfq_id:
+                message += 'Suggested RFQ (Nearest Date + Minimum Total)\n'
+            
+            # Confirmed lines
+            message += '\nConfirmed Lines:\n'
+            for wiz_line in selected_lines:
+                message += f'  - {wiz_line.product_id.display_name} - Qty: {wiz_line.product_qty} @ {wiz_line.price_unit:.2f}\n'
+            
+            # Removed lines
+            if removed_lines_info:
+                message += '\nRemoved Lines:\n'
+                for removed_line in removed_lines_info:
+                    message += f'  - {removed_line["name"]}\n'
+            
+            # Add remarks if provided
+            if self.remarks:
+                message += f'\nRemarks:\n{self.remarks}'
+            
+            rfq.message_post(body=message)
+            
+            # Confirm the RFQ
+            try:
+                if hasattr(rfq, 'button_confirm'):
+                    rfq.button_confirm()
+                    confirmed_rfqs.append(rfq.name)
+            except Exception as e:
+                raise ValidationError(_('Error confirming RFQ %s: %s') % (rfq.name, str(e)))
+        
+        # Show success message
+        message = _('Successfully confirmed %d RFQ(s): %s') % (len(confirmed_rfqs), ', '.join(confirmed_rfqs))
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

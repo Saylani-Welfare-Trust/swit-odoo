@@ -15,8 +15,10 @@
         'security/ir.model.access.csv',
         'security/groups.xml',
         'views/rider_shift.xml',
+        'views/rider_schedule_day.xml',
         'views/rider_collection.xml',
         'views/counterfeit_notes.xml',
+        'views/foreign_currency.xml',
         'wizards/rider_schedule.xml'
     ],
     'auto_install': False,

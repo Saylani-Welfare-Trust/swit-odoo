@@ -104,10 +104,10 @@
                         </page>
                         <page string="Remarks" name="remarks">
                             <group>
-                                <field name="committee_remarks" 
+                                <!-- <field name="committee_remarks" 
                                     readonly="state == 'done'" 
                                     required="state == 'committee_approval'" 
-                                    placeholder="Enter any remarks..."/>
+                                    placeholder="Enter any remarks..." /> -->
                                 <field name="cfo_remarks" 
                                     readonly="state == 'done'" 
                                     placeholder="Enter any remarks..."/>

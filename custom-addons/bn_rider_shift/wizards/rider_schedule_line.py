@@ -36,6 +36,9 @@ class RiderScheduleLine(models.TransientModel):
     rider_schedule_id = fields.Many2one('rider.schedule', string="Rider Schedule")
     rider_id = fields.Many2one('hr.employee', string="Rider")
     key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch")
+    
+    # Location field to match rider.collection and rider.schedule.day
+    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone")
 
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')

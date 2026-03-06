@@ -49,13 +49,25 @@
                     </group>
                 </group>
                 
+                <group>
+                    <field name="remarks" placeholder="Enter remarks to be posted on all RFQs (optional)..."/>
+                </group>
+                
                 <div class="alert alert-success" role="alert" invisible="selected_rfq_name == False">
-                    <strong>✓ Selected RFQ:</strong> <field name="selected_rfq_name" readonly="1" nolabel="1" class="oe_inline"/> (Nearest Date + Minimum Total)
-                    <br/>
-                    <small><i>Note: All RFQs will be updated with prices and dates, but only this RFQ will be confirmed.</i></small>
+                    <strong>✓ Suggested RFQ:</strong> <field name="selected_rfq_name" readonly="1" nolabel="1" class="oe_inline"/> (Nearest Date + Minimum Total)
                 </div>
-                <div class="alert alert-warning" role="alert" invisible="selected_rfq_name != False">
-                    <strong>⚠ Warning:</strong> No RFQ has both Nearest Date and Minimum Total. Please update dates and prices.
+                <div class="alert alert-info" role="alert" invisible="selected_rfq_name != False">
+                    <strong>ℹ Info:</strong> No single RFQ has both Nearest Date and Minimum Total. Review dates and prices before confirming.
+                </div>
+                
+                <div class="alert alert-warning" role="alert" style="margin: 10px;">
+                    <strong>How to Confirm:</strong>
+                    <ul style="margin-top: 5px; margin-bottom: 0;">
+                        <li><b>Option 1:</b> In "Expected Delivery Dates" tab, check "Select to Confirm RFQ" to confirm the entire RFQ with all lines</li>
+                        <li><b>Option 2:</b> In "Price Entry" tab, check individual "Select to Confirm" boxes to confirm only specific lines</li>
+                        <li><b>Both:</b> You can mix both options - entire RFQs + specific lines from other RFQs</li>
+                        <li><b>Remarks:</b> Any remarks entered above will be posted to all RFQs (both confirmed and updated)</li>
+                    </ul>
                 </div>
                 
                 <notebook>
@@ -71,7 +83,8 @@
                                 <field name="currency_id" column_invisible="1"/>
                                 <field name="is_nearest_date" string="✓ Nearest" widget="boolean" readonly="1"/>
                                 <field name="is_minimum_total" string="✓ Min Total" widget="boolean" readonly="1"/>
-                                <field name="is_selected" string="✓ Selected" widget="boolean" readonly="1"/>
+                                <field name="is_selected" string="Suggested" widget="boolean" readonly="1"/>
+                                <field name="select_for_confirm" string="Select to Confirm RFQ" widget="boolean"/>
                             </tree>
                         </field>
                     </page>
@@ -81,19 +94,22 @@
                                 <field name="wizard_id" column_invisible="1" force_save="1"/>
                                 <field name="rfq_line_id" column_invisible="1" force_save="1"/>
                                 <field name="rfq_id" readonly="1" force_save="1"/>
-                                <field name="rfq_name" readonly="1" optional="hide"/>
+                                <field name="rfq_name" readonly="1" optional="show"/>
                                 <field name="vendor_id" readonly="1" force_save="1"/>
                                 <field name="product_id" readonly="1" force_save="1"/>
                                 <field name="product_qty" readonly="1"/>
                                 <field name="product_uom_id" readonly="1" force_save="1"/>
                                 <field name="price_unit" string="Unit Price"/>
+                                <field name="to_confirm" string="Select to Confirm" widget="boolean"/>
                             </tree>
                         </field>
                     </page>
                 </notebook>
                 
                 <footer>
-                    <button string="Update All &amp; Confirm Selected" name="action_update_prices" type="object" 
+                    <button string="Update Prices Only" name="action_update_prices" type="object" 
+                            class="btn-secondary"/>
+                    <button string="Confirm Selected Lines" name="action_confirm_selected" type="object" 
                             class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>

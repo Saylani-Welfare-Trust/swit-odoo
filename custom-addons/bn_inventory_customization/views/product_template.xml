@@ -8,9 +8,22 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='options']" position="inside">
                 <span class="d-inline-flex">
-                    <field name="is_receive_by_weight" on_change="1" field_id="is_receive_by_weight"/>
-                    <label for="is_receive_by_weight"/>
+                    <field name="check_stock" on_change="1" field_id="check_stock"/>
+                    <label for="check_stock"/>
                 </span>
+            </xpath>
+            
+            <!-- Add Livestock Configuration section in General Information tab -->
+            <xpath expr="//group[@name='group_general']" position="after">
+                <group string="Livestock Configuration" name="livestock_config" invisible="check_stock == False">
+                    <group>
+                        <field name="livestock_variant" options="{'no_create': True, 'no_open': True}"/>
+                        <field name="purchase_product" options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                    <group>
+                        <field name="main_attribute_id" options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                </group>
             </xpath>
         </field>
     </record>

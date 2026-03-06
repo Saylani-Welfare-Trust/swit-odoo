@@ -37,6 +37,9 @@ class RiderCollection(models.Model):
     contact_number = fields.Char(string="Contact Number")
     box_no = fields.Char(related='lot_id.name', string="Box No.")
     
+    # Location fields
+    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone")
+    
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
     
@@ -84,3 +87,10 @@ class RiderCollection(models.Model):
                 for rider in collection_ids.mapped('rider_id')
             ]
         }
+
+    def action_change_rate(self):
+        self.env['foreign.currency'].create({
+            'rider_id': self.rider_id.id,
+            'lot_id': self.lot_id.id,
+            'amount': self.amount,
+        })

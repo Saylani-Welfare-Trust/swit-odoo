@@ -162,7 +162,7 @@ class MemberApproval(models.Model):
                 is_in_budget = False
 
         # Set state for approval cycle
-        next_state = 'hod_approval' if is_in_budget else 'committee_approval'
+        next_state = 'hod_approval'
         self.write({
             'budget_amount': total_available_budget,
             'is_in_budget': is_in_budget,

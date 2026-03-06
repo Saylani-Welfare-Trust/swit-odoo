@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Livestock Variant Tree View -->
+    <record id="livestock_variant_tree_view" model="ir.ui.view">
+        <field name="name">livestock.variant.tree</field>
+        <field name="model">livestock.variant</field>
+        <field name="arch" type="xml">
+            <tree string="Livestock Variants">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Livestock Variant Form View -->
+    <record id="livestock_variant_form_view" model="ir.ui.view">
+        <field name="name">livestock.variant.form</field>
+        <field name="model">livestock.variant</field>
+        <field name="arch" type="xml">
+            <form string="Livestock Variant">
+                <sheet>
+                    <group>
+                        <field name="name" placeholder="e.g., Sadqa, Aqiqa, Qurbani"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Livestock Variant Action -->
+    <record id="action_livestock_variant" model="ir.actions.act_window">
+        <field name="name">Livestock Variants</field>
+        <field name="res_model">livestock.variant</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first livestock variant
+            </p>
+            <p>
+                Define livestock variant types like Sadqa, Aqiqa, Qurbani, etc.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item under Inventory > Configuration -->
+    <menuitem id="menu_livestock_variant"
+              name="Livestock Variants"
+              parent="stock.menu_stock_config_settings"
+              action="action_livestock_variant"
+              sequence="100"/>
+
+</odoo>
