@@ -18,7 +18,7 @@
         'security/ir.model.access.csv',
         'data/server_action.xml',
         'data/sequence.xml',
-        'data/stock_location.xml',
+        # 'data/stock_location.xml',
         'data/stock_picking_type.xml',
         'data/hr_employee_category.xml',
         'views/donation_box_request.xml',
