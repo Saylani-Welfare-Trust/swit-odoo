@@ -24,24 +24,25 @@ state_selection = [
 class RiderCollection(models.Model):
     _name = 'rider.collection'
     _description = "Rider Collection"
-    _rec_name = "box_no"
+    _rec_name = "shop_name"
 
 
-    lot_id = fields.Many2one('stock.lot', string="Lot")
-    key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch")
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
+
+    shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string="Shop Name", store=True)
+    contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string="Contact Person", store=True)
+    contact_number = fields.Char(related='donation_box_registration_installation_id.contact_no', string="Contact Number", store=True)
+    box_location = fields.Char(related='donation_box_registration_installation_id.location', string="Box Location", store=True)
+
+    lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
     rider_id = fields.Many2one('hr.employee', string="Rider")
-    
-    shop_name = fields.Char('Shop Name')
-    box_location = fields.Char(string="Box Location")
-    contact_person = fields.Char(string="Contact Person")
-    contact_number = fields.Char(string="Contact Number")
-    box_no = fields.Char(related='lot_id.name', string="Box No.")
-    
-    # Location fields
-    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone")
+    key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
+    sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
     
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
+
+    is_complain_generated = fields.Boolean('Is Complain Generated', default=False)
     
     date = fields.Date("Date")
 
@@ -94,3 +95,18 @@ class RiderCollection(models.Model):
             'lot_id': self.lot_id.id,
             'amount': self.amount,
         })
+    
+    def action_generate_complain(self):
+        # raise ValidationError(self.donation_box_registration_installation_id.id)
+
+        if not self.remarks:
+            raise ValidationError('Please enter the remarks first.')
+
+        self.env['donation.box.complain.center'].create({
+            'rider_id': self.rider_id.id,
+            'lot_id': self.lot_id.id,
+            'date': fields.Date.today(),
+            'remarks': self.remarks,
+        })
+
+        self.is_complain_generated = True

@@ -16,6 +16,7 @@
                     </div>
                     <group>
                         <group name="rider_collection_col_1">
+                            <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True}" />
                             <field name="date" />
                             <field name="day" />
                             <field name="submission_time" />
@@ -40,22 +41,26 @@
         <field name="name">rider.collection.view.tree</field>
         <field name="model">rider.collection</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0" >
-                <field name="rider_id" string="Rider" />
-                <field name="date" />
-                <field name="day" />
-                <field name="shop_name" />
-                <field name="lot_id" string="Box No." />
-                <field name="box_location" string="Location" />
-                <field name="contact_person" string="Contact Person" />
-                <field name="contact_number" string="Contact Number" />
-                <field name="amount" />
-                <field name="counterfeit_notes" />
+            <tree editable="bottom" create="0" delete="0" >
+                <field name="is_complain_generated" column_invisible="1" />
+
+                <field name="rider_id" string="Rider" readonly="1" />
+                <field name="date" readonly="1" />
+                <!-- <field name="day" readonly="1" /> -->
+                <field name="shop_name" readonly="1" />
+                <field name="lot_id" string="Box No." readonly="1" />
+                <field name="sub_zone_id" string="Sub Zone" readonly="1" />
+                <!-- <field name="box_location" string="Location" readonly="1" /> -->
+                <field name="contact_person" string="Contact Person" readonly="1" />
+                <field name="contact_number" string="Contact Number" readonly="1" />
+                <!-- <field name="amount" />
+                <field name="counterfeit_notes" /> -->
                 <field name="remarks" />
-                <field name="submission_time" />
+                <!-- <field name="submission_time" /> -->
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />
 
-                <button string="Change Rate" name="action_change_rate" type="object" class="oe_highlight"/>
+                <button string="Change Rate" name="action_change_rate" type="object" class="oe_highlight" invisible="is_complain_generated"/>
+                <button string="Complain Center" name="action_generate_complain" type="object" class="oe_highlight" invisible="is_complain_generated"/>
             </tree>
         </field>
     </record>

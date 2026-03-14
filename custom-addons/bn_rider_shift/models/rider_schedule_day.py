@@ -14,7 +14,6 @@ day_selection = [
 class RiderScheduleDay(models.Model):
     _name = 'rider.schedule.day'
     _description = 'Rider Schedule Day'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
     rider_shift_id = fields.Many2one('rider.shift', string="Rider Shift")
@@ -31,34 +30,6 @@ class RiderScheduleDay(models.Model):
     key_count = fields.Integer('Key Count', compute="_set_key_count")
 
     name = fields.Char('Name', compute="_set_name")
-    
-    # New fields as per requirement
-    shop_name = fields.Char('Shop Name')
-    box_no = fields.Char('Box No')
-    contact_person = fields.Char('Contact Person')
-    contact_number = fields.Char('Contact Number')
-    status = fields.Selection([
-        ('donation_not_collected', 'Donation not collected'),
-        ('donation_collected', 'Donation collected'),
-        ('donation_submit', 'Donation submit'),
-        ('pending', 'Pending'),
-        ('paid', 'Paid')
-    ], string='Status', default='donation_not_collected')
-    comments = fields.Text('Comments')
-    
-    # Amount Collection Fields
-    actual_amount = fields.Float('Actual Amount')
-    counterfeit_amount = fields.Float('Counterfeit Amount')
-    foreign_currency_amount = fields.Float('Foreign Currency Amount')
-    
-    # Complaint Fields
-    complaint_id = fields.Many2one('donation.box.complain.center', string='Complaint')
-    has_complaint = fields.Boolean('Has Complaint', compute='_compute_has_complaint', store=True)
-    
-    @api.depends('complaint_id')
-    def _compute_has_complaint(self):
-        for record in self:
-            record.has_complaint = bool(record.complaint_id)
 
 
     @api.depends('day', 'rider_shift_id')
@@ -88,7 +59,7 @@ class RiderScheduleDay(models.Model):
                     }
                 }
 
-            if start and end and (self.date < start or self.date > end):
+            if self.date < start or self.date > end:
                 self.date = False
                 return {
                     'warning': {
@@ -101,39 +72,3 @@ class RiderScheduleDay(models.Model):
     def _onchange_key_bunch_id(self):
         for key in self.key_bunch_id.key_ids:
             key.rider_id = self.rider_shift_id.rider_id.id
-    
-    def action_generate_complaint(self):
-        """Open wizard to create a complaint"""
-        # Get the lot_id from box_no if exists
-        lot_id = False
-        if self.box_no:
-            lot = self.env['stock.lot'].search([('name', '=', self.box_no)], limit=1)
-            if lot:
-                lot_id = lot.id
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Generate Complaint',
-            'res_model': 'donation.box.complain.center',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_rider_id': self.rider_shift_id.rider_id.id if self.rider_shift_id else False,
-                'default_lot_id': lot_id,
-            }
-        }
-    
-    def action_view_complaints(self):
-        """View all complaints for this rider"""
-        domain = []
-        if self.rider_shift_id and self.rider_shift_id.rider_id:
-            domain = [('rider_id', '=', self.rider_shift_id.rider_id.id)]
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Complaints',
-            'res_model': 'donation.box.complain.center',
-            'view_mode': 'tree,form',
-            'domain': domain,
-            'context': {'create': False}
-        }

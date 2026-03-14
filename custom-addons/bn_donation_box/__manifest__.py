@@ -9,6 +9,8 @@
         'mail',
         'stock',
         'product',
+        'base_account_budget',
+        'bn_stock_location',
         'bn_master_setup_backup',
         'bn_pos_custom_action'
     ],
@@ -28,6 +30,7 @@
         'views/product_template.xml',
         'views/stock_lot.xml',
         'views/res_partner.xml',
+        'views/donation_product_onhand.xml',
         'reports/donation_box_report.xml',
     ],
     'auto_install': False,

@@ -21,16 +21,16 @@
         <field name="name">Registration or Installation / Approve</field>
     </record>
     
-    <record id="donation_box_registration_installation_change_request_group" model="res.groups">
-        <field name="name">Registration or Installation / Change Request</field>
-    </record>
-    
     <record id="donation_box_complain_center_resolve_group" model="res.groups">
         <field name="name">Complain Center / Resolve</field>
     </record>
     
     <record id="donation_box_pos_action_group" model="res.groups">
         <field name="name">Donation Box / POS Action</field>
+    </record>
+    
+    <record id="donation_product_onhand_group" model="res.groups">
+        <field name="name">Donation Products / Inventory</field>
     </record>
 
 </odoo>
