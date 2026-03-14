@@ -140,7 +140,7 @@ class APIDonationWizard(models.TransientModel):
                     _logger.error('Invalid donations payload: %s', data)
                     raise ValidationError(_('Invalid Donations Info'))
 
-                self.create_fetch_log(history.id, f"End _fetch_donations_from_api", 'API Fetch', 'Finished fetching donations from API')
+                self.create_fetch_log(history.id, f"End _fetch_donations_from_api", 'API Fetch', f"Completed fetching donations from API. Total donations fetched: {len(data.get('donationsInfo') or [])}")
 
                 return data.get('donationsInfo') or []
 

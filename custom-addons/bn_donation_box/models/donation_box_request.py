@@ -46,13 +46,20 @@ class DonationBoxRequest(models.Model):
         self.status = 'rejected'
 
     def action_draft(self):
+        # Check if any lines are marked to uncheck consumed
+        marked_lines = self.donation_box_request_line_ids.filtered(lambda l: l.mark_as_unconsumed)
+        
+        if not marked_lines:
+            raise ValidationError(_('Please select at least one line to mark as unconsumed by checking the "Mark as Unconsumed" checkbox.'))
+        
         self.env['donation.box.registration.installation'].search([('donation_box_request_id', '=', self.id)]).unlink()
         self.env['key'].search([('donation_box_request_id', '=', self.id)]).unlink()
 
+        # Only process lots from lines that are marked
         lot_ids = []
-
-        for line in self.donation_box_request_line_ids:
-            lot_ids.append(line.lot_id.id)
+        for line in marked_lines:
+            if line.lot_id:
+                lot_ids.append(line.lot_id.id)
 
         for lot in self.env['stock.lot'].browse(lot_ids):
             lot.lot_consume = False

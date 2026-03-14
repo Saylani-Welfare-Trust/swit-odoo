@@ -43,6 +43,7 @@
                                     <field name="lock_no" />
                                     <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
+                                    <field name="mark_as_unconsumed" string="Remained Uninstalled" widget="boolean" />
                                 </tree>
                             </field>
                         </page>
