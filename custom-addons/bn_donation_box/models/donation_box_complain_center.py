@@ -54,6 +54,7 @@ class DonationBoxComplain(models.Model):
     installation_category_id = fields.Many2one(related='donation_box_registration_installation_id.installation_category_id', string="Installation Category", store=True, tracking=True)
 
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True, tracking=True)
+    date = fields.Date('Date', tracking=True)
 
     remarks = fields.Text('Remarks', tracking=True)
     complain_officer_remark = fields.Text('Complain Officer Remark', tracking=True)
@@ -71,9 +72,12 @@ class DonationBoxComplain(models.Model):
         self.status = 'process'
     
     def action_resolve(self):
-        # Validate complain officer remark is required for missing and robbery cases
-        if self.box_status in ['missing', 'robbery'] and not self.complain_officer_remark:
-            raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
+        # Validate complain officer remark and box recovered status for missing and robbery cases
+        if self.box_status in ['missing', 'robbery']:
+            if not self.complain_officer_remark:
+                raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
+            if not self.box_recovered:
+                raise ValidationError("Please indicate whether the box was recovered or not before resolving Missing or Robbery cases.")
         
         # Use stored_registration_id as it persists after resolve
         registration = self.stored_registration_id or self.donation_box_registration_installation_id

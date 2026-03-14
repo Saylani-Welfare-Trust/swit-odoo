@@ -24,11 +24,13 @@
                         <group name="donation_box_registration_installation_col_1">
                             <field name="employee_category_1_id" invisible="1" />
                             <field name="employee_category_2_id" invisible="1" />
+                            <field name="key_issuance" invisible="1" />
 
                             <field name="request_no" class="oe_inline" readonly="1" />
                             <field name="shop_name" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="contact_person" required="1" readonly="status in ['approved', 'available']" />
-                            <field name="location" required="1" readonly="status in ['approved', 'available', 'change_request']" />
+                            <!-- <field name="location" required="1" readonly="status in ['approved', 'available', 'change_request']" /> -->
+                            <field name="location" required="1" readonly="key_issuance" />
                             <field name="shop_plot_no" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="street" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="landmark" required="1" readonly="status in ['approved', 'available', 'change_request']" />

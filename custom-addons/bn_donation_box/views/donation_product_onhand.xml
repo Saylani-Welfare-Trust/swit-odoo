@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Donation Product On-hand Tree View -->
+    <record id="donation_product_onhand_view_tree" model="ir.ui.view">
+        <field name="name">donation.product.onhand.view.tree</field>
+        <field name="model">donation.product.onhand</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="product_name" />
+                <field name="location_name" />
+                <field name="on_hand_qty" />
+            </tree>
+        </field>
+    </record>
+
+
+
+    <!-- Donation Product On-hand Search View -->
+    <record id="donation_product_onhand_view_search" model="ir.ui.view">
+        <field name="name">donation.product.onhand.view.search</field>
+        <field name="model">donation.product.onhand</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id" string="Product" />
+                <field name="location_id" string="Location" />
+                <separator />
+                <filter string="Low Stock" name="low_stock" domain="[('on_hand_qty', '&lt;', 10)]" />
+                <filter string="No Stock" name="no_stock" domain="[('on_hand_qty', '=', 0)]" />
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Donation Product On-hand -->
+    <record id="donation_product_onhand_action" model="ir.actions.act_window">
+        <field name="name">Donation Products On-Hand Quantity</field>
+        <field name="res_model">donation.product.onhand</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                This view shows the on-hand quantity of donation products in your assigned locations.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="donation_product_onhand_menu" name="Donation Products Inventory" action="donation_product_onhand_action" parent="donation_box_root_menu" sequence="20" groups="bn_donation_box.donation_product_onhand_group" />
+
+</odoo>

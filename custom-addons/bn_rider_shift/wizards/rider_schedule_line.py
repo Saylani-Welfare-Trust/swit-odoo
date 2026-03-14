@@ -26,19 +26,19 @@ class RiderScheduleLine(models.TransientModel):
     _description = 'Rider Shift Line'
 
 
-    shop_name = fields.Char('Shop Name')
-    contact_person = fields.Char('Contact Person')
-    contact_number = fields.Char('Contact Number')
-    box_location = fields.Char(string="Box Location")
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
 
-    lot_id = fields.Many2one('stock.lot', string="Box No.")
+    shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string="Shop Name", store=True)
+    contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string="Contact Person", store=True)
+    contact_number = fields.Char(related='donation_box_registration_installation_id.contact_no', string="Contact Number", store=True)
+    box_location = fields.Char(related='donation_box_registration_installation_id.location', string="Box Location", store=True)
+
+    lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
     rider_collection_id = fields.Many2one('rider.collection', string="Rider Collection")
     rider_schedule_id = fields.Many2one('rider.schedule', string="Rider Schedule")
     rider_id = fields.Many2one('hr.employee', string="Rider")
-    key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch")
-    
-    # Location field to match rider.collection and rider.schedule.day
-    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone")
+    key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
+    sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
 
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')

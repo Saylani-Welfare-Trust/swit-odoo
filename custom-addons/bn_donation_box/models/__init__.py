@@ -7,3 +7,4 @@ from . import product_product
 from . import res_partner
 from . import product_template
 from . import stock_move
+from . import donation_product_onhand

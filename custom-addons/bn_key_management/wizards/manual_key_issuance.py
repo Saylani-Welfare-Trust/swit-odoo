@@ -25,37 +25,12 @@ class ManualKeyIssuance(models.TransientModel):
     date = fields.Date('Date')
 
 
-    @api.depends('action_type', 'date', 'rider_id')
+    @api.depends('action_type')
     def _compute_available_lot_ids(self):
         for rec in self:
-            if rec.date and rec.rider_id:
-                # Filter boxes based on rider's schedule for the selected date
-                schedule_days = self.env['rider.schedule.day'].search([
-                    ('date', '=', rec.date),
-                    ('rider_shift_id.rider_id', '=', rec.rider_id.id)
-                ])
-                # Get keys from key bunches assigned to this rider on this date
-                key_bunch_ids = schedule_days.mapped('key_bunch_id')
-                keys = self.env['key'].search([
-                    ('key_bunch_id', 'in', key_bunch_ids.ids),
-                    ('state', '!=', 'draft'),
-                    ('lot_id', '!=', False)
-                ])
-                rec.available_lot_ids = [(6, 0, keys.mapped('lot_id').ids)]
-            elif rec.date:
-                # If only date is selected, show all boxes for that date
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
-                key_bunch_ids = schedule_days.mapped('key_bunch_id')
-                keys = self.env['key'].search([
-                    ('key_bunch_id', 'in', key_bunch_ids.ids),
-                    ('state', '!=', 'draft'),
-                    ('lot_id', '!=', False)
-                ])
-                rec.available_lot_ids = [(6, 0, keys.mapped('lot_id').ids)]
-            else:
-                # No date selected, show all available boxes
-                available_keys = self.env['key'].search([('state', '!=', 'draft'), ('lot_id', '!=', False)])
-                rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
+            # Get all lot_ids from key records that are in 'available' state
+            available_keys = self.env['key'].search([('state', '!=', 'draft'), ('lot_id', '!=', False)])
+            rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
 
     @api.depends('date')
     def _set_rider_domain(self):

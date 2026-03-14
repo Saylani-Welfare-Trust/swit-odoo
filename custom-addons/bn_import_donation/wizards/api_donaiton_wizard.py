@@ -20,11 +20,13 @@ class APIDonationWizard(models.TransientModel):
     source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
     destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
 
-    def create_fetch_log(self, history_id, message):
+    def create_fetch_log(self, history_id, message, status, reason):
         """Helper to create fetch log entries"""
         self.env['fetch.log'].create({
             'fetch_history_id': history_id,
-            'name': message
+            'name': message,
+            'status': status,
+            'reason': reason
         })
 
     # ---------------------- Public entry point ----------------------
@@ -51,12 +53,12 @@ class APIDonationWizard(models.TransientModel):
             'end_date': self.end_date,
         })
 
-        self.create_fetch_log(history.id, f"Initiating donation fetch.")
+        self.create_fetch_log(history.id, f"Initiating donation fetch.", 'Initiated', 'Fetch process started')
 
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
         if not donations_info:
-            self.create_fetch_log(history.id, f"No donations found for the given date range {self.start_date} to {self.end_date}.")
+            self.create_fetch_log(history.id, f"No donations found for the given date range. {self.start_date} to {self.end_date}", 'No Data', 'No donations returned from API')
 
             return True
 
@@ -94,7 +96,7 @@ class APIDonationWizard(models.TransientModel):
                     'fetch_history_id': history.id
                 })
 
-        self.create_fetch_log(history.id, f"Donation fetch and processing completed successfully.")
+        self.create_fetch_log(history.id, f"Donation fetch and processing completed successfully.", 'Completed', 'All operations completed successfully')
 
         return True
 
@@ -165,7 +167,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk Data Pre-fetching ----------------------
     def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _prefetch_all_data")
+        self.create_fetch_log(history.id, f"Start _prefetch_all_data", 'Prefetching', 'Starting to prefetch all required data for processing')
 
         """Prefetch all required data in bulk to minimize database queries"""
         # Extract all unique values for bulk queries
@@ -188,7 +190,7 @@ class APIDonationWizard(models.TransientModel):
                 if mobile:
                     unique_mobiles.add(mobile)
 
-        self.create_fetch_log(history.id, f"Unique Currencies: {unique_currencies}, Unique Country Codes: {unique_country_codes}, Unique Mobiles: {unique_mobiles}, Unique Import IDs: {unique_import_ids}")
+        self.create_fetch_log(history.id, f"Unique Currencies: {unique_currencies}, Unique Country Codes: {unique_country_codes}, Unique Mobiles: {unique_mobiles}, Unique Import IDs: {unique_import_ids}", 'Prefetching', 'Extracted unique values for bulk data fetching')
 
         # Bulk fetch currencies
         currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
@@ -203,7 +205,7 @@ class APIDonationWizard(models.TransientModel):
             else:
                 conversion_rates[currency.name.lower()] = 1.0
 
-        self.create_fetch_log(history.id, f"Conversion Rates: {conversion_rates}")
+        self.create_fetch_log(history.id, f"Conversion Rates: {conversion_rates}", 'Prefetching', 'Fetched conversion rates for currencies')
         
         # Bulk fetch countries
         countries = self.env['res.country'].search([('code', 'in', list(unique_country_codes))])
@@ -218,7 +220,7 @@ class APIDonationWizard(models.TransientModel):
             )
             existing_import_ids = {r['import_id'] for r in existing_records}
         
-        self.create_fetch_log(history.id, f"Existing Import IDs: {existing_import_ids}")
+        self.create_fetch_log(history.id, f"Existing Import IDs: {existing_import_ids}", 'Prefetching', 'Fetched existing import IDs to avoid duplicates')
 
         # Bulk fetch existing partners - SIMPLER AND SAFER APPROACH
         partner_cache = {}
@@ -240,7 +242,7 @@ class APIDonationWizard(models.TransientModel):
                     key = (partner.get('mobile'), country_code_id)
                     partner_cache[key] = partner['id']
         
-        self.create_fetch_log(history.id, f"Partner Cache: {partner_cache}")
+        self.create_fetch_log(history.id, f"Partner Cache: {partner_cache}", 'Prefetching', 'Fetched partner cache for existing donors')
 
         # Pre-fetch gateway config data
         gateway_currency_lines = {}
@@ -248,7 +250,7 @@ class APIDonationWizard(models.TransientModel):
             for line in gateway_config.gateway_config_currency_ids:
                 gateway_currency_lines[line.currency_id.name.lower()] = line.account_id.id
         
-        self.create_fetch_log(history.id, f"Gateway Currency Lines: {gateway_currency_lines}")
+        self.create_fetch_log(history.id, f"Gateway Currency Lines: {gateway_currency_lines}", 'Prefetching', 'Fetched gateway currency lines')
 
         gateway_product_lines = {}
         if gateway_config:
@@ -268,7 +270,7 @@ class APIDonationWizard(models.TransientModel):
         )
         default_partner_id = default_partner.id if default_partner else False
         
-        self.create_fetch_log(history.id, f"End _prefetch_all_data")
+        self.create_fetch_log(history.id, f"End _prefetch_all_data", 'Prefetching', 'Completed prefetching all required data for processing')
 
         return {
             'currency_by_name': currency_by_name,
@@ -287,7 +289,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk Processing ----------------------
     def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data, history):
-        self.create_fetch_log(history.id, f"Start _process_donations_bulk")
+        self.create_fetch_log(history.id, f"Start _process_donations_bulk", "Processing", "Starting to process donations in bulk with optimized operations")
 
         """Process donations in bulk with optimized operations"""
         new_donation_ids = []
@@ -307,19 +309,19 @@ class APIDonationWizard(models.TransientModel):
         for info_idx, info in enumerate(donations_info):
             import_id = info.get('_id')
             if not import_id or import_id in all_data['existing_import_ids']:
-                self.create_fetch_log(history.id, f"Skipping donation with import_id {import_id} (already exists or missing)")
+                self.create_fetch_log(history.id, f"Skipping donation with import_id {import_id} (already exists or missing)", 'Skipped', f"Donation with import_id {import_id} is skipped because it already exists or is missing")
 
                 continue
 
             # Prepare donation values efficiently
             donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping, history)
             if donation_vals:
-                self.create_fetch_log(history.id, f"Prepared donation values for index {info_idx}: {donation_vals}")
+                self.create_fetch_log(history.id, f"Prepared donation values for index {info_idx}: {donation_vals}", 'Processing', 'Prepared donation values for bulk processing')
 
                 donations_to_create.append(donation_vals)
 
-                self.create_fetch_log(history.id, f"{gateway_config} and {journal} exist")
-                
+                self.create_fetch_log(history.id, f"{gateway_config} and {journal} exist", 'Processing', 'Gateway config and journal exist')
+
                 # Accumulate journal lines if gateway config exists
                 if gateway_config and journal:
                     self._accumulate_donation_lines_fast(
@@ -424,7 +426,7 @@ class APIDonationWizard(models.TransientModel):
             picking.action_assign()
             picking.button_validate()
 
-        self.create_fetch_log(history.id, f"End _process_donations_bulk")
+        self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
 
         return {
             'new_donations': new_donation_ids,
@@ -436,11 +438,11 @@ class APIDonationWizard(models.TransientModel):
         }
 
     def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
-        self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast")
+        self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
 
         """Prepare donation values with optimized lookups"""
         if info.get('status') != 'success':
-            self.create_fetch_log(history.id, f"Skipping donation {info} at index {info_idx} due to unsuccessful status")
+            self.create_fetch_log(history.id, f"Skipping donation {info} at index {info_idx} due to unsuccessful status", 'Skipped', f"Donation at index {info_idx} is skipped because its status is not successful")
 
             return None
         
@@ -454,7 +456,7 @@ class APIDonationWizard(models.TransientModel):
         
         # Validate currency exists
         if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found in system, using company currency")
+            self.create_fetch_log(history.id, f"Currency {currency_name} not found in system, using company currency", 'Error', f"Currency {currency_name} not found in system, using company currency")
 
             _logger.warning(f"Currency {currency_name} not found in system, using company currency")
             # Use company currency as fallback
@@ -530,7 +532,7 @@ class APIDonationWizard(models.TransientModel):
                 'is_priced_item': it.get('isPricedItem', False),
             })
 
-        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}")
+        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         
         # Build donation values
         donation_vals = {
@@ -583,19 +585,19 @@ class APIDonationWizard(models.TransientModel):
         else:
             donation_vals['donor_id'] = all_data['default_partner_id']
 
-        self.create_fetch_log(history.id, f"End _prepare_donation_vals_fast")
+        self.create_fetch_log(history.id, f"End _prepare_donation_vals_fast", 'Processing', f"Completed preparation of donation values for index {info_idx}")
         
         return donation_vals
 
     def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency, 
                                         debit_accumulator, credit_accumulator, history):
-        self.create_fetch_log(history.id, f"Start _accumulate_donation_lines_fast")
+        self.create_fetch_log(history.id, f"Start _accumulate_donation_lines_fast", 'Processing', f"Starting to accumulate journal lines for donation with import_id {donation_vals.get('import_id', '')} using optimized lookups")
 
         """Accumulate journal lines with optimized lookups"""
         currency_name = donation_vals.get('currency', '')
         currency_rec = all_data['currency_by_name'].get(currency_name.lower())
         if not currency_rec:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found for donation, skipping journal line accumulation")
+            self.create_fetch_log(history.id, f"Currency {currency_name} not found for donation, skipping journal line accumulation", 'Error', f"Currency {currency_name} not found for donation, skipping journal line accumulation")
 
             _logger.warning(f"Currency {currency_name} not found for donation")
             return
@@ -603,7 +605,7 @@ class APIDonationWizard(models.TransientModel):
         # Get debit account from cache
         debit_account_id = all_data['gateway_currency_lines'].get(currency_name.lower())
         if not debit_account_id:
-            self.create_fetch_log(history.id, f"Debit account not found for currency {currency_name}, skipping journal line accumulation")
+            self.create_fetch_log(history.id, f"Debit account not found for currency {currency_name}, skipping journal line accumulation", 'Error', f"Debit account not found for currency {currency_name}, skipping journal line accumulation")
 
             _logger.warning(f"Debit account not found for currency {currency_name}")
             return
@@ -619,7 +621,7 @@ class APIDonationWizard(models.TransientModel):
             
             config = all_data['gateway_product_lines'].get(product_name.lower())
             if not config:
-                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation")
+                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
 
                 _logger.warning(f"Product config not found for {product_name}")
                 continue
@@ -655,7 +657,7 @@ class APIDonationWizard(models.TransientModel):
             if is_foreign:
                 c['amount_currency'] -= item_total
 
-        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast")
+        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
     def _date_to_iso_z(self, date_val):
@@ -700,7 +702,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Journal Entry Creation ----------------------
     def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _create_grouped_journal_move")
+        self.create_fetch_log(history.id, f"Start _create_grouped_journal_move", 'Journal Entry Creation', 'Starting to create grouped journal entry with accumulated lines')
 
         """Create journal entry safely (currency constraint compliant)"""
 
@@ -714,7 +716,7 @@ class APIDonationWizard(models.TransientModel):
         for (account_id, currency_id), vals in debit_accumulator.items():
             debit_amount = company_currency.round(vals['debit_base'])
             if not debit_amount:
-                self.create_fetch_log(history.id, f"Skipping debit line for account {account_id} and currency {currency_id} due to zero amount after rounding")
+                self.create_fetch_log(history.id, f"Skipping debit line for account {account_id} and currency {currency_id} due to zero amount after rounding", 'Skipped', f"Debit line for account {account_id} and currency {currency_id} is skipped because the amount is zero after rounding")
 
                 continue
 
@@ -765,7 +767,7 @@ class APIDonationWizard(models.TransientModel):
                 }))
 
         if not lines:
-            self.create_fetch_log(history.id, "No journal lines to create.")
+            self.create_fetch_log(history.id, "No journal lines to create.", 'Error', "No journal lines to create.")
             # raise ValidationError(_("No journal lines to create."))
 
         # -----------------------------
@@ -806,13 +808,13 @@ class APIDonationWizard(models.TransientModel):
             'line_ids': lines,
         })
 
-        self.create_fetch_log(history.id, f"End _create_grouped_journal_move")
+        self.create_fetch_log(history.id, f"End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
 
         # move.action_post()
         return move
 
     def _get_rounding_difference_account(self, journal, history):
-        self.create_fetch_log(history.id, f"Start _get_rounding_difference_account")
+        self.create_fetch_log(history.id, f"Start _get_rounding_difference_account", 'Journal Entry Creation', 'Attempting to find rounding difference account with proper fallbacks')
 
         """Get rounding difference account with proper fallbacks"""
         # First try journal's default account
@@ -844,13 +846,13 @@ class APIDonationWizard(models.TransientModel):
             ], limit=1)
             
             if not diff_account:
-                self.create_fetch_log(history.id,  f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.")
+                self.create_fetch_log(history.id,  f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.", 'Error', f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.")
                 # raise ValidationError(_(
                 #     "No suitable rounding difference account found. "
                 #     "Please configure a default account on journal '%s' or "
                 #     "set up a rounding difference account." % journal.name
                 # ))
         
-        self.create_fetch_log(history.id, f"End _get_rounding_difference_account")
+        self.create_fetch_log(history.id, f"End _get_rounding_difference_account", 'Journal Entry Creation', 'Completed search for rounding difference account')
 
         return diff_account

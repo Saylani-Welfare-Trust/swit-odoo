@@ -3,3 +3,4 @@ access_donation_box_request,donation.box.request,bn_donation_box.model_donation_
 access_donation_box_request_line,donation.box.request.line,bn_donation_box.model_donation_box_request_line,,1,1,1,1
 access_donation_box_registration_installation,donation.box.registration.installation,bn_donation_box.model_donation_box_registration_installation,bn_donation_box.donation_box_registration_admin_group,1,1,1,1
 access_donation_box_complain_center,donation.box.complain.center,bn_donation_box.model_donation_box_complain_center,,1,1,1,1
+access_donation_product_onhand,donation.product.onhand,bn_donation_box.model_donation_product_onhand,,1,0,0,0

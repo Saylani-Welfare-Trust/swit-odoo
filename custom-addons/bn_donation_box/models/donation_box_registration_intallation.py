@@ -55,6 +55,8 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     installation_date = fields.Date('Installation Date', default=fields.Date.today(), tracking=True)
 
+    key_issuance = fields.Boolean('Key Issuance')
+
     complain_center_ids = fields.One2many('donation.box.complain.center', 'donation_box_registration_installation_id', string="Complain Centers")
 
     status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True)

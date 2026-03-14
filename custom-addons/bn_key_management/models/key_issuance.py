@@ -58,6 +58,8 @@ class KeyIssuance(models.Model):
             if self.search([('key_id', '=', record.key_id.id), ('state', '=', 'issued')]):
                 raise ValidationError(str(f'Key ( {record.key_id.name} ) is already issued to {record.rider_id.name}'))
 
+            record.donation_box_registration_installation_id.key_issuance = True
+
             record.state = 'issued'
             record.key_id.state = 'issued'
 

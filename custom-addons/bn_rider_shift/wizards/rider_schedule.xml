@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="rider_schedule_view_search" model="ir.ui.view">
-        <field name="name">rider.schedule.view.search</field>
-        <field name="model">rider.schedule</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="name" string="Schedule Name"/>
-                <field name="rider_schedule_line_ids" string="Shop Name" filter_domain="[('rider_schedule_line_ids.shop_name', 'ilike', self)]"/>
-                <field name="rider_schedule_line_ids" string="Box No." filter_domain="[('rider_schedule_line_ids.lot_id', 'ilike', self)]"/>
-                <field name="rider_schedule_line_ids" string="Location" filter_domain="[('rider_schedule_line_ids.box_location', 'ilike', self)]"/>
-                <field name="rider_schedule_line_ids" string="Contact Person" filter_domain="[('rider_schedule_line_ids.contact_person', 'ilike', self)]"/>
-                <field name="rider_schedule_line_ids" string="Contact Number" filter_domain="[('rider_schedule_line_ids.contact_number', 'ilike', self)]"/>
-                <field name="rider_schedule_line_ids" string="Date" filter_domain="[('rider_schedule_line_ids.date', '=', self)]"/>
-                
-                <separator/>
-                <filter string="Not Collected" name="filter_not_collected" domain="[('rider_schedule_line_ids.state', '=', 'donation_not_collected')]"/>
-                <filter string="Collected" name="filter_collected" domain="[('rider_schedule_line_ids.state', '=', 'donation_collected')]"/>
-                <filter string="Submitted" name="filter_submitted" domain="[('rider_schedule_line_ids.state', '=', 'donation_submit')]"/>
-                <filter string="Pending" name="filter_pending" domain="[('rider_schedule_line_ids.state', '=', 'pending')]"/>
-                <filter string="Paid" name="filter_paid" domain="[('rider_schedule_line_ids.state', '=', 'paid')]"/>
-            </search>
-        </field>
-    </record>
-
     <record id="rider_schedule_view_form" model="ir.ui.view">
         <field name="name">rider.schedule.view.form</field>
         <field name="model">rider.schedule</field>
@@ -34,45 +11,69 @@
                 </header>
                 <sheet>
                     <field name="rider_schedule_line_ids">
-                        <tree editable="bottom" create="0" delete="0">
+                        <!-- <tree editable="bottom" create="0" delete="0"> -->
+                        <tree create="0" delete="0">
                             <field name="date" readonly="1" />
-                            <field name="day" readonly="1" />
+                            <!-- <field name="day" readonly="1" /> -->
                             <field name="shop_name" readonly="1" />
                             <field name="lot_id" string="Box No." readonly="1" />
-                            <field name="box_location" string="Location" readonly="1" />
+                            <field name="sub_zone_id" string="Sub Zone" readonly="1" />
+                            <!-- <field name="box_location" string="Location" readonly="1" /> -->
                             <field name="contact_person" readonly="1" />
                             <field name="contact_number" readonly="1" />
-                            <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
-                            <field name="counterfeit_notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                            <!-- <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" /> -->
+                            <!-- <field name="counterfeit_notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" /> -->
                             <field name="remarks" />
-                            <field name="submission_time" readonly="1" />
+                            <!-- <field name="submission_time" readonly="1" /> -->
                             <field name="state" widget="badge" decoration-info="state == 'donation_collected'"  decoration-success="state in ['donation_submit', 'paid']" readonly="1" />
                             
-                            <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['pending', 'donation_collected', 'donation_submit', 'paid']" />
+                            <!-- <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['pending', 'donation_collected', 'donation_submit', 'paid']" />
                             <button name="mark_as_pending" string="Mark as Pending" type="object" class="btn-primary" invisible="state in ['pending', 'donation_submit', 'paid']" />
-                            <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" />
+                            <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" /> -->
                         </tree>
+                        <form>
+                            <header>
+                                <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['pending', 'donation_collected', 'donation_submit', 'paid']" />
+                                <button name="mark_as_pending" string="Mark as Pending" type="object" class="btn-primary" invisible="state in ['pending', 'donation_submit', 'paid']" />
+                                <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" />
+
+                                <field name="state" widget="statusbar" statusbar_visible="donation_not_collected, donation_collected, donation_submit, paid" />
+                            </header>
+                            <sheet>
+                                <div class="oe_title">
+                                    <label for="rider_id" />
+                                    <h1><field name="rider_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" readonly="1" /></h1>
+                                </div>
+                                <group>
+                                    <group name="rider_collection_col_1">
+                                        <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True}" readonly="1" />
+                                        <field name="date" readonly="1" />
+                                        <field name="day" readonly="1" />
+                                        <field name="submission_time" readonly="1" />
+                                        <field name="amount" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                                        <field name="counterfeit_notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                                        <field name="remarks" />
+                                    </group>
+                                    <group name="rider_collection_col_2">
+                                        <field name="shop_name" readonly="1" />
+                                        <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
+                                        <field name="box_location" string="Location" readonly="1" />
+                                        <field name="contact_person" string="Contact Person" readonly="1" />
+                                        <field name="contact_number" string="Contact Number" readonly="1" />
+                                    </group>
+                                </group>
+                            </sheet>
+                        </form>
                     </field>
                 </sheet>
             </form>
         </field>
     </record>
     
-    <record id="rider_schedule_view_tree" model="ir.ui.view">
-        <field name="name">rider.schedule.view.tree</field>
-        <field name="model">rider.schedule</field>
-        <field name="arch" type="xml">
-            <tree>
-                <field name="name"/>
-                <field name="create_date" string="Created On"/>
-            </tree>
-        </field>
-    </record>
-    
     <record id="rider_schedule_action" model="ir.actions.act_window">
         <field name="name">Rider Schedule</field>
         <field name="res_model">rider.schedule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">form</field>
         <field name="target">current</field>
     </record>
 

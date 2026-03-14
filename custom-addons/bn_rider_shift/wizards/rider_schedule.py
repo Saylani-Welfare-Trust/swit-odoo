@@ -46,6 +46,7 @@ class RiderSchedule(models.TransientModel):
             existing_collections = self.env['rider.collection'].search([
                 ('rider_id', '=', employee.id),
                 ('date', '=', obj.date),
+                ('is_complain_generated', '=', False),
                 # ('date', '<=', today),
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', 'not in', ['pending', 'donation_submit', 'paid']),
@@ -58,16 +59,12 @@ class RiderSchedule(models.TransientModel):
             for record in existing_collections:
                 line_vals.append((0, 0, {
                     'rider_collection_id': record.id,
+                    'rider_id': record.rider_id.id,
                     'day': record.day,
                     'date': record.date,
                     'state': record.state,
                     'submission_time': record.submission_time,
-                    'shop_name': record.shop_name,
-                    'lot_id': record.lot_id.id,
-                    'box_location': record.box_location,
-                    'contact_person': record.contact_person,
-                    'contact_number': record.contact_number,
-                    'sub_zone_id': record.sub_zone_id.id if record.sub_zone_id else False,
+                    'donation_box_registration_installation_id': record.donation_box_registration_installation_id.id,
                     'amount': record.amount,
                     'counterfeit_notes': record.counterfeit_notes,
                     'remarks': record.remarks,
@@ -95,14 +92,7 @@ class RiderSchedule(models.TransientModel):
                         'rider_id': employee.id,
                         'day': obj.day,
                         'date': obj.date,
-                        'shop_name': obj.shop_name or box.shop_name,
-                        'lot_id': box.lot_id.id,
-                        'box_location': box.location,
-                        'contact_person': obj.contact_person or box.contact_person,
-                        'contact_number': obj.contact_number or box.contact_no,
-                        'sub_zone_id': obj.sub_zone_id.id if obj.sub_zone_id else False,
-                        'state': obj.status if obj.status else 'donation_not_collected',
-                        'remarks': obj.comments or '',
+                        'donation_box_registration_installation_id': box.id,
                     })
 
                     line_vals.append((0, 0, {
@@ -110,13 +100,7 @@ class RiderSchedule(models.TransientModel):
                         'day': collection.day,
                         'date': collection.date,
                         'state': collection.state,
-                        'shop_name': collection.shop_name,
-                        'lot_id': collection.lot_id.id,
-                        'box_location': collection.box_location,
-                        'contact_person': collection.contact_person,
-                        'contact_number': collection.contact_number,
-                        'sub_zone_id': collection.sub_zone_id.id if collection.sub_zone_id else False,
-                        'remarks': collection.remarks,
+                        'donation_box_registration_installation_id': box.id,
                     }))
 
         # ✅ Build wizard
