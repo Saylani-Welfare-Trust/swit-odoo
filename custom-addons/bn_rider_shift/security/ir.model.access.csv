@@ -5,3 +5,4 @@ access_rider_collection,rider.collection,bn_rider_shift.model_rider_collection,,
 access_rider_schedule,rider.schedule,bn_rider_shift.model_rider_schedule,,1,1,1,1
 access_rider_schedule_line,rider.schedule.line,bn_rider_shift.model_rider_schedule_line,,1,1,1,1
 access_counterfeit_notes,counterfeit.notes,bn_rider_shift.model_counterfeit_notes,,1,1,1,1
+access_foreign_currency,foreign.currency,bn_rider_shift.model_foreign_currency,,1,1,1,1

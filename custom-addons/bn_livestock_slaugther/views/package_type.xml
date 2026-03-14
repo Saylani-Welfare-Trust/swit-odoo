@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="custom_product_types_menu"
+        name="Product Types"
+        action="stock.action_package_type_view"
+        parent="bn_livestock_slaugther.livestock_menu"
+        sequence="3"/>
+
+</odoo>

@@ -69,6 +69,7 @@ class RiderSchedule(models.TransientModel):
                     'box_location': record.box_location,
                     'contact_person': record.contact_person,
                     'contact_number': record.contact_number,
+                    'sub_zone_id': record.sub_zone_id.id if record.sub_zone_id else False,
                     'amount': record.amount,
                     'counterfeit_notes': record.counterfeit_notes,
                     'remarks': record.remarks,
@@ -96,11 +97,14 @@ class RiderSchedule(models.TransientModel):
                         'rider_id': employee.id,
                         'day': obj.day,
                         'date': obj.date,
-                        'shop_name': box.shop_name,
+                        'shop_name': obj.shop_name or box.shop_name,
                         'lot_id': box.lot_id.id,
                         'box_location': box.location,
-                        'contact_person': box.contact_person,
-                        'contact_number': box.contact_no,
+                        'contact_person': obj.contact_person or box.contact_person,
+                        'contact_number': obj.contact_number or box.contact_no,
+                        'sub_zone_id': obj.sub_zone_id.id if obj.sub_zone_id else False,
+                        'state': obj.status if obj.status else 'donation_not_collected',
+                        'remarks': obj.comments or '',
                     })
 
                     line_vals.append((0, 0, {
@@ -113,6 +117,8 @@ class RiderSchedule(models.TransientModel):
                         'box_location': collection.box_location,
                         'contact_person': collection.contact_person,
                         'contact_number': collection.contact_number,
+                        'sub_zone_id': collection.sub_zone_id.id if collection.sub_zone_id else False,
+                        'remarks': collection.remarks,
                     }))
 
         # ✅ Build wizard

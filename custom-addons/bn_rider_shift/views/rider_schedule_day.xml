@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Rider Schedule Day Form View -->
+    <record id="rider_schedule_day_view_form" model="ir.ui.view">
+        <field name="name">rider.schedule.day.view.form</field>
+        <field name="model">rider.schedule.day</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="donation_not_collected,donation_collected,donation_submit,paid" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_complaints" type="object" class="oe_stat_button" icon="fa-exclamation-circle" invisible="not has_complaint">
+                            <field name="has_complaint" widget="statinfo" string="Complaints" />
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <label for="rider_shift_id" />
+                        <h1><field name="rider_shift_id" options="{'no_create': True}" /></h1>
+                    </div>
+                    
+                    <!-- Registration Details -->
+                    <group string="Registration Details">
+                        <group>
+                            <field name="date" />
+                            <field name="day" />
+                            <field name="shop_name" />
+                            <field name="box_no" />
+                        </group>
+                        <group>
+                            <field name="city_id" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="zone_id" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="sub_zone_id" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="key_bunch_id" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="key_count" readonly="1" />
+                        </group>
+                    </group>
+                    
+                    <!-- Contact Information -->
+                    <group string="Contact Information">
+                        <group>
+                            <field name="contact_person" />
+                            <field name="contact_number" />
+                        </group>
+                    </group>
+                    
+                    <!-- Amount Collection -->
+                    <group string="Amount Collection">
+                        <group>
+                            <field name="actual_amount" />
+                            <field name="counterfeit_amount" />
+                        </group>
+                        <group>
+                            <field name="foreign_currency_amount" />
+                        </group>
+                    </group>
+                    
+                    <!-- Complaint Center -->
+                    <group string="Complain Center">
+                        <field name="complaint_id" options="{'no_create': True}" />
+                        <button name="action_generate_complaint" string="Generate Complain" type="object" class="btn-primary" />
+                        <button name="action_view_complaints" string="All List" type="object" class="btn-secondary" />
+                    </group>
+                    
+                    <group string="Comments">
+                        <field name="comments" nolabel="1" placeholder="Enter your comments here..." />
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rider Schedule Day Tree View -->
+    <record id="rider_schedule_day_view_tree" model="ir.ui.view">
+        <field name="name">rider.schedule.day.view.tree</field>
+        <field name="model">rider.schedule.day</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="date" />
+                <field name="rider_shift_id" />
+                <field name="shop_name" />
+                <field name="box_no" />
+                <field name="sub_zone_id" />
+                <field name="contact_person" />
+                <field name="contact_number" />
+                <field name="actual_amount" sum="Total Actual Amount" />
+                <field name="counterfeit_amount" sum="Total Counterfeit" />
+                <field name="foreign_currency_amount" sum="Total Foreign Currency" />
+                <field name="status" widget="badge" 
+                    decoration-info="status == 'donation_collected'" 
+                    decoration-success="status in ['donation_submit', 'paid']"
+                    decoration-warning="status == 'pending'"
+                    decoration-danger="status == 'donation_not_collected'" />
+                <field name="has_complaint" widget="boolean_toggle" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Rider Schedule Day Search View -->
+    <record id="rider_schedule_day_view_search" model="ir.ui.view">
+        <field name="name">rider.schedule.day.view.search</field>
+        <field name="model">rider.schedule.day</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="rider_shift_id" />
+                <field name="shop_name" />
+                <field name="box_no" />
+                <field name="sub_zone_id" />
+                <field name="date" />
+                <field name="contact_person" />
+                <field name="contact_number" />
+                
+                <filter string="Has Complaint" name="has_complaint" domain="[('has_complaint', '=', True)]" />
+                <filter string="No Complaint" name="no_complaint" domain="[('has_complaint', '=', False)]" />
+                
+                <separator />
+                <filter string="Not Collected" name="not_collected" domain="[('status', '=', 'donation_not_collected')]" />
+                <filter string="Collected" name="collected" domain="[('status', '=', 'donation_collected')]" />
+                <filter string="Submitted" name="submitted" domain="[('status', '=', 'donation_submit')]" />
+                <filter string="Pending" name="pending" domain="[('status', '=', 'pending')]" />
+                <filter string="Paid" name="paid" domain="[('status', '=', 'paid')]" />
+                
+                <separator />
+                <filter string="Today" name="today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]" />
+                <filter string="This Week" name="this_week" domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                    ('date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]" />
+                <filter string="This Month" name="this_month" domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]" />
+                
+                <group expand="0" string="Group By">
+                    <filter string="Rider" name="group_by_rider" context="{'group_by': 'rider_shift_id'}" />
+                    <filter string="Sub Zone" name="group_by_sub_zone" context="{'group_by': 'sub_zone_id'}" />
+                    <filter string="Status" name="group_by_status" context="{'group_by': 'status'}" />
+                    <filter string="Date" name="group_by_date" context="{'group_by': 'date'}" />
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'day'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Rider Schedule Day Action -->
+    <record id="rider_schedule_day_action" model="ir.actions.act_window">
+        <field name="name">Schedule Days</field>
+        <field name="res_model">rider.schedule.day</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No schedule days found!
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem
+        id="rider_schedule_day_menu"
+        name="Schedule Days"
+        action="rider_schedule_day_action"
+        parent="bn_rider_shift.rider_shift_root_menu"
+        sequence="2"/>
+
+</odoo>

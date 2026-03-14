@@ -14,6 +14,18 @@
             <field name="usage">transit</field>
             <field name="location_id" ref="__custom__.wh" />
         </record>
+        
+        <record id="meat_location" model="stock.location">
+            <field name="name">Meat</field>
+            <field name="usage">transit</field>
+            <field name="location_id" ref="__custom__.wh" />
+        </record>
+        
+        <record id="goat_location" model="stock.location">
+            <field name="name">Goat</field>
+            <field name="usage">transit</field>
+            <field name="location_id" ref="__custom__.wh" />
+        </record>
     
     </data>
 

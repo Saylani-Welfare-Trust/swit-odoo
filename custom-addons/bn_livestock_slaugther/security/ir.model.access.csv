@@ -1,6 +1,15 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_livestock_slaugther,access.livestock.slaugther,bn_livestock_slaugther.model_livestock_slaugther,,1,1,1,1
 access_livestock_slaugther_wizard,access.livestock.slaugther.wizard,bn_livestock_slaugther.model_livestock_slaugther_wizard,,1,1,1,1
+access_livestock_requisition,access.livestock.requisition,bn_livestock_slaugther.model_livestock_requisition,,1,1,1,1
+access_livestock_requisition_line,access.livestock.requisition.line,bn_livestock_slaugther.model_livestock_requisition_line,,1,1,1,1
 access_livestock_cutting,access.livestock.cutting,bn_livestock_slaugther.model_livestock_cutting,,1,1,1,1
 access_livestock_cutting_material,access.livestock.cutting.material,bn_livestock_slaugther.model_livestock_cutting_material,,1,1,1,1
 access_livestock_cutting_material_line,access.livestock.cutting.material.line,bn_livestock_slaugther.model_livestock_cutting_material_line,,1,1,1,1
+access_meat_management,access.meat.management,bn_livestock_slaugther.model_meat_management,,1,1,1,1
+access_kitchen_meat_management,access.kitchen.meat.management,bn_livestock_slaugther.model_kitchen_meat_management,,1,1,1,1
+access_madaris_meat_management,access.madaris.meat.management,bn_livestock_slaugther.model_madaris_meat_management,,1,1,1,1
+access_medical_meat_management,access.medical.meat.management,bn_livestock_slaugther.model_medical_meat_management,,1,1,1,1
+access_livestock_meat_management,access.livestock.meat.management,bn_livestock_slaugther.model_livestock_meat_management,,1,1,1,1
+access_distribution_center,access.distribution.center,bn_livestock_slaugther.model_distribution_center,,1,1,1,1
+access_distribution_center_line,access.distribution.center.line,bn_livestock_slaugther.model_distribution_center_line,,1,1,1,1

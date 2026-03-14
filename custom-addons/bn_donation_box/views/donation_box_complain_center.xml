@@ -5,12 +5,14 @@
         <field name="name">donation.box.complain.center.view.form</field>
         <field name="model">donation.box.complain.center</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="0">
                 <header>
+                    <field name="box_status" invisible="1" />
+                    <field name="box_recovered" invisible="1" />
                     <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved']" />
                     <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved']" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
                     
-                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="box_status not in ['return','missing'] or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
                     <button name="action_repair" string="Repair" type="object" class="btn-primary"  invisible="box_status != 'broken' or status != 'resolved'"  groups="bn_donation_box.donation_box_complain_center_resolve_group" />
 
@@ -19,6 +21,7 @@
 
                 <sheet>
                     <field name="employee_category_id" invisible="1" />
+                    <field name="complain_officer_category_id" invisible="1" />
 
                     <div class="oe_button_box" name="button_box">
                         <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
@@ -41,9 +44,12 @@
                         <group name="donation_box_complain_col_1">
                             <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status == 'process'" />
                             <field name="box_status" required="1" readonly="status == 'process'" />
+                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status == 'resolved'" />
+                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status == 'resolved'" />
                         </group>
-                        <group name="donation_box_complain_col_1">
+                        <group name="donation_box_complain_col_2">
                             <field name="remarks" required="1" readonly="status == 'process'" />
+                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status == 'resolved'" />
                         </group>
                     </group>
 
@@ -81,7 +87,7 @@
         <field name="name">donation.box.complain.center.view.tree</field>
         <field name="model">donation.box.complain.center</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree create="0">
                 <header>
                     <button name="action_repair" string="Repair" type="object" class="btn-primary" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
                 </header>
@@ -89,9 +95,67 @@
                 <field name="donation_box_registration_installation_id" />
                 <field name="lot_id" string="Box No." />
                 <field name="box_status" />
-                <field name="remarks" />
+                <field name="shop_name" optional="show" />
+                <field name="location" optional="hide" />
+                <field name="contact_person" optional="hide" />
+                <field name="contact_no" optional="hide" />
+                <field name="city_id" optional="hide" />
+                <field name="zone_id" optional="hide" />
+                <field name="sub_zone_id" optional="hide" />
+                <field name="box_recovered" optional="hide" />
+                <field name="remarks" optional="show" />
                 <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'process'" decoration-success="status == 'resolved'" />
             </tree>
+        </field>
+    </record>
+
+    <!-- Search View for Complaint Center -->
+    <record id="donation_box_complain_center_view_search" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.search</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Search Fields -->
+                <field name="rider_id" string="Rider" />
+                <field name="lot_id" string="Box No." />
+                <field name="shop_name" string="Shop Name" />
+                <field name="donation_box_registration_installation_id" string="Registration" />
+                <field name="location" string="Location" />
+                <field name="contact_person" string="Contact Person" />
+                <field name="city_id" string="City" />
+                <field name="zone_id" string="Zone" />
+                <field name="sub_zone_id" string="Sub Zone" />
+                
+                <!-- Status Filters -->
+                <separator />
+                <filter string="Draft" name="draft" domain="[('status', '=', 'draft')]" />
+                <filter string="In Process" name="process" domain="[('status', '=', 'process')]" />
+                <filter string="Resolved" name="resolved" domain="[('status', '=', 'resolved')]" />
+                
+                <!-- Box Status Filters -->
+                <separator />
+                <filter string="Missing" name="missing" domain="[('box_status', '=', 'missing')]" />
+                <filter string="Broken" name="broken" domain="[('box_status', '=', 'broken')]" />
+                <filter string="Robbery" name="robbery" domain="[('box_status', '=', 'robbery')]" />
+                <filter string="Return" name="return" domain="[('box_status', '=', 'return')]" />
+                <filter string="Repaired" name="repaired" domain="[('box_status', '=', 'repaired')]" />
+                
+                <!-- Box Recovered Filter -->
+                <separator />
+                <filter string="Box Recovered" name="box_recovered" domain="[('box_recovered', '=', True)]" />
+                <filter string="Box Not Recovered" name="box_not_recovered" domain="[('box_recovered', '=', False)]" />
+                
+                <!-- Group By -->
+                <group expand="0" string="Group By">
+                    <filter string="Rider" name="group_by_rider" context="{'group_by': 'rider_id'}" />
+                    <filter string="Box Status" name="group_by_box_status" context="{'group_by': 'box_status'}" />
+                    <filter string="Status" name="group_by_status" context="{'group_by': 'status'}" />
+                    <filter string="City" name="group_by_city" context="{'group_by': 'city_id'}" />
+                    <filter string="Zone" name="group_by_zone" context="{'group_by': 'zone_id'}" />
+                    <filter string="Sub Zone" name="group_by_sub_zone" context="{'group_by': 'sub_zone_id'}" />
+                    <filter string="Installation Date" name="group_by_installation_date" context="{'group_by': 'installation_date'}" />
+                </group>
+            </search>
         </field>
     </record>
 

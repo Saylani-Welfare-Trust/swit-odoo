@@ -1,0 +1,28 @@
+{
+    'name': 'Inventory Customization',
+    'version': '1.0',
+    'author': 'Syed Owais Noor',
+    'website': 'http://bytesnode.com',
+    'license': 'LGPL-3',
+    'category': 'BytesNode/Inventory Customization',
+    'depends': [
+        'base',
+        'product',
+        'stock',
+        'purchase',
+        'bn_donation_home_service',
+    ],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/demo_data.xml',
+        'views/livestock_variant.xml',
+        'views/product_attribute_value.xml',
+        'views/product_template.xml',
+        'views/product_product.xml',
+        'views/purchase_order.xml',
+        'views/stock_picking.xml',
+        'wizards/receive_by_weight.xml',
+    ],
+    'auto_install': False,
+    'application': False,
+}

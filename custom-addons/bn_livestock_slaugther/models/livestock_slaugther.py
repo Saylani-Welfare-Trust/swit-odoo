@@ -16,7 +16,6 @@ class LivestockSlaughter(models.Model):
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
-    location_id = fields.Many2one('stock.location', string="Location")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
     name = fields.Char(related='product_id.name', string="Product Name", store=True)
@@ -29,13 +28,23 @@ class LivestockSlaughter(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
+    is_meat_depart = fields.Boolean('Is Meat Department')
+    is_goat_depart = fields.Boolean('Is Goat Department')
+
 
     def action_confirm(self):
         # Retrieve the 'Slaughter Stock' location
+        location = None
 
-        slaughter_location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
-        if not slaughter_location:
-            raise ValidationError("Slaughter Stock location not found. Please create it in Inventory > Configuration > Locations.")
+        if self.is_meat_depart:
+            location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
+        elif self.is_goat_depart:
+            location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
+        else:
+            location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
+        
+        if not location:
+            raise ValidationError("Slaughter Stock, Meat or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
         picking_type = self.env['stock.picking.type'].search([
@@ -50,16 +59,11 @@ class LivestockSlaughter(models.Model):
         if not product:
             raise ValidationError(f"Product with code '{self.product_code}' not found.")
 
-        if self.transfer_location:
-            destination_location = self.transfer_location.id
-        else:
-            destination_location = slaughter_location.id
-
         # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': destination_location,
+            'location_dest_id': location,
             'origin': self.product or 'Live Stock Slaughter',
         })
 
@@ -91,8 +95,8 @@ class LivestockSlaughter(models.Model):
         # Retrieve the 'Slaughter Stock' location
         cutting_obj = self.env['live_stock_slaughter.cutting']
 
-        slaughter_location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
-        if not slaughter_location:
+        location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
+        if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
@@ -111,7 +115,7 @@ class LivestockSlaughter(models.Model):
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': slaughter_location.id,
+            'location_dest_id': location.id,
             'origin': self.product_new.id or '',
         })
 

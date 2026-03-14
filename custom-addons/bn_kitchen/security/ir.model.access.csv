@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_kitchen_menu,access.kitchen.menu,bn_kitchen.model_kitchen_menu,,1,1,1,1
+access_kitchen_menu_line,access.kitchen.menu.line,bn_kitchen.model_kitchen_menu_line,,1,1,1,1
+access_branch_kitchen_request,access.branch.kitchen.request,bn_kitchen.model_branch_kitchen_request,,1,1,1,1
+access_branch_kitchen_request_line,access.branch.kitchen.request.line,bn_kitchen.model_branch_kitchen_request_line,,1,1,1,1
+access_daily_branch_kitchen_request_line,access.daily.branch.kitchen.request.line,bn_kitchen.model_daily_branch_kitchen_request_line,,1,1,1,1

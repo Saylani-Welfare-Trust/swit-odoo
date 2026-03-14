@@ -19,3 +19,4 @@ class DisbursementApplicationType(models.Model):
 
     product_category_id = fields.Many2one('product.category', string="Product Category")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
+    analytic_account_ids = fields.Many2many('account.analytic.account', string="Branch")

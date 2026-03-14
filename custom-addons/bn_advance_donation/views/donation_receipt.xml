@@ -43,9 +43,12 @@
                     <group>
                         <group>
                             <field name="payment_type" widget="radio" readonly="state != 'draft'"/>
+                            <field name="bank_id" readonly="state != 'draft'" invisible="payment_type != 'cheque'"/>
                             <field name="is_donation_id" readonly="state != 'draft'"/>
+                            <field name="product_id" readonly="1"/>
                             <field name="donation_id" options="{'no_create': True, 'no_edit': True}" required="1" readonly="state != 'draft'" invisible="is_donation_id == False"/>
                             <field name="donor_id" required="1" readonly="state != 'draft'"/>
+                            <field name="order_id" readonly="1"/>
                             <field name="amount" required="True" readonly="state != 'draft'" force_save="1"/>
                             <field name="date" required="True" readonly="state != 'draft'"/>
                             <field name="used_amount" readonly="1" force_save="1"/>

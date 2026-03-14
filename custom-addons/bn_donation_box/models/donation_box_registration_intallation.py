@@ -12,6 +12,7 @@ status_selection = [
     ('installed', 'Installed'),
     ('approved', 'Approved'),
     ('available', 'Available'),
+    ('change_request', 'Change Request'),
     ('close', 'Closed'),
 ]
 
@@ -47,6 +48,10 @@ class DonationBoxRegistrationInstallation(models.Model):
     contact_person = fields.Char('Contact Person', tracking=True)
     old_box_no = fields.Char('Old Box No.')
     lock_no = fields.Char('Lock No.')
+    shop_plot_no = fields.Char('Shop / Plot No.', tracking=True)
+    street = fields.Char('Street', tracking=True)
+    landmark = fields.Char('Landmark', tracking=True)
+    block_floor_office_no = fields.Char('Block / Floor / Office No.', tracking=True)
 
     installation_date = fields.Date('Installation Date', default=fields.Date.today(), tracking=True)
 
@@ -122,3 +127,6 @@ class DonationBoxRegistrationInstallation(models.Model):
 
             # raise ValidationError(lock_no)
             rec.lock_no = lock_no
+
+    def action_change_request(self):
+        self.status = 'change_request'

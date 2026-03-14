@@ -54,6 +54,8 @@
                 <field name="remarks" />
                 <field name="submission_time" />
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />
+
+                <button string="Change Rate" name="action_change_rate" type="object" class="oe_highlight"/>
             </tree>
         </field>
     </record>

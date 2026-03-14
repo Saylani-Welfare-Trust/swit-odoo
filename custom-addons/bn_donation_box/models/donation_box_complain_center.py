@@ -25,13 +25,15 @@ class DonationBoxComplain(models.Model):
 
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
+    complain_officer_id = fields.Many2one('hr.employee', string="Complain Officer", tracking=True)
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", compute="_set_registration_id", tracking=True)
     stored_registration_id = fields.Many2one('donation.box.registration.installation', string="Stored Registration", tracking=True)
     return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True)
     scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True)
     scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True)
 
-    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
+    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False) and self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id or False)
+    complain_officer_category_id = fields.Many2one('hr.employee.category', string="Complain Officer Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_complain_officer_hr_employee_category', raise_if_not_found=False) and self.env.ref('bn_donation_box.donation_box_complain_officer_hr_employee_category', raise_if_not_found=False).id or False)
     
     name = fields.Char(related='donation_box_registration_installation_id.name', string='Registration / Installation No.', store=True, tracking=True)
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string='Shop Name', store=True, tracking=True)
@@ -54,6 +56,8 @@ class DonationBoxComplain(models.Model):
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True, tracking=True)
 
     remarks = fields.Text('Remarks', tracking=True)
+    complain_officer_remark = fields.Text('Complain Officer Remark', tracking=True)
+    box_recovered = fields.Boolean('Box Recovered', default=False, tracking=True)
 
 
     def action_process(self):
@@ -67,14 +71,24 @@ class DonationBoxComplain(models.Model):
         self.status = 'process'
     
     def action_resolve(self):
+        # Validate complain officer remark is required for missing and robbery cases
+        if self.box_status in ['missing', 'robbery'] and not self.complain_officer_remark:
+            raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
+        
         # Use stored_registration_id as it persists after resolve
         registration = self.stored_registration_id or self.donation_box_registration_installation_id
         
-        if self.box_status != 'return':
+        # Handle box recovered for missing/robbery cases
+        if self.box_status in ['missing', 'robbery'] and self.box_recovered:
+            # If box is recovered, treat it as a return case
             if registration:
                 registration.status = 'close'
             self.lot_id.is_not_return = True
-
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+        elif self.box_status != 'return':
+            if registration:
+                registration.status = 'close'
+            self.lot_id.is_not_return = True
             self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
 
         if self.box_status == 'broken':

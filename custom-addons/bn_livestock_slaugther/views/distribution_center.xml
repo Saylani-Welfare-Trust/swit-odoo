@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="distribution_center_view_tree" model="ir.ui.view">
+        <field name="name">distribution.center.view.tree</field>
+        <field name="model">distribution.center</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="donee_id" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'delivery_note'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="distribution_center_view_form" model="ir.ui.view">
+        <field name="name">distribution.center.view.form</field>
+        <field name="model">distribution.center</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Welfare" name="action_welfare_approve" type="object" class="oe_highlight" invisible="state != 'item_selected' or type != 'jahaiz'" />
+                    <button string="Issue Purchase Requisition" name="action_issue_purchase_requisition" type="object" class="oe_highlight" invisible="state not in ['item_selected', 'welfare_approved']" />
+                    <button string="Issue Delivery Note" name="action_issue_delivery_note" type="object" class="oe_highlight" invisible="state != 'purchase_requisition'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, item_selected, purchase_requisition, delivery_note"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_show_purchase_requisition" type="object" class="oe_stat_button" icon="fa-list-alt" invisible="not purchase_requisition_id">
+                            <field name="purchase_requisition_id" widget="statinfo"/>
+                        </button>
+                        
+                        <button name="action_show_delivery_note" type="object" class="oe_stat_button" icon="fa-truck" invisible="not picking_id">
+                            <field name="picking_id" string="Delivery Note" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" class="oe_inline" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="distribution_center_col_1">
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" requried="1" />
+                            <field name="type" />
+                            <field name="location" />
+                            <field name="delivery_instruction" />
+                        </group>
+                        <group name="distribution_center_col_2">
+                            <field name="request_date" />
+                            <field name="lead_time" />
+                            <field name="delivery_date" readonly="1" />
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="distribution_center_line" string="Lines">
+                            <field name="distribution_center_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="distribution_center_action" model="ir.actions.act_window">
+        <field name="name">Distribution Center</field>
+        <field name="res_model">distribution.center</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new distribution request...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="distribution_center_menu"
+        name="Distribution Center"
+        action="distribution_center_action"
+        parent="bn_livestock_slaugther.livestock_menu"
+        sequence="7"/>
+
+</odoo>

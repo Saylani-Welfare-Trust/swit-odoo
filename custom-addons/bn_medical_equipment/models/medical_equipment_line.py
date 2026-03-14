@@ -13,12 +13,35 @@ class DonationHomeServiceLine(models.Model):
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
     
     quantity = fields.Integer('Quantity', default=1)
-    security_deposit = fields.Monetary(
-        string='Security Deposit', 
+    base_security_deposit = fields.Monetary(
+        string='Base Security Deposit', 
         related='medical_equipment_category_id.security_deposit',
         readonly=True
     )
+    actual_deposit_percentage = fields.Float(
+        string='Actual Deposit Percentage (%)',
+        related='medical_equipment_id.actual_deposit_percentage',
+        readonly=True,
+        store=True
+    )
+    security_deposit = fields.Monetary(
+        string='Security Deposit',
+        compute='_compute_security_deposit',
+        store=True
+    )
 
+    @api.depends('base_security_deposit', 'actual_deposit_percentage', 'quantity')
+    def _compute_security_deposit(self):
+        """
+        Calculate security deposit based on base amount and master's actual deposit percentage.
+        Formula: (base_security_deposit / 100) * actual_deposit_percentage
+        """
+        for line in self:
+            if line.base_security_deposit and line.actual_deposit_percentage:
+                calculated = (line.base_security_deposit * line.actual_deposit_percentage) / 100.0
+                line.security_deposit = calculated
+            else:
+                line.security_deposit = 0.0
 
     @api.onchange('quantity', 'product_id')
     def _onchange_check_on_hand(self):

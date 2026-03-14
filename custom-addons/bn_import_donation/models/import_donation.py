@@ -46,11 +46,7 @@ class ImportDonation(models.Model):
 
     invalid_import_donation_ids = fields.One2many('invalid.import.donation', 'import_donation_id', string="Invalid Import Donations")
     valid_import_donation_ids = fields.One2many('valid.import.donation', 'import_donation_id', string="Valid Import Donations")
-
     
-
-
-
 
     def action_draft(self):
         for line in self.invalid_import_donation_ids:

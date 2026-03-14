@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit payment receipt report to add cheque_date field -->
+    <template id="report_payment_receipt_cheque_date" inherit_id="account.report_payment_receipt_document">
+        <xpath expr="//div[@name='date']" position="after">
+            <div class="row" t-if="o.cheque_date">
+                <div class="col-6">
+                    Cheque Date: <span t-field="o.cheque_date"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="branch_kitchen_request_view_tree" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.view.tree</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="branch_id" />
+                <field name="type" />
+                <field name="state" widget="badge" decoration-success="state == 'done'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="branch_kitchen_request_view_form" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.view.form</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Manufacture" name="action_manufacture" type="object" class="oe_highlight" invisible="state != 'approve'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, approve, done"/>
+                </header>
+
+                <sheet>
+                    <field name="is_daily_request" invisible="1" />
+
+                    <div class="oe_title">
+                        <label for="branch_id"/>
+                        <h1><field name="branch_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="branch_kitchen_request_col_1">
+                            <field name="type" />
+                        </group>
+                        <group name="branch_kitchen_request_col_2">
+                            <field name="month" invisible="type != 'monthly'" />
+                            <field name="year" invisible="type != 'monthly'" />
+                            <field name="date" invisible="type == 'monthly'" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="items" string="Items">
+                            <field name="branch_kitchen_request_line_ids">
+                                <tree editable="bottom">
+                                    <field name="kitchen_menu_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="daily_items" string="Daily Items" invisible="not is_daily_request">
+                            <field name="daily_branch_kitchen_request_line_ids" readonly="1">
+                                <tree editable="bottom">
+                                    <field name="kitchen_menu_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="branch_kitchen_request_action" model="ir.actions.act_window">
+        <field name="name">Branch Kitchen Request</field>
+        <field name="res_model">branch.kitchen.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new branch kitchen request...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="branch_kitchen_request_menu"
+        name="Branch Kitchen Request"
+        action="branch_kitchen_request_action"
+        parent="bn_kitchen.kitchen_menu"
+        sequence="3"/>
+
+</odoo>

@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="rider_schedule_view_search" model="ir.ui.view">
+        <field name="name">rider.schedule.view.search</field>
+        <field name="model">rider.schedule</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Schedule Name"/>
+                <field name="rider_schedule_line_ids" string="Shop Name" filter_domain="[('rider_schedule_line_ids.shop_name', 'ilike', self)]"/>
+                <field name="rider_schedule_line_ids" string="Box No." filter_domain="[('rider_schedule_line_ids.lot_id', 'ilike', self)]"/>
+                <field name="rider_schedule_line_ids" string="Location" filter_domain="[('rider_schedule_line_ids.box_location', 'ilike', self)]"/>
+                <field name="rider_schedule_line_ids" string="Contact Person" filter_domain="[('rider_schedule_line_ids.contact_person', 'ilike', self)]"/>
+                <field name="rider_schedule_line_ids" string="Contact Number" filter_domain="[('rider_schedule_line_ids.contact_number', 'ilike', self)]"/>
+                <field name="rider_schedule_line_ids" string="Date" filter_domain="[('rider_schedule_line_ids.date', '=', self)]"/>
+                
+                <separator/>
+                <filter string="Not Collected" name="filter_not_collected" domain="[('rider_schedule_line_ids.state', '=', 'donation_not_collected')]"/>
+                <filter string="Collected" name="filter_collected" domain="[('rider_schedule_line_ids.state', '=', 'donation_collected')]"/>
+                <filter string="Submitted" name="filter_submitted" domain="[('rider_schedule_line_ids.state', '=', 'donation_submit')]"/>
+                <filter string="Pending" name="filter_pending" domain="[('rider_schedule_line_ids.state', '=', 'pending')]"/>
+                <filter string="Paid" name="filter_paid" domain="[('rider_schedule_line_ids.state', '=', 'paid')]"/>
+            </search>
+        </field>
+    </record>
+
     <record id="rider_schedule_view_form" model="ir.ui.view">
         <field name="name">rider.schedule.view.form</field>
         <field name="model">rider.schedule</field>
@@ -35,10 +58,21 @@
         </field>
     </record>
     
+    <record id="rider_schedule_view_tree" model="ir.ui.view">
+        <field name="name">rider.schedule.view.tree</field>
+        <field name="model">rider.schedule</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="create_date" string="Created On"/>
+            </tree>
+        </field>
+    </record>
+    
     <record id="rider_schedule_action" model="ir.actions.act_window">
         <field name="name">Rider Schedule</field>
         <field name="res_model">rider.schedule</field>
-        <field name="view_mode">form</field>
+        <field name="view_mode">tree,form</field>
         <field name="target">current</field>
     </record>
 

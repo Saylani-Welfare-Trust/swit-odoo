@@ -9,7 +9,6 @@
                 <field name="product_id" />
                 <field name="code" />
                 <field name="donee_id" />
-                <field name="location_id" />
                 <field name="quantity" />
                 <field name="price" />
                 <field name="ref" />
@@ -23,29 +22,31 @@
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
             <form>
+                <field name="is_meat_depart" invisible="1" />
+                <field name="is_goat_depart" invisible="1" />
+
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
-                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight"/>
-                    <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight"/>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" />
+                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="is_meat_depart or is_goat_depart" />
+                    <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="is_meat_depart or is_goat_depart" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="product_id"/>
-                        <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                        <h1><field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" domain="[('is_livestock', '=', True)]" required="1" /></h1>
                     </div>
 
                     <group>
                         <group name="livestock_slaugther_col_1">
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                            <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" />
                             <field name="code" />
+                            <field name="ref" />
                         </group>
                         <group name="livestock_slaugther_col_2">
                             <field name="quantity" />
                             <field name="price" />
-                            <field name="ref" />
                         </group>
                     </group>
                 </sheet>
@@ -62,9 +63,40 @@
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_meat_depart', '=', False), ('is_goat_depart', '=', False)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's add a new livestock slaugther...
+            </p>
+        </field>
+    </record>
+
+    <record id="meat_department_action" model="ir.actions.act_window">
+        <field name="name">Meat Department</field>
+        <field name="res_model">livestock.slaugther</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_meat_depart', '=', True)]</field>
+        <field name="context">{
+            'default_is_meat_depart': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new meat department...
+            </p>
+        </field>
+    </record>
+
+    <record id="goat_department_action" model="ir.actions.act_window">
+        <field name="name">Goat Department</field>
+        <field name="res_model">livestock.slaugther</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_goat_depart', '=', True)]</field>
+        <field name="context">{
+            'default_is_goat_depart': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new goat department...
             </p>
         </field>
     </record>
@@ -81,5 +113,19 @@
         action="livestock_slaugther_action"
         parent="livestock_menu"
         sequence="0"/>
+
+    <menuitem
+        id="meat_department_menu"
+        name="Meat Department"
+        action="meat_department_action"
+        parent="livestock_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="goat_department_menu"
+        name="Goat Department"
+        action="goat_department_action"
+        parent="livestock_menu"
+        sequence="5"/>
 
 </odoo>

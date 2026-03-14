@@ -20,11 +20,16 @@
             <form>
                 <header>
                     <field name="is_donee_register" invisible="1" />
-                    <field name="is_approval" invisible="1" />
+                    <field name="case_type" invisible="1" />
+                    <field name="welfare_acknowledgment" invisible="1" />
+                    
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
                     
-                    <button string="Approval" name="action_approval" type="object" class="oe_highlight" invisible="is_approval or state != 'draft'" />
-                    <button string="Second Approval" name="action_approval" type="object" class="oe_highlight" invisible="not is_approval or state != 'draft'" />
+                    <button string="Approval (1)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_ceo_approval_group" invisible="case_type == False or state != 'draft'" />
+                    <button string="Approval (2)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_cfo_approval_group" invisible="case_type == False or state != 'ceo_approval'" />
+                    
+                    <button string="Sync to Welfare" name="action_sync_welfare_portal" type="object" invisible="case_type != 'below_50_percent' or state != 'draft'" />
+                    <button string="Acknowledge Welfare" name="action_acknowledge_welfare_portal" type="object" invisible="case_type != 'below_50_percent' or not welfare_portal_id" />
                     
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received'" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate'" />
@@ -32,7 +37,7 @@
                     <button string="Refund" name="action_refund" type="object" invisible="state != 'return'" />
                     <button string="Donate" name="action_donate" type="object" invisible="state != 'return'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, approved, sd_received, validate, return, payment_return," />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, payment_return," />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -63,10 +68,12 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
+                            <field name="actual_deposit_percentage" />
+                            <field name="case_type" readonly="1" string="Auto-Determined Case Type" />
                             <field name="cnic_no" readonly="state != 'draft'" required="1" />
                             <field name="street" string="Address" readonly="state != 'draft'" required="1" />
                             <field name="city" required="1" readonly="state != 'draft'" />
-                            <field name="remarks" readonly="1" />
+                            <field name="remarks" invisible="case_type in ['referral', '100_percent']" readonly="state != 'draft'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                         </group>
                         <group name="medical_equipment_col_2">
@@ -83,6 +90,11 @@
                         </group>
                     </group>
 
+                    <group string="Welfare Portal Information" invisible="case_type != 'below_50_percent'">
+                        <field name="welfare_portal_id" readonly="1" />
+                        <field name="welfare_acknowledgment" readonly="state != 'draft'" />
+                    </group>
+
                     <notebook>
                         <page string="Items">
                             <field name="medical_equipment_line_ids">
@@ -91,6 +103,8 @@
                                     <field name="medical_equipment_category_id" string="Master Product" options="{'no_quick_create': True, 'no_create_edit': True}"/>
                                     <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>
                                     <field name="quantity"/>
+                                    <field name="base_security_deposit" readonly="1"/>
+                                    <field name="actual_deposit_percentage" readonly="1"/>
                                     <field name="security_deposit" readonly="1"/>
                                 </tree>
                             </field>

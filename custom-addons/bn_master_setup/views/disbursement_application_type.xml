@@ -10,6 +10,7 @@
                 <field name="order_type" />
                 <field name="product_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="analytic_account_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </tree>
         </field>
     </record>

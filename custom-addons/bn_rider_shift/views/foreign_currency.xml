@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="foreign_currency_view_tree" model="ir.ui.view">
+        <field name="name">foreign.currency.view.tree</field>
+        <field name="model">foreign.currency</field>
+        <field name="arch" type="xml">
+            <tree create="0" delete="0" editable="bottom">
+                <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="amount" readonly="1" />
+                <field name="conversion_rate" />
+                <field name="rider_id" readonly="1" />
+                <field name="lot_id" string="Box No." readonly="1" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'converted'" decoration-danger="state == 'reject'" readonly="1" />
+
+                <button string="Convert" name="action_convert_amount" type="object" class="oe_highlight"/>
+                <button string="Reject" name="action_reject" type="object" class="oe_highlight"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="foreign_currency_action" model="ir.actions.act_window">
+        <field name="name">Foreign Currency</field>
+        <field name="res_model">foreign.currency</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                There is no foreign currency records...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="foreign_currency_menu"
+        name="Foreign Currency"
+        action="foreign_currency_action"
+        parent="bn_rider_shift.rider_shift_root_menu"
+        sequence="3"/>
+
+</odoo>

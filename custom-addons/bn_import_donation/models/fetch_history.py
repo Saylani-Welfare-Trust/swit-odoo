@@ -41,3 +41,13 @@ class FetchHistory(models.Model):
             'domain': [('fetch_history_id', '=', self.id)],
             'target': 'current',
         }
+    
+    def show_fetch_log(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Fetch Log',
+            'res_model': 'fetch.log',
+            'view_mode': 'tree,form',
+            'domain': [('fetch_history_id', '=', self.id)],
+            'target': 'current',
+        }
