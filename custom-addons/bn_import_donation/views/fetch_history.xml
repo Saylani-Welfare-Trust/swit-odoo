@@ -15,6 +15,7 @@
                 <button string="Show Picking" name="show_stock_picking" invisible="not picking_id" type="object" class="oe_highlight" />
                 <button string="Show Journal Entry" name="show_journal_entry" invisible="not journal_entry_id" type="object" class="oe_highlight" />
                 <button string="Show Fetch Donations" name="show_fetch_donation" type="object" class="oe_highlight" />
+                <button string="Show Fetch Logs" name="show_fetch_log" type="object" class="oe_highlight" />
             </tree>
         </field>
     </record>

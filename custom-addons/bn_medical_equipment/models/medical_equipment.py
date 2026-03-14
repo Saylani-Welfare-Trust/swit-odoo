@@ -1,13 +1,20 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 import re
+import logging
+import requests
+import json
+
+_logger = logging.getLogger(__name__)
 
 # CNIC regular expression
 cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 status_selection = [       
     ('draft', 'Draft'),
+    ('ceo_approval', 'CEO Approval'),
+    ('cfo_approval', 'CFO Approval'),
     ('approved', 'Approved'),
     ('sd_received', 'Security Received'),
     ('payment_received', 'Payment Received'),
@@ -18,6 +25,13 @@ status_selection = [
     ('donate', 'Donate'),
     ('waiting_for_inventory_approval', 'Waiting for Inventory Approval'),
     ('recovered', 'Recovered'),
+]
+
+case_type_selection = [
+    ('referral', 'Referral Case'),
+    ('100_percent', '100% Case'),
+    ('50_percent', '50% Case'),
+    ('below_50_percent', 'Below 50% Case'),
 ]
 
 
@@ -49,11 +63,18 @@ class MedicalEquipment(models.Model):
     gender = fields.Selection(related='donee_id.gender', string="Gender", store=True)
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
+    # Actual deposit percentage - determines case type automatically
+    actual_deposit_percentage = fields.Float('Actual Deposit Percentage (%)', default=100.0)
+    case_type = fields.Char('Case Type', compute='_compute_case_type', store=True)
+    
+    # Welfare portal fields for Below 50% cases
+    welfare_portal_id = fields.Char('Welfare Portal ID', readonly=True)
+    welfare_acknowledgment = fields.Boolean('Welfare Portal Acknowledgment')
+    
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id',compute='_compute_total_amount',store=True)
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
-    is_approval = fields.Boolean('Is Approval')
 
     approval_count = fields.Integer('Approval Count')
 
@@ -81,6 +102,26 @@ class MedicalEquipment(models.Model):
                 record.age = age
             else:
                 record.age = 0  # Default value when there's no birth date
+
+    @api.depends('actual_deposit_percentage')
+    def _compute_case_type(self):
+        """
+        Auto-determine case type based on actual deposit percentage
+        100% = 100% Case
+        50% = 50% Case
+        Below 50% = Below 50% Case
+        """
+        for record in self:
+            percentage = record.actual_deposit_percentage
+            if percentage == 100.0:
+                record.case_type = '100_percent'
+            elif percentage == 50.0:
+                record.case_type = '50_percent'
+            elif percentage < 50.0:
+                record.case_type = 'below_50_percent'
+            else:
+                # Default for other percentages (e.g., between 50-100)
+                record.case_type = '50_percent'
 
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):
@@ -118,7 +159,7 @@ class MedicalEquipment(models.Model):
         for record in self:
             total = 0.0
             for line in record.medical_equipment_line_ids:
-                # Use 'amount' instead of 'security_deposit'
+                # The security_deposit is now calculated based on actual_deposit_percentage
                 total += line.security_deposit * line.quantity
             record.total_amount = total
 
@@ -226,16 +267,296 @@ class MedicalEquipment(models.Model):
         return True
     
     def action_approval(self):
-        self.is_approval = False
-
-        for line in self.medical_equipment_line_ids:
-            if line.medical_equipment_category_id.is_medical_approval:
-                self.is_approval = True
-
-        if not self.is_approval or self.approval_count == 1:
-            self.state = 'approved'
-
+        """
+        Handle approval based on case type determined by actual_deposit_percentage.
+        100% Case: Single CEO approval → Approved
+        50% Case: 2 approval cycles (CEO → CFO) - with remarks required
+        Below 50% Case: Sync to welfare portal, then follow 50% case rules with remarks
+        Reference Case: 2 approval cycles (CEO → CFO) - no remarks required
+        """
+        self.ensure_one()
+        
+        case_type = self.case_type
+        current_state = self.state
+        
+        if case_type == '100_percent':
+            # 100%: Single CEO approval → Approved
+            self.write({
+                'state': 'approved'
+            })
+            
+        elif case_type == '50_percent':
+            # 50%: 2 approval cycles with remarks required
+            if not self.remarks:
+                raise ValidationError('Remarks are required for 50% case type.')
+            
+            if current_state == 'draft':
+                self.write({
+                    'state': 'ceo_approval'
+                })
+            elif current_state == 'ceo_approval':
+                self.write({
+                    'state': 'approved'
+                })
+            else:
+                raise ValidationError('This record has already been approved.')
+                
+        elif case_type == 'below_50_percent':
+            # Below 50%: Sync to welfare portal first, then remarks required
+            if not self.welfare_portal_id:
+                raise ValidationError('Welfare Portal ID must be synced before approval for Below 50% cases.')
+            
+            if not self.welfare_acknowledgment:
+                raise ValidationError('Welfare acknowledgment must be received before approval.')
+            
+            if not self.remarks:
+                raise ValidationError('Remarks are required for Below 50% case type.')
+            
+            if current_state == 'draft':
+                self.write({
+                    'state': 'ceo_approval'
+                })
+            elif current_state == 'ceo_approval':
+                self.write({
+                    'state': 'approved'
+                })
+            else:
+                raise ValidationError('This record has already been approved.')
+        
+        else:
+            # Referral Case or others: 2 approval cycles, no remarks required
+            if current_state == 'draft':
+                self.write({
+                    'state': 'ceo_approval'
+                })
+            elif current_state == 'ceo_approval':
+                self.write({
+                    'state': 'approved'
+                })
+            else:
+                raise ValidationError('This record has already been approved.')
+        
         self.approval_count += 1
+    
+    def action_sync_welfare_portal(self):
+        """
+        Sync Below 50% cases to welfare portal - follows welfare.py pattern
+        """
+        if not self:
+            raise UserError("Please select at least one record.")
+        
+        invalid = self.filtered(lambda r: r.case_type != 'below_50_percent')
+        if invalid:
+            raise UserError("Only Below 50% cases can be synced to welfare portal.")
+        
+        success_msgs = []
+        error_msgs = []
+        
+        for rec in self:
+            if not rec.donee_id or not rec.donee_id.name:
+                error_msgs.append(f"[{rec.display_name}] Donee is required.")
+                continue
+            if not rec.cnic_no and not rec.donee_id.mobile:
+                error_msgs.append(f"[{rec.display_name}] CNIC or Mobile is required.")
+                continue
+            
+            try:
+                # Step 1: Check if donee exists in portal
+                donee_exists = rec._check_donee_exists_in_portal()
+                
+                # Step 2: Create donee if needed
+                if not donee_exists:
+                    donee_data = rec._create_donee_in_portal()
+                    portal_donee_id = donee_data.get('id')
+                else:
+                    portal_donee_id = donee_exists.get('id')
+                
+                # Step 3: Create application in portal
+                portal_application = rec._create_me_portal_application()
+                portal_application_id = portal_application.get('id')
+                
+                # Step 4: Mark as synced in portal
+                rec._mark_me_application_synced()
+                
+                # Step 5: Update record with portal information (like welfare does)
+                rec.write({
+                    'welfare_portal_id': portal_application_id,
+                    'is_synced': True,
+                    'last_sync_date': fields.Datetime.now(),
+                })
+                
+                result_message = f"✅ Successfully synced to Welfare Portal. Application ID: {portal_application_id}"
+                success_msgs.append(f"[{rec.display_name}] {result_message}")
+                
+            except Exception as e:
+                error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
+                error_msgs.append(error_message)
+        
+        summary = ""
+        if success_msgs:
+            summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
+        if error_msgs:
+            summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
+        if not summary:
+            summary = "No records processed."
+        
+        return self._show_notification('Welfare Portal Sync Results', summary, 'info')
+    
+    def _check_donee_exists_in_portal(self):
+        """Check if donee already exists in welfare portal"""
+        try:
+            endpoint = self.env.company.check_donee_endpoint
+            data = {
+                "json": {
+                    "odooId": self.donee_id.id
+                }
+            }
+            _logger.info(f"Donee checking query parameters: {data}")
+            result = self._make_welfare_api_call(endpoint, 'POST', data)
+            return result
+        except Exception as e:
+            _logger.info(f"Donee not found in portal: {str(e)}")
+            return None
+    
+    def _create_donee_in_portal(self):
+        """Create donee in welfare portal"""
+        try:
+            endpoint = self.env.company.create_donee_endpoint
+            data = {
+                "json": {
+                    "name": self.donee_id.name or '',
+                    "whatsapp": self.donee_id.mobile or '',
+                    "cnic": (
+                        self.donee_id.cnic_no.replace("-", "")
+                        if self.donee_id.cnic_no else ""
+                    ),
+                    "odooId": self.donee_id.id
+                }
+            }
+            result = self._make_welfare_api_call(endpoint, 'POST', data)
+            return result
+        except Exception as e:
+            raise ValidationError(f"Failed to create donee in welfare portal: {str(e)}")
+    
+    def _create_me_portal_application(self):
+        """Create medical equipment application in welfare portal"""
+        try:
+            endpoint = self.env.company.create_application_endpoint
+            data = {
+                "json": {
+                    "applicationData": {
+                        "odooId": self.id,
+                        "doneeOdooId": self.donee_id.id,
+                        "form": {
+                            "category": "Medical Equipment",
+                            "subcategory": self.case_type,
+                            "donee_name": self.donee_id.name,
+                            "cnic_no": self.cnic_no,
+                            "mobile": self.mobile,
+                            "city": self.city,
+                            "street": self.street,
+                            "date_of_birth": str(self.date_of_birth) if self.date_of_birth else None,
+                            "gender": self.gender,
+                            "age": self.age,
+                            "case_type": self.case_type,
+                            "actual_deposit_percentage": self.actual_deposit_percentage,
+                            "total_amount": float(self.total_amount),
+                            "remarks": self.remarks or ''
+                        }
+                    }
+                }
+            }
+            result = self._make_welfare_api_call(endpoint, 'POST', data)
+            return result
+        except Exception as e:
+            raise ValidationError(f"Failed to create application in welfare portal: {str(e)}")
+    
+    def _mark_me_application_synced(self):
+        """Mark medical equipment application as synced in welfare portal"""
+        try:
+            endpoint = self.env.company.mark_application_endpoint
+            data = {
+                "json": {
+                    "odooId": self.id
+                }
+            }
+            result = self._make_welfare_api_call(endpoint, 'POST', data)
+            return result
+        except Exception as e:
+            _logger.error(f"Failed to mark application as synced: {str(e)}")
+            return None
+    
+    def clean_url(self, url) :
+        return (
+            url.strip()
+            .replace('\u200b', '')   # zero-width space
+            .replace('\ufeff', '')   # BOM
+            .replace('\u00a0', '')   # non-breaking space
+        )
+        
+    def _make_welfare_api_call(self, endpoint, method='POST', data=None):
+        """Make API call to welfare/Sadqa portal - similar to welfare.py pattern"""
+        url = self.clean_url(f"{self.env.company.welfare_url}{endpoint}")
+        headers = {
+            'x-odoo-auth-key': f'{self.env.company.odoo_auth_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        if data is not None:
+            try:
+                # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
+                data = json.loads(json.dumps(data, default=str))
+            except Exception as e:
+                _logger.error("Failed to prepare JSON payload: %s", e)
+                raise UserError(_("Failed to prepare request payload: %s") % e)
+        
+        _logger.info(f"Making Welfare API call to {url} with method {method} and data: {data}")
+        try:
+            if method == 'POST':
+                response = requests.post(url, headers=headers, json=data, timeout=30)
+            else:
+                response = requests.get(url, headers=headers, timeout=30)
+            
+            response.raise_for_status()
+            result = response.json()
+            _logger.info(f"URL: {url} Data: {data} api response: {result}")
+            
+            if not result.get('json', {}):
+                error_msg = result.get('error', 'Unknown error occurred')
+                raise Exception(f"Portal API Error: {error_msg}")
+            
+            return result.get('json', {})
+            
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"Welfare API Request failed: {str(e)}")
+            raise Exception(f"Network error: {str(e)}")
+        except Exception as e:
+            _logger.error(f"Welfare API Processing failed: {str(e)}")
+            raise e
+    
+    def _show_notification(self, title, message, notification_type='info'):
+        """Show notification dialog to user"""
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notification_type,
+                'sticky': False,
+            }
+        }
+    
+    def action_acknowledge_welfare_portal(self):
+        """
+        Mark welfare portal acknowledgment received for Below 50% cases
+        """
+        self.ensure_one()
+        
+        if self.case_type != 'below_50_percent':
+            raise ValidationError('Only Below 50% cases can receive welfare acknowledgment.')
+        
+        self.write({'welfare_acknowledgment': True})
         
     def action_show_picking(self):
         return {
