@@ -56,7 +56,7 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
         if not donations_info:
-            self.create_fetch_log(history.id, "No donations found for the given date range.")
+            self.create_fetch_log(history.id, f"No donations found for the given date range {self.start_date} to {self.end_date}.")
 
             return True
 
