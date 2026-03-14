@@ -102,7 +102,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk API Operations ----------------------
     def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host, history):
-        self.create_fetch_log(history.id, f"Start _fetch_donations_from_api")
+        self.create_fetch_log(history.id, f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling')
 
         """Fetch donations from API with optimized session handling"""
         try:
@@ -140,7 +140,7 @@ class APIDonationWizard(models.TransientModel):
                     _logger.error('Invalid donations payload: %s', data)
                     raise ValidationError(_('Invalid Donations Info'))
 
-                self.create_fetch_log(history.id, f"End _fetch_donations_from_api")
+                self.create_fetch_log(history.id, f"End _fetch_donations_from_api", 'API Fetch', 'Finished fetching donations from API')
 
                 return data.get('donationsInfo') or []
 
