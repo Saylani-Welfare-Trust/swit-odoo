@@ -35,6 +35,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
     setup() {
         super.setup();
+        console.log(`[setup] CustomClosingPopup component initializing...`);
         this.pos = usePos();
         this.popup = useService("popup");
         this.orm = useService("orm");
@@ -47,6 +48,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             lines: {},
             newLines: {},
         });
+        console.log(`[setup] Initial state:`, this.state);
 
         const initializePayment = (pm) => {
             if (!pm?.id) return;
@@ -99,31 +101,67 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
     canConfirm() {
         const cash = this.props.default_cash_details;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(this.getDifference(cash.id))) {
-            return false;
-        }
-        for (const pm of this.props.other_payment_methods || []) {
-            if (this.shouldShowDifference(pm) && !this.env.utils.floatIsZero(this.getDifference(pm.id))) {
+        console.log(`[canConfirm] Checking if can confirm...`);
+        
+        if (cash && this.shouldShowDifference(cash)) {
+            const diff = this.getDifference(cash.id);
+            const isZero = this.env.utils.floatIsZero(diff);
+            console.log(`[canConfirm] Cash: diff=${diff}, isZero=${isZero}, shouldShow=${this.shouldShowDifference(cash)}`);
+            if (!isZero) {
+                console.log(`[canConfirm] BLOCKED: Cash difference is not zero`);
                 return false;
             }
         }
-        return Object.values(this.state.payments).every(v => this.env.utils.isValidFloat(v.counted));
+        
+        for (const pm of this.props.other_payment_methods || []) {
+            if (this.shouldShowDifference(pm)) {
+                const diff = this.getDifference(pm.id);
+                const isZero = this.env.utils.floatIsZero(diff);
+                console.log(`[canConfirm] PM ${pm.name}: diff=${diff}, isZero=${isZero}`);
+                if (!isZero) {
+                    console.log(`[canConfirm] BLOCKED: ${pm.name} has non-zero difference`);
+                    return false;
+                }
+            }
+        }
+        
+        const allValid = Object.values(this.state.payments).every(v => this.env.utils.isValidFloat(v.counted));
+        console.log(`[canConfirm] All payments valid floats: ${allValid}`, Object.values(this.state.payments));
+        console.log(`[canConfirm] CAN CONFIRM: ${allValid}`);
+        return allValid;
     }
 
     async confirm() {
+        console.log(`[confirm] Starting confirm process...`);
         const cash = this.props.default_cash_details;
         let hasDiff = false;
-        if (cash && this.shouldShowDifference(cash) && !this.env.utils.floatIsZero(this.getDifference(cash.id))) {
-            hasDiff = true;
-        }
-        for (const pm of this.props.other_payment_methods || []) {
-            if (this.shouldShowDifference(pm) && !this.env.utils.floatIsZero(this.getDifference(pm.id))) {
+        
+        if (cash && this.shouldShowDifference(cash)) {
+            const diff = this.getDifference(cash.id);
+            const isNotZero = !this.env.utils.floatIsZero(diff);
+            console.log(`[confirm] Cash difference: ${diff}, is non-zero: ${isNotZero}`);
+            if (isNotZero) {
                 hasDiff = true;
-                break;
+            }
+        }
+        
+        for (const pm of this.props.other_payment_methods || []) {
+            if (this.shouldShowDifference(pm)) {
+                const diff = this.getDifference(pm.id);
+                const isNotZero = !this.env.utils.floatIsZero(diff);
+                console.log(`[confirm] ${pm.name} difference: ${diff}, is non-zero: ${isNotZero}`);
+                if (isNotZero) {
+                    hasDiff = true;
+                    break;
+                }
             }
         }
 
-        if (!this.pos.config.cash_control || !hasDiff) return await this.closeSession();
+        console.log(`[confirm] hasDiff=${hasDiff}, cash_control=${this.pos.config.cash_control}`);
+        if (!this.pos.config.cash_control || !hasDiff) {
+            console.log(`[confirm] No difference or cash control disabled, closing session`);
+            return await this.closeSession();
+        }
 
         if (this.hasUserAuthority()) {
             const { confirmed } = await this.popup.add(ConfirmPopup, {
@@ -144,21 +182,31 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         });
     }
 
-    getEffectiveCounted(paymentId) {
-        return parseFloat(this.state.payments[paymentId]?.counted || 0) + this.getLinesTotal(paymentId);
-    }
 
     getDifference(paymentId) {
         const payment = paymentId === this.props.default_cash_details?.id
             ? this.props.default_cash_details
             : (this.props.other_payment_methods || []).find(m => m.id === paymentId);
 
-        if (!payment || !this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) return NaN;
+        console.log(`[getDifference] paymentId=${paymentId}, payment=${payment?.name}, counted=${this.state.payments[paymentId]?.counted}`);
 
-        if (payment.skip_amount_input === true || payment.skip_amount_input === 'tru') return 0;
+        if (!payment || !this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)) {
+            console.log(`[getDifference] Invalid: payment=${!!payment}, isValidFloat=${this.env.utils.isValidFloat(this.state.payments[paymentId]?.counted)}`);
+            return NaN;
+        }
 
+        if (payment.skip_amount_input === true || payment.skip_amount_input === 'true') {
+            console.log(`[getDifference] Skipping amount input for ${payment.name}`);
+            return 0;
+        }
+
+        const counted = parseFloat(this.state.payments[paymentId]?.counted || 0);
+        const linesTotal = this.getLinesTotal(paymentId);
+        const effectiveCounted = counted + linesTotal;
         const expected = payment.amount || 0;
-        return this.getEffectiveCounted(paymentId) - expected;
+        const difference = effectiveCounted - expected;
+        console.log(`[getDifference] paymentId=${paymentId}, counted=${counted}, linesTotal=${linesTotal}, effectiveCounted=${effectiveCounted}, expected=${expected}, difference=${difference}`);
+        return difference;
     }
 
     _getPaymentMethod(paymentId) {
@@ -190,10 +238,12 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
     getLinesTotal(paymentId) {
         const lines = this.state.lines[paymentId] || { restricted: [], unrestricted: [], neutral: [] };
-        return ["restricted", "unrestricted", "neutral"].reduce(
-            (sum, type) => sum + (lines[type] || []).reduce((s, l) => s + (l.amount || 0), 0),
-            0
-        );
+        const restrictedSum = (lines.restricted || []).reduce((s, l) => s + (l.amount || 0), 0);
+        const unrestrictedSum = (lines.unrestricted || []).reduce((s, l) => s + (l.amount || 0), 0);
+        const neutralSum = (lines.neutral || []).reduce((s, l) => s + (l.amount || 0), 0);
+        const total = restrictedSum + unrestrictedSum + neutralSum;
+        console.log(`[getLinesTotal] paymentId=${paymentId}, restricted=${restrictedSum}, unrestricted=${unrestrictedSum}, neutral=${neutralSum}, total=${total}`);
+        return total;
     }
 
     formatCurrencyNeutral(value) {
@@ -211,16 +261,22 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async closeSession() {
+        console.log(`[closeSession] Starting session close...`);
         this.customerDisplay?.update({ closeUI: true });
         const syncSuccess = await this.pos.push_orders_with_closing_popup();
         if (!syncSuccess) return;
 
         if (this.pos.config.cash_control) {
-            const counted = parseFloat(this.state.payments[this.props.default_cash_details.id].counted);
+            const countedValue = this.state.payments[this.props.default_cash_details.id].counted;
+            const counted = parseFloat(countedValue);
+            const linesTotal = this.getLinesTotal(this.props.default_cash_details.id);
+            const effectiveCounted = counted + linesTotal;
+            console.log(`[closeSession] Cash Control Enabled. Counted value: '${countedValue}', parsed: ${counted}, linesTotal: ${linesTotal}, effectiveCounted: ${effectiveCounted}`);
             const response = await this.orm.call("pos.session", "post_closing_cash_details", [
                 this.pos.pos_session.id,
-                counted
+                effectiveCounted
             ]);
+            console.log(`[closeSession] post_closing_cash_details response:`, response);
             if (!response.successful) return this.handleClosingError(response);
         }
 
@@ -265,8 +321,10 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async handleAddLine(paymentId, type = "restricted") {
+        console.log(`[handleAddLine] Adding line for paymentId=${paymentId}, type=${type}`);
         const { amount, ref, bank } = this.state.newLines[paymentId][type];
         const amountNum = parseFloat(amount);
+        console.log(`[handleAddLine] amount='${amount}', amountNum=${amountNum}, ref=${ref}`);
 
         const pm = paymentId === this.props.default_cash_details?.id
             ? this.props.default_cash_details
@@ -316,6 +374,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             await this.popup.add(ErrorPopup, { title: _t("Session Slip Error"), body: _t("Unable to add slip to session please check your internet connection.") });
         } else {
             this.state.lines[paymentId][type].push({ id, bank: bank_name, amount: amountNum, ref, record_id: slip.id });
+            console.log(`[handleAddLine] Line added successfully. New ${type} total: ${this.getLinesTotal(paymentId)}`);
         }
 
         this.state.newLines[paymentId][type] = { amount: 0, ref: "", bank: "" };
@@ -336,14 +395,20 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async openDetailsPopup() {
+        console.log(`[openDetailsPopup] Opening Money Details Popup...`);
         const action = _t("Cash control - closing");
         this.hardwareProxy.openCashbox(action);
         const { confirmed, payload } = await this.popup.add(MoneyDetailsPopup, { moneyDetails: this.moneyDetails, action });
         if (confirmed) {
             const { total, moneyDetailsNotes, moneyDetails } = payload;
-            this.state.payments[this.props.default_cash_details.id].counted = this.env.utils.formatCurrency(total, false);
+            const numericTotal = String(parseFloat(total));
+            console.log(`[openDetailsPopup] CONFIRMED: total=${total}, parsed=${numericTotal}`);
+            this.state.payments[this.props.default_cash_details.id].counted = numericTotal;
+            console.log(`[openDetailsPopup] Updated counted to: ${numericTotal}`);
             if (moneyDetailsNotes) this.state.notes = moneyDetailsNotes;
             this.moneyDetails = moneyDetails;
+        } else {
+            console.log(`[openDetailsPopup] CANCELLED`);
         }
     }
 
