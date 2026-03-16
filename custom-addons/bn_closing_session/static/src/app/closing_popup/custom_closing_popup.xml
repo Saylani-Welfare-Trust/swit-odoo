@@ -22,6 +22,7 @@
                                 <tr class="text-dark">
                                     <th>Payment Method</th>
                                     <th>Expected</th>
+                                    <th t-if="shouldShowSlipHeaders()">Counted</th>
                                     <th t-if="shouldShowSlipHeaders()">Difference</th>
                                     <th>Bank</th>
                                     <th>Slip No.</th>
@@ -36,6 +37,10 @@
                                     <tr t-key="'default_cash'">
                                         <td t-esc="props.default_cash_details.name"/>
                                         <td t-esc="env.utils.formatCurrency(props.default_cash_details.amount)"/>
+                                        <td>
+                                            <input class="form-control form-control-sm" placeholder="Counted"
+                                                t-model="state.payments[props.default_cash_details.id].counted"/>
+                                        </td>
                                         <td t-esc="env.utils.formatCurrency(getDifference(props.default_cash_details.id))"
                                             t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(getDifference(props.default_cash_details.id))}"/>
                                     </tr>
@@ -51,6 +56,7 @@
                                                 <t t-if="type==='neutral'">Non-Donation Amount</t>
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown[type])"/>
+                                            <td></td>
                                             <t t-if="shouldShowSlipInput(props.default_cash_details)">
                                                 <td t-esc="env.utils.formatCurrency(
                                                     type==='restricted'?getRestrictedDifference(props.default_cash_details.id):
@@ -96,10 +102,10 @@
 
                                         <tr t-foreach="state.lines[props.default_cash_details.id][type]||[]" t-as="line" t-key="line.id">
                                             <t t-if="shouldShowSlipInput(props.default_cash_details)">
-                                                <td colspan="3">----</td>
+                                                <td colspan="4">----</td>
                                             </t>
                                             <t t-else="">
-                                                <td colspan="2">----</td>
+                                                <td colspan="3">----</td>
                                             </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
@@ -122,6 +128,12 @@
                                     <tr>
                                         <td t-esc="pm.name"/>
                                         <td t-esc="env.utils.formatCurrency(pm.amount)"/>
+                                        <t t-if="shouldShowSlipInput(pm)">
+                                            <td>
+                                                <input class="form-control form-control-sm" placeholder="Counted"
+                                                    t-model="state.payments[pm.id].counted"/>
+                                            </td>
+                                        </t>
                                         <td t-esc="env.utils.formatCurrency(getDifference(pm.id))"
                                             t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(getDifference(pm.id))}"/>
                                     </tr>
@@ -136,6 +148,7 @@
                                                 <t t-if="type==='neutral'">Non-Donation Amount</t>
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(pm.breakdown[type])"/>
+                                            <td></td>
                                             <t t-if="shouldShowSlipInput(pm)">
                                                 <td t-esc="env.utils.formatCurrency(
                                                     type==='restricted'?getRestrictedDifference(pm.id):
@@ -181,10 +194,10 @@
 
                                         <tr t-foreach="state.lines[pm.id][type]||[]" t-as="line" t-key="line.id">
                                             <t t-if="shouldShowSlipInput(pm)">
-                                                <td colspan="3">----</td>
+                                                <td colspan="4">----</td>
                                             </t>
                                             <t t-else="">
-                                                <td colspan="2">----</td>
+                                                <td colspan="3">----</td>
                                             </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
