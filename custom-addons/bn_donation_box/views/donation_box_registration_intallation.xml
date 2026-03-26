@@ -30,12 +30,12 @@
                             <field name="shop_name" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="contact_person" required="1" readonly="status in ['approved', 'available']" />
                             <!-- <field name="location" required="1" readonly="status in ['approved', 'available', 'change_request']" /> -->
-                            <field name="location" required="1" readonly="key_issuance" />
+                            <field name="location" required="1" readonly="key_issuance or status in ['approved', 'available', 'change_request']" />
                             <field name="shop_plot_no" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="street" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="landmark" required="1" readonly="status in ['approved', 'available', 'change_request']" />
                             <field name="block_floor_office_no" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="rider_id" string="Rider" domain="[('category_ids', 'in', [employee_category_1_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="status not in ['installed', 'approved', 'change_request']" />
+                            <!-- <field name="rider_id" string="Rider" domain="[('category_ids', 'in', [employee_category_1_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="status not in ['installed', 'approved', 'change_request']" /> -->
                             <field name="installer_id" string="Installer" domain="[('category_ids', 'in', [employee_category_2_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="product_id" string="Box Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
@@ -45,7 +45,7 @@
                         <group name="donation_box_registration_installation_col_2">
                             <!-- <field name="donor_id" domain="[('is_donee', '=', False), ('registration_category', '=', 'donor')]" string="Donor Name" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available']" /> -->
                             
-                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['DB Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [2, 4, 14])], 'default_street': location, 'default_street': location, 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_city': city_id.name, 'default_state': 'draft'}" options="{'no_edit': True, 'no_open': True}" />
+                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['DB Donor']), ('state', '=', 'register')]" readonly="status in ['approved', 'available', 'change_request']" context="{'default_category_id': [(6, 0, [2, 4, 14])], 'default_street': location, 'default_street': location, 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_city': city_id.name, 'default_state': 'draft'}" options="{'no_edit': True, 'no_open': True}" />
                             <label for="contact_no"/>
                             <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_id" readonly="status in ['approved', 'available']" required="1"/> <field style="width: 70% !important;" name="contact_no" required="1" readonly="status in ['approved', 'available']" /></div>
                             <field name="installation_date" required="1" readonly="status in ['approved', 'available', 'change_request']" />
