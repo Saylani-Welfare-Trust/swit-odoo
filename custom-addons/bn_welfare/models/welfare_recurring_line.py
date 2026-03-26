@@ -192,14 +192,14 @@ class WelfareRecurringLine(models.Model):
                 StockMoveLine = self.env['stock.move.line']
                 
                 # Use warehouse from welfare recurring line, fallback to default
-                if self.warehouse_id:
-                    warehouse = self.warehouse_id
-                    picking_type = warehouse.out_type_id
-                    location_src = warehouse.lot_stock_id
-                else:
-                    picking_type = self.env.ref('stock.picking_type_out')
-                    location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
-                
+                # if self.warehouse_id:
+                #     warehouse = self.warehouse_id
+                #     picking_type = warehouse.out_type_id
+                #     location_src = warehouse.lot_stock_id
+                # else:
+                picking_type = self.env.ref('stock.picking_type_out')
+                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
+            
                 location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
                 
                 picking_vals = {

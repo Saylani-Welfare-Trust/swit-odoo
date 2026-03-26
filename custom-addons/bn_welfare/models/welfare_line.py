@@ -43,7 +43,7 @@ class WelfareLine(models.Model):
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
 
     # order_type field moved to main welfare model
-    collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
+    collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -83,18 +83,41 @@ class WelfareLine(models.Model):
     )
     
     @api.model
+    def create(self, vals):
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        
+        if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+            vals['collection_point'] = 'branch'
+        
+        return super().create(vals)
+
+
+    def write(self, vals):
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        
+        if 'disbursement_category_id' in vals:
+            if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+                vals['collection_point'] = 'branch'
+        
+        return super().write(vals)
+    
+    
+    @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
+        _logger.info(f"Running scheduled action to auto-mark welfare lines as delivered for today: {today}")
         lines = self.search([('collection_date', '=', today), 
                                     ('state', '=', 'draft'),
                                     ('disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id),
                                     ('welfare_id.state', '=', 'approve'),
                                     ('collection_point', '=', 'branch'),
                                     ('welfare_id.order_type', 'in', ['one_time'])
-                                    ])        
+                                    ])
+        _logger.info(f"Auto-marking {len(lines)} welfare lines as delivered for today")        
         for line in lines:
             if line.welfare_id.order_type == 'one_time' :
                 try:
+                    _logger.info(f"Auto-marking Welfare  {line.welfare_id.name} as delivered")
                     line.action_delivered()
                 except Exception as e:
                     # Optionally log error
@@ -256,6 +279,7 @@ class WelfareLine(models.Model):
             self.welfare_id._auto_disburse_if_all_lines_delivered()
                             
     def action_delivered(self):
+            _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
             if self.disbursement_category_id == in_kind_category:        
                 StockPicking = self.env['stock.picking']
@@ -263,13 +287,13 @@ class WelfareLine(models.Model):
                 StockMoveLine = self.env['stock.move.line']
                 
                 # Use warehouse from welfare line, fallback to default
-                if self.warehouse_id:
-                    warehouse = self.warehouse_id
-                    picking_type = warehouse.out_type_id
-                    location_src = warehouse.lot_stock_id
-                else:
-                    picking_type = self.env.ref('stock.picking_type_out')
-                    location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
+                # if self.warehouse_id:
+                #     warehouse = self.warehouse_id
+                #     picking_type = warehouse.out_type_id
+                #     location_src = warehouse.lot_stock_id
+                # else:
+                picking_type = self.env.ref('stock.picking_type_out')
+                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
                 
                 location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
                 
@@ -283,6 +307,7 @@ class WelfareLine(models.Model):
 
                 }
                 picking = StockPicking.create(picking_vals)
+                _logger.info(f"Created stock picking  for welfare record {picking.name} with product {self.product_id.name} and quantity {self.quantity}")
                 move_vals = {
                     'name': self.product_id.display_name,
                     'product_id': self.product_id.id,

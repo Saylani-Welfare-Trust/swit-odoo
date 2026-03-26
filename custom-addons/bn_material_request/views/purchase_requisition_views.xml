@@ -18,6 +18,11 @@
                         invisible="state not in ['in_progress', 'open']"
                         help="Create multiple RFQs (Purchase Orders) for different vendors with same products"/>
             </xpath>
+
+            <xpath expr="//header/button[2]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
         </field>
     </record>
 
