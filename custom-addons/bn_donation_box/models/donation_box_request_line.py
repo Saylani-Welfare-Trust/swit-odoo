@@ -12,7 +12,6 @@ class DonationBoxRequestLine(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot")
 
     used = fields.Boolean('Used in Picking', default=False)
-    mark_as_unconsumed = fields.Boolean('Remained Uninstalled', default=False, help='Check this to mark the Uninstalled boxes as unconsumed, so they can be reused in future requests. This will also allow you to keep track of which boxes were not installed and can be reused later.')
 
     lock_no = fields.Char('Lock No.')
     key_tag = fields.Char('Key Tag')

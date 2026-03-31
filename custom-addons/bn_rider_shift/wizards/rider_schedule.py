@@ -1,5 +1,6 @@
+
 from odoo import fields, models, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class RiderSchedule(models.TransientModel):
@@ -17,6 +18,8 @@ class RiderSchedule(models.TransientModel):
             vals['name'] = self.env['ir.sequence'].next_by_code('rider_schedule') or _('New')
         
         return super(RiderSchedule, self).create(vals)
+
+
 
     def action_check_shift(self):
         # today = fields.Date.today()
@@ -101,6 +104,9 @@ class RiderSchedule(models.TransientModel):
                         'date': collection.date,
                         'state': collection.state,
                         'donation_box_registration_installation_id': box.id,
+                        # 'amount': collection.amount,
+                        # 'foreign_notes': collection.foreign_notes,
+                        # 'counterfeit_notes': collection.counterfeit_notes,
                     }))
 
         # ✅ Build wizard

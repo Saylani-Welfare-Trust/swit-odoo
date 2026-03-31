@@ -34,7 +34,6 @@
     </record>
     
     <record id="donation_box_registration_installation_change_request_group" model="res.groups">
-        <field name="name">Donation Box / Change Request</field>
+        <field name="name">Registration or Installation / Change Request</field>
     </record>
-
 </odoo>

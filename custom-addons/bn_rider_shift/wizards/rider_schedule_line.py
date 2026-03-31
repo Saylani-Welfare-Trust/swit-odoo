@@ -48,6 +48,7 @@ class RiderScheduleLine(models.TransientModel):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
+    foreign_notes = fields.Float('Foreign Notes')
     counterfeit_notes = fields.Float('Counter Feit Notes')
 
     remarks = fields.Text('Remarks')
@@ -57,14 +58,14 @@ class RiderScheduleLine(models.TransientModel):
         self.state = 'donation_collected'
         self.rider_collection_id.state = 'donation_collected'
 
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'rider.schedule',
-            'view_mode': 'form',
-            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
-            'res_id': self.rider_schedule_id.id,
-            'target': 'current'
-        }
+        # return {
+        #     'type': 'ir.actions.act_window',
+        #     'res_model': 'rider.schedule',
+        #     'view_mode': 'form',
+        #     'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
+        #     'res_id': self.rider_schedule_id.id,
+        #     'target': 'current'
+        # }
     
     def mark_as_pending(self):
         if not self.remarks:
@@ -72,8 +73,10 @@ class RiderScheduleLine(models.TransientModel):
 
         self.state = 'pending'
         self.rider_collection_id.state = 'pending'
+        self.rider_collection_id.amount = self.amount
+        self.rider_collection_id.foreign_notes = self.foreign_notes
+        self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
-
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
 
         key.state = 'pending'
@@ -102,13 +105,17 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.state = 'donation_submit'
         self.rider_collection_id.submission_time = fields.Datetime.now()
         self.rider_collection_id.amount = self.amount
+        self.rider_collection_id.foreign_notes = self.foreign_notes
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
-
+        self.rider_collection_id.remarks = self.remarks
         self.env['counterfeit.notes'].create({
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,
             'submission_time': self.submission_time,
             'amount': self.counterfeit_notes,
+            # 'foreign_notes': self.foreign_notes,
+            # 'counterfeit_notes': self.counterfeit_notes,
+            # 'remarks': self.remarks,
         })
 
         return {
@@ -119,3 +126,20 @@ class RiderScheduleLine(models.TransientModel):
             'res_id': self.rider_schedule_id.id,
             'target': 'current'
         }
+        
+    def action_generate_complain(self):
+        # raise ValidationError(self.donation_box_registration_installation_id.id)
+
+        if not self.remarks:
+            raise ValidationError('Please enter the remarks first.')
+
+        self.env['donation.box.complain.center'].create({
+            'rider_id': self.rider_id.id,
+            'lot_id': self.lot_id.id,
+            'date': fields.Date.today(),
+            'remarks': self.remarks,
+        })
+
+        self.is_complain_generated = True
+        
+        
