@@ -33,62 +33,58 @@ class LivestockSlaughter(models.Model):
 
 
     def action_confirm(self):
-        # Retrieve the 'Slaughter Stock' location
-        location = None
-
+        # ✅ Determine destination location
         if self.is_meat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
+            location = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
         elif self.is_goat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
+            location = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
         else:
-            location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
-        
+            location = self.env['stock.location'].search([('name', 'ilike', 'Slaughter Stock')], limit=1)
+
         if not location:
-            raise ValidationError("Slaughter Stock, Meat or Goat location not found. Please create it in Inventory > Configuration > Locations.")
+            raise ValidationError(
+                "Slaughter Stock, Meat or Goat location not found."
+            )
 
-        # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        # ✅ Internal picking type
+        picking_type = self.env.ref('stock.picking_type_internal')
 
-        # Retrieve the product based on the product code
+        # ✅ Product
         product = self.product_id
-        
         if not product:
-            raise ValidationError(f"Product with code '{self.code}' not found.")
+            raise ValidationError("Product not found.")
 
-        # Create the stock picking
+        # ✅ Create picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': location,
+            'location_dest_id': location.id,
             'origin': product.name or 'Live Stock Slaughter',
         })
 
-        # Create the stock move
-        self.env['stock.move'].create({
+        # ✅ Create move
+        move = self.env['stock.move'].create({
             'name': product.display_name,
             'product_id': product.id,
             'product_uom_qty': self.quantity,
-            'quantity': self.quantity,
             'product_uom': product.uom_id.id,
             'picking_id': picking.id,
             'location_id': picking.location_id.id,
             'location_dest_id': picking.location_dest_id.id,
         })
 
-        # Confirm and assign the picking
+        # ✅ Confirm & assign
         picking.action_confirm()
         picking.action_assign()
 
-        # Set the done quantities and validate the picking
+        # ✅ Set done qty
         for move_line in picking.move_line_ids:
-            move_line.quantity = move_line.quantity_product_uom
+            move_line.qty_done = move_line.product_uom_qty
+
+        # ✅ Validate
         picking.button_validate()
 
+        # ✅ Update state
         self.confirm_hide = True
         self.state = 'received'
 
