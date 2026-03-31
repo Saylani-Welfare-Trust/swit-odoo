@@ -79,7 +79,7 @@ class RiderSchedule(models.TransientModel):
             missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
             finalized_missing_lot_ids = []
 
-            # raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
+            raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
 
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
@@ -99,7 +99,7 @@ class RiderSchedule(models.TransientModel):
                         'date': obj.date,
                         'donation_box_registration_installation_id': box.id,
                     })
-                    
+
                     
                     line_vals.append((0, 0, {
                         'rider_collection_id': collection.id,
