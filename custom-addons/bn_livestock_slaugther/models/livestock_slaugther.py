@@ -85,7 +85,7 @@ class LivestockSlaughter(models.Model):
         picking.button_validate()
 
         # ✅ Update state
-        self.confirm_hide = True
+        # self.confirm_hide = True
         self.state = 'received'
 
     def action_cutting(self):
