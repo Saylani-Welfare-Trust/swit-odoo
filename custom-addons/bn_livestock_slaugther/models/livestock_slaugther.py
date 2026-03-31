@@ -140,7 +140,7 @@ class LivestockSlaughter(models.Model):
             'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
-            'product_code': self.product_code,
+            # 'product_code': self.product_code,
             'picking_id': picking.id,
         })
 
