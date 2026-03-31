@@ -93,7 +93,7 @@ class LivestockSlaughter(models.Model):
 
     def action_cutting(self):
         # Retrieve the 'Slaughter Stock' location
-        cutting_obj = self.env['live_stock_slaughter.cutting']
+        cutting_obj = self.env['livestock.cutting.material']
 
         location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         if not location:
@@ -152,7 +152,7 @@ class LivestockSlaughter(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': 'Cutting Record',
-            'res_model': 'live_stock_slaughter.cutting',
+            'res_model': 'livestock.cutting.material',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',
