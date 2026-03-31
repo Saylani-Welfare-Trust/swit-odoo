@@ -55,7 +55,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_id
+        product = self.code
         if not product:
             raise ValidationError(f"Product with code '{self.product_code}' not found.")
 
