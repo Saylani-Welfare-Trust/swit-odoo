@@ -11,7 +11,7 @@ class POSSession(models.Model):
     def _loader_params_res_partner(self):
         vals = super()._loader_params_res_partner()
         
-        vals["search_params"]["fields"] += ["categories"]
+        vals["search_params"]["fields"] += ["categories", "cnic_no"]
         return vals
     
     def _loader_params_res_users(self):

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="daily_planning_view_tree" model="ir.ui.view">
+        <field name="name">daily.planning.view.tree</field>
+        <field name="model">daily.planning</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="date" />
+                <field name="type" />
+                <field name="partner_id" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="daily_planning_view_form" model="ir.ui.view">
+        <field name="name">daily.planning.view.form</field>
+        <field name="model">daily.planning</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Send to Issuance" invisible="type == 'ration'" name="action_send_to_issuance" type="object" class="oe_highlight"/>
+                </header>
+
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date" />
+                            <field name="type" />
+                        </group>
+                        <group>
+                            <field name="partner_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="product" string="Product">
+                            <field name="daily_planning_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="daily_planning_action" model="ir.actions.act_window">
+        <field name="name">Daily Planning</field>
+        <field name="res_model">daily.planning</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a daily planning....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="planning_root_menu"
+        name="Planning"
+        web_icon="bn_master_setup,static/description/icon.png"
+        sequence="6"/>
+
+    <menuitem
+        id="daily_planning_menu"
+        name="Daily Planning"
+        action="daily_planning_action"
+        parent="planning_root_menu"
+        sequence="0"/>
+
+</odoo>

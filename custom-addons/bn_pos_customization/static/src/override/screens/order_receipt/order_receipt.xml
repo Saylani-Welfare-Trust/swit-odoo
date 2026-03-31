@@ -55,7 +55,7 @@
 
                             <div class="row mb-1">
                                 <div class="col-4 fw-medium">Donor Name:</div>
-                                <div class="col-8 fw-medium">
+                                    <div class="col-8 fw-medium" style="word-break: break-word;">
                                     <t t-if="partner.name"><t t-esc="partner.name"/></t>
                                     <t t-else="">-</t>
                                 </div>
@@ -63,7 +63,7 @@
 
                             <div class="row mb-1">
                                 <div class="col-4 fw-medium">CNIC:</div>
-                                <div class="col-8 fw-medium">
+                                    <div class="col-8 fw-medium" style="word-break: break-word;">
                                     <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
                                     <t t-else="">-</t>
                                 </div>
