@@ -144,7 +144,7 @@ class LivestockSlaughter(models.Model):
             # 'picking_id': picking.id,
         })
 
-        self.cutting_hide = True
+        # self.cutting_hide = True
 
         return {
             'type': 'ir.actions.act_window',
