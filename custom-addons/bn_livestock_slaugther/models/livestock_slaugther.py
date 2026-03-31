@@ -65,7 +65,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location,
-            'origin': self.product or 'Live Stock Slaughter',
+            'origin': product.name or 'Live Stock Slaughter',
         })
 
         # Create the stock move
