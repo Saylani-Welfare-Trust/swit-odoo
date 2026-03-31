@@ -23,21 +23,34 @@ class POSOrder(models.Model):
         """To get the value of field in pos session to pos order"""
         res = super(POSOrder, self)._order_fields(ui_order)
 
-        res['bank_name'] = ui_order.get('bank_name') or False
-        res['cheque_number'] = ui_order.get('cheque_number') or False
-        res['qr_code'] = ui_order.get('qr_code') or False
-        res['cheque_date'] = ui_order.get('cheque_date') or False
+        cheque_date = ui_order.get('cheque_date')
+        parsed_date = False
 
-        # Create pos.cheque record if cheque_number is provided and not a QR code payment
+        # ✅ Fix date parsing (avoid timezone issues)
+        if cheque_date:
+            try:
+                # Handles ISO format like: 2026-03-31T00:00:00.000Z
+                parsed_date = fields.Date.to_date(cheque_date[:10])
+            except Exception:
+                parsed_date = False
+
+        res.update({
+            'bank_name': ui_order.get('bank_name') or False,
+            'cheque_number': ui_order.get('cheque_number') or False,
+            'qr_code': ui_order.get('qr_code') or False,
+            'cheque_date': parsed_date,
+        })
+
+        # ✅ Create cheque record
         cheque_number = ui_order.get('cheque_number')
         if cheque_number and not ui_order.get('qr_code'):
             cheque = self.env['pos.cheque'].create({
                 'bank_name': ui_order.get('bank_name') or False,
                 'name': cheque_number,
-                'date': ui_order.get('cheque_date') or False,
+                'date': parsed_date,
             })
             res['pos_cheque_id'] = cheque.id
-        
+
         return res
     
     def get_cheque_pos_order(self, shop, offset=0, limit=10):
