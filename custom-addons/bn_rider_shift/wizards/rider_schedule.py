@@ -62,11 +62,6 @@ class RiderSchedule(models.TransientModel):
                     'rider_id': record.rider_id.id,
                     'day': record.day,
                     'date': record.date,
-                    'shop_name': record.shop_name,
-                    'lot_id': record.lot_id.id,
-                    'sub_zone_id': record.sub_zone_id.id,
-                    'contact_person': record.contact_person,
-                    'contact_number': record.contact_number,
                     'state': record.state,
                     'submission_time': record.submission_time,
                     'donation_box_registration_installation_id': record.donation_box_registration_installation_id.id,
@@ -79,7 +74,7 @@ class RiderSchedule(models.TransientModel):
             missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
             finalized_missing_lot_ids = []
 
-            raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
+            # raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
 
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
@@ -100,7 +95,6 @@ class RiderSchedule(models.TransientModel):
                         'donation_box_registration_installation_id': box.id,
                     })
 
-                    
                     line_vals.append((0, 0, {
                         'rider_collection_id': collection.id,
                         'day': collection.day,
