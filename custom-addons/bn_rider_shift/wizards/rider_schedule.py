@@ -100,7 +100,6 @@ class RiderSchedule(models.TransientModel):
                         'donation_box_registration_installation_id': box.id,
                     })
                     
-
                     line_vals.append((0, 0, {
                         'rider_collection_id': collection.id,
                         'day': collection.day,
