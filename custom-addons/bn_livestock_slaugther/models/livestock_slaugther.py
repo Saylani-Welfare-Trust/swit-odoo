@@ -55,7 +55,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_new
+        product = self.product_id
         if not product:
             raise ValidationError(f"Product with code '{self.product_code}' not found.")
 
@@ -108,7 +108,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_new
+        product = self.product_id
 
 
         # Create the stock picking
@@ -116,7 +116,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.product_new.id or '',
+            'origin': self.product_id.id or '',
         })
 
         # Create the stock move
@@ -140,7 +140,7 @@ class LivestockSlaughter(models.Model):
         #     move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
         cutting_record = cutting_obj.create({
-            'product_new': self.product_new.id,
+            'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
             'product_code': self.product_code,
