@@ -141,7 +141,7 @@ class LivestockSlaughter(models.Model):
             'quantity': self.quantity,
             'price': self.price,
             # 'product_code': self.product_code,
-            'picking_id': picking.id,
+            # 'picking_id': picking.id,
         })
 
         self.cutting_hide = True
