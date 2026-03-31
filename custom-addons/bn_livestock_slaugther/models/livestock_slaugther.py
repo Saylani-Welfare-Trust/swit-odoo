@@ -57,7 +57,7 @@ class LivestockSlaughter(models.Model):
         # Retrieve the product based on the product code
         product = self.code
         if not product:
-            raise ValidationError(f"Product with code '{self.product_code}' not found.")
+            raise ValidationError(f"Product with code '{self.code}' not found.")
 
         # Create the stock picking
         picking = self.env['stock.picking'].create({
