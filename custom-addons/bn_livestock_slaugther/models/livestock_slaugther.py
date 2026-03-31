@@ -79,7 +79,7 @@ class LivestockSlaughter(models.Model):
 
         # ✅ Set done qty
         for move_line in picking.move_line_ids:
-            move_line.qty_done = move_line.product_uom_qty
+            move_line.qty_done = move_line.quantity
 
         # ✅ Validate
         picking.button_validate()
