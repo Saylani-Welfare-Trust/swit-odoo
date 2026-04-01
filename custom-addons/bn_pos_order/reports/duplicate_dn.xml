@@ -170,7 +170,7 @@
                                         <strong>Date &amp; Time:</strong>
                                         <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
                                     </div>
-                                    <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
+                                    <div><strong>Entered by: </strong> <t t-esc="order.user_id.name"/></div>
                                 </div>
                             </div>
 
