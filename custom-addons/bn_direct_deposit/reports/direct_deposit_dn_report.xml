@@ -70,8 +70,8 @@
                             </style>
 
                             <div class="dn-background">
-                                <img t-if="o.company_id.dn_image"
-                                    t-att-src="image_data_uri(o.company_id.dn_image)"/>
+                                <img t-if="o.env.company.dn_image"
+                                    t-att-src="image_data_uri(o.env.company.dn_image)"/>
                             </div>
 
                             <!-- ===== HEADER ===== -->
