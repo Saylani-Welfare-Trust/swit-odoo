@@ -105,13 +105,12 @@
                                     <div>
                                         <strong>Date &amp; Time:</strong>
                                         <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
-                                        <div t-if="payment_method == 'Cheque'">
-                                            <br/>
-                                            <strong>Cheque Date:</strong>
-                                            <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
-                                            <br/>
-                                            <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
-                                        </div>
+                                    </div>
+                                    <div t-if="payment_method == 'Cheque'">
+                                        <strong>Cheque Date:</strong>
+                                        <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
+                                        <br/>
+                                        <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
                                     </div>
                                     <div>
                                         <strong>Contact No.:</strong>
