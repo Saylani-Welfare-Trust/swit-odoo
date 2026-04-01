@@ -11,7 +11,7 @@
                     <t t-call="web.external_layout">
 
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="margin-top: 460px; position:relative;">
+                        <div class="page" style="margin-top: 420px; position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
