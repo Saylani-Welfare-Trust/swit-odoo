@@ -17,6 +17,7 @@ status_selection = [
 ]
 
 
+
 class DonationBoxComplain(models.Model):
     _name = 'donation.box.complain.center'
     _description = 'Donation Box Complain Center'
