@@ -49,7 +49,6 @@
 
                             <!-- Certificate Info -->
                             <div class="bg-light p-3 border-start border-5 mb-3 compact-section">
-                                <h5 class="fw-bold mb-2 no-margin">Certificate Information</h5>
                                 <div class="row compact-row">
                                     <div class="col-6 pe-3">
                                         <div class="d-flex mb-2">
@@ -92,7 +91,6 @@
 
                             <!-- Donation Box Details -->
                             <div class="compact-section">
-                                <h5 class="fw-bold mb-2 no-margin">Donation Box Details</h5>
                                 <table class="table table-bordered border-2" style="font-size: 13px;">
                                     <thead>
                                         <tr>
