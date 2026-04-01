@@ -66,10 +66,10 @@
 
                                 </div>
                                 <div style="text-align:right;">
-                                    <h1 class="text-transform" style="font-size: 12px;">
-                                        SAYLANI WELFARE INTERNATIONAL TRUST
-                                        <t t-if="order.user_id.branch_name">
-                                            (<t t-esc="order.user_id.branch_name"/>)
+                                    <h1>
+                                        Saylani Welfare International Trust<br/>
+                                        <t t-if="o.env.user.employee_id.analytic_account_id">
+                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
                                 </div>
