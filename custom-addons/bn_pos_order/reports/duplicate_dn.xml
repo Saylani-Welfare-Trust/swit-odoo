@@ -165,7 +165,12 @@
                                         <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
                                     </div>
                                     <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
-                                    <div><strong>Products:</strong> <t t-esc="'<br/>'.join([l.full_product_name for l in order.lines])"/></div>
+                                    <div>
+                                        <strong>Products:</strong>
+                                        <t t-foreach="order.lines" t-as="l">
+                                            <div><t t-esc="l.full_product_name"/></div>
+                                        </t>
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
