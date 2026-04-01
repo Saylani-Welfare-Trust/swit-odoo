@@ -74,7 +74,8 @@
 
                             <div class="dn-background">
                                 <img t-if="o.env.company.dn_image"
-                                    t-att-src="image_data_uri(o.env.company.dn_image)"/>
+                                    t-att-src="image_data_uri(o.env.company.dn_image)"
+                                    style="height: 100%; width: 100%;"/>
                             </div>
 
                             <!-- ===== HEADER ===== -->
