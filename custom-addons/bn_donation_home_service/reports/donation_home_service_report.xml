@@ -60,15 +60,16 @@
                             <div class="watermark">PROVISIONAL</div>
 
                             <!-- ===== HEADER ===== -->
-                            <div class="row mb-2" style="margin-top: 270px; !important">
-                                <div class="col-6">
-                                    <h1>Provisional Receipt (DHS)</h1>
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 10px; margin-top: 170px;">
+                                <div>
+                                    <h1 class="text-transform" style="font-size: 12px; font-weight:bold;">Provisional Receipt (DHS)</h1>
+
                                 </div>
-                                <div class="col-6 text-end">
-                                    <h1>
-                                        Saylani Welfare International Trust<br/>
-                                        <t t-if="o.env.user.employee_id.analytic_account_id">
-                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
+                                <div style="text-align:right;">
+                                    <h1 class="text-transform" style="font-size: 12px;">
+                                        SAYLANI WELFARE INTERNATIONAL TRUST
+                                        <t t-if="order.user_id.branch_name">
+                                            (<t t-esc="order.user_id.branch_name"/>)
                                         </t>
                                     </h1>
                                 </div>
