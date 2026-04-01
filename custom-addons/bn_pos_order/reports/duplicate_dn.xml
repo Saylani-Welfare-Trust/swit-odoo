@@ -9,8 +9,8 @@
                         <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
 
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="margin-top: 420px; position:relative;">
-                            <img t-if="order.env.company.dn_image" t-att-src="image_data_uri(order.env.company.dn_image)" style="max-height: 45px;" alt="Cover"/>
+                        <div class="page" style="position:relative;">
+                            <img t-if="order.env.company.dn_image" t-att-src="image_data_uri(order.env.company.dn_image)" style="max-height: 45px; max-width: 100%;" alt="Cover"/>
 
                             <!-- ===== STYLES ===== -->
                             <style>
