@@ -50,11 +50,30 @@
                                     pointer-events: none;
                                     z-index: 0;
                                 }
+
+                                .header {
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 120px;  /* Adjust header height */
+                                    text-align: center;
+                                    z-index: 10;
+                                }
+                                .header img {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: contain;
+                                }
                             </style>
 
-                            <img t-if="order.env.company.dn_image"
+                            <!-- <img t-if="order.env.company.dn_image"
                                 t-att-src="image_data_uri(order.env.company.dn_image)"
-                                style="height: 100%; width: 100%;"/>
+                                style="height: 100%; width: 100%;"/> -->
+                            <div class="header">
+                                <img t-if="order.env.company.dn_image"
+                                    t-att-src="image_data_uri(order.env.company.dn_image)"/>
+                            </div>
 
                             <!-- ===== WATERMARK ===== -->
                             <div class="watermark">DUPLICATE</div>
