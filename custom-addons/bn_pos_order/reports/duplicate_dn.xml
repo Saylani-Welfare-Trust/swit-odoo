@@ -59,7 +59,7 @@
                                     width: 100%;
                                     height: 100%;
 
-                                    z-index: 0; /* IMPORTANT: never negative */
+                                    z-index: 10; /* IMPORTANT: never negative */
                                 }
 
                                 .dn-background img {
@@ -67,15 +67,14 @@
                                     height: 100%;
 
                                     object-fit: contain; /* BEST for PDF */
-                                    opacity: 0.15;
                                 }
                             </style>
 
-                            <img t-if="order.env.company.dn_image"
-                                t-att-src="image_data_uri(order.env.company.dn_image)"
-                                style="height: 100%; width: 100%;"/>
-                            <!-- <div class="dn-background">
-                            </div> -->
+                            <div class="dn-background">
+                                <img t-if="order.env.company.dn_image"
+                                    t-att-src="image_data_uri(order.env.company.dn_image)"
+                                    style="height: 100%; width: 100%;"/>
+                            </div>
 
                             <!-- ===== WATERMARK ===== -->
                             <div class="watermark">DUPLICATE</div>
