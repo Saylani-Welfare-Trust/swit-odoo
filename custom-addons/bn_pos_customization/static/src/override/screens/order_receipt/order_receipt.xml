@@ -43,8 +43,8 @@
                         <!-- Left Column -->
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>DN #:</strong></div>
-                                <div class="col-8">
+                                <div>
+                                    <strong>DN #:</strong>
                                     <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
                                     <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
                                     <t t-set="current_year" t-value="new Date().getFullYear()"/>
@@ -54,24 +54,24 @@
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Donor Name:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Donor Name:</strong>
                                     <t t-if="partner.name"><t t-esc="partner.name"/></t>
+                                    <t t-else="">-</t> 
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div>
+                                  <strong>CNIC No.:</strong>
+                                  <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
                                     <t t-else="">-</t>
                                 </div>
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>CNIC No.:</strong></div>
-                                <div class="col-8 fw-medium">
-                                    <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
-                                    <t t-else="">-</t>
-                                </div>
-                            </div>
-
-                            <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Payment Method:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Payment Method:</strong>
                                     <t t-if="payment.name"><t t-esc="payment.name"/></t>
                                     <t t-else="">-</t>
                                 </div>
@@ -80,15 +80,13 @@
                             <!-- Conditional Bank / Reference -->
                             <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
                                 <div class="row mb-1" t-if="order.bank_name">
-                                    <div class="col-4 fw-medium"><strong>Bank Name:</strong></div>
-                                    <div class="col-8 fw-medium"><t t-esc="order.bank_name"/></div>
+                                    <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
                                 </div>
                             </t>
 
                             <t t-if="!order.is_bank &amp;&amp; !order.is_donation_in_kind">
                                 <div class="row mb-1" t-if="order.qr_code">
-                                    <div class="col-4 fw-medium"><strong>Reference No:</strong></div>
-                                    <div class="col-8 fw-medium"><t t-esc="order.qr_code"/></div>
+                                    <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
                                 </div>
                             </t>
                         </div>
@@ -96,8 +94,8 @@
                         <!-- Right Column -->
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Date Time:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Date Time:</strong>
                                     <t t-set="dateObj" t-value="new Date(date_format)"/>
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
@@ -113,8 +111,8 @@
                             </div>
 
                             <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                                <div class="col-4 fw-medium" t-if="order.cheque_date"><strong>Cheque Date:</strong></div>
-                                <div class="col-8 fw-medium" t-if="order.cheque_date">
+                                <div t-if="order.cheque_date">
+                                    <strong>Cheque Date:</strong>
                                     <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
@@ -129,14 +127,13 @@
                             
                             <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
                                 <div class="row mb-1" t-if="order.cheque_number">
-                                    <div class="col-4 fw-medium"><strong>Cheque No.:</strong></div>
-                                    <div class="col-8 fw-medium"><t t-esc="order.cheque_number"/></div>
+                                    <div><strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/></div>
                                 </div>
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Contact No:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Contact No:</strong>
                                     <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
                                     <t t-else="">
                                         <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
@@ -146,8 +143,8 @@
                             </div>
 
                             <div class="row mb-1" t-if="!order.is_donation_in_kind">
-                                <div class="col-4 fw-medium"><strong>Total Amount:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Total Amount:</strong>
                                     <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
                                     <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                                 </div>
@@ -183,14 +180,12 @@
                     <div class="row p-2" style="font-size: 11px; line-height: 1.1;">
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium">Enter By:</div>
-                                <div class="col-8 fw-medium"><t t-esc="order.cashier"/></div>
+                                <div><strong>Enter By:</strong> <t t-esc="order.cashier"/></div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="row mb-1" t-if="!order.is_donation_in_kind">
-                                <div class="col-4 fw-medium">Total Amount:</div>
-                                <div class="col-8 fw-medium"><t t-esc="format_currency_amount"/></div>
+                                <div><strong>Total Amount:</strong> <t t-esc="format_currency_amount"/><div>
                             </div>
                         </div>
                     </div>
@@ -201,27 +196,17 @@
                         <!-- Left Column -->
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>DN #:</strong></div>
-                                <div class="col-8">
+                                <div>
+                                    <strong>DN #:</strong>
                                     <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
                                     <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
                                     <t t-set="current_year" t-value="new Date().getFullYear()"/>
                                     <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
                                     <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                                 </div>
-                            </div>
-
-                            <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Donor Name:</strong></div>
-                                <div class="col-8 fw-medium">
-                                    <t t-if="partner.name"><t t-esc="partner.name"/></t>
-                                    <t t-else="">-</t>
-                                </div>
-                            </div>
-
-                            <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Products:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div><strong>Donor Name:</strong><t t-esc="partner.name || '-'"/></div>
+                                <div>
+                                    <strong>Products:</strong>
                                     <t t-set="count" t-value="1"/>
                                     <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                                         <div>
@@ -236,8 +221,8 @@
                         <!-- Right Column -->
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Date Time:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Date Time:</strong>
                                     <t t-set="dateObj" t-value="new Date(date_format)"/>
                                     <t t-set="day" t-value="dateObj.getDate()"/>
                                     <t t-set="month" t-value="dateObj.getMonth() + 1"/>
@@ -250,13 +235,8 @@
                                             (hours &lt; 10 ? '0' : '') + hours + ':' +
                                             (minutes &lt; 10 ? '0' : '') + minutes"/>
                                 </div>
+                                <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                             </div>
-
-                            <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Entered By:</strong></div>
-                                <div class="col-8 fw-medium"><t t-esc="order.cashier"/></div>
-                            </div>
-                            
                         </div>
                     </div>
 
