@@ -3,47 +3,6 @@
 
     <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('pos-receipt')]" position="replace">
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 11px;
-                }
-
-                h1 {
-                    font-size: 14px;
-                    font-weight: bold;
-                    margin: 2px 0;
-                }
-
-                h4 {
-                    font-size: 12px;
-                    margin: 6px 0;
-                    font-weight: bold;
-                }
-
-                table {
-                    font-size: 11px;
-                    border-collapse: collapse;
-                }
-
-                th, td {
-                    padding: 3px 4px !important;
-                }
-
-                /* ✅ FIXED WATERMARK */
-                .watermark {
-                    position: absolute; /* was fixed */
-                    top: 420px;         /* adjust if needed */
-                    left: 50%;
-                    transform: translateX(-50%) rotate(-30deg);
-                    font-size: 80px;
-                    color: rgba(200, 200, 200, 0.15);
-                    font-weight: bold;
-                    white-space: nowrap;
-                    pointer-events: none;
-                    z-index: 0;
-                }
-            </style>
 
             <div class="pos-receipt" style="page-break-inside: avoid; min-height: 0; font-family: Arial, sans-serif;">
 
