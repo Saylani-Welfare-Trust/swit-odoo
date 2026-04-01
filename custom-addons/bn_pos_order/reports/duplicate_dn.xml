@@ -11,8 +11,8 @@
                         <!-- PAGE WRAPPER -->
                         <div class="page" style="position:relative;">
                             <div style="text-align:center;">
-                                <img t-if="o.company_id.dn_image"
-                                    t-att-src="image_data_uri(o.company_id.dn_image)"
+                                <img t-if="order.env.company.dn_image"
+                                    t-att-src="image_data_uri(order.env.company.dn_image)"
                                     style="max-height: 60px; object-fit: contain;"/>
                             </div>
 
