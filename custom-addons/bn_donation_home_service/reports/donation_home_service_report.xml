@@ -60,7 +60,7 @@
                             <div class="watermark">PROVISIONAL</div>
 
                             <!-- ===== HEADER ===== -->
-                            <div class="row mb-2" style="margin-top: 170px;">
+                            <div class="row mb-2" style="margin-top: 170px; !important">
                                 <div class="col-6">
                                     <h1>Provisional Receipt (DHS)</h1>
                                 </div>
