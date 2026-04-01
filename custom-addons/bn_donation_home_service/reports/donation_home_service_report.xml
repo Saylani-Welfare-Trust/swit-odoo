@@ -81,6 +81,7 @@
                                 <div class="col-6">
                                     <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>CNIC No:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
