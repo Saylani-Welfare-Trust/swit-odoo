@@ -169,7 +169,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="order.lines" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/></div>
+                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.qty"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
