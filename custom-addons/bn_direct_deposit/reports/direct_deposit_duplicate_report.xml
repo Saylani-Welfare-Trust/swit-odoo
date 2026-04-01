@@ -134,7 +134,7 @@
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                                 <div>Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
-                                <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(o.amount_total or 0)"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(o.amount or 0)"/></strong></div>
                             </div>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
