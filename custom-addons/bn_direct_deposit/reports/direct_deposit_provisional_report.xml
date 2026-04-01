@@ -108,7 +108,6 @@
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Qty</th>
-                                        <th class="text-end">Rate</th>
                                         <th class="text-end">Amount</th>
                                         <th>Remarks</th>
                                     </tr>
@@ -154,8 +153,8 @@
             <field name="orientation">Portrait</field>
             <field name="margin_top">10</field>
             <field name="margin_bottom">10</field>
-            <field name="margin_left">0</field>
-            <field name="margin_right">0</field>
+            <field name="margin_left">4</field>
+            <field name="margin_right">4</field>
             <field name="header_spacing">10</field>
             <field name="dpi">90</field>
         </record>
