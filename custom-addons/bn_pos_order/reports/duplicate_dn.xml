@@ -135,10 +135,10 @@
                                     <t t-foreach="order.lines" t-as="line" t-key="line.id">
                                         <tr>
                                             <td><t t-esc="line.full_product_name"/></td>
-                                            <td><t t-esc="int(line.qty)"/></td>
+                                            <td class="text-end"><t t-esc="int(line.qty)"/></td>
                                             <t t-if="payment_method != 'Donation In Kind'">
-                                                <td>Rs <t t-esc="'{:,.2f}'.format(line.price_unit or 0)"/></td>
-                                                <td>Rs <t t-esc="'{:,.2f}'.format(line.price_subtotal or 0)"/></td>
+                                                <td class="text-end">Rs <t t-esc="'{:,.2f}'.format(line.price_unit or 0)"/></td>
+                                                <td class="text-end">Rs <t t-esc="'{:,.2f}'.format(line.price_subtotal or 0)"/></td>
                                             </t>
                                         </tr>
                                     </t>
@@ -174,7 +174,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="order.lines" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.qty"/></div>
+                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="int(l.qty)"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
