@@ -148,7 +148,7 @@
                                 <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(order.amount_total or 0)"/></strong></div>
                             </div>
 
-                            <hr style="margin:4px 0; border-top: solid 2px;"/>
+                            <hr style="margin:4px 0; border-top: solid 5px;"/>
 
                             <div class="row mb-2">
                                 <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
