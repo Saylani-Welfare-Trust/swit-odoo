@@ -99,6 +99,7 @@
                                     <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.name or ''"/></div>
                                     <div t-if="payment_method == 'Cheque'">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
+                                        <br/>
                                         <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
                                     </div>
                                 </div>
