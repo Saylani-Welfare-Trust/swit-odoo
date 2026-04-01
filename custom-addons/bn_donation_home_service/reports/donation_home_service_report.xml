@@ -11,7 +11,7 @@
                     <t t-call="web.external_layout">
 
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="margin-top: 360px; position:relative;">
+                        <div class="page" style="margin-top: 460px; position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -44,7 +44,7 @@
                                 /* ✅ FIXED WATERMARK */
                                 .watermark {
                                     position: absolute; /* was fixed */
-                                    top: 70px;         /* adjust if needed */
+                                    top: 120px;         /* adjust if needed */
                                     left: 50%;
                                     transform: translateX(-50%) rotate(-30deg);
                                     font-size: 80px;
@@ -60,12 +60,11 @@
                             <div class="watermark">PROVISIONAL</div>
 
                             <!-- ===== HEADER ===== -->
-                            <div style="display:flex; justify-content:space-between; margin-bottom: 10px; margin-top: 170px;">
-                                <div>
-                                    <h1 class="text-transform" style="font-size: 12px; font-weight:bold;">Provisional Receipt (DHS)</h1>
-
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <h1>Provisional Receipt (DHS)</h1>
                                 </div>
-                                <div style="text-align:right;">
+                                <div class="col-6 text-end">
                                     <h1>
                                         Saylani Welfare International Trust<br/>
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
@@ -82,7 +81,7 @@
                                 <div class="col-6">
                                     <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
-                                    <div><strong>CNIC No:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
+                                    <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
