@@ -71,11 +71,11 @@
                                 }
                             </style>
 
-                            <div class="dn-background">
-                                <img t-if="order.env.company.dn_image"
-                                    t-att-src="image_data_uri(order.env.company.dn_image)"
-                                    style="height: 100%; width: 100%;"/>
-                            </div>
+                            <img t-if="order.env.company.dn_image"
+                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                                style="height: 100%; width: 100%;"/>
+                            <!-- <div class="dn-background">
+                            </div> -->
 
                             <!-- ===== WATERMARK ===== -->
                             <div class="watermark">DUPLICATE</div>
