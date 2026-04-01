@@ -22,7 +22,7 @@
                 ">
 
                     <!-- Header Row -->
-                    <div class="row" style="font-size: 12px; transform: scale(0.99); transform-origin: top;">
+                    <div class="row" style="font-size: 11px; transform: scale(0.99); transform-origin: top;">
                         <div class="col-4">
                             <h1 class="fs-3 fw-bold text-uppercase" t-if="order.receive_voucher">Receipt Voucher</h1>
                             <h1 class="fs-3 fw-bold text-uppercase" t-if="!order.receive_voucher">Donation Receipt</h1>
@@ -39,7 +39,7 @@
                     <br/>
 
                     <!-- Donor & Receipt Info -->
-                    <div class="row p-2" style="font-size: 12px; line-height: 1.1;">
+                    <div class="row p-2" style="font-size: 11px; line-height: 1.1;">
                         <!-- Left Column -->
                         <div class="col-6">
                             <div class="row mb-1">
@@ -157,7 +157,7 @@
                     </div>
 
                     <!-- Items Table -->
-                    <table class="table table-bordered mt-1" style="font-size: 12px; line-height: 1; page-break-inside: auto;">
+                    <table class="table table-bordered mt-1" style="font-size: 11px; line-height: 1; page-break-inside: auto;">
                         <thead>
                             <tr>
                                 <th class="py-1">Product</th>
@@ -180,7 +180,7 @@
                         </tbody>
                     </table>
 
-                    <div class="row p-2" style="font-size: 12px; line-height: 1.1;">
+                    <div class="row p-2" style="font-size: 11px; line-height: 1.1;">
                         <div class="col-6">
                             <div class="row mb-1">
                                 <div class="col-4 fw-medium">Enter By:</div>
@@ -197,7 +197,7 @@
 
                     <div style="border-top: solid 2px;"/>
 
-                    <div class="row p-2" style="font-size: 12px; line-height: 1.1;">
+                    <div class="row p-2" style="font-size: 11px; line-height: 1.1;">
                         <!-- Left Column -->
                         <div class="col-6">
                             <div class="row mb-1">
