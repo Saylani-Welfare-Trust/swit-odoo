@@ -10,6 +10,7 @@
 
                         <!-- PAGE WRAPPER -->
                         <div class="page" style="margin-top: 420px; position:relative;">
+                            <img t-if="company.dn_image" t-att-src="image_data_uri(company.dn_image)" style="max-height: 45px;" alt="Cover"/>
 
                             <!-- ===== STYLES ===== -->
                             <style>
