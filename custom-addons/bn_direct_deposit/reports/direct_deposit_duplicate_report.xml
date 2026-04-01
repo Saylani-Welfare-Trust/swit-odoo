@@ -147,7 +147,7 @@
                                 <div class="col-6">
                                     <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
-                                    <div style="page-break-inside: avoid;">
+                                    <div>
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="o.direct_deposit_line_ids" t-as="l">
