@@ -10,7 +10,7 @@
 
                         <!-- PAGE WRAPPER -->
                         <div class="page" style="margin-top: 420px; position:relative;">
-                            <img t-if="order.env.dn_image" t-att-src="image_data_uri(order.env.company.dn_image)" style="max-height: 45px;" alt="Cover"/>
+                            <img t-if="order.env.company.dn_image" t-att-src="image_data_uri(order.env.company.dn_image)" style="max-height: 45px;" alt="Cover"/>
 
                             <!-- ===== STYLES ===== -->
                             <style>
