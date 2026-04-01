@@ -44,7 +44,7 @@
                                 /* ✅ FIXED WATERMARK */
                                 .watermark {
                                     position: absolute; /* was fixed */
-                                    top: 120px;         /* adjust if needed */
+                                    top: 270px;         /* adjust if needed */
                                     left: 50%;
                                     transform: translateX(-50%) rotate(-30deg);
                                     font-size: 80px;
@@ -60,7 +60,7 @@
                             <div class="watermark">PROVISIONAL</div>
 
                             <!-- ===== HEADER ===== -->
-                            <div class="row mb-2">
+                            <div class="row mb-2" style="margin-top: 170px;">
                                 <div class="col-6">
                                     <h1>Provisional Receipt (DHS)</h1>
                                 </div>
