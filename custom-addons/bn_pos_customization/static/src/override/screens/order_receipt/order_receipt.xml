@@ -171,7 +171,7 @@
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                                 <tr style="page-break-inside: auto;">
                                     <td class="text-start py-1"><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
-                                    <td class="text-end py-1"><t t-if="line.qty"><t t-esc="parseInt(line.qty)"/></t><t t-else="">-</t></td>
+                                    <td class="text-end py-1"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.price"><t t-esc="line.price"/></t><t t-else="">-</t></td>
                                     <td class="text-start py-1"><t t-if="line.customerNote"><t t-esc="line.customerNote"/></t><t t-else="">-</t></td>
@@ -225,7 +225,7 @@
                                     <t t-set="count" t-value="1"/>
                                     <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                                         <div>
-                                            <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="parseInt(line.qty)"/>
+                                            <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
                                         </div>
                                         <t t-set="count" t-value="count + 1"/>
                                     </t>
