@@ -1,159 +1,120 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <template id="pos_donation_receipt_template">
+        <template id="bn_pos_order.pos_donation_receipt_template">
             <t t-call="web.html_container">
-                <t t-foreach="docs" t-as="order">
-                    <!-- Set Payment Method -->
-                    <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <!-- Set Payment Method -->
+                        <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
 
-                    <div class="page">
-                        <style>
-                            h1 {
-                                font-size: 1.5em;
-                                margin: 3px;
-                            }
+                        <!-- PAGE WRAPPER -->
+                        <div class="page" style="margin-top: 420px; position:relative;">
 
-                            /* ✅ FIXED WATERMARK */
-                            .watermark {
-                                position: absolute; /* was fixed */
-                                top: 270px;         /* adjust if needed */
-                                left: 50%;
-                                transform: translateX(-50%) rotate(-30deg);
-                                font-size: 80px;
-                                color: rgba(200, 200, 200, 0.15);
-                                font-weight: bold;
-                                white-space: nowrap;
-                                pointer-events: none;
-                                z-index: 0;
-                            }
+                            <!-- ===== STYLES ===== -->
+                            <style>
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    font-size: 11px;
+                                }
 
-                            .label-field {
-                                width: 40%;
-                                font-weight: normal;
-                                padding-right: 5px;
-                            }
+                                h1 {
+                                    font-size: 14px;
+                                    font-weight: bold;
+                                    margin: 2px 0;
+                                }
 
-                            .value-field {
-                                width: 60%;
-                                font-weight: 500;
-                            }
+                                h4 {
+                                    font-size: 12px;
+                                    margin: 6px 0;
+                                    font-weight: bold;
+                                }
 
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin-top: 10px;
-                            }
+                                table {
+                                    font-size: 11px;
+                                    border-collapse: collapse;
+                                }
 
-                            table, th, td {
-                                border: 1px solid #000;
-                            }
+                                th, td {
+                                    padding: 3px 4px !important;
+                                }
 
-                            th, td {
-                                padding: 5px;
-                                text-align: center;
-                                font-size: 12px;
-                            }
+                                /* ✅ FIXED WATERMARK */
+                                .watermark {
+                                    position: absolute; /* was fixed */
+                                    top: 120px;         /* adjust if needed */
+                                    left: 50%;
+                                    transform: translateX(-50%) rotate(-30deg);
+                                    font-size: 80px;
+                                    color: rgba(200, 200, 200, 0.15);
+                                    font-weight: bold;
+                                    white-space: nowrap;
+                                    pointer-events: none;
+                                    z-index: 0;
+                                }
+                            </style>
 
-                            tfoot th, tfoot td {
-                                font-weight: bold;
-                                border-top: 2px solid #000 !important;
-                            }
-                        </style>
+                            <!-- ===== WATERMARK ===== -->
+                            <div class="watermark">DUPLICATE</div>
 
-                        <!-- Watermark -->
-                        <div class="watermark">DUPLICATE</div>
-
-                        <!-- Header -->
-                        <div style="display:flex; justify-content:space-between; margin-bottom: 10px; margin-top: 720px;">
-                            <div>
-                                <h1 class="text-transform" style="font-size: 12px; font-weight:bold;">DONATION RECEIPT</h1>
-
+                            <!-- ===== HEADER ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <h1>Donation Receipt</h1>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <h1 class="text-transform" style="font-size: 12px;">
+                                        SAYLANI WELFARE INTERNATIONAL TRUST
+                                        <t t-if="order.user_id.branch_name">
+                                            (<t t-esc="order.user_id.branch_name"/>)
+                                        </t>
+                                    </h1>
+                                </div>
                             </div>
-                            <div style="text-align:right;">
-                                <h1 class="text-transform" style="font-size: 12px;">
-                                    SAYLANI WELFARE INTERNATIONAL TRUST
-                                    <t t-if="order.user_id.branch_name">
-                                        (<t t-esc="order.user_id.branch_name"/>)
-                                    </t>
-                                </h1>
-                            </div>
-                        </div>
 
-                        <!-- Donor Info -->
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <div style="width:50%;">
-                                
+                            <hr style="margin:4px 0"/>
 
+                            <!-- ===== BASIC INFO ===== -->
+                            <div class="row mb-2">
                                 <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    <div class="label-field">DN #:</div>
-                                    <div class="value-field">
+                                    
+                                </div>
+
+                                <div class="col-6">
+                                    <div>
+                                        <strong>DN #:</strong>
                                         <t t-set="city_code" t-value="order.user_id.branch_code or 'UNK'"/>
                                         <t t-set="branch_code" t-value="order.company_id.name[:3].upper() or 'UNK'"/>
                                         <t t-set="current_year" t-value="order.date_order and order.date_order.year or ''"/>
                                         <t t-set="random_no" t-value="order.pos_reference and order.pos_reference[-4:] or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
                                     </div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
+                                    <div><strong>CNIC No.:</strong> <t t-esc="order.partner_id.cnic_no or '-'"/></div>
+                                    <div><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
+                                    <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.name or ''"/></div>
+                                    <div t-if="payment_method == 'Cheque'"><strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/></div>
                                 </div>
-
-                                
-                                <div style="display:flex; margin-bottom:5px;font-size: 12px;">
-                                    <div class="label-field">Donor Name:</div>
-                                    <div class="value-field"><t t-esc="order.partner_id.name or '-'"/></div>
-                                </div>
-                                <div style="display:flex; margin-bottom:5px;font-size: 12px;">
-                                    <div class="label-field">CNIC No:</div>
-                                    <div class="value-field"><t t-esc="order.partner_id.cnic_no or '-'"/></div>
-                                </div>
-                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                    <div class="label-field">Payment Method:</div>
-                                    <div class="value-field"><t t-esc="payment_method"/></div>
-                                </div>
-
-                                <t t-if="payment_method == 'Cheque'">
-                                    <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                        <div class="label-field">Bank Name:</div>
-                                        <div class="value-field">
-                                            <t t-esc="order.bank_name or '-'"/>
-                                        </div>
-                                    </div> 
-                                </t>
-
-                                <t t-if="payment_method == 'Credit Card'">
-                                    <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                        <div class="label-field">Reference No:</div>
-                                        <div class="value-field">
-                                            <t t-esc="order.name or '-'"/>
-                                        </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong>Date &amp; Time:</strong>
+                                        <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
                                     </div>
-                                </t>
+                                    <div>
+                                        <strong>Contact No.:</strong>
+                                        <t t-esc="order.partner_id.mobile or '-'"/>
+                                    </div>
+                                    <div>
+                                        <strong>Total Amount:</strong>
+                                        <t t-esc="int(order.amount_total or 0)"/>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div style="width:50%;">
-                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                    <div class="label-field">Date &amp; Time:</div>
-                                    <div class="value-field">
-                                        <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M:%S') or '--'"/>
-                                    </div>
-                                </div>
-                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                    <div class="label-field">Contact No:</div>
-                                    <div class="value-field">
-                                        <t t-if="order.partner_id.country_id">
-                                            <t t-esc="order.partner_id.country_id.name"/> 
-                                        </t>
-                                        <t t-esc="order.partner_id.mobile or order.partner_id.phone"/>
-                                    </div>
-                                </div>
-                                <div style="display:flex; margin-bottom:5px; font-size: 12px;">
-                                    <div class="label-field">Total Amount:</div>
-                                    <div class="value-field">Rs <t t-esc="int(order.amount_total or 0)"/></div>
-                                </div>
-                            </div>
-                        </div>
+                            <!-- ===== ITEMS ===== -->
+                            <h4>Direct Deposit Details</h4>
 
-                        <div style="margin-bottom:10px;">
-                            <table>
+                            <table class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
@@ -177,18 +138,22 @@
                                     </t>
                                 </tbody>
                             </table>
-                            
-                        </div>
 
-                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                            <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
-                            <div>Total Amount: <strong>Rs <t t-esc="int(order.amount_total or 0)"/></strong></div>
-                        </div>
+                            <hr style="margin:4px 0"/>
 
-                        <div style="text-align: center; font-size: 12px;">
-                            Powered by BytesNode
-                        </div>
-                    </div>
+                            <!-- ===== TOTALS ===== -->
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                                <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="int(order.amount_total or 0)"/></strong></div>
+                            </div>
+
+                            <div style="text-align: center; font-size: 12px;">
+                                Powered by BytesNode
+                            </div>
+
+                        </div> <!-- END PAGE -->
+
+                    </t>
                 </t>
             </t>
         </template>
