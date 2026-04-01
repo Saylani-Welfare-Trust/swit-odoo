@@ -139,8 +139,6 @@ patch(PartnerDetailsEdit.prototype, {
         }
         
         const res_partner = await this.orm.call('res.partner', 'search', [domain]);
-        console.log('res_partner', res_partner);
-
         if (res_partner && res_partner.length > 0) {
             return this.popup.add(ErrorPopup, {
                 title: _t(`Validation Error`),

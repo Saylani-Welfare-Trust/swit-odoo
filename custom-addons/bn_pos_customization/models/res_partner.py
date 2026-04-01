@@ -6,7 +6,7 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
 
-    categories = fields.Char('Categories', compute="_compute_category_names", store=True)
+    categories = fields.Char('Categories', compute="_compute_category_names", store=True, tracking=True)
 
 
     @api.depends('category_id')

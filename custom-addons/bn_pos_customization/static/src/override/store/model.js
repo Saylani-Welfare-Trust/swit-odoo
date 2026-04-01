@@ -9,7 +9,7 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 patch(Order.prototype, {
     export_for_printing() {
-        console.log(this);
+        console.log(this.partner);
 
         return {
             ...super.export_for_printing(),
@@ -18,6 +18,7 @@ patch(Order.prototype, {
                 name: this.partner ? this.partner.name : "",
                 mobile: this.partner ? this.partner.mobile : "",
                 phone: this.partner ? this.partner.phone : "",
+                cnic_no: this.partner ? this.partner.cnic_no : "",
             },
             branch_code: this.cashier.branch_code,
             branch_name: this.cashier.branch_name,

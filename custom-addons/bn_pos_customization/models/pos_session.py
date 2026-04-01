@@ -5,13 +5,13 @@ class POSSession(models.Model):
     _inherit = 'pos.session'
 
 
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True, tracking=True)
     
 
     def _loader_params_res_partner(self):
         vals = super()._loader_params_res_partner()
         
-        vals["search_params"]["fields"] += ["categories"]
+        vals["search_params"]["fields"] += ["categories", "cnic_no"]
         return vals
     
     def _loader_params_res_users(self):

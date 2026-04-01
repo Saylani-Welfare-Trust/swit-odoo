@@ -5,7 +5,6 @@
         <xpath expr="//div[hasclass('subpads')]" position="replace">
             <div class="subpads d-flex">
                 <Numpad buttons="getNumpadButtons()"/>
-                <!-- <Numpad buttons="getNumpadButtons()" class="'max-width-325px'"/> -->
             </div>
         </xpath>
 

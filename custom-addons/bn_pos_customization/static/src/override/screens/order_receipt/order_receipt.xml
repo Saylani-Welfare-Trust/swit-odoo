@@ -62,6 +62,14 @@
                             </div>
 
                             <div class="row mb-1">
+                                <div class="col-4 fw-medium">Donor CNIC:</div>
+                                <div class="col-8 fw-medium">
+                                    <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
+                                    <t t-else="">-</t>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
                                 <div class="col-4 fw-medium">Payment Method:</div>
                                 <div class="col-8 fw-medium">
                                     <t t-if="payment.name"><t t-esc="payment.name"/></t>
