@@ -51,31 +51,11 @@
                                     pointer-events: none;
                                     z-index: 0;
                                 }
-
-                                .dn-background {
-                                    position: fixed;
-                                    top: 0;
-                                    left: 0;
-
-                                    width: 100%;
-                                    height: 100%;
-
-                                    z-index: 10; /* IMPORTANT: never negative */
-                                }
-
-                                .dn-background img {
-                                    width: 100%;
-                                    height: 100%;
-
-                                    object-fit: contain; /* BEST for PDF */
-                                }
                             </style>
 
-                            <div class="dn-background">
-                                <img t-if="order.env.company.dn_image"
-                                    t-att-src="image_data_uri(order.env.company.dn_image)"
-                                    style="height: 100%; width: 100%;"/>
-                            </div>
+                            <img t-if="order.env.company.dn_image"
+                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                                style="height: 100%; width: 100%;"/>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
@@ -163,7 +143,7 @@
                                 <div class="col-6">
                                     <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
-                                    <div>
+                                    <div style="page-break-inside: avoid;">
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="o.direct_deposit_line_ids" t-as="l">
