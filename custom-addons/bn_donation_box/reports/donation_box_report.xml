@@ -6,7 +6,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <!-- Certificate Container -->
-                    <div class="page" style="margin-top: 420px; position: relative;">
+                    <div class="page" style="margin-top: 520px; position: relative;">
                         <style>
                         .page-content {
                             position: relative;
