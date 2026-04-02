@@ -11,6 +11,7 @@
             <field name="code">
                 for record in records:
                     record.calculate_amount()
+                    record.calculate_service_charges()
             </field>
         </record>
     
