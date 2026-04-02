@@ -121,7 +121,7 @@
                                     <t t-foreach="o.direct_deposit_line_ids" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
-                                            <td class="text-end"><t t-esc="{:,}'.format(int(line.quantity) or 0) or 0"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount or 0)) or 0"/></td>
                                         </tr>
