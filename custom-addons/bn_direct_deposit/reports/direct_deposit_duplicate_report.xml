@@ -102,7 +102,7 @@
                                     </div>
                                     <div>
                                         <strong>Total Amount:</strong>
-                                        <t t-esc="o.amount or '0.00'"/>
+                                        <t t-esc="'{:,.2f}'.format(o.amount or 0) or '0.00'"/>
                                     </div>
                                 </div>
                             </div>
@@ -113,8 +113,8 @@
                                         <th>Product</th>
                                         <th>Remarks</th>
                                         <th class="text-end">Qty</th>
-                                        <th class="text-end">Rate</th>
-                                        <th class="text-end">Amount</th>
+                                        <th class="text-yend">Rate</th>
+                                        <th class="text-yend">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -124,8 +124,8 @@
                                             <td><t t-esc="line.remarks or '-'"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
-                                            <td class="text-end"><t t-esc="line.amount or '-'"/></td>
-                                            <td class="text-end"><t t-esc="line.quantity*line.amount or '-'"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.amount or 0) or '-'"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.qauntity*line.amount or 0) or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
