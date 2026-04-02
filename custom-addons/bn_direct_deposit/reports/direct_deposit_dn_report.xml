@@ -173,7 +173,7 @@
         </template>
 
         <record id="report_direct_deposit_dn" model="ir.actions.report">
-            <field name="name">Direct Deposit Receipt Duplicate</field>
+            <field name="name">Direct Deposit Receipt</field>
             <field name="model">direct.deposit</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">bn_direct_deposit.direct_deposit_receipt_template_dn</field>
