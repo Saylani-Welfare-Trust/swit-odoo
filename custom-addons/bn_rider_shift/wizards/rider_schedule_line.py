@@ -20,6 +20,14 @@ state_selection = [
     ('paid', 'Paid')
 ]
 
+box_status_selection = [
+    ('missing', 'Missing'),
+    ('broken', 'Broken'),
+    ('robbery', 'Robbery'),
+    ('return', 'Return'),
+    ('repaired', 'Repaired'),
+]
+
 
 class RiderScheduleLine(models.TransientModel):
     _name = 'rider.schedule.line'
@@ -42,6 +50,7 @@ class RiderScheduleLine(models.TransientModel):
 
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
+    box_status = fields.Selection(selection=box_status_selection, string="Box Status")
     
     date = fields.Date('Date')
 
@@ -132,14 +141,32 @@ class RiderScheduleLine(models.TransientModel):
 
         if not self.remarks:
             raise ValidationError('Please enter the remarks first.')
+        
+        if not self.box_status:
+            raise ValidationError('Please select the box status first.')
 
         self.env['donation.box.complain.center'].create({
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,
             'date': fields.Date.today(),
+            'box_status': self.box_status,
             'remarks': self.remarks,
         })
+        
+        # Mark the related rider collection as complain generated
+        if self.rider_collection_id:
+            self.rider_collection_id.is_complain_generated = True
 
-        self.is_complain_generated = True
+    def action_change_rate(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Create Foreign Currency Lines',
+            'res_model': 'foreign.currency.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.rider_collection_id.id if self.rider_collection_id else False,
+            }
+        }
         
         

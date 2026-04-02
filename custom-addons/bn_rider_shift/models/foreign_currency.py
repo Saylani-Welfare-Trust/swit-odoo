@@ -15,6 +15,8 @@ class ForeignCurrency(models.Model):
 
     currency_id = fields.Many2one('res.currency', string="Currency")
     
+    rider_log = fields.Char('Currency')
+
     amount = fields.Float('Amount')
     foreign_notes = fields.Float('Foreign Notes')
     exchanged_amount = fields.Float('Exchanged Amount')

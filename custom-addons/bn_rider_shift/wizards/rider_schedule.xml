@@ -36,6 +36,7 @@
                                 <button name="mark_as_pending" string="Mark as Pending" type="object" class="btn-primary" invisible="state in ['pending', 'donation_submit', 'paid']" />
                                 <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" />
                                 <button string="Complain Center" name="action_generate_complain" type="object" class="oe_highlight" />
+                                <button string="Foreign Currency" name="action_change_rate" type="object" class="oe_highlight" insibile="state != 'donation_collected'" />
 
                                 <field name="state" widget="statusbar" statusbar_visible="donation_not_collected, donation_collected, donation_submit, paid" />
                             </header>
@@ -51,8 +52,9 @@
                                         <field name="day" readonly="1" />
                                         <field name="submission_time" readonly="1" />
                                         <field name="amount" string="Amount (PKR)" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
-                                        <field name="foreign_notes" string="Foreign Notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                                        <!-- <field name="foreign_notes" string="Foreign Currency" readonly="state != 'donation_collected'" required="state == 'donation_collected'" invisible="1" /> -->
                                         <field name="counterfeit_notes" string="Counterfeit Notes" readonly="state != 'donation_collected'" required="state == 'donation_collected'" />
+                                        <field name="box_status" string="Box Status" />
                                         <field name="remarks" />
                                     </group>
                                     <group name="rider_collection_col_2">
