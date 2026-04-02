@@ -101,8 +101,8 @@
     <record id="direct_deposit_action" model="ir.actions.act_window">
         <field name="name">Bank transfers / Direct deposit</field>
         <field name="res_model">direct.deposit</field>
-        <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
+        <!-- <field name="view_mode">tree</field> -->
+        <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...
