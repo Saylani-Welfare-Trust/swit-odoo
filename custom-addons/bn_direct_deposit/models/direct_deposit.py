@@ -244,7 +244,7 @@ class DirectDeposit(models.Model):
 
         self.state = 'clear'
         # Auto-print report when transitioning to clear (duplicate watermark)
-        return self.env.ref('bn_direct_deposit.direct_deposit_receipt_template_dn').report_action(self)
+        return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
     def action_not_clear(self):
         self.state = 'not_clear'
