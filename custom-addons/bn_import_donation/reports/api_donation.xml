@@ -81,7 +81,7 @@
                             <div class="col-6">
                                 <div>
                                     <strong>Date:</strong>
-                                        <t t-esc="format_datetime(o.created_at, 'dd-MM-yyyy HH:mm') if o.created_at else '--'"/>
+                                    <t t-esc="o.created_at.strftime('%d-%m-%Y %H:%M') if o.created_at else '--'"/>
                                 </div>
                                 <div><strong>Currency:</strong> <t t-esc="o.currency"/></div>
                             </div>
