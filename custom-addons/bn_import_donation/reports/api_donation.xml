@@ -91,6 +91,8 @@
                             <thead>
                                 <tr>
                                     <th>Purpose</th>
+                                    <th class="text-yend">Quantity</th>
+                                    <th class="text-yend">Rate</th>
                                     <th class="text-yend">Amount</th>
                                 </tr>
                             </thead>
@@ -98,11 +100,18 @@
                                 <t t-foreach="o.donation_item_ids" t-as="line">
                                     <tr>
                                         <td><t t-esc="line.item"/></td>
-                                        <td class="text-end"><t t-esc="line.qty"/></td>
+                                        <td class="text-end"><t t-esc="'{:,}'.format(int(line.qty) or 0) or 0"/></td>
+                                        <td class="text-end"><t t-esc="'{:,}'.format(int(line.price) or 0) or 0"/></td>
+                                        <td class="text-end"><t t-esc="'{:,}'.format(int(line.price * line.qty) or 0) or 0"/></td>
                                     </tr>
                                 </t>
                             </tbody>
                         </table>
+
+                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                            <div>Bank Charges: <strong><t t-esc="'{:,2f}'.format(o.bank_charges or 0.00)"/></strong></div>
+                            <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong></div>
+                        </div>
 
                         <!-- Footer -->
                         <div class="text-center border-top pt-3 pb-3">

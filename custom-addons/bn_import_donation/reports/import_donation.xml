@@ -85,7 +85,7 @@
                                     <t t-esc="o.date if o.date else '--'"/>
                                 </div>
                                 <div><strong>Currency:</strong> <t t-esc="o.currency_id.name"/></div>
-                                <div><strong>Amount:</strong> <t t-esc="o.amount"/></div>
+                                <div><strong>Amount:</strong> <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/></div>
                             </div>
                         </div>
 
