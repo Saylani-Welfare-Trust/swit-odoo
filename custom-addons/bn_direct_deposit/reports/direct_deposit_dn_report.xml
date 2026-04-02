@@ -172,5 +172,17 @@
             </t>
         </template>
 
+        <record id="report_direct_deposit_dn" model="ir.actions.report">
+            <field name="name">Direct Deposit Receipt</field>
+            <field name="model">direct.deposit</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_direct_deposit.direct_deposit_receipt_template_dn</field>
+            <field name="report_file">bn_direct_deposit.direct_deposit_receipt_template_dn</field>
+            <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
+            <field name="id" ref="bn_direct_deposit.report_direct_deposit_duplicate_paperformat"/>
+        </record>
+        
     </data>
 </odoo>
