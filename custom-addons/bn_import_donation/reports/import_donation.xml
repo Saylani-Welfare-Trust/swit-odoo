@@ -82,7 +82,7 @@
                             <div class="col-6">
                                 <div>
                                     <strong>Date:</strong>
-                                    <t t-esc="(o.datetime.datetime.strptime(o.date, '%Y-%m-%d %H:%M:%S')).strftime('%d-%m-%Y %H:%M') if o.date else '--'"/>
+                                    <t t-esc="o.date if o.date else '--'"/>
                                 </div>
                                 <div><strong>Currency:</strong> <t t-esc="o.currency_id.name"/></div>
                                 <div><strong>Amount:</strong> <t t-esc="o.amount"/></div>
