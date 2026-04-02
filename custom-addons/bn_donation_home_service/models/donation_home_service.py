@@ -32,6 +32,7 @@ class DonationHomeService(models.Model):
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
 
     address = fields.Text('Address')
+    remarks = fields.Text('Remarks')
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
 
@@ -65,7 +66,15 @@ class DonationHomeService(models.Model):
 
         for line in self.donation_home_service_line_ids:
             self.amount += line.amount * line.quantity
-            
+
+    def set_remarks(self):
+        remarks = []
+        for line in self.donation_home_service_line_ids:
+            if line.remarks:
+                remarks.append(line.remarks)
+        
+        self.remarks = "\n".join(remarks)
+
     def calculate_service_charges(self):
         self.total_amount = self.amount + self.service_charges
     
@@ -344,6 +353,7 @@ class DonationHomeService(models.Model):
         # 5. Recalculate totals
         # -------------------------
         dhs.calculate_amount()
+        dhs.set_remarks()
         dhs.calculate_service_charges()
 
         return {

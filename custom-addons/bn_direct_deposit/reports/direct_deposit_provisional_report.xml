@@ -43,7 +43,7 @@
                                 /* ✅ FIXED WATERMARK */
                                 .watermark {
                                     position: absolute; /* was fixed */
-                                    top: 420px;         /* adjust if needed */
+                                    top: 170px;         /* adjust if needed */
                                     left: 50%;
                                     transform: translateX(-50%) rotate(-30deg);
                                     font-size: 80px;
@@ -66,9 +66,9 @@
                                 <div class="col-6 text-end">
                                     <h1>
                                         Saylani Welfare International Trust<br/>
-                                        <t t-if="o.env.user.employee_id.analytic_account_id">
-                                        <br/>
-                                        (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
+                                        <t t-if="o.user_id.employee_id.analytic_account_id">
+                                            <br/>
+                                            (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
                                 </div>
@@ -99,8 +99,9 @@
                                     </div>
                                     <div>
                                         <strong>Total Amount:</strong>
-                                        <t t-esc="o.amount or '0.00'"/>
+                                        <t t-esc="'{:,}'.format(int(o.amount) or 0) or '0.00'"/>
                                     </div>
+                                    <div><strong>Remarks:</strong> <t t-esc="o.remarks or ''"/></div>
                                 </div>
                             </div>
 
@@ -109,8 +110,8 @@
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Qty</th>
-                                        <th class="text-end">Amount</th>
-                                        <th>Remarks</th>
+                                        <th class="text-yend">Rate</th>
+                                        <th class="text-yend">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -119,8 +120,8 @@
                                             <td><t t-esc="line.product_id.name"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
-                                            <td class="text-end"><t t-esc="line.amount or '-'"/></td>
-                                            <td><t t-esc="line.remarks or '-'"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0) or '-'"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount or 0)) or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -131,7 +132,7 @@
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                                 <div>Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
-                                <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(o.amount or 0)"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.amount) or 0)"/></strong></div>
                             </div>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>

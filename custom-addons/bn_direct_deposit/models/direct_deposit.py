@@ -28,6 +28,8 @@ class DirectDeposit(models.Model):
     address = fields.Char('Address')
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')
+    
+    remarks = fields.Text('Remarks')
 
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
     
@@ -64,9 +66,17 @@ class DirectDeposit(models.Model):
     
     def calculate_amount(self):
         self.amount = 0
-        
+
         for line in self.direct_deposit_line_ids:
             self.amount += line.amount*line.quantity
+
+    def set_remarks(self):
+        remarks = []
+        for line in self.direct_deposit_line_ids:
+            if line.remarks:
+                remarks.append(line.remarks)
+        
+        self.remarks = "\n".join(remarks)
 
     @api.model
     def create_dd_record(self, data):
@@ -123,6 +133,7 @@ class DirectDeposit(models.Model):
         # 4. Recalculate totals
         # -------------------------
         dd.calculate_amount()
+        dd.set_remarks()
 
         return {
             "status": "success",

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="hr_employee_action_server" model="ir.actions.server">
+            <field name="name">Update Emplooyee Name | BN</field>
+            <field name="model_id" ref="model_hr_employee"/>
+            <field name="binding_model_id" ref="model_hr_employee"/>
+            <field name="state">code</field>
+            <field name="code">
+                for rec in records:
+                    rec['name'] = rec.name + " ( " + str(rec.barcode) + " )"
+            </field>
+        </record>
+    
+    </data>
+    
+
+</odoo>
