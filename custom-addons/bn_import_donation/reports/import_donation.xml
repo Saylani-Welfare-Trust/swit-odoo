@@ -52,7 +52,7 @@
 
                         <img t-if="o.env.company.dn_image"
                             t-att-src="image_data_uri(o.env.company.dn_image)"
-                            style="margin-top: 0px; height: 100%; width: 100%;"/>
+                            style="height: 100%; width: 100%;"/>
 
                         <!-- ===== WATERMARK ===== -->
                         <div class="watermark">Donation</div>
