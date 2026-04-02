@@ -1,5 +1,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from string import digits
+from random import choice
 
 import re
 
@@ -44,13 +46,7 @@ class HREmployee(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
             
-    def write(self, vals):
-        res = super(HREmployee, self).write(vals)
-
-        raise ValidationError(str(res))
-
-        if 'work_contact_id' in vals:
-            self.name = self.name + " ( " + str(vals.get('work_contact_id', '')) + " )"
-
-        return res
-            
+    def generate_random_barcode(self):
+        for employee in self:
+            employee.barcode = '041'+"".join(choice(digits) for i in range(9))
+            employee.name = employee.name + " ( " + str(employee.barcode) + " )"
