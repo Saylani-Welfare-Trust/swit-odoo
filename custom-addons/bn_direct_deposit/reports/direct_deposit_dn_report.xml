@@ -53,8 +53,8 @@
                                 }
                             </style>
 
-                            <img t-if="order.env.company.dn_image"
-                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                            <img t-if="o.env.company.dn_image"
+                                t-att-src="image_data_uri(o.env.company.dn_image)"
                                 style="height: 100%; width: 100%;"/>
 
                             <!-- ===== HEADER ===== -->
