@@ -63,7 +63,7 @@ class DirectDeposit(models.Model):
         return super(DirectDeposit, self).create(vals)
     
     def calculate_amount(self):
-        self.amount = sum(line.amount for line in self.direct_deposit_line_ids)
+        self.amount = sum(line.amount*line.quantity for line in self.direct_deposit_line_ids)
 
     @api.model
     def create_dd_record(self, data):
