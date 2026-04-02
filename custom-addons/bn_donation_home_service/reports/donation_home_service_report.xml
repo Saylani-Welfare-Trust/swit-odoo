@@ -82,6 +82,7 @@
                                     <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
+                                    <div>Address: <strong> <t t-esc="o.donor_id.street or '-'"/></strong></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
@@ -127,7 +128,6 @@
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                                 <div>Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></div>
-                                <div>Address: <strong> <t t-esc="o.donor_id.street or '-'"/></strong></div>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                                 <div>Entered by: <strong><t t-esc="o.env.user.name"/></strong></div>
