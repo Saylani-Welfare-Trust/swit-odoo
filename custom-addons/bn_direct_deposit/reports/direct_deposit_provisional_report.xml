@@ -122,7 +122,7 @@
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
                                             <td class="text-end"><t t-esc="'{:,.2f}'.format(line.amount or 0) or '-'"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.qauntity*line.amount or 0) or '-'"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.quantity*line.amount or 0) or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
