@@ -74,7 +74,7 @@
                         <!-- ===== BASIC INFO ===== -->
                         <div class="row mb-2">
                             <div class="col-6">
-                                <div><strong>RC #:</strong> ONLINE-<t t-esc="o.dn_number"/></div>
+                                <div><strong>RC #:</strong> <t t-esc="o.dn_number"/></div>
                                 <div><strong>Donor Name:</strong> <t t-esc="o.name"/></div>
                                 <div><strong>Contact:</strong> <t t-esc="o.phone"/></div>
                             </div>
