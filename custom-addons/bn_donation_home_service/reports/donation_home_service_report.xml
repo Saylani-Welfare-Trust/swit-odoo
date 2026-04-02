@@ -126,10 +126,10 @@
 
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></div>
+                                <div>Entered by: <strong><t t-esc="o.env.user.name"/></strong></div>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="o.env.user.name"/></strong></div>
+                                <div>Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></div>
                                 <div>Total Amount: <strong> Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong></div>
                             </div>
 
