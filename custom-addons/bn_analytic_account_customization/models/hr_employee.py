@@ -50,3 +50,9 @@ class HREmployee(models.Model):
         for employee in self:
             employee.barcode = '041'+"".join(choice(digits) for i in range(9))
             employee.name = employee.name + " ( " + str(employee.barcode) + " )"
+
+    def create(self, vals):
+        if 'name' in vals:
+            vals['name'] = vals['name'] + " ( " + str(vals.get('barcode', '')) + " )"
+        
+        return super(HREmployee, self).create(vals)
