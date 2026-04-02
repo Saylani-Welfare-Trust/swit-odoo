@@ -9,8 +9,6 @@ patch(ProductsWidget.prototype, {
         let list = [];
         var parent_check = db.get_category_by_id(this.selectedCategoryId)
 
-        // console.log(parent_check);
-
         if (this.searchWord !== "") {
             list = db.search_product_in_category(this.selectedCategoryId, this.searchWord);
         } else {
@@ -23,9 +21,6 @@ patch(ProductsWidget.prototype, {
                 list = [];
             }
         }
-
-        // Commented below line to not generate list when category is not selected
-        // list = list.filter((product) => !this.getProductListToNotDisplay().includes(product.id));
         
         return list.sort(function (a, b) {
             return a.display_name.localeCompare(b.display_name);

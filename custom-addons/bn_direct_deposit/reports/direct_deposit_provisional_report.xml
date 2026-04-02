@@ -9,9 +9,8 @@
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-call="web.external_layout">
-
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="margin-top: 360px; position:relative;">
+                        <div class="page" style="margin-top: 420px; position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -44,7 +43,7 @@
                                 /* ✅ FIXED WATERMARK */
                                 .watermark {
                                     position: absolute; /* was fixed */
-                                    top: 120px;         /* adjust if needed */
+                                    top: 420px;         /* adjust if needed */
                                     left: 50%;
                                     transform: translateX(-50%) rotate(-30deg);
                                     font-size: 80px;
@@ -57,7 +56,7 @@
                             </style>
 
                             <!-- ===== WATERMARK ===== -->
-                            <div class="watermark">PROVISIONAL</div>
+                            <div class="watermark">Provisional</div>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
@@ -68,7 +67,8 @@
                                     <h1>
                                         Saylani Welfare International Trust<br/>
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
-                                            (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
+                                        <br/>
+                                        (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
                                 </div>
@@ -79,14 +79,19 @@
                             <!-- ===== BASIC INFO ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div><strong>Transaction No.:</strong> <t t-esc="o.transaction_ref or ''"/></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
                                         <strong>Date:</strong>
                                         <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                    </div>
+                                    <div>
+                                        <strong>Bank Deposit:</strong>
+                                        <t t-esc="o.bank_id.name"/>
                                     </div>
                                     <div>
                                         <strong>Contact No.:</strong>
@@ -99,15 +104,11 @@
                                 </div>
                             </div>
 
-                            <!-- ===== ITEMS ===== -->
-                            <h4>Direct Deposit Details</h4>
-
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Qty</th>
-                                        <th class="text-end">Rate</th>
                                         <th class="text-end">Amount</th>
                                         <th>Remarks</th>
                                     </tr>
@@ -118,7 +119,7 @@
                                             <td><t t-esc="line.product_id.name"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
-                                            <td class="text-end"><t t-esc="line.quantity*line.amount"/></td>
+                                            <td class="text-end"><t t-esc="line.quantity*line.amount or '-'"/></td>
                                             <td><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
                                     </t>
@@ -128,16 +129,44 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <div class="row">
-                                <div class="col-6">
-                                    <div><strong>Entered By:</strong> <t t-esc="o.env.user.name"/></div>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                                <div>Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(o.amount or 0)"/></strong></div>
+                            </div>
+
+                            <hr style="margin:4px 0; border-top: solid 5px;"/>
+
+                            <div class="row mb-2">
+                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
+                                    
                                 </div>
-                                <div class="col-6 text-end">
-                                    <div><strong>Total Amount:</strong> Rs <t t-esc="o.amount or 0.0"/></div>
+
+                                <div class="col-6">
+                                    <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div>
+                                        <t t-set="count" t-value="1"/>
+                                        <strong>Products:</strong>
+                                        <t t-foreach="o.direct_deposit_line_ids" t-as="l">
+                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.name"/> - <t t-esc="int(l.quantity)"/></div>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong>Date &amp; Time:</strong>
+                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                    </div>
+                                    <div><strong>Entered by: </strong> <t t-esc="o.user_id.name"/></div>
                                 </div>
                             </div>
 
-                        </div> <!-- END PAGE -->
+                            <div style="text-align: center; font-size: 12px;">
+                                Powered by BytesNode
+                            </div>
+
+                        </div>
 
                     </t>
                 </t>
@@ -151,11 +180,11 @@
             <field name="name">A5 - Direct Deposit Receipt</field>
             <field name="format">A5</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">10</field>
+            <field name="margin_top">0</field>
             <field name="margin_bottom">10</field>
-            <field name="margin_left">8</field>
-            <field name="margin_right">8</field>
-            <field name="header_spacing">10</field>
+            <field name="margin_left">4</field>
+            <field name="margin_right">4</field>
+            <field name="header_spacing">0</field>
             <field name="dpi">90</field>
         </record>
 

@@ -8,7 +8,7 @@
 }
 
 @page {
-    margin-top: 360px;
+    margin-top: 400px;
     padding: 0; /* A4 page margins */
 }
 
@@ -31,7 +31,10 @@
         width: 200mm !important;
         min-height: auto !important; /* important: do not force 297mm */
         margin: 0 auto !important;
-        padding: 10mm; /* optional */
+        padding-right: 10mm; /* optional */
+        padding-left: -25mm; /* optional */
+        padding-top: 0mm; /* optional */
+        padding-top: 0mm; /* optional */
         box-sizing: border-box;
     }
     .render-container {
@@ -39,5 +42,13 @@
     }
     .o-main-components-container  {
         position: absolute !important;
+    }
+    table {
+        font-size: 11px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 3px 4px !important;
     }
 }

@@ -6,7 +6,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <!-- Certificate Container -->
-                    <div class="page" style="position: relative;">
+                    <div class="page" style="margin-top: 520px; position: relative;">
                         <style>
                         .page-content {
                             position: relative;
@@ -36,9 +36,9 @@
                             <!-- Header -->
                             <div class="row compact-section">
                                 <div class="col-5">
-                                    <h4 class="fw-bold text-uppercase mb-2 no-margin">
+                                    <h8 class="fw-bold text-uppercase mb-2 no-margin">
                                         DONATION BOX CERTIFICATE
-                                    </h4>
+                                    </h8>
                                 </div>
                                 <div class="col-7 text-end">
                                     <p class="text-muted mb-2" style="font-size: 13px;">
@@ -49,7 +49,6 @@
 
                             <!-- Certificate Info -->
                             <div class="bg-light p-3 border-start border-5 mb-3 compact-section">
-                                <h5 class="fw-bold mb-2 no-margin">Certificate Information</h5>
                                 <div class="row compact-row">
                                     <div class="col-6 pe-3">
                                         <div class="d-flex mb-2">
@@ -92,7 +91,6 @@
 
                             <!-- Donation Box Details -->
                             <div class="compact-section">
-                                <h5 class="fw-bold mb-2 no-margin">Donation Box Details</h5>
                                 <table class="table table-bordered border-2" style="font-size: 13px;">
                                     <thead>
                                         <tr>
@@ -119,7 +117,7 @@
 
                             <!-- Installation Info -->
                             <div class="bg-light p-3 border-start border-5 compact-section">
-                                <h5 class="fw-bold mb-2 no-margin">Installation Information</h5>
+                                <h6 class="fw-bold mb-2 no-margin">Installation Information</h6>
                                 <div class="row compact-row">
                                     <div class="col-6 pe-3">
                                         <div class="d-flex mb-2">
@@ -181,6 +179,18 @@
         </t>
     </template>
 
+    <record id="report_donation_box_paperformat" model="report.paperformat">
+        <field name="name">A5 - Donation Box Receipt</field>
+        <field name="format">A5</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_spacing">10</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="donation_box_receipt_report_action" model="ir.actions.report">
         <field name="name">Donation Box Receipt</field>
         <field name="model">key.issuance</field>
@@ -190,7 +200,7 @@
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Donation Box Receipt - %s' % (object.lot_id.name)</field>
-        <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
+        <field name="paperformat_id" ref="bn_donation_box.report_donation_box_paperformat"/>
     </record>
 
 </odoo>

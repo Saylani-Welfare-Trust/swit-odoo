@@ -11,7 +11,7 @@
                     <t t-call="web.external_layout">
 
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="margin-top: 360px; position:relative;">
+                        <div class="page" style="margin-top: 420px; position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -81,6 +81,7 @@
                                 <div class="col-6">
                                     <div><strong>DHS #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
@@ -150,8 +151,8 @@
             <field name="orientation">Portrait</field>
             <field name="margin_top">10</field>
             <field name="margin_bottom">10</field>
-            <field name="margin_left">8</field>
-            <field name="margin_right">8</field>
+            <field name="margin_left">4</field>
+            <field name="margin_right">4</field>
             <field name="header_spacing">10</field>
             <field name="dpi">90</field>
         </record>
