@@ -44,10 +44,10 @@ class HREmployee(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
             
-    def create(self, vals):
+    def write(self, vals):
         raise ValidationError(str(vals))
 
         if 'name' in vals:
             vals['name'] = vals.get('name') + " ( " + str(vals.get('barcode', '')) + " )"
             
-        return super(HREmployee, self).create(vals)
+        return super(HREmployee, self).write(vals)
