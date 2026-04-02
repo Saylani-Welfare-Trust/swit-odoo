@@ -7,7 +7,6 @@
     'category': 'BytesNode/Livestock Slaugther',
     'depends': [
         'bn_donation_home_service',
-        'stock',
         'mail',
     ],
     'data': [

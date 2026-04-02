@@ -31,7 +31,7 @@ class LivestockCutting(models.Model):
         self.state = 'received'
     
     def action_validate_picking(self):
-        cutting_obj = self.env['livestock.cutting.material']
+        cutting_obj = self.env['live_stock_slaughter.cutting_material']
         product_pro = self.product
 
         cutting_record = cutting_obj.create({
@@ -61,7 +61,7 @@ class LivestockCutting(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': slaughter_location.id,
             'location_dest_id': cutting_location.id,
-            'origin': self.product_id or 'Live Stock Slaughter',
+            'origin': self.product or 'Live Stock Slaughter',
         })
 
         # Create the stock move
@@ -84,7 +84,7 @@ class LivestockCutting(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': 'Cutting Material Record',
-            'res_model': 'livestock.cutting.material',
+            'res_model': 'live_stock_slaughter.cutting_material',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',

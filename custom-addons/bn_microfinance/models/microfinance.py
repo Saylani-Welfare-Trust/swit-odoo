@@ -566,7 +566,7 @@ class Microfinance(models.Model):
                     'product_id': self.product_id.id,
                     'quantity': 1,
                     'price_unit': self.total_amount,
-                    'account_id': expense_account.id,
+                    # 'account_id': expense_account.id,
                 })
             ]
         }

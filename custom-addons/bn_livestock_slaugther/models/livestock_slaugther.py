@@ -33,64 +33,67 @@ class LivestockSlaughter(models.Model):
 
 
     def action_confirm(self):
-        # ✅ Determine destination location
+        # Retrieve the 'Slaughter Stock' location
+        location = None
+
         if self.is_meat_depart:
-            location = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
+            location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
         elif self.is_goat_depart:
-            location = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
+            location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
         else:
-            location = self.env['stock.location'].search([('name', 'ilike', 'Slaughter Stock')], limit=1)
-
+            location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
+        
         if not location:
-            raise ValidationError(
-                "Slaughter Stock, Meat or Goat location not found."
-            )
+            raise ValidationError("Slaughter Stock, Meat or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
-        # ✅ Internal picking type
-        picking_type = self.env.ref('stock.picking_type_internal')
+        # Retrieve the internal transfer operation type
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.company_id', '=', self.env.company.id)
+        ], limit=1)
+        if not picking_type:
+            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
-        # ✅ Product
-        product = self.product_id
+        # Retrieve the product based on the product code
+        product = self.product_new
         if not product:
-            raise ValidationError("Product not found.")
+            raise ValidationError(f"Product with code '{self.product_code}' not found.")
 
-        # ✅ Create picking
+        # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': location.id,
-            'origin': product.name or 'Live Stock Slaughter',
+            'location_dest_id': location,
+            'origin': self.product or 'Live Stock Slaughter',
         })
 
-        # ✅ Create move
-        move = self.env['stock.move'].create({
+        # Create the stock move
+        self.env['stock.move'].create({
             'name': product.display_name,
             'product_id': product.id,
             'product_uom_qty': self.quantity,
+            'quantity': self.quantity,
             'product_uom': product.uom_id.id,
             'picking_id': picking.id,
             'location_id': picking.location_id.id,
             'location_dest_id': picking.location_dest_id.id,
         })
 
-        # ✅ Confirm & assign
+        # Confirm and assign the picking
         picking.action_confirm()
         picking.action_assign()
 
-        # ✅ Set done qty
+        # Set the done quantities and validate the picking
         for move_line in picking.move_line_ids:
-            move_line.quantity = move_line.quantity
-
-        # ✅ Validate
+            move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
 
-        # ✅ Update state
-        # self.confirm_hide = True
+        self.confirm_hide = True
         self.state = 'received'
 
     def action_cutting(self):
         # Retrieve the 'Slaughter Stock' location
-        cutting_obj = self.env['livestock.cutting.material']
+        cutting_obj = self.env['live_stock_slaughter.cutting']
 
         location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         if not location:
@@ -105,7 +108,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_id
+        product = self.product_new
 
 
         # Create the stock picking
@@ -113,7 +116,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.product_id.id or '',
+            'origin': self.product_new.id or '',
         })
 
         # Create the stock move
@@ -137,19 +140,19 @@ class LivestockSlaughter(models.Model):
         #     move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
         cutting_record = cutting_obj.create({
-            'product_id': self.product_id.id,
+            'product_new': self.product_new.id,
             'quantity': self.quantity,
             'price': self.price,
-            # 'product_code': self.product_code,
-            # 'picking_id': picking.id,
+            'product_code': self.product_code,
+            'picking_id': picking.id,
         })
 
-        # self.cutting_hide = True
+        self.cutting_hide = True
 
         return {
             'type': 'ir.actions.act_window',
             'name': 'Cutting Record',
-            'res_model': 'livestock.cutting.material',
+            'res_model': 'live_stock_slaughter.cutting',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',
