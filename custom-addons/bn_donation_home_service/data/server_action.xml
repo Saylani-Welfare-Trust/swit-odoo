@@ -14,6 +14,17 @@
                     record.calculate_service_charges()
             </field>
         </record>
+        
+        <record id="donation_home_service_remarks_action_server" model="ir.actions.server">
+            <field name="name">Update Donation Home Service Remarks | BN</field>
+            <field name="model_id" ref="model_donation_home_service"/>
+            <field name="binding_model_id" ref="model_donation_home_service"/>
+            <field name="state">code</field>
+            <field name="code">
+                for record in records:
+                    record.set_remarks()
+            </field>
+        </record>
     
     </data>
     

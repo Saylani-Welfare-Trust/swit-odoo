@@ -97,6 +97,7 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.total_amount) or 0) or '0.00'"/>
                                     </div>
+                                    <div><strong>Remarks: </strong> <t t-esc="o.remarks or '-'"/></div>
                                 </div>
                             </div>
 
@@ -104,7 +105,6 @@
                                 <thead>
                                     <tr>
                                         <th>Product</th>
-                                        <th>Remarks</th>
                                         <th class="text-end">Qty</th>
                                         <th class="text-end">Rate</th>
                                         <th class="text-end">Amount</th>
@@ -114,7 +114,6 @@
                                     <t t-foreach="o.donation_home_service_line_ids" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
-                                            <td><t t-esc="line.remarks or '-'"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0.0)"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount) or 0.0)"/></td>
