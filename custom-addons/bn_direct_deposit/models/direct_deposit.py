@@ -63,11 +63,9 @@ class DirectDeposit(models.Model):
         return super(DirectDeposit, self).create(vals)
     
     def calculate_amount(self):
-        self.amount = 0
-        
         for line in self.direct_deposit_line_ids:
             self.amount += line.amount*line.quantity
-    
+
     @api.model
     def create_dd_record(self, data):
         address = data.get('address')

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="donation_home_service_action_server" model="ir.actions.server">
+            <field name="name">Update Donation Home Service Total Amount | BN</field>
+            <field name="model_id" ref="model_donation_home_service"/>
+            <field name="binding_model_id" ref="model_donation_home_service"/>
+            <field name="state">code</field>
+            <field name="code">
+                for record in records:
+                    record.calculate_amount()
+                    record.calculate_service_charges()
+            </field>
+        </record>
+    
+    </data>
+    
+
+</odoo>

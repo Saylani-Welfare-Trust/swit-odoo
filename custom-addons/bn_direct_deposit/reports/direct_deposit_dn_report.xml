@@ -53,14 +53,14 @@
                                 }
                             </style>
 
-                            <img t-if="order.env.company.dn_image"
-                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                            <img t-if="o.env.company.dn_image"
+                                t-att-src="image_data_uri(o.env.company.dn_image)"
                                 style="height: 100%; width: 100%;"/>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1>Provisional Receipt</h1>
+                                    <h1>Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1>
@@ -107,19 +107,21 @@
                                 <thead>
                                     <tr>
                                         <th>Product</th>
-                                        <th class="text-end">Qty</th>
-                                        <th class="text-end">Amount</th>
                                         <th>Remarks</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-yend">Rate</th>
+                                        <th class="text-yend">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="o.direct_deposit_line_ids" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
+                                            <td><t t-esc="line.remarks or '-'"/></td>
                                             <td class="text-end"><t t-esc="line.quantity"/></td>
                                             <!-- <td class="text-end"><t t-esc="line.product_id.list_price"/></td> -->
                                             <td class="text-end"><t t-esc="line.amount or '-'"/></td>
-                                            <td><t t-esc="line.remarks or '-'"/></td>
+                                            <td class="text-end"><t t-esc="line.qauntity*line.amount or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
