@@ -67,8 +67,8 @@
                                     <h1>
                                         Saylani Welfare International Trust<br/>
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
-                                        <br/>
-                                        (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
+                                            <br/>
+                                            (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
                                 </div>
