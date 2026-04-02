@@ -102,20 +102,20 @@
                                 <thead>
                                     <tr>
                                         <th>Product</th>
+                                        <th>Remarks</th>
                                         <th class="text-end">Qty</th>
                                         <th class="text-end">Rate</th>
                                         <th class="text-end">Amount</th>
-                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="o.donation_home_service_line_ids" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
-                                            <td class="text-end"><t t-esc="line.quantity"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.product_id.lst_price or 0.0)"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.amount or 0.0)"/></td>
                                             <td><t t-esc="line.remarks or '-'"/></td>
+                                            <td class="text-end"><t t-esc="line.quantity"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.product_id.lst_price) or 0.0)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0.0)"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -126,12 +126,12 @@
                             <!-- ===== TOTALS ===== -->
                             <div class="row">
                                 <div class="col-6">
-                                    <div><strong>Service Charges:</strong> Rs <t t-esc="'{:,.2f}'.format(o.service_charges or 0.0)"/></div>
+                                    <div><strong>Service Charges:</strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></div>
                                     <div><strong>Address:</strong> <t t-esc="o.donor_id.street or '-'"/></div>
                                 </div>
                                 <div class="col-6 text-end">
                                     <div><strong>Entered By:</strong> <t t-esc="o.env.user.name"/></div>
-                                    <div><strong>Total Amount:</strong> Rs <t t-esc="'{:,.2f}'.format(o.total_amount or 0.0)"/></div>
+                                    <div><strong>Total Amount:</strong> Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0.0)"/></div>
                                 </div>
                             </div>
 
