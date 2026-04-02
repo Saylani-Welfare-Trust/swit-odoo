@@ -110,7 +110,7 @@
 
                         <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                             <div>Bank Charges: <strong><t t-esc="'{:,.2f}'.format(o.bank_charges or 0.00)"/></strong></div>
-                            <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong></div>
+                            <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(float(o.total_amount or 0))"/></strong></div>
                         </div>
 
                         <!-- Footer -->
