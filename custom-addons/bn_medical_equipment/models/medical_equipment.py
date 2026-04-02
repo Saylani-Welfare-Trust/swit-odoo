@@ -13,8 +13,8 @@ cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 status_selection = [       
     ('draft', 'Draft'),
-    ('ceo_approval', 'CEO Approval'),
-    ('cfo_approval', 'CFO Approval'),
+    ('ceo_approval', 'Approval(1)'),
+    ('cfo_approval', 'Approval(2)'),
     ('approved', 'Approved'),
     ('sd_received', 'Security Received'),
     ('payment_received', 'Payment Received'),
@@ -281,9 +281,16 @@ class MedicalEquipment(models.Model):
         
         if case_type == '100_percent':
             # 100%: Single CEO approval → Approved
-            self.write({
-                'state': 'approved'
-            })
+            if current_state == 'draft':
+                self.write({
+                    'state': 'ceo_approval'
+                })
+            elif current_state == 'ceo_approval':
+                self.write({
+                    'state': 'approved'
+                })
+            else:
+                raise ValidationError('This record has already been approved.')
             
         elif case_type == '50_percent':
             # 50%: 2 approval cycles with remarks required

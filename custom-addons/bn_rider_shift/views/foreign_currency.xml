@@ -9,6 +9,8 @@
                 <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="amount" readonly="1" />
                 <field name="conversion_rate" />
+                <field name="foreign_notes" />
+                <field name="exchanged_amount" />
                 <field name="rider_id" readonly="1" />
                 <field name="lot_id" string="Box No." readonly="1" />
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'converted'" decoration-danger="state == 'reject'" readonly="1" />

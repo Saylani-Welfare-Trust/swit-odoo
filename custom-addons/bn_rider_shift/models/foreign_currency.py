@@ -16,7 +16,8 @@ class ForeignCurrency(models.Model):
     currency_id = fields.Many2one('res.currency', string="Currency")
     
     amount = fields.Float('Amount')
-
+    foreign_notes = fields.Float('Foreign Notes')
+    exchanged_amount = fields.Float('Exchanged Amount')
     conversion_rate = fields.Float('Conversion Rate', default=1.0)
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
@@ -26,7 +27,7 @@ class ForeignCurrency(models.Model):
 
 
     def action_convert_amount(self):
-        self.amount = self.curruncy_id._convert(self.amount, self.env.company.currency_id, self.env.company, fields.Date.today())
+        self.exchanged_amount = self.currency_id._convert(self.amount, self.env.company.currency_id, self.env.company, fields.Date.today())
         self.state = 'converted'
 
     def action_reject(self):

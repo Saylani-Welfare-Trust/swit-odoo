@@ -6,3 +6,5 @@ access_rider_schedule,rider.schedule,bn_rider_shift.model_rider_schedule,,1,1,1,
 access_rider_schedule_line,rider.schedule.line,bn_rider_shift.model_rider_schedule_line,,1,1,1,1
 access_counterfeit_notes,counterfeit.notes,bn_rider_shift.model_counterfeit_notes,,1,1,1,1
 access_foreign_currency,foreign.currency,bn_rider_shift.model_foreign_currency,,1,1,1,1
+access_foreign_currency_wizard,access_foreign_currency_wizard,model_foreign_currency_wizard,,1,1,1,1
+access_foreign_currency_wizard_line,access_foreign_currency_wizard_line,model_foreign_currency_wizard_line,,1,1,1,1

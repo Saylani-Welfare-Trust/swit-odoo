@@ -46,24 +46,41 @@ class DonationBoxRequest(models.Model):
         self.status = 'rejected'
 
     def action_draft(self):
-        # Check if any lines are marked to uncheck consumed
-        marked_lines = self.donation_box_request_line_ids.filtered(lambda l: l.mark_as_unconsumed)
-        
-        if not marked_lines:
-            raise ValidationError(_('Please select at least one line to mark as unconsumed by checking the "Mark as Unconsumed" checkbox.'))
-        
-        self.env['donation.box.registration.installation'].search([('donation_box_request_id', '=', self.id)]).unlink()
-        self.env['key'].search([('donation_box_request_id', '=', self.id)]).unlink()
 
-        # Only process lots from lines that are marked
-        lot_ids = []
-        for line in marked_lines:
-            if line.lot_id:
-                lot_ids.append(line.lot_id.id)
+        all_records = self.donation_box_registration_installation_ids
 
-        for lot in self.env['stock.lot'].browse(lot_ids):
-            lot.lot_consume = False
-            lot.location_id = self.source_location_id.id
+        if not all_records:
+            raise ValidationError(_('No installation records found.'))
+
+        # Split records
+        installed_records = all_records.filtered(lambda r: r.box_status == 'installed')
+        not_installed_records = all_records.filtered(lambda r: r.box_status != 'installed')
+
+        # ❌ If ALL are installed → block
+        if installed_records and not not_installed_records:
+            raise ValidationError(
+                _('All donation boxes are already installed. Cannot reset to draft.')
+            )
+
+        # ✅ If NONE installed → process ALL
+        records_to_process = not_installed_records or all_records
+
+        # Collect lot_ids
+        lot_ids = records_to_process.mapped('lot_id').ids
+
+        # Reset lots
+        self.env['stock.lot'].browse(lot_ids).write({
+            'lot_consume': False,
+            'location_id': self.source_location_id.id
+        })
+
+        # ❗ Delete ONLY processed records (skip installed)
+        records_to_process.unlink()
+
+        # Delete keys (common cleanup)
+        self.env['key'].search([
+            ('donation_box_request_id', '=', self.id)
+        ]).unlink()
 
         self.status = 'draft'
     

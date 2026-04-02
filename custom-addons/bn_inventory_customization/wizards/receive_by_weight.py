@@ -142,31 +142,59 @@ class ReceiveByWeight(models.TransientModel):
             # Among these templates, inspect their product variants and try to match by attribute value ranges
             matched_variant = None
             matched_attr_val = None
+
+            # STEP 1: Get all attribute values having weight ranges
+            all_attr_vals = self.env['product.attribute.value'].search([
+                ('from_kg', '!=', False),
+                ('to_kg', '!=', False),
+            ])
+
+            # STEP 2: Find matching weight range
+            weight_attr = None
+            for attr_val in all_attr_vals:
+                try:
+                    if float(attr_val.from_kg) <= weight <= float(attr_val.to_kg):
+                        weight_attr = attr_val
+                        break
+                except Exception:
+                    continue
+
+            if not weight_attr:
+                raise UserError(f"No weight range found for weight {weight} kg")
+
+            # STEP 3: Extract color from weight range name
+            # Example: "7000 RED" → "red"
+            weight_name = weight_attr.name.lower()
+            color = weight_name.split()[-1]  # safest extraction
+            # var_and_color=[]
+            # STEP 4: Find matching variant from templates
             for tmpl in templates:
                 for variant in tmpl.product_variant_ids:
-                    # product_template_attribute_value_ids links variant -> attribute value records
-                    for ptav in variant.product_template_attribute_value_ids:
-                        attr_val = ptav.product_attribute_value_id
-                        # only consider attribute values that define from_kg/to_kg
-                        if attr_val and (attr_val.from_kg is not None) and (attr_val.to_kg is not None):
-                            try:
-                                if float(attr_val.from_kg) <= weight <= float(attr_val.to_kg):
-                                    matched_variant = variant
-                                    matched_attr_val = attr_val
-                                    break
-                            except Exception:
-                                # skip invalid values
-                                continue
-                    if matched_variant:
+
+                    # for ptav in variant.product_template_attribute_value_ids:
+                    #     attr_val = ptav.product_attribute_value_id
+
+                    #     if not attr_val or not attr_val.name:
+                    #         continue
+
+                    variant_name = variant.display_name.lower()
+                    # raise UserError(f"Checking variant '{variant.display_name}' with attribute value '{variant_name}' against color '{color}'")
+                    # Match color
+                    # var_and_color.append((variant_name,color))
+                    if color in variant_name:
+                        matched_variant = variant
+                        # matched_attr_val = weight_attr
                         break
+
                 if matched_variant:
                     break
 
+            # raise UserError(f"Variant and color combinations: {var_and_color}")
+
+            # STEP 5: Final check
             if not matched_variant:
                 raise UserError(
-                    "No matching variant found in range %s kg for product '%s' with livestock variant '%s'."
-                    % (
-                    weight, base_product.display_name, (livestock_variant.display_name if livestock_variant else 'N/A'))
+                    f"No variant found matching color '{color}' for weight {weight} kg"
                 )
 
             # STEP 3: Increase stock for the matched variant (add 1 unit per wizard line)

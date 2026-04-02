@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='sub_zone_id']" position="after">
-                <field name="key_bunch_id" string="Key Bunch" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="sub_zone_id == False" readonly="status in ['approved', 'available', 'change_request']" />
+                <field name="key_bunch_id" string="Key Bunch" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="sub_zone_id == False" readonly="status in ['approved', 'available']"/>
             </xpath>
         </field>
     </record>

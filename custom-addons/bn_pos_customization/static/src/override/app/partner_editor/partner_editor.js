@@ -43,9 +43,9 @@ patch(PartnerDetailsEdit.prototype, {
         };
     },
 
-    get cnicStyle() {
-        return this.changes.donor_type === 'individual' ? 'display: block;' : 'display: none;';
-    },
+    // get cnicStyle() {
+    //     return this.changes.donor_type === 'individual' ? 'display: block;' : 'display: none;';
+    // },
 
     updateDonorType(event) {
         this.changes.donor_type = event.target.value;
@@ -54,7 +54,7 @@ patch(PartnerDetailsEdit.prototype, {
         const selectedValue = event.target.value;
 
         const selected_array = [
-            { 'individual': ['name', 'country_code_id', 'mobile', 'email'] },
+            { 'individual': ['name', 'country_code_id', 'mobile', 'email', 'cnic_no'] },
             { 'coorporate': ['name', 'country_code_id', 'mobile', 'email', 'cnic_no'] },
         ];
 

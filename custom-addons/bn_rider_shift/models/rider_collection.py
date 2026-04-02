@@ -49,7 +49,8 @@ class RiderCollection(models.Model):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
-    counterfeit_notes = fields.Float('Counter Feit Notes')
+    foreign_notes = fields.Float('Foreign Notes')
+    counterfeit_notes = fields.Float('Counterfeit Notes')
 
     remarks = fields.Text('Remarks')
 
@@ -90,23 +91,14 @@ class RiderCollection(models.Model):
         }
 
     def action_change_rate(self):
-        self.env['foreign.currency'].create({
-            'rider_id': self.rider_id.id,
-            'lot_id': self.lot_id.id,
-            'amount': self.amount,
-        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Create Foreign Currency Lines',
+            'res_model': 'foreign.currency.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+            }
+        }
     
-    def action_generate_complain(self):
-        # raise ValidationError(self.donation_box_registration_installation_id.id)
-
-        if not self.remarks:
-            raise ValidationError('Please enter the remarks first.')
-
-        self.env['donation.box.complain.center'].create({
-            'rider_id': self.rider_id.id,
-            'lot_id': self.lot_id.id,
-            'date': fields.Date.today(),
-            'remarks': self.remarks,
-        })
-
-        self.is_complain_generated = True

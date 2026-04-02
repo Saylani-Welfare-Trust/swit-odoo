@@ -1,4 +1,5 @@
 from odoo import models, api, fields
+# from odoo.exceptions import Warning
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -88,7 +89,6 @@ class AccountRegisterPayments(models.TransientModel):
     
     def action_create_payments(self):
         res = super().action_create_payments()
-
         # Handle welfare line and recurring line disbursement for Cash + Bank payments
         if self.line_ids:
             for line in self.line_ids:
@@ -96,10 +96,11 @@ class AccountRegisterPayments(models.TransientModel):
                     bill = line.move_id
                     
                     # Check if bill is linked to welfare recurring line
-                    if bill.recurring_line_id and bill.recurring_line_id.state == 'draft':
+                    if bill.recurring_line_id and bill.recurring_line_id.state == 'delivered':
                         bill.recurring_line_id.action_disbursed()
                     # Check if bill is linked to welfare line
-                    elif bill.welfare_line_id and bill.welfare_line_id.state == 'draft':
+                    elif bill.welfare_line_id and bill.welfare_line_id.state == 'delivered':
+                        # raise Warning("Debug: action_create_payments called. Check logs for details.")
                         bill.welfare_line_id.action_disbursed()
 
         return res

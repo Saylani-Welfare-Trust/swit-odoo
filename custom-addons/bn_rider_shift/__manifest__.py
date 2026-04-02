@@ -18,7 +18,8 @@
         'views/rider_collection.xml',
         'views/counterfeit_notes.xml',
         'views/foreign_currency.xml',
-        'wizards/rider_schedule.xml'
+        'wizards/rider_schedule.xml',
+        'wizards/foreign_currency_wizard.xml',
     ],
     'auto_install': False,
     'application': False,
