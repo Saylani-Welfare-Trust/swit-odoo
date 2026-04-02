@@ -98,7 +98,7 @@
                                 <t t-foreach="o.donation_item_ids" t-as="line">
                                     <tr>
                                         <td><t t-esc="line.item"/></td>
-                                        <td class="text-end"><t t-esc="line.quantity"/></td>
+                                        <td class="text-end"><t t-esc="line.qty"/></td>
                                     </tr>
                                 </t>
                             </tbody>
