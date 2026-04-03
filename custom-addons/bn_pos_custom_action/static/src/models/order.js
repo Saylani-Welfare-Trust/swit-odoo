@@ -12,6 +12,7 @@ patch(Order.prototype, {
 
         // Include source_document if set
         json.source_document = this.source_document || false;
+        json.remarks = this.remarks || false;
 
         // DEBUG: Get current partner
         const partner = this.get_partner();
