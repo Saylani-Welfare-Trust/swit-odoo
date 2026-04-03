@@ -25,8 +25,8 @@
                     <!-- Header Row -->
                     <div class="row" style="font-size: 14px; transform: scale(0.99); transform-origin: top;">
                         <div class="col-4">
-                            <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
-                            <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                            <h3 t-if="order.receive_voucher">Receipt Voucher</h3>
+                            <h3 t-if="!order.receive_voucher">Donation Receipt</h3>
                         </div>
                         <div class="col-8 text-end">
                             <b>
