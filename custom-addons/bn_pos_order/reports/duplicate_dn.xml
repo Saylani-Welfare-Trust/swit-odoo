@@ -116,6 +116,10 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/>
                                     </div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-esc="order.remarks or '-'"/>
+                                    </div>
                                 </div>
                             </div>
 
