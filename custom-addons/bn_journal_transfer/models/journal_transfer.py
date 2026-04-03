@@ -64,7 +64,7 @@ class JournalTransfer(models.TransientModel):
 
             move_vals = {
                 'date': rec.date,
-                'journal_id': rec.source_journal_id.id,
+                'journal_id': rec.dest_journal_id.id,
                 'line_ids': [(0,0,line) for line in move_line_vals],
                 'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
             }
