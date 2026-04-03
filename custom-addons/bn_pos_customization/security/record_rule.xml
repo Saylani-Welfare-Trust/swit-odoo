@@ -23,4 +23,26 @@
         <field name="perm_unlink" eval="False"/>
     </record>
     
+    <record id="pos_session_rule" model="ir.rule">
+        <field name="name">POS Session User Only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('bn_pos_customization.pos_shop_user_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="pos_payment_rule" model="ir.rule">
+        <field name="name">POS Payment User Only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_payment"/>
+        <field name="domain_force">[('pos_order_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('bn_pos_customization.pos_shop_user_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
 </odoo>
