@@ -47,5 +47,19 @@ patch(Order.prototype, {
      */
     get_source_document() {
         return this.source_document;
+    },
+
+    /**
+     * Setter for remarks
+     */
+    set_remarks(remarks) {
+        this.remarks = remarks;
+    },
+
+    /**
+     * Getter for remarks
+     */
+    get_remarks() {
+        return this.remarks;
     }
 });

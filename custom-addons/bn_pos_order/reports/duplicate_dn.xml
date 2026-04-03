@@ -92,7 +92,7 @@
                                     <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="order.partner_id.cnic_no or '-'"/></div>
                                     <div><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
-                                    <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.name or ''"/></div>
+                                    <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
                                     <div t-if="payment_method == 'Cheque'">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
                                     </div>
