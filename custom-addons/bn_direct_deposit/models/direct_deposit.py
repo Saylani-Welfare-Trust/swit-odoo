@@ -143,6 +143,9 @@ class DirectDeposit(models.Model):
     def _create_invoice(self):
         self.ensure_one()
 
+        if not self.bank_id:
+            raise ValidationError(_("Please select a bank for the direct deposit."))
+
         journal = self.env['account.journal'].browse(self.bank_id.id)
 
         move_vals = {
