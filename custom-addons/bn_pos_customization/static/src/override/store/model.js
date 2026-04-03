@@ -9,11 +9,12 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 patch(Order.prototype, {
     export_for_printing() {
-        console.log("Order_CNIC_TEST:", this);
+        const remarks = this.get_orderlines()
+        .map(line => line.customerNote || '-')
+        .join('\n');
 
         return {
             ...super.export_for_printing(),
-            
 
             partner: {
                 name: this.partner ? this.partner.name : "",
@@ -22,6 +23,7 @@ patch(Order.prototype, {
                 cnic: this.partner ? this.partner.cnic_no : "",
             },
 
+            remarks: remarks,
             branch_code: this.cashier.branch_code,
             branch_name: this.cashier.branch_name,
             receive_voucher: this.pos.receive_voucher,
