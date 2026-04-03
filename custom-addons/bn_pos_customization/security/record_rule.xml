@@ -12,4 +12,15 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <record id="pos_order_rule" model="ir.rule">
+        <field name="name">POS Order User Only</field>
+        <field name="model_id" ref="model_pos_order"/>
+        <field name="domain_force">[('user_id', '==', user.id)]</field>
+        <field name="groups" eval="[(4, ref('bn_pos_customization.pos_shop_user_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
 </odoo>
