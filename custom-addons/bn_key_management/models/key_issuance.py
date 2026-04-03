@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -23,6 +23,7 @@ class KeyIssuance(models.Model):
     rider_id = fields.Many2one(related='key_id.rider_id', string="Rider", store=True)
     donation_box_registration_installation_id = fields.Many2one(related='key_id.donation_box_registration_installation_id', string="Donation Box Registartion / Installation", store=True)
     
+    name = fields.Char('Name', default='New')
     key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
     rider_name = fields.Char(related='rider_id.name', string="Rider Name", store=True)
 
@@ -52,6 +53,13 @@ class KeyIssuance(models.Model):
 
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True)
 
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('key_issuance') or ('New')
+
+        return super(KeyIssuance, self).create(vals)
 
     def action_issue(self):
         for record in self:
@@ -139,11 +147,31 @@ class KeyIssuance(models.Model):
             collection.state = 'paid'
 
             return {
-                "status": "success"
+                "status": "success",
+                "name": key_obj.name,
             }
 
         return {
             "status": "success",
             "id": key_obj.id,
             "donor_id": box.donor_id.id
+        }
+    
+    def action_show_pos_order(self):
+        pos_order = self.env['pos.order'].search([('source_document', '=', self.name)])
+
+        if not pos_order:
+            raise ValidationError(str(f'No POS Order found for Key Issuance ( {self.name} )'))
+
+        return {
+            'name': 'POS Order',
+            'type': 'ir.actions.act_window',
+            'res_model': 'pos.order',
+            'context': {
+                'edit': '0',
+                'delete': '0',
+            },
+            'view_mode': 'form',
+            'res_id': pos_order.id,
+            'target': 'new',
         }

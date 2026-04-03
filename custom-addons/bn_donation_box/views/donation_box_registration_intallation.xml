@@ -9,7 +9,7 @@
                 <header>
                     <button name="action_install" string="Install" type="object" class="oe_highlight" invisible="status in ['installed', 'approved', 'available', 'close', 'change_request']" />
                     <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status in ['draft', 'approved', 'available', 'close']" groups="bn_donation_box.donation_box_registration_installation_approve_group" />
-                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status in ['change_request','draft']" groups="bn_donation_box.donation_box_registration_installation_change_request_group" />
+                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status in ['change_request','draft', 'installed']" groups="bn_donation_box.donation_box_registration_installation_change_request_group" />
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, installed, approved, available"/>
                 </header>

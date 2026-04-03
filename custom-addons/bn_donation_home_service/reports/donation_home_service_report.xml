@@ -65,7 +65,7 @@
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1>
-                                        Saylani Welfare International Trust<br/>
+                                        Saylani Welfare International Trust
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
                                             <br/>
                                             (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
@@ -95,7 +95,7 @@
                                     </div>
                                     <div>
                                         <strong>Total Amount:</strong>
-                                        <t t-esc="'{:,}'.format(int(o.total_amount) or 0) or '0.00'"/>
+                                        <t t-esc="'{:,}'.format(int(o.total_amount) or 0) or 0"/>
                                     </div>
                                     <div><strong>Remarks: </strong> <t t-esc="o.remarks or '-'"/></div>
                                 </div>
@@ -114,9 +114,9 @@
                                     <t t-foreach="o.donation_home_service_line_ids" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.name"/></td>
-                                            <td class="text-end"><t t-esc="line.quantity"/></td>
-                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0.0)"/></td>
-                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount) or 0.0)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0) or 0"/></td>
+                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount) or 0) or 0"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -126,10 +126,10 @@
 
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></div>
+                                <div>Entered by: <strong><t t-esc="o.env.user.name"/></strong></div>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="o.env.user.name"/></strong></div>
+                                <div>Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></div>
                                 <div>Total Amount: <strong> Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong></div>
                             </div>
 
@@ -147,7 +147,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="o.donation_home_service_line_ids" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.name"/> - <t t-esc="int(l.quantity)"/></div>
+                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>

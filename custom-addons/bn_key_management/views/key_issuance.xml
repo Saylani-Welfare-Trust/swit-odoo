@@ -6,6 +6,7 @@
         <field name="model">key.issuance</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0">
+                <field name="name" />
                 <field name="key_name" string="Key" />
                 <field name="rider_name" string="Rider" />
                 <field name="issued_on" />
@@ -24,6 +25,7 @@
                     <button string="Issued" name="action_issue" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'overdue']" />
                     <button string="Return" name="action_return" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned']" />
                     <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned', 'overdue']" />
+                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight" />
                     <button string="Print Receipt" name="%(bn_donation_box.donation_box_receipt_report_action)d" type="action" class="btn-secondary" icon="fa-print"  invisible="state in ['draft', 'issued', 'returned', 'overdue']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,returned,overdue"/>
@@ -31,7 +33,7 @@
                 <sheet>
                     <div class="oe_title">
                         <label for="rider_id"/>
-                        <h1><field name="rider_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" class="oe_inline" readonly="1" /></h1>
+                        <h1><field name="name" readonly="1" /></h1>
                     </div>
 
                     <group>
@@ -41,6 +43,7 @@
                             <field name="returned_on" readonly="1" />
                         </group>
                         <group name="key_inssuance_col_2">
+                            <field name="rider_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" class="oe_inline" readonly="1" />
                             <field name="donation_amount" readonly="1" />
                             <field name="issued_on" readonly="1" />
                         </group>

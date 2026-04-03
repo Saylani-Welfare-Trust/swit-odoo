@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class DonationBoxRequestLine(models.Model):
@@ -48,3 +48,47 @@ class DonationBoxRequestLine(models.Model):
                 vals['key_tag'] = self.env['ir.sequence'].next_by_code('donation_box_key') or 'Unknown'
 
         return super(DonationBoxRequestLine, self).create(vals_list)
+
+    def action_draft_line(self):
+        """
+        Reset a single donation box request line to draft state.
+        This removes the line and its associated records.
+        """
+        
+        for line in self:
+            parent_request = line.donation_box_request_id
+            
+            # Get registration/installation records for this specific line
+            line_registration_records = parent_request.donation_box_registration_installation_ids.filtered(
+                lambda r: r.lot_id.id == line.lot_id.id
+            )
+            
+            if not line_registration_records:
+                raise ValidationError("No installation records found for this line.")
+            
+            # Check if any are installed
+            installed_records = line_registration_records.filtered(lambda r: r.box_status == 'installed')
+            
+            if installed_records:
+                raise ValidationError(
+                    "Cannot reset this line because the donation box is already installed."
+                )
+            
+            # Reset the lot
+            if line.lot_id:
+                line.lot_id.write({
+                    'lot_consume': False,
+                    'location_id': parent_request.source_location_id.id
+                })
+            
+            # Delete keys associated with this line
+            self.env['key'].search([
+                ('lot_id', '=', line.lot_id.id),
+                ('donation_box_request_id', '=', parent_request.id)
+            ]).unlink()
+            
+            # Delete registration/installation records for this line
+            line_registration_records.unlink()
+            
+            # Delete the line itself
+            line.unlink()
