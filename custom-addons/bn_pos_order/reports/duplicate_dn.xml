@@ -10,6 +10,7 @@
 
                         <!-- PAGE WRAPPER -->
                         <div class="page" style="position:relative;">
+                            <!-- ===== STYLES ===== -->
                             <style>
                                 body {
                                     font-family: Arial, sans-serif;
@@ -57,7 +58,7 @@
                                 style="height: 100%; width: 100%;"/>
 
                             <!-- ===== WATERMARK ===== -->
-                            <div class="watermark">DUPLICATE</div>
+                            <div class="watermark">Duplicate</div>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
@@ -66,7 +67,7 @@
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1 class="text-transform" style="font-size: 12px;">
-                                        SAYLANI WELFARE INTERNATIONAL TRUST
+                                        Saylani Welfare International Trust
                                         <br/>
                                         <t t-if="order.user_id.branch_name">
                                             (<t t-esc="order.user_id.branch_name"/>)
@@ -79,10 +80,6 @@
 
                             <!-- ===== BASIC INFO ===== -->
                             <div class="row mb-2">
-                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    
-                                </div>
-
                                 <div class="col-6">
                                     <div>
                                         <strong>DN #:</strong>
@@ -117,7 +114,7 @@
                                     </div>
                                     <div>
                                         <strong>Total Amount:</strong>
-                                        <t t-esc="'{:,.2f}'.format(order.amount_total or 0)"/>
+                                        <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/>
                                     </div>
                                 </div>
                             </div>
@@ -139,8 +136,8 @@
                                             <td><t t-esc="line.full_product_name"/></td>
                                             <td class="text-end"><t t-esc="int(line.qty)"/></td>
                                             <t t-if="payment_method != 'Donation In Kind'">
-                                                <td class="text-end">Rs <t t-esc="'{:,.2f}'.format(line.price_unit or 0)"/></td>
-                                                <td class="text-end">Rs <t t-esc="'{:,.2f}'.format(line.price_subtotal or 0)"/></td>
+                                                <td class="text-end">Rs <t t-esc="'{:,}'.format(int(line.price_unit) or 0)"/></td>
+                                                <td class="text-end">Rs <t t-esc="'{:,}'.format(int(line.price_subtotal) or 0)"/></td>
                                             </t>
                                         </tr>
                                     </t>
@@ -152,16 +149,12 @@
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
                                 <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
-                                <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(order.amount_total or 0)"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/></strong></div>
                             </div>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
                             <div class="row mb-2">
-                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    
-                                </div>
-
                                 <div class="col-6">
                                     <div>
                                         <strong>DN #:</strong>
