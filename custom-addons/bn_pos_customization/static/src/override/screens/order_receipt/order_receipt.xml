@@ -55,7 +55,7 @@
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium">Donor Name:</div>
+                                <div class="col-4 fw-medium"><strong>Donor Name:</strong></div>
                                     <div class="col-8 fw-medium" style="word-break: break-word;">
                                     <t t-if="partner.name"><t t-esc="partner.name"/></t>
                                     <t t-else="">-</t> 
@@ -71,15 +71,7 @@
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium">CNIC:</div>
-                                    <div class="col-8 fw-medium" style="word-break: break-word;">
-                                    <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
-                                    <t t-else="">-</t>
-                                </div>
-                            </div>
-
-                            <div class="row mb-1">
-                                <div class="col-4 fw-medium">Payment Method:</div>
+                                <div class="col-4 fw-medium"><strong>Payment Method:</strong></div>
                                 <div class="col-8 fw-medium">
                                     <t t-if="payment.name"><t t-esc="payment.name"/></t>
                                     <t t-else="">-</t>
@@ -98,6 +90,10 @@
                                     <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
                                 </div>
                             </t>
+                            
+                            <div class="row mb-1">
+                                <div><strong>Remarks:</strong> <t t-esc="order.remarks"/></div>
+                            </div>
                         </div>
 
                         <!-- Right Column -->
@@ -170,7 +166,6 @@
                                 <th class="py-1">Quantity</th>
                                 <th class="py-1" t-if="!order.is_donation_in_kind">Rate</th>
                                 <th class="py-1" t-if="!order.is_donation_in_kind">Amount</th>
-                                <th class="py-1">Remarks</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -180,7 +175,6 @@
                                     <td class="text-end py-1"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.unitPrice"><t t-esc="line.unitPrice"/></t><t t-else="">-</t></td>
                                     <td class="text-end py-1" t-if="!order.is_donation_in_kind"><t t-if="line.price"><t t-esc="line.price"/></t><t t-else="">-</t></td>
-                                    <td class="text-start py-1"><t t-if="line.customerNote"><t t-esc="line.customerNote"/></t><t t-else="">-</t></td>
                                 </tr>
                             </t>
                         </tbody>
@@ -247,6 +241,10 @@
                                 <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 12px;">
+                        Powered by BytesNode
                     </div>
 
                 </div>

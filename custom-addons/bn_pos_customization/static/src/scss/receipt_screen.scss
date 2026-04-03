@@ -31,10 +31,10 @@
         width: 200mm !important;
         min-height: auto !important; /* important: do not force 297mm */
         margin: 0 auto !important;
-        padding-right: 10mm; /* optional */
-        padding-left: -25mm; /* optional */
-        padding-top: 0mm; /* optional */
-        padding-top: 0mm; /* optional */
+        padding-right: 0mm !important; /* optional */
+        padding-left: -25mm !important; /* optional */
+        padding-top: 0mm !important; /* optional */
+        padding-top: 0mm !important; /* optional */
         box-sizing: border-box;
     }
     .render-container {
