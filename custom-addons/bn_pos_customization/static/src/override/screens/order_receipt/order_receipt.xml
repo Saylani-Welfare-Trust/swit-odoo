@@ -25,11 +25,11 @@
                     <!-- Header Row -->
                     <div class="row" style="font-size: 12px; transform: scale(0.99); transform-origin: top;">
                         <div class="col-4">
-                            <h1 class="fs-3 fw-bold" t-if="order.receive_voucher">Receipt Voucher</h1>
-                            <h1 class="fs-3 fw-bold" t-if="!order.receive_voucher">Donation Receipt</h1>
+                            <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
+                            <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
                         </div>
                         <div class="col-8 text-end">
-                            <b class="fw-bold">
+                            <b>
                                 <t t-if="company.name"><t t-esc="company.name"/></t>
                                 <br/>
                                 <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
