@@ -91,7 +91,7 @@
                                 </div>
                             </t>
                             
-                            <div class="row mb-1" t-if="order.qr_code">
+                            <div class="row mb-1">
                                 <div><strong>Remarks:</strong> <t t-esc="order.remarks"/></div>
                             </div>
                         </div>
