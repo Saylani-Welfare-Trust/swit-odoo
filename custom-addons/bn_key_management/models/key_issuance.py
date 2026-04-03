@@ -33,8 +33,6 @@ class KeyIssuance(models.Model):
     
     state = fields.Selection(selection=key_selection, default='draft', string="Status")
 
-    pos_order_no = fields.Char('POS Order No.', compute='_compute_pos_order_no', store=True)
-
     donation_amount = fields.Float('Donation Amount')
 
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string='Requestor Name', store=True)
@@ -55,26 +53,6 @@ class KeyIssuance(models.Model):
 
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True)
 
-
-    @api.depends('donation_amount')
-    def _compute_pos_order_no(self):
-        for record in self:
-            pos_order = self.env['pos.order'].search([('source_document', '=', record.name)], limit=1)
-
-            city_code = pos_order.user_id.branch_code or 'UNK'
-            branch_code = (pos_order.company_id.name or 'UNK')[:3].upper()
-
-            if pos_order.date_order:
-                if isinstance(pos_order.date_order, str):
-                    year = pos_order.date_order[:4]
-                else:
-                    year = pos_order.date_order.year
-            else:
-                year = ''
-
-            random_no = pos_order.pos_reference[-4:] if pos_order.pos_reference else '0000'
-
-            record.pos_order_no = f"{city_code}-{branch_code}-{year}-{random_no}"
 
     @api.model
     def create(self, vals):
