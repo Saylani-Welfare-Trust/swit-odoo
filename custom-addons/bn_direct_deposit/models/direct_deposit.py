@@ -143,7 +143,7 @@ class DirectDeposit(models.Model):
     def _create_invoice(self):
         self.ensure_one()
 
-        journal = self.env['account.journal'].search([('name', '=', 'Bank')], limit=1)
+        journal = self.env['account.journal'].browse(self.bank_id.id)
 
         move_vals = {
             "move_type": "entry",
