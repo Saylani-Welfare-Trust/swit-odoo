@@ -55,10 +55,10 @@
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Donor Name:</strong></div>
-                                    <div class="col-8 fw-medium" style="word-break: break-word;">
+                                <div>
+                                    <strong>Donor Name:</strong>
                                     <t t-if="partner.name"><t t-esc="partner.name"/></t>
-                                    <t t-else="">-</t> 
+                                    <t t-else="">-</t>
                                 </div>
                             </div>
 
@@ -71,8 +71,8 @@
                             </div>
 
                             <div class="row mb-1">
-                                <div class="col-4 fw-medium"><strong>Payment Method:</strong></div>
-                                <div class="col-8 fw-medium">
+                                <div>
+                                    <strong>Payment Method:</strong>
                                     <t t-if="payment.name"><t t-esc="payment.name"/></t>
                                     <t t-else="">-</t>
                                 </div>
