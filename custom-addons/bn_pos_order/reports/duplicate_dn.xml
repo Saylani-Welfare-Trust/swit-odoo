@@ -93,7 +93,7 @@
                                     <div><strong>CNIC No.:</strong> <t t-esc="order.partner_id.cnic_no or '-'"/></div>
                                     <div><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
                                     <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
-                                    <div t-if="payment_method == 'Cheque'">
+                                    <div t-if="'Cheque' in payment_method">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
                                     </div>
                                 </div>
@@ -102,7 +102,7 @@
                                         <strong>Date &amp; Time:</strong>
                                         <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
                                     </div>
-                                    <div t-if="payment_method == 'Cheque'">
+                                    <div t-if="'Cheque' in payment_method">
                                         <strong>Cheque Date:</strong>
                                         <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
                                         <br/>
