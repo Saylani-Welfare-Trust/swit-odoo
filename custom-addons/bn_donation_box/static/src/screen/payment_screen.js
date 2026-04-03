@@ -8,7 +8,13 @@ import { patch } from "@web/core/utils/patch";
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
+
+        const remarks = currentOrder.get_orderlines()
+        .map(line => line.customerNote || '-')
+        .join('\n');
         
+        currentOrder.set_remarks(remarks)
+
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.donation_box) {
             const donationBoxData = currentOrder.extra_data.donation_box;

@@ -6,6 +6,7 @@ class POSOrder(models.Model):
 
 
     source_document = fields.Char('Source Document')
+    remarks = fields.Char('Remarks')
 
 
     def _order_fields(self, ui_order):
@@ -13,5 +14,6 @@ class POSOrder(models.Model):
         res = super(POSOrder, self)._order_fields(ui_order)
 
         res['source_document'] = ui_order.get('source_document') or False
-        
+        res['remarks'] = ui_order.get('remarks') or False
+
         return res
