@@ -11,6 +11,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/groups.xml',
+        'data/sequence.xml',
         'data/schedule_action.xml',
         'wizards/bulk_key_issuance.xml',
         'wizards/manual_key_issuance.xml',

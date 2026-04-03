@@ -26,6 +26,8 @@ patch(PaymentScreen.prototype, {
                 }
 
                 if (data.status === 'success') {
+                    currentOrder.set_source_document(data.name)
+
                     this.env.services.notification.add(_t("Amount Recorded Successfully"), { type: "success" });
                 }
             }

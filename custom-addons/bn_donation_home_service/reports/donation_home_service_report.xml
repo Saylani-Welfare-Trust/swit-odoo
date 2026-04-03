@@ -65,7 +65,7 @@
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1>
-                                        Saylani Welfare International Trust<br/>
+                                        Saylani Welfare International Trust
                                         <t t-if="o.env.user.employee_id.analytic_account_id">
                                             <br/>
                                             (<t t-esc="o.env.user.employee_id.analytic_account_id.name"/>)
