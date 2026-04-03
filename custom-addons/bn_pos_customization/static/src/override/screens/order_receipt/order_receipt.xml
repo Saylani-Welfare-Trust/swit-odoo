@@ -92,7 +92,16 @@
                             </t>
                             
                             <div class="row mb-1">
-                                <div><strong>Remarks:</strong> <t t-esc="order.remarks"/></div>
+                                <div>
+                                    <strong>Remarks:</strong>
+                                    <t t-set="count" t-value="1"/>
+                                    <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
+                                        <div>
+                                            <t t-esc="count"/>. <t t-esc="line.remarks"/>
+                                        </div>
+                                        <t t-set="count" t-value="count + 1"/>
+                                    </t>
+                                </div>
                             </div>
                         </div>
 
