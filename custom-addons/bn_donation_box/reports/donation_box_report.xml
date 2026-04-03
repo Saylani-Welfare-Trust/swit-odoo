@@ -84,8 +84,8 @@
                                 <div><strong>KI #:</strong> <t t-esc="o.name or '--'"/></div>
                                 <div><strong>POS #:</strong> <t t-esc="o.pos_order_no or '--'"/></div>
                                 <div><strong>Box No.:</strong> <t t-esc="o.lot_id.name or '-'"/></div>
-                                <div><strong>Issued On:</strong> <t t-if="o.issued_on"><t t-esc="o.issued_on.strftime('%d-%m-%Y') or '-'"/></div>
-                                <div><strong>Returned On:</strong> <t t-if="o.returned_on"><t t-esc="o.returned_on.strftime('%d-%m-%Y') or '-'"/></div>
+                                <div><strong>Issued On:</strong> <t t-if="o.issued_on"><t t-esc="o.issued_on.strftime('%d-%m-%Y') or '-'"/></t></div>
+                                <div><strong>Returned On:</strong> <t t-if="o.returned_on"><t t-esc="o.returned_on.strftime('%d-%m-%Y') or '-'"/></t></div>
 
                             </div>
                             <div class="col-6">
