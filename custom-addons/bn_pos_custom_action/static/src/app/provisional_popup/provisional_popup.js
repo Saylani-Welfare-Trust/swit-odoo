@@ -367,6 +367,11 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
         // Direct Deposit
         if (this.action_type === 'dd') {
+            if (!this.state.selected_bank_id || !this.state.transaction_ref || !this.state.address) {
+                this.notification.add(_t("Please select Bank, or fill Transfer Reference, and Address."), { type: "danger" });
+                return;
+            }
+
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
