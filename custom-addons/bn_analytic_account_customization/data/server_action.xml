@@ -14,6 +14,17 @@
             </field>
         </record>
     
+        <record id="res_user_action_server" model="ir.actions.server">
+            <field name="name">Update User Name | BN</field>
+            <field name="model_id" ref="model_res_users"/>
+            <field name="binding_model_id" ref="model_res_users"/>
+            <field name="state">code</field>
+            <field name="code">
+                for rec in records:
+                    rec['name'] = rec.name + " ( " + str(rec.employee_id.barcode) + " )"
+            </field>
+        </record>
+    
     </data>
     
 
