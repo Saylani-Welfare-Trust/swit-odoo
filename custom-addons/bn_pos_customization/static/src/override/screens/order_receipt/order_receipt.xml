@@ -192,12 +192,12 @@
                     <div class="row p-2" style="font-size: 14px; line-height: 1.1;">
                         <div class="col-6">
                             <div class="row mb-1">
-                                <div><strong>Enter By:</strong> <t t-esc="order.cashier"/></div>
+                                <div>Enter By: <strong> <t t-esc="order.cashier"/> </strong></div>
                             </div>
                         </div>
                         <div class="col-6 text-end">
                             <div class="row mb-1" t-if="!order.is_donation_in_kind">
-                                <div><strong>Total Amount:</strong> <t t-esc="format_currency_amount"/></div>
+                                <div>Total Amount: <strong> <t t-esc="format_currency_amount"/> </strong></div>
                             </div>
                         </div>
                     </div>
