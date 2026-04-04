@@ -42,6 +42,8 @@
         page-break-before: avoid !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
+        transform: scale(0.95);
+        transform-origin: top left;
     }
 
     /* Render container positioning */
@@ -59,6 +61,7 @@
 
     /* Tables */
     .render-container .pos-receipt table {
+        page-break-inside: auto;
         width: 100%;
         border-collapse: collapse;
         page-break-inside: auto;
@@ -68,6 +71,10 @@
         padding: 3px 4px !important;
         border: 1px solid #000; /* optional, makes table visible */
         text-align: left;
+        page-break-inside: avoid;
+    }
+
+    .render-container .pos-receipt tr {
         page-break-inside: avoid;
     }
 }
