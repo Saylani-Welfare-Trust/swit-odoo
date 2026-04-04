@@ -9,7 +9,7 @@
 
 @page {
     size: A5;
-    margin: 84.67mm 0mm 10mm 4mm !important; /* top right bottom left */
+    margin: 84.67mm 2mm 10mm 4mm !important; /* top right bottom left */
 }
 
 @media print {
@@ -62,7 +62,6 @@
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
         border: 1px solid #000 !important; /* optional, makes table visible */
-        text-align: left !important;
         page-break-inside: avoid !important;
     }
 }
