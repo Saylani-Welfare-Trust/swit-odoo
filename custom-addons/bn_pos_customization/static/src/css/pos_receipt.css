@@ -1,6 +1,6 @@
 .pos-receipt-print {
     width: 420px;
-    font-size: 12px;
+    font-size: 11px;
     color: #000000;
 }
 
@@ -10,7 +10,7 @@
 }
 
 .pos-receipt .pos-receipt-right-align .tax-letter{
-    margin-left: 0.5em;
+    margin-left: 0.25em;
 }
 
 .pos-receipt .pos-receipt-center-align {
