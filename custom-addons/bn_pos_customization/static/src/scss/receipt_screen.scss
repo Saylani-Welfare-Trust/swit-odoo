@@ -4,7 +4,8 @@
 
 /* Preview in POS screen */
 .receipt-screen .default-view .pos-receipt-container {
-    flex-basis: 148mm; /* A4 width */
+    // flex-basis: 148mm; /* A4 width */
+    flex-basis: 210mm; /* A4 width */
 }
 
 @page {
