@@ -11,7 +11,7 @@ patch(PaymentScreen.prototype, {
 
         const remarks = currentOrder.get_orderlines()
         .map(line => line.customerNote || '-')
-        .join('\n');
+        .join('-');
         
         currentOrder.set_remarks(remarks)
 
