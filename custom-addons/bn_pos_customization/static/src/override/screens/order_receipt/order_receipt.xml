@@ -72,9 +72,11 @@
                             <strong>Remarks:</strong>
                             <t t-set="count" t-value="1"/>
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                                <t t-esc="count"/>. <t t-esc="line.customerNote"/>
-                                <br/>
-                                <t t-set="count" t-value="count + 1"/>
+                                <t t-if="line.customerNote">
+                                    <t t-esc="count"/>. <t t-esc="line.customerNote"/>
+                                    <br/>
+                                    <t t-set="count" t-value="count + 1"/>
+                                </t>
                             </t>
                         </div>
                     </div>
