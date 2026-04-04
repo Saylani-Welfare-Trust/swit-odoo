@@ -30,7 +30,7 @@
                     </div>
                 </div>
 
-                <hr style="margin:4px 0"/>
+                <hr/>
 
                 <!-- ===== BASIC INFO ===== -->
                 <div class="row mb-2" style="font-size: 11px;">
@@ -149,7 +149,7 @@
                     </tbody>
                 </table>
 
-                <hr style="margin:4px 0"/>
+                <hr/>
 
                 <!-- ===== TOTALS ===== -->
                 <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
@@ -157,7 +157,7 @@
                     <div>Total Amount: <strong> <t t-esc="format_currency_amount"/> </strong></div>
                 </div>
 
-                <hr style="margin:4px 0; border-top: solid 5px;"/>
+                <hr style="border-top: solid 5px;"/>
 
                 <div class="row mb-2" style="font-size: 11px;">
                     <div class="col-6">
