@@ -65,4 +65,9 @@
         border: 1px solid #000 !important; /* optional, makes table visible */
         // page-break-inside: auto !important;
     }
+
+    hr {
+        margin: 4px 0 !important;
+        page-break-after: avoid !important;
+    }
 }
