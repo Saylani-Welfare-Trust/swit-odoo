@@ -8,6 +8,7 @@
 
 @page {
     size: A5;
+    margin-top: 345px; /* page padding */
     margin: 15px; /* page padding */
 }
 
@@ -36,7 +37,7 @@
     }
     .render-container {
         position: absolute !important;
-        top: 360px;
+        top: 0;
         left: 4px;
     }
     .o-main-components-container {
