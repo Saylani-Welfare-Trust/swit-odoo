@@ -36,7 +36,7 @@
     /* Main receipt container */
     .render-container .pos-receipt {
         width: 559px !important; /* A5 width */
-        margin: 360px 0 20px 20px !important;
+        margin: 360px 0px 20px 20px !important;
         border: none !important;
         font-size: 11px !important;
         page-break-inside: avoid !important; /* keep receipt together */
@@ -54,15 +54,6 @@
         position: absolute !important;
         top: 0;
         left: 0;
-    }
-
-    /* Receipt image at top */
-    .render-container .pos-receipt .receipt-header-image {
-        display: block;
-        max-width: 100%;
-        max-height: 80px; /* adjust as needed */
-        margin: 0 auto 5px auto; /* top 0, bottom 5px */
-        page-break-inside: avoid !important;
     }
 
     /* Tables */
