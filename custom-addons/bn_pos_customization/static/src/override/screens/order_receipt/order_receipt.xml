@@ -160,7 +160,7 @@
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>
-                            <t t-foreach="lines" t-as="line">
+                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                                 <div>
                                     <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
                                 </div>
