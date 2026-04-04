@@ -1,24 +1,20 @@
-/* ================== Receipt Container ================== */
+/* ================== A5 POS Receipt ================== */
 .pos-receipt-print {
-    width: 148mm; /* Full A5 width */
-    max-width: 148mm;
-    font-size: 12px; /* Base font size */
+    width: 148mm; /* A5 full width */
+    font-size: 11px; /* Adjusted for A5 readability */
     color: #000000;
     margin: 0;
-    padding: 10px 5mm; /* Small padding from edges */
+    padding: 0;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
 }
 
-/* ================== Alignment ================== */
 .pos-receipt .pos-receipt-right-align {
     float: right;
     display: flex;
-    justify-content: flex-end;
 }
 
-.pos-receipt .pos-receipt-right-align .tax-letter {
-    margin-left: 0.5em;
+.pos-receipt .pos-receipt-right-align .tax-letter{
+    margin-left: 0.2em; /* scaled down from 0.5em */
 }
 
 .pos-receipt .pos-receipt-center-align {
@@ -26,43 +22,44 @@
 }
 
 .pos-receipt .pos-receipt-left-padding {
-    padding-left: 5mm; /* consistent with A5 padding */
+    padding-left: 1em; /* reduced from 2em */
 }
 
-/* ================== Logo & QR Code ================== */
 .pos-receipt .pos-receipt-logo {
-    width: 60%; /* more visible but fits A5 */
-    max-width: 80mm;
+    width: 40%; /* scaled down for A5 */
     display: block;
-    margin: 0 auto 5px auto;
+    margin: 0 auto;
 }
 
 .pos-receipt .pos-receipt-qrcode {
     display: block;
-    margin: 5px auto;
-    width: 40mm; /* fixed size QR code */
+    margin: 0 auto;
 }
 
-/* ================== Contact & Order Info ================== */
-.pos-receipt .pos-receipt-contact,
+.pos-receipt .pos-receipt-contact {
+    text-align: center;
+    font-size: 70%; /* slightly smaller for A5 */
+}
+
 .pos-receipt .pos-receipt-order-data {
     text-align: center;
-    font-size: 10px; /* slightly smaller for printing */
-    margin: 2px 0;
+    font-size: 70%;
 }
 
-/* ================== Amount & Titles ================== */
 .pos-receipt .pos-receipt-amount {
-    font-size: 14px;
-    padding-left: 10mm;
+    font-size: 110%; /* slightly smaller */
+    padding-left: 2em; /* adjusted from 6em */
 }
 
-.pos-receipt .pos-receipt-title,
-.pos-receipt .pos-receipt-header {
+.pos-receipt .pos-receipt-title {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 110%; /* adjusted */
     text-align: center;
-    margin: 5px 0;
+}
+
+.pos-receipt .pos-receipt-header {
+    font-size: 110%;
+    text-align: center;
 }
 
 .pos-receipt .pos-order-receipt-cancel {
@@ -70,20 +67,18 @@
 }
 
 .pos-receipt .pos-receipt-customer-note {
-    word-break: break-word;
+    word-break: break-all;
 }
 
-/* ================== Payment Terminal ================== */
 .pos-payment-terminal-receipt {
     text-align: center;
-    font-size: 10px;
+    font-size: 70%;
 }
 
 .pos-payment-terminal-receipt pre {
     font-family: inherit;
 }
 
-/* ================== Responsive Prices ================== */
 .responsive-price {
     display: flex;
     flex-wrap: wrap;
@@ -94,7 +89,6 @@
     margin-left: auto;
 }
 
-/* ================== Taxes ================== */
 .pos-receipt .pos-receipt-taxes {
     display: grid;
     grid-template-columns: min-content min-content auto auto auto;
@@ -102,22 +96,12 @@
     justify-items: end;
 }
 
-/* ================== Orderlines ================== */
 .pos-receipt .orderlines {
+    /*rtl:ignore*/
     direction: ltr;
 }
 
-/* ================== Styled Receipt Padding ================== */
 .styled-receipt {
-    padding: 10px 5mm;
-    padding-bottom: 15px;
-}
-
-/* ================== Print Adjustments ================== */
-@media print {
-    .pos-receipt-print {
-        width: 148mm;
-        margin: 0 auto;
-        font-size: 11px;
-    }
+    padding: 10px; /* reduced from 15px */
+    padding-bottom: 20px; /* reduced from 30px */
 }
