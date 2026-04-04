@@ -9,7 +9,7 @@
 
 @page {
     size: A5;
-    margin: 84.67mm 4mm 10mm 4mm !important; /* top right bottom left */
+    margin: 84.67mm 0mm 10mm 4mm !important; /* top right bottom left */
 }
 
 @media print {
@@ -45,7 +45,6 @@
         position: relative !important; /* keep layout correct */
         margin: 0 !important;
         padding: 0 !important;
-        page-break-inside: avoid !important;
     }
 
     /* Render container positioning */
@@ -63,20 +62,16 @@
     .render-container .pos-receipt table {
         width: 100% !important;
         border-collapse: collapse !important;
-        page-break-inside: avoid !important;
     }
 
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
         border: 1px solid #000 !important;
-        page-break-inside: avoid !important;
     }
 
     hr {
         margin: 4px 0 !important;
-        border: none !important;
-        border-top: 1px solid #000 !important;
         page-break-after: avoid !important;
     }
 }
