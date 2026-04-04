@@ -13,14 +13,17 @@
 }
 
 @media print {
-    body {
-        background-color: transparent;
-        font-family: Arial, sans-serif;
-    }
-
-    /* Hide everything except receipt */
     body * {
         visibility: hidden;
+        display: none;
+    }
+    body, .pos-receipt, .pos-receipt * {
+        visibility: visible !important;
+        display: block !important;
+    }
+    .pos-receipt {
+        width: 100%;
+        margin: 0 auto;
     }
     .pos, .pos * {
         position: static !important;
