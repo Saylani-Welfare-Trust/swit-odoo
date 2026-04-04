@@ -16,7 +16,7 @@
     body {
         background-color: transparent;
         font-family: Arial, sans-serif;
-        font-size: 11px;
+        // font-size: 11px;
     }
 
     /* Hide everything except receipt */
@@ -36,6 +36,7 @@
     /* Main receipt container */
     .render-container .pos-receipt {
         width: 148mm !important; /* A5 width */
+        height: 210mm !important; /* A5 width */
         border: none !important;
         font-size: 11px !important;
         page-break-inside: avoid !important; /* keep receipt together */
