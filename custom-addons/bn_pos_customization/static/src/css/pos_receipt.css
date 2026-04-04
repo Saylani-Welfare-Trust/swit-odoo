@@ -121,7 +121,6 @@ h4 {
 
 /* ================== A5 POS Receipt Table ================== */
 .pos-receipt-print table {
-    font-size: 11px; /* matches receipt font */
     border-collapse: collapse; /* clean borders */
     width: 100%; /* full width for table */
 }

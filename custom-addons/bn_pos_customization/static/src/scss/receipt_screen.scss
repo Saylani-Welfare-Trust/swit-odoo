@@ -31,7 +31,7 @@
     .render-container .pos-receipt {
         margin: 0 auto !important;
         border: none !important;
-        font-size: 14px !important;
+        font-size: 11px !important;
         width: 559px !important; /* A5 width */
     }
     .render-container {
@@ -47,14 +47,12 @@
 
     /* Table Styles */
     .render-container .pos-receipt table {
-        font-size: 11px !important;
         border-collapse: collapse;
         width: 100%;
     }
 
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
-        font-size: 11px !important;
         padding: 3px 4px !important;
         border: 1px solid #000; /* optional, for visible borders */
         text-align: left;
