@@ -130,7 +130,7 @@
                 <!-- Items Table -->
                 <table class="table table-bordered" style="page-break-inside: auto;">
                     <thead>
-                        <tr style="page-break-inside: avoid;">
+                        <tr>
                             <th>Product</th>
                             <th>Quantity</th>
                             <th t-if="!order.is_donation_in_kind">Rate</th>
