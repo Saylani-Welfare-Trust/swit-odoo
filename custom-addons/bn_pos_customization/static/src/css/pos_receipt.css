@@ -1,22 +1,24 @@
 /* ================== Receipt Container ================== */
 .pos-receipt-print {
-    width: calc(148mm - 24mm); /* A5 width minus left+right margin (12mm each) */
-    font-size: 11px;
+    width: 148mm; /* Full A5 width */
+    max-width: 148mm;
+    font-size: 12px; /* Base font size */
     color: #000000;
-    margin: 0 auto; /* Centered horizontally */
-    padding: 4mm; /* Padding inside receipt */
+    margin: 0;
+    padding: 10px 5mm; /* Small padding from edges */
     box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
 
-/* ================== Alignment & Styling ================== */
+/* ================== Alignment ================== */
 .pos-receipt .pos-receipt-right-align {
     float: right;
     display: flex;
-    margin: 0;
+    justify-content: flex-end;
 }
 
 .pos-receipt .pos-receipt-right-align .tax-letter {
-    margin-left: 0;
+    margin-left: 0.5em;
 }
 
 .pos-receipt .pos-receipt-center-align {
@@ -24,28 +26,43 @@
 }
 
 .pos-receipt .pos-receipt-left-padding {
-    padding-left: 0;
+    padding-left: 5mm; /* consistent with A5 padding */
 }
 
-.pos-receipt .pos-receipt-logo,
+/* ================== Logo & QR Code ================== */
+.pos-receipt .pos-receipt-logo {
+    width: 60%; /* more visible but fits A5 */
+    max-width: 80mm;
+    display: block;
+    margin: 0 auto 5px auto;
+}
+
 .pos-receipt .pos-receipt-qrcode {
     display: block;
-    margin: 0 auto;
+    margin: 5px auto;
+    width: 40mm; /* fixed size QR code */
 }
 
+/* ================== Contact & Order Info ================== */
 .pos-receipt .pos-receipt-contact,
-.pos-receipt .pos-receipt-order-data,
-.pos-payment-terminal-receipt {
+.pos-receipt .pos-receipt-order-data {
     text-align: center;
-    font-size: 75%;
+    font-size: 10px; /* slightly smaller for printing */
+    margin: 2px 0;
 }
 
-.pos-receipt .pos-receipt-amount,
+/* ================== Amount & Titles ================== */
+.pos-receipt .pos-receipt-amount {
+    font-size: 14px;
+    padding-left: 10mm;
+}
+
 .pos-receipt .pos-receipt-title,
 .pos-receipt .pos-receipt-header {
-    font-size: 125%;
-    text-align: center;
     font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    margin: 5px 0;
 }
 
 .pos-receipt .pos-order-receipt-cancel {
@@ -53,13 +70,20 @@
 }
 
 .pos-receipt .pos-receipt-customer-note {
-    word-break: break-all;
+    word-break: break-word;
+}
+
+/* ================== Payment Terminal ================== */
+.pos-payment-terminal-receipt {
+    text-align: center;
+    font-size: 10px;
 }
 
 .pos-payment-terminal-receipt pre {
     font-family: inherit;
 }
 
+/* ================== Responsive Prices ================== */
 .responsive-price {
     display: flex;
     flex-wrap: wrap;
@@ -70,6 +94,7 @@
     margin-left: auto;
 }
 
+/* ================== Taxes ================== */
 .pos-receipt .pos-receipt-taxes {
     display: grid;
     grid-template-columns: min-content min-content auto auto auto;
@@ -77,82 +102,22 @@
     justify-items: end;
 }
 
+/* ================== Orderlines ================== */
 .pos-receipt .orderlines {
-    direction: ltr; /* rtl ignore */
+    direction: ltr;
 }
 
-/* ================== Tables ================== */
-custom-table {
-    font-size: 11px;
-    border-collapse: collapse;
-}
-
-custom-th, custom-td {
-    padding: 2px 4px !important;
-}
-
-/* ================== Headings ================== */
-h1 {
-    font-size: 14px;
-    font-weight: bold;
-    margin: 2px 0;
-}
-
-h4 {
-    font-size: 12px;
-    margin: 2px 0;
-    font-weight: bold;
-}
-
-/* ================== Remove extra spacing ================== */
+/* ================== Styled Receipt Padding ================== */
 .styled-receipt {
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 10px 5mm;
+    padding-bottom: 15px;
 }
 
-/* ================== Page / Print Settings ================== */
-@page {
-    size: A5;
-    margin: 12mm; /* Default A5 margin */
-}
-
+/* ================== Print Adjustments ================== */
 @media print {
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        font-family: Arial, sans-serif;
+    .pos-receipt-print {
+        width: 148mm;
+        margin: 0 auto;
         font-size: 11px;
-    }
-
-    body * {
-        visibility: hidden;
-    }
-
-    .pos, .pos * {
-        position: static !important;
-    }
-
-    .render-container .pos-receipt, 
-    .render-container .pos-receipt * {
-        visibility: visible;
-        margin: 0 !important;
-        padding: 0 !important;
-        background-color: transparent !important;
-        color: black !important;
-        width: calc(148mm - 24mm) !important; /* fit inside default margins */
-        box-sizing: border-box;
-    }
-
-    .render-container {
-        position: absolute !important;
-        top: 12mm !important; /* top margin */
-        left: 12mm !important; /* left margin */
-    }
-
-    .o-main-components-container {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
     }
 }
