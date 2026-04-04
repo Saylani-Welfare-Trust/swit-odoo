@@ -1,8 +1,8 @@
 /* ================== A5 POS Receipt ================== */
-body {
-    font-family: Arial, sans-serif; /* updated font family */
-    font-size: 11px; /* base font size */
-}
+/* body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+} */
 
 .pos-receipt-print {
     width: 148mm; /* A5 full width */
