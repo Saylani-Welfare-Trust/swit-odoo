@@ -72,8 +72,8 @@
                             <strong>Remarks:</strong>
                             <t t-set="count" t-value="1"/>
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                                <br/>
                                 <t t-esc="count"/>. <t t-esc="line.customerNote"/>
+                                <br/>
                                 <t t-set="count" t-value="count + 1"/>
                             </t>
                         </div>
@@ -172,9 +172,8 @@
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                                <div>
-                                    <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
-                                </div>
+                                <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
+                                <br/>
                                 <t t-set="count" t-value="count + 1"/>
                             </t>
                         </div>

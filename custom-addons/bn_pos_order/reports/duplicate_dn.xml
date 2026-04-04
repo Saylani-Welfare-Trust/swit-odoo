@@ -100,8 +100,8 @@
                                         <strong>Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
                                         <t t-foreach="order.remarks.split('-')" t-as="remark">
-                                            <br/>
                                             <t t-esc="count"/>. <t t-esc="remark or '-'"/>
+                                            <br/>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
@@ -178,7 +178,8 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="order.lines" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="int(l.qty)"/></div>
+                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="int(l.qty)"/>
+                                            <br/>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
