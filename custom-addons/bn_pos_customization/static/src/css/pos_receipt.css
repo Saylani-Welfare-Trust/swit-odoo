@@ -105,3 +105,24 @@
     padding: 10px; /* reduced from 15px */
     padding-bottom: 20px; /* reduced from 30px */
 }
+
+h1 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 2px 0;
+}
+
+h4 {
+    font-size: 12px;
+    margin: 6px 0;
+    font-weight: bold;
+}
+
+custom-table {
+    font-size: 11px;
+    border-collapse: collapse;
+}
+
+custom-th, custom-td {
+    padding: 3px 4px !important;
+}
