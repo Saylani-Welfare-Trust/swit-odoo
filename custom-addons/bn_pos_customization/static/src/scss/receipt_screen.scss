@@ -9,7 +9,7 @@
 
 @page {
     size: A5;
-    margin: 84.67mm 0mm 5mm 5mm !important; /* No default page margin */
+    margin: 84.67mm 0mm 10mm 5mm !important; /* No default page margin */
 }
 
 @media print {
@@ -19,7 +19,6 @@
     }
 
     /* Hide everything except receipt */
-        font-size: 11px;
     body * {
         visibility: hidden;
     }
