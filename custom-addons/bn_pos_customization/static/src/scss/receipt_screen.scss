@@ -14,7 +14,9 @@
 
 @media print {
     body {
-        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
         background-color: transparent;
         font-family: Arial, sans-serif;
     }
@@ -42,7 +44,7 @@
 
     /* Render container positioning */
     .render-container {
-        position: absolute !important;
+        position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100%;
@@ -65,5 +67,13 @@
         border: 1px solid #000; /* optional, makes table visible */
         text-align: left;
         page-break-inside: avoid;
+    }
+
+    .pos,
+    .o-main-components-container,
+    .pos .screen,
+    .pos .screen * {
+        height: 0 !important;
+        overflow: hidden !important;
     }
 }
