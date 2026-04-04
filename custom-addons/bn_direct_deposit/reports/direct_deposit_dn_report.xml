@@ -203,7 +203,7 @@
             <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
             <field name="binding_type">report</field>
             <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
-            <field name="id" ref="bn_direct_deposit.report_direct_deposit_paperformat"/>
+            <field name="id" ref="report_direct_deposit_paperformat"/>
         </record>
 
     </data>
