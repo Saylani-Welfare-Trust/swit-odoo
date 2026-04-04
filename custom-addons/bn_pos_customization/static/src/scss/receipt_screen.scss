@@ -36,8 +36,8 @@
     /* Main receipt container */
     .render-container .pos-receipt {
         width: 148mm !important; /* A5 width */
-        height: 210mm !important; /* A5 height */
-        // margin: 95mm 0px 10mm 10mm !important;
+        height: auto !important;
+        min-height: auto !important;
         border: none !important;
         font-size: 11px !important;
         page-break-inside: avoid !important; /* keep receipt together */
