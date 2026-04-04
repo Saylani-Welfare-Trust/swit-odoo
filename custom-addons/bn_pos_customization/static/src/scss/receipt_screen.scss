@@ -21,7 +21,7 @@
     /* Hide everything except receipt */
     body * {
         visibility: hidden;
-        height: 0 !important;
+        height: 210mm !important;
         overflow: hidden !important;
     }
     .pos, .pos * {
