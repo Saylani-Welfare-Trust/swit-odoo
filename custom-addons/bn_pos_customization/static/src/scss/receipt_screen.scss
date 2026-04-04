@@ -9,7 +9,7 @@
 
 @page {
     size: A5;
-    margin: 0mm 5mm 0mm 5mm !important; /* No default page margin */
+    margin: 84.67mm 4mm 0mm 4mm !important; /* No default page margin */
 }
 
 @media print {
@@ -40,7 +40,6 @@
         page-break-before: avoid !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
-        margin-top: 84.67mm !important;
     }
 
     /* Render container positioning */
