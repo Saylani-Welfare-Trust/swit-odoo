@@ -1,4 +1,3 @@
-/* ================= A5 POS Receipt ================= */
 .pos-receipt-container {
     direction: ltr;
 }
@@ -9,7 +8,7 @@
 
 @page {
     size: A5;
-    margin: 0; /* No default page margin */
+    margin: 15px; /* page padding */
 }
 
 @media print {
@@ -18,37 +17,28 @@
         font-family: Arial, sans-serif;
         font-size: 11px;
     }
-
-    /* Hide everything except receipt */
     body * {
         visibility: hidden;
     }
     .pos, .pos * {
         position: static !important;
     }
-    .render-container .pos-receipt *,
-    .render-container .pos-receipt {
+    .render-container .pos-receipt * {
         visibility: visible;
         background-color: transparent !important;
         color: black !important;
     }
-
-    /* Main receipt container */
     .render-container .pos-receipt {
-        width: 559px !important; /* A5 width */
         margin: 0 auto !important;
         border: none !important;
         font-size: 11px !important;
-        page-break-inside: avoid !important; /* keep receipt together */
-        page-break-after: auto !important;
+        width: 559px !important; /* A5 width */
+        margin-top: 360px !important;
     }
-
-    /* Render container positioning */
     .render-container {
         position: absolute !important;
-        top: 0 !important;
-        left: 4px !important;
-        width: 100%;
+        top: 0;
+        left: 4px;
     }
     .o-main-components-container {
         position: absolute !important;
@@ -56,26 +46,16 @@
         left: 0;
     }
 
-    /* Receipt image at top */
-    .render-container .pos-receipt .receipt-header-image {
-        display: block;
-        max-width: 100%;
-        max-height: 80px; /* adjust as needed */
-        margin: 0 auto 5px auto; /* top 0, bottom 5px */
-        page-break-inside: avoid !important;
+    /* Table Styles */
+    .render-container .pos-receipt table {
+        border-collapse: collapse;
+        width: 100%;
     }
 
-    /* Tables */
-    .render-container .pos-receipt table {
-        width: 100%;
-        border-collapse: collapse;
-        page-break-inside: auto;
-    }
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
-        border: 1px solid #000; /* optional, makes table visible */
+        border: 1px solid #000; /* optional, for visible borders */
         text-align: left;
-        page-break-inside: avoid;
     }
 }
