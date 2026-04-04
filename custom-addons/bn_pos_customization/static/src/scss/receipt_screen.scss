@@ -63,6 +63,6 @@
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
         border: 1px solid #000 !important; /* optional, makes table visible */
-        page-break-inside: avoid !important;
+        // page-break-inside: avoid !important;
     }
 }
