@@ -42,4 +42,13 @@
         top: 0;
         left: 0;
     }
+
+    custom-table {
+        font-size: 11px;
+        border-collapse: collapse;
+    }
+
+    custom-th, custom-td {
+        padding: 3px 4px !important;
+    }
 }
