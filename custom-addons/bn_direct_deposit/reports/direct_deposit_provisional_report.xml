@@ -83,6 +83,15 @@
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div><strong>Transaction No.:</strong> <t t-esc="o.transaction_ref or ''"/></div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="o.remarks.split('-')" t-as="remark">
+                                            <t t-esc="count"/>. <t t-esc="remark or '-'"/>
+                                            <br/>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
@@ -100,15 +109,6 @@
                                     <div>
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/>
-                                    </div>
-                                    <div>
-                                        <strong>Remarks:</strong>
-                                        <t t-set="count" t-value="1"/>
-                                        <t t-foreach="o.remarks.split('-')" t-as="remark">
-                                            <t t-esc="count"/>. <t t-esc="remark or '-'"/>
-                                            <br/>
-                                            <t t-set="count" t-value="count + 1"/>
-                                        </t>
                                     </div>
                                 </div>
                             </div>
