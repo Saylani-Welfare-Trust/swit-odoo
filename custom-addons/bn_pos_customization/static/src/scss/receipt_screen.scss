@@ -45,7 +45,7 @@
         /* Fix bottom space */
         display: inline-block !important;
         float: none !important;
-        position: relative !important;
+        position: absolute !important;
         page-break-after: auto !important;
         page-break-inside: avoid !important;
         margin: 0 !important;
@@ -54,7 +54,7 @@
 
     /* Render container positioning */
     .render-container {
-        position: relative !important;
+        position: absolute !important;
         top: auto !important;
         left: auto !important;
         width: auto !important;
@@ -62,7 +62,7 @@
     }
 
     .o-main-components-container {
-        position: relative !important;
+        position: absolute !important;
         top: auto !important;
         left: auto !important;
     }
