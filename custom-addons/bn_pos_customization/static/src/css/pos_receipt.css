@@ -10,7 +10,7 @@
 }
 
 .pos-receipt .pos-receipt-right-align .tax-letter{
-    margin-left: 0.25em;
+    margin-left: 0px;
 }
 
 .pos-receipt .pos-receipt-center-align {
@@ -18,7 +18,7 @@
 }
 
 .pos-receipt .pos-receipt-left-padding {
-    padding-left: 0.25em;
+    padding-left: 0px;
 }
 
 .pos-receipt .pos-receipt-logo {
@@ -44,7 +44,7 @@
 
 .pos-receipt .pos-receipt-amount {
     font-size: 125%;
-    padding-left: 0.25em;
+    padding-left: 0px;
 }
 
 .pos-receipt .pos-receipt-title {
@@ -114,11 +114,11 @@ h4 {
     font-weight: bold;
 }
 
-table {
+custom-table {
     font-size: 11px;
     border-collapse: collapse;
 }
 
-th, td {
+custom-th, custom-td {
     padding: 3px 4px !important;
 }

@@ -1,5 +1,5 @@
 .receipt-screen .default-view .pos-receipt-container {
-    flex-basis: 794px;
+    flex-basis: 420px;
 }
 
 @page {
@@ -33,7 +33,7 @@
     }
     .render-container {
         position: absolute !important;
-        top: 360px;
+        top: 170px;
         left: 0;
     }
     .o-main-components-container  {
