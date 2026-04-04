@@ -1,48 +1,70 @@
+/* ================= A5 POS Receipt ================= */
 .pos-receipt-container {
     direction: ltr;
 }
 
-/* Preview in POS screen */
 .receipt-screen .default-view .pos-receipt-container {
-    flex-basis: 559px; /* A4 width */
+    flex-basis: 559px; /* A5 width in px */
 }
 
 @page {
-    margin-top: 320px;
-    padding: 0; /* A4 page margins */
+    size: A5;
+    margin: 0 0 10px; /* No default page margin */
 }
 
 @media print {
     body {
         background-color: transparent;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
     }
+
+    /* Hide everything except receipt */
     body * {
         visibility: hidden;
     }
     .pos, .pos * {
         position: static !important;
     }
-    .render-container .pos-receipt * {
+    .render-container .pos-receipt *,
+    .render-container .pos-receipt {
         visibility: visible;
         background-color: transparent !important;
         color: black !important;
     }
+
+    /* Main receipt container */
     .render-container .pos-receipt {
-        width: 559px !important;
-        min-height: auto !important; /* important: do not force 297mm */
+        width: 559px !important; /* A5 width */
         margin: 0 auto !important;
-        padding-right: 0mm !important; /* optional */
-        padding-left: -25mm !important; /* optional */
-        padding-top: 0mm !important; /* optional */
-        padding-top: 0mm !important; /* optional */
-        box-sizing: border-box;
+        border: none !important;
+        font-size: 11px !important;
+        page-break-inside: avoid !important; /* keep receipt together */
+        page-break-after: auto !important;
     }
+
+    /* Render container positioning */
     .render-container {
         position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100%;
     }
-    .o-main-components-container  {
+    .o-main-components-container {
         position: absolute !important;
+        top: 0;
+        left: 0;
     }
+
+    /* Receipt image at top */
+    .render-container .pos-receipt .receipt-header-image {
+        display: block;
+        max-width: 100%;
+        max-height: 80px; /* adjust as needed */
+        margin: 0 auto 5px auto; /* top 0, bottom 5px */
+        page-break-inside: avoid !important;
+    }
+
     /* Tables */
     .render-container .pos-receipt table {
         width: 100%;
