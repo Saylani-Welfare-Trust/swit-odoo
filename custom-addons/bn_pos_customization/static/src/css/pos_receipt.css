@@ -1,16 +1,22 @@
+/* ================== Receipt Container ================== */
 .pos-receipt-print {
-    width: 420px;
+    width: 148mm; /* Full A5 width */
     font-size: 11px;
     color: #000000;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+/* ================== Alignment & Styling ================== */
 .pos-receipt .pos-receipt-right-align {
     float: right;
     display: flex;
+    margin: 0;
 }
 
-.pos-receipt .pos-receipt-right-align .tax-letter{
-    margin-left: 0px;
+.pos-receipt .pos-receipt-right-align .tax-letter {
+    margin-left: 0;
 }
 
 .pos-receipt .pos-receipt-center-align {
@@ -18,44 +24,28 @@
 }
 
 .pos-receipt .pos-receipt-left-padding {
-    padding-left: 0px;
+    padding-left: 0;
 }
 
-.pos-receipt .pos-receipt-logo {
-    width: 50%;
-    display: block;
-    margin: 0 auto;
-}
-
+.pos-receipt .pos-receipt-logo,
 .pos-receipt .pos-receipt-qrcode {
     display: block;
     margin: 0 auto;
 }
 
-.pos-receipt .pos-receipt-contact {
+.pos-receipt .pos-receipt-contact,
+.pos-receipt .pos-receipt-order-data,
+.pos-payment-terminal-receipt {
     text-align: center;
     font-size: 75%;
 }
 
-.pos-receipt .pos-receipt-order-data {
-    text-align: center;
-    font-size: 75%;
-}
-
-.pos-receipt .pos-receipt-amount {
-    font-size: 125%;
-    padding-left: 0px;
-}
-
-.pos-receipt .pos-receipt-title {
-    font-weight: bold;
-    font-size: 125%;
-    text-align: center;
-}
-
+.pos-receipt .pos-receipt-amount,
+.pos-receipt .pos-receipt-title,
 .pos-receipt .pos-receipt-header {
     font-size: 125%;
     text-align: center;
+    font-weight: bold;
 }
 
 .pos-receipt .pos-order-receipt-cancel {
@@ -64,11 +54,6 @@
 
 .pos-receipt .pos-receipt-customer-note {
     word-break: break-all;
-}
-
-.pos-payment-terminal-receipt {
-    text-align: center;
-    font-size: 75%;
 }
 
 .pos-payment-terminal-receipt pre {
@@ -93,32 +78,83 @@
 }
 
 .pos-receipt .orderlines {
-    /*rtl:ignore*/
-    direction: ltr;
+    direction: ltr; /* rtl ignore */
 }
 
-.styled-receipt {
-    padding: 4px;
-    padding-bottom: 30px;
-}
-
-h1 {
-    font-size: 14px;
-    font-weight: bold;
-    margin: 2px 0;
-}
-
-h4 {
-    font-size: 12px;
-    margin: 6px 0;
-    font-weight: bold;
-}
-
+/* ================== Tables ================== */
 custom-table {
     font-size: 11px;
     border-collapse: collapse;
 }
 
 custom-th, custom-td {
-    padding: 3px 4px !important;
+    padding: 2px 4px !important;
+}
+
+/* ================== Headings ================== */
+h1 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 0;
+}
+
+h4 {
+    font-size: 12px;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* ================== Remove extra spacing ================== */
+.styled-receipt {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* ================== Page / Print Settings ================== */
+@page {
+    size: A5;
+    margin: 0;
+}
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+    }
+
+    body * {
+        visibility: hidden;
+        margin: 0;
+        padding: 0;
+    }
+
+    .pos, .pos * {
+        position: static !important;
+    }
+
+    .render-container .pos-receipt, 
+    .render-container .pos-receipt * {
+        visibility: visible;
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+        color: black !important;
+        width: 148mm !important;
+        box-sizing: border-box;
+    }
+
+    .render-container {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
+
+    .o-main-components-container {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
 }
