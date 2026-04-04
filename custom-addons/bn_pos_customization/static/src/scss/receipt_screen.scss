@@ -9,11 +9,13 @@
 
 @page {
     size: A5;
-    margin: 84.67mm 5mm 5mm 5mm !important; /* No default page margin */
+    margin: 84.67mm 2mm 3mm 5mm !important; /* top right bottom left */
 }
 
 @media print {
     body {
+        height: auto !important;
+        overflow: hidden !important;
         background-color: transparent;
         font-family: Arial, sans-serif;
     }
