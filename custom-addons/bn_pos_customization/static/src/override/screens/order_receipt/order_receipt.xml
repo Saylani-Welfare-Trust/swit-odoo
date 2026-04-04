@@ -142,7 +142,7 @@
                                 <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                 <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
                                 <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
-                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></t></td>
+                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
                             </tr>
                         </t>
                     </tbody>
@@ -202,7 +202,7 @@
                 <div style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
                 </div>
-                
+
             </div>
         </xpath>
     </t>
