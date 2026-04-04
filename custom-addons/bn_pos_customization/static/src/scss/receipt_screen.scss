@@ -44,14 +44,14 @@
     }
 
     /* Table Styles */
-    custom-table {
+    .render-container .pos-receipt table {
         font-size: 11px;
         border-collapse: collapse;
         width: 100%;
     }
 
-    custom-th,
-    custom-td {
+    .render-container .pos-receipt th,
+    .render-container .pos-receipt td {
         font-size: 11px;
         padding: 3px 4px !important;
         border: 1px solid #000; /* optional, for visible borders */
