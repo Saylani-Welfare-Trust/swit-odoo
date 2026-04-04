@@ -65,12 +65,4 @@
         text-align: left;
         page-break-inside: avoid;
     }
-
-    .pos,
-    .o-main-components-container,
-    .pos .screen,
-    .pos .screen * {
-        height: 0 !important;
-        overflow: hidden !important;
-    }
 }
