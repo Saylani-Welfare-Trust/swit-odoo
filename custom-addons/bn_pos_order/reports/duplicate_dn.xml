@@ -10,14 +10,14 @@
 
                         <!-- ===== IMAGE ON NEW PAGE ===== -->
                         <t t-if="order.env.company.dn_image">
-                            <div class="page" style="position:relative; page-break-before: always;">
+                            <div class="page" style="position:relative; page-break-after: always;">
                                 <img t-att-src="image_data_uri(order.env.company.dn_image)"
                                     style="height: 100%; width: 100%; object-fit: contain;"/>
                             </div>
                         </t>
 
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="position:relative; page-break-before: always;">
+                        <div class="page" style="position:relative; page-break-after: always;">
                             <!-- ===== STYLES ===== -->
                             <style>
                                 body {
