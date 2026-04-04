@@ -22,7 +22,7 @@
                         <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
                     </div>
                     <div class="col-6 text-end">
-                        <h1 class="text-transform" style="font-size: 11px;">
+                        <h1 class="text-transform" style="font-size: 12px;">
                             <t t-if="company.name"><t t-esc="company.name"/></t>
                             <br/>
                             <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
