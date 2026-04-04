@@ -126,7 +126,7 @@
                 </div>
 
                 <!-- Items Table -->
-                <table class="table table-bordered">
+                <table class="table table-bordered" style="page-break-inside: auto;">
                     <thead>
                         <tr>
                             <th>Product</th>
