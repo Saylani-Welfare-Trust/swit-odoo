@@ -186,7 +186,7 @@
         <!-- ===================== -->
         <!-- A5 Paper Format -->
         <!-- ===================== -->
-        <record id="report_direct_deposit_paperformat" model="report.paperformat">
+        <record id="report_direct_deposit_provisional_paperformat" model="report.paperformat">
             <field name="name">A5 - Direct Deposit Receipt</field>
             <field name="format">A5</field>
             <field name="orientation">Portrait</field>
@@ -207,7 +207,7 @@
             <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
             <field name="binding_type">report</field>
             <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
-            <field name="paperformat_id" ref="report_direct_deposit_paperformat"/>
+            <field name="paperformat_id" ref="report_direct_deposit_provisional_paperformat"/>
         </record>
 
     </data>
