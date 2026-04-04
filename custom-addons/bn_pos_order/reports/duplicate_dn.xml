@@ -100,8 +100,8 @@
                                         <strong>Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
                                         <t t-foreach="order.remarks.split('-')" t-as="remark">
-                                            <t t-esc="remark or '-'"/>
                                             <br/>
+                                            <t t-esc="remark or '-'"/>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
