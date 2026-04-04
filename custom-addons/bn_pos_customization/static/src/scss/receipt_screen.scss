@@ -57,7 +57,7 @@
     .render-container .pos-receipt table {
         width: 100% !important;
         border-collapse: collapse !important;
-        page-break-inside: auto !important;
+        page-break-inside: avoid !important;
     }
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
