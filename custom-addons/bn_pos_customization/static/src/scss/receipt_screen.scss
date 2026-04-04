@@ -13,17 +13,13 @@
 }
 
 @media print {
-    body * {
-        visibility: hidden;
-        display: none;
-    }
-    body, .pos-receipt, .pos-receipt * {
+    body {
         visibility: visible !important;
         display: block !important;
     }
-    .pos-receipt {
-        width: 100%;
-        margin: 0 auto;
+    body * {
+        visibility: hidden;
+        display: none;
     }
     .pos, .pos * {
         position: static !important;
@@ -33,6 +29,7 @@
         visibility: visible;
         background-color: transparent !important;
         color: black !important;
+        display: block !important;
     }
 
     /* Main receipt container */
@@ -41,8 +38,12 @@
         border: none !important;
         font-size: 11px !important;
     }
-
+    
     /* Render container positioning */
+    .pos-receipt {
+        width: 100%;
+        margin: 0 auto;
+    }
     .render-container {
         position: absolute !important;
         top: 0 !important;
