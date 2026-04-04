@@ -39,22 +39,22 @@
     }
     .o-main-components-container {
         position: absolute !important;
-        top: 0;
-        left: 0;
+        top: 360px;
+        left: 4px;
     }
 
     /* Table Styles */
-    .custom-table {
-        font-size: 11px;
-        border-collapse: collapse;
-        width: 100%;
-    }
+    // .custom-table {
+    //     font-size: 11px;
+    //     border-collapse: collapse;
+    //     width: 100%;
+    // }
 
-    .custom-th,
-    .custom-td {
-        font-size: 11px;
-        padding: 3px 4px !important;
-        border: 1px solid #000; /* optional, for visible borders */
-        text-align: left;
-    }
+    // .custom-th,
+    // .custom-td {
+    //     font-size: 11px;
+    //     padding: 3px 4px !important;
+    //     border: 1px solid #000; /* optional, for visible borders */
+    //     text-align: left;
+    // }
 }

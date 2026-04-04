@@ -124,26 +124,26 @@ h4 {
 }
 
 /* ================== A5 POS Receipt Table ================== */
-.custom-table {
-    font-size: 11px; /* matches receipt font */
-    border-collapse: collapse; /* clean borders */
-    width: 100%; /* full width for table */
+/* .custom-table {
+    font-size: 11px;
+    border-collapse: collapse;
+    width: 100%;
 }
 
 .custom-th,
 .custom-td {
-    padding: 3px 4px !important; /* compact padding */
-    text-align: left; /* default alignment */
+    padding: 3px 4px !important;
+    text-align: left;
 }
 
 .custom-th {
-    font-weight: bold; /* bold headers */
+    font-weight: bold;
 }
 
 .custom-td {
-    font-weight: normal; /* normal text */
+    font-weight: normal;
 }
 
 .custom-table tr {
-    border-bottom: 1px solid #000000; /* optional row separation */
-}
+    border-bottom: 1px solid #000000;
+} */
