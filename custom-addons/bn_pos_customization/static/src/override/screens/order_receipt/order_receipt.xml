@@ -127,7 +127,7 @@
                 </div>
 
                 <!-- Items Table -->
-                <table class="table table-bordered">
+                <table class="table table-bordered custom-table">
                     <thead>
                         <tr>
                             <th class="custom-th">Product</th>
