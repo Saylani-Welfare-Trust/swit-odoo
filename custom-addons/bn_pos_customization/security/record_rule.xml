@@ -22,7 +22,7 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>
-    
+
     <record id="pos_session_rule" model="ir.rule">
         <field name="name">POS Session User Only</field>
         <field name="model_id" ref="point_of_sale.model_pos_session"/>
