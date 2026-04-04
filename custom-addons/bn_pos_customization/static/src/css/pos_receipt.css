@@ -103,7 +103,7 @@
 }
 
 .styled-receipt {
-    padding: 4px; /* reduced from 15px */
+    padding: 0px; /* reduced from 15px */
     padding-bottom: 0px; /* reduced from 30px */
 }
 
