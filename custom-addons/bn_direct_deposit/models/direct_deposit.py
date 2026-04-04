@@ -76,7 +76,7 @@ class DirectDeposit(models.Model):
             if line.remarks:
                 remarks.append(line.remarks)
         
-        self.remarks = "\n".join(remarks)
+        self.remarks = "-".join(remarks)
 
     @api.model
     def create_dd_record(self, data):

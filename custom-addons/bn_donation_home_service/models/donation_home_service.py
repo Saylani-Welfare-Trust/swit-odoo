@@ -73,7 +73,7 @@ class DonationHomeService(models.Model):
             if line.remarks:
                 remarks.append(line.remarks)
         
-        self.remarks = "\n".join(remarks)
+        self.remarks = "-".join(remarks)
 
     def calculate_service_charges(self):
         self.total_amount = self.amount + self.service_charges

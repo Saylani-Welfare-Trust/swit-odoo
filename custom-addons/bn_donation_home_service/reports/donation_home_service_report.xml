@@ -97,7 +97,15 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.total_amount) or 0) or 0"/>
                                     </div>
-                                    <div><strong>Remarks: </strong> <t t-esc="o.remarks or '-'"/></div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="o.remarks.split('-')" t-as="remark">
+                                            <t t-esc="count"/>. <t t-esc="remark or '-'"/>
+                                            <br/>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
+                                    </div>
                                 </div>
                             </div>
 
