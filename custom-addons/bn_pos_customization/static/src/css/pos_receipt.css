@@ -1,25 +1,103 @@
 .pos-receipt-print {
-    width: 148mm !important; /* changed from 266px to A4 */
-    min-height: 210mm !important; /* optional: full A4 height */
-    font-size: 11px !important;
-    color: #000000 !important;
-    margin: 0 auto !important;
-    padding: 4mm 0mm !important;
+    width: 559x;
+    font-size: 12px;
+    color: #000000;
 }
-h1 {
-    font-size: 14px !important;
-    font-weight: bold !important;
-    margin: 2px 0 !important;
+
+.pos-receipt .pos-receipt-right-align {
+    float: right;
+    display: flex;
 }
-h4 {
-    font-size: 12px !important;
-    margin: 6px 0 !important;
-    font-weight: bold !important;
+
+.pos-receipt .pos-receipt-right-align .tax-letter{
+    margin-left: 0.5em;
 }
-.custom-table {
-    font-size: 11px !important;
-    border-collapse: collapse !important;
+
+.pos-receipt .pos-receipt-center-align {
+    text-align: center;
 }
-.custom-th, .custom-td {
-    padding: 3px 4px !important;
+
+.pos-receipt .pos-receipt-left-padding {
+    padding-left: 0.25em;
+}
+
+.pos-receipt .pos-receipt-logo {
+    width: 50%;
+    display: block;
+    margin: 0 auto;
+}
+
+.pos-receipt .pos-receipt-qrcode {
+    display: block;
+    margin: 0 auto;
+}
+
+.pos-receipt .pos-receipt-contact {
+    text-align: center;
+    font-size: 75%;
+}
+
+.pos-receipt .pos-receipt-order-data {
+    text-align: center;
+    font-size: 75%;
+}
+
+.pos-receipt .pos-receipt-amount {
+    font-size: 125%;
+    padding-left: 0.25em;
+}
+
+.pos-receipt .pos-receipt-title {
+    font-weight: bold;
+    font-size: 125%;
+    text-align: center;
+}
+
+.pos-receipt .pos-receipt-header {
+    font-size: 125%;
+    text-align: center;
+}
+
+.pos-receipt .pos-order-receipt-cancel {
+    color: red;
+}
+
+.pos-receipt .pos-receipt-customer-note {
+    word-break: break-all;
+}
+
+.pos-payment-terminal-receipt {
+    text-align: center;
+    font-size: 75%;
+}
+
+.pos-payment-terminal-receipt pre {
+    font-family: inherit;
+}
+
+.responsive-price {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.responsive-price > .pos-receipt-right-align {
+    margin-left: auto;
+}
+
+.pos-receipt .pos-receipt-taxes {
+    display: grid;
+    grid-template-columns: min-content min-content auto auto auto;
+    width: 100%;
+    justify-items: end;
+}
+
+.pos-receipt .orderlines {
+    /*rtl:ignore*/
+    direction: ltr;
+}
+
+.styled-receipt {
+    padding: 4px;
+    padding-bottom: 30px;
 }
