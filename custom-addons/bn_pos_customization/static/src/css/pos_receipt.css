@@ -1,13 +1,29 @@
 /* ================== A5 POS Receipt ================== */
 .pos-receipt-print {
     width: 148mm; /* A5 full width */
-    font-size: 11px; /* Adjusted for A5 readability */
+    font-size: 11px;
     color: #000000;
     margin: 0;
-    padding: 0;
+    padding: 0 4px; /* ✅ left & right padding added */
     box-sizing: border-box;
     font-family: Arial, sans-serif;
+
+    /* ✅ HEADER SPACE */
+    padding-top: 360px;
+    position: relative;
 }
+
+/* ===== HEADER IMAGE (inside reserved space) ===== */
+.pos-receipt-print .receipt-header-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-height: 340px; /* slightly less than 360px */
+    object-fit: contain;
+}
+
+/* ================= EXISTING STYLES ================= */
 
 .pos-receipt .pos-receipt-right-align {
     float: right;
@@ -15,7 +31,7 @@
 }
 
 .pos-receipt .pos-receipt-right-align .tax-letter{
-    margin-left: 0.2em; /* scaled down from 0.5em */
+    margin-left: 0.2em;
 }
 
 .pos-receipt .pos-receipt-center-align {
@@ -23,11 +39,11 @@
 }
 
 .pos-receipt .pos-receipt-left-padding {
-    padding-left: 1em; /* reduced from 2em */
+    padding-left: 1em;
 }
 
 .pos-receipt .pos-receipt-logo {
-    width: 40%; /* scaled down for A5 */
+    width: 40%;
     display: block;
     margin: 0 auto;
 }
@@ -39,7 +55,7 @@
 
 .pos-receipt .pos-receipt-contact {
     text-align: center;
-    font-size: 70%; /* slightly smaller for A5 */
+    font-size: 70%;
 }
 
 .pos-receipt .pos-receipt-order-data {
@@ -48,13 +64,13 @@
 }
 
 .pos-receipt .pos-receipt-amount {
-    font-size: 110%; /* slightly smaller */
-    padding-left: 2em; /* adjusted from 6em */
+    font-size: 110%;
+    padding-left: 2em;
 }
 
 .pos-receipt .pos-receipt-title {
     font-weight: bold;
-    font-size: 110%; /* adjusted */
+    font-size: 110%;
     text-align: center;
 }
 
@@ -98,13 +114,12 @@
 }
 
 .pos-receipt .orderlines {
-    /*rtl:ignore*/
     direction: ltr;
 }
 
 .styled-receipt {
-    padding: 4px; /* reduced from 15px */
-    padding-bottom: 20px; /* reduced from 30px */
+    padding: 4px;
+    padding-bottom: 20px;
 }
 
 h1 {
@@ -119,26 +134,26 @@ h4 {
     font-weight: bold;
 }
 
-/* ================== A5 POS Receipt Table ================== */
+/* ================== TABLE ================== */
 .pos-receipt-print table {
-    border-collapse: collapse; /* clean borders */
-    width: 100%; /* full width for table */
+    border-collapse: collapse;
+    width: 100%;
 }
 
 .pos-receipt-print th,
 .pos-receipt-print td {
-    padding: 3px 4px !important; /* compact padding */
-    text-align: left; /* default alignment */
+    padding: 3px 4px !important;
+    text-align: left;
 }
 
 .pos-receipt-print th {
-    font-weight: bold; /* bold headers */
+    font-weight: bold;
 }
 
 .pos-receipt-print td {
-    font-weight: normal; /* normal text */
+    font-weight: normal;
 }
 
 .pos-receipt-print table tr {
-    border-bottom: 1px solid #000000; /* optional row separation */
+    border-bottom: 1px solid #000000;
 }
