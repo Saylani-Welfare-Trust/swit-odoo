@@ -8,8 +8,16 @@
                         <!-- Set Payment Method -->
                         <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
 
+                        <!-- ===== IMAGE ON NEW PAGE ===== -->
+                        <t t-if="order.env.company.dn_image">
+                            <div class="page" style="position:relative; page-break-before: always;">
+                                <img t-att-src="image_data_uri(order.env.company.dn_image)"
+                                    style="height: 100%; width: 100%; object-fit: contain;"/>
+                            </div>
+                        </t>
+
                         <!-- PAGE WRAPPER -->
-                        <div class="page" style="position:relative;">
+                        <div class="page" style="position:relative; page-break-before: always;">
                             <!-- ===== STYLES ===== -->
                             <style>
                                 body {
@@ -52,10 +60,6 @@
                                     z-index: 0;
                                 }
                             </style>
-
-                            <img t-if="order.env.company.dn_image"
-                                t-att-src="image_data_uri(order.env.company.dn_image)"
-                                style="height: 100%; width: 100%;"/>
 
                             <!-- ===== WATERMARK ===== -->
                             <div class="watermark">Duplicate</div>
