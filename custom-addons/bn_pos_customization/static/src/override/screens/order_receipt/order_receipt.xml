@@ -37,94 +37,71 @@
                         </div>
                     </div>
 
-                    <br/>
+                    <hr style="margin:4px 0"/>
 
-                    <!-- Donor & Receipt Info -->
-                    <div class="row p-2">
-                        <!-- Left Column -->
+                    <!-- ===== BASIC INFO ===== -->
+                    <div class="row mb-2">
                         <div class="col-6">
-                            <div class="row mb-2">
-                                <div>
-                                    <strong>DN #:</strong>
-                                    <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                                    <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
-                                    <t t-set="current_year" t-value="new Date().getFullYear()"/>
-                                    <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
-                                    <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
-                                </div>
+                            <div>
+                                <strong>DN #:</strong>
+                                <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
+                                <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
+                                <t t-set="current_year" t-value="new Date().getFullYear()"/>
+                                <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
+                                <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                             </div>
-
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>Donor Name:</strong>
-                                    <t t-if="partner.name"><t t-esc="partner.name"/></t>
-                                    <t t-else="">-</t>
-                                </div>
+                            <div>
+                                <strong>Donor Name:</strong>
+                                <t t-if="partner.name"><t t-esc="partner.name"/></t>
+                                <t t-else="">-</t>
                             </div>
-
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>CNIC No.:</strong>
-                                    <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
-                                    <t t-else="">-</t>
-                                </div>
+                            <div>
+                                <strong>CNIC No.:</strong>
+                                <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
+                                <t t-else="">-</t>
                             </div>
-
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>Payment Method:</strong>
-                                    <t t-if="payment.name"><t t-esc="payment.name"/></t>
-                                    <t t-else="">-</t>
-                                </div>
+                            <div>
+                                <strong>Payment Method:</strong>
+                                <t t-if="payment.name"><t t-esc="payment.name"/></t>
+                                <t t-else="">-</t>
                             </div>
-
-                            <!-- Conditional Bank / Reference -->
-                            <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                                <div class="row mb-1" t-if="order.bank_name">
-                                    <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
-                                </div>
-                            </t>
-
                             <t t-if="!order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                                <div class="row mb-1" t-if="order.qr_code">
+                                <div t-if="order.qr_code">
                                     <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
                                 </div>
                             </t>
-                            
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>Remarks:</strong>
-                                    <t t-set="count" t-value="1"/>
-                                    <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
-                                        <div>
-                                            <t t-esc="count"/>. <t t-esc="line.customerNote"/>
-                                        </div>
-                                        <t t-set="count" t-value="count + 1"/>
-                                    </t>
+                            <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
+                                <div t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind &amp;&amp; order.bank_name">
+                                    <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
                                 </div>
+                            </t>
+                            <div>
+                                <strong>Remarks:</strong>
+                                <t t-set="count" t-value="1"/>
+                                <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
+                                    <div>
+                                        <t t-esc="count"/>. <t t-esc="line.customerNote"/>
+                                    </div>
+                                    <t t-set="count" t-value="count + 1"/>
+                                </t>
                             </div>
                         </div>
-
-                        <!-- Right Column -->
                         <div class="col-6">
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>Date Time:</strong>
-                                    <t t-set="dateObj" t-value="new Date(date_format)"/>
-                                    <t t-set="day" t-value="dateObj.getDate()"/>
-                                    <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                    <t t-set="year" t-value="dateObj.getFullYear()"/>
-                                    <t t-set="hours" t-value="dateObj.getHours()"/>
-                                    <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                    <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-                                    <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                            (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                            (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                            (minutes &lt; 10 ? '0' : '') + minutes"/>
-                                </div>
+                            <div>
+                                <strong>Date Time:</strong>
+                                <t t-set="dateObj" t-value="new Date(date_format)"/>
+                                <t t-set="day" t-value="dateObj.getDate()"/>
+                                <t t-set="month" t-value="dateObj.getMonth() + 1"/>
+                                <t t-set="year" t-value="dateObj.getFullYear()"/>
+                                <t t-set="hours" t-value="dateObj.getHours()"/>
+                                <t t-set="minutes" t-value="dateObj.getMinutes()"/>
+                                <t t-set="seconds" t-value="dateObj.getSeconds()"/>
+                                <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
+                                        (hours &lt; 10 ? '0' : '') + hours + ':' +
+                                        (minutes &lt; 10 ? '0' : '') + minutes"/>
                             </div>
-
-                            <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
+                            <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
                                 <div t-if="order.cheque_date">
                                     <strong>Cheque Date:</strong>
                                     <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
@@ -136,34 +113,23 @@
                                     <t t-set="seconds" t-value="dateObj.getSeconds()"/>
                                     <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
                                             (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+                                    <br/>
+                                    <strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/>
                                 </div>
+                            </t>
+                            <div>
+                                <strong>Contact No:</strong>
+                                <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
+                                <t t-else="">
+                                    <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
+                                    <t t-else="">-</t>
+                                </t>
                             </div>
-                            
-                            <div class="row mb-1" t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                                <div class="row mb-1" t-if="order.cheque_number">
-                                    <div><strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/></div>
-                                </div>
+                            <div>
+                                <strong>Total Amount:</strong>
+                                <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
+                                <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                             </div>
-
-                            <div class="row mb-1">
-                                <div>
-                                    <strong>Contact No:</strong>
-                                    <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
-                                    <t t-else="">
-                                        <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
-                                        <t t-else="">-</t>
-                                    </t>
-                                </div>
-                            </div>
-
-                            <div class="row mb-1" t-if="!order.is_donation_in_kind">
-                                <div>
-                                    <strong>Total Amount:</strong>
-                                    <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
-                                    <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
-                                </div>
-                            </div>
-                            
                         </div>
                     </div>
 
