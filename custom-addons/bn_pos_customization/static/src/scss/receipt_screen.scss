@@ -4,7 +4,7 @@
 }
 
 .receipt-screen .default-view .pos-receipt-container {
-    flex-basis: 559px; /* A5 width in px */
+    flex-basis: 148mm; /* A5 width in mm */
 }
 
 @page {
@@ -35,7 +35,7 @@
 
     /* Main receipt container */
     .render-container .pos-receipt {
-        width: 559px !important; /* A5 width */
+        width: 148mm !important; /* A5 width */
         margin: 0 auto !important;
         border: none !important;
         font-size: 11px !important;
