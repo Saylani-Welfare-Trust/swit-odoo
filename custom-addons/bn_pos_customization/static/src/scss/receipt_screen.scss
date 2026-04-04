@@ -30,7 +30,9 @@
         visibility: visible !important;
         background-color: transparent !important;
         color: black !important;
-        page-break-inside: auto !important;
+        page-break-after: auto !important; /* avoid forced page break */
+        page-break-before: auto !important;
+        page-break-inside: avoid !important;
     }
 
     /* Main receipt container */
@@ -57,12 +59,12 @@
     .render-container .pos-receipt table {
         width: 100% !important;
         border-collapse: collapse !important;
-        // page-break-inside: auto !important;
+        page-break-inside: avoid !important;
     }
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
         border: 1px solid #000 !important; /* optional, makes table visible */
-        // page-break-inside: auto !important;
+        page-break-inside: avoid !important;
     }
 }
