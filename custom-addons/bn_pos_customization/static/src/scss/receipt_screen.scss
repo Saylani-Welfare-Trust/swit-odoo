@@ -13,17 +13,20 @@
 }
 
 @media print {
-    body {
+    html, body {
+        background-color: transparent;
+        font-family: Arial, sans-serif;
         margin: 0 !important;
         padding: 0 !important;
         height: auto !important;
-        background-color: transparent;
-        font-family: Arial, sans-serif;
+        overflow: visible !important;
     }
 
     /* Hide everything except receipt */
     body * {
         visibility: hidden;
+        height: 0 !important;
+        overflow: hidden !important;
     }
     .pos, .pos * {
         position: static !important;
