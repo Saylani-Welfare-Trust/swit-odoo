@@ -127,22 +127,22 @@
                 </div>
 
                 <!-- Items Table -->
-                <table class="table table-bordered">
+                <table class="table table-bordered custom-table">
                     <thead>
                         <tr>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th t-if="!order.is_donation_in_kind">Rate</th>
-                            <th t-if="!order.is_donation_in_kind">Amount</th>
+                            <th class="custom-th">Product</th>
+                            <th class="custom-th">Quantity</th>
+                            <th class="custom-th" t-if="!order.is_donation_in_kind">Rate</th>
+                            <th class="custom-th" t-if="!order.is_donation_in_kind">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
                             <tr style="page-break-inside: auto;">
-                                <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
-                                <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
-                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
-                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
+                                <td class="custom-td"><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
+                                <td class="custom-td text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
+                                <td class="custom-td text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
+                                <td class="custom-td text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
                             </tr>
                         </t>
                     </tbody>
