@@ -114,11 +114,11 @@ h4 {
     font-weight: bold;
 }
 
-custom-table {
+table {
     font-size: 11px;
     border-collapse: collapse;
 }
 
-custom-th, custom-td {
+th, td {
     padding: 3px 4px !important;
 }
