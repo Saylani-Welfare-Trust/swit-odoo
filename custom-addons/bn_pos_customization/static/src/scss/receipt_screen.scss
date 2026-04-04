@@ -16,21 +16,17 @@
     body {
         background-color: transparent !important;
         font-family: Arial, sans-serif !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }
 
     /* Hide everything except receipt */
     body * {
         visibility: hidden !important;
     }
-
     .pos, .pos * {
         position: static !important;
     }
-
-    .render-container .pos-receipt,
-    .render-container .pos-receipt * {
+    .render-container .pos-receipt *,
+    .render-container .pos-receipt {
         visibility: visible !important;
         background-color: transparent !important;
         color: black !important;
@@ -39,38 +35,32 @@
     /* Main receipt container */
     .render-container .pos-receipt {
         width: 148mm !important; /* A5 width */
+        border: none !important;
         font-size: 11px !important;
-        display: inline-block !important; /* compact height */
-        float: none !important;
-        position: relative !important; /* keep layout correct */
-        margin: 0 !important;
-        padding: 0 !important;
-        page-break-inside: auto !important;
     }
 
     /* Render container positioning */
-    .render-container,
-    .o-main-components-container {
+    .render-container {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    }
+    .o-main-components-container {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
     }
 
     /* Tables */
     .render-container .pos-receipt table {
         width: 100% !important;
         border-collapse: collapse !important;
-        page-break-inside: auto !important;
     }
-
     .render-container .pos-receipt th,
     .render-container .pos-receipt td {
         padding: 3px 4px !important;
-        border: 1px solid #000 !important;
-        page-break-inside: auto !important;
+        border: 1px solid #000 !important; /* optional, makes table visible */
     }
 
     hr {
