@@ -149,7 +149,7 @@ class LivestockCuttingMaterial(models.Model):
                     'quantity': line.quantity,
                 }))
 
-        self.material_ids = material_vals
+        self.livestock_cutting_material_line_ids = material_vals
 
     def action_end_cutting(self):
         self.state = 'done'
