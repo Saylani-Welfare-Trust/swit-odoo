@@ -88,7 +88,6 @@ class LivestockSlaughter(models.Model):
             move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
 
-        self.confirm_hide = True
         self.state = 'received'
 
     def action_cutting(self):
