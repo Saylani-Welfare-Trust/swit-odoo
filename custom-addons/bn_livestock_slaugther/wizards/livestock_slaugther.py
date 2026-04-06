@@ -84,7 +84,6 @@ class LivestockSlaugtherWizard(models.TransientModel):
         picking.button_validate()
 
         # Optionally, you can change the state of the slaughter record
-        # rec.state = 'received'  # or whatever makes sense
         rec.transfer_location = self.dest_location_id.id
         rec.transfer_bool = True
 

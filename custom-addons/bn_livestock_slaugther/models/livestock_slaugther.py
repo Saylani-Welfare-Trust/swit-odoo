@@ -17,6 +17,7 @@ class LivestockSlaughter(models.Model):
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
+    transfer_location = fields.Many2one('stock.location', string='Destination Location')
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
