@@ -21,7 +21,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state == 'received'"/>
                     <button string="Validate Picking" name="action_validate_picking" type="object" class="oe_highlight"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
