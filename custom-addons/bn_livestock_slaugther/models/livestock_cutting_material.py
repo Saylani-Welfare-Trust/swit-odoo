@@ -132,7 +132,7 @@ class LivestockCuttingMaterial(models.Model):
                     'quantity': qty,
                 })
 
-    def action_start(self):
+    def action_start_cutting(self):
         product_master = self.env['product.master']
         needed_parents = product_master.search([('product_id', '=', self.product.id)], limit=1)
 
@@ -151,7 +151,7 @@ class LivestockCuttingMaterial(models.Model):
 
         self.material_ids = material_vals
 
-    def action_end(self):
+    def action_end_cutting(self):
         self.state = 'done'
         self.end_time = fields.Datetime.now()
 
