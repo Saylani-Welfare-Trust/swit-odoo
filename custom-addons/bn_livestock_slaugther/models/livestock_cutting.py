@@ -33,7 +33,7 @@ class LivestockCutting(models.Model):
     
     def action_validate_picking(self):
         cutting_obj = self.env['livestock.cutting.material']
-        product_pro = self.product
+        product_pro = self.product_id
 
         cutting_record = cutting_obj.create({
             'product': self.product.id,
