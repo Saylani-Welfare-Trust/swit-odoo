@@ -18,7 +18,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
         rec = self.livestock_slaughter_id
 
         # basic validations
-        if not rec.product:
+        if not rec.product_id:
             raise ValidationError(_('Record has no product set.'))
         if not rec.quantity or rec.quantity <= 0:
             raise ValidationError(_('Quantity must be greater than 0.'))
