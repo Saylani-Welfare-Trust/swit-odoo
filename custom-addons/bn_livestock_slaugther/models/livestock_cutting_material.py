@@ -86,15 +86,15 @@ class LivestockCuttingMaterial(models.Model):
 
     def action_send_to_goat_and_meat(self):
         # 1) Find Cutting, Goat, and Meat locations
-        cutting_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Cutting')], limit=1)
-        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Goat')], limit=1)
-        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Meat')], limit=1)
+        cutting_loc = self.env['stock.location'].search([('name', 'ilike', 'Cutting')], limit=1)
+        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
+        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
 
         if not cutting_loc or not goat_loc or not meat_loc:
             raise ValidationError("Cutting, Goat, or Meat location not properly set!")
 
-        for material in self.material_ids:
-            product = material.product
+        for material in self.livestock_cutting_material_line_ids:
+            product = material.product_id
             qty = material.quantity
 
             # Decide target location
