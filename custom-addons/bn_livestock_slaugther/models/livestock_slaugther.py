@@ -63,7 +63,7 @@ class LivestockSlaughter(models.Model):
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': location,
+            'location_dest_id': location.id,
             'origin': self.product_id or 'Live Stock Slaughter',
         })
 
