@@ -36,7 +36,7 @@ class LivestockCutting(models.Model):
         product_pro = self.product_id
 
         cutting_record = cutting_obj.create({
-            'product': self.product.id,
+            'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
             'product_code': self.product_code,
