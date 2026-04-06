@@ -66,7 +66,7 @@ class LivestockCuttingMaterial(models.Model):
         # 2) for each material, bump the quant in that cutting location
         for record in self:
             for material in record.livestock_cutting_material_line_ids:
-                product = material.product
+                product = material.product_id
                 qty = material.quantity
 
                 # find or create the quant in the Cutting location
