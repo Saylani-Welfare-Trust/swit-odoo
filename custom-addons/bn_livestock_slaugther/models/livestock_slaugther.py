@@ -33,6 +33,7 @@ class LivestockSlaughter(models.Model):
     is_goat_depart = fields.Boolean('Is Goat Department')
     confirm_hide = fields.Boolean('Confirm Hide')
     cutting_hide = fields.Boolean('Cutting Hide')
+    transfer_bool = fields.Boolean('Cutting Hide')
 
 
     @api.model
