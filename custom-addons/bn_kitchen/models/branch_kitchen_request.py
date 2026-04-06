@@ -65,31 +65,32 @@ class BranchKitchenRequest(models.Model):
 
         mo_ids = []
 
-        for line in self.branch_kitchen_request_line_ids:
-            bom = self.env['mrp.bom'].search([
-                '|',
-                ('product_id', '=', line.product_id.id),
-                ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
-                ('company_id', '=', self.env.company.id),
-            ], order='sequence, product_id', limit=1)
-            
-            if not bom:
-                raise ValidationError(f"No BOM found for {line.product_id.display_name}")
-            
-            mo = Production.create({
-                'product_id': line.product_id.id,
-                'product_qty': line.quantity,
-                'product_uom_id': line.product_id.uom_id.id,
-                'bom_id': bom.id,
-                'location_src_id': warehouse_loc.id,
-                'location_dest_id': kitchen_loc.id,
-                'origin': f"Kitchen Request {self.id}",
-            })
+        for bn_line in self.branch_kitchen_request_line_ids:
+            for line in bn_line.kitchen_menu_line_ids:
+                bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', line.product_id.id),
+                    ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                    ('company_id', '=', self.env.company.id),
+                ], order='sequence, product_id', limit=1)
+                
+                if not bom:
+                    raise ValidationError(f"No BOM found for {line.product_id.display_name}")
+                
+                mo = Production.create({
+                    'product_id': line.product_id.id,
+                    'product_qty': line.quantity,
+                    'product_uom_id': line.product_id.uom_id.id,
+                    'bom_id': bom.id,
+                    'location_src_id': warehouse_loc.id,
+                    'location_dest_id': kitchen_loc.id,
+                    'origin': f"Kitchen Request {self.id}",
+                })
 
-            # confirm and reserve components
-            mo.action_confirm()
+                # confirm and reserve components
+                mo.action_confirm()
 
-            mo_ids.append(mo.id)
+                mo_ids.append(mo.id)
 
         # add all MOs at once
         self.mrp_ids = [(6, 0, mo_ids)]
