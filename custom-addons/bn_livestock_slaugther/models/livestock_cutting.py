@@ -27,6 +27,8 @@ class LivestockCutting(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
+    is_picking = fields.Boolean('Is Picking')
+
 
     @api.model
     def create(self, vals):
@@ -85,6 +87,8 @@ class LivestockCutting(models.Model):
         picking.action_confirm()
         picking.action_assign()
         picking.button_validate()
+
+        self.is_picking = True
 
         return {
             'type': 'ir.actions.act_window',
