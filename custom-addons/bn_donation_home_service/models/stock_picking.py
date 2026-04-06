@@ -10,7 +10,7 @@ class StockPicking(models.Model):
     
 
     def _create_live_stock_slaughter_cutting(self):
-        """Create live_stock_slaughter.cutting record based on the picking"""
+        """Create livestock.cutting record based on the picking"""
         for move in self.move_ids:
             product = move.product_id
             # raise UserError(str(move.product_id.read()))
