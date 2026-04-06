@@ -16,6 +16,7 @@ class LivestockCutting(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
+    picking_id = fields.Many2one('stock.picking', string="Picking")
 
     name = fields.Char(related='product_id.name', string="Product Name", store=True)
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)

@@ -135,8 +135,6 @@ class LivestockSlaughter(models.Model):
         picking.action_assign()
 
         # Set the done quantities and validate the picking
-        # for move_line in picking.move_line_ids:
-        #     move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
         cutting_record = cutting_obj.create({
             'product_id': self.product_id.id,
