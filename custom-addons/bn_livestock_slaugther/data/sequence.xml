@@ -24,6 +24,20 @@
             <field name="padding">5</field>
         </record>
     
+        <record id="meat_department_sequence" model="ir.sequence">
+            <field name="name">Meat Department</field>
+            <field name="code">meat_department</field>
+            <field name="prefix">MD/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
+        <record id="goat_department_sequence" model="ir.sequence">
+            <field name="name">Goat Department</field>
+            <field name="code">goat_department</field>
+            <field name="prefix">GD/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
     </data>
     
 

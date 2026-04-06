@@ -39,7 +39,12 @@ class LivestockSlaughter(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
+            if vals.get('is_meat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('meat_slaughter') or ('New')
+            elif vals.get('is_goat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('goat_slaughter') or ('New')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
 
         return super(LivestockSlaughter, self).create(vals)
 
