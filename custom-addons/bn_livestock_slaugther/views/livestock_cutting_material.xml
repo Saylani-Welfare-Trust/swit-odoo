@@ -25,8 +25,8 @@
                     <button string="Update Inventory" name="action_update_inventory" invisible="state != 'not_received'" />
                     <button string="Send to Goat &amp; Meat" name="action_send_to_goat_and_meat" invisible="state != 'not_received'" />
 
-                    <button string="Start Cutting" name="action_start_cutting" invisible="state != 'received'" />
-                    <button string="End Cutting" name="action_end_cutting" invisible="state != 'received'" />
+                    <button string="Start Cutting" name="action_start_cutting" type="object" invisible="state != 'received'" />
+                    <button string="End Cutting" name="action_end_cutting" type="object" invisible="state != 'received'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received, in_progress, done"/>
                 </header>
