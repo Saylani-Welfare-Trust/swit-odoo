@@ -39,7 +39,7 @@ class LivestockCutting(models.Model):
             'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
-            'product_code': self.product_code,
+            'code': self.code,
         })
 
         if not self.picking_id:
