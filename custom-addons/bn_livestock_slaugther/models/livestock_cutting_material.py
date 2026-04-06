@@ -134,7 +134,7 @@ class LivestockCuttingMaterial(models.Model):
 
     def action_start_cutting(self):
         product_master = self.env['product.master']
-        needed_parents = product_master.search([('product_id', '=', self.product.id)], limit=1)
+        needed_parents = product_master.search([('product_id', '=', self.product_id.id)], limit=1)
 
         self.state = 'in_progress'
         self.start_time = fields.Datetime.now()
@@ -163,7 +163,7 @@ class LivestockCuttingMaterial(models.Model):
             raise ValidationError("No such location Livestock Cutting found!")
 
         # 2) for each material line, subtract from that location’s quant
-        product = self.product
+        product = self.product_id
         used_qty = self.quantity
 
         # find the quant in Cutting location
