@@ -24,10 +24,12 @@
             <form>
                 <field name="is_meat_depart" invisible="1" />
                 <field name="is_goat_depart" invisible="1" />
+                <field name="confirm_hide" invisible="1" />
+                <field name="cutting_hide" invisible="1" />
 
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" />
-                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="is_meat_depart or is_goat_depart" />
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide" />
+                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide" />
                     <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="is_meat_depart or is_goat_depart" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
