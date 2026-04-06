@@ -39,10 +39,10 @@ class LivestockSlaugtherWizard(models.TransientModel):
             raise UserError(_('No internal picking type found. Configure a Warehouse with an Internal Transfers type.'))
 
         # ensure we have a concrete product.product
-        product = getattr(rec.product, 'product_variant_id', False) or (
-                    rec.product.product_variant_ids and rec.product.product_variant_ids[0])
+        product = getattr(rec.product_id, 'product_variant_id', False) or (
+                    rec.product_id.product_variant_ids and rec.product_id.product_variant_ids[0])
         if not product:
-            raise UserError(_('No product variant found for template: %s') % rec.product.display_name)
+            raise UserError(_('No product variant found for template: %s') % rec.product_id.display_name)
 
         # Build picking
         picking_vals = {
