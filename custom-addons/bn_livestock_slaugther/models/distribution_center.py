@@ -122,7 +122,7 @@ class DistributionCenter(models.Model):
             'partner_id': self.donee_id.id,
             'picking_type_id': self.env.ref('stock.picking_type_out').id,
             'location_id': warehouse_loc.id,
-            # 'location_dest_id': self.donee_id.property_stock_customer.id,
+            'location_dest_id': self.donee_id.property_stock_customer.id,
             'move_ids': [
                 (0, 0, {
                     'name': line.product_id.display_name,
@@ -131,7 +131,7 @@ class DistributionCenter(models.Model):
                     'quantity': line.quantity,
                     'product_uom': line.product_id.uom_id.id,
                     'location_id': warehouse_loc.id,
-                    # 'location_dest_id': self.donee_id.property_stock_customer.id,
+                    'location_dest_id': self.donee_id.property_stock_customer.id,
                 })
                 for line in self.distribution_center_line_ids
             ],
