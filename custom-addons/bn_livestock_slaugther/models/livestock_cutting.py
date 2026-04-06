@@ -49,9 +49,6 @@ class LivestockCutting(models.Model):
             'code': self.code,
         })
 
-        if not self.picking_id:
-            raise ValidationError("No picking linked to this cutting record!")
-
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
             ('warehouse_id.company_id', '=', self.env.company.id)
