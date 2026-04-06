@@ -49,7 +49,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'picking_type_id': picking_type.id,
             'location_id': src_loc.id,
             'location_dest_id': self.dest_location_id.id,
-            'partner_id': rec.donee.id if rec.donee else False,
+            'partner_id': rec.donee_id.id if rec.donee_id else False,
             'origin': rec.pos_name or _('Slaughter Transfer'),
             'company_id': rec.company_id.id,
         }
