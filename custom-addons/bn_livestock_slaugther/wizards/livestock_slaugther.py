@@ -50,7 +50,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'location_id': src_loc.id,
             'location_dest_id': self.dest_location_id.id,
             'partner_id': rec.donee_id.id if rec.donee_id else False,
-            'origin': rec.livestock_slaughter_id.name or _('Slaughter Transfer'),
+            'origin': self.livestock_slaughter_id.name or _('Slaughter Transfer'),
             'company_id': rec.company_id.id,
         }
         picking = self.env['stock.picking'].create(picking_vals)

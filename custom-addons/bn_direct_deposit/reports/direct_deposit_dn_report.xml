@@ -126,7 +126,7 @@
                                 <tbody>
                                     <t t-foreach="o.direct_deposit_line_ids" t-as="line">
                                         <tr>
-                                            <td><t t-esc="line.product_id.name"/></td>
+                                            <td><t t-esc="line.product_id.display_name"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount or 0)) or 0"/></td>
@@ -157,7 +157,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="o.direct_deposit_line_ids" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
+                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
