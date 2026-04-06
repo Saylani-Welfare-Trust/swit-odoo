@@ -10,6 +10,13 @@
             <field name="padding">5</field>
         </record>
     
+        <record id="livestock_slaughter_sequence" model="ir.sequence">
+            <field name="name">Livestock Slaughter</field>
+            <field name="code">livestock_slaugther</field>
+            <field name="prefix">LS/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
     </data>
     
 

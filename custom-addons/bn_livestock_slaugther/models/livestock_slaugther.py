@@ -1,4 +1,4 @@
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
 
 
@@ -18,7 +18,7 @@ class LivestockSlaughter(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
-    name = fields.Char(related='product_id.name', string="Product Name", store=True)
+    name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
     ref = fields.Char('Source Document')
 
@@ -33,6 +33,13 @@ class LivestockSlaughter(models.Model):
     confirm_hide = fields.Boolean('Confirm Hide')
     cutting_hide = fields.Boolean('Cutting Hide')
 
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
+
+        return super(LivestockSlaughter, self).create(vals)
 
     def action_confirm(self):
         # Retrieve the 'Slaughter Stock' location
