@@ -38,6 +38,8 @@ class LivestockSlaughter(models.Model):
 
     @api.model
     def create(self, vals):
+        raise ValidationError(str(vals))
+
         if vals.get('name', _('New') == _('New')):
             if vals.get('is_meat_depart'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('meat_slaughter') or ('New')
