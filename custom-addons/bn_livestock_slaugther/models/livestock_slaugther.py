@@ -30,6 +30,8 @@ class LivestockSlaughter(models.Model):
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
+    confirm_hide = fields.Boolean('Confirm Hide')
+    cutting_hide = fields.Boolean('Cutting Hide')
 
 
     def action_confirm(self):
@@ -88,6 +90,7 @@ class LivestockSlaughter(models.Model):
             move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
 
+        self.confirm_hide = True
         self.state = 'received'
 
     def action_cutting(self):
@@ -143,6 +146,8 @@ class LivestockSlaughter(models.Model):
             'code': self.code,
             'picking_id': picking.id,
         })
+
+        self.cutting_hide = True
 
         return {
             'type': 'ir.actions.act_window',
