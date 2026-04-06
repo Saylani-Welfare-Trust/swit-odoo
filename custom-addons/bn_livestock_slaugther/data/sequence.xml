@@ -17,6 +17,13 @@
             <field name="padding">5</field>
         </record>
     
+        <record id="livestock_cutting_sequence" model="ir.sequence">
+            <field name="name">Livestock Cutting</field>
+            <field name="code">livestock_cutting</field>
+            <field name="prefix">LC/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
     </data>
     
 

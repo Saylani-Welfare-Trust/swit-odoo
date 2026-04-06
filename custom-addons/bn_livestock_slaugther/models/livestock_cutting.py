@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -18,7 +18,7 @@ class LivestockCutting(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    name = fields.Char(related='product_id.name', string="Product Name", store=True)
+    name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
 
     quantity = fields.Integer('Quantity', default=1)
@@ -27,6 +27,13 @@ class LivestockCutting(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
+
+        return super(LivestockCutting, self).create(vals)
 
     def action_confirm(self):
         self.state = 'received'
