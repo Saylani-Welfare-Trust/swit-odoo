@@ -66,7 +66,7 @@ class BranchKitchenRequest(models.Model):
         mo_ids = []
 
         for bn_line in self.branch_kitchen_request_line_ids:
-            for line in bn_line.kitchen_menu_line_ids:
+            for line in bn_line.kitchen_menu_id.kitchen_menu_line_ids:
                 bom = self.env['mrp.bom'].search([
                     '|',
                     ('product_id', '=', line.product_id.id),
