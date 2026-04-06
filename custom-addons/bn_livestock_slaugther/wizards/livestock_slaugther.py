@@ -31,7 +31,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
         # choose internal picking type for the company (fallback to any internal if company-specific not found)
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', rec.company_id.id)
+            ('warehouse_id.company_id', '=', self.env.company.id)
         ], limit=1)
         if not picking_type:
             picking_type = self.env['stock.picking.type'].search([('code', '=', 'internal')], limit=1)
