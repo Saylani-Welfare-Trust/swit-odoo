@@ -90,6 +90,7 @@
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
                             <field name="portal_review_notes" readonly="1" />
                             <field name="inquiry_media" widget="html" readonly="1"/>
+                            <field name="applicantLocationLink" readonly="0"/>
                         </group>
                     </group>
                     <notebook>
@@ -112,6 +113,7 @@
                                     <field name="amount" readonly="1" />
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />
+                                   <field name="net_amount" readonly="1" />
                                     <field name="show_deliver_button" column_invisible="1"/>
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />

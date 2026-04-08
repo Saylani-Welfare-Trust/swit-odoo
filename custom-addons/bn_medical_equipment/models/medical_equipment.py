@@ -46,15 +46,18 @@ class MedicalEquipment(models.Model):
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
     recovery_picking_id = fields.Many2one('stock.picking', string="Recovery Picking")
     sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
-
+    last_sync_date = fields.Datetime('Last Sync Date')
     name = fields.Char('Name', default="New")
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
     mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True, size=10)
     city = fields.Char(related='donee_id.city', string="City", store=True)
     street = fields.Char(related='donee_id.street', string="Street", store=True)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
+    application_location_link = fields.Char(string="Application Location Link", store=True)
     
     remarks = fields.Text('Remarks')
+    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
+
 
     date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
 
@@ -66,10 +69,14 @@ class MedicalEquipment(models.Model):
     # Actual deposit percentage - determines case type automatically
     actual_deposit_percentage = fields.Float('Actual Deposit Percentage (%)', default=100.0)
     case_type = fields.Char('Case Type', compute='_compute_case_type', store=True)
+    employee_id = fields.Many2one('hr.employee', string="Employee")
+    loan_request_amount = fields.Float('Loan Request Amount')
+
+
     
     # Welfare portal fields for Below 50% cases
     welfare_portal_id = fields.Char('Welfare Portal ID', readonly=True)
-    welfare_acknowledgment = fields.Boolean('Welfare Portal Acknowledgment')
+    Portal_acknowledgment = fields.Boolean('Portal Acknowledgment')
     
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id',compute='_compute_total_amount',store=True)
     service_charges = fields.Monetary('Service Charges', currency_field='currency_id')
@@ -313,7 +320,7 @@ class MedicalEquipment(models.Model):
             if not self.welfare_portal_id:
                 raise ValidationError('Welfare Portal ID must be synced before approval for Below 50% cases.')
             
-            if not self.welfare_acknowledgment:
+            if not self.Portal_acknowledgment:
                 raise ValidationError('Welfare acknowledgment must be received before approval.')
             
             if not self.remarks:
@@ -388,8 +395,8 @@ class MedicalEquipment(models.Model):
                 # Step 5: Update record with portal information (like welfare does)
                 rec.write({
                     'welfare_portal_id': portal_application_id,
-                    'is_synced': True,
-                    'last_sync_date': fields.Datetime.now(),
+                    'Portal_acknowledgment': True,
+                    'last_sync_date': self.last_sync_date,
                 })
                 
                 result_message = f"✅ Successfully synced to Welfare Portal. Application ID: {portal_application_id}"
@@ -449,34 +456,57 @@ class MedicalEquipment(models.Model):
         """Create medical equipment application in welfare portal"""
         try:
             endpoint = self.env.company.create_application_endpoint
+            data_list = []
+            for line in self.medical_equipment_line_ids:
+                data_list.append({
+                    "medicalEquipmentCategoryId": line.medical_equipment_category_id,
+                    "productId": line.product_id,
+                    "quantity": line.quantity,
+                    "baseSecurityDeposit": line.base_security_deposit,
+                    "actualDepositPercentage": line.actual_deposit_percentage,
+                    "securityDeposit": line.security_deposit,
+            })
+            # raise ValidationError(str(data_list))
             data = {
                 "json": {
                     "applicationData": {
                         "odooId": self.id,
                         "doneeOdooId": self.donee_id.id,
+                        "inquiryOfficerOdooId": self.employee_id.id,
+                        "department": "medical",
                         "form": {
-                            "category": "Medical Equipment",
-                            "subcategory": self.case_type,
-                            "donee_name": self.donee_id.name,
-                            "cnic_no": self.cnic_no,
-                            "mobile": self.mobile,
-                            "city": self.city,
-                            "street": self.street,
-                            "date_of_birth": str(self.date_of_birth) if self.date_of_birth else None,
-                            "gender": self.gender,
-                            "age": self.age,
-                            "case_type": self.case_type,
-                            "actual_deposit_percentage": self.actual_deposit_percentage,
-                            "total_amount": float(self.total_amount),
-                            "remarks": self.remarks or ''
+                            "category": "medical",
+                            "subcategory": "medical",
+                            "date": fields.Date.today().strftime("%d-%m-%Y"),
+                            "loanRequestAmount": self.loan_request_amount,
+                            "applicationInformation": {
+                                "name": self.donee_id.name,
+                                "fatherName": self.donee_id.father_name,
+                                "cnic": self.cnic_no,
+                                "phoneNumber": self.donee_id.mobile,
+                                "whatsappNumber": self.donee_id.mobile,
+                                "applicantLocationLink": self.application_location_link,
+                            },
+                            "medicalInfo": {
+                                "state": self.state ,
+                                "actualDepositPercentage": self.actual_deposit_percentage,
+                                "caseType": self.case_type,
+                                "totalAmount": self.total_amount,
+                                "serviceCharges": self.service_charges,
+                                "remarks": self.remarks,
+                                "welfarePortalId": self.welfare_portal_id,
+                                "welfareAcknowledgment": self.Portal_acknowledgment,
+                                "medicalEquipmentLines": data_list,
+                            },
                         }
                     }
                 }
             }
+            # raise ValidationError(str(data))
             result = self._make_welfare_api_call(endpoint, 'POST', data)
             return result
         except Exception as e:
-            raise ValidationError(f"Failed to create application in welfare portal: {str(e)}")
+            raise ValidationError(f"Failed to create medical equipment application in welfare portal: {str(e)}")
     
     def _mark_me_application_synced(self):
         """Mark medical equipment application as synced in welfare portal"""
@@ -484,7 +514,8 @@ class MedicalEquipment(models.Model):
             endpoint = self.env.company.mark_application_endpoint
             data = {
                 "json": {
-                    "odooId": self.id
+                    "odooId": self.id,
+                    "department": "medical",
                 }
             }
             result = self._make_welfare_api_call(endpoint, 'POST', data)
@@ -563,7 +594,7 @@ class MedicalEquipment(models.Model):
         if self.case_type != 'below_50_percent':
             raise ValidationError('Only Below 50% cases can receive welfare acknowledgment.')
         
-        self.write({'welfare_acknowledgment': True})
+        self.write({'Portal_acknowledgment': True})
         
     def action_show_picking(self):
         return {

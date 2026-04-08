@@ -46,6 +46,9 @@ class WelfareRecurringLine(models.Model):
     
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     
+    def write(self, vals):
+        return super().write(vals)
+    
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
@@ -163,6 +166,7 @@ class WelfareRecurringLine(models.Model):
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
     
+    @api.onchange('disbursement_category_id')
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""

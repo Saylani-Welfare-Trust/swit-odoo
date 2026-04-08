@@ -56,7 +56,7 @@ class WelfareLine(models.Model):
     # warehouse_id = fields.Many2one('stock.warehouse', string="Warehouse")
     # warehouse_domain = fields.Char('Warehouse Domain', compute='_compute_warehouse_domain', default="[]", store=True)
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
-
+    net_amount = fields.Float('Net Amount', compute='_compute_net_amount')
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -95,6 +95,8 @@ class WelfareLine(models.Model):
     def write(self, vals):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
         
+        vals["net_amount"]= self.net_amount
+        vals["total_amount"]= self.total_amount
         if 'disbursement_category_id' in vals:
             if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
                 vals['collection_point'] = 'branch'
@@ -230,6 +232,11 @@ class WelfareLine(models.Model):
         for rec in self:
             rec.total_amount = rec.quantity * rec.amount
             
+    @api.depends('total_amount')
+    def _compute_net_amount(self):
+        for rec in self:
+            rec.net_amount = rec.total_amount  # Placeholder for any future deductions or adjustments to total amount
+        
     @api.depends('disbursement_application_type_id')
     def _compute_product_domain(self):
         for rec in self:

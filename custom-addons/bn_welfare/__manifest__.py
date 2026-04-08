@@ -8,7 +8,7 @@
     'depends': [
         'bn_microfinance',
         'bn_profile_management',
-        'bn_analytic_account_customization'
+        'bn_analytic_account_customization',
     ],
     'data': [
         'data/sequence.xml',
@@ -17,11 +17,11 @@
         'data/ir_cron_auto_deliver.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        'views/welfare_institution_fetch_log.xml',
         'views/welfare.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',
-        'views/welfare_institution_fetch_log.xml',
         'reports/report_welfare_collection_document.xml',
     ],
     'auto_install': False,

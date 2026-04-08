@@ -21,7 +21,7 @@
                 <header>
                     <field name="is_donee_register" invisible="1" />
                     <field name="case_type" invisible="1" />
-                    <field name="welfare_acknowledgment" invisible="1" />
+                    <field name="Portal_acknowledgment" invisible="1" />
                     
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
                     
@@ -68,13 +68,18 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
+                            <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" />
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" />
                             <field name="cnic_no" readonly="state != 'draft'" required="1" />
                             <field name="street" string="Address" readonly="state != 'draft'" required="1" />
                             <field name="city" required="1" readonly="state != 'draft'" />
                             <field name="remarks" invisible="case_type in ['referral', '100_percent']" readonly="state != 'draft'" />
+                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
+                            <field name="application_location_link" readonly="state != 'draft'" required="1" />
+                            <field name="loan_request_amount" readonly="state != 'draft'" />
+                            <field name="last_sync_date" readonly="1" />
                         </group>
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
@@ -92,7 +97,7 @@
 
                     <group string="Welfare Portal Information" invisible="case_type != 'below_50_percent'">
                         <field name="welfare_portal_id" readonly="1" />
-                        <field name="welfare_acknowledgment" readonly="state != 'draft'" />
+                        <field name="Portal_acknowledgment" readonly="state != 'draft'" />
                     </group>
 
                     <notebook>

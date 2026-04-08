@@ -1,5 +1,8 @@
 from odoo import fields, models, api
 from odoo.exceptions import ValidationError,UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 box_status_selection = [
@@ -72,13 +75,28 @@ class DonationBoxComplain(models.Model):
         self.status = 'process'
     
     def action_resolve(self):
+        # Check if key has been returned before allowing resolution
+        if self.lot_id:
+            keys = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
+            if keys:
+                # Check if any key is still in issued or pending state (not returned)
+                unreturned_keys = keys.filtered(lambda k: k.state in ['issued', 'pending'])
+                if unreturned_keys:
+                    raise ValidationError(
+                        f"❌ Cannot resolve complaint!\n\n"
+                        f"Key(s) must be returned before resolution.\n\n"
+                        f"Unreturned Keys:\n" +
+                        "\n".join([f"  • {k.name} (Status: {k.state})" for k in unreturned_keys]) +
+                        "\n\nPlease ensure all keys are returned and marked as available."
+                    )
+        
         # Validate complain officer remark and box recovered status for missing and robbery cases
         if self.box_status in ['missing', 'robbery']:
             if not self.complain_officer_remark:
                 raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
             if not self.box_recovered:
                 raise ValidationError("Please indicate whether the box was recovered or not before resolving Missing or Robbery cases.")
-        
+            
         # Use stored_registration_id as it persists after resolve
         registration = self.stored_registration_id or self.donation_box_registration_installation_id
         
