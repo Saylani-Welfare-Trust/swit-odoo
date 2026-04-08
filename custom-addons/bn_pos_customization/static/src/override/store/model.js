@@ -16,7 +16,7 @@ patch(Order.prototype, {
                 name: this.partner ? this.partner.name : "",
                 mobile: this.partner ? this.partner.mobile : "",
                 phone: this.partner ? this.partner.phone : "",
-                cnic: this.partner ? this.partner.cnic_no : "",
+                cnic_no: this.partner ? this.partner.cnic_no : "",
             },
 
             branch_code: this.cashier.branch_code,
