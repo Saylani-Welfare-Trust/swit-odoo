@@ -35,7 +35,7 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
         keys=[]
-        # raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
+        raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
                 # ('key_id', '=', 33922),
