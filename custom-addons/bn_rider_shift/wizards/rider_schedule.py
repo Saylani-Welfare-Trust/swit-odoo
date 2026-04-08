@@ -116,6 +116,10 @@ class RiderSchedule(models.TransientModel):
                     }))
 
         raise UserError(str(keys)+" --------------- ")
+    
+
+
+    
         # ✅ Build wizard
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
