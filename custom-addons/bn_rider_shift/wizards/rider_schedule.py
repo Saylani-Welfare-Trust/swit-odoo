@@ -35,7 +35,7 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
         keys=[]
-        raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
+        # raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
                 # ('key_id', '=', 33922),
@@ -59,7 +59,6 @@ class RiderSchedule(models.TransientModel):
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', 'not in', ['pending', 'donation_submit', 'paid']),
             ])
-            raise UserError(str(keys)+" --------------- "+str(lot_ids)+" --------------- "+str(existing_collections.read()))
 
             # Get already existing lot_ids
             existing_lot_ids = existing_collections.mapped('lot_id').ids
@@ -116,6 +115,7 @@ class RiderSchedule(models.TransientModel):
                         # 'counterfeit_notes': collection.counterfeit_notes,
                     }))
 
+        raise UserError(str(keys)+" --------------- ")
         # ✅ Build wizard
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
