@@ -34,18 +34,19 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No shift found for today. Please check your schedule."))
 
         line_vals = []
+        keys=[]
         # raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
-                ('key_id', '=', 33922),
-                # ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
+                # ('key_id', '=', 33922),
+                ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
                 ('state', 'in', ['issued', 'overdue']),
                 # ('issue_date', '<=', obj.date),
             ])
 
+            keys.append(key_ids.mapped('key_name'))
 
-
-            raise UserError(str(key_ids.mapped('key_name'))+" --------------- "+str(obj.key_bunch_id.name)+" --------------- "+str(obj.date))
+            # raise UserError(str(key_ids.mapped('key_name'))+" --------------- "+str(obj.key_bunch_id.name)+" --------------- "+str(obj.date))
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
 
@@ -58,6 +59,7 @@ class RiderSchedule(models.TransientModel):
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', 'not in', ['pending', 'donation_submit', 'paid']),
             ])
+            raise UserError(str(keys)+" --------------- "+str(lot_ids)+" --------------- "+str(existing_collections.read()))
 
             # Get already existing lot_ids
             existing_lot_ids = existing_collections.mapped('lot_id').ids
