@@ -34,7 +34,7 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No shift found for today. Please check your schedule."))
 
         line_vals = []
-
+        raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
                 ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
