@@ -42,7 +42,7 @@ class RiderSchedule(models.TransientModel):
                 # ('issue_date', '<=', obj.date),
             ])
 
-            raise UserError(str(key_ids.mapped('key_name').ids)+" --------------- "+str(obj.key_bunch_id.name)+" --------------- "+str(obj.date))
+            raise UserError(str(key_ids.mapped('key_name'))+" --------------- "+str(obj.key_bunch_id.name)+" --------------- "+str(obj.date))
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
 
