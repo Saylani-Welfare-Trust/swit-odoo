@@ -53,6 +53,8 @@ class RiderScheduleLine(models.TransientModel):
 
     remarks = fields.Text('Remarks')
 
+    is_complain_generated = fields.Boolean('Is Complain Generated')
+
 
     def mark_as_done(self):
         self.state = 'donation_collected'

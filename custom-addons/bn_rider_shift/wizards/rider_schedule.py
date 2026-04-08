@@ -39,7 +39,7 @@ class RiderSchedule(models.TransientModel):
             key_ids = self.env['key.issuance'].search([
                 ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
                 ('state', 'in', ['issued', 'overdue']),
-                # ('issue_date', '<=', obj.date),
+                ('issue_date', '<=', obj.date),
             ])
 
             lot_ids = key_ids.mapped('lot_id')
@@ -82,8 +82,7 @@ class RiderSchedule(models.TransientModel):
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
                     # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
-                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
-                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id)]):
+                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
                         finalized_missing_lot_ids.append(missing_lot_id)
 
                 boxes = self.env['donation.box.registration.installation'].search([
