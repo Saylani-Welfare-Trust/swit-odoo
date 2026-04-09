@@ -17,6 +17,7 @@
         'views/qurbani_schedule.xml',
         'views/qurbani_order.xml',
         'views/qurbani_day.xml',
+        'reports/qurbani_token.xml',
     ],
     'auto_install': False,
     'application': True,

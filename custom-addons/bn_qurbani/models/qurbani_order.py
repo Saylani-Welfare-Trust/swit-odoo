@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class QurbaniOrder(models.Model):
@@ -19,4 +19,58 @@ class QurbaniOrder(models.Model):
             'view_mode': 'form',
             'res_id': self.pos_order_id.id,
             'target': 'current',
+        }
+    
+    @api.model
+    def select_order(self, data):
+        if not data:
+            return {
+                "status": "error",
+                "body": "Please provide order reference",
+            }
+
+        order_ref = data.get('order_ref')
+        if not order_ref:
+            return {
+                "status": "error",
+                "body": "Order reference is required",
+            }
+
+        # -------------------------
+        # Find POS Order
+        # -------------------------
+        order = self.env['pos.order'].search(
+            [('pos_reference', '=', order_ref)],
+            limit=1
+        )
+
+        if not order:
+            return {
+                "status": "error",
+                "body": f"POS Order not found for reference {order_ref}",
+            }
+
+        # -------------------------
+        # Find Qurbani Order
+        # -------------------------
+        qurbani_order = self.env['qurbani.order'].search(
+            [('pos_order_id', '=', order.id)],
+            limit=1
+        )
+
+        if not qurbani_order:
+            return {
+                "status": "error",
+                "body": f"Qurbani Order not found for reference {order_ref}",
+            }
+
+        # -------------------------
+        # Success Response
+        # -------------------------
+        return {
+            "status": "success",
+            "id": qurbani_order.id,
+            "name": qurbani_order.name,
+            "pos_reference": order.pos_reference,
+            "customer": order.partner_id.name if order.partner_id else None,
         }
