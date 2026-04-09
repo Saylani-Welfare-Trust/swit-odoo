@@ -41,7 +41,8 @@ class PosOrder(models.Model):
                     self.env['livestock.slaugther'].create({
                         'product_id': product.id,
                         'quantity': int(line.qty),
-                        'ref': order.name,
+                        'price': int(line.price_subtotal_incl),
+                        'ref': order.pos_reference,
                         'source_location_id': order.picking_type_id.default_location_src_id.id
                         if hasattr(order, 'picking_type_id') else False,
                     })
