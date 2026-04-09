@@ -25,7 +25,7 @@ class PosOrder(models.Model):
                 ], limit=1)
 
                 if schedule:
-                    schedule.pos_hissa += 1   # increment by 1
+                    schedule.current_hissa += 1   # increment by 1
 
             # If list is not empty → create record
             if product_list:
