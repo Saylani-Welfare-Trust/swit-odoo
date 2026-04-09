@@ -220,7 +220,7 @@
             <field name="report_type">qweb-html</field>
             <field name="report_name">bn_qurbani.qurbani_token_receipt_template</field>
             <field name="report_file">bn_qurbani.qurbani_token_receipt_template</field>
-            <field name="binding_model_id" ref="point_of_sale.model_pos_order"/>
+            <field name="binding_model_id" ref="bn_qurbani.model_qurbani_order"/>
             <field name="binding_type">report</field>
             <field name="paperformat_id" ref="bn_qurbani.paperformat_qurban_order_receipt_a5"/>
         </record>
