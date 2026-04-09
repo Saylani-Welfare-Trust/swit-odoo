@@ -29,7 +29,7 @@
 
     <!-- Parent Menu -->
     <menuitem id="menu_qurbani_root"
-        name="Qurbani Management"
+        name="Qurbani"
         web_icon="bn_qurbani,static/description/icon.png"
         sequence="10"/>
 
