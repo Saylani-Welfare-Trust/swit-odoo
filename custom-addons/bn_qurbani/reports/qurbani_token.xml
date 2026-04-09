@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <template id="bn_pos_order.pos_donation_receipt_template">
+        <template id="bn_qurbani.qurbani_token_receipt_template">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="order">
                     <t t-call="web.external_layout">
