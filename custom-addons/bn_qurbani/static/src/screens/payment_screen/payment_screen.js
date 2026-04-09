@@ -32,7 +32,7 @@ patch(PaymentScreen.prototype, {
             }
         }
 
-        if (!hasValidProduct) {
+        if (hasValidProduct) {
             // 🔹 First call your custom method
             const data = await this.orm.call('qurbani.order', "select_order", [currentOrder.name]);
 
