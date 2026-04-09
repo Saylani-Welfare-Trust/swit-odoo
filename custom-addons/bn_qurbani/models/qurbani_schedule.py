@@ -126,7 +126,7 @@ class QurbaniSchedule(models.Model):
                 'name': product.name,
                 'product_id': product.id,
                 'product_uom_qty': qty,
-                'quantity': product.uom_id.id,
+                'product_uom': product.uom_id.id,
                 'picking_id': picking.id,
                 'location_id': record.location_id.id,
                 'location_dest_id': customer_location.id,
@@ -142,7 +142,7 @@ class QurbaniSchedule(models.Model):
             # Set Done Quantity
             # -------------------------
             for move_line in picking.move_line_ids:
-                move_line.qty_done = qty
+                move_line.quantity = qty
 
             # -------------------------
             # Validate Delivery
