@@ -72,6 +72,9 @@ class QurbaniSchedule(models.Model):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
+        # ✅ Get Customer Location
+        customer_location = self.env.ref('stock.stock_location_customers')
+
         for record in self:
             if not record.livestock_product_id or not record.location_id:
                 continue
@@ -112,7 +115,7 @@ class QurbaniSchedule(models.Model):
             picking = StockPicking.create({
                 'picking_type_id': picking_type.id,
                 'location_id': record.location_id.id,
-                'location_dest_id': picking_type.default_location_dest_id.id,
+                'location_dest_id': customer_location.id,
                 'origin': record.day_id.name or 'Qurbani Schedule',
             })
 
@@ -126,7 +129,7 @@ class QurbaniSchedule(models.Model):
                 'product_uom': product.uom_id.id,
                 'picking_id': picking.id,
                 'location_id': record.location_id.id,
-                'location_dest_id': picking_type.default_location_dest_id.id,
+                'location_dest_id': customer_location.id,
             })
 
             # -------------------------
