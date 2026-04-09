@@ -6,6 +6,7 @@
         <field name="model">qurbani.order</field>
         <field name="arch" type="xml">
             <tree create="false" edit="false" delete="false">
+                <field name="name"/>
                 <field name="pos_order_id"/>
                 <field name="receipt_number"/>
                 <field name="product_ids" widget="many2many_tags"/>

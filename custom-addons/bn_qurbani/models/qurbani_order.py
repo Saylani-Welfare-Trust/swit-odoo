@@ -1,14 +1,24 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
     _description = 'Qurbani POS Orders'
 
-    pos_order_id = fields.Many2one('pos.order', string="Order", required=True)
-    receipt_number = fields.Char(string="Receipt Number", required=True)
+    pos_order_id = fields.Many2one('pos.order', string="Order")
+    
+    name = fields.Char('Name', default="New")
+    receipt_number = fields.Char('Receipt Number')
+    
     product_ids = fields.Many2many('product.product', string="Products")
 
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order') or ('New')
+
+        return super(QurbaniOrder, self).create(vals)
 
     def action_show_order(self):
         self.ensure_one()
