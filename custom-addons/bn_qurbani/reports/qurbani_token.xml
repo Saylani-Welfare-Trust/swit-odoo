@@ -217,7 +217,7 @@
         <record id="qurbani_token_report" model="ir.actions.report">
             <field name="name">Qurbani Token</field>
             <field name="model">qurbani.order</field>
-            <field name="report_type">qweb-html</field>
+            <field name="report_type">qweb-pdf</field>
             <field name="report_name">bn_qurbani.qurbani_token_receipt_template</field>
             <field name="report_file">bn_qurbani.qurbani_token_receipt_template</field>
             <field name="binding_model_id" ref="bn_qurbani.model_qurbani_order"/>
