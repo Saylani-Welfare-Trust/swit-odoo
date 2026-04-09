@@ -9,6 +9,8 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
+        console.log(this);
+
         let hasValidProduct = false;
 
         // -------------------------
