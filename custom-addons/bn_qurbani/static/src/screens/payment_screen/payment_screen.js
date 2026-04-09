@@ -7,12 +7,6 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
-
-        // Continue with normal POS flow
-        super.validateOrder(isForceValidate);
-
-        const currentOrder = this.currentOrder;
-
         let hasValidProduct = false;
 
         // -------------------------
@@ -56,5 +50,8 @@ patch(PaymentScreen.prototype, {
                 return;
             }
         }
+
+        // Continue with normal POS flow
+        return super.validateOrder(isForceValidate);
     }
 })
