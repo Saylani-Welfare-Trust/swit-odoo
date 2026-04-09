@@ -126,7 +126,7 @@ class QurbaniSchedule(models.Model):
                 'name': product.name,
                 'product_id': product.id,
                 'product_uom_qty': qty,
-                'product_uom': product.uom_id.id,
+                'quantity': product.uom_id.id,
                 'picking_id': picking.id,
                 'location_id': record.location_id.id,
                 'location_dest_id': customer_location.id,
