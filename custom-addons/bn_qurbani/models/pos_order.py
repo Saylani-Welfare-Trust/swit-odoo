@@ -36,6 +36,7 @@ class PosOrder(models.Model):
                     # -------------------------
                 elif (
                     product.is_livestock
+                    and product.type == 'product'
                 ):
                     self.env['livestock.slaugther'].create({
                         'product_id': product.id,
