@@ -29,14 +29,15 @@
 
     <!-- Parent Menu -->
     <menuitem id="menu_qurbani_root"
-            name="Qurbani Management"
-            sequence="10"/>
+        name="Qurbani Management"
+        web_icon="bn_qurbani,static/description/icon.png"
+        sequence="10"/>
 
     <!-- Sub Menu -->
     <menuitem id="menu_qurbani_schedule"
-            name="Qurbani Schedule"
-            parent="menu_qurbani_root"
-            action="action_qurbani_schedule"
-            sequence="20"/>
+        name="Qurbani Schedule"
+        parent="menu_qurbani_root"
+        action="action_qurbani_schedule"
+        sequence="20"/>
 
 </odoo>
