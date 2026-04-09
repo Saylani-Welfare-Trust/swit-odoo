@@ -12,6 +12,7 @@
         'point_of_sale'
     ],
     'data': [
+        'data/sequence.xml',
         'security/ir.model.access.csv',
         'data/qurbani_day_data.xml',
         'views/qurbani_schedule.xml',
