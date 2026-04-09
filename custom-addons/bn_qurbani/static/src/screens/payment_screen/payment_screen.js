@@ -9,6 +9,7 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
+        console.log('New Rasie Amount Button Clicked');
         console.log(currentOrder);
 
         // 🔹 First call your custom method

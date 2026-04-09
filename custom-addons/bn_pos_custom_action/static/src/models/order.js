@@ -16,7 +16,6 @@ patch(Order.prototype, {
 
         // DEBUG: Get current partner
         const partner = this.get_partner();
-        console.log("DEBUG: Current Order Partner", partner);
 
         if (partner) {
             console.log("Partner Name:", partner.name);
@@ -28,7 +27,6 @@ patch(Order.prototype, {
                 cnic_no: partner.cnic_no || '',  // Fallback to empty string if undefined
             };
         } else {
-            console.log("No partner selected for this order");
             json.partner = json.partner || {};
             json.partner.cnic_no = '';
         }
