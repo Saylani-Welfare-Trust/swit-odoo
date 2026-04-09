@@ -5,7 +5,13 @@
         <field name="name">livestock.slaugther.view.tree</field>
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree create="0" edit="0" delete="0">
+                <field name="is_meat_depart" invisible="1" />
+                <field name="is_goat_depart" invisible="1" />
+                <field name="confirm_hide" invisible="1" />
+                <field name="cutting_hide" invisible="1" />
+                <field name="transfer_bool" invisible="1" />
+
                 <field name="product_id" />
                 <field name="code" />
                 <field name="donee_id" />
@@ -13,6 +19,10 @@
                 <field name="price" />
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" readonly="1" />
+                
+                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide" />
+                <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide" />
+                <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
             </tree>
         </field>
     </record>
@@ -65,7 +75,8 @@
     <record id="livestock_slaugther_action" model="ir.actions.act_window">
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
-        <field name="view_mode">tree,form</field>
+        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="view_mode">tree</field>
         <field name="domain">[('is_meat_depart', '=', False), ('is_goat_depart', '=', False)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -77,7 +88,8 @@
     <record id="meat_department_action" model="ir.actions.act_window">
         <field name="name">Meat Department</field>
         <field name="res_model">livestock.slaugther</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="view_mode">tree,form</field> -->
         <field name="domain">[('is_meat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_meat_depart': True
@@ -92,7 +104,8 @@
     <record id="goat_department_action" model="ir.actions.act_window">
         <field name="name">Goat Department</field>
         <field name="res_model">livestock.slaugther</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="view_mode">tree,form</field> -->
         <field name="domain">[('is_goat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_goat_depart': True
