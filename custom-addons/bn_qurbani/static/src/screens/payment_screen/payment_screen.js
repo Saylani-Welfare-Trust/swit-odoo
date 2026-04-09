@@ -49,7 +49,7 @@ patch(PaymentScreen.prototype, {
 
                 this.env.services.notification.add(_t("Amount Recorded Successfully"), { type: "success" });
                 
-                this.report.doAction("bn_qurbani.qurbani_token_report", [data.id]);
+                this.env.services.report.doAction("bn_qurbani.qurbani_token_report", [data.id]);
             }
         }
 
