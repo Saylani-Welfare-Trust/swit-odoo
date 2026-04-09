@@ -29,12 +29,10 @@ class PosOrder(models.Model):
 
             # If list is not empty → create record
             if product_list:
-                q_order = self.env['qurbani.order'].create({
+                self.env['qurbani.order'].create({
                     'pos_order_id': order.id,
                     'receipt_number': order.pos_reference,
                     'product_ids': [(6, 0, product_list)],  # Many2many format
                 })
-
-                report_action = self.env.ref('bn_qurbani.qurbani_token_report').report_action(q_order)
 
         return orders
