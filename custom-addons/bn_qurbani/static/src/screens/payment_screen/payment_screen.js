@@ -9,9 +9,6 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        console.log('Current Order Details:');
-        console.log(currentOrder);
-
         let hasValidProduct = false;
 
         // -------------------------
@@ -35,7 +32,7 @@ patch(PaymentScreen.prototype, {
 
         if (!hasValidProduct) {
             // 🔹 First call your custom method
-            const data = await this.orm.call('pos.order', "select_order", [currentOrder.name]);
+            const data = await this.orm.call('qurbani.order', "select_order", [currentOrder.name]);
 
             if (data.status === 'error') {
                 this.popup.add(ErrorPopup, {
