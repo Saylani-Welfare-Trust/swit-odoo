@@ -29,25 +29,18 @@ class QurbaniOrder(models.Model):
                 "body": "Please provide order reference",
             }
 
-        order_ref = data.get('order_ref')
-        if not order_ref:
-            return {
-                "status": "error",
-                "body": "Order reference is required",
-            }
-
         # -------------------------
         # Find POS Order
         # -------------------------
         order = self.env['pos.order'].search(
-            [('pos_reference', '=', order_ref)],
+            [('pos_reference', '=', data)],
             limit=1
         )
 
         if not order:
             return {
                 "status": "error",
-                "body": f"POS Order not found for reference {order_ref}",
+                "body": f"POS Order not found for reference {data}",
             }
 
         # -------------------------
@@ -61,7 +54,7 @@ class QurbaniOrder(models.Model):
         if not qurbani_order:
             return {
                 "status": "error",
-                "body": f"Qurbani Order not found for reference {order_ref}",
+                "body": f"Qurbani Order not found for reference {data}",
             }
 
         # -------------------------
