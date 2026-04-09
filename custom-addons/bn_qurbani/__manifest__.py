@@ -21,9 +21,9 @@
     ],
     'auto_install': False,
     'application': True,
-    'assets': {
-        'point_of_sale._assets_pos': [
-            'bn_qurbani/static/src/screens/**/*',
-        ],
-    }
+    # 'assets': {
+    #     'point_of_sale._assets_pos': [
+    #         'bn_qurbani/static/src/screens/**/*',
+    #     ],
+    # }
 }

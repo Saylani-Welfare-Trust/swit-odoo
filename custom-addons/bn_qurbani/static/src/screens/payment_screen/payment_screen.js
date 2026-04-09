@@ -48,12 +48,10 @@ patch(PaymentScreen.prototype, {
                 this.env.services.notification.add(_t("Amount Recorded Successfully"), { type: "success" });
                 
                 this.env.services.report.doAction("bn_qurbani.qurbani_token_report", [data.id]);
-
-                return
             }
         }
 
         // Continue with normal POS flow
-        super.validateOrder(isForceValidate);
+        return super.validateOrder(isForceValidate);
     }
 })
