@@ -5,7 +5,7 @@
         <field name="name">livestock.slaugther.view.tree</field>
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
+            <tree delete="0">
                 <field name="is_meat_depart" column_invisible="1" />
                 <field name="is_goat_depart" column_invisible="1" />
                 <field name="confirm_hide" column_invisible="1" />
@@ -79,6 +79,10 @@
         <!-- <field name="view_mode">tree,form</field> -->
         <field name="view_mode">tree</field>
         <field name="domain">[('is_meat_depart', '=', False), ('is_goat_depart', '=', False)]</field>
+        <field name="context">{
+            'create': 0,
+            'edit': 0,
+        }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's add a new livestock slaugther...
@@ -93,7 +97,7 @@
         <!-- <field name="view_mode">tree,form</field> -->
         <field name="domain">[('is_meat_depart', '=', True)]</field>
         <field name="context">{
-            'default_is_meat_depart': True
+            'default_is_meat_depart': True,
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
