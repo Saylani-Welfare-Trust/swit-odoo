@@ -15,7 +15,7 @@ class PosOrder(models.Model):
                 product = line.product_id
 
                 # Check both conditions
-                if product.is_livestock and product.type == 'service':
+                if product.is_livestock and product.type == 'service' and 'qurbani' in product.categ_id.name.lower():
                     product_list.append(product.id)
                 
 
