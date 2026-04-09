@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_qurbani_day,qurbani.day,model_qurbani_day,base.group_user,1,1,1,1
+access_qurbani_schedule,qurbani.schedule,model_qurbani_schedule,base.group_user,1,1,1,1
+access_qurbani_order,qurbani.order,model_qurbani_order,base.group_user,1,1,1,1
