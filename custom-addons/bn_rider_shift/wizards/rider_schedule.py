@@ -115,11 +115,8 @@ class RiderSchedule(models.TransientModel):
                         # 'counterfeit_notes': collection.counterfeit_notes,
                     }))
 
-        raise UserError(str(keys)+" --------------- ")
-    
+        # raise UserError(str(keys)+" --------------- ")
 
-
-    
         # ✅ Build wizard
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
