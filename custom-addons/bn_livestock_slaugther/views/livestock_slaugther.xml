@@ -17,8 +17,8 @@
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
-                <field name="ref" />
                 <field name="source_location_id" />
+                <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" readonly="1" />
                 
                 <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide" />
