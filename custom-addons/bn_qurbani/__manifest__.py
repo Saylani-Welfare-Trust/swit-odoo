@@ -22,7 +22,7 @@
     'application': True,
     'assets': {
         'point_of_sale._assets_pos': [
-            'bn_qurbani/static/src/override/screens/**/*',
+            'bn_qurbani/static/src/screens/**/*',
         ],
     }
 }
