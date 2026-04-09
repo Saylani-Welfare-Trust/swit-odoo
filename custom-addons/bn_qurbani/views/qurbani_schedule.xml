@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- TREE VIEW -->
+    <record id="view_qurbani_master_tree" model="ir.ui.view">
+        <field name="name">qurbani.schedule.tree</field>
+        <field name="model">qurbani.schedule</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="day_id" required="1"/>
+                <field name="start_time" widget="float_time" required="1"/>
+                <field name="end_time" widget="float_time" required="1"/>
+                <field name="livestock_product_id" required="1"/>
+                <field name="service_product_id" required="1"/>
+                <field name="location_id" required="1"/>
+                <field name="qty_available"/>
+                <field name="total_hissa" required="1"/>
+                <field name="pos_hissa" readonly="1" />
+                <field name="option" required="1"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <record id="action_qurbani_schedule" model="ir.actions.act_window">
+        <field name="name">Qurbani Schedule</field>
+        <field name="res_model">qurbani.schedule</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <!-- Parent Menu -->
+    <menuitem id="menu_qurbani_root"
+            name="Qurbani Management"
+            sequence="10"/>
+
+    <!-- Sub Menu -->
+    <menuitem id="menu_qurbani_schedule"
+            name="Qurbani Schedule"
+            parent="menu_qurbani_root"
+            action="action_qurbani_schedule"
+            sequence="20"/>
+
+</odoo>

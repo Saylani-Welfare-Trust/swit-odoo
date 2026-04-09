@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_qurbani_day_tree" model="ir.ui.view">
+        <field name="name">qurbani.day.tree</field>
+        <field name="model">qurbani.day</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_qurbani_day" model="ir.actions.act_window">
+        <field name="name">Qurbani Day</field>
+        <field name="res_model">qurbani.day</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="menu_qurbani_day"
+        name="Days"
+        parent="menu_qurbani_root"
+        action="action_qurbani_day"
+        sequence="40"/>
+</odoo>
