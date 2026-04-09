@@ -9,6 +9,8 @@
                 <field name="pos_order_id"/>
                 <field name="receipt_number"/>
                 <field name="product_ids" widget="many2many_tags"/>
+
+                <button string="Show Order" name="action_show_order" type="object" class="oe_highlight"/>
             </tree>
         </field>
     </record>

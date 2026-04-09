@@ -8,3 +8,15 @@ class QurbaniOrder(models.Model):
     pos_order_id = fields.Many2one('pos.order', string="Order", required=True)
     receipt_number = fields.Char(string="Receipt Number", required=True)
     product_ids = fields.Many2many('product.product', string="Products")
+
+
+    def action_show_order(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'POS Order',
+            'res_model': 'pos.order',
+            'view_mode': 'form',
+            'res_id': self.pos_order_id.id,
+            'target': 'current',
+        }
