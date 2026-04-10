@@ -38,10 +38,9 @@ class RiderSchedule(models.TransientModel):
         # raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
-                # ('key_id', '=', 33922),
                 ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
                 ('state', 'in', ['issued', 'overdue']),
-                # ('issue_date', '<=', obj.date),
+                ('issue_date', '<=', obj.date),
             ])
 
             keys.append(key_ids.mapped('key_name'))
