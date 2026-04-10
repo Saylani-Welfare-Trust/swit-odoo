@@ -86,8 +86,8 @@ class RiderSchedule(models.TransientModel):
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
                     # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
-                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
-                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id)]):
+                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id)]):
+                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
                         finalized_missing_lot_ids.append(missing_lot_id)
 
                 boxes = self.env['donation.box.registration.installation'].search([
