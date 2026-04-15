@@ -15,8 +15,6 @@ class ManualKeyIssuance(models.TransientModel):
 
     action_type = fields.Selection(selection=action_type_selection, string="Type")
 
-    rider_ids = fields.Many2many('hr.employee', string="Rider IDs", compute="_set_rider_domain")
-
     rider_id = fields.Many2one('hr.employee', string="Rider")
     
     lot_id = fields.Many2one('stock.lot', string="Box No.", domain="[('id', 'in', available_lot_ids)]")
@@ -29,17 +27,8 @@ class ManualKeyIssuance(models.TransientModel):
     def _compute_available_lot_ids(self):
         for rec in self:
             # Get all lot_ids from key records that are in 'available' state
-            available_keys = self.env['key'].search([('state', '!=', 'draft'), ('lot_id', '!=', False)])
+            available_keys = self.env['key'].search([('state', '=', 'available'), ('lot_id', '!=', False)])
             rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
-
-    @api.depends('date')
-    def _set_rider_domain(self):
-        for rec in self:
-            if rec.date:
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
-                rec.rider_ids = [(6, 0, schedule_days.mapped('rider_shift_id.rider_id').ids)]
-            else:
-                rec.rider_ids = [(6, 0, [])]
 
     def _get_key(self):
         """Search for key by lot_id"""

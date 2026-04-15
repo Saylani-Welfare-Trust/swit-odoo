@@ -20,9 +20,16 @@
                             <field name="date" />
                             <field name="day" />
                             <field name="submission_time" />
+                            <!-- Readonly for users NOT in group_edit_rider_collection -->
                             <field name="amount" string="Amount (PKR)" />
-                            <field name="foreign_notes" string="Foreign Notes" />
+                            
+                            <!-- Readonly for users NOT in group_edit_rider_collection -->
+                            <!-- <field name="foreign_notes" string="Foreign Notes" readonly="1" groups="!bn_rider_shift.group_edit_rider_collection"/> -->
+                            <!-- Editable for users IN group_edit_rider_collection -->
+                            <!-- <field name="foreign_notes" string="Foreign Notes" groups="bn_rider_shift.group_edit_rider_collection"/> -->
+                            <!-- Editable for users IN group_edit_rider_collection -->
                             <field name="counterfeit_notes" string="Counterfeit Notes" />
+                            
                             <field name="remarks" />
                         </group>
                         <group name="rider_collection_col_2">
@@ -54,14 +61,20 @@
                 <!-- <field name="box_location" string="Location" readonly="1" /> -->
                 <field name="contact_person" string="Contact Person" readonly="1" />
                 <field name="contact_number" string="Contact Number" readonly="1" />
-                <field name="amount" />
-                <field name="foreign_notes" string="Foreign Notes" />
-                <field name="counterfeit_notes" />
-                <field name="remarks" />
+                <!-- Readonly for users NOT in group_edit_rider_collection -->
+                <field name="amount" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
+                <!-- Editable for users IN group_edit_rider_collection -->
+                <field name="amount" groups="!bn_rider_shift.group_edit_rider_collection"/>
+                <!-- <field name="foreign_notes" string="Foreign Notes" /> -->
+                <!-- Readonly for users NOT in group_edit_rider_collection -->
+                <field name="counterfeit_notes" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
+                <!-- Editable for users IN group_edit_rider_collection -->
+                <field name="counterfeit_notes" groups="!bn_rider_shift.group_edit_rider_collection"/>
+                <field name="remarks"/>
                 <!-- <field name="submission_time" /> -->
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />
 
-                <button string="Change Rate" name="action_change_rate" type="object" class="oe_highlight" invisible="is_complain_generated"/>
+                <!-- <button string="Change Rate" name="action_change_rate" type="object" class="oe_highlight" invisible="is_complain_generated"/> -->
             </tree>
         </field>
     </record>

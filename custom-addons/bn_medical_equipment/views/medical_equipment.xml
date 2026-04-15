@@ -19,17 +19,20 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="state" invisible="1"/>
                     <field name="is_donee_register" invisible="1" />
                     <field name="case_type" invisible="1" />
-                    <field name="welfare_acknowledgment" invisible="1" />
+                    <field name="Portal_acknowledgment" invisible="1" />
+                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+
                     
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
                     
-                    <button string="Approval (1)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_ceo_approval_group" invisible="case_type == False or state != 'draft'" />
+                    <button string="Approval (1)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_ceo_approval_group" invisible=" not approval_button_check"/>
                     <button string="Approval (2)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_cfo_approval_group" invisible="case_type == False or state != 'ceo_approval'" />
                     
-                    <button string="Sync to Welfare" name="action_sync_welfare_portal" type="object" invisible="case_type != 'below_50_percent' or state != 'draft'" />
-                    <button string="Acknowledge Welfare" name="action_acknowledge_welfare_portal" type="object" invisible="case_type != 'below_50_percent' or not welfare_portal_id" />
+                    <button string="Sync to Portal" name="action_send_for_inquiry" type="object" invisible="case_type != 'below_50_percent' or state != 'completed'" />
+                    <button string="Portal Acknowledgment " name="action_check_portal_status" type="object" invisible=" state !='send_for_inquiry'" />
                     
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received'" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate'" />
@@ -37,7 +40,7 @@
                     <button string="Refund" name="action_refund" type="object" invisible="state != 'return'" />
                     <button string="Donate" name="action_donate" type="object" invisible="state != 'return'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, payment_return," />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, payment_return, send_for_inquiry, inquiry" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -68,13 +71,30 @@
 
                     <group>
                         <group name="medical_equipment_col_1">
+                            <field name="portal_application_id" invisible="1"/>
+
+                            <field name="approval_button_check" invisible="1"/>
+                            <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" />
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" />
                             <field name="cnic_no" readonly="state != 'draft'" required="1" />
                             <field name="street" string="Address" readonly="state != 'draft'" required="1" />
                             <field name="city" required="1" readonly="state != 'draft'" />
-                            <field name="remarks" invisible="case_type in ['referral', '100_percent']" readonly="state != 'draft'" />
+                            <field name="general_remarks" string="General Remarks" readonly="state != 'draft'" />
+                            <field name="remarks_approval1" 
+                                required="case_type in ['50_percent', 'below_50_percent'] and state == 'ceo_approval'"
+                                readonly="state != 'completed'"/>
+
+                            <field name="remarks_approval2" 
+                                required="case_type in ['50_percent', 'below_50_percent'] and state == 'cfo_approval'"
+                                readonly="state != 'ceo_approval'"/>
+
+                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
+                           
+                            <field name="application_location_link" readonly="state != 'draft'" required="1" />
+                            <field name="loan_request_amount" readonly="state != 'draft'" />
+                            <field name="last_sync_date" readonly="1" />
                         </group>
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
@@ -87,12 +107,16 @@
                             <field name="age" readonly="1" />
                             <field name="donee_id" string="Donee" readonly="state != 'draft'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="1" />
                             <field name="currency_id" invisible="1"/>
+
+                            <field name="portal_review_notes" readonly="1" />
+                            <field name="inquiry_media" widget="html" readonly="1"/>
+
                         </group>
                     </group>
 
                     <group string="Welfare Portal Information" invisible="case_type != 'below_50_percent'">
                         <field name="welfare_portal_id" readonly="1" />
-                        <field name="welfare_acknowledgment" readonly="state != 'draft'" />
+                        <field name="Portal_acknowledgment" readonly="1" />
                     </group>
 
                     <notebook>

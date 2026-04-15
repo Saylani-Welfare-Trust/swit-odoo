@@ -46,6 +46,9 @@ class WelfareRecurringLine(models.Model):
     
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     
+    def write(self, vals):
+        return super().write(vals)
+    
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
@@ -138,7 +141,8 @@ class WelfareRecurringLine(models.Model):
     def action_disbursed(self):
         # Mark as disbursed and update welfare if all lines are delivered/disbursed
         self.state = 'disbursed'
-        
+        if self.advance_donation_line_id:
+            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
         # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         # if cash_category and self.disbursement_category_id.id == cash_category.id:
@@ -163,6 +167,7 @@ class WelfareRecurringLine(models.Model):
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
     
+    @api.onchange('disbursement_category_id')
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""

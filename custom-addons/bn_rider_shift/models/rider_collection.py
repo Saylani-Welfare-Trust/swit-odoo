@@ -49,7 +49,7 @@ class RiderCollection(models.Model):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
-    foreign_notes = fields.Float('Foreign Notes')
+    foreign_notes = fields.Float('Foreign Currency')
     counterfeit_notes = fields.Float('Counterfeit Notes')
 
     remarks = fields.Text('Remarks')
@@ -88,17 +88,5 @@ class RiderCollection(models.Model):
                 {'id': rider.id, 'name': rider.name}
                 for rider in collection_ids.mapped('rider_id')
             ]
-        }
-
-    def action_change_rate(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Create Foreign Currency Lines',
-            'res_model': 'foreign.currency.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'active_id': self.id,
-            }
         }
     

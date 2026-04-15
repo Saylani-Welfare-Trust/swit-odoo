@@ -6,15 +6,11 @@
     <field name="model">foreign.currency.wizard</field>
     <field name="arch" type="xml">
         <form string="Create Foreign Currency Lines">
-            <group>
-                <field name="line_count"/>
-                <!-- <button name="action_generate_lines" type="object"
-                        string="Generate Lines" class="btn-secondary"/> -->
-            </group>
-
             <field name="line_ids">
                 <tree editable="bottom">
-                    <field name="amount"/>
+                    <field name="currency" />
+                    <field name="foreign_notes"/>
+                    <field name="amount" />
                 </tree>
             </field>
 

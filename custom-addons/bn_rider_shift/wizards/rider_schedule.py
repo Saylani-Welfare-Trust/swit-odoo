@@ -34,8 +34,7 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No shift found for today. Please check your schedule."))
 
         line_vals = []
-        keys=[]
-        # raise UserError(str(rider_shift_obj.read())+" --------------- "+str(employee.id))
+
         for obj in rider_shift_obj:
             key_ids = self.env['key.issuance'].search([
                 ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
@@ -43,9 +42,6 @@ class RiderSchedule(models.TransientModel):
                 ('issue_date', '<=', obj.date),
             ])
 
-            keys.append(key_ids.mapped('key_name'))
-
-            # raise UserError(str(key_ids.mapped('key_name'))+" --------------- "+str(obj.key_bunch_id.name)+" --------------- "+str(obj.date))
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
 
@@ -86,7 +82,6 @@ class RiderSchedule(models.TransientModel):
             if missing_lot_ids:
                 for missing_lot_id in missing_lot_ids:
                     # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
-                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id)]):
                     if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
                         finalized_missing_lot_ids.append(missing_lot_id)
 
@@ -113,8 +108,6 @@ class RiderSchedule(models.TransientModel):
                         # 'foreign_notes': collection.foreign_notes,
                         # 'counterfeit_notes': collection.counterfeit_notes,
                     }))
-
-        # raise UserError(str(keys)+" --------------- ")
 
         # ✅ Build wizard
         rider_schedule = self.env['rider.schedule'].create({

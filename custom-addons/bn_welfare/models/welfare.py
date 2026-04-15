@@ -78,6 +78,7 @@ class Welfare(models.Model):
     father_cnic_no = fields.Char(related='donee_id.father_cnic_no', string="Father CNIC No.", store=True, size=15)
     old_system_id = fields.Char('Old System ID')
     
+    applicantLocationLink = fields.Char('Applicant Location Link') 
     date = fields.Date('Date', default=fields.Date.today())
     cnic_expiration_date = fields.Date(related='donee_id.cnic_expiration', string="CNIC Expiration Date", store=True)
 
@@ -123,6 +124,7 @@ class Welfare(models.Model):
         string="Inquiry Media",
         sanitize=False,   # IMPORTANT
     )
+
 
 
     # Employee Informaiton Fields
@@ -463,7 +465,7 @@ class Welfare(models.Model):
         for app in applications:
             # Match by CNIC (most reliable)
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-            if app.get('odooId') == self.id:
+            if app.get('odooId') == self.id and app.get('department') == "welfare":
                 return app
             # # Match by name and WhatsApp
             # if (app.get('name') == self.donee_id.name and 
@@ -493,7 +495,8 @@ class Welfare(models.Model):
         data = {
                 "json":{
 
-                "odooId": self.id
+                "odooId": self.id,
+                "department": "welfare"
             }
         }
         result = self._make_sadqa_api_call(self.env.company.mark_application_endpoint, 'POST', data)
@@ -546,34 +549,40 @@ class Welfare(models.Model):
                     "odooId": self.id,
                     "doneeOdooId": self.donee_id.id,
                     "inquiryOfficerOdooId": self.employee_id.id,
+                    "department": "welfare",
                     "form": {
-                        "category": "Individual",  # fix
-                        "subcategory": "General Aid",  # fix
-                        "donee": self.donee_id.name,
-                        "cnic_no": self.cnic_no,
-                        "father_name": self.father_name,
+                        "category": "welfare",  # fix
+                        "subcategory": "welfare",
                         "date": str(self.date) if self.date else None,
-                        "monthly_income": self.monthly_income,
-                        "monthly_salary": self.monthly_salary,
-                        "loan_request_amount": self.loan_request_amount,
-                        "dependent_person": self.dependent_person,
-                        "household_member": self.household_member,
-                        "residence_type": self.residence_type,
-                        "company_name": self.company_name,
-                        "company_address": self.company_address,
-                        "service_duration": self.service_duration,
-                        "bank_account": self.bank_account,
-                        "bank_name": self.bank_name,
-                        "account_no": self.account_no,
-                        "aid_from_other_organization": self.aid_from_other_organization,
-                        "have_applied_swit": self.have_applied_swit,
-                        "driving_license": self.driving_license,
-                        "security_offered": self.security_offered,
-                        "other_loan": self.other_loan,
-                        "outstanding_amount": self.outstanding_amount,
-                        "monthly_household_expense": self.monthly_household_expense,
-                        "details_1": self.details_1,
-                        "details_2": self.details_2,  
+                        "loanRequestAmount": self.loan_request_amount,
+                        "applicantInformation": {
+                            "name": self.donee_id.name,
+                            "fatherName": self.father_name,
+                            "cnic": self.cnic_no,
+                            "phoneNumber": self.donee_id.mobile,
+                            "whatsappNumber": self.donee_id.mobile,
+                            "applicantLocationLink": self.applicantLocationLink
+                        },
+                        "employmentInfo": {
+                            "companyName": self.company_name,
+                            "companyAddress": self.company_address,
+                            "companyPhone": self.company_phone,
+                            "designation": self.designation,
+                            "durationOfService": self.service_duration,
+                            "monthlySalary": self.monthly_salary
+                        },
+                        "residencyInfo": {
+                            "residenceType": self.residence_type,
+                            "homePhone": self.home_phone_no,
+                            "landlordName": self.landlord_name,
+                            "landlordCnic": self.landlord_cnic_no,
+                            "landlordMobile": self.landlord_mobile,
+                            "rentalDuration": self.rental_shared_duration,
+                            "monthlyRent": self.per_month_rent,
+                            "gasBill": self.gas_bill,
+                            "electricityBill": self.electricity_bill,
+                            "otherInfo": self.home_other_info
+                        }
                     }
                 }
             }
@@ -755,9 +764,12 @@ class Welfare(models.Model):
             
             if line.recurring_duration:
                 month = 0
+                num_months = int(line.recurring_duration.split('_')[0])
                 
-                for i in range(int(line.recurring_duration.split('_')[0])):
-                    self.env['welfare.recurring.line'].create({
+                # Get available advance donation lines if advance donation is linked to welfare line
+                            
+                for i in range(num_months):
+                    recurring_line_vals = {
                         'welfare_id': line.welfare_id.id,
                         'collection_date': line.collection_date + relativedelta(months=month),
                         'product_id': line.product_id.id,
@@ -768,10 +780,11 @@ class Welfare(models.Model):
                         'quantity': line.quantity,
                         'collection_point': line.collection_point,
                         'amount': line.total_amount,
-                    })
-
+                        # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
+                    }
+                    
+                    self.env['welfare.recurring.line'].create(recurring_line_vals)
                     month += 1
-
 
         self.state = 'recurring'
         
