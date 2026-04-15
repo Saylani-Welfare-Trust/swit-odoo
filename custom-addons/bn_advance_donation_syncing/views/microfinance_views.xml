@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Welfare Line Tree View - Add advance donation fields to inline tree -->
+        <record id="view_microfinance_form_line_sync" model="ir.ui.view">
+            <field name="name">microfinance.form.sync</field>
+            <field name="model">microfinance</field>
+            <field name="inherit_id" ref="bn_microfinance.microfinance_view_form"/>
+            <field name="arch" type="xml">
+            <xpath expr="//group[@name='microfinance_col_1']" position="inside">
+                <field name="advance_donation_line_id" invisible="1"/>
+                <button name="action_select_advance_donation"
+                        string="Select from Advance Donation"
+                        type="object"
+                        class="btn-primary"/>
+            </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

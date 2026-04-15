@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Advance Donation Line Tree View - Add reserved field to inline tree -->
+        <record id="view_advance_donation_form_line_sync" model="ir.ui.view">
+            <field name="name">advance.donation.form.line.sync</field>
+            <field name="model">advance.donation</field>
+            <field name="inherit_id" ref="bn_advance_donation.advance_donation_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='advance_donation_lines']//tree//field[@name='state']" position="after">
+                    <field name="is_reserved" optional="hide" widget="boolean" string="Reserved"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
