@@ -94,11 +94,10 @@ class Microfinance(models.Model):
         string='Advance Donation',
         domain="[('state','=','approved'), ('product_id','=',product_id)]"
     )
-    used_advance_donation_line_id = fields.Many2one('advance.donation.line', string='Used Advance Donation Line', readonly=True, copy=False)
-    donor_contribution = fields.Monetary(
+    # used_advance_donation_line_id = fields.Many2one('advance.donation.lines', string='Used Advance Donation Line', readonly=True, copy=False)
+    advance_donation_amount = fields.Monetary(
         'Contribution by Donor',
         currency_field='currency_id',
-        compute='_compute_donor_contribution',
         store=True
     )
        
@@ -239,46 +238,46 @@ class Microfinance(models.Model):
             'domain': [('id', 'in', self.bill_ids.ids)],
             'target': 'current',
         }
-    @api.depends('advance_donation_id', 'security_deposit')
-    def _compute_donor_contribution(self):
-        for rec in self:
-            # 1️⃣ Rollback previous disbursement
-            if rec.used_advance_donation_line_id and rec.donor_contribution:
-                rec.used_advance_donation_line_id.disbursed_amount -= rec.donor_contribution
+    # @api.depends('advance_donation_id', 'security_deposit')
+    # def _compute_advance_donation_amount(self):
+    #     for rec in self:
+    #         # 1️⃣ Rollback previous disbursement
+    #         if rec.used_advance_donation_line_id and rec.advance_donation_amount:
+    #             rec.used_advance_donation_line_id.disbursed_amount -= rec.advance_donation_amount
 
-            donor_contribution = 0
-            used_line = False
+    #         advance_donation_amount = 0
+    #         used_line = False
 
-            if rec.advance_donation_id:
-                eligible_lines = rec.advance_donation_id.advance_donation_lines.filtered(
-                    lambda l: l.state == 'paid' and not l.is_disbursed
-                )
+    #         if rec.advance_donation_id:
+    #             eligible_lines = rec.advance_donation_id.advance_donation_lines.filtered(
+    #                 lambda l: l.state == 'paid' and not l.is_disbursed
+    #             )
 
-                if eligible_lines:
-                    used_line = eligible_lines[0]
-                    donor_contribution = used_line.paid_amount - used_line.disbursed_amount
+    #             if eligible_lines:
+    #                 used_line = eligible_lines[0]
+    #                 advance_donation_amount = used_line.paid_amount - used_line.disbursed_amount
 
-            # 2️⃣ Apply security deposit logic
-            final_contribution = (
-                donor_contribution - rec.security_deposit
-                if donor_contribution > rec.security_deposit
-                else donor_contribution
-            )
+    #         # 2️⃣ Apply security deposit logic
+    #         final_contribution = (
+    #             advance_donation_amount - rec.security_deposit
+    #             if advance_donation_amount > rec.security_deposit
+    #             else advance_donation_amount
+    #         )
 
-            # 3️⃣ Set computed fields
-            rec.donor_contribution = final_contribution
-            rec.used_advance_donation_line_id = used_line
+    #         # 3️⃣ Set computed fields
+    #         rec.advance_donation_amount = final_contribution
+    #         rec.used_advance_donation_line_id = used_line
 
 
-    @api.onchange('advance_donation_id')
-    def _onchange_advance_donation_id(self):
-        for rec in self:
-            # reset previous used line
-            if rec.used_advance_donation_line_id:
-                # rec.used_advance_donation_line_id.disbursed_amount = 0
-                # rec.used_advance_donation_line_id.is_disbursed = False
-                rec.used_advance_donation_line_id = False
-                rec.donor_contribution = 0
+    # @api.onchange('advance_donation_id')
+    # def _onchange_advance_donation_id(self):
+    #     for rec in self:
+    #         # reset previous used line
+    #         if rec.used_advance_donation_line_id:
+    #             # rec.used_advance_donation_line_id.disbursed_amount = 0
+    #             # rec.used_advance_donation_line_id.is_disbursed = False
+    #             rec.used_advance_donation_line_id = False
+    #             rec.advance_donation_amount = 0
 
   
     @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
@@ -344,10 +343,10 @@ class Microfinance(models.Model):
             rec.security_deposit = line.sd_amount
             rec.product_amount = rec.product_id.lst_price
 
-    @api.depends('product_amount', 'security_deposit', 'donor_contribution')
+    @api.depends('product_amount', 'security_deposit', 'advance_donation_amount')
     def _set_total_amount(self):
         for rec in self:
-            rec.total_amount = rec.product_amount - rec.security_deposit - rec.donor_contribution
+            rec.total_amount = rec.product_amount - rec.security_deposit - rec.advance_donation_amount
     
     @api.depends('product_id')
     def _set_installment_amount(self):
@@ -492,9 +491,9 @@ class Microfinance(models.Model):
         self.state = 'hod_approve'
         # self.used_advance_donation_line_id.is_disbursed = True
         # 4️⃣ Apply new disbursement
-        if self.used_advance_donation_line_id and self.donor_contribution:
-            # raise ValidationError(self.donor_contribution)
-            self.used_advance_donation_line_id.disbursed_amount += self.donor_contribution
+        # if self.used_advance_donation_line_id and self.advance_donation_amount:
+        #     # raise ValidationError(self.advance_donation_amount)
+        #     self.used_advance_donation_line_id.disbursed_amount += self.advance_donation_amount
 
     def action_send_to_recovery(self):
         lines = []
@@ -528,11 +527,11 @@ class Microfinance(models.Model):
         if self.state == 'hod_approve':
             if not self.hod_remarks:
                 raise ValidationError('Please provide HOD Remarks.')
-            if self.used_advance_donation_line_id and self.donor_contribution:
-                self.used_advance_donation_line_id.disbursed_amount -= self.donor_contribution
-                self.used_advance_donation_line_id = False
-                self.donor_contribution = 0
-                self.advance_donation_id = False
+            # if self.used_advance_donation_line_id and self.advance_donation_amount:
+            #     self.used_advance_donation_line_id.disbursed_amount -= self.advance_donation_amount
+            #     self.used_advance_donation_line_id = False
+            #     self.advance_donation_amount = 0
+            #     self.advance_donation_id = False
             self.state = 'draft'
         elif self.state == 'mem_approve':
             if not self.mem_remarks:

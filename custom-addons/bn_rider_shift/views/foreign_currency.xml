@@ -8,16 +8,17 @@
             <tree create="0" delete="0" editable="bottom">
                 <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="rider_log" />
-                <field name="amount" readonly="1" />
+                <field name="amount"  readonly="1" groups="!bn_rider_shift.group_edit_rider_collection" string="Foreign Amount"  />
+                <field name="amount"  groups="bn_rider_shift.group_edit_rider_collection" string="Foreign Amount"  />
                 <field name="conversion_rate" />
                 <field name="foreign_notes" />
-                <field name="exchanged_amount" />
+                <field name="exchanged_amount" string="PKR Amount"  readonly="1"/>
                 <field name="rider_id" readonly="1" />
                 <field name="lot_id" string="Box No." readonly="1" />
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'converted'" decoration-danger="state == 'reject'" readonly="1" />
 
-                <button string="Convert" name="action_convert_amount" type="object" class="oe_highlight"/>
-                <button string="Reject" name="action_reject" type="object" class="oe_highlight"/>
+                <button string="Convert" name="action_convert_amount" type="object" class="oe_highlight" invisible="state  in ['converted','reject']"/>
+                <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state not in ['draft']"/>
             </tree>
         </field>
     </record>

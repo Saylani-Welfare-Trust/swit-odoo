@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Welfare Recurring Line Tree View - Add advance donation fields to inline tree -->
+        <record id="view_welfare_form_recurring_line_sync" model="ir.ui.view">
+            <field name="name">welfare.form.recurring.line.sync</field>
+            <field name="model">welfare</field>
+            <field name="inherit_id" ref="bn_welfare.welfare_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='welfare_recurring_line_ids']//tree//field[@name='state']" position="after">
+                    <field name="advance_donation_id" optional="hide" string="Advance Donation" readonly="1"/>
+                    <field name="advance_donation_line_id" optional="hide" string="Advance Donation Line" column_invisible="1"/>
+                    <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
+                     <button name="action_select_advance_donation" string="Select from Advance Donation" type="object" class="btn-primary" />  
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

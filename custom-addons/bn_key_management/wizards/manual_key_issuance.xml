@@ -11,8 +11,7 @@
                     <group>
                         <group name="manual_key_issuance_col_1">
                             <field name="date" required="1" />
-                            <field name="rider_ids" invisible="1" />
-                            <field name="rider_id" domain="[('id', 'in', rider_ids)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" />
+                            <field name="rider_id" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" />
                         </group>
                         <group name="manual_key_issuance_col_2">
                             <field name="available_lot_ids" invisible="1" />

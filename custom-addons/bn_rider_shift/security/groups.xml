@@ -21,4 +21,8 @@
         <field name="name">Rider Collection / Edit Amount / Notes</field>
     </record>
 
+    <record id="group_edit_rider_collection" model="res.groups">
+        <field name="name">Foreign Currency Collection</field>
+    </record>
+
 </odoo>

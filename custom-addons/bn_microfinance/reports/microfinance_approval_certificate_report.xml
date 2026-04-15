@@ -250,7 +250,7 @@
                                         <div class="flex-row">
                                             <div class="flex-label">Donor Contribution:</div>
                                             <div class="flex-value">
-                                                <span t-field="doc.donor_contribution" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                                <span t-field="doc.advance_donation_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
                                             </div>
                                         </div>
                                     </div>

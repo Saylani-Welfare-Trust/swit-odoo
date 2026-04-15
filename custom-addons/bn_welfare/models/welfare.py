@@ -767,33 +767,7 @@ class Welfare(models.Model):
                 num_months = int(line.recurring_duration.split('_')[0])
                 
                 # Get available advance donation lines if advance donation is linked to welfare line
-                advance_donation_lines = []
-                if line.advance_donation_id:
-                    # Get available lines (not disbursed and not reserved)
-                    available_lines = self.env['advance.donation.lines'].search([
-                        ('advance_donation_id', '=', line.advance_donation_id.id),
-                        ('is_disbursed', '=', False),
-                        ('reserved', '=', False),
-                        ('state', '=', 'paid')
-                    ])
-                    
-                    if available_lines:
-                        advance_donation_lines = available_lines
-                    else:
-                        # Check if there are any lines at all
-                        all_lines = self.env['advance.donation.lines'].search([
-                            ('advance_donation_id', '=', line.advance_donation_id.id)
-                        ])
-                        if all_lines:
-                            raise UserError(
-                                f"❌ Cannot create recurring lines for '{line.advance_donation_id.name}'.\n"
-                                f"No available donation lines found.\n\n"
-                                f"All {len(all_lines)} lines are either:\n"
-                                f"  • Disbursed\n"
-                                f"  • Already reserved\n\n"
-                                f"Please select a different advance donation with available lines."
-                            )
-                
+                            
                 for i in range(num_months):
                     recurring_line_vals = {
                         'welfare_id': line.welfare_id.id,
@@ -808,10 +782,6 @@ class Welfare(models.Model):
                         'amount': line.total_amount,
                         # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
                     }
-                    
-                    # Attach advance donation if available (onchange will auto-reserve a line)
-                    if advance_donation_lines:
-                        recurring_line_vals['advance_donation_id'] = line.advance_donation_id.id
                     
                     self.env['welfare.recurring.line'].create(recurring_line_vals)
                     month += 1

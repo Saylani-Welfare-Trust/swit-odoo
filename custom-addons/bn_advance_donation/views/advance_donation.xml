@@ -100,11 +100,15 @@
                                     <field name="disbursed_amount"/>
                                     <field name="is_disbursed"/>
                                     <field name="disbursement_date"/>
+                                    <!-- <field name="is_reserved" widget="boolean_button" /> -->
+                                    <!-- <field name="reserved_by_record_name" string="Reserved By" /> -->
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
                                     <!-- <field name="date_visibility" column_invisible="1"/> -->
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
+                                    <!-- <field name="reserved_welfare_line_id" column_invisible="1"/> -->
+                                    <!-- <field name="reserved_welfare_recurring_line_id" column_invisible="1"/> -->
                                 </tree>
                             </field>
                         </page>

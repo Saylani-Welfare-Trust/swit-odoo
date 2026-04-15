@@ -101,7 +101,7 @@
                                     <field name="analytic_account_domain" column_invisible="1" />
                                     <field name="is_collection_point_readonly" column_invisible="1" />
 
-                                    <field name="recurring_duration" invisible="parent.order_type != 'recurring'" />
+                                    <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
@@ -113,7 +113,8 @@
                                     <field name="amount" readonly="1" />
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />
-                                   <field name="net_amount" readonly="1" />
+                                    <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
+
                                     <field name="show_deliver_button" column_invisible="1"/>
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />

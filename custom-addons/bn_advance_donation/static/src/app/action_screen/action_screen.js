@@ -9,7 +9,9 @@ import { _t } from "@web/core/l10n/translation";
 patch(ActionScreen.prototype, {
     get checkAdvanceDonationAccess() {
         // Only allow users in the advance_donation_pos_action_group
+        console.log("Checking Advance Donation Access:", this.pos._advanceDonation);
         return this.pos._advanceDonation;
+        
     },
 
 

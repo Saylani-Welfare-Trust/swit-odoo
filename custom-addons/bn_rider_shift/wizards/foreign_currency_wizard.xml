@@ -10,7 +10,7 @@
                 <tree editable="bottom">
                     <field name="currency" />
                     <field name="foreign_notes"/>
-                    <field name="amount"/>
+                    <field name="amount" />
                 </tree>
             </field>
 

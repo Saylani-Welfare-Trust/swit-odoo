@@ -145,7 +145,7 @@
     
     <record id="action_report_advance_donation_line_non_cash" model="ir.actions.report">
         <field name="name">Non-Cash Donation Line Report</field>
-        <field name="model">advance.donation.line</field>
+        <field name="model">advance.donation.lines</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">bn_advance_donation.report_advance_donation_line_non_cash</field>
         <field name="report_file">bn_advance_donation.report_advance_donation_line_non_cash</field>

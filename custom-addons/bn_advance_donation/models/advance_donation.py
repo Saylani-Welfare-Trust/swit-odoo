@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
-    
+    # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     donor_id = fields.Many2one(
@@ -62,7 +62,7 @@ class AdvanceDonation(models.Model):
         default='draft',
         string='Status')
 
-    advance_donation_lines = fields.One2many('advance.donation.line', 'advance_donation_id')
+    advance_donation_lines = fields.One2many('advance.donation.lines', 'advance_donation_id')
     donation_slip_usage_lines = fields.One2many('advance.donation.slip.usage', 'advance_donation_id')
 
     approved_date = fields.Datetime('Approved Date')

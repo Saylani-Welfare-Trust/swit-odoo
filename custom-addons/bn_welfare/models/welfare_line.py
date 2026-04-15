@@ -56,7 +56,13 @@ class WelfareLine(models.Model):
     # warehouse_id = fields.Many2one('stock.warehouse', string="Warehouse")
     # warehouse_domain = fields.Char('Warehouse Domain', compute='_compute_warehouse_domain', default="[]", store=True)
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
-    net_amount = fields.Float('Net Amount', compute='_compute_net_amount')
+    # net_amount = fields.Float(
+    #     'Net Amount',
+    #     compute='_compute_net_amount',
+    #     store=True
+    # )
+
+    # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -76,12 +82,25 @@ class WelfareLine(models.Model):
         store=True,
     )
 
+    advance_donation_amount = fields.Float(
+        'Advance Donation Amount',
+        store=True,
+        default=0.0
+    )
+
+
+
+
     total_amount = fields.Float(
         'Total Amount',
         compute='_compute_total_amount',
-        store=True
+        store=True,
+        readonly=False
     )
-    
+
+
+    manual_total = fields.Boolean(default=False)
+
     @api.model
     def create(self, vals):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
@@ -92,16 +111,7 @@ class WelfareLine(models.Model):
         return super().create(vals)
 
 
-    def write(self, vals):
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        
-        vals["net_amount"]= self.net_amount
-        vals["total_amount"]= self.total_amount
-        if 'disbursement_category_id' in vals:
-            if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
-                vals['collection_point'] = 'branch'
-        
-        return super().write(vals)
+    # REMOVED - This write() method was problematic and has been merged with the manual tracking one below
     
     
     @api.model
@@ -227,15 +237,39 @@ class WelfareLine(models.Model):
         for rec in self:
             rec.is_collection_point_readonly = rec.disbursement_category_id.name == "In Kind"
 
-    @api.depends('quantity', 'amount')
+
+    @api.depends('quantity', 'amount', 'advance_donation_amount')
     def _compute_total_amount(self):
         for rec in self:
-            rec.total_amount = rec.quantity * rec.amount
+            if not rec.manual_total:
+                amount = rec.quantity * rec.amount
+                rec.total_amount = amount - rec.advance_donation_amount if (rec.advance_donation_amount > 0) else amount
+
+    def write(self, vals):
+        # Track manual amount overrides
+        if 'total_amount' in vals:
+            vals['manual_total'] = True
+        
+        # Preserve manually set total_amount when not in vals but flag is True
+        if self.manual_total and 'total_amount' not in vals:
+            vals['total_amount'] = self.total_amount - self.advance_donation_amount if (self.advance_donation_amount > 0) else self.total_amount
+    
+        
+        # Handle in_kind category auto-selection
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        if 'disbursement_category_id' in vals:
+            if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+                vals['collection_point'] = 'branch'
+        
+        return super().write(vals)
             
-    @api.depends('total_amount')
-    def _compute_net_amount(self):
-        for rec in self:
-            rec.net_amount = rec.total_amount  # Placeholder for any future deductions or adjustments to total amount
+    # @api.depends('total_amount', 'advance_donation_amount')
+    # def _compute_net_amount(self):
+    #     for rec in self:
+    #         if rec.manual_net_total:
+    #             rec.net_amount = rec.total_amount - rec.advance_donation_amount
+    #         else:
+    #             rec.net_amount = rec.total_amount
         
     @api.depends('disbursement_application_type_id')
     def _compute_product_domain(self):
@@ -273,7 +307,8 @@ class WelfareLine(models.Model):
     def action_disbursed(self):
         # Mark as disbursed and update welfare if all lines are delivered/disbursed
         self.state = 'disbursed'
-        
+        if self.advance_donation_line_id:
+            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
         # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         # if cash_category and self.disbursement_category_id.id == cash_category.id:
