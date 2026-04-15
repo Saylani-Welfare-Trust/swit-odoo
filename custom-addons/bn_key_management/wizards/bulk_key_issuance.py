@@ -22,26 +22,48 @@ class BulkKeyIssuance(models.TransientModel):
     
     key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunch")
 
-    date = fields.Date('Date')
+    date = fields.Date(
+        string='Date',
+        default=fields.Date.context_today,
+        required=True
+    )
 
-
-    @api.depends('date')
+    @api.depends('date', 'action_type', 'rider_id')
     def _set_rider_domain(self):
         for rec in self:
             if rec.date:
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
+                schedule_days = self.env['rider.schedule.day'].search([
+                    ('date', '=', rec.date)
+                ])
                 rec.rider_ids = [(6, 0, schedule_days.mapped('rider_shift_id.rider_id').ids)]
             else:
                 rec.rider_ids = [(6, 0, [])]
 
-    @api.depends('date')
+    @api.depends('date', 'action_type', 'rider_id')
     def _set_location_domain(self):
         for rec in self:
-            if rec.date:
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
-                rec.domain_key_bunch_ids = [(6, 0, schedule_days.mapped('key_bunch_id').ids)]
-            else:
-                rec.domain_key_bunch_ids = [(6, 0, [])]
+            domain_ids = []
+
+            if rec.date and rec.rider_id:
+
+                schedule_days = self.env['rider.schedule.day'].search([
+                    ('date', '=', rec.date),
+                    ('rider_shift_id.rider_id', '=', rec.rider_id.id)
+                ])
+
+                if rec.action_type == 'issue':
+                    # ✅ Only bunch assigned in shift
+                    domain_ids = schedule_days.mapped('key_bunch_id').ids
+
+                elif rec.action_type == 'return':
+                    # ✅ Only bunch where payment received
+                    issuances = self.env['key.issuance'].search([
+                        ('rider_id', '=', rec.rider_id.id),
+                        ('state', 'in', ['donation_receive', 'pending']),
+                    ])
+                    domain_ids = issuances.mapped('key_id.key_bunch_id').ids
+
+            rec.domain_key_bunch_ids = [(6, 0, list(set(domain_ids)))]
 
     def action_issue(self):
         if not self.rider_id:
@@ -73,17 +95,22 @@ class BulkKeyIssuance(models.TransientModel):
     def action_return(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
+
         if not self.key_bunch_ids:
-            raise ValidationError('Please Select a Key Group to issue')
- 
+            raise ValidationError('Please Select a Key Group')
 
         for group in self.key_bunch_ids:
-            key_issuance = self.env['key.issuance'].search([('key_id', 'in', self.key_bunch_ids.key_ids.ids), ('state', '=', 'issued')])
-            if key_issuance:
-                raise ValidationError('Please move all keys in Donation Received state.')
-
             for key in group.key_ids:
-                key_issuance = self.env['key.issuance'].search([('key_id', '=', key.id)])
-                
-                if key_issuance:
-                    key_issuance.action_return()
+
+                key_issuance = self.env['key.issuance'].search([
+                    ('key_id', '=', key.id),
+                    ('rider_id', '=', self.rider_id.id),
+                    ('state', 'in', ['donation_receive', 'pending'])
+                ], limit=1)
+
+                if not key_issuance:
+                    raise ValidationError(
+                        f'Key "{key.name}" is not in Donation Received / Pending state.'
+                    )
+
+                key_issuance.action_return()

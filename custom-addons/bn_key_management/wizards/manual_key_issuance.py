@@ -20,15 +20,34 @@ class ManualKeyIssuance(models.TransientModel):
     lot_id = fields.Many2one('stock.lot', string="Box No.", domain="[('id', 'in', available_lot_ids)]")
     available_lot_ids = fields.Many2many('stock.lot', string="Available Lots", compute="_compute_available_lot_ids")
 
-    date = fields.Date('Date')
-
+    date = fields.Date(
+        string='Date',
+        default=fields.Date.context_today,
+        required=True
+    )
 
     @api.depends('action_type')
     def _compute_available_lot_ids(self):
         for rec in self:
-            # Get all lot_ids from key records that are in 'available' state
-            available_keys = self.env['key'].search([('state', '=', 'available'), ('lot_id', '!=', False)])
-            rec.available_lot_ids = [(6, 0, available_keys.mapped('lot_id').ids)]
+            lot_ids = []
+
+            if rec.action_type == 'issue':
+                # Only available keys
+                keys = self.env['key'].search([
+                    ('state', '=', 'available'),
+                    ('lot_id', '!=', False)
+                ])
+                lot_ids = keys.mapped('lot_id').ids
+
+            elif rec.action_type == 'return':
+                # Keys where:
+                # payment received + submitted in POS + DN prepared
+                key_issuances = self.env['key.issuance'].search([
+                    ('state', 'in', ['donation_receive'])
+                ])
+                lot_ids = key_issuances.mapped('key_id.lot_id').ids
+
+            rec.available_lot_ids = [(6, 0, lot_ids)]
 
     def _get_key(self):
         """Search for key by lot_id"""
@@ -74,7 +93,7 @@ class ManualKeyIssuance(models.TransientModel):
 
         key_issuance = self.env['key.issuance'].search([
             ('key_id', '=', key.id),
-            ('state', 'in', ['donation_receive', 'pending'])
+            ('state', 'in', ['donation_receive'])
         ], limit=1)
         
         if key_issuance:
