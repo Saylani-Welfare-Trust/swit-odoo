@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hijri_view_tree" model="ir.ui.view">
+        <field name="name">hijri.view.tree</field>
+        <field name="model">hijri</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" delete="0">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+
+    <record id="hijri_action" model="ir.actions.act_window">
+        <field name="name">Hijri</field>
+        <field name="res_model">hijri</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new hijri....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="hijri_menu"
+        name="Hijri"
+        action="hijri_action"
+        parent="bn_qurbani.qurbani_menu"
+        sequence="10"/>
+
+</odoo>

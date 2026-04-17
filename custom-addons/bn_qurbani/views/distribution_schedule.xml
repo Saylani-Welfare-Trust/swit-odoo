@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_distribution_master_tree" model="ir.ui.view">
+        <field name="name">distribution.schedule.tree</field>
+        <field name="model">distribution.schedule</field>
+        <field name="arch" type="xml">
+            <tree create="0" editable="bottom">
+                <header>
+                    <button string="Update Inventory" name="action_update_inventory" type="object" class="oe_highlight"/>
+                </header>
+
+                <field name="distribution_location_ids" column_invisible="1"/>
+                <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="start_time" widget="float_time" required="1"/>
+                <field name="end_time" widget="float_time" required="1"/>
+                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="pos_product_id" domain="[('type', '=', 'product'), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="slaughter_schedule_id" required="1" domain="[('hijri_id', '=', hijri_id), ('day_id', '=', day_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="demand" readonly="1"/>
+                <field name="location_id" required="1" domain="[('id', 'in', distribution_location_ids)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="total_hissa" readonly="1"/>
+                <field name="booked_hissa" readonly="1"/>
+                <field name="current_hissa" readonly="1" column_invisible="1"/>
+                <field name="remaining_hissa" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_distribution_schedule" model="ir.actions.act_window">
+        <field name="name">Distribution Schedule</field>
+        <field name="res_model">distribution.schedule</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new distribution schedule....
+            </p>
+        </field>
+    </record>
+    
+    <!-- Sub Menu -->
+    <menuitem id="menu_distribution_schedule"
+        name="Distribution"
+        parent="bn_qurbani.qurbani_schedule_menu"
+        action="action_distribution_schedule"
+        sequence="2"/>
+
+</odoo>

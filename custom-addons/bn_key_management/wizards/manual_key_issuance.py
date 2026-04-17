@@ -70,6 +70,7 @@ class ManualKeyIssuance(models.TransientModel):
         if key.state != 'available':
             raise ValidationError(f'Key "{key.name}" is not available for issuance')
         
+        key.rider_id = self.rider_id.id
         key_issuance_obj = self.env['key.issuance'].create({
             'rider_id': self.rider_id.id,
             'key_id': key.id

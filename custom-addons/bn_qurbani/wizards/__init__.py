@@ -1,0 +1,1 @@
+from . import qurbani_schedule

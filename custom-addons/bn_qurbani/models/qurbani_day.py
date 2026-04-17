@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class QurbaniDay(models.Model):
     _name = 'qurbani.day'
-    _description = 'Day Master'
+    _description = 'Qurbani Day'
 
-    name = fields.Char(string="Day Name", required=True)
+
+    name = fields.Char('Day')

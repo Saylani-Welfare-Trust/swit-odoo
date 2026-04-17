@@ -109,8 +109,9 @@ class BulkKeyIssuance(models.TransientModel):
                 ], limit=1)
 
                 if not key_issuance:
-                    raise ValidationError(
-                        f'Key "{key.name}" is not in Donation Received / Pending state.'
-                    )
+                    # raise ValidationError(
+                    #     f'Key "{key.name}" is not in Donation Received / Pending state.'
+                    # )
+                    pass
 
                 key_issuance.action_return()

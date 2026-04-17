@@ -17,41 +17,59 @@ patch(PaymentScreen.prototype, {
         for (let line of currentOrder.get_orderlines()) {
             const product = line.product;
 
-            const isLivestock = product.is_livestock;
-            const isService = product.type === 'service';
-            const isQurbaniCategory =
-                product.categ &&
-                product.categ.name &&
-                product.categ.name.toLowerCase().includes('qurbani');
+            const isQurbaniLivestock =
+                product.is_livestock &&
+                product.detailed_type === "product" &&
+                product.categ?.name?.toLowerCase().includes("qurbani");
 
-            if (isLivestock && isService && isQurbaniCategory) {
+            if (isQurbaniLivestock) {
                 hasValidProduct = true;
                 break;
             }
         }
 
         if (hasValidProduct) {
-            // 🔹 First call your custom method
-            const data = await this.orm.call('qurbani.order', "select_order", [currentOrder.name]);
+            const donor_id = currentOrder.partner.id;
+            const orderLines = currentOrder.get_orderlines();
 
-            if (data.status === 'error') {
-                this.popup.add(ErrorPopup, {
-                    title: _t("Error"),
-                    body: data.body,
-                });
-                return;
+            const payload = {
+                'donor_id': donor_id,
+                'order_lines': this.prepareOrderLines(orderLines),
             }
 
-            if (data.status === 'success') {
-                currentOrder.set_source_document(data.name)
-
-                this.env.services.notification.add(_t("Amount Recorded Successfully"), { type: "success" });
+            await this.orm.call('qurbani.order', "create_qurbani_record", [payload]).then((data) => {
+                if (data.status === 'error') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: data.body,
+                    });
+                }
                 
-                this.env.services.report.doAction("bn_qurbani.qurbani_token_report", [data.id]);
-            }
+                if (data.status === 'success') {
+                    currentOrder.set_source_document(data.name)
+
+                    this.notification.add(_t("Operation Successful"), {
+                        type: "info",
+                    });
+                }
+            })
         }
+
+        this.pos.is_qurbani = true
 
         // Continue with normal POS flow
         return super.validateOrder(isForceValidate);
+    },
+
+    prepareOrderLines(orderLines) {
+        return orderLines.map(line => (
+                {
+                    product_id: line.product.id,
+                    quantity: line.quantity,
+                    price: line.price,
+                    remarks: line.customerNote
+                }
+            )
+        );
     }
 })

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="eid_day_1" model="qurbani.day">
+        <field name="name">Eid 1st Day</field>
+    </record>
+
+    <record id="eid_day_2" model="qurbani.day">
+        <field name="name">Eid 2nd Day</field>
+    </record>
+
+    <record id="eid_day_3" model="qurbani.day">
+        <field name="name">Eid 3rd Day</field>
+    </record>
+
+</odoo>
