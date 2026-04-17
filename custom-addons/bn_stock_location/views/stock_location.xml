@@ -7,7 +7,10 @@
         <field name="inherit_id" ref="stock.view_location_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='replenish_location']" position="after">
+                <field name="is_slaughter_location" />
+                <field name="is_distribution_location" />
                 <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="usage != 'internal'" />
+                <field name="location_option_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>
         </field>
     </record>
