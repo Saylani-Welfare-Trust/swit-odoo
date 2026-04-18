@@ -31,7 +31,7 @@
         'point_of_sale._assets_pos': [
             'bn_qurbani/static/src/app/**/*',
             'bn_qurbani/static/src/screens/**/*',
-            # 'bn_qurbani/static/src/components/**/*',
+            'bn_qurbani/static/src/components/**/*',
             'bn_qurbani/static/src/models/*',
         ],
     }
