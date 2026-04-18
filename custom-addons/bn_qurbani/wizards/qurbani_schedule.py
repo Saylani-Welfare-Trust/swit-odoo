@@ -26,7 +26,9 @@ class QurbaniSchedule(models.TransientModel):
         slot_duration = self.slot_interval or 1
         dist_window = self.interval or 2
 
-        # Optional: records (avoid duplicates)
+        # -----------------------------
+        # REMOVE OLD RECORDS
+        # -----------------------------
         Slaughter.search([
             ('day_id', '=', self.day_id.id),
             ('hijri_id', '=', self.hijri_id.id)
@@ -41,6 +43,7 @@ class QurbaniSchedule(models.TransientModel):
         # SLAUGHTER SLOTS
         # -----------------------------
         current_time = start
+        slaughter_slots = 0  # count slots
 
         while current_time + slot_duration <= end:
             Slaughter.create({
@@ -51,6 +54,7 @@ class QurbaniSchedule(models.TransientModel):
             })
 
             current_time += slot_duration
+            slaughter_slots += 1
 
         # -----------------------------
         # DISTRIBUTION SLOTS
@@ -58,19 +62,18 @@ class QurbaniSchedule(models.TransientModel):
         # First slaughter slot end
         first_slot_end = start + slot_duration
 
-        # Jump only once by interval
+        # Start after interval jump
         dist_start = first_slot_end + dist_window
 
-        # Safety: ensure it doesn't exceed end
-        if dist_start < end:
-            current_time = dist_start
+        current_time = dist_start
 
-            while current_time + slot_duration <= end:
-                Distribution.create({
-                    'start_time': current_time,
-                    'end_time': current_time + slot_duration,
-                    'day_id': self.day_id.id,
-                    'hijri_id': self.hijri_id.id,
-                })
+        # Create SAME number of slots as slaughter
+        for i in range(slaughter_slots):
+            Distribution.create({
+                'start_time': current_time,
+                'end_time': current_time + slot_duration,
+                'day_id': self.day_id.id,
+                'hijri_id': self.hijri_id.id,
+            })
 
-                current_time += slot_duration
+            current_time += slot_duration
