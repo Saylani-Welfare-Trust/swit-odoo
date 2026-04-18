@@ -18,9 +18,9 @@
                 <!-- Header Row -->
                 <div class="row mb-2 receipt_header">
                     <div class="col-6">
-                        <h1 t-if="order.receive_voucher &amp;&amp; !order.is_qurbani">Receipt Voucher</h1>
-                        <h1 t-if="!order.receive_voucher &amp;&amp; !order.is_qurbani">Donation Receipt</h1>
-                        <h1 t-if="!order.receive_voucher &amp;&amp; order.is_qurbani">Qurbani Booking</h1>
+                        <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
+                        <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                        <!-- <h1 t-if="!order.receive_voucher &amp;&amp; order.is_qurbani">Qurbani Booking</h1> -->
                     </div>
                     <div class="col-6 text-end">
                         <h1 class="text-transform" style="font-size: 12px;">
