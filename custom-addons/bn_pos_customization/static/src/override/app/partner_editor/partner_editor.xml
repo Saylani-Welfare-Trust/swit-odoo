@@ -78,7 +78,6 @@
                                 t-att-class="{'border-danger': missingFields.includes('mobile') }" />
                         </div>
 
-                        <!-- <div class="col" t-attf-id="cnic_no" t-attf-style="{{ cnicStyle }}"> -->
                         <div class="col" t-attf-id="cnic_no" >
                             <label class="form-label" for="cnic_no">CNIC</label>
                             <input class="form-control"

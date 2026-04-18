@@ -16,10 +16,11 @@
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total))" />
 
                 <!-- Header Row -->
-                <div class="row mb-2">
+                <div class="row mb-2 receipt_header">
                     <div class="col-6">
-                        <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
-                        <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                        <h1 t-if="order.receive_voucher &amp;&amp; !order.is_qurbani">Receipt Voucher</h1>
+                        <h1 t-if="!order.receive_voucher &amp;&amp; !order.is_qurbani">Donation Receipt</h1>
+                        <h1 t-if="!order.receive_voucher &amp;&amp; order.is_qurbani">Qurbani Booking</h1>
                     </div>
                     <div class="col-6 text-end">
                         <h1 class="text-transform" style="font-size: 12px;">
@@ -71,7 +72,7 @@
                         <div>
                             <strong>Remarks:</strong>
                             <t t-set="count" t-value="1"/>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
+                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
                                 <t t-if="line.customerNote">
                                     <t t-esc="count"/>. <t t-esc="line.customerNote"/>
                                     <br/>
@@ -138,7 +139,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
+                        <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
                             <tr>
                                 <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                 <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
@@ -173,7 +174,7 @@
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName">
+                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
                                 <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
                                 <br/>
                                 <t t-set="count" t-value="count + 1"/>
