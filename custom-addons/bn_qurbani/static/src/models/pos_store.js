@@ -23,7 +23,7 @@ patch(PosStore.prototype, {
         if (isQurbani) {
             const res = await this.popup.add(QurbaniSchedule, {
                 // hissa_no: nameHasNo,
-                hissa_no: true,
+                hissa_no: false,
                 product: product,
             });
 
