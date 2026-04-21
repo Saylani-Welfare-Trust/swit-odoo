@@ -77,7 +77,7 @@
                 </t>
 
                 <!-- SLOT LIST -->
-                <t t-if="state.selectedLocation &amp;&amp;  !this.hissa_no">
+                <t t-if="state.selectedLocation &amp;&amp; !this.hissa_no">
 
                     <t t-foreach="state.data[state.selectedCity][state.selectedLocation]"
                        t-as="slot"
