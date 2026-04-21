@@ -45,8 +45,7 @@ class QurbaniOrder(models.Model):
     def set_remarks(self):
         remarks = []
         for line in self.qurbani_order_line_ids:
-            if line.remarks:
-                remarks.append(line.remarks)
+            remarks.append(f'{line.hissa_name} - {line.city_id.name} - {line.distribution_id.name} - {line.day_id.name}: {line.start_time} to {line.end_time}')
         
         self.remarks = "-".join(remarks)
     
@@ -79,73 +78,108 @@ class QurbaniOrder(models.Model):
 
     @api.model
     def create_qurbani_record(self, data):
+        # raise ValidationError(str(data))
 
         schedule_usage = {}
 
-        # -------------------------
-        # 1. GROUP & CALCULATE FIRST
-        # -------------------------
-        for line in data['order_lines']:
+        # ==================================================
+        # 1. FIND EXACT DEMAND RECORD (ONLY SOURCE OF TRUTH)
+        # ==================================================
+        def _get_demand(line):
+            slot = line.get('qurbani_schedule', {}).get('slot', {})
 
-            schedule = self.env['distribution.schedule'].search([
-                ('pos_product_id', '=', line['product_id'])
+            return self.env['qurbani.demand'].search([
+                ('pos_product_id', '=', line['product_id']),
+
+                # slaughter window matching
+                ('slaughter_location_id', '=', slot.get('slaughter').get('location', 0)),
+                ('slaughter_start_time', '<=', slot.get('slaughter').get('start', 0)),
+                ('slaughter_end_time', '>=', slot.get('slaughter').get('end', 0)),
+
+                # distribution window matching
+                ('distribution_location_id', '=', slot.get('distribution').get('location', 0)),
+                ('distribution_start_time', '<=', slot.get('distribution').get('start', 0)),
+                ('distribution_end_time', '>=', slot.get('distribution').get('end', 0)),
+
+                # optional safety keys
+                ('hijri_id', '=', self.env['hijri'].search([], order="id desc", limit=1).id),
             ], limit=1)
 
-            if not schedule:
+        # ==================================================
+        # 2. GROUP & CALCULATE FIRST
+        # ==================================================
+        for line in data['order_lines']:
+            demand = _get_demand(line)
+
+            if not demand:
                 continue
 
             qty = int(line['quantity'])
 
-            if schedule.id not in schedule_usage:
-                schedule_usage[schedule.id] = {
-                    'schedule': schedule,
+            if demand.id not in schedule_usage:
+                schedule_usage[demand.id] = {
+                    'demand': demand,
                     'qty': 0
                 }
 
-            schedule_usage[schedule.id]['qty'] += qty
+            schedule_usage[demand.id]['qty'] += qty
 
-        # -------------------------
-        # 2. VALIDATION (IMPORTANT PART)
-        # -------------------------
+        # ==================================================
+        # 3. VALIDATION
+        # ==================================================
         for usage in schedule_usage.values():
-            schedule = usage['schedule']
+            demand = usage['demand']
             new_qty = usage['qty']
 
-            if (schedule.booked_hissa + new_qty) > schedule.total_hissa:
+            if (demand.booked_hissa + new_qty) > demand.total_hissa:
                 return {
                     "status": "error",
-                    "body": f"Not enough Hissa for {schedule.name}. "
-                            f"Available: {schedule.total_hissa - schedule.booked_hissa}, "
-                            f"Requested: {new_qty}",
+                    "body": (
+                        f"Not enough Hissa for {demand.id}. "
+                        f"Available: {demand.total_hissa - demand.booked_hissa}, "
+                        f"Requested: {new_qty}"
+                    ),
                 }
 
-        # -------------------------
-        # 3. APPLY UPDATES AFTER VALIDATION
-        # -------------------------
+        # ==================================================
+        # 4. APPLY UPDATES (NO CHANGE IN STRUCTURE)
+        # ==================================================
         product_lines = []
 
         for line in data['order_lines']:
 
-            schedule = self.env['distribution.schedule'].search([
-                ('pos_product_id', '=', line['product_id'])
-            ], limit=1)
-
+            demand = _get_demand(line)
             qty = int(line['quantity'])
 
-            if schedule:
-                schedule.booked_hissa += qty
-                schedule.current_hissa += qty
+            if demand:
+                demand.booked_hissa += qty
+                demand.current_hissa += qty
 
             product_lines.append((0, 0, {
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'amount': line['price'],
-                'remarks': line.get('remarks', ''),
+
+                'day_id': self.env['qurbani.day'].search([
+                    ('name', '=', line['qurbani_schedule'].get('slot', {}).get('day', ''))
+                ], limit=1).id,
+
+                'city_id': self.env['stock.location'].search([
+                    ('name', '=', line['qurbani_schedule'].get('city', ''))
+                ], limit=1).id,
+
+                'distribution_id': self.env['stock.location'].search([
+                    ('name', '=', line['qurbani_schedule'].get('location', ''))
+                ], limit=1).id,
+
+                'hissa_name': line['qurbani_schedule'].get('name', ''),
+                'start_time': line['qurbani_schedule'].get('slot', {}).get('start_time', 0),
+                'end_time': line['qurbani_schedule'].get('slot', {}).get('end_time', 0),
             }))
 
-        # -------------------------
-        # 4. CREATE ORDER
-        # -------------------------
+        # ==================================================
+        # 5. CREATE ORDER (UNCHANGED)
+        # ==================================================
         qurbani = self.env['qurbani.order'].create({
             'donor_id': data['donor_id'],
             'qurbani_order_line_ids': product_lines,

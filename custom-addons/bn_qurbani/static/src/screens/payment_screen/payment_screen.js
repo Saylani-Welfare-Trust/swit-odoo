@@ -51,11 +51,11 @@ patch(PaymentScreen.prototype, {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
+
+                    this.pos.is_qurbani = true
                 }
             })
         }
-
-        this.pos.is_qurbani = true
 
         // Continue with normal POS flow
         return super.validateOrder(isForceValidate);
@@ -67,7 +67,7 @@ patch(PaymentScreen.prototype, {
                     product_id: line.product.id,
                     quantity: line.quantity,
                     price: line.price,
-                    remarks: line.customerNote
+                    qurbani_schedule: line.qurbani_schedule || null,
                 }
             )
         );

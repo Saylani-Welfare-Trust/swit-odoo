@@ -6,24 +6,16 @@
         <field name="model">distribution.schedule</field>
         <field name="arch" type="xml">
             <tree create="0" editable="bottom">
-                <header>
-                    <button string="Update Inventory" name="action_update_inventory" type="object" class="oe_highlight"/>
-                </header>
-
-                <field name="distribution_location_ids" column_invisible="1"/>
-                <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
-                <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
-                <field name="start_time" widget="float_time" required="1"/>
-                <field name="end_time" widget="float_time" required="1"/>
-                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
-                <field name="pos_product_id" domain="[('type', '=', 'product'), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
-                <field name="slaughter_schedule_id" required="1" domain="[('hijri_id', '=', hijri_id), ('day_id', '=', day_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="demand" readonly="1"/>
-                <field name="location_id" required="1" domain="[('id', 'in', distribution_location_ids)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="total_hissa" readonly="1"/>
-                <field name="booked_hissa" readonly="1"/>
-                <field name="current_hissa" readonly="1" column_invisible="1"/>
-                <field name="remaining_hissa" readonly="1"/>
+                <field name="inventory_product_name" column_invisible="1"/>
+                <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="start_time" widget="float_time" readonly="1"/>
+                <field name="end_time" widget="float_time" readonly="1"/>
+                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="pos_product_ids" widget="many2many_tags" domain="[('name', 'ilike', inventory_product_name), ('type', '=', 'product'), ('is_qurbani_inventory', '=', False), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="slaughter_schedule_id" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="slaughter_location_id" readonly="1" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="location_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
             </tree>
         </field>
     </record>

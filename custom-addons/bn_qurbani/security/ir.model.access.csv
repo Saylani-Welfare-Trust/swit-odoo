@@ -8,3 +8,6 @@ access_distribution_schedule,distribution.schedule,model_distribution_schedule,,
 access_qurbani_order,qurbani.order,model_qurbani_order,,1,1,1,1
 access_qurbani_order_line,qurbani.order.line,model_qurbani_order_line,,1,1,1,1
 access_qurbani_schedule,qurbani.schedule,model_qurbani_schedule,,1,1,1,1
+access_qurbani_demand,qurbani.demand,model_qurbani_demand,,1,1,1,1
+access_generate_qurbani_demand,generate.qurbani.demand,model_generate_qurbani_demand,,1,1,1,1
+access_update_qurbani_demand,update.qurbani.demand,model_update_qurbani_demand,,1,1,1,1

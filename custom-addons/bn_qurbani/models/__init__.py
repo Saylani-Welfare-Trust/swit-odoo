@@ -1,3 +1,5 @@
+from . import product_template
+from . import product_product
 from . import qurbani_day
 from . import hijri
 from . import chand_raat
@@ -6,3 +8,5 @@ from . import slaughter_schedule
 from . import distribution_schedule
 from . import qurbani_order
 from . import qurbani_order_line
+from . import pos_config
+from . import qurbani_demand

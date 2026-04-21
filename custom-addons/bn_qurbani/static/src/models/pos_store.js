@@ -11,6 +11,8 @@ patch(PosStore.prototype, {
             product = this.db.get_product_by_id(product);
         }
 
+        const nameHasNo = product.display_name?.toLowerCase().includes("no");
+
         const isQurbani =
             product.is_livestock &&
             product.detailed_type === "product" &&
@@ -19,7 +21,10 @@ patch(PosStore.prototype, {
         let payload = null;
 
         if (isQurbani) {
-            const res = await this.popup.add(QurbaniSchedule);
+            const res = await this.popup.add(QurbaniSchedule, {
+                hissa_no: nameHasNo,
+                product: product,
+            });
 
             if (!res?.confirmed) {
                 return false;
@@ -36,7 +41,5 @@ patch(PosStore.prototype, {
         if (isQurbani && line) {
             line.qurbani_schedule = payload;
         }
-
-        console.log(order);
     }
 });

@@ -7,14 +7,25 @@
 
             <!-- HEADER -->
             <div class="modal-header drag-handle">
-                <h4 class="modal-title">Qurbani Schedule</h4>
+                <h4 class="modal-title">Cashier </h4><t t-esc="this.pos.get_cashier().name"/>
             </div>
 
             <!-- BODY -->
             <main class="modal-body">
 
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Name</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            placeholder="Enter Name"
+                            t-att-value="state.name"
+                            t-on-input="onNameInput"/>
+                    </div>
+                </div>
+
                 <!-- CITY -->
-                <div class="row mb-2">
+                <div class="row mb-2 text-start" t-if="!this.hissa_no">
                     <div class="col-4 fw-semibold">City</div>
                     <div class="col-8">
 
@@ -36,9 +47,9 @@
                 </div>
 
                 <!-- LOCATION -->
-                <t t-if="state.selectedCity">
+                <t t-if="state.selectedCity &amp;&amp; !this.hissa_no">
 
-                    <div class="row mb-2">
+                    <div class="row mb-2 text-start">
                         <div class="col-4 fw-semibold">Location</div>
                         <div class="col-8">
 
@@ -66,7 +77,7 @@
                 </t>
 
                 <!-- SLOT LIST -->
-                <t t-if="state.selectedLocation">
+                <t t-if="state.selectedLocation &amp;&amp;  !this.hissa_no">
 
                     <t t-foreach="state.data[state.selectedCity][state.selectedLocation]"
                        t-as="slot"
@@ -111,7 +122,7 @@
 
                 <button class="btn btn-primary"
                         t-on-click="confirmSelection"
-                        t-att-disabled="!state.selectedSlot">
+                        t-att-disabled="!state.name">
                     Confirm
                 </button>
 
