@@ -72,12 +72,14 @@ class QurbaniSchedule(models.TransientModel):
             ('day_id', '=', self.day_id.id),
             ('hijri_id', '=', self.hijri_id.id),
             ('location_id', '=', self.slaughter_location_id.id),
+            ('inventory_product_id', '=', self.inventory_product_id.id),
         ]).unlink()
 
         Distribution.search([
             ('day_id', '=', self.day_id.id),
             ('hijri_id', '=', self.hijri_id.id),
             ('slaughter_location_id', '=', self.slaughter_location_id.id),
+            ('inventory_product_id', '=', self.inventory_product_id.id),
         ]).unlink()
 
         # -----------------------------
