@@ -23,48 +23,46 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
             selectedCity: null,
             selectedLocation: null,
             selectedSlot: null,
+            selectedSlotId: null,   // ✅ ADDED
             name: "",
         });
 
-        this.defaultCity = this.pos.config.city_id[1]?.split('/')?.pop() || "";
-        this.defaultLocation = this.pos.config.distribution_id[1]?.split('/')?.pop() || "";
+        this.defaultCity = this.pos.config.city_id?.[1]?.split('/')?.pop() || "";
+        this.defaultLocation = this.pos.config.distribution_id?.[1]?.split('/')?.pop() || "";
 
         onMounted(() => this.loadData());
     }
 
     async loadData() {
-        const productId = this.product.id;  // ✅ get product ID from props
+        const productId = this.product.id;
 
         this.state.data = await this.orm.call(
-            "qurbani.demand",
+            "distribution.schedule",
             "get_distribution_details",
-            [productId]   // ✅ pass product
+            [productId]
         );
 
         if (this.defaultCity && this.state.data[this.defaultCity]) {
             this.state.selectedCity = this.defaultCity;
 
-            if (
-                this.defaultLocation &&
-                this.state.data[this.defaultCity][this.defaultLocation]
-            ) {
+            if (this.defaultLocation &&
+                this.state.data[this.defaultCity][this.defaultLocation]) {
                 this.state.selectedLocation = this.defaultLocation;
             }
         }
     }
 
-    // CITY CHANGE
     onCityChange() {
         this.state.selectedLocation = null;
         this.state.selectedSlot = null;
+        this.state.selectedSlotId = null;   // ✅ RESET
     }
 
-    // LOCATION CHANGE
     onLocationChange() {
         this.state.selectedSlot = null;
+        this.state.selectedSlotId = null;   // ✅ RESET
     }
 
-    // ✅ FIXED SLOT SELECT (NO THIS ERROR)
     selectSlot(ev) {
         const slotId = parseInt(ev.currentTarget.dataset.id);
 
@@ -75,6 +73,8 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
             ?.find(s => s.id === slotId);
 
         if (!slot || slot.remaining_hissa <= 0) return;
+
+        this.state.selectedSlotId = slotId;   // ✅ for UI highlight
 
         this.state.selectedSlot = {
             id: slot.id,
@@ -95,16 +95,14 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
     }
 
     validateName(name) {
-        const regex = /^[A-Za-z ]{3,}$/;  // only letters + spaces, min length 3
+        const regex = /^[A-Za-z ]{3,}$/;
         return regex.test(name.trim());
     }
-    
+
     onNameInput(ev) {
-        const value = ev.target.value;
-        this.state.name = value;
+        this.state.name = ev.target.value;
     }
 
-    // CONFIRM
     confirmSelection() {
         const slot = this.state.selectedSlot;
         const name = this.state.name?.trim();
@@ -114,7 +112,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
         if (!this.validateName(name)) {
             this.notification.add(
                 "Name must be at least 3 characters and contain only letters.",
-                { type: 'warning' }
+                { type: "warning" }
             );
             return;
         }
@@ -122,15 +120,14 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
         this.props.close({
             confirmed: true,
             payload: {
-                name: name,
+                name,
                 city: this.state.selectedCity,
                 location: this.state.selectedLocation,
-                slot: slot,
+                slot,
             },
         });
     }
 
-    // CANCEL
     cancel() {
         this.props.close({
             confirmed: false,

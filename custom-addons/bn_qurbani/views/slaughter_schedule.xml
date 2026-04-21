@@ -5,7 +5,9 @@
         <field name="name">slaughter.schedule.view.tree</field>
         <field name="model">slaughter.schedule</field>
         <field name="arch" type="xml">
-            <tree create="0" editable="bottom">
+            <tree create="0" edit="0">
+                <field name="inventory_product_name" column_invisible="1" />
+
                 <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="start_time" widget="float_time" readonly="1"/>

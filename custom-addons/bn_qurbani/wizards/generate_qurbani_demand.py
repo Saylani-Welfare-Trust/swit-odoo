@@ -16,8 +16,12 @@ class GenerateQurbaniDemand(models.TransientModel):
     def action_generate_demand(self):
         self.ensure_one()
 
-        Demand = self.env['qurbani.demand']
+        CityDemand = self.env['qurbani.city.demand']
+        SlaughterDemand = self.env['qurbani.slaughter.demand']
+        SlaughterSlotDemand = self.env['qurbani.slaughter.slot.demand']
         Distribution = self.env['distribution.schedule']
+
+        new_record = {}
 
         # -----------------------------
         # BASIC VALIDATIONS
@@ -41,9 +45,9 @@ class GenerateQurbaniDemand(models.TransientModel):
             raise UserError("No distribution schedule found for selected criteria.")
 
         # -----------------------------
-        # PREVENT DUPLICATE GENERATION
+        # PREVENT DUPLICATE GENERATION (GLOBAL)
         # -----------------------------
-        existing = Demand.search([
+        existing = SlaughterDemand.search([
             ('hijri_id', '=', self.hijri_id.id),
             ('day_id', '=', self.day_id.id),
             ('slaughter_location_id', '=', self.slaughter_location_id.id)
@@ -53,65 +57,138 @@ class GenerateQurbaniDemand(models.TransientModel):
             raise UserError("Demand already generated for this combination.")
 
         # -----------------------------
-        # CREATE DEMAND
+        # BUILD DATA (CITY → PRODUCT → SLOTS)
         # -----------------------------
         for record in distribution_schedule:
 
-            # ✅ Validate POS products
+            # Validate POS products
             if not record.pos_product_ids:
                 raise UserError(
                     f"No POS products found for distribution slot at {record.start_time}."
                 )
 
-            # ✅ Validate slaughter link
+            # Validate slaughter link
             if not record.slaughter_schedule_id:
                 raise UserError(
-                    f"Slaughter slot not linked for distribution at {record.start_time}. "
-                    f"Please regenerate schedule properly."
+                    f"Slaughter slot not linked for distribution at {record.start_time}."
                 )
 
             slaughter = record.slaughter_schedule_id
 
-            for pos_product in record.pos_product_ids:
+            # Validate city
+            if not slaughter.city_location_id:
+                raise UserError(
+                    f"City not defined in slaughter schedule at {record.start_time}."
+                )
+
+            city_id = slaughter.city_location_id.id
+            product_id = slaughter.inventory_product_id.id
+
+            if not product_id:
+                raise UserError(
+                    f"Inventory product missing in slaughter schedule at {record.start_time}."
+                )
+
+            # -----------------------------
+            # INIT CITY
+            # -----------------------------
+            if city_id not in new_record:
+                new_record[city_id] = {}
+
+            # -----------------------------
+            # INIT PRODUCT UNDER CITY
+            # -----------------------------
+            if product_id not in new_record[city_id]:
+                new_record[city_id][product_id] = {
+                    'slaughter_location_id': record.slaughter_location_id.id,
+                    'slots': []
+                }
+
+            # -----------------------------
+            # ADD SLOT (MULTIPLE ALLOWED)
+            # -----------------------------
+            slot_vals = {
+                'start_time': slaughter.start_time,
+                'end_time': slaughter.end_time,
+            }
+
+            # Avoid duplicate slots in memory
+            if slot_vals not in new_record[city_id][product_id]['slots']:
+                new_record[city_id][product_id]['slots'].append(slot_vals)
+
+        # -----------------------------
+        # FINAL VALIDATION
+        # -----------------------------
+        if not new_record:
+            raise UserError("No valid data found to generate demand.")
+
+        # -----------------------------
+        # CREATE RECORDS
+        # -----------------------------
+        for city_id, products in new_record.items():
+
+            for product_id, details in products.items():
 
                 # -----------------------------
-                # PREVENT DUPLICATE PER SLOT
+                # CITY DEMAND
                 # -----------------------------
-                existing_line = Demand.search([
-                    ('hijri_id', '=', record.hijri_id.id),
-                    ('day_id', '=', record.day_id.id),
-                    ('slaughter_location_id', '=', record.slaughter_location_id.id),
-                    ('distribution_location_id', '=', record.location_id.id),
-                    ('distribution_start_time', '=', record.start_time),
-                    ('pos_product_id', '=', pos_product.id),
+                city_demand = CityDemand.search([
+                    ('hijri_id', '=', self.hijri_id.id),
+                    ('day_id', '=', self.day_id.id),
+                    ('city_location_id', '=', city_id),
+                    ('inventory_product_id', '=', product_id),
                 ], limit=1)
 
-                if existing_line:
-                    continue  # skip duplicates safely
+                if not city_demand:
+                    city_demand = CityDemand.create({
+                        'hijri_id': self.hijri_id.id,
+                        'day_id': self.day_id.id,
+                        'city_location_id': city_id,
+                        'inventory_product_id': product_id,
+                    })
 
                 # -----------------------------
-                # CREATE RECORD
+                # SLAUGHTER DEMAND
                 # -----------------------------
-                Demand.create({
-                    'hijri_id': record.hijri_id.id,
-                    'day_id': record.day_id.id,
+                slaughter_demand = SlaughterDemand.search([
+                    ('hijri_id', '=', self.hijri_id.id),
+                    ('day_id', '=', self.day_id.id),
+                    ('city_location_id', '=', city_id),
+                    ('slaughter_location_id', '=', details['slaughter_location_id']),
+                    ('inventory_product_id', '=', product_id),
+                ], limit=1)
 
-                    # City
-                    'city_location_id': slaughter.city_location_id.id if hasattr(slaughter, 'city_location_id') else False,
+                if not slaughter_demand:
+                    slaughter_demand = SlaughterDemand.create({
+                        'hijri_id': self.hijri_id.id,
+                        'day_id': self.day_id.id,
+                        'city_location_id': city_id,
+                        'slaughter_location_id': details['slaughter_location_id'],
+                        'inventory_product_id': product_id,
+                    })
 
-                    'city_demand': 0,
+                # -----------------------------
+                # SLOT DEMAND (MULTIPLE)
+                # -----------------------------
+                for slot in details['slots']:
 
-                    # Slaughter
-                    'slaughter_location_id': record.slaughter_location_id.id,
-                    'slaughter_start_time': slaughter.start_time,
-                    'slaughter_end_time': slaughter.end_time,
+                    existing_slot = SlaughterSlotDemand.search([
+                        ('hijri_id', '=', self.hijri_id.id),
+                        ('day_id', '=', self.day_id.id),
+                        ('slaughter_location_id', '=', details['slaughter_location_id']),
+                        ('inventory_product_id', '=', product_id),
+                        ('start_time', '=', slot['start_time']),
+                        ('end_time', '=', slot['end_time']),
+                    ], limit=1)
 
-                    # Distribution
-                    'distribution_location_id': record.location_id.id,
-                    'distribution_start_time': record.start_time,
-                    'distribution_end_time': record.end_time,
+                    if existing_slot:
+                        continue  # skip duplicates safely
 
-                    # Products
-                    'inventory_product_id': record.inventory_product_id.id,
-                    'pos_product_id': pos_product.id,
-                })
+                    SlaughterSlotDemand.create({
+                        'hijri_id': self.hijri_id.id,
+                        'day_id': self.day_id.id,
+                        'slaughter_location_id': details['slaughter_location_id'],
+                        'inventory_product_id': product_id,
+                        'start_time': slot['start_time'],
+                        'end_time': slot['end_time'],
+                    })

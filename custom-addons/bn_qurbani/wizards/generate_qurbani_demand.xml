@@ -26,7 +26,7 @@
     </record>
 
     <record id="generate_qurbani_demand_action" model="ir.actions.act_window">
-        <field name="name">Action Name</field>
+        <field name="name">Generate Qurbani Demand</field>
         <field name="res_model">generate.qurbani.demand</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

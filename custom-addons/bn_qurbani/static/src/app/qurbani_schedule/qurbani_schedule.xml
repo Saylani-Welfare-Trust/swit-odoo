@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<templates id="template" xml:space="preserve">
+<templates xml:space="preserve">
 
     <t t-name="bn_qurbani.QurbaniSchedule">
 
@@ -7,20 +7,24 @@
 
             <!-- HEADER -->
             <div class="modal-header drag-handle">
-                <h4 class="modal-title">Cashier </h4><t t-esc="this.pos.get_cashier().name"/>
+                <h4 class="modal-title">
+                    Cashier
+                </h4>
+                <t t-esc="this.pos.get_cashier().name"/>
             </div>
 
             <!-- BODY -->
             <main class="modal-body">
 
+                <!-- NAME -->
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Name</div>
                     <div class="col-8">
                         <input type="text"
-                            class="form-control form-control-sm"
-                            placeholder="Enter Name"
-                            t-att-value="state.name"
-                            t-on-input="onNameInput"/>
+                               class="form-control form-control-sm"
+                               placeholder="Enter Name"
+                               t-att-value="state.name"
+                               t-on-input="onNameInput"/>
                     </div>
                 </div>
 
@@ -85,22 +89,23 @@
 
                         <div class="card p-2 mb-2"
                              t-att-data-id="slot.id"
-                             t-att-class="slot.remaining_hissa &lt;= 0 and 'opacity-50' or ''"
+                             t-att-class="
+                                (slot.remaining_hissa &lt;= 0 and 'opacity-50 ' or '') +
+                                (state.selectedSlotId === slot.id and 'border border-primary bg-light shadow' or '')
+                             "
                              t-on-click="selectSlot">
 
                             <div class="d-flex justify-content-between">
 
                                 <div>
-                                    <strong>
-                                        <t t-esc="slot.day"/>
-                                    </strong>
+                                    <strong><t t-esc="slot.day"/></strong>
                                 </div>
+
                                 <div>
-                                    <div>
-                                        <t t-esc="slot.start_time"/> -
-                                        <t t-esc="slot.end_time"/>
-                                    </div>
+                                    <t t-esc="slot.start_time"/> -
+                                    <t t-esc="slot.end_time"/>
                                 </div>
+
                                 <div>
                                     <span class="badge bg-success">
                                         <t t-esc="slot.remaining_hissa"/> Left

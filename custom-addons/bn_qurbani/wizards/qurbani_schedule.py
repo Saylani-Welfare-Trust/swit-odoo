@@ -28,6 +28,12 @@ class QurbaniSchedule(models.TransientModel):
         store=True,
         readonly=True
     )
+    
+    pos_product_ids = fields.Many2many(
+        related="city_schedule_id.pos_product_ids",
+        string="POS Products",
+        readonly=True
+    )
 
     hijri_id = fields.Many2one('hijri', string="Hijri Date")
     day_id = fields.Many2one('qurbani.day', string="Qurbani Day")
@@ -85,7 +91,7 @@ class QurbaniSchedule(models.TransientModel):
         # -----------------------------
         # GENERATE SLAUGHTER SLOTS
         # -----------------------------
-        slaughter_slots = self._generate_slaughter_slots(
+        slaughter_records = self._generate_slaughter_slots(
             Slaughter, start, end, slot_duration
         )
 
@@ -93,18 +99,19 @@ class QurbaniSchedule(models.TransientModel):
         # GENERATE DISTRIBUTION SLOTS
         # -----------------------------
         self._generate_distribution_slots(
-            Distribution, start, slot_duration, dist_window, slaughter_slots
+            Distribution, slot_duration, dist_window, slaughter_records
         )
+
 
     # --------------------------------------------------
     # SLAUGHTER SLOT GENERATION
     # --------------------------------------------------
     def _generate_slaughter_slots(self, Slaughter, start, end, slot_duration):
         current_time = start
-        slaughter_slots = 0
+        slaughter_records = []
 
         while current_time + slot_duration <= end:
-            Slaughter.create({
+            record = Slaughter.create({
                 'start_time': current_time,
                 'end_time': current_time + slot_duration,
                 'day_id': self.day_id.id,
@@ -114,21 +121,22 @@ class QurbaniSchedule(models.TransientModel):
                 'inventory_product_id': self.inventory_product_id.id,
             })
 
+            slaughter_records.append(record)
             current_time += slot_duration
-            slaughter_slots += 1
 
-        return slaughter_slots
+        return slaughter_records
+
 
     # --------------------------------------------------
     # DISTRIBUTION SLOT GENERATION
     # --------------------------------------------------
     def _generate_distribution_slots(
-        self, Distribution, start, slot_duration, dist_window, slaughter_slots
+        self, Distribution, slot_duration, dist_window, slaughter_records
     ):
-        first_slot_end = start + slot_duration
-        current_time = first_slot_end + dist_window
+        for slaughter in slaughter_records:
+            # Distribution starts after slaughter ends + buffer
+            current_time = slaughter.end_time + dist_window
 
-        for i in range(slaughter_slots):
             for distribution in self.city_schedule_id.distribution_location_ids:
                 Distribution.create({
                     'start_time': current_time,
@@ -136,10 +144,10 @@ class QurbaniSchedule(models.TransientModel):
                     'day_id': self.day_id.id,
                     'hijri_id': self.hijri_id.id,
                     'slaughter_location_id': self.slaughter_location_id.id,
+                    'slaughter_schedule_id': slaughter.id,  # ✅ LINKED
                     'location_id': distribution.id,
                     'inventory_product_id': self.inventory_product_id.id,
+                    'pos_product_ids': [(6, 0, self.pos_product_ids.ids)],
                     'interval': self.interval or 2,
                     'slot_interval': self.slot_interval or 1,
                 })
-
-            current_time += slot_duration

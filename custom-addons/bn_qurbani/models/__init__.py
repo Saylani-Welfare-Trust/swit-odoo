@@ -9,4 +9,6 @@ from . import distribution_schedule
 from . import qurbani_order
 from . import qurbani_order_line
 from . import pos_config
-from . import qurbani_demand
+from . import qurbani_city_demand
+from . import qurbani_slaughter_demand
+from . import qurbani_slaughter_slot_demand

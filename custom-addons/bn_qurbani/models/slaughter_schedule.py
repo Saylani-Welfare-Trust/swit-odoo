@@ -8,13 +8,14 @@ class SlaughterSchedule(models.Model):
     _description = 'Slaughter Schedule'
 
 
-    name = fields.Char('Name', compute="_compute_name", default="New", store=True)
-
     day_id = fields.Many2one('qurbani.day', string="Day", tracking=True)
     hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True)
     city_location_id = fields.Many2one('stock.location', string="City Location", tracking=True)
     location_id = fields.Many2one('stock.location', string='Slaughter Location', tracking=True)
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product", tracking=True)
+
+    name = fields.Char('Name', compute="_compute_name", default="New", store=True)
+    inventory_product_name = fields.Char(related='inventory_product_id.name', string="Inentory Product Name")
 
     start_time = fields.Float('Start Time', tracking=True)
     end_time = fields.Float('End Time', tracking=True)
