@@ -41,6 +41,7 @@ patch(PosStore.prototype, {
 
         if (isQurbani && line) {
             line.qurbani_schedule = payload;
+            line.customerNote = payload.name || "";
         }
     }
 });
