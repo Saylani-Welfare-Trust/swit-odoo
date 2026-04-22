@@ -36,6 +36,16 @@ class DistributionSchedule(models.Model):
         if not last_hijri:
             return {}
 
+        # 🔥 GET PRODUCT ONCE
+        product = self.env['product.product'].browse(product_id)
+        product_name = (product.name or "").lower()
+
+        # 🔥 DECIDE SLOT LIMIT BASED ON PRODUCT
+        if "yes" in product_name:
+            limit_type = "two"
+        else:
+            limit_type = "one"
+
         records = self.search([
             ('hijri_id', '=', last_hijri.id),
             ('pos_product_ids', 'in', product_id)
@@ -112,17 +122,24 @@ class DistributionSchedule(models.Model):
             })
 
         # ==================================================
-        # 🔥 LIMIT: FIRST 2 AVAILABLE SLOTS PER DAY
+        # 🔥 APPLY LIMIT BASED ON PRODUCT
         # ==================================================
         for city in city_map:
             for location in city_map[city]:
 
-                # sort by time (optional but recommended)
-                city_map[city][location].sort(
-                    key=lambda x: x.get("start_time") or 0
-                )
+                slots = city_map[city][location]
 
-                # take ONLY first 2 available slots
-                city_map[city][location] = city_map[city][location][:2]
+                # sort by time
+                slots.sort(key=lambda x: x.get("start_time") or 0)
+
+                if not slots:
+                    continue
+
+                if limit_type == "two":
+                    # ✅ YES → first 2
+                    city_map[city][location] = slots[:2]
+                else:
+                    # ✅ NO → last 1
+                    city_map[city][location] = [slots[-1]]
 
         return city_map
