@@ -1,265 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates id="template" xml:space="preserve">
 
-    <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
-        <xpath expr="//div[hasclass('pos-receipt')]" position="replace">
+<t t-name="bn_pos_customization.OrderReceipt"
+   t-inherit="point_of_sale.OrderReceipt"
+   t-inherit-mode="extension">
 
-            <div class="pos-receipt">
+<xpath expr="//div[hasclass('pos-receipt')]" position="replace">
 
-                <t t-set="company" t-value="props.data.headerData.company"/>
-                <t t-set="order" t-value="props.data"/>
-                <t t-set="partner" t-value="props.data.partner"/>
-                <t t-set="lines" t-value="props.data.orderlines"/>
-                <t t-set="payment" t-value="props.data.paymentlines[0]"/>
-                <t t-set="date_format" t-value="order.date" />
-                <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
-                <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total))" />
+<div class="pos-receipt">
 
-                <!-- Header Row -->
-                <div class="row mb-2 receipt_header">
-                    <div class="col-6">
-                        <h1>Qurbani Booking</h1>
-                        <!-- <t t-if="order.is_qurbani">
-                            <h1>Qurbani Booking</h1>
-                        </t>
-                        <t t-else="">
-                            <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
-                            <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
-                        </t> -->
-                    </div>
-                    <div class="col-6 text-end">
-                        <h1 class="text-transform" style="font-size: 12px;">
-                            <t t-if="company.name"><t t-esc="company.name"/></t>
-                            <br/>
-                            <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
-                        </h1>
-                    </div>
-                </div>
+    <!-- ================= VARIABLES ================= -->
+    <t t-set="company" t-value="props.data.headerData.company"/>
+    <t t-set="order" t-value="props.data"/>
+    <t t-set="partner" t-value="props.data.partner"/>
+    <t t-set="lines" t-value="props.data.orderlines"/>
+    <t t-set="payment" t-value="props.data.paymentlines and props.data.paymentlines[0]"/>
+    <t t-set="date_format" t-value="order.date"/>
+    <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total || 0))"/>
 
-                <hr/>
-
-                <!-- ===== BASIC INFO ===== -->
-                <div class="row mb-2" style="font-size: 11px;">
-                    <div class="col-6">
-                        <div>
-                            <strong>DN #:</strong>
-                            <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                            <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
-                            <t t-set="current_year" t-value="new Date().getFullYear()"/>
-                            <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
-                            <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
-                        </div>
-                        <div>
-                            <strong>Donor Name:</strong>
-                            <t t-if="partner.name"><t t-esc="partner.name"/></t>
-                            <t t-else="">-</t>
-                        </div>
-                        <div>
-                            <strong>CNIC No.:</strong>
-                            <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
-                            <t t-else="">-</t>
-                        </div>
-                        <div>
-                            <strong>Payment Method:</strong>
-                            <t t-if="payment.name"><t t-esc="payment.name"/></t>
-                            <t t-else="">-</t>
-                        </div>
-                        <t t-if="!order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.qr_code">
-                                <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
-                            </div>
-                        </t>
-                        <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind &amp;&amp; order.bank_name">
-                                <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
-                            </div>
-                        </t>
-                        <div>
-                            <strong>Remarks:</strong>
-                            <t t-set="count" t-value="1"/>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
-                                <t t-if="line.customerNote">
-                                    <t t-esc="count"/>. <t t-esc="line.customerNote"/>
-                                    <br/>
-                                    <t t-set="count" t-value="count + 1"/>
-                                </t>
-                            </t>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div>
-                            <strong>Date Time:</strong>
-                            <t t-set="dateObj" t-value="new Date(date_format)"/>
-                            <t t-set="day" t-value="dateObj.getDate()"/>
-                            <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                            <t t-set="year" t-value="dateObj.getFullYear()"/>
-                            <t t-set="hours" t-value="dateObj.getHours()"/>
-                            <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                            <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-                            <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                    (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                    (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                    (minutes &lt; 10 ? '0' : '') + minutes"/>
-                        </div>
-                        <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.cheque_date">
-                                <strong>Cheque Date:</strong>
-                                <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
-                                <t t-set="day" t-value="dateObj.getDate()"/>
-                                <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                <t t-set="year" t-value="dateObj.getFullYear()"/>
-                                <t t-set="hours" t-value="dateObj.getHours()"/>
-                                <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-                                <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year"/>
-                                <br/>
-                                <strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/>
-                            </div>
-                        </t>
-                        <div>
-                            <strong>Contact No:</strong>
-                            <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
-                            <t t-else="">
-                                <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
-                                <t t-else="">-</t>
-                            </t>
-                        </div>
-                        <div>
-                            <strong>Total Amount:</strong>
-                            <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
-                            <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Items Table -->
-                <t t-if="order.is_qurbani">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>City</th>
-                                <th>Location</th>
-                                <th>Day</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
-                                <tr>
-                                    <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
-                                    <td>
-                                        <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
-                                            <t t-esc="line.qurbani_schedule_line.city"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </td>
-
-                                    <td>
-                                        <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
-                                            <t t-esc="line.qurbani_schedule_line.location"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </td>
-
-                                    <td>
-                                        <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
-                                            <t t-esc="line.qurbani_schedule_line.slot.day"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </td>
-
-                                    <td>
-                                        <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
-                                            <t t-esc="line.qurbani_schedule_line.slot.distribution.start"/> - <t t-esc="line.qurbani_schedule_line.slot.distribution.end"/>
-                                        </t>
-                                        <t t-else="">-</t>
-                                    </td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
+    <!-- ================= HEADER ================= -->
+    <div class="row mb-2 receipt_header">
+        <div class="col-6">
+            <h1>Qurbani Booking</h1>
+        </div>
+        <div class="col-6 text-end">
+            <h1 style="font-size: 12px;">
+                <t t-esc="company.name or ''"/>
+                <br/>
+                <t t-if="order.branch_name">
+                    (<t t-esc="order.branch_name"/>)
                 </t>
-                <t t-else="">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th t-if="!order.is_donation_in_kind">Rate</th>
-                                <th t-if="!order.is_donation_in_kind">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
-                                <tr>
-                                    <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
-                                    <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
-                                    <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
-                                    <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
-                </t>
+            </h1>
+        </div>
+    </div>
 
-                <hr/>
+    <hr/>
 
-                <!-- ===== TOTALS ===== -->
-                <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                    <div>Enter By: <strong> <t t-esc="order.cashier"/> </strong></div>
-                    <div>Total Amount: <strong> <t t-esc="format_currency_amount"/> </strong></div>
-                </div>
+    <!-- ================= BASIC INFO ================= -->
+    <div class="row mb-2" style="font-size: 11px;">
+        <div class="col-6">
 
-                <hr style="border-top: solid 5px;"/>
+            <!-- DN -->
+            <div>
+                <strong>DN #:</strong>
+                <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
+                <t t-set="branch_code"
+                   t-value="company.name ? company.name.substring(0,3).toUpperCase() : 'UNK'"/>
+                <t t-set="current_year" t-value="new Date().getFullYear()"/>
+                <t t-set="random_no" t-value="order.name ? order.name.slice(-4) : '0000'"/>
 
-                <div class="row mb-2" style="font-size: 11px;">
-                    <div class="col-6">
-                        <div>
-                            <strong>DN #:</strong>
-                            <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                            <t t-set="branch_code" t-value="company.name.substring(0,3).toUpperCase() or 'UNK'"/>
-                            <t t-set="current_year" t-value="new Date().getFullYear()"/>
-                            <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
-                            <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
-                        </div>
-                        <div><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
-                        <div>
-                            <strong>Products:</strong>
-                            <t t-set="count" t-value="1"/>
-                            <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
-                                <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.qty"/>
-                                <br/>
-                                <t t-set="count" t-value="count + 1"/>
-                            </t>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div>
-                            <strong>Date Time:</strong>
-                            <t t-set="dateObj" t-value="new Date(date_format)"/>
-                            <t t-set="day" t-value="dateObj.getDate()"/>
-                            <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                            <t t-set="year" t-value="dateObj.getFullYear()"/>
-                            <t t-set="hours" t-value="dateObj.getHours()"/>
-                            <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                            <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-                            <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                    (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
-                                    (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                    (minutes &lt; 10 ? '0' : '') + minutes"/>
-                        </div>
-                        <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; font-size: 12px;">
-                    Powered by BytesNode
-                </div>
-
+                <span>
+                    <t t-esc="city_code"/>-
+                    <t t-esc="branch_code"/>-
+                    <t t-esc="current_year"/>-
+                    <t t-esc="random_no"/>
+                </span>
             </div>
-        </xpath>
+
+            <div><strong>Donor:</strong> <t t-esc="partner.name or '-'"/></div>
+            <div><strong>CNIC:</strong> <t t-esc="partner.cnic_no or '-'"/></div>
+            <div><strong>Payment:</strong> <t t-esc="payment and payment.name or '-'"/></div>
+
+            <!-- Remarks -->
+            <div>
+                <strong>Remarks:</strong><br/>
+                <t t-set="count" t-value="1"/>
+                <t t-foreach="lines" t-as="line">
+                    <t t-if="line.customerNote">
+                        <t t-esc="count"/>. <t t-esc="line.customerNote"/><br/>
+                        <t t-set="count" t-value="count + 1"/>
+                    </t>
+                </t>
+            </div>
+
+        </div>
+
+        <div class="col-6">
+
+            <!-- Date -->
+            <div>
+                <strong>Date:</strong>
+                <t t-set="d" t-value="new Date(date_format)"/>
+                <t t-esc="d.toLocaleString()"/>
+            </div>
+
+            <div><strong>Contact:</strong> <t t-esc="partner.mobile or partner.phone or '-'"/></div>
+            <div><strong>Total:</strong> <t t-esc="format_currency_amount"/></div>
+
+        </div>
+    </div>
+
+    <!-- ================= QURBANI TABLE ================= -->
+    <t t-if="order.is_qurbani">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>City</th>
+                    <th>Location</th>
+                    <th>Day</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <t t-foreach="lines" t-as="line">
+
+                    <tr>
+                        <td><t t-esc="line.productName or '-'"/></td>
+
+                        <!-- SAFE CONDITION -->
+                        <t t-set="is_yes"
+                           t-value="line.productName and line.productName.toLowerCase().includes('yes')"/>
+
+                        <!-- CITY -->
+                        <td>
+                            <t t-if="is_yes and line.qurbani_schedule_line">
+                                <t t-esc="line.qurbani_schedule_line.city or '-'"/>
+                            </t>
+                            <t t-else="">-</t>
+                        </td>
+
+                        <!-- LOCATION -->
+                        <td>
+                            <t t-if="is_yes and line.qurbani_schedule_line">
+                                <t t-esc="line.qurbani_schedule_line.location or '-'"/>
+                            </t>
+                            <t t-else="">-</t>
+                        </td>
+
+                        <!-- DAY -->
+                        <td>
+                            <t t-if="is_yes 
+                                and line.qurbani_schedule_line 
+                                and line.qurbani_schedule_line.slot">
+                                <t t-esc="line.qurbani_schedule_line.slot.day or '-'"/>
+                            </t>
+                            <t t-else="">-</t>
+                        </td>
+
+                        <!-- TIME -->
+                        <td>
+                            <t t-if="is_yes 
+                                and line.qurbani_schedule_line 
+                                and line.qurbani_schedule_line.slot 
+                                and line.qurbani_schedule_line.slot.distribution">
+
+                                <t t-esc="line.qurbani_schedule_line.slot.distribution.start or ''"/>
+                                -
+                                <t t-esc="line.qurbani_schedule_line.slot.distribution.end or ''"/>
+
+                            </t>
+                            <t t-else="">-</t>
+                        </td>
+
+                    </tr>
+
+                </t>
+
+            </tbody>
+        </table>
     </t>
 
+    <!-- ================= NORMAL TABLE ================= -->
+    <t t-else="">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="lines" t-as="line">
+                    <tr>
+                        <td><t t-esc="line.productName or '-'"/></td>
+                        <td class="text-end"><t t-esc="line.qty or 0"/></td>
+                        <td class="text-end"><t t-esc="line.unitPrice or 0"/></td>
+                        <td class="text-end"><t t-esc="line.price or 0"/></td>
+                    </tr>
+                </t>
+            </tbody>
+        </table>
+    </t>
+
+    <hr/>
+
+    <!-- ================= FOOTER ================= -->
+    <div style="display:flex; justify-content:space-between; font-size:10px;">
+        <div>Cashier: <t t-esc="order.cashier or '-'"/></div>
+        <div>Total: <t t-esc="format_currency_amount"/></div>
+    </div>
+
+    <hr style="border-top: solid 5px;"/>
+
+    <div style="text-align:center; font-size:12px;">
+        Powered by BytesNode
+    </div>
+
+</div>
+
+</xpath>
+</t>
 </templates>
