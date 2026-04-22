@@ -9,8 +9,10 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 patch(Order.prototype, {
     export_for_printing() {
+        const result = super.export_for_printing();
+
         return {
-            ...super.export_for_printing(),
+            ...result,
 
             partner: {
                 name: this.partner ? this.partner.name : "",
@@ -23,8 +25,21 @@ patch(Order.prototype, {
             branch_name: this.cashier.branch_name,
             receive_voucher: this.pos.receive_voucher,
             is_qurbani: this.pos.is_qurbani,
-            is_bank: this.paymentlines[0].payment_method.is_bank,
-            is_donation_in_kind: this.paymentlines[0].payment_method.is_donation_in_kind,
+            is_bank: this.paymentlines[0]?.payment_method?.is_bank,
+            is_donation_in_kind: this.paymentlines[0]?.payment_method?.is_donation_in_kind,
+
+            // ✅ ADD THIS: enrich order lines
+            orderlines: this.orderlines.map((line) => {
+                const base = result.orderlines.find(
+                    (l) => l.id === line.id || l.productName === line.product.display_name
+                );
+
+                return {
+                    ...base,
+                    qurbani_schedule_line: line.qurbani_schedule || null,
+                    id: line.id,
+                };
+            }),
         };
     },
 

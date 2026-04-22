@@ -130,10 +130,8 @@ class QurbaniOrder(models.Model):
             demand = self.env['qurbani.slaughter.slot.demand'].search([
                 ('day_id', '=', distribution.day_id.id),
                 ('hijri_id', '=', distribution.hijri_id.id),
-
                 ('slaughter_location_id', '=', distribution.slaughter_location_id.id),
                 ('inventory_product_id', '=', distribution.inventory_product_id.id),
-
                 ('start_time', '<=', slaughter.start_time),
                 ('end_time', '>=', slaughter.end_time),
             ], limit=1)
@@ -142,7 +140,7 @@ class QurbaniOrder(models.Model):
             return demand
 
         # ==================================================
-        # 3. GROUP & CONVERT HISSA
+        # 3. GROUP (ONLY HISSA COUNT)
         # ==================================================
         for line in data['order_lines']:
 
@@ -150,12 +148,7 @@ class QurbaniOrder(models.Model):
             if not demand:
                 continue
 
-            qty = int(line.get('quantity', 0))
-
-            divisor = _get_divisor(demand)
-
-            # 🔥 convert ORDER qty → HISSA qty
-            hissa_qty = qty * divisor
+            qty = int(line.get('quantity', 0))  # this is HISSA
 
             if demand.id not in schedule_usage:
                 schedule_usage[demand.id] = {
@@ -163,7 +156,7 @@ class QurbaniOrder(models.Model):
                     'qty': 0
                 }
 
-            schedule_usage[demand.id]['qty'] += hissa_qty
+            schedule_usage[demand.id]['qty'] += qty
 
         # ==================================================
         # 4. VALIDATION
@@ -185,18 +178,36 @@ class QurbaniOrder(models.Model):
                 }
 
         # ==================================================
-        # 5. APPLY UPDATES (SAFE)
+        # 5. APPLY UPDATES (🔥 CORRECT INVENTORY-STYLE LOGIC)
         # ==================================================
         for usage in schedule_usage.values():
 
             demand = usage['demand']
-            qty = usage['qty']
+            incoming_hissa = usage['qty']
 
-            new_current = (demand.current_hissa or 0) + qty
+            divisor = _get_divisor(demand)
+
+            old_current = demand.current_hissa or 0
+
+            # STEP 1: add hissa
+            total_hissa = old_current + incoming_hissa
+
+            # STEP 2: detect completed animals
+            completed_animals = int(total_hissa // divisor)
+
+            # STEP 3: remaining hissa after full animals
+            remaining_hissa = total_hissa % divisor
+
+            # STEP 4: reduce remaining demand
+            new_remaining_demand = max(
+                (demand.remaining_demand or 0) - completed_animals,
+                0
+            )
 
             demand.write({
-                'current_hissa': new_current,
-                'booked_hissa': new_current,
+                'current_hissa': remaining_hissa,   # 🔥 leftover like inventory
+                'booked_hissa': (demand.booked_hissa or 0) + incoming_hissa,
+                'remaining_demand': new_remaining_demand,
             })
 
         # ==================================================
