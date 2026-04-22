@@ -8,6 +8,7 @@
     'depends': [
         'bn_pos_custom_action',
         'bn_profile_management',
+        'point_of_sale',
     ],
     'data': [
         'security/group.xml',
