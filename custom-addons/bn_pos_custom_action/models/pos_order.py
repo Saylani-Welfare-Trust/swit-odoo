@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.exceptions import UserError
 
 
 class POSOrder(models.Model):
@@ -17,3 +18,8 @@ class POSOrder(models.Model):
         res['remarks'] = ui_order.get('remarks') or False
 
         return res
+    
+    def write(self, vals):
+        if 'remarks' in vals and not self.env.user.has_group('bn_pos_custom_action.pos_order_remark_group'):
+            raise UserError("You cannot edit remarks.")
+        return super().write(vals)
