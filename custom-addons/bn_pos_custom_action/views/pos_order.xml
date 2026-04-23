@@ -10,6 +10,11 @@
                 <field name="source_document" readonly="1" />
                 <field name="remarks" />
             </xpath>
+
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
         </field>
     </record>
 
