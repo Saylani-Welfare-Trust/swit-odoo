@@ -113,10 +113,14 @@
                         </t>
                         <div>
                             <strong>Contact No:</strong>
-                            <t t-if="partner.mobile"><t t-esc="partner.mobile"/></t>
+                            <t t-if="partner.mobile">
+                                <t t-esc="partner.mobile"/>
+                            </t>
+                            <t t-elif="partner.phone">
+                                <t t-esc="partner.phone"/>
+                            </t>
                             <t t-else="">
-                                <t t-if="partner.phone"><t t-esc="partner.phone"/></t>
-                                <t t-else="">-</t>
+                                -
                             </t>
                         </div>
                         <div>
