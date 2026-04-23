@@ -85,6 +85,15 @@
                 </table>
             </t>
         </xpath>
+
+        <xpath expr="//div[@name='custom-footer']" position="replace">
+            <div name="halfnama" style="text-align: center; font-size: 12px;">
+                <t t-esc="order.halfnama" t-if="order.halfnama"/>
+            </div>
+            <div name="custom-footer" style="text-align: center; font-size: 12px;">
+                Powered by BytesNode
+            </div>
+        </xpath>
     </t>
 
 </templates>

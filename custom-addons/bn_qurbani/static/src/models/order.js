@@ -12,6 +12,7 @@ patch(Order.prototype, {
             ...result,
 
             is_qurbani: this.pos.is_qurbani,
+            halfnama: this.pos.company.halfnama,
 
             // ✅ ADD THIS: enrich order lines
             orderlines: this.orderlines.map((line) => {
