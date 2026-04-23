@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="generate_qurbani_demand_view_form" model="ir.ui.view">
+        <field name="name">generate.qurbani.demand.view.form</field>
+        <field name="model">generate.qurbani.demand</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                       <group name="generate_qurbani_demand_col_1">
+                            <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                       </group>
+                       <group name="generate_qurbani_demand_col_2">
+                            <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                       </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Generate Demand" type="object" name="action_generate_demand" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="generate_qurbani_demand_action" model="ir.actions.act_window">
+        <field name="name">Generate Qurbani Demand</field>
+        <field name="res_model">generate.qurbani.demand</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="qurbani_coniguration_menu"
+        name="Configuration"
+        parent="bn_qurbani.menu_qurbani_root"
+        sequence="10"/>
+
+    <menuitem
+        id="generate_qurbani_demand_menu"
+        name="Generate Qurbani Demand"
+        action="generate_qurbani_demand_action"
+        parent="qurbani_coniguration_menu"
+        sequence="0"/>
+
+</odoo>

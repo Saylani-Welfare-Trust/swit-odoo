@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="qurbani_order_sequence" model="ir.sequence">
+            <field name="name">Qurbani Order</field>
+            <field name="code">qurbani_order</field>
+            <field name="prefix">QO/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
+        <record id="qurbani_order_line_sequence" model="ir.sequence">
+            <field name="name">Qurbani Order Line</field>
+            <field name="code">qurbani_order_line</field>
+            <field name="prefix">QOL/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
+    </data>
+    
+
+</odoo>

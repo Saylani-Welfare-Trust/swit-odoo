@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="qurbani_schedule_view_form" model="ir.ui.view">
+        <field name="name">qurbani.schedule.view.form</field>
+        <field name="model">qurbani.schedule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group name="qurbani_schedule_col_1">
+                            <field name="start_time" widget="float_time" required="1"/>
+                            <field name="end_time" widget="float_time" required="1"/>
+                            <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                            <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                            <field name="interval" required="1"/>
+                            <field name="slot_interval" required="1"/>
+                        </group>
+                        <group name="qurbani_schedule_col_1">
+                            <field name="city_schedule_id" domain="[('hijri_id', '=', hijri_id), ('day_id', '=', day_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                            <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not city_schedule_id"/>
+                            <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not slaughter_location_id"/>
+                            <field name="pos_product_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not slaughter_location_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Generate" type="object" name="action_generate_schedule" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="generate_qurbani_schedule_action" model="ir.actions.act_window">
+        <field name="name">Generate Qurbani Schedule</field>
+        <field name="res_model">qurbani.schedule</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new qurbani schedule....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="generate_qurbani_schedule_menu"
+        name="Generate Qurbani Schedule"
+        action="generate_qurbani_schedule_action"
+        parent="bn_qurbani.qurbani_menu"
+        sequence="0"/>
+
+</odoo>

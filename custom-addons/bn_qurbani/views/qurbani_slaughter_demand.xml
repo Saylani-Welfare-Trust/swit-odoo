@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="qurbani_slaughter_demand_view_form" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.view.form</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="day_id" />
+                        <h1><field name="day_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="qurbani_city_demand_col_1">
+                            <field name="hijri_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="city_location_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="city_remaining_demand" readonly="1"/>
+                            <field name="demand"/>
+                            <field name="total_demand" readonly="1"/>
+                        </group>
+                        <group name="qurbani_city_demand_col_1">
+                            <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                            <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                            <field name="remaining_demand" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_demand_view_tree" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.view.tree</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="arch" type="xml">
+            <tree create="0" editable="bottom">
+                <field name="day_id" readonly="1"/>
+                <field name="hijri_id" readonly="1"/>
+                <field name="city_location_id" readonly="1"/>
+                <field name="city_remaining_demand" readonly="1"/>
+                <field name="slaughter_location_id" readonly="1"/>
+                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="demand"/>
+                <field name="total_demand" readonly="1"/>
+                <field name="remaining_demand" readonly="1"/>
+
+                <button string="History" name="action_open_chatter" type="object" class="oe_highlight"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_demand_action" model="ir.actions.act_window">
+        <field name="name">Slaughter</field>
+        <field name="res_model">qurbani.slaughter.demand</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new city demand....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="qurbani_slaughter_demand_menu"
+        name="Slaughter"
+        action="qurbani_slaughter_demand_action"
+        parent="bn_qurbani.qurbani_demand_menu"
+        sequence="1"/>
+
+</odoo>

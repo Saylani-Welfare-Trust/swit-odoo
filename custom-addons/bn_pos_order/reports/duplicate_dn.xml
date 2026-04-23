@@ -99,8 +99,8 @@
                                     <div>
                                         <strong>Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
-                                        <t t-foreach="order.remarks.split('\n')" t-as="remark">
-                                            <t t-esc="remark or '-'"/>
+                                        <t t-foreach="order.lines" t-as="l">
+                                            <t t-esc="count"/>. <t t-esc="l.customer_note or '-'"/>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>

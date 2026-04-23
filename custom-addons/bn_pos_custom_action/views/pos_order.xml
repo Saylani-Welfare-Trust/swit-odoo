@@ -8,7 +8,10 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='fiscal_position_id']" position="after">
                 <field name="source_document" readonly="1" />
-                <field name="remarks" readonly="1" />
+            </xpath>
+
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
             </xpath>
         </field>
     </record>

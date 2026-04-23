@@ -19,7 +19,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.notification = useService("notification");
         
         // Set component properties
-        this.title = this.props.title || "Module Name";
+        this.title = this.props.title || "Receive Order Details";
         this.action_type = this.props.action_type;
         this.placeholder = this.props.placeholder;
         
@@ -68,6 +68,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
         
         // Handle different action types
+        if (this.action_type === 'qb') {
+            this.pos.receive_voucher = false
+            
+            await this.processQurbaniRecord(selectedOrder);
+        } 
         if (this.action_type === 'dhs') {
             this.pos.receive_voucher = true
             
@@ -77,11 +82,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             this.pos.receive_voucher = true
             
             await this.processWelfareRecord(selectedOrder);
-        } 
-        // if (this.action_type === 'ad') {    
-        //     this.pos.receive_voucher = true
-        //     await this.processAdvanceDonationRecord(selectedOrder);
-        // } 
+        }
         // Process medical equipment records
         if (this.action_type === 'me') {
             this.pos.receive_voucher = true
@@ -104,121 +105,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Process Welfare record
      */
-    // async processAdvanceDonationRecord(selectedOrder) {
-    //     try {
-    //         console.log("Processing Advance Donation Record:", this.state.record_number);
-    //         // Fetch advance donation record
-    //         const record = await this.orm.searchRead(
-    //             'advance.donation',
-    //             [['name', '=', this.state.record_number],
-    //              ['state', '=', 'approved']
-    //         ],
-    //         ['id', 'name', 'state', 'donor_id', 'remaining_amount', 'product_id', 'total_product_amount', 'paid_amount'],
-    //         { limit: 1 }
-    //         );
-    //         console.log("Advance Donation Record Fetch Result:", record);
-
-    //         if (!record.length) {
-    //             this.notification.add("Advance donation record not found", { type: 'warning' });
-    //             return;
-    //         }
-
-    //         const donationRecord = record[0];
-
-    //         // Validate state must be 'approved'
-    //         if (donationRecord.state !== 'approved') {
-    //             this.notification.add(
-    //                 `Unauthorized Request State: ${donationRecord.state}. Expected 'approved'.`,
-    //                 { type: 'warning' }
-    //             );
-    //             return;
-    //         }
-    //         console.log("Advance Donation Record:", donationRecord);
-
-    //         // Check if there's remaining amount to pay
-    //         if (donationRecord.remaining_amount <= 0) {
-    //             this.notification.add("No remaining amount to pay for this donation", { type: 'warning' });
-    //             return;
-    //         }
-
-    //         // Get the product
-    //         if (!donationRecord.product_id || !donationRecord.product_id[0]) {
-    //             this.notification.add("No product found in advance donation record", { type: 'warning' });
-    //             return;
-    //         }
-
-    //         const product = this.pos.db.get_product_by_id(donationRecord.product_id[0]);
-    //         if (!product) {
-    //             this.notification.add("Product not found in POS database", { type: 'warning' });
-    //             return;
-    //         }
-
-    //         // Calculate amount per unit
-    //         // Since it's a donation payment, we want to collect the remaining amount
-    //         // We'll add the product with the remaining amount as the total
-    //         const remainingAmount = donationRecord.remaining_amount;
-            
-    //         // Add product to POS order
-    //         // We'll add it as a single line with the remaining amount
-    //         // Using negative quantity to indicate it's a payment/collection
-    //         selectedOrder.add_product(product, {
-    //             quantity: 1, // Negative indicates payment collection
-    //             price_extra: remainingAmount - product.lst_price, // Adjust price to match remaining amount
-    //         });
-
-    //         // Add partner to order if exists
-    //         if (donationRecord.donor_id && donationRecord.donor_id[0]) {
-    //             const partnerId = donationRecord.donor_id[0];
-    //             let partner = await this.getOrLoadPartner(partnerId);
-    //             if (partner) {
-    //                 this.assignPartnerToOrder(partner, selectedOrder);
-    //             }
-    //         }
-
-    //         // Add extra order data for payment_screen handling
-    //         this.addAdvanceDonationExtraOrderData(selectedOrder, donationRecord);
-
-    //         this.notification.add(
-    //             `Added advance donation: ${donationRecord.name} - Remaining: ${remainingAmount}`,
-    //             { type: "success" }
-    //         );
-
-    //         super.confirm();
-
-    //     } catch (error) {
-    //         this.handleProcessingError(error);
-    //     }
-    // }
-
-    /**
-     * Add advance donation extra order data
-     */
-    // addAdvanceDonationExtraOrderData(selectedOrder, record) {
-    //     if (!selectedOrder.extra_data) {
-    //         selectedOrder.extra_data = {};
-    //     }
-        
-    //     selectedOrder.extra_data.advance_donation = {
-    //         record_number: record.name,
-    //         donation_state: record.state,
-    //         donation_id: record.id,
-    //         remaining_amount: record.remaining_amount,
-    //         total_amount: record.total_product_amount,
-    //         paid_amount: record.paid_amount,
-    //         product_id: record.product_id[0],
-    //         donor_id: record.donor_id ? record.donor_id[0] : null,
-    //         scan_timestamp: new Date().toISOString(),
-    //     };
-    //     console.log("🟢 [Advance Donation] Added extra order data:", selectedOrder.extra_data);
-    // }
-
-
-
     async processWelfareRecord(selectedOrder) {
         try {
             // wf_request_type: 'one_time' or 'recurring'
             const isRecurring = this.wf_request_type === 'recurring';
-            // console.log("Welfare Request Type:", this.wf_request_type, "Is Recurring:", isRecurring);
 
             const record = await this.orm.searchRead(
                 'welfare',
@@ -297,11 +187,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     {}
                 );
                 // Filter by main welfare order_type
-                // console.log("Welfare Record Order Type:", welfareRecord);
                 const filteredLines = welfareRecord.order_type === 'one_time'
                     ? lines.filter(l => true) // all lines, since order_type is now on welfare
                     : [];
-                // console.log("Filtered Lines:", filteredLines);
                 const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
@@ -435,7 +323,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 ['name', 'state', 'donee_id', 'microfinance_line_ids', 'microfinance_recovery_line_ids'],
                 { limit: 1 }
             );
-            // console.log(record);
             if (!record.length) return this.handleRecordNotFound();
             
             if (record[0].microfinance_recovery_line_ids && record[0].microfinance_recovery_line_ids.length > 0) {
@@ -490,7 +377,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const microfinanceRecoveryLineIds = await this.handleMicrofinanceRecoveryLines(record[0], selectedOrder);
 
             // Add partner to order
-            // console.log(record);
             if (record[0].donee_id && record[0].donee_id[0]) {
                 const partnerId = record[0].donee_id[0];
                 let partner = await this.getOrLoadPartner(partnerId);
@@ -510,9 +396,28 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     /**
      * Process Donation Home Service record
      */
+    async processQurbaniRecord(selectedOrder) {
+        try {
+            const record = await this.orm.searchRead(
+                'qurbani.order',
+                [['name', '=', this.state.record_number]],
+                ['name'],
+                { limit: 1 }
+            );
+            
+            if (record && record.length > 0) {
+                this.report.doAction("bn_qurbani.qurbani_token_report", [
+                    record.id,
+                ]);
+
+                super.confirm();
+            }
+        } catch (error) {
+            this.handleProcessingError(error);
+        }
+    }
+    
     async processDHSRecord(selectedOrder) {
-        // console.log("Donation Home Service Record Number:", this.state.record_number);
-        
         try {
             const record = await this.orm.searchRead(
                 'donation.home.service',
@@ -520,8 +425,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 ['name', 'state', 'donor_id', 'service_charges', 'donation_home_service_line_ids'],
                 { limit: 1 }
             );
-            
-            // console.log("Donation Home Service:", record);
 
             if (record[0].state != 'gate_in') {
                 this.notification.add(
@@ -530,9 +433,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 );
 
                 return
-            } 
-            
-            // console.log("Medical Equipment Record:", record);
+            }
             
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
@@ -549,8 +450,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process medical equipment record
      */
     async processMedicalEquipmentRecord(selectedOrder) {
-        // console.log("Medical Equipment Record Number:", this.state.record_number);
-        
         try {
             const record = await this.orm.searchRead(
                 'medical.equipment',
@@ -559,9 +458,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 { limit: 1 }
             );
 
-            // console.log(record);
-
-            // if (!['sd_received', 'return'].includes(record[0].state)) {
             if (!['sd_received', 'refund'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
@@ -569,9 +465,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 );
 
                 return
-            } 
-            
-            // console.log("Medical Equipment Record:", record);
+            }
             
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
@@ -791,16 +685,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Handle found record
      */
     async handleRecordFound(record, selectedOrder) {
-        // console.log("Record found:", record);
-        
         if (this.action_type === 'dhs') {
             // Process all record components
             await this.processDHSLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
             await this.processPartner(record, selectedOrder);
-            
-            // Log current state and close popup
-            // console.log("Record state:", record.state);
 
             super.confirm();
         }
@@ -810,9 +699,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processEquipmentLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
             await this.processPartner(record, selectedOrder);
-            
-            // Log current state and close popup
-            // console.log("Record state:", record.state);
 
             super.confirm();
         }
@@ -824,8 +710,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Handle record not found scenario
      */
     handleRecordNotFound() {
-        // console.log("No record found with number:", this.state.record_number);
-
         this.notification.add(
             "Record not found",
             { type: 'warning' }
@@ -892,8 +776,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 });
 
                 addedProductsCount++;
-
-                console.log(selectedOrder);
             }
         }
 
@@ -919,8 +801,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     hasDHSLines(record) {
         if (!record.donation_home_service_line_ids || record.donation_home_service_line_ids.length === 0) {
-            // console.log("No donation home service lines found for this record");
-
             this.notification.add(
                 "No products configured for this donation home service",
                 { type: 'warning' }
@@ -935,8 +815,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     hasEquipmentLines(record) {
         if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
-            // console.log("No equipment lines found for this record");
-
             this.notification.add(
                 "No products configured for this equipment",
                 { type: 'warning' }
@@ -959,8 +837,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             {}
         );
 
-        // console.log("DHS lines:", dhsLines);
-
         return dhsLines;
     }
     
@@ -975,7 +851,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             {}
         );
         
-        // console.log("Equipment lines:", equipmentLines);
         return equipmentLines;
     }
 
@@ -1011,12 +886,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
 
         const quantity = this.calculateProductQuantity(line, record);
-        // console.log(`Adding product ${product.display_name} with price ${price}`);
-         
+        
         if (this.action_type === 'me') {
             if (record.state == 'refund') {
-                console.log(this.pos.company);
-
                 // Fetch the service product
                 const serviceProduct = await this.orm.searchRead(
                     'product.product',
@@ -1077,7 +949,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
         }
         
-        // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);
         return true;
     }
 
@@ -1090,11 +961,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         // Apply negative price for return state
         if (record.state == 'return') {
             qty = -1*qty;
-
-            // console.log(`Using negative price for return state: ${qty}`);
         }
-
-        // console.log(`Using standard price: ${Price}`);
         
         return qty;
     }
@@ -1176,13 +1043,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             { limit: 1 }
         );
         
-        // console.log("Partner Data:", partnerData);
-        
         if (partnerData && partnerData.length > 0) {
             this.pos.db.add_partners([partnerData[0]]);
             const partner = this.pos.db.get_partner_by_id(partnerId);
-            
-            // console.log("Partner loaded to POS:", partner);
             
             return partner;
         }
@@ -1195,8 +1058,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     assignPartnerToOrder(partner, selectedOrder) {
         selectedOrder.set_partner(partner);
-        
-        // console.log("Partner set on order:", partner.name);
         
         this.notification.add(
             `Customer set to: ${partner.name}`,
@@ -1212,6 +1073,13 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             selectedOrder.extra_data = {};
         }
         
+        if (this.action_type === 'qb') {
+            selectedOrder.extra_data.qurbani = {
+                record_number: record.name,
+                qurbani_id: record.id,
+                scan_timestamp: new Date().toISOString(),
+            };
+        }
         if (this.action_type === 'dhs') {
             selectedOrder.extra_data.dhs = {
                 record_number: record.name,
@@ -1219,8 +1087,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 dhs_id: record.id,
                 scan_timestamp: new Date().toISOString(),
             };
-
-            // console.log("Extra order data added:", selectedOrder.extra_data.dhs);
         }
         if (this.action_type === 'me') {
             selectedOrder.extra_data.medical_equipment = {
@@ -1229,8 +1095,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 equipment_id: record.id,
                 scan_timestamp: new Date().toISOString(),
             };
-
-            // console.log("Extra order data added:", selectedOrder.extra_data.medical_equipment);
         }
         if (this.action_type === 'mf') {
             selectedOrder.extra_data.microfinance = {

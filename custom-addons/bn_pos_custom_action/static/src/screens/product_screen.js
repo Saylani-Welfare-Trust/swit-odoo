@@ -8,8 +8,6 @@ patch(ProductScreen.prototype, {
     get checkProductPrice() {
         const orderLines = this.pos.get_order().get_orderlines(); // get current order lines
 
-        console.log(orderLines);
-
         for (const line of orderLines) {
             if (line.product.lst_price > 0) {
                 return true; // at least one line has price > 0
@@ -22,6 +20,7 @@ patch(ProductScreen.prototype, {
         const order = this.pos.get_order();
         return order && order.extra_data && order.extra_data.welfare;
     },
+
     getNumpadButtons() {
         const buttons = [
             { value: "1" },
@@ -44,8 +43,6 @@ patch(ProductScreen.prototype, {
             { value: "0" },
             { value: this.env.services.localization.decimalPoint },
             { value: "Backspace", text: "⌫" },
-            // Add your custom button here if needed, e.g.:
-            // { value: "custom_action", text: _t("Custom"), custom: true },
         ];
 
         if (this.isWelfareOrder) {
@@ -57,6 +54,7 @@ patch(ProductScreen.prototype, {
                 return { ...btn, disabled: true };
             });
         }
+        
         return buttons.map((button) => ({
             ...button,
             class: this.pos.numpadMode === button.value ? "active border-primary" : "",

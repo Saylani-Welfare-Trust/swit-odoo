@@ -1,26 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_qurbani_order_tree" model="ir.ui.view">
-        <field name="name">qurbani.order.tree</field>
+    <record id="qurbani_order_view_tree" model="ir.ui.view">
+        <field name="name">qurbani.order.view.tree</field>
         <field name="model">qurbani.order</field>
         <field name="arch" type="xml">
-            <tree create="false" edit="false" delete="false">
-                <field name="pos_order_id"/>
-                <field name="receipt_number"/>
-                <field name="product_ids" widget="many2many_tags"/>
+            <tree create="0" edit="0" default_order="create_date desc">
+                <field name="name"/>
+                <field name="donor_id"/>
+                <field name="amount" sum="1" />
+                <field name="total_amount" sum="1" />
             </tree>
         </field>
     </record>
-    <record id="action_qurbani_order" model="ir.actions.act_window">
-        <field name="name">Qurbani order</field>
-        <field name="res_model">qurbani.order</field>
-        <field name="view_mode">tree</field>
+
+    <record id="qurbani_order_view_form" model="ir.ui.view">
+        <field name="name">qurbani.order.view.form</field>
+        <field name="model">qurbani.order</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="1">
+                <header>
+                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Qurbani Order" />
+                        <h1><field name="name" readonly="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="qurbani_order_col_1">
+                            <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                        </group>
+                        <group name="qurbani_order_col_2">
+                            <label for="mobile"/>
+                            <div style="display: flex;">
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
+                                <field style="width: 70% !important;" name="mobile" readonly="1" nolabel="1" />
+                            </div>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Items">
+                            <field name="qurbani_order_line_ids">
+                                <tree create="0" delete="0" editable="bottom">
+                                    <field name="name" readonly="1" />
+                                    <field name="day_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="hijri_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="hissa_name" />
+                                    <field name="start_time" widget="float_time" readonly="1" />
+                                    <field name="end_time" widget="float_time" readonly="1" />
+                                    <field name="currency_id" column_invisible="1" readonly="1" />
+                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="quantity" readonly="1" />
+                                    <field name="amount" readonly="1" />
+                                    <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                                    <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
     </record>
+
+    <record id="action_qurbani_order" model="ir.actions.act_window">
+        <field name="name">Qurbani Order</field>
+        <field name="res_model">qurbani.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new qurbani order....
+            </p>
+        </field>
+    </record>
+
+    <!-- Parent Menu -->
+    <menuitem id="menu_qurbani_root"
+        name="Qurbani"
+        groups="bn_qurbani.qurbani_menu_group"
+        web_icon="bn_qurbani,static/description/icon.png"
+        sequence="10"/>
 
     <menuitem id="menu_qurbani_order"
         name="Qurbani Orders"
         parent="menu_qurbani_root"
         action="action_qurbani_order"
-        sequence="30"/>
+        sequence="1"/>
+
 </odoo>

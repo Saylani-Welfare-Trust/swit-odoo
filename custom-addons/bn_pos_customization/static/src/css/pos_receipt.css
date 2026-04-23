@@ -1,6 +1,144 @@
+/* ================== A5 POS Receipt ================== */
 .pos-receipt-print {
-    width: 210mm !important; /* changed from 266px to A4 */
-    min-height: 297mm !important; /* optional: full A4 height */
-    font-size: 12px;
+    width: 148mm; /* A5 full width */
+    font-size: 11px; /* Adjusted for A5 readability */
     color: #000000;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+.pos-receipt .pos-receipt-right-align {
+    float: right;
+    display: flex;
+}
+
+.pos-receipt .pos-receipt-right-align .tax-letter{
+    margin-left: 0.2em; /* scaled down from 0.5em */
+}
+
+.pos-receipt .pos-receipt-center-align {
+    text-align: center;
+}
+
+.pos-receipt .pos-receipt-left-padding {
+    padding-left: 1em; /* reduced from 2em */
+}
+
+.pos-receipt .pos-receipt-logo {
+    width: 40%; /* scaled down for A5 */
+    display: block;
+    margin: 0 auto;
+}
+
+.pos-receipt .pos-receipt-qrcode {
+    display: block;
+    margin: 0 auto;
+}
+
+.pos-receipt .pos-receipt-contact {
+    text-align: center;
+    font-size: 70%; /* slightly smaller for A5 */
+}
+
+.pos-receipt .pos-receipt-order-data {
+    text-align: center;
+    font-size: 70%;
+}
+
+.pos-receipt .pos-receipt-amount {
+    font-size: 110%; /* slightly smaller */
+    padding-left: 2em; /* adjusted from 6em */
+}
+
+.pos-receipt .pos-receipt-title {
+    font-weight: bold;
+    font-size: 110%; /* adjusted */
+    text-align: center;
+}
+
+.pos-receipt .pos-receipt-header {
+    font-size: 110%;
+    text-align: center;
+}
+
+.pos-receipt .pos-order-receipt-cancel {
+    color: red;
+}
+
+.pos-receipt .pos-receipt-customer-note {
+    word-break: break-all;
+}
+
+.pos-payment-terminal-receipt {
+    text-align: center;
+    font-size: 70%;
+}
+
+.pos-payment-terminal-receipt pre {
+    font-family: inherit;
+}
+
+.responsive-price {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.responsive-price > .pos-receipt-right-align {
+    margin-left: auto;
+}
+
+.pos-receipt .pos-receipt-taxes {
+    display: grid;
+    grid-template-columns: min-content min-content auto auto auto;
+    width: 100%;
+    justify-items: end;
+}
+
+.pos-receipt .orderlines {
+    /*rtl:ignore*/
+    direction: ltr;
+}
+
+.styled-receipt {
+    padding: 0px; /* reduced from 15px */
+    padding-bottom: 0px; /* reduced from 30px */
+}
+
+h1 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 2px 0;
+}
+
+h4 {
+    font-size: 12px;
+    margin: 6px 0;
+    font-weight: bold;
+}
+
+/* ================== A5 POS Receipt Table ================== */
+.pos-receipt-print table {
+    border-collapse: collapse; /* clean borders */
+    width: 100%; /* full width for table */
+}
+
+.pos-receipt-print th,
+.pos-receipt-print td {
+    padding: 3px 4px !important; /* compact padding */
+    text-align: left; /* default alignment */
+}
+
+.pos-receipt-print th {
+    font-weight: bold; /* bold headers */
+}
+
+.pos-receipt-print td {
+    font-weight: normal; /* normal text */
+}
+
+.pos-receipt-print table tr {
+    border-bottom: 1px solid #000000; /* optional row separation */
 }

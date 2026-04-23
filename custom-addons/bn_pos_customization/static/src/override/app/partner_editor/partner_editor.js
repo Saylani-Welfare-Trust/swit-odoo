@@ -43,10 +43,6 @@ patch(PartnerDetailsEdit.prototype, {
         };
     },
 
-    // get cnicStyle() {
-    //     return this.changes.donor_type === 'individual' ? 'display: block;' : 'display: none;';
-    // },
-
     updateDonorType(event) {
         this.changes.donor_type = event.target.value;
 
