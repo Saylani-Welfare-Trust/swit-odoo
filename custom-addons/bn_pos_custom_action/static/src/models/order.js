@@ -14,23 +14,6 @@ patch(Order.prototype, {
         json.source_document = this.source_document || false;
         json.remarks = this.remarks || false;
 
-        // DEBUG: Get current partner
-        const partner = this.get_partner();
-
-        if (partner) {
-            console.log("Partner Name:", partner.name);
-            console.log("Partner CNIC:", partner.cnic_no);
-
-            // Ensure CNIC is always included in JSON sent to receipt
-            json.partner = {
-                ...json.partner,
-                cnic_no: partner.cnic_no || '',  // Fallback to empty string if undefined
-            };
-        } else {
-            json.partner = json.partner || {};
-            json.partner.cnic_no = '';
-        }
-
         return json;
     },
 

@@ -72,8 +72,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     onBankChange(ev) {
         const bankId = parseInt(ev.target.value) || null;
         this.state.selected_bank_id = bankId;
-
-        console.log("Selected Bank ID:", bankId);
     }
 
     prepareOrderLines(orderLines) {
@@ -103,8 +101,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
         // Donation Home Service
         if (this.action_type === 'dhs') {
-            console.log(this.orderLines);
-
             const payload ={
                 'donor_id': this.donor_id,
                 'address': this.state.address,
@@ -202,26 +198,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     }
                 }
             }
-            // await this.orm.call('microfinance.installment', "create_microfinance_security_deposit", [payload]).then((data) => {
-            //     if (data.status === 'error') {
-            //         this.popup.add(ErrorPopup, {
-            //             title: _t("Error"),
-            //             body: data.body,
-            //         });
-            //     }
-            //     else if (data.status === 'success') {
-            //         record = data
-
-            //         payload.security_deposit_id = data.deposit_id
-
-            //         this.notification.add(_t("Operation Successful"), {
-            //             type: "info",
-            //         });
-            //         // this.report.doAction("bn_microfinance.security_deposit_report_action", [
-            //         //     data.id,
-            //         // ]);
-            //     }
-            // });
 
             const securityProduct = await this.orm.searchRead(
                 'product.product',
@@ -367,11 +343,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
         // Direct Deposit
         if (this.action_type === 'dd') {
-            if (!this.state.selected_bank_id || !this.state.transaction_ref || !this.state.address) {
-                this.notification.add(_t("Please select Bank, or fill Transfer Reference, and Address."), { type: "danger" });
-                return;
-            }
-
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
@@ -448,13 +419,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             { limit: 1 }
         );
         
-        // console.log("Partner Data:", partnerData);
-        
         if (partnerData && partnerData.length > 0) {
             this.pos.db.add_partners([partnerData[0]]);
             const partner = this.pos.db.get_partner_by_id(partnerId);
-            
-            // console.log("Partner loaded to POS:", partner);
             
             return partner;
         }
@@ -467,8 +434,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
      */
     assignPartnerToOrder(partner, selectedOrder) {
         selectedOrder.set_partner(partner);
-        
-        // console.log("Partner set on order:", partner.name);
         
         this.notification.add(
             `Customer set to: ${partner.name}`,

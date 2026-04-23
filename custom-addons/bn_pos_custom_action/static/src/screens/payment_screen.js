@@ -7,8 +7,6 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
-        // console.log("🟢 [PaymentScreen] validateOrder called with isForceValidate:", isForceValidate);
-        // console.log("🟢 [PaymentScreen] Current Order extra_data:", this.currentOrder.extra_data);
         const currentOrder = this.currentOrder;
         
         // Only process medical equipment if order has extra_data with medical_equipment
@@ -50,7 +48,6 @@ patch(PaymentScreen.prototype, {
                     }
                     // Condition 2: If state is 'refund', update to 'payment_return'
                     else if (currentState === 'refund') {
-                    // else if (currentState === 'return') {
                         const checkUpdate = await this.processEquipmentLines(equipmentRecord[0], currentOrder);
                     
                         if (checkUpdate) {
@@ -74,12 +71,15 @@ patch(PaymentScreen.prototype, {
                         
                         // Show appropriate notification based on state change
                         if (currentState === 'approved') {
+                            currentOrder.set_source_document(medicalData.record_number);
+
                             this.env.services.notification.add(
                                 `Medical equipment ${medicalData.record_number} marked as paid`,
                                 { type: 'success' }
                             );
                         } else if (currentState === 'refund') {
-                        // } else if (currentState === 'return') {
+                            currentOrder.set_source_document(medicalData.record_number);
+
                             this.env.services.notification.add(
                                 `Medical equipment ${medicalData.record_number} refund payment processed`,
                                 { type: 'success' }
@@ -108,6 +108,8 @@ patch(PaymentScreen.prototype, {
                         'medical.security.deposit', "set_security_depsoit_values",
                         [payload]
                     );
+
+                    currentOrder.set_source_document(medicalData.record_number);
                 }
 
                 console.error("❌ [Medical Equipment] No equipment ID found");
@@ -144,6 +146,8 @@ patch(PaymentScreen.prototype, {
                             
                             // Show appropriate notification based on state change
                             if (currentState === 'gate_in') {
+                                currentOrder.set_source_document(dhsData.record_number);
+
                                 this.env.services.notification.add(
                                     `Donation Home Service ${dhsData.record_number} payment processed`,
                                     { type: 'success' }
@@ -193,6 +197,8 @@ patch(PaymentScreen.prototype, {
                         }
                     );
                     
+                    currentOrder.set_source_document(mfData.record_number);
+
                     this.env.services.notification.add(
                         `Deposit Received successfully`,
                         { type: 'success' }
@@ -219,9 +225,9 @@ patch(PaymentScreen.prototype, {
                             }]
                         );
 
-                        console.log("🟢 [Microfinance] Created installment:", newInstallment);
-
                         if (newInstallment) {
+                            currentOrder.set_source_document(mfData.record_number);
+
                             this.env.services.notification.add(
                                 `Security Deposit record created and paid successfully`,
                                 { type: 'success' }
@@ -252,9 +258,6 @@ patch(PaymentScreen.prototype, {
                             actualPaidAmount += ol.get_price_with_tax();
                         }
                     }
-                    
-                    console.log("🟢 [Microfinance] Actual paid amount from order:", actualPaidAmount);
-                    console.log("🟢 [Microfinance] Unpaid lines to process:", microfinanceLineIds);
                     
                     // Distribute payment across installment lines (sorted by due_date - already sorted)
                     let remainingPayment = actualPaidAmount;
@@ -293,7 +296,6 @@ patch(PaymentScreen.prototype, {
                             }
                         );
                         
-                        console.log(`🟢 [Microfinance] Line ${line.id}: paid ${paymentForThisLine}, new total: ${newPaidAmount}, state: ${newState}`);
                         processedLines++;
                     }
                     
@@ -314,12 +316,12 @@ patch(PaymentScreen.prototype, {
                                 state: 'paid',
                             }]
                         );
-                        
-                        console.log("🟢 [Microfinance] Created installment record:", newInstallment);
                     } catch (error) {
                         console.error("❌ [Microfinance] Error creating installment record:", error);
                     }
                     
+                    currentOrder.set_source_document(mfData.record_number);
+
                     this.env.services.notification.add(
                         `Processed payment of ${actualPaidAmount} across ${processedLines} installment(s)`,
                         { type: 'success' }
@@ -340,6 +342,8 @@ patch(PaymentScreen.prototype, {
                         );
                     }
                     
+                    currentOrder.set_source_document(mfData.record_number);
+
                     this.env.services.notification.add(
                         `Processed ${microfinanceLineIds.length} microfinance instalments`,
                         { type: 'success' }
@@ -348,7 +352,7 @@ patch(PaymentScreen.prototype, {
             }
 
         }
-        console.log("🟢 [Advance Donation] Processing donation line:",currentOrder.get_orderlines());
+
         // ---------- Advance Donation Processing ----------
         // Check for products with is_advance_donation field set to true
         const donationLines = currentOrder.get_orderlines().filter(line =>
@@ -357,10 +361,8 @@ patch(PaymentScreen.prototype, {
 
         if (donationLines && donationLines.length > 0) {
             try {
-                console.log("🟢 [Advance Donation] Processing donation receipt...");
                 
                 for (const donationLine of donationLines) {
-                    console.log("🟢 [Advance Donation] Processing donation line:", donationLine);
                     
                     const donationAmount = Math.abs(donationLine.get_display_price());
                     const partner = currentOrder.get_partner();
@@ -383,7 +385,6 @@ patch(PaymentScreen.prototype, {
                         'donor_id': partner ? partner.id : null,
                         'product_id': donationLine.product.id,
                     };
-                    console.log("🟢 [Advance Donation] Preparing to create donation receipt with data:", data);
                     
                     // Only add cheque fields if payment type is cheque
                     if (data.payment_type === 'cheque') {
@@ -397,8 +398,10 @@ patch(PaymentScreen.prototype, {
                         'register_pos_payment',
                         [data]
                     );
-                    console.log("🟢 [Advance Donation] Donation receipt result:", result);
+
                     if (result.status === 'success') {
+                        currentOrder.set_source_document(result.receipt_name);
+
                         this.env.services.notification.add(
                             `Donation receipt created for ${donationLine.product.display_name}`,
                             { type: 'success' }
@@ -437,6 +440,9 @@ patch(PaymentScreen.prototype, {
                                 );
                             }
                         }
+
+                        currentOrder.set_source_document(wfData.record_number);
+
                         this.env.services.notification.add(
                             `Welfare ${wfData.record_number} one-time disbursement completed`,
                             { type: 'success' }
@@ -455,6 +461,13 @@ patch(PaymentScreen.prototype, {
                                 );
                             }
                         }
+
+                        currentOrder.set_source_document(wfData.record_number);
+
+                        this.env.services.notification.add(
+                            `Welfare ${wfData.record_number} recurring disbursement completed`,
+                            { type: 'success' }
+                        );
                     }
                 }
             } catch (error) {
@@ -467,7 +480,7 @@ patch(PaymentScreen.prototype, {
         }
         
         // Continue with normal POS flow
-        return super.validateOrder(isForceValidate);
+        super.validateOrder(isForceValidate);
     },
 
     /**
@@ -480,8 +493,6 @@ patch(PaymentScreen.prototype, {
 
         const equipmentLines = await this.fetchEquipmentLines(record);
 
-        // console.log(`Equipment Lines:`, equipmentLines);
-
         for (const line of equipmentLines) {
             const equipmentLineId = line.id;
             const productId = line.product_id[0];
@@ -491,10 +502,6 @@ patch(PaymentScreen.prototype, {
             const orderLine = selectedOrder.orderlines.find(
                 (ol) => ol.product.id === productId
             );
-
-            // console.log(`Checking Product: ${productName}`);
-            // console.log(`Equipment Qty: ${equipmentQty}`);
-            // console.log(`OrderLine:`, orderLine);
 
             if (orderLine) {
                 const orderQty = orderLine.quantity || 0;
@@ -521,8 +528,6 @@ patch(PaymentScreen.prototype, {
                             `${productName} quantity updated: ${equipmentQty} → ${newQty}`,
                             { type: "info" }
                         );
-
-                        // console.log(`✅ Updated ${productName}: ${equipmentQty} → ${newQty}`);
                     } catch (error) {
                         console.error(`❌ Failed to update ${productName}`, error);
                         this.env.services.notification.add(
@@ -533,8 +538,6 @@ patch(PaymentScreen.prototype, {
 
                     return true;
                 } else {
-                    // console.log(`✅ Quantities already match for ${productName}`);
-
                     return false;
                 }
             } else {
@@ -548,8 +551,6 @@ patch(PaymentScreen.prototype, {
      */
     hasEquipmentLines(record) {
         if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
-            // console.log("No equipment lines found for this record");
-
             this.notification.add(
                 "No products configured for this equipment",
                 { type: 'warning' }
@@ -570,11 +571,6 @@ patch(PaymentScreen.prototype, {
             {}
         );
         
-        // console.log("Equipment lines:", equipmentLines);
-        
         return equipmentLines;
     },
-    /**
-     * Returns true if the current order is a welfare order
-     */
 });

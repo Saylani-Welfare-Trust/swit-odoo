@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+        <xpath expr="//div[@name='custom-title']" position="replace">
+            <div name="custom-title" class="col-6">
+                <t t-if="order.is_qurbani">
+                    <h1>Qurbani Booking</h1>
+                </t>
+                <t t-else="">
+                    <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
+                    <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                </t>
+            </div>
+        </xpath>
+
+        <xpath expr="//table[@name='items-table']" position="replace">
+            <t t-if="order.is_qurbani">
+                <table name="qurbani-items-table" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>City</th>
+                            <th>Location</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
+                            <tr>
+                                <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
+                                <td>
+                                    <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
+                                        <t t-esc="line.qurbani_schedule_line.city"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+
+                                <td>
+                                    <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
+                                        <t t-esc="line.qurbani_schedule_line.location"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+
+                                <td>
+                                    <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
+                                        <t t-esc="line.qurbani_schedule_line.slot.day"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+
+                                <td>
+                                    <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
+                                        <t t-esc="line.qurbani_schedule_line.slot.distribution.start"/> - <t t-esc="line.qurbani_schedule_line.slot.distribution.end"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </t>
+            <t t-else="">
+                <table name="items-table" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th t-if="!order.is_donation_in_kind">Rate</th>
+                            <th t-if="!order.is_donation_in_kind">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
+                            <tr>
+                                <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
+                                <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
+                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
+                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </t>
+        </xpath>
+    </t>
+
+</templates>
