@@ -21,11 +21,11 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_pos_customization/static/src/override/app/**/*',
-            'bn_pos_customization/static/src/override/screens/**/*',
-            # 'bn_pos_customization/static/src/override/screens/order_receipt/order_receipt.xml',
-            # 'bn_pos_customization/static/src/override/screens/partner_list/partner_list.js',
-            # 'bn_pos_customization/static/src/override/screens/payment_screen/payment_screen.xml',
-            # 'bn_pos_customization/static/src/override/screens/receipt_screen/receipt_screen.xml',
+            # 'bn_pos_customization/static/src/override/screens/**/*',
+            'bn_pos_customization/static/src/override/screens/order_receipt/order_receipt.xml',
+            'bn_pos_customization/static/src/override/screens/partner_list/partner_list.js',
+            'bn_pos_customization/static/src/override/screens/payment_screen/payment_screen.xml',
+            'bn_pos_customization/static/src/override/screens/receipt_screen/receipt_screen.xml',
             'bn_pos_customization/static/src/override/models/**/*',
             'bn_pos_customization/static/src/scss/*',
             'bn_pos_customization/static/src/css/*',

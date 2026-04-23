@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates id="template" xml:space="preserve">
 
-    <t t-name="bn_pos_customization.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+    <t t-name="bn_qurbani.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[@name='custom-title']" position="replace">
             <div name="custom-title" class="col-6">
                 <t t-if="order.is_qurbani">
