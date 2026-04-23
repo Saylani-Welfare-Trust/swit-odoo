@@ -86,13 +86,13 @@
             </t>
         </xpath>
 
-        <!-- <xpath expr="//div[@name='custom-details']" position="replace">
+        <xpath expr="//div[@name='custom-details']" position="replace">
             <t t-if="order.is_qurbani">
                 <div name="halfnama" style="text-align: center; font-size: 12px;">
                     <t t-esc="order.halfnama" t-if="order.halfnama"/>
                 </div>
             </t>
-            <t t-else="">
+            <!-- <t t-else="">
                 <div class="col-6">
                     <div>
                         <strong>DN #:</strong>
@@ -134,8 +134,8 @@
                     </div>
                     <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                 </div>
-            </t>
-        </xpath> -->
+            </t> -->
+        </xpath>
     </t>
 
 </templates>
