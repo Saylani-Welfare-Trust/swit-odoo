@@ -42,13 +42,6 @@ class QurbaniOrder(models.Model):
     
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
-
-    def set_remarks(self):
-        remarks = []
-        for line in self.qurbani_order_line_ids:
-            remarks.append(f'{line.hissa_name} - {line.city_id.name} - {line.distribution_id.name} - {line.day_id.name}: {line.start_time} to {line.end_time}')
-        
-        self.remarks = "-".join(remarks)
     
     def action_show_pos_order(self):
         self.ensure_one()
@@ -229,13 +222,13 @@ class QurbaniOrder(models.Model):
                     ('name', '=', slot.get('day'))
                 ], limit=1).id,
 
+                'hijri_id': Hijri.id,
+
                 'city_id': self.env['stock.location'].search([
                     ('name', '=', schedule.get('city'))
                 ], limit=1).id,
 
-                'distribution_id': self.env['stock.location'].search([
-                    ('name', '=', slot.get('distribution', {}).get('location'))
-                ], limit=1).id,
+                'distribution_id': self.env['stock.location'].browse(slot.get('distribution', {}).get('location')).id,
 
                 'hissa_name': schedule.get('name', ''),
                 'start_time': slot.get('distribution', {}).get('start'),
@@ -251,7 +244,6 @@ class QurbaniOrder(models.Model):
         })
 
         qurbani.calculate_amount()
-        qurbani.set_remarks()
 
         return {
             "status": "success",

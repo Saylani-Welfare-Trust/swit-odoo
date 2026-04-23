@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class QurbaniOrderLine(models.Model):
@@ -12,6 +13,7 @@ class QurbaniOrderLine(models.Model):
     city_id = fields.Many2one('stock.location', string="City")
     distribution_id = fields.Many2one('stock.location', string="Distribution")
     day_id = fields.Many2one('qurbani.day', string="Day")
+    hijri_id = fields.Many2one('hijri', string="Hijri")
 
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')
@@ -30,3 +32,17 @@ class QurbaniOrderLine(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order_line') or ('New')
 
         return super(QurbaniOrderLine, self).create(vals)
+    
+    def write(self, vals):
+
+        if vals.get('hissa_name'):
+            pos_order = self.env['pos.order'].search([('source_document', '=', self.qurbani_order_id.name)])
+
+            if pos_order:
+                line = pos_order.lines.filtered(lambda l:l.customer_note == self.hissa_name and l.product_id.id == self.product_id.id and l.qty == self.quantity)
+
+                # raise ValidationError(str(self.hissa_name))
+                if line:
+                    line.customer_note = vals.get('hissa_name')
+
+        return super(QurbaniOrderLine, self).write(vals)

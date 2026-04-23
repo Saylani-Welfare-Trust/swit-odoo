@@ -41,10 +41,7 @@ class DistributionSchedule(models.Model):
         product_name = (product.name or "").lower()
 
         # 🔥 DECIDE SLOT LIMIT BASED ON PRODUCT
-        if "yes" in product_name:
-            limit_type = "two"
-        else:
-            limit_type = "one"
+        limit_type = "two" if "yes" in product_name else "one"
 
         records = self.search([
             ('hijri_id', '=', last_hijri.id),
@@ -105,6 +102,8 @@ class DistributionSchedule(models.Model):
             city_map[city][location].append({
                 "id": rec.id,
                 "day": rec.day_id.name if rec.day_id else "",
+                "day_id": rec.day_id.id if rec.day_id else None,
+
                 "product": rec.inventory_product_id.name if rec.inventory_product_id else "",
 
                 "slaughter_location_id": slaughter_location_id,
@@ -122,24 +121,46 @@ class DistributionSchedule(models.Model):
             })
 
         # ==================================================
-        # 🔥 APPLY LIMIT BASED ON PRODUCT
+        # 🔥 APPLY LIMIT PER DAY (FIXED LOGIC)
         # ==================================================
         for city in city_map:
             for location in city_map[city]:
 
                 slots = city_map[city][location]
 
-                # sort by time
-                slots.sort(key=lambda x: x.get("start_time") or 0)
+                # -----------------------------
+                # GROUP BY DAY
+                # -----------------------------
+                day_map = {}
+                for slot in slots:
+                    day_id = slot.get("day_id") or 0
+                    day_map.setdefault(day_id, []).append(slot)
 
-                if not slots:
-                    continue
+                final_slots = []
 
-                if limit_type == "two":
-                    # ✅ YES → first 2
-                    city_map[city][location] = slots[:2]
-                else:
-                    # ✅ NO → last 1
-                    city_map[city][location] = [slots[-1]]
+                # -----------------------------
+                # APPLY LIMIT PER DAY
+                # -----------------------------
+                for day_id, day_slots in day_map.items():
+
+                    # sort by time
+                    day_slots.sort(key=lambda x: x.get("start_time") or 0)
+
+                    if not day_slots:
+                        continue
+
+                    if limit_type == "two":
+                        # ✅ YES → first 2 slots per day
+                        final_slots.extend(day_slots[:2])
+                    else:
+                        # ✅ NO → last 1 slot per day
+                        final_slots.append(day_slots[-1])
+
+                # -----------------------------
+                # FINAL SORT (OPTIONAL)
+                # -----------------------------
+                final_slots.sort(key=lambda x: (x.get("day_id") or 0, x.get("start_time") or 0))
+
+                city_map[city][location] = final_slots
 
         return city_map

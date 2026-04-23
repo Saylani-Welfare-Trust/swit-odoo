@@ -11,6 +11,7 @@
         'bn_pos_customization',
         'bn_pos_payment_method',
         'bn_res_company',
+        'bn_pos_order',
     ],
     'data': [
         'data/sequence.xml',
