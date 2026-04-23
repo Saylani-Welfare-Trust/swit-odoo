@@ -7,21 +7,21 @@
         <field name="arch" type="xml">
             <form create="0">
                 <header>
-                    <field name="box_status" invisible="1" />
-                    <field name="box_recovered" invisible="1" />
-                    <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved']" />
-                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved']" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <field name="box_status" invisible="1"/>
+                    <field name="box_recovered" invisible="1"/>
+                    <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved','not_recovered']"/>
+                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved','not_recovered']" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
                     
-                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
 
-                    <button name="action_repair" string="Repair" type="object" class="btn-primary"  invisible="box_status != 'broken' or status != 'resolved'"  groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary" invisible="box_status != 'broken' or status != 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
 
-                    <field name="status" widget="statusbar" statusbar_visible="draft, process, resolved"/>
+                    <field name="status" widget="statusbar" statusbar_visible="draft, process, not_recovered, resolved "/>
                 </header>
 
                 <sheet>
-                    <field name="employee_category_id" invisible="1" />
-                    <field name="complain_officer_category_id" invisible="1" />
+                    <field name="employee_category_id" invisible="1"/>
+                    <field name="complain_officer_category_id" invisible="1"/>
 
                     <div class="oe_button_box" name="button_box">
                         <button name="action_return_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
@@ -36,42 +36,42 @@
                     </div>
 
                     <div class="oe_title">
-                        <label for="rider_id" />
-                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status == 'process'" /></h1>
+                        <label for="rider_id"/>
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status in ['not_recovered', 'process']"/></h1>
                     </div>
 
                     <group>
-                        <group name="donation_box_complain_col_1">
-                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status == 'process'" />
-                            <field name="box_status" required="1" readonly="status == 'process'" />
-                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status == 'resolved'" />
-                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status == 'resolved'" />
+                        <group name="donation_box_complain_col_1" >
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status in ['not_recovered', 'process']"/>
+                            <field name="box_status" required="1" readonly="status in ['not_recovered', 'process']"/>
+                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
+                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
                         </group>
                         <group name="donation_box_complain_col_2">
-                            <field name="date" readonly="1" />
-                            <field name="remarks" required="1" readonly="status == 'process'" />
-                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status == 'resolved'" />
+                            <field name="date" readonly="1"/>
+                            <field name="remarks" required="1" readonly="status in ['not_recovered', 'process']"/>
+                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
                         </group>
                     </group>
 
                     <group name="donation_box_info" string="Box Information">
                         <group name="donation_box_info_col_1">
-                            <field name="donation_box_registration_installation_id" readonly="1" />
-                            <field name="name" string="Request No." readonly="1" />
-                            <field name="shop_name" string="Shop No." readonly="1" />
-                            <field name="location" readonly="1" />
-                            <field name="contact_person" readonly="1" />
-                            <field name="installer_id" string="Installer" readonly="1" />
-                            <field name="product_id" string="Box Category" readonly="1" />
+                            <field name="donation_box_registration_installation_id" readonly="1"/>
+                            <field name="name" string="Request No." readonly="1"/>
+                            <field name="shop_name" string="Shop No." readonly="1"/>
+                            <field name="location" readonly="1"/>
+                            <field name="contact_person" readonly="1"/>
+                            <field name="installer_id" string="Installer" readonly="1"/>
+                            <field name="product_id" string="Box Category" readonly="1"/>
                         </group>
                         <group name="donation_box_info_col_2">
-                            <field name="donor_id" string="Donor" readonly="1" />
-                            <field name="contact_no" readonly="1" widget="phone" />
-                            <field name="installation_date" readonly="1" />
-                            <field name="installation_category_id" string="Installation Category" readonly="1" />
-                            <field name="city_id" string="City" readonly="1" />
-                            <field name="zone_id" string="Zone" readonly="1" />
-                            <field name="sub_zone_id" string="Sub Zone" readonly="1" />
+                            <field name="donor_id" string="Donor" readonly="1"/>
+                            <field name="contact_no" readonly="1" widget="phone"/>
+                            <field name="installation_date" readonly="1"/>
+                            <field name="installation_category_id" string="Installation Category" readonly="1"/>
+                            <field name="city_id" string="City" readonly="1"/>
+                            <field name="zone_id" string="Zone" readonly="1"/>
+                            <field name="sub_zone_id" string="Sub Zone" readonly="1"/>
                         </group>
                     </group>
                 </sheet>

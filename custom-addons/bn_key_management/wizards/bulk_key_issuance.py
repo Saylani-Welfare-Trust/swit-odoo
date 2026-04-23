@@ -1,5 +1,5 @@
 from odoo import fields, models, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 action_type_selection = [
@@ -89,8 +89,10 @@ class BulkKeyIssuance(models.TransientModel):
                         'rider_id': self.rider_id.id,
                         'key_id': key.id
                     })
-
                     key_issuance_obj.action_issue()
+            
+        
+                
 
     def action_return(self):
         if not self.rider_id:
