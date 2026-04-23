@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
     <!-- Tree View (no create, no delete, allow edit) -->
     <record id="bn_master_setup_view_direct_deposit_account_setup_tree" model="ir.ui.view">
         <field name="name">direct.deposit.account.setup.tree</field>
@@ -30,4 +31,5 @@
               name="Direct Deposit Account" 
               parent="bn_master_setup_menu_direct_deposit_root" 
               action="bn_master_setup_action_direct_deposit_account_setup"/>
+
 </odoo>

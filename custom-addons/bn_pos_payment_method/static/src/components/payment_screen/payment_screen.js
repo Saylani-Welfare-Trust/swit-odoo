@@ -8,8 +8,6 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async addNewPaymentLine(paymentMethod) {
-        console.log(paymentMethod);
-
         if (paymentMethod.show_popup) {
             await this.popup.add(PaymentPopup, {
                 title: paymentMethod.name,
@@ -20,7 +18,6 @@ patch(PaymentScreen.prototype, {
         }
         
         if (paymentMethod.is_donation_in_kind) {
-            // console.log(this);
             const currentOrder = this.pos.get_order();
 
             currentOrder.donation_in_kind = true
@@ -64,7 +61,7 @@ patch(PaymentScreen.prototype, {
         }
 
         // Continue with normal POS flow
-        return super.validateOrder(isForceValidate);
+        super.validateOrder(isForceValidate);
     },
 
     prepareOrderLines(orderLines) {

@@ -5,6 +5,7 @@ class APIDonationItemModel(models.Model):
     _name = 'api.donation.item'
     _description = 'API Donation Item'
 
+
     donation_type = fields.Char('Donation Type')
     donation_no = fields.Char('Donation No')
     price_id = fields.Char('Price Id')

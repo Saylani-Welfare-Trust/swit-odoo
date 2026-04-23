@@ -1,1 +1,1 @@
-# Saylani Welfare and Internationl Trust (SWIT)
+# Saylani Welfare International Trust

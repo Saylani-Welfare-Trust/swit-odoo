@@ -47,7 +47,7 @@ class ResPartner(models.Model):
     has_cnic = fields.Selection(selection=general_selection, string="Has CNIC", default='yes', tracking=True)
     state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
     
-    mobile = fields.Char(size=10)
+    mobile = fields.Char(size=10, tracking=True)
     surname = fields.Char('Surname', tracking=True)
     cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
     next_kin = fields.Char('Next Kin', tracking=True)
@@ -61,7 +61,7 @@ class ResPartner(models.Model):
     reference_remarks = fields.Char('Reference / Remarks', tracking=True)
     bank_wallet_account = fields.Char('Bank / Wallet Account', tracking=True)
     primary_registration_id = fields.Char('Primary Registration ID', tracking=True)
-    secondary_registration_id = fields.Char('Secondary Registration ID')
+    secondary_registration_id = fields.Char('Secondary Registration ID', tracking=True)
 
     cnic_back = fields.Char('CNIC Back', tracking=True)
     cnic_front = fields.Char('CNIC Front', tracking=True)
@@ -73,13 +73,13 @@ class ResPartner(models.Model):
     approved_form_file = fields.Binary('Approved Form File')
     reference_letter_file = fields.Binary('Reference Letter File')
 
-    cnic_expiration = fields.Date('CNIC Expiration')
-    date_of_birth = fields.Date('Date Of Birth')
-    
-    details = fields.Text('Details')
+    cnic_expiration = fields.Date('CNIC Expiration', tracking=True)
+    date_of_birth = fields.Date('Date Of Birth', tracking=True)
 
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
-    country_code_id = fields.Many2one('res.country', string="Phone Code")
+    details = fields.Text('Details', tracking=True)
+
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
+    country_code_id = fields.Many2one('res.country', string="Phone Code", tracking=True)
 
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
@@ -168,7 +168,6 @@ class ResPartner(models.Model):
             elif len(cleaned_cnic) > 5:
                 self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
 
-            
             if not self.is_valid_cnic_format(self.member_cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
@@ -190,7 +189,6 @@ class ResPartner(models.Model):
                 self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
                 self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
             
             if not self.is_valid_cnic_format(self.father_cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
@@ -215,105 +213,6 @@ class ResPartner(models.Model):
             'is_individual': True if 'Individual' in self.category_id.mapped('name') else False,
             
         })
-    
-    # def action_register(self):
-    #     for rec in self:
-    #         if not rec.date_of_birth and 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
-    #             raise ValidationError('Please specify your Date of Birth...')
-    #         elif rec.date_of_birth and 'Microfinance' in rec.category_id.mapped('name') and rec.age and rec.age < 18:
-    #             raise ValidationError('Cannot register the Person for Microfinance as his/her age is below 18.')
-            
-    #         # Check CNIC expiry date for Donee registration - must be at least 1 year from today
-    #         if 'Donee' in rec.category_id.mapped('name') and rec.cnic_expiration:
-    #             from dateutil.relativedelta import relativedelta
-    #             min_expiry_date = fields.Date.today() + relativedelta(years=1)
-    #             if rec.cnic_expiration < min_expiry_date:
-    #                 raise ValidationError('CNIC expiry date should be minimum one year from the date of application. Please renew your CNIC before registration.')
-            
-    #         if 'Donee' in rec.category_id.mapped('name'):
-    #             res_partner = rec.env['res.partner'].search(['|', ('cnic_no', '=', rec.cnic_no), ('mobile', '=', rec.mobile), ('country_code_id', '=', rec.country_code_id.id), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
-
-    #             if res_partner:
-    #                 raise ValidationError(str(f'A Donee with same CNIC or Mobile No. already exist in the System.'))
-                
-    #             res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-    #             if res_partner:
-    #                 rec.secondary_registration_id = res_partner.primary_registration_id
-    #             else:
-    #                 if rec.cnic_no:
-    #                     res_partner = rec.env['res.partner'].search([('cnic_no', '=', rec.cnic_no), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-    #                     if res_partner:
-    #                         rec.secondary_registration_id = res_partner.primary_registration_id
-    #         elif 'Donor' in rec.category_id.mapped('name'):
-    #             res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donor']), ('state', '=', 'register')])
-
-    #             if res_partner:
-    #                 raise ValidationError(str(f'A Donor with same Mobile No. already exist in the System.'))
-                
-    #             res_partner = rec.env['res.partner'].search([('country_code_id', '=', rec.country_code_id.id), ('mobile', '=', rec.mobile), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
-
-    #             if res_partner:
-    #                 rec.secondary_registration_id = res_partner.primary_registration_id
-    #             else:
-    #                 if rec.cnic_no:
-    #                     res_partner = rec.env['res.partner'].search([('cnic_no', '=', rec.cnic_no), ('category_id.name', 'in', ['Donee']), ('state', '=', 'register')])
-
-    #                     if res_partner:
-    #                         rec.secondary_registration_id = res_partner.primary_registration_id
-            
-    #         if not rec.primary_registration_id:
-    #             seq_num = None
-    #             age = None
-    #             BY = None
-                
-    #             RY = fields.Date.today().year
-    #             RY = str(RY)[2:]
-
-    #             if rec.date_of_birth:
-    #                 BY = str(rec.date_of_birth).split('-')[0]
-                    
-    #                 today = fields.Date.today()
-    #                 age = today.year - int(BY)
-
-    #             check_digit = None
-
-    #             if 'Donee' in rec.category_id.mapped('name'):
-    #                 seq_num = rec.env['ir.sequence'].next_by_code('donee_profile_management') or ('New')
-                    
-    #                 if 'Employee' in rec.category_id.mapped('name') and rec.gender == 'female':
-    #                     check_digit = 2
-    #                 if 'Employee' in rec.category_id.mapped('name') and rec.gender == 'male':
-    #                     check_digit = 3
-    #                 elif age > 18 and rec.gender == 'female':
-    #                     check_digit = 0
-    #                 elif age > 18 and rec.gender == 'male':
-    #                     check_digit = 1
-    #                 elif age < 18 and rec.gender == 'female':
-    #                     check_digit = 4
-    #                 elif age < 18 and rec.gender == 'male':
-    #                     check_digit = 5
-    #             else:
-    #                 seq_num = rec.env['ir.sequence'].next_by_code('donor_profile_management') or ('New')
-                    
-    #                 if 'Employee' in rec.category_id.mapped('name'):
-    #                     check_digit = 8
-    #                 elif 'Individual' in rec.category_id.mapped('name'):
-    #                     check_digit = 6
-    #                 else:
-    #                     check_digit = 7
-
-    #             rec.primary_registration_id = f'{RY}-{str(BY)[2:]}-{seq_num}-{check_digit}' if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name') else f'{RY}-{seq_num}-{check_digit}'
-
-    #         rec.state = 'register'
-
-    #         if 'Welfare' in rec.category_id.mapped('name'):
-    #             rec.action_welfare_application()
-            
-    #         # Automatically open microfinance application wizard after successful registration
-    #         if 'Microfinance' in rec.category_id.mapped('name'):
-    #             return rec.action_print_microfinance_application()
 
     def action_register(self):
         Partner = self.env['res.partner']

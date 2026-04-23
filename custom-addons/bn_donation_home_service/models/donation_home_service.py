@@ -26,7 +26,6 @@ class DonationHomeService(models.Model):
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
-    # direct_deposit_id = fields.Many2one('direct.deposit', string="Direct Deposit")
 
     name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
@@ -62,10 +61,10 @@ class DonationHomeService(models.Model):
         return super(DonationHomeService, self).create(vals)
     
     def calculate_amount(self):
-        self.amount = 0
+        self.amount = sum(line.amount * line.quantity for line in self.donation_home_service_line_ids)
 
-        for line in self.donation_home_service_line_ids:
-            self.amount += line.amount * line.quantity
+    def calculate_total_amount(self):
+        self.total_amount = self.amount + self.service_charges
 
     def set_remarks(self):
         remarks = []
@@ -74,9 +73,6 @@ class DonationHomeService(models.Model):
                 remarks.append(line.remarks)
         
         self.remarks = "-".join(remarks)
-
-    def calculate_service_charges(self):
-        self.total_amount = self.amount + self.service_charges
     
     def action_cancel(self):
         def _create_return_for_picking(picking):
@@ -127,8 +123,6 @@ class DonationHomeService(models.Model):
 
         self.state = 'cancel'
 
-
-    
     def action_gate_out(self):
         """Confirm donation and create stock picking if stockable product lines exist."""
         StockPicking = self.env['stock.picking']
@@ -347,14 +341,14 @@ class DonationHomeService(models.Model):
                     total_price_incl_tax += tax.amount
 
             if not line.amount:
-                line.amount = total_price_incl_tax * line.quantity
+                line.amount = total_price_incl_tax
 
         # -------------------------
         # 5. Recalculate totals
         # -------------------------
         dhs.calculate_amount()
+        dhs.calculate_total_amount()
         dhs.set_remarks()
-        dhs.calculate_service_charges()
 
         return {
             "status": "success",

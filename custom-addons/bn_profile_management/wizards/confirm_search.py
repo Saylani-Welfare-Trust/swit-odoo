@@ -118,6 +118,15 @@ class ConfirmSearch(models.TransientModel):
                 }
         elif self.donee_registration_type == 'medical':
             if donee:
+                donee.category_id = [(6, 0, [
+                                             self.env.ref('bn_profile_management.donee_partner_category').id,
+                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
+                                             self.env.ref('bn_profile_management.medical_partner_category').id
+                                             ])
+                                    ]
+
+                self.env.cr.commit()
+
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'res.partner',
@@ -144,6 +153,15 @@ class ConfirmSearch(models.TransientModel):
                 }
         elif self.donee_registration_type == 'student':
             if donee:
+                donee.category_id = [(6, 0, [
+                                             self.env.ref('bn_profile_management.donee_partner_category').id,
+                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
+                                             self.env.ref('bn_profile_management.student_partner_category').id
+                                             ])
+                                    ]
+
+                self.env.cr.commit()
+
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'res.partner',
