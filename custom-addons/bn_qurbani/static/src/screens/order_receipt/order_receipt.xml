@@ -92,7 +92,7 @@
                     <t t-esc="order.halfnama" t-if="order.halfnama"/>
                 </div>
             </t>
-                <div class="col-6">
+                 <div class="col-6">
                     <div>
                         <strong>DN #:</strong>
                         <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
@@ -101,7 +101,11 @@
                         <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
                         <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                     </div>
-                    <div><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
+                    <div>
+                        <strong>Donor Name:</strong>
+                        <t t-if="partner.name"><t t-esc="partner.name"/></t>
+                        <t t-else="">-</t> 
+                    </div>
                     <div>
                         <strong>Products:</strong>
                         <t t-set="count" t-value="1"/>
@@ -115,7 +119,8 @@
                 <div class="col-6">
                     <div>
                         <strong>Date Time:</strong>
-                        <t t-set="dateObj" t-value="new Date(date_format)"/>
+                        <t t-esc="date_format"/>
+                        <!-- <t t-set="dateObj" t-value="new Date(date_format)"/>
                         <t t-set="day" t-value="dateObj.getDate()"/>
                         <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                         <t t-set="year" t-value="dateObj.getFullYear()"/>
@@ -125,10 +130,10 @@
                         <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
                                 (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
                                 (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                (minutes &lt; 10 ? '0' : '') + minutes"/>
+                                (minutes &lt; 10 ? '0' : '') + minutes"/> -->
                     </div>
                     <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
-                </div>  
+                </div>
             <t t-else="">
             </t>
         </xpath>
