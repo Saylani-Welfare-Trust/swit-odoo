@@ -14,7 +14,7 @@
             </div>
         </xpath>
 
-        <xpath expr="//table[@name='items-table']" position="replace">
+        <!-- <xpath expr="//table[@name='items-table']" position="replace">
             <t t-if="order.is_qurbani">
                 <table name="qurbani-items-table" class="table table-bordered">
                     <thead>
@@ -135,7 +135,7 @@
                     <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                 </div>
             </t>
-        </xpath>
+        </xpath> -->
     </t>
 
 </templates>
