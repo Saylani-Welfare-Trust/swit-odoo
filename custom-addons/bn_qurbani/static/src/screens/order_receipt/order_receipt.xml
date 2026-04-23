@@ -19,6 +19,7 @@
                 <table name="qurbani-items-table" class="table table-bordered">
                     <thead>
                         <tr>
+                            <th>Name</th>
                             <th>Product</th>
                             <th>City</th>
                             <th>Location</th>
@@ -29,6 +30,13 @@
                     <tbody>
                         <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
                             <tr>
+                                <td>
+                                    <t t-if="line.qurbani_schedule_line">
+                                        <t t-esc="line.qurbani_schedule_line.name"/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+
                                 <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                 <td>
                                     <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
@@ -45,7 +53,7 @@
                                 </td>
 
                                 <td>
-                                    <t t-if="line.productName &amp;&amp; line.productName.toLowerCase().includes('yes') &amp;&amp; line.qurbani_schedule_line">
+                                    <t t-if="line.qurbani_schedule_line">
                                         <t t-esc="line.qurbani_schedule_line.slot.day"/>
                                     </t>
                                     <t t-else="">-</t>
@@ -131,8 +139,23 @@
                         </div>
                         <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                     </div>
-                </div>
+                </div>  
             </t>
+        </xpath>
+
+        <xpath expr="//div[@name='custom-remarks']" position="replace">
+            <t t-if="order.is_qurbani" />
+             <t t-else="">
+                <div name="custom-remarks" style="font-size: 12px;">
+                    <strong>Remarks:</strong>
+                    <t t-set="count" t-value="1"/>
+                    <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
+                        <t t-esc="count"/>. <t t-esc="line.productName"/> - <t t-esc="line.customerNote"/>
+                        <br/>
+                        <t t-set="count" t-value="count + 1"/>
+                    </t>
+                </div>
+             </t>
         </xpath>
     </t>
 

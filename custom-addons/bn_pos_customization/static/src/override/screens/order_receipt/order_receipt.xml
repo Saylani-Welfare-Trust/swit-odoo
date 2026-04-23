@@ -68,7 +68,7 @@
                                 <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
                             </div>
                         </t>
-                        <div>
+                        <div name="custom-remarks">
                             <strong>Remarks:</strong>
                             <t t-set="count" t-value="1"/>
                             <t t-foreach="lines" t-as="line" t-key="line.id+line.productName+line.customerNote">
@@ -203,7 +203,7 @@
                     </div>
                 </div>
                 
-                <div style="text-align: center; font-size: 12px;">
+                <div name="custom-footer" style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
                 </div>
 
