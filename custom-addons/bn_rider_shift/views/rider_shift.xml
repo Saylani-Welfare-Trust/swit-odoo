@@ -46,7 +46,8 @@
                                     <field name="date" widget="date"/>
                                     <!-- <field name="day" /> -->
                                     <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                                    <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <!-- <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/> -->
+                                    <field name="zone_id" string="Zone"  required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="key_bunch_id" domain="[('sub_zone_id', '=', sub_zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" string="Bunch"/>
                                     <field name="key_count" string="No. of Keys" readonly="1"/>
