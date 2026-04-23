@@ -199,7 +199,7 @@
                     </div>
                 </div>
                 
-                <div name="custom-footer" style="text-align: center; font-size: 12px;">
+                <div style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
                 </div>
 

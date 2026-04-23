@@ -10,18 +10,17 @@ installment_selection = [
 class MicrofinanceScheme(models.Model):
     _name = 'microfinance.scheme'
     _description = "Microfinance Scheme"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    name = fields.Char('Name', tracking=True)
-    prefix = fields.Char('Prefix', tracking=True)
+    name = fields.Char('Name')
+    prefix = fields.Char('Prefix')
     
-    is_created = fields.Boolean('Is Created', tracking=True)
+    is_created = fields.Boolean('Is Created')
 
-    installment_type = fields.Selection(selection=installment_selection, string='Installment Type', default='daily', tracking=True)
+    installment_type = fields.Selection(selection=installment_selection, string='Installment Type', default='daily')
 
-    daily_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
-    monthly_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
+    daily_recovery_days = fields.Integer('Recovery Days', default=0)
+    monthly_recovery_days = fields.Integer('Recovery Days', default=0)
 
     microfinance_scheme_line_ids = fields.One2many('microfinance.scheme.line', 'microfinance_scheme_id', string="Microfinance Scheme Line")
 

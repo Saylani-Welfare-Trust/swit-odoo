@@ -54,6 +54,7 @@ class POSOrder(models.Model):
         return res
     
     def get_cheque_pos_order(self, shop, offset=0, limit=10):
+        # orders = self.env['pos.order'].search([('session_id.config_id', '=', shop)], offset=offset, limit=limit)
         orders = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')], offset=offset, limit=limit)
         total_count = self.env['pos.order'].search_count([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')])
         
@@ -132,11 +133,15 @@ class POSOrder(models.Model):
                 "status": "error",
                 "body": "Order does not exist in the system or been delete instead."
             }
+
+
+        # raise ValidationError(str(order))
+        # raise ValidationError(str(order.pos_cheque_id))
         
         order.pos_cheque_id.state = 'cancel'
 
         return {
             "status": "success",
-            "name": order.pos_cheque_id.name,
             "body": "Cheque Status has been updated successfully."
         }
+        # raise ValidationError(str(order.pos_cheque_id.state))

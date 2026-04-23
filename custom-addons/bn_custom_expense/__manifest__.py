@@ -6,8 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/HR Expense Customization',
     'depends': [
-        'base',
-        'hr_expense',
+        'hr_expense'
     ],
     'data': [
         'security/group.xml',

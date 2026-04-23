@@ -22,9 +22,6 @@ patch(ReceiptScreen.prototype, {
         if (this.pos.bn_customization) {
             this.pos.bn_customization = false
         }
-        if (this.pos.is_qurbani) {
-            this.pos.is_qurbani = false
-        }
         
         this.pos.showScreen(name, props);
     }

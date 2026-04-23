@@ -29,7 +29,7 @@
         id="donaiton_in_kind_config_menu"
         name="Donation In Kind Config."
         action="donation_in_kind_config_action"
-        parent="bn_import_donation.donation_inflow_config_menu"
+        parent="bn_master_setup.donation_inflow_config_menu"
         sequence="2"/>
 
 </odoo>

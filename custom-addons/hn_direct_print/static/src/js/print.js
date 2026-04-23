@@ -74,6 +74,8 @@ patch(ActionMenus.prototype, {
             const orm = this.orm;
             const user = await orm.read("res.users", [session.uid], ["enabled_direct_print", "printer_name"]);
             if (user[0].enabled_direct_print) {
+                console.log("hn_direct_print: Direct print enabled for user, attempting direct print");
+                
                 // Fetch full report action from ir.actions.report
                 const reportActions = await orm.read("ir.actions.report", [action.id], [
                     "report_name",
@@ -108,6 +110,7 @@ patch(ActionMenus.prototype, {
                     });
                     
                     if (apiResp.ok) {
+                        console.log("hn_direct_print: PDF sent to API successfully, skipping default download");
                         return { success: true };
                     }
                     console.warn("API call failed, falling back to default executeAction", apiResp);
