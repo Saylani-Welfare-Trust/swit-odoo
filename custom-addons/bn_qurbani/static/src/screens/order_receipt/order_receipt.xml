@@ -92,7 +92,8 @@
                     <t t-esc="order.halfnama" t-if="order.halfnama"/>
                 </div>
             </t>
-                 <div class="col-6">
+            <t t-else="">
+                <div class="col-6">
                     <div>
                         <strong>DN #:</strong>
                         <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
@@ -119,8 +120,7 @@
                 <div class="col-6">
                     <div>
                         <strong>Date Time:</strong>
-                        <t t-esc="date_format"/>
-                        <!-- <t t-set="dateObj" t-value="new Date(date_format)"/>
+                        <t t-set="dateObj" t-value="new Date(date_format)"/>
                         <t t-set="day" t-value="dateObj.getDate()"/>
                         <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                         <t t-set="year" t-value="dateObj.getFullYear()"/>
@@ -130,11 +130,10 @@
                         <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
                                 (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
                                 (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                (minutes &lt; 10 ? '0' : '') + minutes"/> -->
+                                (minutes &lt; 10 ? '0' : '') + minutes"/>
                     </div>
                     <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                 </div>
-            <t t-else="">
             </t>
         </xpath>
     </t>
