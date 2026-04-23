@@ -14,7 +14,7 @@
             </div>
         </xpath>
 
-        <!-- <xpath expr="//table[@name='items-table']" position="replace">
+        <xpath expr="//table[@name='items-table']" position="replace">
             <t t-if="order.is_qurbani">
                 <table name="qurbani-items-table" class="table table-bordered">
                     <thead>
@@ -86,7 +86,7 @@
             </t>
         </xpath>
 
-        <xpath expr="//div[@name='custom-details']" position="replace">
+        <!-- <xpath expr="//div[@name='custom-details']" position="replace">
             <t t-if="order.is_qurbani">
                 <div name="halfnama" style="text-align: center; font-size: 12px;">
                     <t t-esc="order.halfnama" t-if="order.halfnama"/>
