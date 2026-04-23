@@ -45,19 +45,28 @@
 
                     <notebook>
                         <page string="Items">
-                            <field name="qurbani_order_line_ids">
+                            <field name="qurbani_order_line_ids" create="0">
                                 <tree>
-                                    <field name="name" readonly="1"/>
+                                    <field name="name" />
                                     <field name="hissa_name" />
-                                    <field name="start_time" widget="float_time" readonly="1"/>
-                                    <field name="end_time" widget="float_time" readonly="1"/>
+                                    <field name="start_time" widget="float_time" />
+                                    <field name="end_time" widget="float_time" />
                                     <field name="currency_id" column_invisible="1"/>
-                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1"/>
-                                    <field name="quantity" readonly="1"/>
-                                    <field name="amount" readonly="1"/>
-                                    <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
-                                    <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}"/>
+                                    <field name="quantity"/>
+                                    <field name="amount" />
+                                    <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                 </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="hissa_name" />
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                     </notebook>
