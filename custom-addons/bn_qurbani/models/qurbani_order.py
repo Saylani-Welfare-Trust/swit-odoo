@@ -159,7 +159,8 @@ class QurbaniOrder(models.Model):
             demand = usage['demand']
             qty = usage['qty']
 
-            available = (demand.total_hissa or 0) - (demand.current_hissa or 0)
+            available = demand.remaining_hissa
+            # available = (demand.total_hissa or 0) - (demand.current_hissa or 0)
 
             if qty > available:
                 return {
