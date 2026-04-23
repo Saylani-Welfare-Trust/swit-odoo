@@ -73,6 +73,7 @@ patch(PaymentScreen.prototype, {
                     product_id: line.product.id,
                     quantity: line.quantity,
                     price: line.price,
+                    remarks: line.customerNote,
                 }
             )
         );
