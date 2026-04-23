@@ -85,6 +85,7 @@
     <!-- Parent Menu -->
     <menuitem id="menu_qurbani_root"
         name="Qurbani"
+        groups="bn_qurbani.qurbani_menu_group"
         web_icon="bn_qurbani,static/description/icon.png"
         sequence="10"/>
 

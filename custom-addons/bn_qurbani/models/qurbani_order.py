@@ -132,8 +132,8 @@ class QurbaniOrder(models.Model):
                 ('hijri_id', '=', distribution.hijri_id.id),
                 ('slaughter_location_id', '=', distribution.slaughter_location_id.id),
                 ('inventory_product_id', '=', distribution.inventory_product_id.id),
-                ('start_time', '<=', slaughter.start_time),
-                ('end_time', '>=', slaughter.end_time),
+                ('start_time', '<=', slot.get('slaughter', {}).get('start') or slaughter.start_time),
+                ('end_time', '>=', slot.get('slaughter', {}).get('end') or slaughter.end_time),
             ], limit=1)
 
             demand_cache[key] = demand

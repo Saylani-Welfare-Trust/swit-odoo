@@ -12,3 +12,5 @@ from . import pos_config
 from . import qurbani_city_demand
 from . import qurbani_slaughter_demand
 from . import qurbani_slaughter_slot_demand
+from . import res_company
+from . import pos_session

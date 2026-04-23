@@ -14,8 +14,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.notification = useService("notification");
-
-        this.hissa_no = this.props.hissa_no || false;
+        
         this.product = this.props.product || false;
 
         this.state = useState({

@@ -23,6 +23,8 @@ patch(Order.prototype, {
 
             branch_code: this.cashier.branch_code,
             branch_name: this.cashier.branch_name,
+            receive_voucher: this.pos.receive_voucher,
+            is_qurbani: this.pos.is_qurbani,
             is_bank: this.paymentlines[0]?.payment_method?.is_bank,
             is_donation_in_kind: this.paymentlines[0]?.payment_method?.is_donation_in_kind,
 

@@ -11,8 +11,6 @@ patch(PosStore.prototype, {
             product = this.db.get_product_by_id(product);
         }
 
-        const nameHasNo = product.display_name?.toLowerCase().includes("no");
-
         const isQurbani =
             product.is_livestock &&
             product.detailed_type === "product" &&
@@ -22,8 +20,6 @@ patch(PosStore.prototype, {
 
         if (isQurbani) {
             const res = await this.popup.add(QurbaniSchedule, {
-                // hissa_no: nameHasNo,
-                hissa_no: false,
                 product: product,
             });
 

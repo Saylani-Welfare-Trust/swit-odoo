@@ -29,7 +29,7 @@
                 </div>
 
                 <!-- CITY -->
-                <div class="row mb-2 text-start" t-if="!this.hissa_no">
+                <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">City</div>
                     <div class="col-8">
 
@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- LOCATION -->
-                <t t-if="state.selectedCity &amp;&amp; !this.hissa_no">
+                <t t-if="state.selectedCity">
 
                     <div class="row mb-2 text-start">
                         <div class="col-4 fw-semibold">Location</div>
@@ -81,7 +81,7 @@
                 </t>
 
                 <!-- SLOT LIST -->
-                <t t-if="state.selectedLocation &amp;&amp; !this.hissa_no">
+                <t t-if="state.selectedLocation">
 
                     <t t-foreach="state.data[state.selectedCity][state.selectedLocation]"
                        t-as="slot"
