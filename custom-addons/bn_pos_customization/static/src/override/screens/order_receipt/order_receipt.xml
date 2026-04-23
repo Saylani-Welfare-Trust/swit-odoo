@@ -83,7 +83,8 @@
                     <div class="col-6">
                         <div>
                             <strong>Date Time:</strong>
-                            <t t-set="dateObj" t-value="new Date(date_format)"/>
+                            <t t-esc="date_format"/>
+                            <!-- <t t-set="dateObj" t-value="new Date(date_format)"/>
                             <t t-set="day" t-value="dateObj.getDate()"/>
                             <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                             <t t-set="year" t-value="dateObj.getFullYear()"/>
@@ -93,12 +94,13 @@
                             <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
                                     (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
                                     (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                    (minutes &lt; 10 ? '0' : '') + minutes"/>
+                                    (minutes &lt; 10 ? '0' : '') + minutes"/> -->
                         </div>
                         <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
                             <div t-if="order.cheque_date">
                                 <strong>Cheque Date:</strong>
-                                <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
+                                <t t-esc="order.cheque_date"/>
+                                <!-- <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
                                 <t t-set="day" t-value="dateObj.getDate()"/>
                                 <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                                 <t t-set="year" t-value="dateObj.getFullYear()"/>
@@ -106,7 +108,7 @@
                                 <t t-set="minutes" t-value="dateObj.getMinutes()"/>
                                 <t t-set="seconds" t-value="dateObj.getSeconds()"/>
                                 <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year"/>
+                                        (month &lt; 10 ? '0' : '') + month + '-' + year"/> -->
                                 <br/>
                                 <strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/>
                             </div>
@@ -183,7 +185,8 @@
                     <div class="col-6">
                         <div>
                             <strong>Date Time:</strong>
-                            <t t-set="dateObj" t-value="new Date(date_format)"/>
+                            <t t-esc="date_format"/>
+                            <!-- <t t-set="dateObj" t-value="new Date(date_format)"/>
                             <t t-set="day" t-value="dateObj.getDate()"/>
                             <t t-set="month" t-value="dateObj.getMonth() + 1"/>
                             <t t-set="year" t-value="dateObj.getFullYear()"/>
@@ -193,7 +196,7 @@
                             <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
                                     (month &lt; 10 ? '0' : '') + month + '-' + year + ' ' +
                                     (hours &lt; 10 ? '0' : '') + hours + ':' +
-                                    (minutes &lt; 10 ? '0' : '') + minutes"/>
+                                    (minutes &lt; 10 ? '0' : '') + minutes"/> -->
                         </div>
                         <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                     </div>
