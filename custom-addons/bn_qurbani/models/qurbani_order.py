@@ -238,8 +238,8 @@ class QurbaniOrder(models.Model):
                 ], limit=1).id,
 
                 'hissa_name': schedule.get('name', ''),
-                'start_time': slot.get('distribution', {}).get('start')),
-                'end_time': slot.get('distribution', {}).get('end')),
+                'start_time': slot.get('distribution', {}).get('start'),
+                'end_time': slot.get('distribution', {}).get('end'),
             }))
 
         # ==================================================
