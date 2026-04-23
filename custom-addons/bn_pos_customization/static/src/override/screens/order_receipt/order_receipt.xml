@@ -164,7 +164,7 @@
                 <hr style="border-top: solid 5px;"/>
 
                 <div class="row mb-2" style="font-size: 11px;">
-                    <div class="col-6">
+                    <div name="custom-details" class="col-6">
                         <div>
                             <strong>DN #:</strong>
                             <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
@@ -203,7 +203,7 @@
                     </div>
                 </div>
                 
-                <div name="custom-details" style="text-align: center; font-size: 12px;">
+                <div style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
                 </div>
 

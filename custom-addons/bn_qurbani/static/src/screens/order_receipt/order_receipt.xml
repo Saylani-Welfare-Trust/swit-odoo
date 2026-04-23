@@ -93,7 +93,7 @@
                 </div>
             </t>
             <t t-else="">
-                <div class="col-6">
+                <div name="custom-details" class="col-6">
                     <div>
                         <strong>DN #:</strong>
                         <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
