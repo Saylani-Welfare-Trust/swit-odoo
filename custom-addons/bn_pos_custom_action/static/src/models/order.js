@@ -12,7 +12,10 @@ patch(Order.prototype, {
 
         // Include source_document if set
         json.source_document = this.source_document || false;
-        json.remarks = this.remarks || false;
+        // json.remarks = this.remarks || false;
+        json.remarks = (this.get_orderlines ? this.get_orderlines() : this.orderlines || [])
+        .map(line => line.customerNote)
+        .join("-") || false;
 
         return json;
     },
