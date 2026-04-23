@@ -19,7 +19,7 @@
             <t t-if="order.is_qurbani">
                 <h1>Qurbani Booking</h1>
             </t>
-            <t t-else>
+            <t t-else="">
                 <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
                 <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
             </t>
