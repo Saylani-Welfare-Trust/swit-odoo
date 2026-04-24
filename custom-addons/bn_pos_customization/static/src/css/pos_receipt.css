@@ -1,6 +1,7 @@
 /* ================== A5 POS Receipt ================== */
 .pos-receipt-print {
-    width: 148mm; /* A5 full width */
+    width: 100% !important;
+    max-width: 148mm; /* optional safety */
     font-size: 11px; /* Adjusted for A5 readability */
     color: #000000;
     margin: 0;
