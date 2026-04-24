@@ -12,6 +12,3 @@ access_qurbani_city_demand,qurbani.city.demand,model_qurbani_city_demand,,1,1,1,
 access_qurbani_slaughter_demand,qurbani.slaughter.demand,model_qurbani_slaughter_demand,,1,1,1,1
 access_qurbani_slaughter_slot_demand,qurbani.slaughter.slot.demand,model_qurbani_slaughter_slot_demand,,1,1,1,1
 access_generate_qurbani_demand,generate.qurbani.demand,model_generate_qurbani_demand,,1,1,1,1
-access_generate_qurbani_slaughter,generate.qurbani.slaughter,model_generate_qurbani_slaughter,,1,1,1,1
-access_qurbani_cow_slaughter,qurbani.cow.slaughter,model_qurbani_cow_slaughter,,1,1,1,1
-access_qurbani_goat_slaughter,qurbani.goat.slaughter,model_qurbani_goat_slaughter,,1,1,1,1

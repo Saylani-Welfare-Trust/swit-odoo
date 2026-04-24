@@ -7,9 +7,7 @@
         <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='pos']//group[@name='pos']" position="inside">
-                <field name="first_para_halfnama" />
-                <field name="second_para_halfnama" />
-                <field name="third_para_halfnama" />
+                <field name="halfnama" />
             </xpath>
         </field>
     </record>

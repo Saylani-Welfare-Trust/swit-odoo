@@ -36,16 +36,13 @@ class QurbaniOrderLine(models.Model):
     def write(self, vals):
 
         if vals.get('hissa_name'):
-            if self.env.user.has_group('bn_qurbani.edit_hissa_name_group'):
-                pos_order = self.env['pos.order'].search([('source_document', '=', self.qurbani_order_id.name)])
+            pos_order = self.env['pos.order'].search([('source_document', '=', self.qurbani_order_id.name)])
 
-                if pos_order:
-                    line = pos_order.lines.filtered(lambda l:l.customer_note == self.hissa_name and l.product_id.id == self.product_id.id and l.qty == self.quantity)
+            if pos_order:
+                line = pos_order.lines.filtered(lambda l:l.customer_note == self.hissa_name and l.product_id.id == self.product_id.id and l.qty == self.quantity)
 
-                    # raise ValidationError(str(self.hissa_name))
-                    if line:
-                        line.customer_note = vals.get('hissa_name')
-            else:
-                raise ValidationError("You don't have access to edit the hissa name.")
+                # raise ValidationError(str(self.hissa_name))
+                if line:
+                    line.customer_note = vals.get('hissa_name')
 
         return super(QurbaniOrderLine, self).write(vals)
