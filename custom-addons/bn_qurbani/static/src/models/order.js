@@ -12,7 +12,9 @@ patch(Order.prototype, {
             ...result,
 
             is_qurbani: this.pos.is_qurbani,
-            halfnama: this.pos.company.halfnama,
+            first_para_halfnama: this.pos.company.first_para_halfnama,
+            second_para_halfnama: this.pos.company.second_para_halfnama,
+            third_para_halfnama: this.pos.company.third_para_halfnama,
 
             // ✅ ADD THIS: enrich order lines
             orderlines: this.orderlines.map((line) => {

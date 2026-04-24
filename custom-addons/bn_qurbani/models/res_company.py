@@ -5,4 +5,6 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
 
-    halfnama = fields.Text('Halfnama')
+    first_para_halfnama = fields.Text('First Halfnama')
+    second_para_halfnama = fields.Text('Second Halfnama')
+    third_para_halfnama = fields.Text('Third Halfnama')

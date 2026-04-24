@@ -8,6 +8,6 @@ class PosSession(models.Model):
     def _loader_params_res_company(self):
         # OVERRIDE to load the fields in pos data (load_pos_data)
         vals = super()._loader_params_res_company()
-        vals['search_params']['fields'] += ['halfnama']
+        vals['search_params']['fields'] += ['first_para_halfnama', 'second_para_halfnama', 'third_para_halfnama']
         
         return vals
