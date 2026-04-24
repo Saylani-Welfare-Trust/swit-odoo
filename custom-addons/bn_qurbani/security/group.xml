@@ -8,5 +8,9 @@
     <record id="demand_menu_group" model="res.groups">
         <field name="name">Qurbani / Demand</field>
     </record>
+    
+    <record id="edit_hissa_name_group" model="res.groups">
+        <field name="name">Qurbani / Edit Hissa Name</field>
+    </record>
 
 </odoo>

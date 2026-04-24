@@ -9,7 +9,6 @@
         'point_of_sale'
     ],
     'data': [
-        'security/group.xml',
         'views/pos_order.xml',
         'views/res_company.xml',
     ],

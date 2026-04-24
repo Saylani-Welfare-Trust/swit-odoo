@@ -96,8 +96,12 @@
 
         <xpath expr="//div[@name='custom-details']" position="replace">
             <t t-if="order.is_qurbani">
-                <div name="halfnama" style="text-align: center; font-size: 12px;">
-                    <t t-esc="order.halfnama" t-if="order.halfnama"/>
+                <div name="halfnama" style="text-align: right; font-size: 10px;">
+                    <strong><t t-esc="order.first_para_halfnama" t-if="order.first_para_halfnama"/></strong>
+                    <br/>
+                    <t t-esc="order.second_para_halfnama" t-if="order.second_para_halfnama"/>
+                    <br/>
+                    <strong><t t-esc="order.third_para_halfnama" t-if="order.third_para_halfnama"/></strong>
                 </div>
             </t>
             <t t-else="">
