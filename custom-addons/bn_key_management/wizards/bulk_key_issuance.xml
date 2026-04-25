@@ -10,7 +10,7 @@
                     <field name="action_type" options="{'horizontal': True}" widget="radio" />
                     <group>
                         <group name="bulk_key_issuance_col_1">
-                            <field name="date" required="1" />
+                            <field name="date" required="1"  readonly="1"/>
                             <field name="rider_ids" invisible="1" />
                             <field name="domain_key_bunch_ids" invisible="1" />
                             <field name="rider_id" domain="[('id', 'in', rider_ids)]" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Rider" />

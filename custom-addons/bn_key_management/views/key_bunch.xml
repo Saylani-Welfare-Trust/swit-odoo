@@ -6,7 +6,7 @@
         <field name="model">key.bunch</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="rider_id" string="Rider" />
+                <field name="rider_id" string="Rider" column_invisible="1" />
                 <field name="name" string="Bunch" />
             </tree>
         </field>
