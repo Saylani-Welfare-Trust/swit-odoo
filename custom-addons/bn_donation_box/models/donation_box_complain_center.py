@@ -16,7 +16,6 @@ box_status_selection = [
 status_selection = [
     ('draft', 'Draft'),
     ('process', 'Process'),
-    ('not_recovered', 'Not Recovered'),
     ('resolved', 'Resolved'),
 ]
 
@@ -95,32 +94,29 @@ class DonationBoxComplain(models.Model):
         if self.box_status in ['missing', 'robbery']:
             if not self.complain_officer_remark:
                 raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
-            if  self.box_recovered:
-                # raise ValidationError("Please indicate whether the box was recovered or not before resolving Missing or Robbery cases.")
+            if not self.box_recovered:
+                raise ValidationError("Please indicate whether the box was recovered or not before resolving Missing or Robbery cases.")
             
-                # Use stored_registration_id as it persists after resolve
-                registration = self.stored_registration_id or self.donation_box_registration_installation_id
-                
-                # Handle box recovered for missing/robbery cases
-                if self.box_status in ['missing', 'robbery'] and self.box_recovered:
-                    # If box is recovered, treat it as a return case
-                    if registration:
-                        registration.status = 'close'
-                    self.lot_id.is_not_return = True
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
-                elif self.box_status != 'return':
-                    if registration:
-                        registration.status = 'close'
-                    self.lot_id.is_not_return = True
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+        # Use stored_registration_id as it persists after resolve
+        registration = self.stored_registration_id or self.donation_box_registration_installation_id
+        
+        # Handle box recovered for missing/robbery cases
+        if self.box_status in ['missing', 'robbery'] and self.box_recovered:
+            # If box is recovered, treat it as a return case
+            if registration:
+                registration.status = 'close'
+            self.lot_id.is_not_return = True
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+        elif self.box_status != 'return':
+            if registration:
+                registration.status = 'close'
+            self.lot_id.is_not_return = True
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
 
-                if self.box_status == 'broken':
-                    self.action_scrap()
+        if self.box_status == 'broken':
+            self.action_scrap()
 
-                self.status = 'resolved'
-            else:
-                self.status = 'not_recovered'
-
+        self.status = 'resolved'
 
     @api.depends('lot_id')
     def _set_registration_id(self):

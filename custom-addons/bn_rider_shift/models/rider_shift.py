@@ -19,11 +19,6 @@ class RiderShift(models.Model):
 
     start_date = fields.Date("Start Date", tracking=True)
     end_date = fields.Date("End Date", tracking=True)
-    state= fields.Selection([
-        ('draft', 'Draft'),
-        ('done', 'Done'),
-    ], default='draft', string="Status", tracking=True)
- 
 
     schedule_day_ids = fields.One2many('rider.schedule.day', 'rider_shift_id', string="Schedule Days")
 
@@ -70,11 +65,4 @@ class RiderShift(models.Model):
             if lines_to_create:
                 self.env['rider.schedule.day'].create(lines_to_create)
         
-        return True
-    def action_mark_done(self):
-        for shift in self:
-            if shift.state == 'draft':
-                shift.state = 'done'
-            else:
-                raise UserError(_("Only shifts in 'Draft' state can be marked as 'Done'."))
         return True

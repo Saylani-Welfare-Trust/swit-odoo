@@ -64,12 +64,12 @@
                 <!-- Readonly for users NOT in group_edit_rider_collection -->
                 <field name="amount" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
                 <!-- Editable for users IN group_edit_rider_collection -->
-                <field name="amount" groups="!bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
+                <field name="amount" groups="!bn_rider_shift.group_edit_rider_collection"/>
                 <!-- <field name="foreign_notes" string="Foreign Notes" /> -->
                 <!-- Readonly for users NOT in group_edit_rider_collection -->
                 <field name="counterfeit_notes" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
                 <!-- Editable for users IN group_edit_rider_collection -->
-                <field name="counterfeit_notes" groups="!bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
+                <field name="counterfeit_notes" groups="!bn_rider_shift.group_edit_rider_collection"/>
                 <field name="remarks"/>
                 <!-- <field name="submission_time" /> -->
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />

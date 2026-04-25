@@ -36,37 +36,11 @@ class RiderSchedule(models.TransientModel):
         line_vals = []
 
         for obj in rider_shift_obj:
-            # Old Code
-
-            # key_ids = self.env['key.issuance'].search([
-            #     ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
-            #     ('state', 'in', ['issued', 'overdue']),
-            #     ('issue_date', '<=', obj.date),
-            # ])
-
-
-            # New Code Start
-            # SHIFT keys
-            shift_key_ids = obj.key_bunch_id.key_ids.ids
-
-            # MANUAL keys (same rider + date)
-            manual_key_ids = self.env['key.issuance'].search([
-                ('rider_id', '=', employee.id),
-                ('issue_date', '<=', obj.date),
-                ('state', 'in', ['issued', 'overdue']),
-            ]).mapped('key_id').ids
-
-            # COMBINE both (NO duplicates)
-            all_key_ids = list(set(shift_key_ids + manual_key_ids))
-
-            # FINAL issuance fetch
             key_ids = self.env['key.issuance'].search([
-                ('key_id', 'in', all_key_ids),
+                ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
                 ('state', 'in', ['issued', 'overdue']),
                 ('issue_date', '<=', obj.date),
             ])
-
-            # New Code End 
 
             lot_ids = key_ids.mapped('lot_id')
             # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
@@ -75,12 +49,11 @@ class RiderSchedule(models.TransientModel):
             existing_collections = self.env['rider.collection'].search([
                 ('rider_id', '=', employee.id),
                 ('date', '=', obj.date),
-                # ('is_complain_generated', '=', False),
+                ('is_complain_generated', '=', False),
                 # ('date', '<=', today),
                 ('lot_id', 'in', lot_ids.ids),
                 ('state', 'not in', ['pending', 'donation_submit', 'paid']),
             ])
-
 
             # Get already existing lot_ids
             existing_lot_ids = existing_collections.mapped('lot_id').ids
@@ -135,9 +108,6 @@ class RiderSchedule(models.TransientModel):
                         # 'foreign_notes': collection.foreign_notes,
                         # 'counterfeit_notes': collection.counterfeit_notes,
                     }))
-
-        # raise UserError(f"All key issuances for rider: {[(k.id, k.key_id.name, k.state, k.issue_date) for k in key_ids]}")
-        # raise UserError(str(line_vals))           
 
         # ✅ Build wizard
         rider_schedule = self.env['rider.schedule'].create({

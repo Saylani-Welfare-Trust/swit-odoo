@@ -117,16 +117,15 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.foreign_notes = self.foreign_notes
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
-        if self.counterfeit_notes > 0:
-            self.env['counterfeit.notes'].create({
-                'rider_id': self.rider_id.id,
-                'lot_id': self.lot_id.id,
-                'submission_time': self.submission_time,
-                'amount': self.counterfeit_notes,
-                # 'foreign_notes': self.foreign_notes,
-                # 'counterfeit_notes': self.counterfeit_notes,
-                # 'remarks': self.remarks,
-            })
+        self.env['counterfeit.notes'].create({
+            'rider_id': self.rider_id.id,
+            'lot_id': self.lot_id.id,
+            'submission_time': self.submission_time,
+            'amount': self.counterfeit_notes,
+            # 'foreign_notes': self.foreign_notes,
+            # 'counterfeit_notes': self.counterfeit_notes,
+            # 'remarks': self.remarks,
+        })
 
         return {
             'type': 'ir.actions.act_window',
