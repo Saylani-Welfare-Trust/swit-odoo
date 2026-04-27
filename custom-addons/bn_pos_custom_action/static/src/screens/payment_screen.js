@@ -18,18 +18,25 @@ patch(PaymentScreen.prototype, {
             
             if (equipmentId) {
                 // First, get the current state of the medical equipment record
+                
                 const equipmentRecord = await this.env.services.orm.searchRead(
                     'medical.equipment',
                     [['id', '=', equipmentId]],
-                    ['name', 'state', 'medical_equipment_line_ids'],
+                    ['name', 'state', 'medical_equipment_line_ids','remaining_amount'],
                     { limit: 1 }
                 );
-                
+            
                 if (equipmentRecord && equipmentRecord.length > 0) {
                     const currentState = equipmentRecord[0].state;
                     
                     let newState;
-                    
+                    if (currentState === 'donate' && medicalData.remaining_amount > 0) {
+                        const result = await this.env.services.orm.write(
+                            'medical.equipment',
+                            [equipmentId],
+                            { remaining_amount: 0 }
+                        );   
+                    }
                     // Condition 1: If state is 'draft', update to 'payment'
                     if (currentState === 'sd_received') {
                         // Check for negative quantities

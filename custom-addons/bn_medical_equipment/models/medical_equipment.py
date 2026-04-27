@@ -123,13 +123,17 @@ class MedicalEquipment(models.Model):
     portal_application_id = fields.Char('Portal Application ID')
     is_synced = fields.Boolean('Is Synced')
     portal_donee_id = fields.Char('Portal Donee ID')
+    initial_deposit_percentage = fields.Float(
+        string="Initial Deposit %",
+        readonly=True
+    )
 
     @api.depends('state', 'case_type')
     def _compute_is_actual_deposit_editable(self):
         for record in self:
             if record.state in ['inquiry', 'draft', 'ceo_approval']:
                 record.is_actual_deposit_editable = True
-            elif record.state == 'completed' and self.case_type in  ['50_percent', '100_percent']:
+            elif record.state == 'completed' and record.case_type in  ['50_percent', '100_percent']:
                 record.is_actual_deposit_editable = True
             else:
                 record.is_actual_deposit_editable = False
@@ -210,6 +214,19 @@ class MedicalEquipment(models.Model):
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
+
+    @api.constrains('actual_deposit_percentage')
+    def _check_actual_deposit_percentage(self):
+        for record in self:
+            # Only validate the percentage range, no state-based restrictions
+            if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
+                raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
+            if record.initial_deposit_percentage >= 50:
+                if record.actual_deposit_percentage < 50:
+                    raise ValidationError(
+                        "You cannot change value below 50 because initial value was 50 or above."
+                    )
+            
     def is_valid_cnic_format(self, cnic):
         return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
 
@@ -249,6 +266,9 @@ class MedicalEquipment(models.Model):
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
+            
+        if 'actual_deposit_percentage' in vals:
+             vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
 
         return super(MedicalEquipment, self).create(vals)
     
