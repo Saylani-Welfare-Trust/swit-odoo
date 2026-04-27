@@ -78,7 +78,7 @@
                             <field name="actual_deposit_percentage" readonly = "not is_actual_deposit_editable"/>
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" invisible="1"/>
                             <field name="cnic_no" readonly="state != 'draft'" required="1" />
-                            <field name="street" string="Address" readonly="state != 'draft'" required="1" />
+                            <field name="street" string="Address" readonly="state != 'draft'" required="1"  force_save="1"/>
                             <field name="city" required="1" readonly="state != 'draft'" />
                             <field name="general_remarks" string="General Remarks" readonly="state != 'draft'" />
                             <field name="remarks_approval1" 
