@@ -13,6 +13,7 @@ patch(PaymentScreen.prototype, {
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
             const equipmentId = medicalData.equipment_id;
+            const medical_equipment_request_no = medicalData.medical_equipment_request_no;
             const securityDepositId = medicalData.security_deposit_id;
             
             if (equipmentId) {
@@ -99,6 +100,7 @@ patch(PaymentScreen.prototype, {
                     deposit_id: securityDepositId || null,
                     payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
                     bank_name: currentOrder.bank_name,
+                    medical_equipment_request_no: medical_equipment_request_no,
                     cheque_no: currentOrder.cheque_number,
                     cheque_date: currentOrder.cheque_date,
                     state: 'paid',
