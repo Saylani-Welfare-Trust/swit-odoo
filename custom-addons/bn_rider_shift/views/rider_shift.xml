@@ -12,6 +12,7 @@
             </tree>
         </field>
     </record>
+    
 
     <record id="rider_shift_view_form" model="ir.ui.view">
         <field name="name">rider.shift.view.form</field>
