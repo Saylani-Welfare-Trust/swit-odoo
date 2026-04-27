@@ -60,7 +60,7 @@ patch(PaymentScreen.prototype, {
 
                     let newState;
 
-                    if (currentState === 'sd_received') {
+                    if (currentState === 'cfo_approval') {
                         const hasNegativeQty = currentOrder
                             .get_orderlines()
                             .some((line) => line.get_quantity() < 0);
