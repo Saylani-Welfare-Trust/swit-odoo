@@ -1095,7 +1095,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 equipment_id: record.id,
                 scan_timestamp: new Date().toISOString(),
             };
-            console.log("Medical Equipment extra data set on order:", selectedOrder.extra_data.medical_equipment);
         }
         if (this.action_type === 'mf') {
             selectedOrder.extra_data.microfinance = {
