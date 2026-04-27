@@ -694,7 +694,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             super.confirm();
         }
         
-        if (this.action_type === 'me') {
+        if (this.action_type === 'me' ) {
             // Process all record components
             await this.processEquipmentLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
@@ -871,6 +871,14 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return addedProductsCount;  
         }
         else {
+                // 🚫 Check remaining amount first
+            if (!record.remaining_amount || record.remaining_amount <= 0) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: _t("Amount is already paid."),
+                });
+                return 0;
+            }
             let addedProductsCount = 1;
             const serviceProduct = await this.orm.searchRead(
                 'product.product',
