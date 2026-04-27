@@ -215,23 +215,41 @@ class MedicalEquipment(models.Model):
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
 
-    @api.constrains('actual_deposit_percentage', 'state')
-    def _check_actual_deposit_percentage(self):
-        for record in self:
-            # Always check valid range
-            if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
-                raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
+    def write(self, vals):
+        if 'actual_deposit_percentage' in vals:
+            for record in self:
+                new_value = vals.get('actual_deposit_percentage')
+                initial_value = record.initial_deposit_percentage
+
+                # Always valid range
+                if new_value < 0 or new_value > 100:
+                    raise ValidationError("Value must be between 0 and 100.")
+
+                if record.state != 'draft' and initial_value >= 50:
+                    if new_value < 50:
+                        raise ValidationError(
+                            "You cannot change value below 50 because initial value was 50 or above."
+                        )
+
+        return super().write(vals)
+
+    # @api.constrains('actual_deposit_percentage', 'state')
+    # def _check_actual_deposit_percentage(self):
+    #     for record in self:
+    #         # Always check valid range
+    #         if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
+    #             raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
             
-            # ✅ Skip restriction in draft
-            if record.state == 'draft':
-                continue
+    #         # ✅ Skip restriction in draft
+    #         if record.state == 'draft':
+    #             continue
             
-            # ✅ Apply restriction only in later states
-            if record.initial_deposit_percentage >= 50:
-                if record.actual_deposit_percentage < 50:
-                    raise ValidationError(
-                        "You cannot change value below 50 because initial value was 50 or above."
-                    )
+    #         # ✅ Apply restriction only in later states
+    #         if record.initial_deposit_percentage >= 50:
+    #             if record.actual_deposit_percentage < 50:
+    #                 raise ValidationError(
+    #                     "You cannot change value below 50 because initial value was 50 or above."
+    #                 )
             
     def is_valid_cnic_format(self, cnic):
         return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
