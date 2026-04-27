@@ -31,6 +31,7 @@ patch(PaymentScreen.prototype, {
                     
                     let newState;
                     if (currentState === 'donate' && medicalData.remaining_amount > 0) {
+                        console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
                         const result = await this.env.services.orm.write(
                             'medical.equipment',
                             [equipmentId],
