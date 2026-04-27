@@ -65,7 +65,7 @@ class MedicalEquipment(models.Model):
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
     mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True, size=10)
     city = fields.Char(related='donee_id.city', string="City", store=True)
-    street = fields.Char(related='donee_id.street', string="Street", store=True)
+    street = fields.Char(related='donee_id.street', string="Street", store=True, readonly=False)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
     application_location_link = fields.Char(string="Applicant Location Link", store=True)
     portal_review_notes = fields.Text('Review Notes')
