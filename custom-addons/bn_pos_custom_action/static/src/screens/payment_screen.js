@@ -92,25 +92,25 @@ patch(PaymentScreen.prototype, {
                     console.error("❌ [Medical Equipment] Equipment record not found");
                 }
             } else {
-                if (securityDepositId) {
-                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                // if (!securityDepositId) {
+                const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
 
-                    const payload = {
-                        deposit_id: securityDepositId,
-                        payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
-                        bank_name: currentOrder.bank_name,
-                        cheque_no: currentOrder.cheque_number,
-                        cheque_date: currentOrder.cheque_date,
-                        state: 'paid',
-                    }
-
-                    await this.env.services.orm.call(
-                        'medical.security.deposit', "set_security_depsoit_values",
-                        [payload]
-                    );
-
-                    currentOrder.set_source_document(medicalData.record_number);
+                const payload = {
+                    deposit_id: securityDepositId || null,
+                    payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                    bank_name: currentOrder.bank_name,
+                    cheque_no: currentOrder.cheque_number,
+                    cheque_date: currentOrder.cheque_date,
+                    state: 'paid',
                 }
+
+                await this.env.services.orm.call(
+                    'medical.security.deposit', "set_security_depsoit_values",
+                    [payload]
+                );
+
+                currentOrder.set_source_document(medicalData.record_number);
+                // }
 
                 console.error("❌ [Medical Equipment] No equipment ID found");
             }
