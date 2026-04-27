@@ -45,8 +45,8 @@ class MedicalEquipmentDonation(models.TransientModel):
                 continue
 
             income_account = (
-                product.property_account_income_id
-                or product.categ_id.property_account_income_categ_id
+                self.product_id.property_account_income_id
+                or self.product_id.categ_id.property_account_income_categ_id
             )
             expense_account = (
                 security_product.property_account_expense_id
