@@ -138,6 +138,13 @@ class MedicalEquipment(models.Model):
             else:
                 record.is_actual_deposit_editable = False
 
+    @api.constrains('actual_deposit_percentage')
+    def _check_actual_deposit_percentage(self):
+        for record in self:
+            # Always check valid range
+            if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
+                raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
+
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:
@@ -170,16 +177,31 @@ class MedicalEquipment(models.Model):
                         _("Age must be at least 18 years old. Current age: %s years") % age
                     )
 
-    @api.depends('actual_deposit_percentage')
+    @api.depends('actual_deposit_percentage', 'state', 'initial_deposit_percentage')
     def _compute_case_type(self):
-        """
-        Auto-determine case type based on actual deposit percentage
-        100% = 100% Case
-        50% = 50% Case
-        Below 50% = Below 50% Case
-        """
         for record in self:
             percentage = record.actual_deposit_percentage
+
+            # ✅ Draft: fully dynamic
+            if record.state == 'draft':
+                if percentage == 100.0:
+                    record.case_type = '100_percent'
+                elif percentage == 50.0:
+                    record.case_type = '50_percent'
+                elif percentage < 50.0:
+                    record.case_type = 'below_50_percent'
+                else:
+                    record.case_type = '50_percent'
+                continue
+
+            # ✅ Non-draft states: restrict downgrade
+            if record.initial_deposit_percentage >= 50:
+                # ❌ Prevent going below 50
+                if percentage < 50.0:
+                    record.case_type = '50_percent'
+                    continue
+
+            # ✅ Normal logic for allowed cases
             if percentage == 100.0:
                 record.case_type = '100_percent'
             elif percentage == 50.0:
@@ -187,7 +209,6 @@ class MedicalEquipment(models.Model):
             elif percentage < 50.0:
                 record.case_type = 'below_50_percent'
             else:
-                # Default for other percentages (e.g., between 50-100)
                 record.case_type = '50_percent'
 
     @api.onchange('date_of_birth')
@@ -233,23 +254,6 @@ class MedicalEquipment(models.Model):
 
         return super().write(vals)
 
-    # @api.constrains('actual_deposit_percentage', 'state')
-    # def _check_actual_deposit_percentage(self):
-    #     for record in self:
-    #         # Always check valid range
-    #         if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
-    #             raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
-            
-    #         # ✅ Skip restriction in draft
-    #         if record.state == 'draft':
-    #             continue
-            
-    #         # ✅ Apply restriction only in later states
-    #         if record.initial_deposit_percentage >= 50:
-    #             if record.actual_deposit_percentage < 50:
-    #                 raise ValidationError(
-    #                     "You cannot change value below 50 because initial value was 50 or above."
-    #                 )
             
     def is_valid_cnic_format(self, cnic):
         return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
