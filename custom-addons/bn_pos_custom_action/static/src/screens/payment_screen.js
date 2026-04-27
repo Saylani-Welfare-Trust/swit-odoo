@@ -30,7 +30,7 @@ patch(PaymentScreen.prototype, {
                     const currentState = equipmentRecord[0].state;
                     console.log(`🔍 Current state of equipment ${medicalData.record_number}: ${currentState}`);
                     let newState;
-                    if (currentState === 'donate' && medicalData.remaining_amount > 0) {
+                    if (currentState === 'donate' ) {
                         console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
                         const result = await this.env.services.orm.write(
                             'medical.equipment',
