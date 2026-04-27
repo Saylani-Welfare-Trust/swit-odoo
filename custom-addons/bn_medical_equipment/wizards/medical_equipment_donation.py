@@ -91,3 +91,4 @@ class MedicalEquipmentDonation(models.TransientModel):
         self.medical_equipment_id.state = 'donate'
         self.medical_equipment_id.move_id = move.id
         self.medical_equipment_id.general_remarks = self.remarks
+        self.medical_equipment_id.remaining_amount = self.amount-self.medical_equipment_id.total_amount if self.amount else 0.0

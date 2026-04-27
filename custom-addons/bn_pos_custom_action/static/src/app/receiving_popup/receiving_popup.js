@@ -458,7 +458,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 { limit: 1 }
             );
 
-            if (!['sd_received', 'refund'].includes(record[0].state)) {
+            if (!['sd_received', 'refund', 'donate'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }
@@ -858,15 +858,53 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Add products to POS order
      */
     async addProductsToOrder(lines, record, selectedOrder) {
-        let addedProductsCount = 0;
-        
-        for (let line of lines) {
-            if (await this.addProductLine(line, record, selectedOrder)) {
-                addedProductsCount++;
+        if (!record.state == 'donate'){
+            let addedProductsCount = 0;
+            
+            for (let line of lines) {
+                
+                if (await this.addProductLine(line, record, selectedOrder)) {
+                    addedProductsCount++;
+                }
             }
-        }
         
-        return addedProductsCount;
+            return addedProductsCount;  
+        }
+        else {
+            let addedProductsCount = 1;
+            const serviceProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+            
+            if (serviceProduct.length) {
+                // Get the product from POS DB
+                const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
+                
+                if (!product) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
+                    });
+                    
+                    return 0;
+                }
+                
+                // Add product to order
+                selectedOrder.add_product(product, {
+                    quantity: -1,
+                    price_extra: record.remaining_amount,
+                });
+            }
+
+            return addedProductsCount;      
+        }
     }
 
     /**

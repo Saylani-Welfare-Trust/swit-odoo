@@ -75,6 +75,7 @@ class MedicalEquipment(models.Model):
         store=False
     )
 
+    remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id')
     inquiry_media = fields.Html(
             string="Inquiry Media",
             sanitize=False,   # IMPORTANT
@@ -747,7 +748,8 @@ class MedicalEquipment(models.Model):
             'res_model': 'medical.equipment.donation',
             'view_mode': 'form',
             'context': {
-                'default_medical_equipment_id': self.id
+                'default_medical_equipment_id': self.id,
+                'default_amount': self.total_amount
             },
             'target': 'new',
         }
