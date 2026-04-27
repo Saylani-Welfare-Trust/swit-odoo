@@ -90,4 +90,4 @@ class MedicalEquipmentDonation(models.TransientModel):
 
         self.medical_equipment_id.state = 'donate'
         self.medical_equipment_id.move_id = move.id
-        self.medical_equipment_id.remarks = self.remarks
+        self.medical_equipment_id.general_remarks = self.remarks
