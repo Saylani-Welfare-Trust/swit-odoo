@@ -4,6 +4,7 @@ import { useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { _t } from "@web/core/l10n/translation";
 
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
 
