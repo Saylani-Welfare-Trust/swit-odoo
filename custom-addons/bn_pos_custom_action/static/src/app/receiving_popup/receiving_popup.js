@@ -454,7 +454,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'medical.equipment',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donee_id', 'medical_equipment_line_ids'],
+                ['name', 'state', 'donee_id', 'medical_equipment_line_ids','remaining_amount'],
                 { limit: 1 }
             );
 
