@@ -6,11 +6,13 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Master Setup',
     'depends': [
-        'mail',
+        'mail', 'product'
     ],
     'data': [
         'security/ir.model.access.csv',
         'security/group.xml',
+        'data/qurbani_day_data.xml',
+        'data/chand_raat_date.xml',
         'data/disbursement_category.xml',
         'views/location_option.xml',
         'views/installation_category.xml',
@@ -26,6 +28,10 @@
         'views/medical_equipment_category.xml',
         'views/product_master.xml',
         'views/advance_donation_category.xml',
+        'views/qurbani_day.xml',
+        'views/qurbani_hijri.xml',
+        'views/chand_raat_date.xml',
+        # 'views/sms_template_views.xml',
     ],
     'auto_install': False,
     'application': True,

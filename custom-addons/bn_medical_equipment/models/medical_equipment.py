@@ -7,6 +7,7 @@ import re
 import logging
 import requests
 import json
+from dateutil.relativedelta import relativedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -66,8 +67,13 @@ class MedicalEquipment(models.Model):
     city = fields.Char(related='donee_id.city', string="City", store=True)
     street = fields.Char(related='donee_id.street', string="Street", store=True)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
-    application_location_link = fields.Char(string="Application Location Link", store=True)
+    application_location_link = fields.Char(string="Applicant Location Link", store=True)
     portal_review_notes = fields.Text('Review Notes')
+    is_actual_deposit_editable = fields.Boolean(
+        compute='_compute_is_actual_deposit_editable',
+        string='Is Editable',
+        store=False
+    )
 
     inquiry_media = fields.Html(
             string="Inquiry Media",
@@ -117,7 +123,15 @@ class MedicalEquipment(models.Model):
     is_synced = fields.Boolean('Is Synced')
     portal_donee_id = fields.Char('Portal Donee ID')
 
-
+    @api.depends('state', 'case_type')
+    def _compute_is_actual_deposit_editable(self):
+        for record in self:
+            if record.state in ['inquiry', 'draft', 'ceo_approval']:
+                record.is_actual_deposit_editable = True
+            elif record.state == 'completed' and self.case_type in  ['50_percent', '100_percent']:
+                record.is_actual_deposit_editable = True
+            else:
+                record.is_actual_deposit_editable = False
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
@@ -128,16 +142,28 @@ class MedicalEquipment(models.Model):
                         "Mobile number must contain exactly 10 digits."
                     )
 
+
     @api.depends('date_of_birth')
     def _compute_age(self):
         for record in self:
             if record.date_of_birth:
-                # Get today's date
                 today = fields.Date.today()
-                age = today.year - record.date_of_birth.year
+                age = relativedelta(today, record.date_of_birth).years
                 record.age = age
             else:
-                record.age = 0  # Default value when there's no birth date
+                record.age = 0
+
+    @api.constrains('date_of_birth')
+    def _check_age(self):
+        for record in self:
+            if record.date_of_birth:
+                today = fields.Date.today()
+                age = relativedelta(today, record.date_of_birth).years
+                
+                if age < 18:
+                    raise ValidationError(
+                        _("Age must be at least 18 years old. Current age: %s years") % age
+                    )
 
     @api.depends('actual_deposit_percentage')
     def _compute_case_type(self):
@@ -162,8 +188,16 @@ class MedicalEquipment(models.Model):
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):
         if self.date_of_birth:
-            if self.date_of_birth.year == fields.Date.today().year or self.date_of_birth.year > fields.Date.today().year:
-                raise ValidationError(str(f'Invalid Date of Birth...'))
+            today = fields.Date.today()
+            
+            # Check for future dates
+            if self.date_of_birth.year == today.year or self.date_of_birth.year > today.year:
+                raise ValidationError('Invalid Date of Birth. Please enter a valid past date.')
+            
+            # Check age - must be 18 or older
+            age = relativedelta(today, self.date_of_birth).years
+            if age < 18:
+                raise ValidationError(f'Age must be at least 18 years old. Current age: {age} years.')
 
     @api.constrains('cnic_no')
     def _check_cnic_no_format(self):
@@ -312,8 +346,6 @@ class MedicalEquipment(models.Model):
             'state': 'validate'  # Or whatever your next state should be
         })
         
-        # Optional: Validate the picking automatically
-        # stock_picking.button_validate()
         return True
     
     def action_approval(self):
@@ -345,7 +377,7 @@ class MedicalEquipment(models.Model):
         if current_state in ['completed', 'inquiry']:
             # First approval: from completed/inquiry to ceo_approval
             if requires_remarks_ceo and not self.remarks_approval1:
-                raise ValidationError('CEO remarks are required for this case type.')
+                raise ValidationError('Approval(1) remarks are required for this case type.')
             self.write({'state': 'ceo_approval'})
             
         elif current_state == 'ceo_approval':
@@ -353,7 +385,7 @@ class MedicalEquipment(models.Model):
             if requires_two_approvals:
                 # Need CFO approval
                 if requires_remarks_cfo and not self.remarks_approval2:
-                    raise ValidationError('CFO remarks are required for this case type.')
+                    raise ValidationError('Approval(2) remarks are required for this case type.')
                 self.write({'state': 'cfo_approval'})
             else:
                 # 100% case: directly approved
@@ -368,84 +400,6 @@ class MedicalEquipment(models.Model):
     
         self.approval_count += 1
     
-    # def action_approval(self):
-    #     """
-    #     Handle approval based on case type determined by actual_deposit_percentage.
-    #     100% Case: Single CEO approval → Approved
-    #     50% Case: 2 approval cycles (CEO → CFO) - with remarks required
-    #     Below 50% Case: Sync to welfare portal, then follow 50% case rules with remarks
-    #     Reference Case: 2 approval cycles (CEO → CFO) - no remarks required
-    #     """
-    #     self.ensure_one()
-        
-    #     case_type = self.case_type
-    #     current_state = self.state
-        
-    #     if case_type == '100_percent':
-    #         # 100%: Single CEO approval → Approved
-    #         if current_state == 'completed':
-    #             self.write({
-    #                 'state': 'ceo_approval'
-    #             })
-    #         elif current_state == 'ceo_approval':
-    #             self.write({
-    #                 'state': 'approved'
-    #             })
-    #         else:
-    #             raise ValidationError('This record has already been approved.')
-            
-    #     elif case_type == '50_percent':
-    #         # 50%: 2 approval cycles with remarks required
-    #         if not self.remarks:
-    #             raise ValidationError('Remarks are required for 50% case type.')
-            
-    #         if current_state == 'completed':
-    #             self.write({
-    #                 'state': 'ceo_approval'
-    #             })
-    #         elif current_state == 'ceo_approval':
-    #             self.write({
-    #                 'state': 'approved'
-    #             })
-    #         else:
-    #             raise ValidationError('This record has already been approved.')
-                
-    #     elif case_type == 'below_50_percent':
-    #         # Below 50%: Sync to welfare portal first, then remarks required
-    #         if not self.welfare_portal_id:
-    #             raise ValidationError('Welfare Portal ID must be synced before approval for Below 50% cases.')
-            
-    #         if not self.Portal_acknowledgment:
-    #             raise ValidationError('Welfare acknowledgment must be received before approval.')
-            
-    #         if not self.remarks:
-    #             raise ValidationError('Remarks are required for Below 50% case type.')
-            
-    #         if current_state == 'completed' or current_state == 'inquiry':
-    #             self.write({
-    #                 'state': 'ceo_approval'
-    #             })
-    #         elif current_state == 'ceo_approval':
-    #             self.write({
-    #                 'state': 'approved'
-    #             })
-    #         else:
-    #             raise ValidationError('This record has already been approved.')
-        
-    #     else:
-    #         # Referral Case or others: 2 approval cycles, no remarks required
-    #         if current_state == 'completed':
-    #             self.write({
-    #                 'state': 'ceo_approval'
-    #             })
-    #         elif current_state == 'ceo_approval':
-    #             self.write({
-    #                 'state': 'approved'
-    #             })
-    #         else:
-    #             raise ValidationError('This record has already been approved.')
-        
-    #     self.approval_count += 1
     
     def action_sync_welfare_portal(self):
         """
@@ -513,24 +467,7 @@ class MedicalEquipment(models.Model):
             summary = "No records processed."
         
         return self._show_notification('Welfare Portal Sync Results', summary, 'info')
-    
-    # def _check_donee_exists_in_portal(self):
-    #     """Check if donee already exists in welfare portal"""
-    #     try:
-    #         endpoint = self.env.company.check_donee_endpoint
-    #         data = {
-    #             "json": {
-    #                 "odooId": self.donee_id.id
-    #             }
-    #         }
-    #         _logger.info(f"Donee checking query parameters: {data}")
-    #         result = self._make_welfare_api_call(endpoint, 'POST', data)
-    #         raise ValidationError(str(result))
-    #         return result
-    #     except Exception as e:
-    #         _logger.info(f"Donee not found in portal: {str(e)}")
-    #         return None
-    
+
     def _create_donee_in_portal(self):
         """Create donee in welfare portal"""
         try:
@@ -550,89 +487,7 @@ class MedicalEquipment(models.Model):
             return result
         except Exception as e:
             raise ValidationError(f"Failed to create donee in welfare portal: {str(e)}")
-    
-    # def _create_me_portal_application(self):
-        # """Create medical equipment application in welfare portal"""
-        # try:
-        #     endpoint = self.env.company.create_application_endpoint
-        #     data_list = []
-        #     for line in self.medical_equipment_line_ids:
-        #         data_list.append({
-        #             "medicalEquipmentCategoryId": line.medical_equipment_category_id,
-        #             "productId": line.product_id,
-        #             "quantity": line.quantity,
-        #             "baseSecurityDeposit": line.base_security_deposit,
-        #             "actualDepositPercentage": line.actual_deposit_percentage,
-        #             "securityDeposit": line.security_deposit,
-        #     })
-        #     # raise ValidationError(str(data_list))
-        #     data = {
-        #         "json": {
-        #             "applicationData": {
-        #                 "odooId": self.id,
-        #                 "doneeOdooId": self.donee_id.id,
-        #                 "inquiryOfficerOdooId": self.employee_id.id,
-        #                 "department": "medical",
-        #                 "form": {
-        #                     "category": "medical",
-        #                     "subcategory": "medical",
-        #                     "date": fields.Date.today().strftime("%d-%m-%Y"),
-        #                     "loanRequestAmount": self.loan_request_amount,
-        #                     "applicationInformation": {
-        #                         "name": self.donee_id.name,
-        #                         "fatherName": self.donee_id.father_name,
-        #                         "cnic": self.cnic_no,
-        #                         "phoneNumber": self.donee_id.mobile,
-        #                         "whatsappNumber": self.donee_id.mobile,
-        #                         "applicantLocationLink": self.application_location_link,
-        #                     },
-        #                     "medicalInfo": {
-        #                         "state": self.state ,
-        #                         "actualDepositPercentage": self.actual_deposit_percentage,
-        #                         "caseType": self.case_type,
-        #                         "totalAmount": self.total_amount,
-        #                         "serviceCharges": self.service_charges,
-        #                         "remarks": self.remarks,
-        #                         "welfarePortalId": self.welfare_portal_id,
-        #                         "welfareAcknowledgment": self.Portal_acknowledgment,
-        #                         "medicalEquipmentLines": data_list,
-        #                     },
-        #                 }
-        #             }
-        #         }
-        #     }
-        #     # raise ValidationError(str(data))
-        #     result = self._make_welfare_api_call(endpoint, 'POST', data)
-        #     return result
-        # except Exception as e:
-        #     raise ValidationError(f"Failed to create medical equipment application in welfare portal: {str(e)}")
-    
-    # def _mark_me_application_synced(self,applications):
-    #     """Find matching application from portal data"""
-    #     for app in applications:
-    #         # Match by CNIC (most reliable)
-    #         # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-    #         if app.get('odooId') == self.id and app.get('department') == "medical":
-    #             return app
-    #         # # Match by name and WhatsApp
-    #         # if (app.get('name') == self.donee_id.name and 
-    #         #     app.get('whatsapp') == self.donee_id.mobile):
-    #         #     return app
-    #     return None
-    #     # """Mark medical equipment application as synced in welfare portal"""
-    #     # try:
-    #     #     endpoint = self.env.company.mark_application_endpoint
-    #     #     data = {
-    #     #         "json": {
-    #     #             "odooId": self.id,
-    #     #             "department": "medical",
-    #     #         }
-    #     #     }
-    #     #     result = self._make_welfare_api_call(endpoint, 'POST', data)
-    #     #     return result
-    #     # except Exception as e:
-    #     #     _logger.error(f"Failed to mark application as synced: {str(e)}")
-    #     #     return None
+
     
     def clean_url(self, url) :
         return (
@@ -896,31 +751,7 @@ class MedicalEquipment(models.Model):
             },
             'target': 'new',
         }
-    # def _get_sadqa_api_headers(self):
-    #     """Get API authentication headers"""
-    #     return {
-    #         'x-odoo-auth-key': f'{self.env.company.odoo_auth_key}',
-    #         'Content-Type': 'application/json'
-    #     }
-    # def _make_sadqa_api_call(self, endpoint, method='POST', data=None):
-    #     """Make API call to Sadqa Jaria portal"""
-    #     # base_url = 'https://backend.switsjmm.com'
-    #     url = f"{self.env.company.welfare_url}{endpoint}"
-    #     headers = self._get_sadqa_api_headers()
 
-    #     url = self.clean_url(url)
-    #     # raise UserError(
-    #     #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
-    #     #         % (url, headers, data)
-    #     #     )
-    #     if data is not None:
-    #         try:
-    #             # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
-    #             data = json.loads(json.dumps(data, default=str))
-    #             raise ValidationError(str(data))
-    #         except Exception as e:
-    #             _logger.error("Failed to prepare JSON payload: %s", e)
-    #             raise UserError(_("Failed to prepare request payload: %s") % e)
 
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""
@@ -939,70 +770,7 @@ class MedicalEquipment(models.Model):
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
         self.state = 'completed'
             
-    # def _search_portal_applications(self):
-    #     """Search for matching applications in portal"""
-    #     try:
-    #         result = self._make_sadqa_api_call(self.env.company.search_endpoint)
-    #         applications = result
-    #         # raise ValidationError(str(applications))
-    #         if applications:
-    #             _logger.info(f"Unsynced applications found: {applications}")
-    #             # Find matching application based on donee information
-    #             matching_app = self._find_matching_application(applications)
-    #             return matching_app
-    #         return None
-            
-    #     except Exception as e:
-    #         raise ValidationError(str(e))
-    #         _logger.warning(f"No unsynced applications found: {str(e)}")
-    #         return None
-            
-    # def action_check_portal_status(self):
-    #     """Check current status in portal"""
-    #     self.ensure_one()
-        
-    #     # try:
-    #         # Check if donee exists
-    #     donee_data = self._check_donee_exists_in_portal()
-    #     # _logger.info(f"Donee data: {donee_data}")
 
-    #     # raise exceptions.ValidationError(donee_data)
-
-            
-    #     if donee_data:
-    #             message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-
-    #     else:
-    #         donee_in_portal = self._create_donee_in_portal()
-    #     # Check for applications
-    #     application = self._search_portal_applications()
-    #     self._mark_me_application_synced()
-
-    #     # _logger.info(f"Applications found: {application}")    
-    #     app_state = application.get('status') if application else None
-    #     inquiry_reports = application.get('inquiryReports') if application else None
-    #     all_media = []
-    #     all_remarks = []
-    #     if isinstance(inquiry_reports, list):
-    #         for report in inquiry_reports:
-    #             media = report.get('media') if isinstance(report, dict) else None
-    #             remarks = report.get('remarks') if isinstance(report, dict) else None
-    #             if media:
-    #                 for url in media:
-    #                     all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
-    #             if remarks:
-    #                 all_remarks.append(remarks)
-    #     # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
-    #     if app_state == 'inquiry_complete': # type: ignore
-    #         self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
-    #         self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
-    #         self.write({"state":"inquiry"})
-    #         result = self._handle_existing_application(application)
-    #         message = f" | 📋 application status: {app_state} "
-    #         message += f" | 📋 {result['message']} "
-    #     else:
-    #         message += f" | 📋 No applications found"     # type: ignore
-    #     return self._show_notification('Portal Status Check', message, 'info')
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
         data = {
@@ -1021,14 +789,6 @@ class MedicalEquipment(models.Model):
             # Mark application as synced in portal
             synced_application = self._mark_application_synced()
             
-            # Update disbursement record with portal information
-            # self.write({
-            #     'portal_application_id': portal_application.get('id'),
-            #     'portal_donee_id': portal_application.get('doneeId', ''),
-            #     'is_synced': True,
-            #     'last_sync_date': fields.Datetime.now(),
-            #     # 'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
-            # })
             return {
             'action': 'linked_existing',
             'application_id': portal_application.get('id'),
@@ -1168,10 +928,7 @@ class MedicalEquipment(models.Model):
         headers = self._get_sadqa_api_headers()
 
         url = self.clean_url(url)
-        # raise UserError(
-        #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
-        #         % (url, headers, data)
-        #     )
+
         if data is not None:
             try:
                 # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
@@ -1179,12 +936,7 @@ class MedicalEquipment(models.Model):
             except Exception as e:
                 _logger.error("Failed to prepare JSON payload: %s", e)
                 raise UserError(_("Failed to prepare request payload: %s") % e)
-        # raise UserError(
-        #     f"API Request Failed\n\n"
-        #     f"URL: {url}\n"
-        #     f"Headers: {headers}"
-        #     f"Data: {data}\n"
-        # )
+
         _logger.info(f"Making Sadqa Jaria API call to {url} with method {method} and data: {data}")
         try:
             if data is None :
@@ -1196,13 +948,11 @@ class MedicalEquipment(models.Model):
             response.raise_for_status()
             result = response.json()
             _logger.info(f" URL: {url} Data: {data}  api response : {result}")
-            # raise ValidationError(str(result))
 
             
             if not result.get('json', {}):
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
-            # raise exceptions.ValidationError(str("result",result))
                 
             return result.get('json', {})
             
@@ -1225,12 +975,8 @@ class MedicalEquipment(models.Model):
         """Check current status in portal"""
         self.ensure_one()
         
-        # try:
-            # Check if donee exists
+     
         donee_data = self._check_donee_exists_in_portal()
-        # _logger.info(f"Donee data: {donee_data}")
-
-        # raise exceptions.ValidationError(donee_data)
 
             
         if donee_data:
@@ -1343,61 +1089,5 @@ class MedicalEquipment(models.Model):
             'POST',
             data
         )
-        # raise ValidationError(str(result))
         return result
-    # def create_portal_application(self):
-    #     """Create medical equipment application in welfare portal"""
-    #     try:
-    #         endpoint = self.env.company.create_application_endpoint
-    #         data_list = []
-    #         for line in self.medical_equipment_line_ids:
-    #             data_list.append({
-    #                 "medicalEquipmentCategoryId": line.medical_equipment_category_id,
-    #                 "productId": line.product_id,
-    #                 "quantity": line.quantity,
-    #                 "baseSecurityDeposit": line.base_security_deposit,
-    #                 "actualDepositPercentage": line.actual_deposit_percentage,
-    #                 "securityDeposit": line.security_deposit,
-    #         })
-    #         # raise ValidationError(str(data_list))
-    #         data = {
-    #             "json": {
-    #                 "applicationData": {
-    #                     "odooId": self.id,
-    #                     "doneeOdooId": self.donee_id.id,
-    #                     "inquiryOfficerOdooId": self.employee_id.id,
-    #                     "department": "medical",
-    #                     "form": {
-    #                         "category": "medical",
-    #                         "subcategory": "medical",
-    #                         "date": fields.Date.today().strftime("%d-%m-%Y"),
-    #                         "loanRequestAmount": self.loan_request_amount,
-    #                         "applicationInformation": {
-    #                             "name": self.donee_id.name,
-    #                             "fatherName": self.donee_id.father_name,
-    #                             "cnic": self.cnic_no,
-    #                             "phoneNumber": self.donee_id.mobile,
-    #                             "whatsappNumber": self.donee_id.mobile,
-    #                             "applicantLocationLink": self.application_location_link,
-    #                         },
-    #                         "medicalInfo": {
-    #                             "state": self.state ,
-    #                             "actualDepositPercentage": self.actual_deposit_percentage,
-    #                             "caseType": self.case_type,
-    #                             "totalAmount": self.total_amount,
-    #                             "serviceCharges": self.service_charges,
-    #                             "remarks": self.remarks,
-    #                             "welfarePortalId": self.welfare_portal_id,
-    #                             "welfareAcknowledgment": self.Portal_acknowledgment,
-    #                             "medicalEquipmentLines": data_list,
-    #                         },
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #         # raise ValidationError(str(data))
-    #         result = self._make_welfare_api_call(endpoint, 'POST', data)
-    #         return result
-    #     except Exception as e:
-    #         raise ValidationError(f"Failed to create medical equipment application in welfare portal: {str(e)}")
     

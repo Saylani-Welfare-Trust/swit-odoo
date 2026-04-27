@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view__chand_raat_tree" model="ir.ui.view">
+        <field name="name">chand.raat.tree</field>
+        <field name="model">chand.raat</field>
+        <field name="arch" type="xml">
+            <tree string="chand Raat" create="false" delete="false" editable="bottom">
+                <field name="date"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_chand_raat" model="ir.actions.act_window">
+        <field name="name">Chand Raat Date</field>
+        <field name="res_model">chand.raat</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <menuitem id="menu_chand_raat"
+        name="Chand Raat Date"
+        parent="qurbani_menu"
+        action="action_chand_raat"
+        sequence="2"/>
+</odoo>

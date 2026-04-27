@@ -1,8 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-
+import logging
 import re
-
+_logger = logging.getLogger(__name__)
 
 payment_method_selection = [
     ('cash', 'Cash'),
@@ -74,10 +74,20 @@ class MedicalSecurityDeposit(models.Model):
     
     @api.model
     def set_security_depsoit_values(self, data):
-        security_deposit = self.search(
-            [('id', '=', data.get('deposit_id')), ('state', 'in', ['draft', 'pending'])],
+        # security_deposit = self.search(
+        #     [('id', '=', data.get('deposit_id')), ('state', 'in', ['draft', 'pending'])],
+        #     limit=1
+        # )
+        
+        medical_equipment_id = self.env['medical.equipment'].search(
+            [('name', '=', data['medical_equipment_request_no'])],
             limit=1
         )
+        security_deposit = self.create({
+            'medical_equipment_id': medical_equipment_id.id,
+            'donee_id': data.get('donee_id'),
+            'amount': data.get('total_amount'),
+        })
 
         if security_deposit:
             security_deposit.payment_method = data.get('payment_method')
@@ -88,6 +98,8 @@ class MedicalSecurityDeposit(models.Model):
 
             security_deposit.medical_equipment_id.sd_slip_id = security_deposit.id
             security_deposit.medical_equipment_id.state = 'sd_received'
+
+   
 
     @api.model
     def get_medical_equipment_security_deposit(self, data):
@@ -107,6 +119,7 @@ class MedicalSecurityDeposit(models.Model):
             [('medical_equipment_id', '=', medical_equipment_request.id)],
             limit=1
         )
+        _logger.info(f"Security Deposit Search Result for Medical Equipment Request '{medical_equipment_request.name}': {security_deposit.read()[0] if security_deposit else 'No record found'}")
 
         if security_deposit:
             return {
@@ -121,7 +134,7 @@ class MedicalSecurityDeposit(models.Model):
 
         # ✅ calculate amount properly
         amount = sum(
-            line.medical_equipment_category_id.security_deposit
+            line.security_deposit
             for line in medical_equipment_request.medical_equipment_line_ids
         )
         quantity = sum(
@@ -129,18 +142,14 @@ class MedicalSecurityDeposit(models.Model):
             for line in medical_equipment_request.medical_equipment_line_ids
         )
 
-        # ✅ create with ALL values
-        deposit = self.create({
-            'medical_equipment_id': medical_equipment_request.id,
-            'donee_id': medical_equipment_request.donee_id.id,
-            'amount': quantity*amount,
-        })
+        # # ✅ create with ALL values
+
 
         return {
             'status': "success",
             'id': medical_equipment_request.id,
             'donee_id': medical_equipment_request.donee_id.id,
-            'deposit_id': deposit.id,
+            # 'deposit_id': deposit.id,
             'amount': amount,
             'quantity': quantity,
             'deposit_exists': False

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Action -->
+    <record id="action_sms_template" model="ir.actions.act_window">
+        <field name="name">SMS Message Template</field>
+        <field name="res_model">sms.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="target">current</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure your SMS message template here.
+            </p>
+            <p>
+                Use dynamic variables: {donor_name}, {amount}, {items}
+            </p>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_sms_template_tree" model="ir.ui.view">
+        <field name="name">sms.template.tree</field>
+        <field name="model">sms.template</field>
+        <field name="arch" type="xml">
+            <tree editable="top">
+                <field name="name"/>
+                <field name="message" string="Message Preview"/>
+                <field name="is_active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_sms_template_form" model="ir.ui.view">
+        <field name="name">sms.template.form</field>
+        <field name="model">sms.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="is_active"/>
+                    </group>
+                    <group string="SMS Message Template">
+                        <field name="message" nolabel="1"/>
+                    </group>
+                    <group string="Dynamic Variables">
+                        <div class="alert alert-info">
+                            <strong>Available Variables:</strong><br/>
+                            <code>{donor_name}</code> - Donor's Name<br/>
+                            <code>{amount}</code> - Donation Amount<br/>
+                            <code>{items}</code> - Donation Items<br/>
+                            <br/>
+                            <strong>Example:</strong><br/>
+                            Dear {donor_name},<br/>
+                            Thank you for your donation of {amount} PKR for {items}.<br/>
+                            May Allah bless you!
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Single Menu - Directly under BN Master Setup -->
+    <menuitem id="bn_master_setup_menu_sms_template" 
+              name="SMS Message Template" 
+              parent="bn_master_setup.master_setup_menu" 
+              action="action_sms_template" 
+              sequence="60"/>
+
+</odoo>

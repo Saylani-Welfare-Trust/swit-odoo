@@ -8,7 +8,7 @@
             <tree editable="bottom">
                 <field name="name" string="Product" />
                 <field name="product_id" string="System Product" />
-                <field name="is_medical_approval" />
+                <field name="is_medical_approval" column_invisible="1" />
                 <field name="security_deposit" />
             </tree>
         </field>
