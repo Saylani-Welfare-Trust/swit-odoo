@@ -1041,7 +1041,7 @@ class MedicalEquipment(models.Model):
         for line in self.medical_equipment_line_ids:
             data_list.append({
                 "medicalEquipmentCategoryId": line.medical_equipment_category_id,
-                "productId": line.product_id,
+                "productId": line.product_id.display_name,
                 "quantity": line.quantity,
                 "baseSecurityDeposit": line.base_security_deposit,
                 "actualDepositPercentage": line.actual_deposit_percentage,
