@@ -12,26 +12,55 @@ patch(PaymentScreen.prototype, {
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
-            const equipmentId = medicalData.equipment_id;
+            // const equipmentId = medicalData.equipment_id ;
+            // const recordNumber = medicalData.medical_equipment_request_no;
             const securityDepositId = medicalData.security_deposit_id;
             
+            let equipmentId = medicalData.equipment_id || null;
+            const recordNumber = medicalData.medical_equipment_request_no;
+
+            // 🔹 Step 1: Resolve equipmentId (from ID or from record number)
+            if (! equipmentId && recordNumber) {
+                try {
+                    const equipmentRecord = await this.env.services.orm.searchRead(
+                        'medical.equipment',
+                        [['name', '=', recordNumber]], // 👈 search by number
+                        ['id', 'name', 'state', 'medical_equipment_line_ids'],
+                        { limit: 1 }
+                    );
+
+                    if (equipmentRecord.length > 0) {
+                        equipmentId = equipmentRecord[0].id;
+                        console.log("✅ Found equipment via number:", equipmentId);
+                    } else {
+                        await this.popup.add(ErrorPopup, {
+                            title: _t("Not Found"),
+                            body: _t("Medical Equipment not found using request number."),
+                        });
+                        return;
+                    }
+                } catch (error) {
+                    console.error("❌ Error fetching equipment:", error);
+                    return;
+                }
+            }
+
+            // 🔹 Step 2: Now ALWAYS use equipmentId
             if (equipmentId) {
-                // First, get the current state of the medical equipment record
                 const equipmentRecord = await this.env.services.orm.searchRead(
                     'medical.equipment',
                     [['id', '=', equipmentId]],
                     ['name', 'state', 'medical_equipment_line_ids'],
                     { limit: 1 }
                 );
-                
-                if (equipmentRecord && equipmentRecord.length > 0) {
-                    const currentState = equipmentRecord[0].state;
-                    
+
+                if (equipmentRecord.length > 0) {
+                    const record = equipmentRecord[0];
+                    const currentState = record.state;
+
                     let newState;
-                    
-                    // Condition 1: If state is 'draft', update to 'payment'
+
                     if (currentState === 'sd_received') {
-                        // Check for negative quantities
                         const hasNegativeQty = currentOrder
                             .get_orderlines()
                             .some((line) => line.get_quantity() < 0);
@@ -41,55 +70,42 @@ patch(PaymentScreen.prototype, {
                                 title: _t("Invalid Quantity"),
                                 body: _t("You cannot process an order with negative quantities."),
                             });
-                            return; // Stop validation
+                            return;
                         }
 
                         newState = 'payment_received';
-                    }
-                    // Condition 2: If state is 'refund', update to 'payment_return'
+                    } 
                     else if (currentState === 'refund') {
-                        const checkUpdate = await this.processEquipmentLines(equipmentRecord[0], currentOrder);
-                    
+                        const checkUpdate = await this.processEquipmentLines(record, currentOrder);
+
                         if (checkUpdate) {
                             return super.validateOrder(isForceValidate);
                         }
 
                         newState = 'payment_return';
-                    }
-                    // For other states, don't update or use default
+                    } 
                     else {
-                        newState = currentState; // Keep current state
+                        newState = currentState;
                     }
-                    
-                    // Only update if state changed
+
                     if (newState && newState !== currentState) {
-                        const result = await this.env.services.orm.write(
+                        await this.env.services.orm.write(
                             'medical.equipment',
                             [equipmentId],
                             { state: newState }
                         );
-                        
-                        // Show appropriate notification based on state change
-                        if (currentState === 'approved') {
-                            currentOrder.set_source_document(medicalData.record_number);
 
-                            this.env.services.notification.add(
-                                `Medical equipment ${medicalData.record_number} marked as paid`,
-                                { type: 'success' }
-                            );
-                        } else if (currentState === 'refund') {
-                            currentOrder.set_source_document(medicalData.record_number);
+                        currentOrder.set_source_document(recordNumber);
 
-                            this.env.services.notification.add(
-                                `Medical equipment ${medicalData.record_number} refund payment processed`,
-                                { type: 'success' }
-                            );
-                        }
+                        this.env.services.notification.add(
+                            `Medical equipment ${recordNumber} processed`,
+                            { type: 'success' }
+                        );
                     } else {
-                        console.log("🟡 [Medical Equipment] No state change required");
+                        console.log("🟡 No state change required");
                     }
                 } else {
-                    console.error("❌ [Medical Equipment] Equipment record not found");
+                    console.error("❌ Equipment record not found");
                 }
             } else {
                 if (securityDepositId) {
