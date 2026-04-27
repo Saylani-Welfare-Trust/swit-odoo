@@ -215,12 +215,18 @@ class MedicalEquipment(models.Model):
                     raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
 
 
-    @api.constrains('actual_deposit_percentage')
+    @api.constrains('actual_deposit_percentage', 'state')
     def _check_actual_deposit_percentage(self):
         for record in self:
-            # Only validate the percentage range, no state-based restrictions
+            # Always check valid range
             if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
                 raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
+            
+            # ✅ Skip restriction in draft
+            if record.state == 'draft':
+                continue
+            
+            # ✅ Apply restriction only in later states
             if record.initial_deposit_percentage >= 50:
                 if record.actual_deposit_percentage < 50:
                     raise ValidationError(
