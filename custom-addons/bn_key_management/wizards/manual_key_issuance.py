@@ -51,15 +51,14 @@ class ManualKeyIssuance(models.TransientModel):
     @api.depends('lot_id')
     def _set_key_id(self):
         """Search for key by lot_id"""
-        if not self.lot_id:
-            raise ValidationError('Please select a Box No.')
+        if self.lot_id:
         
-        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
-        
-        if not key:
-            raise ValidationError(f'Key with Box No. "{self.lot_id.name}" not found')
-        
-        self.key_id = key.id
+            key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
+            
+            if not key:
+                raise ValidationError(f'Key with Box No. "{self.lot_id.name}" not found')
+            
+            self.key_id = key.id
 
     def action_issue(self):
         if not self.rider_id:
