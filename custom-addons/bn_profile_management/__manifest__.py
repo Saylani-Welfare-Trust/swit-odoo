@@ -17,7 +17,7 @@
         # 'security/group.xml',
         # 'security/access_right.xml',
         # 'security/record_rule.xml',
-        'security/ir.model.access.csv',
+        # 'security/ir.model.access.csv',
         'views/res_partner.xml',
         'views/res_partner_layer.xml',
         'views/product_template.xml',
