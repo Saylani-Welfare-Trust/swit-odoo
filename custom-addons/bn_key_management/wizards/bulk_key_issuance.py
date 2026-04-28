@@ -15,7 +15,6 @@ class BulkKeyIssuance(models.TransientModel):
 
     action_type = fields.Selection(selection=action_type_selection, string="Type")
 
-    domain_rider_ids = fields.Many2many('hr.employee', string="Rider IDs", compute="_set_rider_domain")
     domain_key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunchs", compute="_set_location_domain")
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
@@ -44,7 +43,6 @@ class BulkKeyIssuance(models.TransientModel):
             if rec.date and rec.rider_id:
 
                 schedule_days = self.env['rider.schedule.day'].search([
-                    ('date', '=', rec.date),
                     ('rider_shift_id.rider_id', '=', rec.rider_id.id)
                 ])
 
