@@ -27,10 +27,10 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
 
-        # ✅ Define active states (ONLY these should appear in schedule)
+        # ✅ ONLY these should appear in schedule
         active_states = ['donation_not_collected', 'donation_collected']
 
-        # 🔹 Get all active key issuances
+        # 🔹 Get active key issuances
         key_issuances = self.env['key.issuance'].search([
             ('rider_id', '=', employee.id),
             ('state', 'in', ['issued', 'overdue']),
@@ -42,19 +42,15 @@ class RiderSchedule(models.TransientModel):
         # 🔹 Get lot_ids
         lot_ids = key_issuances.mapped('lot_id').ids
 
-        # 🔹 Fetch existing ACTIVE collections
-        existing_collections = self.env['rider.collection'].search([
+        # 🔥 STEP 1: Fetch ONLY active state records for display
+        active_collections = self.env['rider.collection'].search([
             ('rider_id', '=', employee.id),
             ('lot_id', 'in', lot_ids),
-            ('state', 'not in', active_states),
+            ('state', 'in', active_states),
         ])
 
-        existing_lot_ids = existing_collections.mapped('lot_id').ids
-
-        # raise ValidationError(str(existing_lot_ids) + " " + str(lot_ids))
-
-        # 🔹 Add existing collections to wizard
-        for record in existing_collections:
+        # 🔹 Add ONLY active records to wizard
+        for record in active_collections:
             line_vals.append((0, 0, {
                 'rider_collection_id': record.id,
                 'rider_id': record.rider_id.id if record.rider_id else False,
@@ -69,8 +65,13 @@ class RiderSchedule(models.TransientModel):
                 'remarks': record.remarks,
             }))
 
-        # 🔹 Find missing lot_ids (no active collection exists)
-        missing_lot_ids = list(set(lot_ids) - set(existing_lot_ids))
+        # 🔥 STEP 2: Find missing lots (NO record exists in ANY state)
+        missing_lot_ids = list(set(lot_ids) - set(
+            self.env['rider.collection'].search([
+                ('rider_id', '=', employee.id),
+                ('lot_id', 'in', lot_ids),
+            ]).mapped('lot_id').ids
+        ))
 
         # 🔹 Get boxes for missing lots
         boxes = self.env['donation.box.registration.installation'].search([
@@ -78,7 +79,7 @@ class RiderSchedule(models.TransientModel):
             ('status', '!=', 'close')
         ])
 
-        # 🔹 Create new collections
+        # 🔥 STEP 3: Create only truly missing records
         for box in boxes:
             collection = self.env['rider.collection'].create({
                 'rider_id': employee.id,
@@ -94,15 +95,13 @@ class RiderSchedule(models.TransientModel):
                 'donation_box_registration_installation_id': box.id,
             }))
 
-        # 🔹 Create rider schedule
+        # 🔹 Create schedule
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
         })
 
-        # 🔹 Remove wizard
         self.unlink()
 
-        # 🔹 Open form view
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'rider.schedule',
