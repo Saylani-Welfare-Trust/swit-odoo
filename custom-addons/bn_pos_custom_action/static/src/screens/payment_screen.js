@@ -119,11 +119,11 @@ patch(PaymentScreen.prototype, {
                     'medical.security.deposit', "set_security_depsoit_values",
                     [payload]
                 );
-                console.log("✅ Security deposit values set successfully");
                 currentOrder.set_source_document(medicalData.record_number);
                 // }
-
-                console.error("❌ [Medical Equipment] No equipment ID found");
+                
+                console.log("✅ Security deposit values set successfully");
+                // console.error("❌ [Medical Equipment] No equipment ID found");
             }
             
         }
