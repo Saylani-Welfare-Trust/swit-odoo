@@ -874,6 +874,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             return addedProductsCount;  
         }
         else {
+            console.log("Processing donate state for medical equipment. Adding security deposit product with remaining amount as price extra.");
                 // 🚫 Check remaining amount first
             if (!record.remaining_amount || record.remaining_amount <= 0) {
                 this.popup.add(ErrorPopup, {
