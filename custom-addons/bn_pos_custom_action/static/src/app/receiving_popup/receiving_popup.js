@@ -792,7 +792,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
 
         const equipmentLines = await this.fetchEquipmentLines(record);
+        console.log("Fetched equipment lines:", equipmentLines);
         const addedProductsCount = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
+        console.log("Added products count:", addedProductsCount);
         
         this.notifyProductAdditionResult(addedProductsCount);
     }
@@ -960,6 +962,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         
                         return
                     }
+                    console.log("Adding refund line with negative quantity and security deposit as price extra:", {
+                        product: product.name,
+                        quantity: quantity * -1,
+                        price_extra: line.security_deposit,
+                    });
                     
                     // Add product to order
                     selectedOrder.add_product(product, {
