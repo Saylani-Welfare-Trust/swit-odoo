@@ -28,10 +28,10 @@ patch(PaymentScreen.prototype, {
             
                 if (equipmentRecord && equipmentRecord.length > 0) {
                     const currentState = equipmentRecord[0].state;
-                    console.log(`🔍 Current state of equipment ${medicalData.record_number}: ${currentState}`);
+                    // console.log(`🔍 Current state of equipment ${medicalData.record_number}: ${currentState}`);
                     let newState;
                     if (currentState === 'donate' ) {
-                        console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
+                        // console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
                         const result = await this.env.services.orm.write(
                             'medical.equipment',
                             [equipmentId],
@@ -113,12 +113,13 @@ patch(PaymentScreen.prototype, {
                     cheque_date: currentOrder.cheque_date,
                     state: 'paid',
                 }
+                console.log("📤 Payload for setting security deposit values:", payload);
 
                 await this.env.services.orm.call(
                     'medical.security.deposit', "set_security_depsoit_values",
                     [payload]
                 );
-
+                console.log("✅ Security deposit values set successfully");
                 currentOrder.set_source_document(medicalData.record_number);
                 // }
 
