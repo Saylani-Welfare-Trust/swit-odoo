@@ -15,7 +15,6 @@ export class ActionButton extends Component {
         this.popup = useService("popup");
 
         this.pos._welfare = await this.env.services.user.hasGroup('bn_welfare.welfare_pos_action_group')
-        this.pos._donationBox = await this.env.services.user.hasGroup('bn_donation_box.donation_box_pos_action_group')
         this.pos._microFinance = await this.env.services.user.hasGroup('bn_microfinance.microfinance_pos_action_group')
         this.pos._directDeposit = await this.env.services.user.hasGroup('bn_direct_deposit.direct_deposit_pos_action_group')
         this.pos._medicalEquipment = await this.env.services.user.hasGroup('bn_medical_equipment.medical_equipment_pos_action_group')

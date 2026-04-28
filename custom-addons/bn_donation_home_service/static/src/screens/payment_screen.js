@@ -17,6 +17,6 @@ patch(PaymentScreen.prototype, {
         }
         
         // Continue with normal POS flow
-        return super.validateOrder(isForceValidate);
+        super.validateOrder(isForceValidate);
     },
 });

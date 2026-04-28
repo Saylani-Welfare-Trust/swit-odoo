@@ -11,8 +11,6 @@ import {_t} from "@web/core/l10n/translation";
 
 patch(ActionScreen.prototype, {
     get checkDonationHomeServiceAccess(){
-        // console.log(this);
-
         return this.pos._donationHomeService || false;
     },
 

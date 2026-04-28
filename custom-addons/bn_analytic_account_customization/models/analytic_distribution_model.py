@@ -4,10 +4,18 @@ from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingD
 
 
 class AnalyticDistributionModel(models.Model):
-    _inherit = 'account.analytic.distribution.model'
+    _name = 'account.analytic.distribution.model'
+    _inherit = ['account.analytic.distribution.model', 'mail.thread', 'mail.activity.mixin']
 
 
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
+
+    partner_id = fields.Many2one('res.partner', string="Partner", tracking=True)
+    partner_category_id = fields.Many2one('res.partner.category', string="Partner Category", tracking=True)
+
+    account_prefix = fields.Char(string="Account Prefix", tracking=True)
+
+    product_categ_id = fields.Many2one('product.category', string='Product Category', tracking=True)
     
     product_id = fields.Many2many(
         'product.product',

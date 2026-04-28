@@ -20,8 +20,6 @@
         'security/ir.model.access.csv',
         'views/res_partner.xml',
         'views/res_partner_layer.xml',
-        'views/product_template.xml',
-        'views/product_product.xml',
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'wizards/microfinance_application_wizard.xml',

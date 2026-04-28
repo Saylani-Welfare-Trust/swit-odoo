@@ -8,6 +8,9 @@ class HRExpense(models.Model):
     _inherit = 'hr.expense'
 
 
+    date = fields.Date(string='Expense Date', default=None, tracking=True)
+
+
     @api.onchange('date')
     def _onchange_date(self):
         if self.date:

@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -15,23 +15,23 @@ class POSCheque(models.Model):
     _description = "POS Cheque"
 
 
-    bank_id = fields.Many2one('account.journal', string="Bank")
-    donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Acccount", compute="_set_details", store=True)
+    bank_id = fields.Many2one('account.journal', string="Bank", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True, tracking=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Acccount", compute="_set_details", store=True, tracking=True)
     
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New", tracking=True)
     
-    state = fields.Selection(selection=state_selection, string="State", default='draft')
+    state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
 
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
 
-    bank_name = fields.Char('Bank Name')
+    bank_name = fields.Char('Bank Name', tracking=True)
 
-    date = fields.Date('Date')
+    date = fields.Date('Date', tracking=True)
 
-    bounce_count = fields.Integer('Bounce Count')
+    bounce_count = fields.Integer('Bounce Count', tracking=True)
 
-    amount = fields.Float('Amount', compute="_set_details", store=True)
+    amount = fields.Float('Amount', compute="_set_details", store=True, tracking=True)
 
 
     @api.depends('name')
@@ -65,7 +65,6 @@ class POSCheque(models.Model):
             'name': 'POS Order',
             'type': 'ir.actions.act_window',
             'res_model': 'pos.order',
-            # 'domain': [('pos_cheque_id', '=', self.id)],
             'context': {
                 'edit': '0',
                 'delete': '0',
@@ -79,7 +78,6 @@ class POSCheque(models.Model):
         self.state = 'clear'
     
     def action_bounce(self):
-        # raise ValidationError('Functionality coming soon')
         if self.bounce_count > 3:
             raise ValidationError('You can not bounce the cheque more then 3 times')
 
@@ -88,3 +86,10 @@ class POSCheque(models.Model):
     
     def action_cancel(self):
         self.state = 'cancel'
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('pos_cheque') or ('New')
+
+        return super(POSCheque, self).create(vals)

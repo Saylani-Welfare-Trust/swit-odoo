@@ -5,15 +5,15 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     _name = 'microfinance.application.wizard'
     _description = 'Microfinance Application Wizard'
 
+
     partner_id = fields.Many2one('res.partner', string="Partner", required=True)
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme", required=True)
+
 
     def action_print_application(self):
         """Create microfinance record and print the application form"""
         self.ensure_one()
         
-
-
         # Check existing enrollment
         existing = self.env['microfinance'].search([
             ('donee_id', '=', self.partner_id.id),

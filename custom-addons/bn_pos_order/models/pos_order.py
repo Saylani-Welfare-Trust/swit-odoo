@@ -12,7 +12,6 @@ class POSOrder(models.Model):
 
     state = fields.Selection(
         [('draft', 'New'), ('cancel', 'Cancelled'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded'), ('reject', 'Reject')],
-        # [('draft', 'New'), ('cancel', 'Cancelled'), ('refund_request', 'Refund Request'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded')],
         'Status', readonly=True, copy=False, default='draft', index=True)
     
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
@@ -37,9 +36,6 @@ class POSOrder(models.Model):
                 pos_order.state = 'done'
         
         self.state = 'reject'
-
-    # def action_refund_request(self):
-    #     self.state = 'refund_request'
 
     def action_cfo_approval(self):
         self.state = 'cfo_approval'

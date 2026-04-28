@@ -9,12 +9,5 @@
                 </div>
             </div>
         </xpath>
-        <xpath expr="//table" position="after">
-            <div class="row" t-if="o.create_uid">
-                <div class="col-12">
-                    Payment Receipt Maker / Prepared By: <span t-field="o.create_uid.name"/>
-                </div>
-            </div>
-        </xpath>
     </template>
 </odoo>

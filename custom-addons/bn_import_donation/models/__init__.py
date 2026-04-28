@@ -1,3 +1,5 @@
+from . import product_product
+from . import product_template
 from . import import_donation
 from . import invalid_import_donation
 from . import valid_import_donation
@@ -7,3 +9,8 @@ from . import api_donation_item
 from . import fetch_history
 from . import res_partner
 from . import fetch_log
+from . import header_type
+from . import gateway_config
+from . import gateway_config_line
+from . import gateway_config_header
+from . import gateway_config_currency

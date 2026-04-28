@@ -10,6 +10,7 @@
         'bn_pos_custom_action',
     ],
     'data': [
+        'data/sequence.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/pos_cheque.xml',

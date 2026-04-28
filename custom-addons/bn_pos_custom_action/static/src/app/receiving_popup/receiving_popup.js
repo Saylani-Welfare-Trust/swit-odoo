@@ -4,7 +4,6 @@ import { useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
-import { _t } from "@web/core/l10n/translation";
 
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
 
@@ -455,11 +454,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'medical.equipment',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donee_id', 'medical_equipment_line_ids','remaining_amount'],
+                ['name', 'state', 'donee_id', 'medical_equipment_line_ids'],
                 { limit: 1 }
             );
 
-            if (!['sd_received', 'refund', 'donate'].includes(record[0].state)) {
+            if (!['sd_received', 'refund'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }
@@ -695,7 +694,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             super.confirm();
         }
         
-        if (this.action_type === 'me' ) {
+        if (this.action_type === 'me') {
             // Process all record components
             await this.processEquipmentLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
@@ -859,61 +858,15 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Add products to POS order
      */
     async addProductsToOrder(lines, record, selectedOrder) {
-        if (!record.state == 'donate'){
-            let addedProductsCount = 0;
-            
-            for (let line of lines) {
-                
-                if (await this.addProductLine(line, record, selectedOrder)) {
-                    addedProductsCount++;
-                }
-            }
+        let addedProductsCount = 0;
         
-            return addedProductsCount;  
-        }
-        else {
-                // 🚫 Check remaining amount first
-            if (!record.remaining_amount || record.remaining_amount <= 0) {
-                this.popup.add(ErrorPopup, {
-                    title: _t("Error"),
-                    body: _t("Amount is already paid."),
-                });
-                return 0;
+        for (let line of lines) {
+            if (await this.addProductLine(line, record, selectedOrder)) {
+                addedProductsCount++;
             }
-            let addedProductsCount = 1;
-            const serviceProduct = await this.orm.searchRead(
-                'product.product',
-                [
-                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
-                    ['detailed_type', '=', 'service'],
-                    ['available_in_pos', '=', true]
-                ],
-                ['id'],
-                { limit: 1 }
-            );
-            
-            if (serviceProduct.length) {
-                // Get the product from POS DB
-                const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
-                
-                if (!product) {
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
-                    });
-                    
-                    return 0;
-                }
-                
-                // Add product to order
-                selectedOrder.add_product(product, {
-                    quantity: -1,
-                    price_extra: record.remaining_amount,
-                });
-            }
-
-            return addedProductsCount;      
         }
+        
+        return addedProductsCount;
     }
 
     /**
