@@ -14,7 +14,7 @@
         'data/sequence.xml',
         'data/server_action.xml',
         'data/res_partner_category.xml',
-        'security/group.xml',
+        # 'security/group.xml',
         'security/access_right.xml',
         'security/record_rule.xml',
         'security/ir.model.access.csv',
