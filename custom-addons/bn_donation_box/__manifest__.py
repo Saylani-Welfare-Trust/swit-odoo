@@ -10,6 +10,7 @@
         'bn_stock_location',
         'bn_pos_custom_action',
         'bn_profile_management',
+        'bn_master_setup_backup',
     ],
     'data': [
         'security/groups.xml',
