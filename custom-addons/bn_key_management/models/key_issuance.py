@@ -31,7 +31,7 @@ class KeyIssuance(models.Model):
     key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
 
     issued_on = fields.Datetime('Issued On', default=fields.Datetime.now)
-    issue_date = fields.Date('Issued Date')
+    issue_date = fields.Date('Issued Date', default=fields.Date.today)
     returned_on = fields.Datetime('Returned On')
     
     state = fields.Selection(selection=key_selection, default='draft', string="Status")
@@ -154,8 +154,5 @@ class KeyIssuance(models.Model):
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('key_issuance') or ('New')
-        if vals.get('issued_on'):
-            issued_on = fields.Datetime.from_string(vals['issued_on'])
-            vals['issue_date'] = issued_on.date()
 
         return super(KeyIssuance, self).create(vals)
