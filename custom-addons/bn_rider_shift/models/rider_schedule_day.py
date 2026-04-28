@@ -47,11 +47,12 @@ class RiderScheduleDay(models.Model):
                     }
                 }
 
-            if self.date < start or self.date > end:
-                self.date = False
-                return {
-                    'warning': {
-                        'title': "Invalid Date",
-                        'message': f"Date must be between {start} and {end}.",
+            if self.date and start and end:
+                if self.date < start or self.date > end:
+                    self.date = False
+                    return {
+                        'warning': {
+                            'title': "Invalid Date",
+                            'message': f"Date must be between {start} and {end}.",
+                        }
                     }
-                }
