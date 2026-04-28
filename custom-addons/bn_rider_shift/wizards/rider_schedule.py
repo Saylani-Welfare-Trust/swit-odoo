@@ -26,9 +26,11 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No employee linked to current user."))
 
         line_vals = []
+        today = fields.Date.today()
 
-        # ✅ ONLY these should appear in schedule
+        # ✅ Define states
         active_states = ['donation_not_collected', 'donation_collected']
+        unfinished_states = ['pending', 'draft', 'donation_not_collected']
 
         # 🔹 Get active key issuances
         key_issuances = self.env['key.issuance'].search([
@@ -42,15 +44,32 @@ class RiderSchedule(models.TransientModel):
         # 🔹 Get lot_ids
         lot_ids = key_issuances.mapped('lot_id').ids
 
-        # 🔥 STEP 1: Fetch ONLY active state records for display
-        active_collections = self.env['rider.collection'].search([
+        # =========================================================
+        # 🔥 STEP 1: Get TODAY collections
+        # =========================================================
+        today_collections = self.env['rider.collection'].search([
             ('rider_id', '=', employee.id),
             ('lot_id', 'in', lot_ids),
-            ('state', 'in', active_states),
+            ('date', '=', today),
         ])
 
-        # 🔹 Add ONLY active records to wizard
-        for record in active_collections:
+        # =========================================================
+        # 🔥 STEP 2: Get OLD unfinished collections
+        # =========================================================
+        old_unfinished = self.env['rider.collection'].search([
+            ('rider_id', '=', employee.id),
+            ('lot_id', 'in', lot_ids),
+            ('date', '<', today),
+            ('state', 'in', unfinished_states),
+        ])
+
+        # =========================================================
+        # 🔥 STEP 3: Combine records to display
+        # =========================================================
+        collections_to_show = today_collections | old_unfinished
+
+        # 🔹 Add to wizard
+        for record in collections_to_show:
             line_vals.append((0, 0, {
                 'rider_collection_id': record.id,
                 'rider_id': record.rider_id.id if record.rider_id else False,
@@ -65,25 +84,22 @@ class RiderSchedule(models.TransientModel):
                 'remarks': record.remarks,
             }))
 
-        # 🔥 STEP 2: Find missing lots (NO record exists in ANY state)
-        missing_lot_ids = list(set(lot_ids) - set(
-            self.env['rider.collection'].search([
-                ('rider_id', '=', employee.id),
-                ('lot_id', 'in', lot_ids),
-            ]).mapped('lot_id').ids
-        ))
+        # =========================================================
+        # 🔥 STEP 4: Create ONLY missing records for TODAY
+        # =========================================================
+        existing_today_lot_ids = today_collections.mapped('lot_id').ids
+        missing_lot_ids = list(set(lot_ids) - set(existing_today_lot_ids))
 
-        # 🔹 Get boxes for missing lots
+        # 🔹 Get boxes
         boxes = self.env['donation.box.registration.installation'].search([
             ('lot_id', 'in', missing_lot_ids),
             ('status', '!=', 'close')
         ])
 
-        # 🔥 STEP 3: Create only truly missing records
         for box in boxes:
             collection = self.env['rider.collection'].create({
                 'rider_id': employee.id,
-                'date': fields.Date.today(),
+                'date': today,
                 'donation_box_registration_installation_id': box.id,
             })
 
@@ -95,7 +111,9 @@ class RiderSchedule(models.TransientModel):
                 'donation_box_registration_installation_id': box.id,
             }))
 
+        # =========================================================
         # 🔹 Create schedule
+        # =========================================================
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
         })
