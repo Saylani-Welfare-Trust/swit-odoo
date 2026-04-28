@@ -27,7 +27,10 @@ class RiderSchedule(models.TransientModel):
 
         line_vals = []
 
-        # 🔹 Get all active key issuances for this rider (NO date filter)
+        # ✅ Define active states (ONLY these should appear in schedule)
+        active_states = ['donation_not_collected', 'donation_collected']
+
+        # 🔹 Get all active key issuances
         key_issuances = self.env['key.issuance'].search([
             ('rider_id', '=', employee.id),
             ('state', 'in', ['issued', 'overdue']),
@@ -37,74 +40,67 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No active keys found for this rider."))
 
         # 🔹 Get lot_ids
-        lot_ids = key_issuances.mapped('lot_id')
+        lot_ids = key_issuances.mapped('lot_id').ids
 
-        # 🔹 Fetch existing collections (NO date restriction)
+        # 🔹 Fetch existing ACTIVE collections
         existing_collections = self.env['rider.collection'].search([
             ('rider_id', '=', employee.id),
-            ('lot_id', 'in', lot_ids.ids),
-            ('state', 'in', ['donation_not_collected', 'donation_collected']),
+            ('lot_id', 'in', lot_ids),
+            ('state', 'in', active_states),
         ])
 
         existing_lot_ids = existing_collections.mapped('lot_id').ids
 
-        # 🔹 Add existing collections
+        # 🔹 Add existing collections to wizard
         for record in existing_collections:
             line_vals.append((0, 0, {
                 'rider_collection_id': record.id,
-                'rider_id': record.rider_id.id,
+                'rider_id': record.rider_id.id if record.rider_id else False,
                 'date': record.date,
                 'state': record.state,
                 'submission_time': record.submission_time,
-                'donation_box_registration_installation_id': record.donation_box_registration_installation_id.id,
+                'donation_box_registration_installation_id':
+                    record.donation_box_registration_installation_id.id
+                    if record.donation_box_registration_installation_id else False,
                 'amount': record.amount,
                 'counterfeit_notes': record.counterfeit_notes,
                 'remarks': record.remarks,
             }))
 
-        # 🔹 Find missing lot_ids
-        missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
+        # 🔹 Find missing lot_ids (no active collection exists)
+        missing_lot_ids = list(set(lot_ids) - set(existing_lot_ids))
 
-        # 🔹 Avoid duplicates (NO date restriction)
-        finalized_missing_lot_ids = []
-
-        for lot_id in missing_lot_ids:
-            already_exists = self.env['rider.collection'].search([
-                ('lot_id', '=', lot_id),
-                ('rider_id', '=', employee.id),
-                ('state', 'not in', ['pending', 'donation_submit', 'paid']),
-            ], limit=1)
-
-            if not already_exists:
-                finalized_missing_lot_ids.append(lot_id)
-
-        # 🔹 Create new collections
+        # 🔹 Get boxes for missing lots
         boxes = self.env['donation.box.registration.installation'].search([
-            ('lot_id', 'in', finalized_missing_lot_ids),
+            ('lot_id', 'in', missing_lot_ids),
             ('status', '!=', 'close')
         ])
 
+        # 🔹 Create new collections
         for box in boxes:
             collection = self.env['rider.collection'].create({
                 'rider_id': employee.id,
-                'date': fields.Date.today(),  # optional (can remove if not needed)
+                'date': fields.Date.today(),
                 'donation_box_registration_installation_id': box.id,
             })
 
             line_vals.append((0, 0, {
                 'rider_collection_id': collection.id,
+                'rider_id': employee.id,
                 'date': collection.date,
                 'state': collection.state,
                 'donation_box_registration_installation_id': box.id,
             }))
 
-        # 🔹 Build wizard
+        # 🔹 Create rider schedule
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
         })
 
+        # 🔹 Remove wizard
         self.unlink()
 
+        # 🔹 Open form view
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'rider.schedule',
