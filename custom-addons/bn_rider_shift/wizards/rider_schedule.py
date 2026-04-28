@@ -43,7 +43,7 @@ class RiderSchedule(models.TransientModel):
         existing_collections = self.env['rider.collection'].search([
             ('rider_id', '=', employee.id),
             ('lot_id', 'in', lot_ids.ids),
-            ('state', 'not in', ['pending', 'donation_submit', 'paid']),
+            ('state', 'in', ['donation_not_collected', 'donation_collected']),
         ])
 
         existing_lot_ids = existing_collections.mapped('lot_id').ids
@@ -61,8 +61,6 @@ class RiderSchedule(models.TransientModel):
                 'counterfeit_notes': record.counterfeit_notes,
                 'remarks': record.remarks,
             }))
-
-        raise ValidationError(str(existing_lot_ids)+ " " +str(lot_ids.ids))
 
         # 🔹 Find missing lot_ids
         missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
