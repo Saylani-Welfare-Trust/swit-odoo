@@ -26,8 +26,6 @@ class StockMove(models.Model):
             elif 'without' in self.product_id.name.lower() and 'small' in self.product_id.name.lower():
                 next_serial_number = f'WB-{int(next_serial_number)+1}'
 
-        # raise ValidationError(next_serial_number)
-
         action['context'] = {
             'default_product_id': self.product_id.id,
             'default_move_id': self.id,

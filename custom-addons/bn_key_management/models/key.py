@@ -19,7 +19,6 @@ class Key(models.Model):
     donation_box_request_id = fields.Many2one('donation.box.request', string="Donation Box Request")
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box Registration")
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
-    rider_id = fields.Many2one(related='key_bunch_id.rider_id', string="Rider", store=True)
 
     name = fields.Char('Key')
     lot_id = fields.Many2one('stock.lot', string="Lot")

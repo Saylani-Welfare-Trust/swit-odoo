@@ -2,16 +2,6 @@ from odoo import models, fields
 from odoo.exceptions import ValidationError
 
 
-day_selection = [
-    ('mon', 'Monday'),
-    ('tue', 'Tuesday'),
-    ('wed', 'Wednesday'),
-    ('thu', 'Thursday'),
-    ('fri', 'Friday'),
-    ('sat', 'Saturday'),
-    ('sun', 'Sunday'),
-]
-
 state_selection = [
     ('donation_not_collected', 'Donation not collected'),
     ('donation_collected', 'Donation collected'),
@@ -48,7 +38,6 @@ class RiderScheduleLine(models.TransientModel):
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
 
-    day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
     box_status = fields.Selection(selection=box_status_selection, string="Box Status")
     
@@ -66,15 +55,6 @@ class RiderScheduleLine(models.TransientModel):
     def mark_as_done(self):
         self.state = 'donation_collected'
         self.rider_collection_id.state = 'donation_collected'
-
-        # return {
-        #     'type': 'ir.actions.act_window',
-        #     'res_model': 'rider.schedule',
-        #     'view_mode': 'form',
-        #     'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
-        #     'res_id': self.rider_schedule_id.id,
-        #     'target': 'current'
-        # }
     
     def mark_as_pending(self):
         if not self.remarks:
@@ -86,12 +66,11 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.foreign_notes = self.foreign_notes
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
+        
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
-
         key.state = 'pending'
 
         key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', 'in', ['issued', 'overdue'])], limit=1)
-
         key_issuance.state = 'pending'
 
         return {
@@ -117,15 +96,14 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.foreign_notes = self.foreign_notes
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
-        self.env['counterfeit.notes'].create({
-            'rider_id': self.rider_id.id,
-            'lot_id': self.lot_id.id,
-            'submission_time': self.submission_time,
-            'amount': self.counterfeit_notes,
-            # 'foreign_notes': self.foreign_notes,
-            # 'counterfeit_notes': self.counterfeit_notes,
-            # 'remarks': self.remarks,
-        })
+        
+        if self.counterfeit_notes > 0:
+            self.env['counterfeit.notes'].create({
+                'rider_id': self.rider_id.id,
+                'lot_id': self.lot_id.id,
+                'submission_time': self.submission_time,
+                'amount': self.counterfeit_notes,
+            })
 
         return {
             'type': 'ir.actions.act_window',
@@ -137,8 +115,6 @@ class RiderScheduleLine(models.TransientModel):
         }
         
     def action_generate_complain(self):
-        # raise ValidationError(self.donation_box_registration_installation_id.id)
-
         if not self.remarks:
             raise ValidationError('Please enter the remarks first.')
         
@@ -146,6 +122,7 @@ class RiderScheduleLine(models.TransientModel):
             raise ValidationError('Please select the box status first.')
 
         self.env['donation.box.complain.center'].create({
+            'donation_box_registration_installation_id': self.donation_box_registration_installation_id.id,
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,
             'date': fields.Date.today(),

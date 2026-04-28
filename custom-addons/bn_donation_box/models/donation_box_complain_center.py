@@ -1,8 +1,5 @@
-from odoo import fields, models, api
-from odoo.exceptions import ValidationError,UserError
-import logging
-
-_logger = logging.getLogger(__name__)
+from odoo import fields, models
+from odoo.exceptions import ValidationError
 
 
 box_status_selection = [
@@ -16,6 +13,7 @@ box_status_selection = [
 status_selection = [
     ('draft', 'Draft'),
     ('process', 'Process'),
+    ('not_recovered', 'Not Recovered'),
     ('resolved', 'Resolved'),
 ]
 
@@ -29,8 +27,7 @@ class DonationBoxComplain(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     complain_officer_id = fields.Many2one('hr.employee', string="Complain Officer", tracking=True)
-    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", compute="_set_registration_id", tracking=True)
-    stored_registration_id = fields.Many2one('donation.box.registration.installation', string="Stored Registration", tracking=True)
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", tracking=True)
     return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True)
     scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True)
     scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True)
@@ -65,66 +62,66 @@ class DonationBoxComplain(models.Model):
 
 
     def action_process(self):
-        # Store the registration ID before it gets closed during resolve
-        if self.donation_box_registration_installation_id:
-            self.stored_registration_id = self.donation_box_registration_installation_id.id
-
-        if self.box_status == 'repaired':
-            raise ValidationError("Please contact your firendly administrator as you cannot set box status directly to 'Repaired'.")
+        if self.box_status != 'process':
+            raise ValidationError(f"Please contact your firendly administrator as you cannot set box status directly to '{self.box_status}'.")
         
         self.status = 'process'
     
     def action_resolve(self):
-        # Check if key has been returned before allowing resolution
+        # Ensure keys are returned before resolution
         if self.lot_id:
             keys = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
-            if keys:
-                # Check if any key is still in issued or pending state (not returned)
-                unreturned_keys = keys.filtered(lambda k: k.state in ['issued', 'pending'])
-                if unreturned_keys:
-                    raise ValidationError(
-                        f"❌ Cannot resolve complaint!\n\n"
-                        f"Key(s) must be returned before resolution.\n\n"
-                        f"Unreturned Keys:\n" +
-                        "\n".join([f"  • {k.name} (Status: {k.state})" for k in unreturned_keys]) +
-                        "\n\nPlease ensure all keys are returned and marked as available."
-                    )
-        
-        # Validate complain officer remark and box recovered status for missing and robbery cases
+            unreturned_keys = keys.filtered(lambda k: k.state in ['issued', 'pending'])
+
+            if unreturned_keys:
+                raise ValidationError(
+                    "❌ Cannot resolve complaint!\n\n"
+                    "Key(s) must be returned before resolution.\n\n"
+                    "Unreturned Keys:\n" +
+                    "\n".join([f"  • {k.name} (Status: {k.state})" for k in unreturned_keys]) +
+                    "\n\nPlease ensure all keys are returned and marked as available."
+                )
+
+        # Handle Missing / Robbery cases
         if self.box_status in ['missing', 'robbery']:
             if not self.complain_officer_remark:
-                raise ValidationError("Complain Officer Remark is required before resolving Missing or Robbery cases.")
-            if not self.box_recovered:
-                raise ValidationError("Please indicate whether the box was recovered or not before resolving Missing or Robbery cases.")
-            
-        # Use stored_registration_id as it persists after resolve
-        registration = self.stored_registration_id or self.donation_box_registration_installation_id
-        
-        # Handle box recovered for missing/robbery cases
-        if self.box_status in ['missing', 'robbery'] and self.box_recovered:
-            # If box is recovered, treat it as a return case
-            if registration:
-                registration.status = 'close'
-            self.lot_id.is_not_return = True
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
-        elif self.box_status != 'return':
-            if registration:
-                registration.status = 'close'
-            self.lot_id.is_not_return = True
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+                raise ValidationError(
+                    "Complain Officer Remark is required before resolving Missing or Robbery cases."
+                )
 
+            registration = self.donation_box_registration_installation_id
+
+            # If box is recovered
+            if self.box_recovered:
+                if registration:
+                    registration.status = 'close'
+
+                if self.lot_id:
+                    self.lot_id.is_not_return = True
+                    self.lot_id.lot_consume = False
+
+                if self.lot_id:
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+
+                self.status = 'resolved'
+
+            # If box is NOT recovered
+            else:
+                if registration:
+                    registration.status = 'close'
+
+                if self.lot_id:
+                    self.lot_id.is_not_return = True
+
+                if self.lot_id:
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+
+                self.status = 'not_recovered'
+
+        # Handle broken case separately
         if self.box_status == 'broken':
             self.action_scrap()
-
-        self.status = 'resolved'
-
-    @api.depends('lot_id')
-    def _set_registration_id(self):
-        for rec in self:
-            rec.donation_box_registration_installation_id = None
-
-            if rec.lot_id:
-                rec.donation_box_registration_installation_id = self.env['donation.box.registration.installation'].search([('lot_id', '=', rec.lot_id.id), ('status', '=', 'available')], order='id desc', limit=1).id
+            self.status = 'resolved'
 
     def action_return(self):
         """Return ONLY the selected serial (lot) from a multi-line picking."""
@@ -133,7 +130,7 @@ class DonationBoxComplain(models.Model):
             if not rec.lot_id:
                 raise ValidationError("Please select a Serial (Lot) to return.")
 
-            registration = rec.stored_registration_id or rec.donation_box_registration_installation_id
+            registration = rec.donation_box_registration_installation_id
             if not registration:
                 raise ValidationError("No installation record found for this serial.")
 
@@ -214,11 +211,10 @@ class DonationBoxComplain(models.Model):
     def action_scrap(self):
         """Scrap the selected serial (lot) instead of returning picking."""
         for rec in self:
-
             if not rec.lot_id:
                 raise ValidationError("Please select a Serial (Lot) to scrap.")
 
-            registration = rec.stored_registration_id or rec.donation_box_registration_installation_id
+            registration = rec.donation_box_registration_installation_id
             if not registration:
                 raise ValidationError("No installation record found for this serial.")
 

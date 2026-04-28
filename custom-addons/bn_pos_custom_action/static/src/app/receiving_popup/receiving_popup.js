@@ -1118,10 +1118,4 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
         
     }
-
-    async cancel() {
-        if (this.canCancel()) {
-            super.cancel();
-        }
-    }
 }

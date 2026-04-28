@@ -1,24 +1,12 @@
 from odoo import fields, models, api
 
 
-day_selection = [
-    ('mon', 'Monday'),
-    ('tue', 'Tuesday'),
-    ('wed', 'Wednesday'),
-    ('thu', 'Thursday'),
-    ('fri', 'Friday'),
-    ('sat', 'Saturday'),
-    ('sun', 'Sunday'),
-]
-
 class RiderScheduleDay(models.Model):
     _name = 'rider.schedule.day'
     _description = 'Rider Schedule Day'
 
 
     rider_shift_id = fields.Many2one('rider.shift', string="Rider Shift")
-
-    day = fields.Selection(selection=day_selection, string="Day", default='mon')
 
     date = fields.Date("Date")
 
@@ -32,13 +20,13 @@ class RiderScheduleDay(models.Model):
     name = fields.Char('Name', compute="_set_name")
 
 
-    @api.depends('day', 'rider_shift_id')
+    @api.depends('rider_shift_id')
     def _set_name(self):
         for record in self:
             record.name = ''
 
             if record.rider_shift_id:
-                record.name = record.day.title() + ' ' + record.rider_shift_id.name
+                record.name = record.rider_shift_id.name + ' ' + record.city_id.name + ' ' + record.zone_id.name + ' ' + record.key_bunch_id.name + ' ' + record.sub_zone_id.name
 
     def _set_key_count(self):
         for rec in self:
@@ -59,16 +47,12 @@ class RiderScheduleDay(models.Model):
                     }
                 }
 
-            if self.date < start or self.date > end:
-                self.date = False
-                return {
-                    'warning': {
-                        'title': "Invalid Date",
-                        'message': f"Date must be between {start} and {end}.",
+            if self.date and start and end:
+                if self.date < start or self.date > end:
+                    self.date = False
+                    return {
+                        'warning': {
+                            'title': "Invalid Date",
+                            'message': f"Date must be between {start} and {end}.",
+                        }
                     }
-                }
-            
-    @api.onchange('key_bunch_id')
-    def _onchange_key_bunch_id(self):
-        for key in self.key_bunch_id.key_ids:
-            key.rider_id = self.rider_shift_id.rider_id.id

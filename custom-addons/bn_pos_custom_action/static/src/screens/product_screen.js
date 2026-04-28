@@ -5,15 +5,19 @@ import { _t } from "@web/core/l10n/translation";
 
 
 patch(ProductScreen.prototype, {
-    get checkProductPrice() {
-        const orderLines = this.pos.get_order().get_orderlines(); // get current order lines
+    get hasQurbaniProduct() {
+        const currentOrder = this.pos.get_order();
+        if (!currentOrder) return false;
 
-        for (const line of orderLines) {
-            if (line.product.lst_price > 0) {
-                return true; // at least one line has price > 0
-            }
-        }
-        return false; // no line has price > 0
+        return currentOrder.get_orderlines().some(line => {
+            const product = line.product;
+
+            return (
+                product.is_livestock &&
+                product.detailed_type === "product" &&
+                product.categ?.name?.toLowerCase().includes("qurbani")
+            );
+        });
     },
     
     get isWelfareOrder() {
@@ -49,6 +53,16 @@ patch(ProductScreen.prototype, {
             // Disable all except payment and custom action (adjust value as needed)
             return buttons.map(btn => {
                 if (["payment", "custom_action"].includes(btn.value)) {
+                    return { ...btn, disabled: false };
+                }
+                return { ...btn, disabled: true };
+            });
+        }
+
+        // 🔥 DISABLE ALL NUMPAD IF QURBANI PRODUCT EXISTS
+        if (this.hasQurbaniProduct) {
+            return buttons.map(btn => {
+                if (btn.value === "Backspace") {
                     return { ...btn, disabled: false };
                 }
                 return { ...btn, disabled: true };

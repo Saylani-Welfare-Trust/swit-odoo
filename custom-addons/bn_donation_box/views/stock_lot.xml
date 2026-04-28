@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='ref']" position="after">
                 <field name="lot_consume" readonly="1" />
+                <field name="is_not_return" readonly="1" />
             </xpath>
         </field>
     </record>

@@ -22,4 +22,10 @@
     ],
     'auto_install': False,
     'application': False,
+    'assets': {
+        'point_of_sale._assets_pos': [
+            'bn_key_management/static/src/app/**/*',
+            'bn_key_management/static/src/screen/*',
+        ],
+    },
 }

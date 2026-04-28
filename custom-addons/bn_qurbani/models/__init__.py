@@ -16,3 +16,4 @@ from . import res_company
 from . import pos_session
 from . import qurbani_cow_slaughter
 from . import qurbani_goat_slaughter
+from . import pos_order

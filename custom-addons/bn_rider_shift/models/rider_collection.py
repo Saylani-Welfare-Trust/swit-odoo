@@ -1,5 +1,4 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
 
 
 day_selection = [
@@ -27,6 +26,7 @@ class RiderCollection(models.Model):
     _rec_name = "shop_name"
 
 
+    rider_id = fields.Many2one('hr.employee', string="Rider")
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
 
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string="Shop Name", store=True)
@@ -35,7 +35,6 @@ class RiderCollection(models.Model):
     box_location = fields.Char(related='donation_box_registration_installation_id.location', string="Box Location", store=True)
 
     lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
-    rider_id = fields.Many2one('hr.employee', string="Rider")
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
     
@@ -57,8 +56,6 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
-        # raise ValidationError('Hit')
-
         collection_ids = self.sudo().search([('state', '=', 'donation_submit')])
 
         if not collection_ids:
@@ -66,8 +63,6 @@ class RiderCollection(models.Model):
                 "status": "error",
                 "body": f"No donation collections were found for today {fields.Date.today().strftime('%d-%m-%Y')}."
             }
-
-        # raise ValidationError(str(collection_ids))
 
         return {
             "status": "success",

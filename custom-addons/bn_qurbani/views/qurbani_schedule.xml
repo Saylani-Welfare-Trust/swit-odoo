@@ -14,8 +14,10 @@
                 <field name="location_id" required="1"/>
                 <field name="qty_available"/>
                 <field name="total_hissa" required="1"/>
-                <field name="pos_hissa" readonly="1" />
+                <field name="current_hissa" readonly="1" />
                 <field name="option" required="1"/>
+
+                <button string="Update Inventory" name="action_update_inventory" type="object" class="oe_highlight"/>
             </tree>
         </field>
     </record>
@@ -29,14 +31,15 @@
 
     <!-- Parent Menu -->
     <menuitem id="menu_qurbani_root"
-            name="Qurbani Management"
-            sequence="10"/>
+        name="Qurbani"
+        web_icon="bn_qurbani,static/description/icon.png"
+        sequence="10"/>
 
     <!-- Sub Menu -->
     <menuitem id="menu_qurbani_schedule"
-            name="Qurbani Schedule"
-            parent="menu_qurbani_root"
-            action="action_qurbani_schedule"
-            sequence="20"/>
+        name="Qurbani Schedule"
+        parent="menu_qurbani_root"
+        action="action_qurbani_schedule"
+        sequence="20"/>
 
 </odoo>

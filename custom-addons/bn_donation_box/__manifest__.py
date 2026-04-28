@@ -6,13 +6,11 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Donation Box',
     'depends': [
-        'mail',
-        'stock',
+        'hr',
         'product',
-        'base_account_budget',
         'bn_stock_location',
-        'bn_master_setup_backup',
-        'bn_pos_custom_action'
+        'bn_pos_custom_action',
+        'bn_profile_management',
     ],
     'data': [
         'security/groups.xml',
@@ -31,6 +29,7 @@
         'views/stock_lot.xml',
         'views/res_partner.xml',
         'views/donation_product_onhand.xml',
+        'views/installation_category.xml',
         'reports/donation_box_report.xml',
     ],
     'auto_install': False,

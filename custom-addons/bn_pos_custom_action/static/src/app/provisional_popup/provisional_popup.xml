@@ -4,7 +4,7 @@
     <t t-name="bn_pos_custom_action.ProvisionalPopup">
         <div class="popup popup-selection">
             <div class="modal-header drag-handle">
-                <h4 class="modal-title"><t t-esc="this.title" /></h4>
+                <h3 class="modal-title"><t t-esc="this.title" /></h3>
             </div>
             <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
                 <div class="row mb-2 text-start">
