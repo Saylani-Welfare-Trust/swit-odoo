@@ -79,3 +79,4 @@ class AdvanceDonationLine(models.Model):
     def action_print_line_non_cash_report(self):
         """Print non-cash donation report for this specific line"""
         return self.env.ref('bn_advance_donation.action_report_advance_donation_line_non_cash').report_action(self)
+    

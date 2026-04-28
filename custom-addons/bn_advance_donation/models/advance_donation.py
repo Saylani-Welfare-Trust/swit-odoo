@@ -14,7 +14,8 @@ class AdvanceDonation(models.Model):
     )
     category_id = fields.Many2one('advance.donation.category', string='Category')
     contract_type = fields.Selection([('product', 'Quantity Based'),
-                                     ('frequency', 'Frequency Based')],
+                                     ('frequency', 'Frequency Based'),
+                                     ('open_contract', 'Open Contract')],
                                     string='Contract Type', default='product')
 
     payment_type = fields.Selection([('cash', 'Cash'),
@@ -68,7 +69,13 @@ class AdvanceDonation(models.Model):
     approved_date = fields.Datetime('Approved Date')
     is_fully_paid = fields.Boolean(compute='_compute_fully_paid')
     is_fully_disbursed = fields.Boolean(compute='_compute_fully_disbursed', store=True)
-
+    
+    disbursement_line_ids = fields.One2many(
+        'advance.donation.disbursement.line',
+        'advance_donation_id',
+        string="Disbursement Lines"
+    )
+    
 
     @api.model
     def create(self, vals):
@@ -127,6 +134,13 @@ class AdvanceDonation(models.Model):
     #     """Calculate available balance after manual payment"""
     #     for rec in self:
     #         rec.available_balance = rec.total_balance - rec.manual_payment_amount
+    
+    @api.onchange('contract_type')
+    def _onchange_contract_type(self):
+        if self.contract_type == 'open_contract':
+            self.total_no_of_product = 1
+            self.no_of_product = 1   # also for consistency
+            self.amount_percentage = 100.00
 
     def compute_donation(self):
         self.advance_donation_lines.unlink()
@@ -159,12 +173,21 @@ class AdvanceDonation(models.Model):
                     })
                     serial += 1
         else:
-            for i in range(self.total_no_of_product):
+            if not self.contract_type == 'open_contract':
+                for i in range(self.total_no_of_product):
+                    self.advance_donation_lines.create({
+                        'serial_no': i + 1,
+                        'product_id': self.product_id.id,
+                        'amount': amount,
+                        'remaining_amount': amount,
+                        'advance_donation_id': self.id,
+                    })
+            else:
                 self.advance_donation_lines.create({
-                    'serial_no': i + 1,
+                    'serial_no': 1,
                     'product_id': self.product_id.id,
-                    'amount': amount,
-                    'remaining_amount': amount,
+                    'amount': self.total_product_amount,
+                    'remaining_amount': self.total_product_amount,
                     'advance_donation_id': self.id,
                 })
 

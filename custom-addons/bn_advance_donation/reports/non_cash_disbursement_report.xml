@@ -1,0 +1,207 @@
+<odoo>
+    <template id="template_advance_donation_disbursement_line">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="line">
+                <!-- Helper: Get donee from whichever source is present -->
+                <t t-set="donee" t-value="
+                    (line.welfare_line_id and line.welfare_line_id.welfare_id and line.welfare_line_id.welfare_id.donee_id) or
+                    (line.microfinance_id and line.microfinance_id.donee_id) or
+                    None
+                "/>
+                <div class="page">
+                    <div class="header">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 style="color: #2E4053;">Disbursement Certificate</h2>
+                                <h4 style="color: #5D6D7E;">Advance Donation Disbursement Line</h4>
+                                <hr style="border: 2px solid #2E4053;"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donation Information</h5>
+                            <table class="table table-borderless">
+                                <!-- <tr>
+                                    <td><strong>Application No:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.name"/></td>
+                                </tr> -->
+                                <!-- <tr>
+                                    <td><strong>Donation Line:</strong></td>
+                                    <td>
+                                        <span t-esc="line.advance_donation_line_id.serial_no or ''"/> -
+                                        <span t-esc="
+                                            line.advance_donation_line_id and 
+                                            line.advance_donation_line_id.product_id and 
+                                            line.advance_donation_line_id.product_id.display_name 
+                                            or ''
+                                        "/>                                    
+                                    </td>
+                                </tr> -->
+                                <!-- <tr>
+                                    <td><strong>Product:</strong></td>
+                                    <td><span t-esc="line.product_id.display_name"/></td>
+                                </tr> -->
+                                <!-- <tr>
+                                    <td><strong>Disbursement Date:</strong></td>
+                                    <td><span t-esc="line.date and line.date.strftime('%Y-%m-%d') or ''"/></td>
+                                </tr> -->
+                            </table>
+                        </div>
+                        <div class="col-6">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donor Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Donor Name:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.donor_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Category:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.category_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contract Type:</strong></td>
+                                    <td>
+                                        <span t-esc="dict(line.advance_donation_id.fields_get(allfields=['contract_type'])['contract_type']['selection'])[line.advance_donation_id.contract_type]"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Approved Date:</strong></td>
+                                    <td><span t-esc="line.advance_donation_id.approved_date and line.advance_donation_id.approved_date.strftime('%Y-%m-%d') or 'Not Approved'"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Donee Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donee / Beneficiary Information</h5>
+                            <div t-if="donee" class="alert alert-success">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td width="30%"><strong>Donee Name:</strong></td>
+                                        <td><span t-esc="donee.name or ''"/></td>
+                                    </tr>
+                                    <tr t-if="donee.phone">
+                                        <td><strong>Phone:</strong></td>
+                                        <td><span t-esc="donee.phone"/></td>
+                                    </tr>
+                                    <tr t-if="donee.email">
+                                        <td><strong>Email:</strong></td>
+                                        <td><span t-esc="donee.email"/></td>
+                                    </tr>
+                                    <tr t-if="donee.street">
+                                        <td><strong>Address:</strong></td>
+                                        <td>
+                                            <span t-esc="donee.street or ''"/>
+                                            <span t-if="donee.street2">, <t t-esc="donee.street2"/></span><br/>
+                                            <span t-esc="donee.city or ''"/>
+                                            <span t-if="donee.state_id">, <t t-esc="donee.state_id.name"/></span>
+                                            <span t-if="donee.country_id">, <t t-esc="donee.country_id.name"/></span>
+                                        </td>
+                                    </tr>
+                                        <!-- <tr t-if="donee.identification_number">
+                                            <td><strong>ID Number:</strong></td>
+                                            <td><span t-esc="donee.identification_number"/></td>
+                                        </tr> -->
+                                </table>
+                            </div>
+                            <!-- <div t-else class="alert alert-warning">
+                                <em>No donee information available for this disbursement.</em>
+                            </div> -->
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Financial Details</h5>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="card" style="border: 2px solid #F39C12;">
+                                        <div class="card-body text-center">
+                                            <h6 style="color: #F39C12;">Advance Donation Amount</h6>
+                                            <h4 style="color: #F39C12;">
+                                                <span t-esc="'{:,.2f}'.format(line.advance_amount)"/>
+                                                <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card" style="border: 2px solid #27AE60;">
+                                        <div class="card-body text-center">
+                                            <h6 style="color: #27AE60;">Final Disbursed Amount</h6>
+                                            <h4 style="color: #27AE60;">
+                                                <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/>
+                                                <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Traceability Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Disbursement Source (Traceability)</h5>
+                            <div class="alert alert-info">
+                                <i class="fa fa-link"/> <strong>Linked Module:</strong>
+                                <!--<p t-if="line.welfare_line_id">-->
+                                <!--    <strong>Welfare Line:</strong>-->
+                                <!--    <span t-esc="line.welfare_line_id.display_name or line.welfare_line_id.welfare_id.name"/>-->
+                                <!--</p>-->
+                                <p t-if="line.welfare_id">
+                                    <!--<strong>Recurring Welfare Line:</strong>-->
+                                    <span t-esc="line.welfare_id.name or line.welfare_id.id"/>
+                                </p>
+                                <p t-if="line.microfinance_id">
+                                    <strong>Microfinance:</strong>
+                                    <span t-esc="line.microfinance_id.display_name or line.microfinance_id.id"/>
+                                </p>
+                                <p t-if="not (line.welfare_id or line.microfinance_id or line.welfare_line_id)">
+                                    <em>No specific module link recorded.</em>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-5">
+                        <div class="col-6">
+                            <p><strong>Issue Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
+                            <p><strong>Issued By:</strong> <span t-esc="user.name"/></p>
+                        </div>
+                        <div class="col-6 text-right">
+                            <div style="border-top: 1px solid #000; width: 200px; margin-left: auto;">
+                                <p class="text-center mt-2"><strong>Authorized Signature</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <small style="color: #7F8C8D;">
+                                This is a computer-generated document. No signature is required.<br/>
+                                For any queries, please contact the administration office.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_advance_donation_disbursement_line" model="ir.actions.report">
+        <field name="name">Advance Donation Disbursement Line Report</field>
+        <field name="model">advance.donation.disbursement.line</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_advance_donation.template_advance_donation_disbursement_line</field>
+        <field name="report_file">bn_advance_donation.template_advance_donation_disbursement_line</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Disbursement - %s - %s' % (object.advance_donation_id.name, object.date and object.date.strftime('%Y%m%d') or '')</field>
+    </record>
+</odoo>

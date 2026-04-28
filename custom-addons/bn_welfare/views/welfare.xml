@@ -26,7 +26,9 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button name="action_open_full_edit_wizard" type="object" string="Full Form View" class="btn-primary"   invisible="state not in ['inquiry', 'committee_approval']"/>
+
+                    <button string="Complete" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
@@ -66,9 +68,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'committee_approval'" required="state == 'committee_approval'" />
-                            <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
-                            <field name="member_remarks" readonly="state != 'mem_approve'" required="state == 'mem_approve'" />
+                            <field name="committee_remarks" readonly="state != 'inquiry'" />
+                            <field name="hod_remarks" readonly="state != 'committee_approval'"/>
+                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'" />
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 

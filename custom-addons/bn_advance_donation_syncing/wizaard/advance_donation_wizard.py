@@ -13,6 +13,7 @@ class AdvanceDonationWizard(models.TransientModel):
     )
     
     product_id = fields.Many2one('product.product', string="Product", required=True)
+    today_date = fields.Date(string="Today Date", default=fields.Date.today)
     
     # Context fields
     welfare_line_id = fields.Many2one('welfare.line', string="Welfare Line")
@@ -20,7 +21,8 @@ class AdvanceDonationWizard(models.TransientModel):
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
 
     def action_show_lines(self):
-        """Open second wizard with filtered donation lines"""
+        """Automatically select and confirm the first available donation line"""
+
         if not self.advance_donation_id or not self.product_id:
             raise UserError(_("Please select both Advance Donation and Product."))
         
@@ -32,40 +34,69 @@ class AdvanceDonationWizard(models.TransientModel):
         if not donation_lines:
             raise UserError(_("No donation lines found for this product."))
         
-        # FIRST, create the selection wizard record
-        selection_wizard = self.env['advance.donation.line.selection.wizard'].create({
-            'advance_donation_id': self.advance_donation_id.id,
-            'product_id': self.product_id.id,
-            'welfare_line_id': self.welfare_line_id.id if self.welfare_line_id else False,
-            'recurring_line_id': self.recurring_line_id.id if self.recurring_line_id else False,
-            'microfinance_id': self.microfinance_id.id if self.microfinance_id else False,
-        })
+        # Find first non-reserved line
+        available_line = donation_lines.filtered(lambda l: not l.is_reserved)
+        if not available_line:
+            raise UserError(_("All donation lines for this product are already reserved."))
         
-        # THEN, create the line wizard records
-        wizard_line_commands = []
-        for line in donation_lines:
-            wizard_line_commands.append((0, 0, {
-                'original_line_id': line.id,
-                'product_id': line.product_id.id,
-                'paid_amount': line.paid_amount,
-                'is_reserved': line.is_reserved,
-                'currency_id': line.currency_id.id,
-            }))
+        available_line = available_line[0]  # Take the first available line
         
-        if wizard_line_commands:
-            selection_wizard.write({
-                'donation_line_ids': wizard_line_commands
-            })
         
-        # Return the form view of the created wizard
-        return {
-            'name': _('Select Donation Line'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'advance.donation.line.selection.wizard',
-            'res_id': selection_wizard.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
+        if self.welfare_line_id:
+            target_model = self.welfare_line_id
+            limit_amount = target_model.total_amount
+
+        elif self.recurring_line_id:
+            target_model = self.recurring_line_id
+            limit_amount = target_model.amount 
+
+        elif self.microfinance_id:
+            target_model = self.microfinance_id
+            limit_amount = target_model.total_amount
+
+        else:
+            raise UserError(_("No target record found to link the donation."))
+
+        if target_model.advance_donation_id and target_model.advance_donation_id.id == self.advance_donation_id.id:
+            raise UserError(_("This Advance Donation is already linked to this record."))
+       
+        if not available_line.paid_amount > limit_amount:
+        
+            # Prepare values to write
+            vals = {
+                'advance_donation_id': self.advance_donation_id.id,
+                'advance_donation_line_id': available_line.id,
+                'advance_donation_amount': available_line.paid_amount
+            }
+        else:
+            vals = {
+                'advance_donation_id': self.advance_donation_id.id,
+                'advance_donation_line_id': available_line.id,
+                'advance_donation_amount': limit_amount
+            }
+        
+        # Apply deduction only if recurring_line_id exists
+        if self.recurring_line_id:
+            current_amount = target_model.amount or 0.0
+            if not self.advance_donation_id.contract_type == 'open_contract':
+
+                vals['amount'] = current_amount - available_line.paid_amount
+            else:
+                vals['amount'] = current_amount - limit_amount
+
+        
+        # Update the target record
+        target_model.write(vals)
+        if not self.advance_donation_id.contract_type == 'open_contract':
+            # Mark original line as reserved
+            available_line.write({'is_reserved': True})
+        else:
+            # For open contracts, we reserve the amount instead of the line
+            if available_line.reserved_amount + limit_amount > available_line.paid_amount:
+                raise UserError(_("Not enough available amount in the selected donation line."))
+            available_line.write({'reserved_amount': available_line.reserved_amount + limit_amount})      
+        # Close wizard
+        return {'type': 'ir.actions.act_window_close'}
 
 
 class AdvanceDonationLineSelectionWizard(models.TransientModel):

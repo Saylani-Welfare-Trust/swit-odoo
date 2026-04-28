@@ -94,6 +94,7 @@ class Welfare(models.Model):
 
     frc = fields.Binary('FRC')
     frc_name = fields.Char('FRC Name')
+    
 
     electricity_bill_file = fields.Binary('Electricity Bill')
     electricity_bill_name = fields.Char('Electricity Bill Name')
@@ -725,14 +726,15 @@ class Welfare(models.Model):
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     
     def action_move_to_hod(self):
-        # if not self.hod_remarks:
-        #     raise ValidationError('Please enter HOD Remarks!')
+
+        if not self.hod_remarks:
+            raise ValidationError('Please enter HOD Remarks!')
         
         self.state = 'hod_approve'
     
     def action_move_to_member(self):
-        # if not self.member_remarks:
-        #     raise ValidationError('Please enter Member Remarks!')
+        if not self.member_remarks:
+            raise ValidationError('Please enter Member Remarks!')
         
         self.state = 'mem_approve'
     
@@ -789,8 +791,14 @@ class Welfare(models.Model):
         self.state = 'recurring'
         
     def action_committee_approval(self):
-        # if not self.committee_remarks:
-        #     raise ValidationError(_('Please enter Committee Remarks before approval.'))
+        if not self.committee_remarks:
+            raise ValidationError(_('Please enter Committee Remarks before approval.'))
+        # if self.state == 'inquiry':
+        #     # Check HOD remarks
+        #     if not self.committee_remarks:
+        #         raise ValidationError('Please enter HOD Remarks before approval.')
+        #     # self.action_move_to_member()  # This moves to mem_approve
+        #     # message = 'Application approved by HOD and sent to Member'
         self.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
@@ -822,3 +830,27 @@ class Welfare(models.Model):
                     rec.state = state_flow[idx-1]
             except Exception:
                 pass
+
+    # Add this method to your welfare model
+
+    def action_open_full_edit_wizard(self):
+        """Open the full-width wizard for editing all fields"""
+        self.ensure_one()
+        
+        # Only allow in committee_approval and hod_approve states
+        if self.state not in ['inquiry', 'committee_approval']:
+            raise ValidationError(_('This option is only available in Committee Approval and HOD Approval states.'))
+        
+        return {
+            'name': _('Edit All Fields - Full View'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'welfare.fields.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': False,
+            'context': {
+                'default_welfare_id': self.id,
+                'active_id': self.id,
+                'active_model': 'welfare',
+            }
+        }

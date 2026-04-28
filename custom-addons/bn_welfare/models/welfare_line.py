@@ -1,4 +1,7 @@
 from odoo import models, fields, api
+from odoo.fields import Date
+from odoo.exceptions import UserError
+
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -238,22 +241,29 @@ class WelfareLine(models.Model):
             rec.is_collection_point_readonly = rec.disbursement_category_id.name == "In Kind"
 
 
-    @api.depends('quantity', 'amount', 'advance_donation_amount')
+    # @api.depends('quantity', 'amount', 'advance_donation_amount')
+    # def _compute_total_amount(self):
+    #     for rec in self:
+    #         if not rec.manual_total:
+    #             amount = rec.quantity * rec.amount
+    #             rec.total_amount = amount - rec.advance_donation_amount if (rec.advance_donation_amount > 0) else amount
+    #             _logger.info(f"Computed total_amount for {rec.total_amount}")
+    @api.depends('quantity', 'amount', 'advance_donation_amount', 'manual_total')
     def _compute_total_amount(self):
         for rec in self:
             if not rec.manual_total:
                 amount = rec.quantity * rec.amount
                 rec.total_amount = amount - rec.advance_donation_amount if (rec.advance_donation_amount > 0) else amount
+                _logger.info(f"Auto-computed total_amount: {rec.total_amount}")
+            else:
+                _logger.info(f"Skipping compute for {rec.id} because manual_total=True, keeping total_amount: {rec.total_amount}")
 
+    import logging
+
+    _logger = logging.getLogger(__name__)
     def write(self, vals):
-        # Track manual amount overrides
-        if 'total_amount' in vals:
-            vals['manual_total'] = True
-        
-        # Preserve manually set total_amount when not in vals but flag is True
-        if self.manual_total and 'total_amount' not in vals:
-            vals['total_amount'] = self.total_amount - self.advance_donation_amount if (self.advance_donation_amount > 0) else self.total_amount
-    
+        _logger.info(f"=== WRITE CALLED ===")
+        _logger.info(f"Input vals: {vals}")
         
         # Handle in_kind category auto-selection
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
@@ -261,7 +271,47 @@ class WelfareLine(models.Model):
             if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
                 vals['collection_point'] = 'branch'
         
-        return super().write(vals)
+        # If manually setting total_amount
+        if 'total_amount' in vals:
+            _logger.info(f"Manual total_amount detected: {vals['total_amount']}")
+            vals['manual_total'] = True
+            
+            ad_amount = self.advance_donation_amount
+            vals['total_amount'] = vals['total_amount'] - ad_amount
+            _logger.info(f"After advance subtraction: {vals['total_amount']}")
+        
+        # # If only updating advance_donation_amount on a manual_total record
+        elif 'advance_donation_amount' in vals:
+            _logger.info(f"Updating advance on manual_total record")
+            old_advance = self.advance_donation_amount
+            new_advance = vals['advance_donation_amount']
+            # Adjust total_amount by the change in advance
+            if 'total_amount' not in vals:
+                vals['total_amount'] = self.total_amount - (new_advance - old_advance)
+                _logger.info(f"Adjusted total_amount from {self.total_amount} to {vals['total_amount']}")
+        
+        _logger.info(f"Final vals before super write: {vals}")
+        result = super().write(vals)
+        _logger.info(f"After write - total_amount: {self.total_amount}, manual_total: {self.manual_total}")
+        
+        return result
+    # def write(self, vals):
+    #     # Track manual amount overrides
+    #     if 'total_amount' in vals:
+    #         vals['manual_total'] = True
+        
+    #     # Preserve manually set total_amount when not in vals but flag is True
+    #     if self.manual_total and 'total_amount' not in vals:
+    #         vals['total_amount'] = self.total_amount - self.advance_donation_amount if (self.advance_donation_amount > 0) else self.total_amount
+    
+        
+    #     # Handle in_kind category auto-selection
+    #     in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+    #     if 'disbursement_category_id' in vals:
+    #         if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+    #             vals['collection_point'] = 'branch'
+        
+    #     return super().write(vals)
             
     # @api.depends('total_amount', 'advance_donation_amount')
     # def _compute_net_amount(self):
@@ -305,21 +355,47 @@ class WelfareLine(models.Model):
             self.collection_point = 'branch'
        
     def action_disbursed(self):
-        # Mark as disbursed and update welfare if all lines are delivered/disbursed
+        """Mark welfare line as disbursed"""
+        _logger.info(f"Marking welfare line {self.id} as disbursed")
         self.state = 'disbursed'
+        _logger.info(f"Updating advance donation line {self.advance_donation_line_id.id} with disbursed amount {self.advance_donation_amount}")
+
         if self.advance_donation_line_id:
-            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
-        # # For Cash + Bank, check if bill is paid
-        # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
-        # if cash_category and self.disbursement_category_id.id == cash_category.id:
-        #     if self.collection_point == 'bank' and self.bill_id:
-        #         # Bill payment is handled through account.move payment
-        #         # This method will be called after payment is registered
-        #         pass
+            if self.advance_donation_amount > 0:
+                self.advance_donation_line_id.write({'disbursed_amount':self.advance_donation_line_id.disbursed_amount + self.advance_donation_amount})
+
+            if self.advance_donation_id.contract_type == 'open_contract':
+                _logger.info(f"Creating disbursement line for open contract with advance amount {self.advance_donation_amount}")
+                total_amount = self.total_amount or 0.0
+                advance_amount = self.advance_donation_amount
+                final_amount = advance_amount
+
+                # Only create disbursement line if amounts are valid (non-negative)
+                if final_amount >= 0 and advance_amount >= 0:
+                    disbursement_line = self.env['advance.donation.disbursement.line'].create({
+                        'advance_donation_id': self.advance_donation_id.id,
+                        'advance_donation_line_id': self.advance_donation_line_id.id,
+                        'product_id': self.product_id.id,
+                        'date': fields.Date.today(),
+                        'total_amount': total_amount,
+                        'advance_amount': advance_amount,
+                        'disbursed_amount': final_amount,
+                        'disbursed_record': self.welfare_id.name,
+
+                        'welfare_id': self.welfare_id.id,
+                        # 'recurring_line_id': self.recurring_line_id.id,
+                        # 'microfinance_id': self.microfinance_id.id,
+                    })
+                    # raise UserError(f"Disbursement line created for open contract with advance amount {disbursement_line}")
+                else:
+                    _logger.warning(f"Skipped creating disbursement line for welfare {self.welfare_id.name}: "
+                                  f"final_amount={final_amount}, advance_amount={advance_amount}")
         
+        # Update welfare parent if all lines are now delivered/disbursed
         if self.welfare_id:
+            _logger.info(f"Calling _auto_disburse_if_all_lines_delivered for welfare {self.welfare_id.name}")
             self.welfare_id._auto_disburse_if_all_lines_delivered()
-                            
+    
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')

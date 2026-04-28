@@ -139,19 +139,49 @@ class WelfareRecurringLine(models.Model):
         return bill
 
     def action_disbursed(self):
-        # Mark as disbursed and update welfare if all lines are delivered/disbursed
+        """Mark recurring welfare line as disbursed"""
+        _logger.info(f"Marking recurring welfare line {self.id} as disbursed")
         self.state = 'disbursed'
-        if self.advance_donation_line_id:
-            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
-        # # For Cash + Bank, check if bill is paid
-        # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
-        # if cash_category and self.disbursement_category_id.id == cash_category.id:
-        #     if self.collection_point == 'bank' and self.bill_id:
-        #         # Bill payment is handled through account.move payment
-        #         # This method will be called after payment is registered
-        #         pass
         
+        # Handle advance donation disbursement if applicable
+        if hasattr(self, 'advance_donation_line_id') and self.advance_donation_line_id:
+            _logger.info(f"Processing advance donation for recurring welfare line {self.id}")
+            
+            # Only update disbursed_amount if it's greater than zero
+            if hasattr(self, 'advance_donation_amount') and self.advance_donation_amount > 0:
+                self.advance_donation_line_id.write({'disbursed_amount':self.advance_donation_line_id.disbursed_amount + self.advance_donation_amount})
+                _logger.info(f"Updated advance donation line disbursed_amount: {self.advance_donation_amount}")
+            
+            # Create disbursement line for open contracts
+            if self.advance_donation_id.contract_type == 'open_contract':
+                _logger.info(f"Creating disbursement line for open contract with advance amount {self.advance_donation_amount}")
+                total_amount = self.amount or 0.0
+                advance_amount = self.advance_donation_amount
+                final_amount = advance_amount
+
+                # Only create disbursement line if amounts are valid (non-negative)
+                if final_amount >= 0 and advance_amount >= 0:
+                    disbursement_line = self.env['advance.donation.disbursement.line'].create({
+                        'advance_donation_id': self.advance_donation_id.id,
+                        'advance_donation_line_id': self.advance_donation_line_id.id,
+                        'product_id': self.product_id.id,
+                        'date': fields.Date.today(),
+                        'total_amount': total_amount,
+                        'advance_amount': advance_amount,
+                        'disbursed_amount': final_amount,
+                        'disbursed_record': self.welfare_id.name,
+                        'welfare_id': self.welfare_id.id,
+                        # 'recurring_line_id': self.recurring_line_id.id,
+                        # 'microfinance_id': self.microfinance_id.id,
+                    })
+                    # raise UserError(f"Disbursement line created for open contract with advance amount {disbursement_line}")
+                else:
+                    _logger.warning(f"Skipped creating disbursement line for welfare {self.welfare_id.name}: "
+                                  f"final_amount={final_amount}, advance_amount={advance_amount}")
+        
+        # Update welfare parent if all lines are now delivered/disbursed
         if self.welfare_id:
+            _logger.info(f"Calling _auto_disburse_if_all_lines_delivered for welfare {self.welfare_id.name}")
             self.welfare_id._auto_disburse_if_all_lines_delivered()
     
     @api.depends('welfare_id')

@@ -56,7 +56,7 @@
                             <field name="category_id" required="1" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <field name="contract_type" required="1" readonly="state != 'draft'"/>
                             <field name="contract_frequency" required="1" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
-                            <field name="total_product_amount" readonly="1" force_save="1"/>
+                            <field name="total_product_amount" readonly="not contract_type == 'open_contract'" force_save="1"/>
                             <field name="remaining_amount"/>
                             <field name="donation_slip_ids" domain="[('state', '=', 'paid'), ('donor_id', '=', donor_id), ('remaining_amount', '>', 0)]" invisible="is_fully_paid == True" widget="many2many_tags" options="{'no_create': True, 'no_edit': True}"  readonly="state != 'draft'" force_save="1"/>
                             <field name="donation_slip_ids" domain="[('state', '=', 'paid'), ('donor_id', '=', donor_id), ('remaining_amount', '>', 0), ('id', 'in', donation_slip_ids)]" invisible="is_fully_paid == False" widget="many2many_tags" options="{'no_create': True, 'no_edit': True}"  readonly="state != 'draft'" force_save="1"/>
@@ -69,17 +69,17 @@
                         </group>
                         <group>
                             <field name="product_id" domain="[('id', 'in', product_domain_ids)]" required="1" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
-                            <field name="no_of_product" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
+                            <field name="no_of_product" invisible="contract_type == 'product'" readonly="state != 'draft' or contract_type == 'open_contract'" force_save="1"/>
                                 <label for="amount_percentage"/>
                             <div>
-                                <field name="amount_percentage" class="oe_inline" readonly="state != 'draft'"/>
+                                <field name="amount_percentage" class="oe_inline" readonly="state != 'draft' or contract_type == 'open_contract'" force_save="1"/>
                                 <span class="o_form_label oe_inline">%</span>
                             </div>
                             <field name="contract_start_date" string="Date" widget="daterange" options="{'end_date_field': 'contract_end_date'}" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
                             <field name="contract_end_date" invisible="1"/>
-                            <field name="no_of_days" readonly="1" force_save="1" invisible="contract_frequency == 'weekly' or contract_type == 'product'"/>
+                            <field name="no_of_days" readonly="1" force_save="1" invisible="contract_frequency == 'weekly' or contract_type == 'product' or contract_type == 'open_contract'"/>
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
-                            <field name="total_no_of_product" readonly="contract_type == 'frequency' or state != 'draft'" force_save="1"/>                            
+                            <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
                             <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
                             <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
@@ -99,11 +99,9 @@
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                     <field name="disbursed_amount"/>
                                     <field name="is_disbursed"/>
-                                    <field name="disbursement_date"/>
-                                    <!-- <field name="is_reserved" widget="boolean_button" /> -->
-                                    <!-- <field name="reserved_by_record_name" string="Reserved By" /> -->
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
-                                    <!-- <field name="date_visibility" column_invisible="1"/> -->
+
+                                    <field name="disbursement_date"/> 
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
@@ -151,6 +149,37 @@
                                     <field name="paid_amount" string="Total Used Amount" readonly="1"/>
                                 </group>
                             </group>
+                        </page>
+                        <page string="Disbursement Lines">
+                            <field name="disbursement_line_ids" readonly="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="date"/>
+                                    <field name="total_amount"/> 
+                                    <field name="advance_amount"/>
+                                    <field name="disbursed_record"/>
+                                    <field name="disbursed_amount"/>
+                                    <field name="welfare_id" invisible="1"/>
+                                    <!-- <field name="recurring_line_id"/> -->
+                                    <field name="microfinance_id" invisible="1"/>
+                                    <button name="action_print_line_non_cash_disbursement_report" string="Print Non-Cash Report" type="object" class="btn-link" icon="fa-print"/>
+
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="date" readonly="1"/>
+                                        <field name="total_amount" readonly="1"/>
+                                        <field name="advance_amount" readonly="1"/>
+                                        <field name="disbursed_amount" readonly="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="welfare_id" readonly="1"/>
+                                        <!-- <field name="recurring_line_id" readonly="1"/> -->
+                                        <field name="microfinance_id" readonly="1"/>
+                                    </group>
+                                </form>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>

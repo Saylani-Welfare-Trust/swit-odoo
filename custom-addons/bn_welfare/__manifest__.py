@@ -23,6 +23,8 @@
         'views/product_template.xml',
         'views/record_search.xml',
         'reports/report_welfare_collection_document.xml',
+        'wizards/wizard_view.xml',
+        # 'views/welfare_tree_views.xml',  # Add this line
     ],
     'auto_install': False,
     'application': True,
