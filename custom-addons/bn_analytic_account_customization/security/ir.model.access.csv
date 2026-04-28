@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_analytical_product_line,analytical.product.line,bn_analytic_account_customization.model_analytical_product_line,,1,1,1,1
 access_location_option,access.location.option,bn_analytic_account_customization.model_location_option,,1,1,1,1
+access_sub_zone,access.sub.zone,bn_analytic_account_customization.model_sub_zone,,1,1,1,1
