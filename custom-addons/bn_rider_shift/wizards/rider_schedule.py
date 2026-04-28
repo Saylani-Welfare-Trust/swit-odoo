@@ -46,9 +46,8 @@ class RiderSchedule(models.TransientModel):
         existing_collections = self.env['rider.collection'].search([
             ('rider_id', '=', employee.id),
             ('lot_id', 'in', lot_ids),
-        ]).filtered(
-            lambda r: r.state in active_states
-        )
+            ('state', 'not in', active_states),
+        ])
 
         existing_lot_ids = existing_collections.mapped('lot_id').ids
 
