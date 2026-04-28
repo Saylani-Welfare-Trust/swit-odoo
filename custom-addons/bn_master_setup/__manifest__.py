@@ -14,8 +14,6 @@
         'data/qurbani_day_data.xml',
         'data/chand_raat_date.xml',
         'data/disbursement_category.xml',
-        'views/location_option.xml',
-        'views/installation_category.xml',
         'views/header_type.xml',
         'views/gateway_config.xml',
         'views/microfinance_scheme.xml',
