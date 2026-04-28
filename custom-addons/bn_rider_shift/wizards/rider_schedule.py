@@ -51,7 +51,7 @@ class RiderSchedule(models.TransientModel):
 
         existing_lot_ids = existing_collections.mapped('lot_id').ids
 
-        raise ValidationError(str(existing_lot_ids) + " " + str(lot_ids))
+        # raise ValidationError(str(existing_lot_ids) + " " + str(lot_ids))
 
         # 🔹 Add existing collections to wizard
         for record in existing_collections:
