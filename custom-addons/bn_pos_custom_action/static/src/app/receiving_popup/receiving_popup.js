@@ -861,7 +861,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     async addProductsToOrder(lines, record, selectedOrder) {
         if (!record.state == 'donate'){
             let addedProductsCount = 0;
-            
+            console.log("Adding products for lines:", lines);
             for (let line of lines) {
                 
                 if (await this.addProductLine(line, record, selectedOrder)) {
