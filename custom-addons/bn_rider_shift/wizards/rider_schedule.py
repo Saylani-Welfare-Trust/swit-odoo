@@ -72,7 +72,7 @@ class RiderSchedule(models.TransientModel):
             already_exists = self.env['rider.collection'].search([
                 ('lot_id', '=', lot_id),
                 ('rider_id', '=', employee.id),
-                ('state', 'in', ['donation_not_collected', 'donation_collected']),
+                ('state', 'not in', ['pending', 'donation_submit', 'paid']),
             ], limit=1)
 
             if not already_exists:
