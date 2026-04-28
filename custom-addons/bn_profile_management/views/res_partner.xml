@@ -50,6 +50,11 @@
                             <field name="surname"  />
                             <field name="gender" required="donee_required_fields" />
                             <field name="religion" />
+                            
+                           <field name="donee_required_fields" invisible="1" />
+                           <field name="welfare_donee_required_fields" invisible="1" />
+                           <field name="welfare_donee_female_required" invisible="1" />
+
                             <field name="martial_status" />
                             <field name="spouse_name" invisible="martial_status == 'unmarried'" required="donee_required_fields and martial_status == 'married'" />
                             <field name="has_cnic" />
