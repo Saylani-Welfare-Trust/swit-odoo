@@ -62,6 +62,8 @@ class RiderSchedule(models.TransientModel):
                 'remarks': record.remarks,
             }))
 
+        raise ValidationError(str(existing_lot_ids)+ " " +str(lot_ids.ids))
+
         # 🔹 Find missing lot_ids
         missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
 
