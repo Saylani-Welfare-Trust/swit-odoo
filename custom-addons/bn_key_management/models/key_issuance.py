@@ -23,7 +23,7 @@ class KeyIssuance(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    rider_id = fields.Many2one('Rider')
+    rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     key_id = fields.Many2one('key', string="Key", tracking=True)
     donation_box_registration_installation_id = fields.Many2one(related='key_id.donation_box_registration_installation_id', string="Donation Box Registartion / Installation", store=True)
     
