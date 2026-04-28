@@ -7,6 +7,7 @@
     'category': 'BytesNode/Donation Box',
     'depends': [
         'hr',
+        'product',
         'bn_stock_location',
         'bn_pos_custom_action',
         'bn_profile_management',
