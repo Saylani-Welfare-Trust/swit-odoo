@@ -73,7 +73,7 @@
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">
-                                <field name="amount" readonly="1"/>
+                                <!-- <field name="amount" readonly="1"/> -->
                                 <field name="service_charges" readonly="1"/>
                                 <field name="total_amount" readonly="1"/>
                             </group>
@@ -100,12 +100,44 @@
         </field>
     </record>
 
+    <record id="donaiton_home_service_operation_action" model="ir.actions.act_window">
+        <field name="name">Donation Home Service Operation</field>
+        <field name="res_model">stock.picking.type</field>
+        <field name="view_mode">kanban</field>
+        <field name="domain">[('name', 'in', ['Donation Home Service | Gate Out', 'Donation Home Service | Gate In'])]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for an operation to occur...
+            </p>
+        </field>
+    </record>
+
+    <!-- <menuitem
+        id="donation_home_service_menu"
+        web_icon="bn_donation_home_service,static/description/icon.png"
+        groups="bn_donation_home_service.donation_home_service_menu_group"
+        name="Donation Home Service"
+        sequence="6"/> -->
+
     <menuitem
         id="donation_home_service_menu"
         groups="bn_donation_home_service.donation_home_service_menu_group"
         name="Donation Home Service"
-        action="donation_home_service_action"
         parent="bn_import_donation.import_donation_root_menu"
         sequence="2"/>
+
+    <menuitem
+        id="provisional_order_menu"
+        name="Provisional Orders"
+        action="donation_home_service_action"
+        parent="donation_home_service_menu"
+        sequence="0"/>
+    
+    <menuitem
+        id="donation_home_service_operation_menu"
+        name="Operations"
+        action="donaiton_home_service_operation_action"
+        parent="donation_home_service_menu"
+        sequence="1"/>
 
 </odoo>

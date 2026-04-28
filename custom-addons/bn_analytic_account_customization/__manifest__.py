@@ -7,15 +7,16 @@
     'category': 'BytesNode/Analytical Account Enhancement',
     'depends': [
         'hr_expense',
+        'account',
         'analytic',
+        'bn_master_setup',
     ],
     'data': [
+        'data/server_action.xml',
         'security/ir.model.access.csv',
         'views/analytic_account.xml',
         'views/analytic_distribution_model.xml',
-        'views/hr_employee.xml',
-        'views/sub_zone.xml',
-        'views/location_option.xml',
+        'views/hr_employee.xml'
     ],
     'auto_install': False,
     'application': False,

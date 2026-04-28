@@ -8,8 +8,3 @@ access_api_donation_item,access.api.donation.item,bn_import_donation.model_api_d
 access_api_donation_wizard,access.api.donation.wizard,bn_import_donation.model_api_donation_wizard,api_donation_admin_group,1,1,1,1
 access_fetch_history,access.fetch.history,bn_import_donation.model_fetch_history,api_donation_admin_group,1,1,1,1
 access_fetch_log,access.fetch.log,bn_import_donation.model_fetch_log,api_donation_admin_group,1,1,1,1
-access_header_type,access.header.type,bn_import_donation.model_header_type,,1,1,1,1
-access_gateway_config,access.gateway.config,bn_import_donation.model_gateway_config,,1,1,1,1
-access_gateway_config_line,access.gateway.config.line,bn_import_donation.model_gateway_config_line,,1,1,1,1
-access_gateway_config_header,access.gateway.config.header,bn_import_donation.model_gateway_config_header,,1,1,1,1
-access_gateway_config_currency,access.gateway.config.currency,bn_import_donation.model_gateway_config_currency,,1,1,1,1

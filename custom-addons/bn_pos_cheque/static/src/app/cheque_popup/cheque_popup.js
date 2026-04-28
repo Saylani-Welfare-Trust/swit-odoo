@@ -3,6 +3,7 @@
 import { onMounted, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
 
@@ -13,12 +14,16 @@ export class ChequePopup extends AbstractAwaitablePopup {
     static template = "bn_pos_cheque.ChequePopup";
 
     async get_pos_cheque() {
+        // console.log(this.pos);
+
         const shop = this.pos.config.id;
 
         const offset = (this.state.currentPage - 1) * this.state.limit;
             
         const result = await this.orm.call('pos.order', 'get_cheque_pos_order', [this.state.activeId, shop, offset, this.state.limit]);
 
+        // console.log(result);
+        
         this.state.chequeorder = result.orders;
         this.state.totalRecords = result.total_count;
     }
@@ -88,6 +93,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
         await this.processPOSOrderRecord(selectedOrder, orderID);
         
         if (this.success) {
+            // console.log(orderID);
+
             this.pos.pos_cheque_order_id = orderID;
         }
     }
@@ -104,6 +111,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
                 { limit: 1 }
             );
             
+            // console.log("Order Record:", record);
+            
             if (record && record.length > 0) {
                 await this.handleRecordFound(record[0], selectedOrder);
             } else {
@@ -118,6 +127,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
      * Handle record not found scenario
      */
     handleRecordNotFound() {
+        // console.log("No record found with number:", this.state.record_number);
+
         this.notification.add(
             "Order record not found",
             { type: 'warning' }
@@ -141,11 +152,15 @@ export class ChequePopup extends AbstractAwaitablePopup {
      * Handle found pos order record
      */
     async handleRecordFound(orderRecord, selectedOrder) {
+        // console.log("Record found:", orderRecord);
+        
         // Process all record components
         await this.processPOSOrderLines(orderRecord, selectedOrder);
         await this.processPartner(orderRecord, selectedOrder);
         
         // Log current state and close popup
+        // console.log("Record state:", orderRecord.state);
+
         super.confirm();
         
         return orderRecord.state;
@@ -170,6 +185,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
      */
     hasPOSOrderLines(orderRecord) {
         if (!orderRecord.lines || orderRecord.lines.length === 0) {
+            // console.log("No order lines found for this record");
+
             this.notification.add(
                 "No products configured for this order",
                 { type: 'warning' }
@@ -190,6 +207,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
             {}
         );
         
+        // console.log("Order lines:", orderLines);
+
         return orderLines;
     }
 
@@ -229,6 +248,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
             price_extra:  product.lst_price == 0 ? line.price_subtotal_incl : 0
         });
         
+        // console.log(`Added ${product.display_name} (Qty: ${line.quantity || 1}, Price: ${price})`);
         return true;
     }
 
@@ -294,10 +314,14 @@ export class ChequePopup extends AbstractAwaitablePopup {
             { limit: 1 }
         );
         
+        // console.log("Partner Data:", partnerData);
+        
         if (partnerData && partnerData.length > 0) {
             this.pos.db.add_partners([partnerData[0]]);
             const partner = this.pos.db.get_partner_by_id(partnerId);
             
+            // console.log("Partner loaded to POS:", partner);
+
             return partner;
         }
         
@@ -310,6 +334,8 @@ export class ChequePopup extends AbstractAwaitablePopup {
     assignPartnerToOrder(partner, selectedOrder) {
         selectedOrder.set_partner(partner);
         
+        // console.log("Partner set on order:", partner.name);
+
         this.notification.add(
             `Customer set to: ${partner.name}`,
             { type: 'info' }
@@ -324,5 +350,11 @@ export class ChequePopup extends AbstractAwaitablePopup {
     
     canCancel() {
         return true;
+    }
+
+    async cancel() {
+        if (this.canCancel()) {
+            super.cancel();
+        }
     }
 }

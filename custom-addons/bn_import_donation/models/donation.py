@@ -10,28 +10,27 @@ state_selection = [
 class Donation(models.Model):
     _name = 'donation'
     _description = "Donation"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    donor_id = fields.Many2one('res.partner', string="Donor / Student", tracking=True)
-    journal_id = fields.Many2one('account.journal', string="Journal", tracking=True)
-    product_id = fields.Many2one('product.product', string="Product", tracking=True)
-    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor / Student")
+    journal_id = fields.Many2one('account.journal', string="Journal")
+    product_id = fields.Many2one('product.product', string="Product")
+    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
     company_id = fields.Many2one('res.company', string="Company", default=lambda self: self.env.user.company_id.id)
     currency_id = fields.Many2one(related='company_id.currency_id', string="Currency")
 
-    name = fields.Char('Name', default="New", tracking=True)
-    transaction_id = fields.Char('Transaction ID', tracking=True)
+    name = fields.Char('Name', default="New")
+    transaction_id = fields.Char('Transaction ID')
 
-    reference = fields.Text('Reference/Remarks', tracking=True)
+    reference = fields.Text('Reference/Remarks')
     
-    date = fields.Char('Date', tracking=True)
+    date = fields.Char('Date')
 
-    amount = fields.Monetary('Amount', tracking=True)
+    amount = fields.Monetary('Amount')
 
-    is_fee = fields.Boolean('Is Fee', tracking=True)
+    is_fee = fields.Boolean('Is Fee')
 
-    state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True)
+    state = fields.Selection(selection=state_selection, string="State", default="draft")
 
 
     @api.model
