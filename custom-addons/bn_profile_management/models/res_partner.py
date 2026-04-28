@@ -86,8 +86,9 @@ class ResPartner(models.Model):
     is_change_request = fields.Boolean('Is Change Request')
     is_donor = fields.Boolean('Is Donor', compute="_set_is_donor", store=True)
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
-
-
+    welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
+    welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
+    # required_optional_fields = fields.Boolean('Required Optional Fields', compute="_compute_required_flags", store=True)
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:
@@ -96,6 +97,24 @@ class ResPartner(models.Model):
                     raise ValidationError(
                         "Mobile number must contain exactly 10 digits."
                     )
+
+    @api.depends('name', 'category_id')
+    def _set_welfare_donee_required_fields(self):
+        for rec in self:
+            rec.welfare_donee_required_fields = False
+            cat_names = rec.category_id.mapped('name')
+            is_donee_individual = 'Donee' in cat_names and 'Individual' in cat_names
+            is_welfare = 'Welfare' in cat_names
+            if is_donee_individual and not is_welfare:
+                rec.welfare_donee_required_fields = True
+            # else remains False (including case with Welfare)
+            
+    @api.depends('welfare_donee_required_fields', 'gender')
+    def _compute_female_required_override(self):
+        for rec in self:
+            # For welfare-sensitive fields, if gender is female, required = True
+            # (overrides the welfare exclusion)
+            rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
 
     @api.depends('name', 'category_id')
     def _set_donee_required_fields(self):
