@@ -89,7 +89,7 @@
                                         <t t-set="random_no" t-value="order.pos_reference and order.pos_reference[-4:] or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/>
                                     </div>
-                                    <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
+                                    <div name="custom-donor"><strong>Register Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="order.partner_id.cnic_no or '-'"/></div>
                                     <div><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
                                     <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
@@ -99,12 +99,9 @@
                                     <div>
                                         <strong>Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
-                                        <t t-foreach="order.remarks.split('-')" t-as="remark">
-                                            <t t-if="remark">
-                                                <t t-esc="count"/>. <t t-esc="remark or '-'"/>
-                                                <br/>
-                                                <t t-set="count" t-value="count + 1"/>
-                                            </t>
+                                        <t t-foreach="order.lines" t-as="l">
+                                            <t t-esc="count"/>. <t t-esc="l.customer_note or '-'"/>
+                                            <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
                                 </div>
@@ -180,8 +177,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="order.lines" t-as="l">
-                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="int(l.qty)"/>
-                                            <br/>
+                                            <div><t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="int(l.qty)"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>

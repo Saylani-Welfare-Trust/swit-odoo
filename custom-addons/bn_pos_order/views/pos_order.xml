@@ -25,9 +25,6 @@
                 <field name="state" widget="statusbar" statusbar_visible="draft,refund_request,cfo_approval,paid,done,refund"/>
             </xpath>
 
-            <!-- <xpath expr="//header//button[@name='refund']" position="attributes">
-                <attribute name="invisible">state != 'cfo_approval' or not has_refundable_lines</attribute>
-            </xpath> -->
             <xpath expr="//header/button[@type='action']" position="attributes">
                 <attribute name="invisible">state != 'cfo_approval'</attribute>
             </xpath>

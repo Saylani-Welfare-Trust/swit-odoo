@@ -13,6 +13,14 @@
                 </t>
             </div>
         </xpath>
+        
+        <xpath expr="//div[@name='custom-donor']" position="after">
+            <div name="custom-favor">
+                <strong>Donor Name:</strong>
+                <t t-if="order.favor"><t t-esc="order.favor"/></t>
+                <t t-else=""><t t-esc="partner.name"/></t>
+            </div>
+        </xpath>
 
         <xpath expr="//table[@name='items-table']" position="replace">
             <t t-if="order.is_qurbani">

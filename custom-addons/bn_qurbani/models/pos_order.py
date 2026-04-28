@@ -1,60 +1,17 @@
-from odoo import models, api
+from odoo import models, fields
 
-class PosOrder(models.Model):
+
+class POSOrder(models.Model):
     _inherit = 'pos.order'
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        orders = super().create(vals_list)
 
-        for order in orders:
-            qurbani_product_list = []
+    favor = fields.Char('Favor')
 
-            for line in order.lines:
-                product = line.product_id
 
-                # ✅ Only livestock service products in Qurbani category
-                if (
-                    product.is_livestock
-                    and product.type == 'service'
-                    and product.categ_id
-                    and 'qurbani' in product.categ_id.name.lower()
-                ):
-                    qurbani_product_list.append(product.id)
+    def _order_fields(self, ui_order):
+        """To get the value of field in pos session to pos order"""
+        res = super(POSOrder, self)._order_fields(ui_order)
 
-                    # -------------------------
-                    # Update Qurbani Schedule
-                    # -------------------------
-                    schedule = self.env['qurbani.schedule'].search([
-                        ('service_product_id', '=', product.id)
-                    ], limit=1)
-                    if schedule:
-                        schedule.current_hissa += int(line.qty)
+        res['favor'] = ui_order.get('favor') or False
 
-                    # -------------------------
-                    # Create Livestock Slaughter Record
-                    # -------------------------
-                elif (
-                    product.is_livestock
-                    and product.type == 'product'
-                ):
-                    self.env['livestock.slaugther'].create({
-                        'product_id': product.id,
-                        'quantity': int(line.qty),
-                        'price': int(line.price_subtotal_incl),
-                        'ref': order.pos_reference,
-                        'source_location_id': order.picking_type_id.default_location_src_id.id
-                        if hasattr(order, 'picking_type_id') else False,
-                    })
-
-            # -------------------------
-            # Create Qurbani Order
-            # -------------------------
-            if qurbani_product_list:
-                self.env['qurbani.order'].create({
-                    'pos_order_id': order.id,
-                    'receipt_number': order.pos_reference,
-                    'product_ids': [(6, 0, qurbani_product_list)],
-                })
-
-        return orders
+        return res

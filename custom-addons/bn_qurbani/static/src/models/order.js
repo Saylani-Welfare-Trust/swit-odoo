@@ -11,6 +11,7 @@ patch(Order.prototype, {
         return {
             ...result,
 
+            favor: this.favor,
             is_qurbani: this.pos.is_qurbani,
             first_para_halfnama: this.pos.company.first_para_halfnama,
             second_para_halfnama: this.pos.company.second_para_halfnama,
@@ -29,5 +30,32 @@ patch(Order.prototype, {
                 };
             }),
         };
+    },
+
+    /**
+     * Override export_as_JSON to include custom fields like CNIC and favor
+     */
+    export_as_JSON() {
+        // Get the original JSON
+        const json = super.export_as_JSON(...arguments);
+
+        // Include favor if set
+        json.favor = this.favor || false;
+
+        return json;
+    },
+
+    /**
+     * Setter for favor
+     */
+    set_favor(favor) {
+        this.favor = favor;
+    },
+
+    /**
+     * Getter for favor
+     */
+    get_favor() {
+        return this.favor;
     },
 });

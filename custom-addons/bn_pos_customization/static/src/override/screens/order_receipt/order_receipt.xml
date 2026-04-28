@@ -43,8 +43,8 @@
                             <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                         </div>
-                        <div>
-                            <strong>Donor Name:</strong>
+                        <div name="custom-donor">
+                            <strong>Register Name:</strong>
                             <t t-if="partner.name"><t t-esc="partner.name"/></t>
                             <t t-else="">-</t>
                         </div>

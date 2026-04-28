@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_qurbani.ActionpadWidget" t-inherit="point_of_sale.ActionpadWidget" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('set-partner')]" position="before">
+            <button class="button set-favor btn btn-light rounded-0 py-2 flex-shrink-1 fw-bolder"
+                    t-on-click="onFavorPopupClick">
+                <div class="d-flex justify-content-center align-items-center ">
+                    <span class="d-flex justify-content-center align-items-center rounded-circle me-2" t-if="!ui.isSmall">
+                        <i class="fa fa-pencil me-1"/>
+                    </span>
+                    <div class="text-truncate fw-bolder text-action">
+                        Donor
+                    </div>
+                </div>
+            </button>
+        </xpath>
+    </t>
+
+</templates>
