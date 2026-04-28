@@ -7,9 +7,10 @@
         <field name="arch" type="xml">
             <tree create="0" edit="0">
                 <field name="key_name" string="Key" />
-                <field name="rider_name" string="Rider" />
+                <field name="rider_id" />
                 <field name="issued_on" />
                 <field name="returned_on" />
+                <field name="action_type" />
                 <field name="state" widget="badge" decoration-info="state == 'returned'" decoration-success="state == 'issued'" decoration-danger="state == 'overdue'" />
             </tree>
         </field>
@@ -26,7 +27,7 @@
                     <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned', 'overdue']" />
                     <button string="Print Receipt" name="%(bn_donation_box.donation_box_receipt_report_action)d" type="action" class="btn-secondary" icon="fa-print"  invisible="state in ['draft', 'issued', 'returned', 'overdue']"/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,returned,overdue"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,overdue,returned"/>
                 </header>
                 <sheet>
                     <div class="oe_title">

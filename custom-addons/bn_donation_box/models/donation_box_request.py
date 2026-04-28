@@ -15,7 +15,7 @@ class DonationBoxRequest(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
+    rider_id = fields.Many2one('hr.employee', string="Installer", tracking=True)
     picking_id = fields.Many2one('stock.picking', string="Picking", tracking=True)
     picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type", default=lambda self: self.env.ref('bn_donation_box.donation_box_stock_picking_type', raise_if_not_found=False).id)
     source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
@@ -44,45 +44,6 @@ class DonationBoxRequest(models.Model):
     
     def action_reject(self):
         self.status = 'rejected'
-
-    def action_draft(self):
-
-        all_records = self.donation_box_registration_installation_ids
-
-        if not all_records:
-            raise ValidationError(_('No installation records found.'))
-
-        # Split records
-        installed_records = all_records.filtered(lambda r: r.box_status == 'installed')
-        not_installed_records = all_records.filtered(lambda r: r.box_status != 'installed')
-
-        # ❌ If ALL are installed → block
-        if installed_records and not not_installed_records:
-            raise ValidationError(
-                _('All donation boxes are already installed. Cannot reset to draft.')
-            )
-
-        # ✅ If NONE installed → process ALL
-        records_to_process = not_installed_records or all_records
-
-        # Collect lot_ids
-        lot_ids = records_to_process.mapped('lot_id').ids
-
-        # Reset lots
-        self.env['stock.lot'].browse(lot_ids).write({
-            'lot_consume': False,
-            'location_id': self.source_location_id.id
-        })
-
-        # ❗ Delete ONLY processed records (skip installed)
-        records_to_process.unlink()
-
-        # Delete keys (common cleanup)
-        self.env['key'].search([
-            ('donation_box_request_id', '=', self.id)
-        ]).unlink()
-
-        self.status = 'draft'
     
     def generate_records(self):
         for donation_box in self.donation_box_request_line_ids:
@@ -119,25 +80,6 @@ class DonationBoxRequest(models.Model):
                 'lock_no': donation_box.lock_no,
                 'name': donation_box.key_tag
             })
-
-    def update_on_hand_quantity_with_stock_move(self, product, location, quantity):
-        # Ensure the product and location exist
-        if not product or not location:
-            raise ValidationError("Product or Location not found.")
-        
-        # Create a stock move to adjust the quantity
-        stock_move = self.env['stock.move'].create({
-            'name': 'Stock Move for ' + product.name,
-            'product_id': product.id,
-            'product_uom_qty': quantity,
-            'product_uom': product.uom_id.id,
-            'location_id': location.id,
-            'location_dest_id': location.id,  # Same location for adjustment
-        })
-        
-        stock_move._action_confirm()
-        stock_move._action_assign()
-        stock_move._action_done()
 
     def check_lines(self):
         lot_ids = self.donation_box_request_line_ids.mapped('lot_id.id')

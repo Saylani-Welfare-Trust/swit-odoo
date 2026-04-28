@@ -19,127 +19,86 @@ class RiderSchedule(models.TransientModel):
         
         return super(RiderSchedule, self).create(vals)
 
-
-
     def action_check_shift(self):
-        # today = fields.Date.today()
         employee = self.env.user.employee_id
 
-        # Find today's shift
-        rider_shift_obj = self.env['rider.schedule.day'].search([
-            ('rider_shift_id.rider_id', '=', employee.id),
-            # ('date', '=', today)
-        ])
-        if not rider_shift_obj:
-            raise UserError(_("No shift found for today. Please check your schedule."))
+        if not employee:
+            raise UserError(_("No employee linked to current user."))
 
         line_vals = []
 
-        for obj in rider_shift_obj:
-            # Old Code
+        # 🔹 Get all active key issuances for this rider (NO date filter)
+        key_issuances = self.env['key.issuance'].search([
+            ('rider_id', '=', employee.id),
+            ('state', 'in', ['issued', 'overdue']),
+        ])
 
-            # key_ids = self.env['key.issuance'].search([
-            #     ('key_id', 'in', obj.key_bunch_id.key_ids.ids),
-            #     ('state', 'in', ['issued', 'overdue']),
-            #     ('issue_date', '<=', obj.date),
-            # ])
+        if not key_issuances:
+            raise UserError(_("No active keys found for this rider."))
 
+        # 🔹 Get lot_ids
+        lot_ids = key_issuances.mapped('lot_id')
 
-            # New Code Start
-            # SHIFT keys
-            shift_key_ids = obj.key_bunch_id.key_ids.ids
+        # 🔹 Fetch existing collections (NO date restriction)
+        existing_collections = self.env['rider.collection'].search([
+            ('rider_id', '=', employee.id),
+            ('lot_id', 'in', lot_ids.ids),
+            ('state', 'not in', ['pending', 'donation_submit', 'paid']),
+        ])
 
-            # MANUAL keys (same rider + date)
-            manual_key_ids = self.env['key.issuance'].search([
+        existing_lot_ids = existing_collections.mapped('lot_id').ids
+
+        # 🔹 Add existing collections
+        for record in existing_collections:
+            line_vals.append((0, 0, {
+                'rider_collection_id': record.id,
+                'rider_id': record.rider_id.id,
+                'date': record.date,
+                'state': record.state,
+                'submission_time': record.submission_time,
+                'donation_box_registration_installation_id': record.donation_box_registration_installation_id.id,
+                'amount': record.amount,
+                'counterfeit_notes': record.counterfeit_notes,
+                'remarks': record.remarks,
+            }))
+
+        # 🔹 Find missing lot_ids
+        missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
+
+        # 🔹 Avoid duplicates (NO date restriction)
+        finalized_missing_lot_ids = []
+
+        for lot_id in missing_lot_ids:
+            already_exists = self.env['rider.collection'].search([
+                ('lot_id', '=', lot_id),
                 ('rider_id', '=', employee.id),
-                ('issue_date', '<=', obj.date),
-                ('state', 'in', ['issued', 'overdue']),
-            ]).mapped('key_id').ids
-
-            # COMBINE both (NO duplicates)
-            all_key_ids = list(set(shift_key_ids + manual_key_ids))
-
-            # FINAL issuance fetch
-            key_ids = self.env['key.issuance'].search([
-                ('key_id', 'in', all_key_ids),
-                ('state', 'in', ['issued', 'overdue']),
-                ('issue_date', '<=', obj.date),
-            ])
-
-            # New Code End 
-
-            lot_ids = key_ids.mapped('lot_id')
-            # lot_ids = obj.key_bunch_id.key_ids.filtered(lambda k:k.state == 'issued').mapped('lot_id')
-
-            # 🔹 Fetch existing collections for these lot_ids
-            existing_collections = self.env['rider.collection'].search([
-                ('rider_id', '=', employee.id),
-                ('date', '=', obj.date),
-                # ('is_complain_generated', '=', False),
-                # ('date', '<=', today),
-                ('lot_id', 'in', lot_ids.ids),
                 ('state', 'not in', ['pending', 'donation_submit', 'paid']),
-            ])
+            ], limit=1)
 
+            if not already_exists:
+                finalized_missing_lot_ids.append(lot_id)
 
-            # Get already existing lot_ids
-            existing_lot_ids = existing_collections.mapped('lot_id').ids
+        # 🔹 Create new collections
+        boxes = self.env['donation.box.registration.installation'].search([
+            ('lot_id', 'in', finalized_missing_lot_ids),
+            ('status', '!=', 'close')
+        ])
 
-            # 🔹 Add existing collections to the lines
-            for record in existing_collections:
-                line_vals.append((0, 0, {
-                    'rider_collection_id': record.id,
-                    'rider_id': record.rider_id.id,
-                    'day': record.day,
-                    'date': record.date,
-                    'state': record.state,
-                    'submission_time': record.submission_time,
-                    'donation_box_registration_installation_id': record.donation_box_registration_installation_id.id,
-                    'amount': record.amount,
-                    'counterfeit_notes': record.counterfeit_notes,
-                    'remarks': record.remarks,
-                }))
+        for box in boxes:
+            collection = self.env['rider.collection'].create({
+                'rider_id': employee.id,
+                'date': fields.Date.today(),  # optional (can remove if not needed)
+                'donation_box_registration_installation_id': box.id,
+            })
 
-            # 🔹 Create new collections only for missing lot_ids
-            missing_lot_ids = list(set(lot_ids.ids) - set(existing_lot_ids))
-            finalized_missing_lot_ids = []
+            line_vals.append((0, 0, {
+                'rider_collection_id': collection.id,
+                'date': collection.date,
+                'state': collection.state,
+                'donation_box_registration_installation_id': box.id,
+            }))
 
-            # raise UserError(str(missing_lot_ids)+" --------------- "+str(lot_ids.ids)+" --------------- "+str(existing_lot_ids))
-
-            if missing_lot_ids:
-                for missing_lot_id in missing_lot_ids:
-                    # if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', today)]):
-                    if not self.env['rider.collection'].search([('lot_id', '=', missing_lot_id), ('rider_id', '=', employee.id), ('date', '=', obj.date)]):
-                        finalized_missing_lot_ids.append(missing_lot_id)
-
-                boxes = self.env['donation.box.registration.installation'].search([
-                    ('lot_id', 'in', finalized_missing_lot_ids),
-                    ('status', '!=', 'close')
-                ])
-
-                for box in boxes:
-                    collection = self.env['rider.collection'].create({
-                        'rider_id': employee.id,
-                        'day': obj.day,
-                        'date': obj.date,
-                        'donation_box_registration_installation_id': box.id,
-                    })
-
-                    line_vals.append((0, 0, {
-                        'rider_collection_id': collection.id,
-                        'day': collection.day,
-                        'date': collection.date,
-                        'state': collection.state,
-                        'donation_box_registration_installation_id': box.id,
-                        # 'amount': collection.amount,
-                        # 'foreign_notes': collection.foreign_notes,
-                        # 'counterfeit_notes': collection.counterfeit_notes,
-                    }))
-
-        # raise UserError(f"All key issuances for rider: {[(k.id, k.key_id.name, k.state, k.issue_date) for k in key_ids]}")
-        # raise UserError(str(line_vals))           
-
-        # ✅ Build wizard
+        # 🔹 Build wizard
         rider_schedule = self.env['rider.schedule'].create({
             'rider_schedule_line_ids': line_vals
         })

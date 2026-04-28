@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -6,9 +6,14 @@ key_selection = [
     ('draft', 'Draft'),
     ('issued', 'Issued'),
     ('donation_receive', 'Donation Received'),
-    ('returned', 'Returned'),
     ('overdue', 'Overdue'),
     ('pending', 'Pending'),
+    ('returned', 'Returned'),
+]
+
+action_type_selection = [
+    ('bulk', 'Bulk'),
+    ('manual', 'Manual'),
 ]
 
 
@@ -16,21 +21,21 @@ class KeyIssuance(models.Model):
     _name = 'key.issuance'
     _description = 'Key Issuance'
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = 'key_name'
 
 
+    rider_id = fields.Many2one('Rider')
     key_id = fields.Many2one('key', string="Key", tracking=True)
-    rider_id = fields.Many2one(related='key_id.rider_id', string="Rider", store=True)
     donation_box_registration_installation_id = fields.Many2one(related='key_id.donation_box_registration_installation_id', string="Donation Box Registartion / Installation", store=True)
     
+    name = fields.Char('Key Name', default="New")
     key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
-    rider_name = fields.Char(related='rider_id.name', string="Rider Name", store=True)
 
-    issued_on = fields.Datetime(string="Issued On", default=fields.Datetime.now)
-    issue_date = fields.Date(string="Issued Date", default=fields.Date.today())
-    returned_on = fields.Datetime(string="Returned On")
+    issued_on = fields.Datetime('Issued On', default=fields.Datetime.now)
+    issue_date = fields.Date('Issued Date')
+    returned_on = fields.Datetime('Returned On')
     
     state = fields.Selection(selection=key_selection, default='draft', string="Status")
+    action_type = fields.Selection(selection=action_type_selection, default='bulk', string="Action Type")
 
     donation_amount = fields.Float('Donation Amount')
 
@@ -65,9 +70,6 @@ class KeyIssuance(models.Model):
 
     def action_return(self):
         for record in self:
-            # if not record.donation_amount:
-            #     raise ValidationError(str(f'Please enter the Amount of Donation Collected against key ( {self.key_id.name} )'))
-
             record.state = 'returned'
             record.returned_on = fields.Datetime.now()
             record.key_id.state = 'available'
@@ -147,3 +149,13 @@ class KeyIssuance(models.Model):
             "id": key_obj.id,
             "donor_id": box.donor_id.id
         }
+    
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('key_issuance') or ('New')
+        if vals.get('issued_on'):
+            issued_on = fields.Datetime.from_string(vals['issued_on'])
+            vals['issue_date'] = issued_on.date()
+
+        return super(KeyIssuance, self).create(vals)

@@ -4,6 +4,7 @@ class ForeignCurrencyWizard(models.TransientModel):
     _name = 'foreign.currency.wizard'
     _description = 'Foreign Currency Wizard'
 
+
     line_ids = fields.One2many(
         'foreign.currency.wizard.line',
         'wizard_id',

@@ -10,7 +10,6 @@ box_status_selection = [
 status_selection = [
     ('draft', 'Draft'),
     ('installed', 'Installed'),
-    ('approved', 'Approved'),
     ('available', 'Available'),
     ('change_request', 'Change Request'),
     ('close', 'Closed'),
@@ -31,10 +30,8 @@ class DonationBoxRegistrationInstallation(models.Model):
     product_id = fields.Many2one('product.product', string="Box Category")
     country_id = fields.Many2one(related='donor_id.country_code_id', string="Phone Code", store=True, tracking=True)
     
-    rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     installer_id = fields.Many2one('hr.employee', string="Installer", tracking=True)
-    employee_category_1_id = fields.Many2one('hr.employee.category', string="Employee 1 Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
-    employee_category_2_id = fields.Many2one('hr.employee.category', string="Employee 2 Category", default=lambda self: self.env.ref('bn_donation_box.installer_hr_employee_category', raise_if_not_found=False).id)
+    employee_category_2_id = fields.Many2one('hr.employee.category', string="Employee Installer Category", default=lambda self: self.env.ref('bn_donation_box.installer_hr_employee_category', raise_if_not_found=False).id)
     
     city_id = fields.Many2one('account.analytic.account', string="City", tracking=True)
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
@@ -65,13 +62,16 @@ class DonationBoxRegistrationInstallation(models.Model):
     
     def action_install(self):
         if not self.donor_id:
-            donor = self.env['res.partner'].create({
-                'name': self.shop_name,
-                'street': self.location,
-                'country_code_id': self.country_id.id,
-                'mobile': self.contact_no,
-                'category_id': [(6, 0, [2, 4, 14])],
-            })
+            donor = self.env['res.partner'].search([('name', '=', self.shop_name)]) or None
+
+            if not donor:
+                donor = self.env['res.partner'].create({
+                    'name': self.shop_name,
+                    'street': self.location,
+                    'country_code_id': self.country_id.id,
+                    'mobile': self.contact_no,
+                    'category_id': [(6, 0, [2, 4, 14])],
+                })
 
             self.donor_id = donor.id
 
@@ -79,22 +79,10 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.status = 'installed'
 
     def action_approved(self):
-        if not self.donor_id:
-            donor = self.env['res.partner'].create({
-                'name': self.shop_name,
-                'street': self.location,
-                'country_code_id': self.country_id.id,
-                'mobile': self.contact_no,
-                'category_id': [(6, 0, [2, 4, 14])],
-            })
-
-            self.donor_id = donor.id
-
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
 
         if key:
             key.key_bunch_id = self.key_bunch_id.id
-            key.rider_id = self.rider_id.id
             key.donation_box_request_id = self.donation_box_request_id.id
             key.donation_box_registration_installation_id = self.id
 
@@ -110,14 +98,8 @@ class DonationBoxRegistrationInstallation(models.Model):
         return super(DonationBoxRegistrationInstallation, self).create(vals)
     
     def install_donation_box(self, records):
-        # raise ValidationError(str(records))
-        
         for rec in records:
             rec.action_install()
-    
-    def add_demo_rider(self, records):
-        for rec in records:
-            rec.rider_id = 1 # Default Odoo Administrator ID
 
     def approve_donation_box(self, records):
         for rec in records:
@@ -127,7 +109,6 @@ class DonationBoxRegistrationInstallation(models.Model):
         for rec in records:
             lock_no = rec.donation_box_request_id.donation_box_request_line_ids.filtered(lambda x:x.lot_id == rec.lot_id).lock_no
 
-            # raise ValidationError(lock_no)
             rec.lock_no = lock_no
 
     def action_change_request(self):

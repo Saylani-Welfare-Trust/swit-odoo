@@ -6,7 +6,7 @@ class DonationProductOnhand(models.Model):
     _name = 'donation.product.onhand'
     _description = 'Donation Product On-hand Quantity'
     _order = 'location_name, product_name'
-    _auto = False
+    
 
     product_id = fields.Integer(string='Product ID', readonly=True)
     product_name = fields.Char(string='Product Name', readonly=True)

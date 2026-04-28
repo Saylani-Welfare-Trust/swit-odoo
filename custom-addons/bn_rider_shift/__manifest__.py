@@ -6,7 +6,6 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Rider Shift',
     'depends': [
-        'mail',
         'bn_key_management',
         'bn_donation_box',
     ],
@@ -23,4 +22,9 @@
     ],
     'auto_install': False,
     'application': False,
+    'assets': {
+        'point_of_sale._assets_pos': [
+            'bn_rider_shift/static/src/app/**/*',
+        ],
+    },
 }

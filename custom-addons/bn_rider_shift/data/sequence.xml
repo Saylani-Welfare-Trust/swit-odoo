@@ -9,6 +9,13 @@
             <field name="prefix">RS/%(year)s/</field>
             <field name="padding">5</field>
         </record>
+        
+        <record id="rider_shift_sequence" model="ir.sequence">
+            <field name="name">Rider Shift</field>
+            <field name="code">rider_shift_sequence</field>
+            <field name="prefix">RSH/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
     
     </data>
 

@@ -11,8 +11,6 @@ class DonationBoxRequestLine(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     lot_id = fields.Many2one('stock.lot', string="Lot")
 
-    used = fields.Boolean('Used in Picking', default=False)
-
     lock_no = fields.Char('Lock No.')
     key_tag = fields.Char('Key Tag')
     old_box_no = fields.Char('Old Box No.')

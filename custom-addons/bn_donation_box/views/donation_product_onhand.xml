@@ -14,8 +14,6 @@
         </field>
     </record>
 
-
-
     <!-- Donation Product On-hand Search View -->
     <record id="donation_product_onhand_view_search" model="ir.ui.view">
         <field name="name">donation.product.onhand.view.search</field>

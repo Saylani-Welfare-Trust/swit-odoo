@@ -10,8 +10,7 @@
                 <field name="donation_box_registration_installation_ids" readonly="1">
                     <tree>
                         <field name="donor_id" string="Donor" />
-                        <field name="installer_id" string="Installer" />
-                        <field name="rider_id" string="Rider" />
+                        <field name="installer_id" />
                         <field name="name" string="Registration No." />
                         <field name="location" />
                         <field name="contact_person" />
@@ -35,8 +34,7 @@
                 <field name="donation_box_registration_installation_ids" readonly="1">
                     <tree>
                         <field name="donor_id" string="Donor" />
-                        <field name="installer_id" string="Installer" />
-                        <field name="rider_id" string="Rider" />
+                        <field name="installer_id" />
                         <field name="name" string="Registration No." />
                         <field name="location" />
                         <field name="contact_person" />

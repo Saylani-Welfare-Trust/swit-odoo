@@ -17,6 +17,4 @@ class KeyBunch(models.Model):
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
-    rider_id = fields.Many2one('hr.employee', string="Rider")
-
     key_ids = fields.One2many('key', 'key_bunch_id', string="Keys")

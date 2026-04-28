@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <form>
                  <header>
-                    <button name="action_draft" string="Set To Draft" type="object" invisible="1" />
                     <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
                     <button name="action_reject" string="Rejected" type="object" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
                     
@@ -43,6 +42,7 @@
                                     <field name="lock_no" />
                                     <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
+
                                     <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved'" />
                                 </tree>
                             </field>
