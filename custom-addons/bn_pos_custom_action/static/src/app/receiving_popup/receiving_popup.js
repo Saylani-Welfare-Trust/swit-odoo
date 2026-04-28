@@ -861,7 +861,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Add products to POS order
      */
     async addProductsToOrder(lines, record, selectedOrder) {
-        if (!record.state == 'donate'){
+        if (record.state !== 'donate'){
             let addedProductsCount = 0;
             console.log("Adding products for lines:", lines);
             for (let line of lines) {
