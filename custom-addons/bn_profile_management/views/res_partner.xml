@@ -51,7 +51,7 @@
                             <field name="gender" required="donee_required_fields" />
                             <field name="religion" />
 
-                           <!-- <field name="donee_required_fields" invisible="1" /> -->
+                           <field name="donee_required_fields" invisible="1" />
                            <field name="welfare_donee_required_fields" invisible="1" />
                            <field name="welfare_donee_female_required" invisible="1" />
 
@@ -71,8 +71,8 @@
                             <field name="date_of_birth" required="donee_required_fields" />
                             <field name="age" />
                             <field name="father_name" required="donee_required_fields" />
-                            <field name="father_cnic_no" required="donee_required_fields" />
-                            <field name="next_kin" required="donee_required_fields" />
+                            <field name="father_cnic_no" required="welfare_donee_required_fields" />
+                            <field name="next_kin" required="welfare_donee_required_fields" />
                             <field name="nearest_land_mark" required="donee_required_fields" />
                             <field name="reference_remarks" />
                             <field name="bank_wallet_account" />

@@ -183,7 +183,10 @@
                             <group>
                                 <group name="general_info_col_1">
                                     <field name="is_change_request" invisible="1" />
+                                    <field name="donee_required_fields" invisible="1" />
                                     <field name="surname" />
+                                    <field name="welfare_donee_required_fields" invisible="1" />
+                                   <field name="welfare_donee_female_required" invisible="1" />
                                     <field name="gender" required="donee_required_fields" />
                                     <field name="religion" />
                                     <field name="martial_status" />
