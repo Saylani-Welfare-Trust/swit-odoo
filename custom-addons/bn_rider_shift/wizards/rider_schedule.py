@@ -40,7 +40,9 @@ class RiderSchedule(models.TransientModel):
             raise UserError(_("No active keys found for this rider."))
 
         # 🔹 Get lot_ids
-        lot_ids = key_issuances.mapped('lot_id').ids
+        lot_ids = key_issuances.mapped('key_id').filtered(
+            lambda k: k.donation_box_registration_installation_id
+        ).mapped('donation_box_registration_installation_id').mapped('lot_id').ids
 
         # 🔹 Fetch existing ACTIVE collections
         existing_collections = self.env['rider.collection'].search([
