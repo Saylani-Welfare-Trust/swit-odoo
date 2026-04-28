@@ -86,8 +86,8 @@ class ResPartner(models.Model):
     is_change_request = fields.Boolean('Is Change Request')
     is_donor = fields.Boolean('Is Donor', compute="_set_is_donor", store=True)
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
-    welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
-    welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
+    welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=False)
+    welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=False)
     # required_optional_fields = fields.Boolean('Required Optional Fields', compute="_compute_required_flags", store=True)
     @api.constrains('mobile')
     def _check_mobile_number(self):
