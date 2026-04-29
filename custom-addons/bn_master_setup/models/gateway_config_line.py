@@ -12,6 +12,9 @@ class GatewayConfigLine(models.Model):
 
                                         )
 
-    product_id = fields.Many2one('product.product', string="Product")
+    product_id = fields.Many2one('product.product', 
+                                 string="Product",
+                                 ondelete='set null' 
+)
     
     name = fields.Char('Product Name')
