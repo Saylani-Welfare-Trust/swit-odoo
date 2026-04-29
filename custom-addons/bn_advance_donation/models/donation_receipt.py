@@ -376,7 +376,7 @@ class DonationReceipt(models.Model):
 
             if data['payment_type'] == 'cheque':
                 payment.write({
-                    'bank_id': int(data['bank_id']),
+                    # 'bank_id': int(data['bank_id']),
                     'cheque_number': data['cheque_number'],
                     'cheque_date': data['cheque_date'],
                 })
