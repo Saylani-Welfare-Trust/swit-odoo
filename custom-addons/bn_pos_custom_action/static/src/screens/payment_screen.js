@@ -371,7 +371,7 @@ patch(PaymentScreen.prototype, {
         );
 
         if (donationLines && donationLines.length > 0) {
-            try {
+            // try {
                 
                 for (const donationLine of donationLines) {
                     
@@ -409,8 +409,8 @@ patch(PaymentScreen.prototype, {
                         'register_pos_payment',
                         [data]
                     );
-                    // console.log("📤 Data sent for donation receipt creation:", data);
-                    // console.log("📥 Result from donation receipt creation:", result);
+                    console.log("📤 Data sent for donation receipt creation:", data);
+                    console.log("📥 Result from donation receipt creation:", result);
                     if (result.status === 'success') {
                         currentOrder.set_source_document(result.receipt_name);
 
@@ -422,16 +422,16 @@ patch(PaymentScreen.prototype, {
                         throw new Error(result.body || 'Failed to create donation receipt');
                     }
                 }
-            } catch (error) {
-                // console.log("📤 Data sent for donation receipt creation:", data);
-                // console.log("📥 Result from donation receipt creation:", result);
-                console.error("❌ [Advance Donation] Error creating donation receipt:", error);
-                this.env.services.notification.add(
-                    "Failed to create donation receipt. Order cannot be completed.",
-                    { type: 'warning' }
-                );
-                return; // Stop the order if donation receipt creation fails
-            }
+            // } catch (error) {
+            //     // console.log("📤 Data sent for donation receipt creation:", data);
+            //     // console.log("📥 Result from donation receipt creation:", result);
+            //     console.error("❌ [Advance Donation] Error creating donation receipt:", error);
+            //     this.env.services.notification.add(
+            //         "Failed to create donation receipt. Order cannot be completed.",
+            //         { type: 'warning' }
+            //     );
+            //     return; // Stop the order if donation receipt creation fails
+            // }
         }
         // --- WELFARE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
