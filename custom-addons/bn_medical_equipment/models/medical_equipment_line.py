@@ -35,7 +35,6 @@ class DonationHomeServiceLine(models.Model):
         'stock.lot',
         string="Allowed Lots",
         compute="_compute_allowed_lot_ids",
-        store=True,
     )
     
 
