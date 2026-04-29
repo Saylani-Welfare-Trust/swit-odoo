@@ -69,7 +69,7 @@ class RiderCollection(models.Model):
             'collection_ids': [{
                 'id': collection.id,
                 'day': collection.day,
-                'date': collection.date.strftime('%d-%m-%Y'),
+                'date': collection.date,
                 'lot_id': collection.lot_id.id if collection.lot_id else False,
                 'box_no': collection.lot_id.name if collection.lot_id else '',
                 'shop_name': collection.shop_name,

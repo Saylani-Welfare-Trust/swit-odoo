@@ -72,15 +72,6 @@ class RiderScheduleLine(models.TransientModel):
 
         key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', 'in', ['issued', 'overdue'])], limit=1)
         key_issuance.state = 'pending'
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'rider.schedule',
-            'view_mode': 'form',
-            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
-            'res_id': self.rider_schedule_id.id,
-            'target': 'current'
-        }
     
     def mark_as_submit(self):
         if self.amount < 0:
@@ -104,15 +95,6 @@ class RiderScheduleLine(models.TransientModel):
                 'submission_time': self.submission_time,
                 'amount': self.counterfeit_notes,
             })
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'rider.schedule',
-            'view_mode': 'form',
-            'view_id': self.env.ref('bn_rider_shift.rider_schedule_view_form').id,
-            'res_id': self.rider_schedule_id.id,
-            'target': 'current'
-        }
         
     def action_generate_complain(self):
         if not self.remarks:
