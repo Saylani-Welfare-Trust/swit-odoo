@@ -136,7 +136,6 @@
                                         width="200"
                                         options="{'no_quick_create': True, 'no_create_edit': True}"
                                         readonly="1"/>
-                                    <field name="allowed_lot_ids" column_invisible="1" />
                                     <field name="lot_ids"
                                         options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
                                         string="Product No./Lot"
