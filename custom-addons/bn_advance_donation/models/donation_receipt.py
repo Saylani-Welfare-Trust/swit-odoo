@@ -339,16 +339,16 @@ class DonationReceipt(models.Model):
             #             "status": "error",
             #             "body": "Please select bank",
             #         }
-            #     if not data['cheque_number']:
-            #         return {
-            #             "status": "error",
-            #             "body": "Please enter cheque number",
-            #         }
-            #     if not data['cheque_date']:
-            #         return {
-            #             "status": "error",
-            #             "body": "Please enter cheque date",
-            #         }
+                if not data['cheque_number']:
+                    return {
+                        "status": "error",
+                        "body": "Please enter cheque number",
+                    }
+                if not data['cheque_date']:
+                    return {
+                        "status": "error",
+                        "body": "Please enter cheque date",
+                    }
             
             _logger.info("Creating donation receipt...")
             
@@ -376,9 +376,9 @@ class DonationReceipt(models.Model):
 
             if data['payment_type'] == 'cheque':
                 payment.write({
-                    'bank_id': int(data['bank_id'] or False),
-                    'cheque_number': data['cheque_number' ] or False,
-                    'cheque_date': data['cheque_date'] or False,
+                    # 'bank_id': int(data['bank_id']),
+                    'cheque_number': data['cheque_number'],
+                    'cheque_date': data['cheque_date'],
                 })
                 _logger.info("Processing cheque payment...")
                 payment.action_paid()

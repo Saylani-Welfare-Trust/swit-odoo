@@ -399,7 +399,7 @@ patch(PaymentScreen.prototype, {
                     
                     // // Only add cheque fields if payment type is cheque
                     if (data.payment_type === 'cheque') {
-                        data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback                        
+                        // data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback                        
                         data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
                         data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
                     }
