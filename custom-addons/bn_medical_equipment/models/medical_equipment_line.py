@@ -39,17 +39,15 @@ class DonationHomeServiceLine(models.Model):
     )
     
 
-    @api.depends('product_id', 'donation_box_request_id.source_location_id')
+    @api.depends('product_id',)
     def _compute_allowed_lot_ids(self):
         for line in self:
-            if not line.product_id or not line.donation_box_request_id.source_location_id:
+            if not line.product_id:
                 line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
                 continue
 
             lots = self.env['stock.lot'].search([
                 ('product_id', '=', line.product_id.id),
-                # ('product_qty', '>', 0),
-                ('location_id', '=', line.donation_box_request_id.source_location_id.id),
             ])
 
             lot_ids = lots.filtered(lambda l: not l.lot_consume)
