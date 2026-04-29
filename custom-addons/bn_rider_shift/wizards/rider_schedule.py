@@ -50,6 +50,7 @@ class RiderSchedule(models.TransientModel):
             ('rider_id', '=', employee.id),
             ('lot_id', 'in', lot_ids),
             ('date', '=', today),
+            ('state', 'in', unfinished_states)
         ])
 
         # =========================================================
