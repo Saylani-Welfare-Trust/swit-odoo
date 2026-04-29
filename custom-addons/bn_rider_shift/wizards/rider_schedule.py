@@ -29,8 +29,7 @@ class RiderSchedule(models.TransientModel):
         today = fields.Date.today()
 
         # ✅ Define states
-        active_states = ['donation_not_collected', 'donation_collected']
-        unfinished_states = ['pending', 'draft', 'donation_not_collected']
+        unfinished_states = ['donation_not_collected', 'donation_collected']
 
         # 🔹 Get active key issuances
         key_issuances = self.env['key.issuance'].search([
