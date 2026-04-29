@@ -333,12 +333,12 @@ class DonationReceipt(models.Model):
                     "body": "Invalid amount format",
                 }
 
-            if data['payment_type'] == 'cheque':
-                if not data['bank_id']:
-                    return {
-                        "status": "error",
-                        "body": "Please select bank",
-                    }
+            # if data['payment_type'] == 'cheque':
+            #     if not data['bank_id']:
+            #         return {
+            #             "status": "error",
+            #             "body": "Please select bank",
+            #         }
                 if not data['cheque_number']:
                     return {
                         "status": "error",
