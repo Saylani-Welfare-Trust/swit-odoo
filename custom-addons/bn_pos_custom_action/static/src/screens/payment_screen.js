@@ -397,14 +397,14 @@ patch(PaymentScreen.prototype, {
                         'product_id': donationLine.product.id,
                     };
                     
-                    // Only add cheque fields if payment type is cheque
-                    if (data.payment_type === 'cheque') {
-                        data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback
-                        data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
-                        data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
-                    }
+                    // // Only add cheque fields if payment type is cheque
+                    // if (data.payment_type === 'cheque') {
+                    //     data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback
+                    //     data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
+                    //     data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
+                    // }
 
-                    const result = await this.env.services.orm.call(
+                    const result = await     this.env.services.orm.call(
                         'advance.donation.receipt',
                         'register_pos_payment',
                         [data]
