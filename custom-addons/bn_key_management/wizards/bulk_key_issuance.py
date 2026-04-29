@@ -44,7 +44,8 @@ class BulkKeyIssuance(models.TransientModel):
             if rec.date and rec.rider_id:
 
                 schedule_days = self.env['rider.schedule.day'].search([
-                    ('rider_shift_id.rider_id', '=', rec.rider_id.id)
+                    ('rider_shift_id.rider_id', '=', rec.rider_id.id),
+                    ('date', '=', fields.Date.today())
                 ])
 
                 if rec.action_type == 'issue':
