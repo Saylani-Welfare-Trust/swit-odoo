@@ -379,6 +379,7 @@ class MedicalEquipment(models.Model):
                 'product_uom': product_line.product_id.uom_id.id,
                 'location_id': operation_type.default_location_src_id.id,
                 'location_dest_id': operation_type.default_location_dest_id.id,
+                'lot_ids': [(6, 0, product_line.lot_ids.ids)],        
                 'name': product_line.product_id.name,
             }) for product_line in self.medical_equipment_line_ids],
         }
