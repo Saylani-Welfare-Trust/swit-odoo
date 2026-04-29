@@ -389,7 +389,7 @@ patch(PaymentScreen.prototype, {
 
                     // Prepare data for register_pos_payment
                     const data = {
-                        'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
+                        'payment_type': paymentMethod.type === 'Cash' ? 'cash' : 'cheque',
                         'is_donation_id': false,
                         'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
