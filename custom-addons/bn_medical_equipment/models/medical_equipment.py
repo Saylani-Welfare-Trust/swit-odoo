@@ -1401,3 +1401,10 @@ class MedicalEquipment(models.Model):
     #     except Exception as e:
     #         raise ValidationError(f"Failed to create medical equipment application in welfare portal: {str(e)}")
     
+
+
+
+
+
+
+
