@@ -594,6 +594,7 @@ class MedicalEquipment(models.Model):
             _logger.error(f"Welfare API Request failed: {str(e)}")
             raise Exception(f"Network error: {str(e)}")
         except Exception as e:
+            raise ValidationError(f"An error occurred while processing the welfare portal request: {str(result)}")
             _logger.error(f"Welfare API Processing failed: {str(e)}")
             raise e
     
