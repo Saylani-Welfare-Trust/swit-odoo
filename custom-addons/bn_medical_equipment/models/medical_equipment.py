@@ -1014,6 +1014,7 @@ class MedicalEquipment(models.Model):
 
             
             if not result.get('json', {}):
+                raise ValidationError(f"Unexpected API response format: {result}")
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
                 
@@ -1023,7 +1024,8 @@ class MedicalEquipment(models.Model):
             _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
             raise Exception(f"Network error: {str(e)}")
         except Exception as e:
-            _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
+            raise ValidationError(f"An error occurred while processing the Sadqa Jaria portal request: {str(result)}")
+            _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")e
             raise e
     def _get_sadqa_api_headers(self):
         """Get API authentication headers"""
