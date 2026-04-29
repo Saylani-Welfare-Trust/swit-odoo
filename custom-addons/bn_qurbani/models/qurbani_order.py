@@ -136,6 +136,11 @@ class QurbaniOrder(models.Model):
         # 3. GROUP (ONLY HISSA COUNT)
         # ==================================================
         for line in data['order_lines']:
+            product = self.env['product.product'].browse(line['product_id'])
+
+            # ❌ Skip non-qurbani products
+            if 'qurbani' not in product.categ_id.name.lower():
+                continue
 
             demand = _get_demand(line)
             if not demand:
@@ -210,6 +215,11 @@ class QurbaniOrder(models.Model):
         product_lines = []
 
         for line in data['order_lines']:
+            product = self.env['product.product'].browse(line['product_id'])
+
+            # ❌ Skip non-qurbani products
+            if 'qurbani' not in product.categ_id.name.lower():
+                continue
 
             schedule = line.get('qurbani_schedule', {})
             slot = schedule.get('slot', {})
