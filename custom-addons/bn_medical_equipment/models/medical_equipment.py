@@ -1048,7 +1048,6 @@ class MedicalEquipment(models.Model):
             # message = "✅ Donee created in portal"  # Add this line
         # Check for applications
         application = self._search_portal_applications()
-        raise UserError(str(application))
         # _logger.info(f"Applications found: {application}")    
         app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
