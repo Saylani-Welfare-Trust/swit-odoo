@@ -53,38 +53,6 @@ class RiderSchedule(models.TransientModel):
             }))
 
         # =========================================================
-        # 🔥 CREATE MISSING TODAY COLLECTIONS (ONLY BASED ON BOXES)
-        # =========================================================
-        existing_today_box_ids = self.env['rider.collection'].search([
-            ('rider_id', '=', employee.id),
-            ('date', '=', today),
-        ]).mapped('donation_box_registration_installation_id').ids
-
-        boxes = self.env['donation.box.registration.installation'].search([
-            ('status', '!=', 'close')
-        ])
-
-        missing_boxes = boxes.filtered(
-            lambda b: b.id not in existing_today_box_ids
-        )
-
-        for box in missing_boxes:
-            collection = self.env['rider.collection'].create({
-                'rider_id': employee.id,
-                'date': today,
-                'donation_box_registration_installation_id': box.id,
-                'state': 'donation_not_collected',
-            })
-
-            line_vals.append((0, 0, {
-                'rider_collection_id': collection.id,
-                'rider_id': employee.id,
-                'date': today,
-                'state': collection.state,
-                'donation_box_registration_installation_id': box.id,
-            }))
-
-        # =========================================================
         # 🔹 CREATE WIZARD
         # =========================================================
         rider_schedule = self.env['rider.schedule'].create({
