@@ -84,6 +84,8 @@ class KeyIssuance(models.Model):
 
     @api.model
     def set_donation_amount(self, data):
+        raise ValidationError(str(data))
+
         if not data:
             return {
                 "status": "error",
