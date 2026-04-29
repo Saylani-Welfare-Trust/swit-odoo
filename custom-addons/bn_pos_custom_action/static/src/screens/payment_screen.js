@@ -423,6 +423,8 @@ patch(PaymentScreen.prototype, {
                     }
                 }
             } catch (error) {
+                console.log("📤 Data sent for donation receipt creation:", data);
+                console.log("📥 Result from donation receipt creation:", result);
                 console.error("❌ [Advance Donation] Error creating donation receipt:", error);
                 this.env.services.notification.add(
                     "Failed to create donation receipt. Order cannot be completed.",
