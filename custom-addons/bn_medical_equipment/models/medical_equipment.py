@@ -1082,7 +1082,7 @@ class MedicalEquipment(models.Model):
         try:
             result = self._make_sadqa_api_call(self.env.company.search_endpoint)
             applications = result
-            raise ValidationError(str(applications))
+            # raise ValidationError(str(applications))
             if applications:
                 _logger.info(f"Unsynced applications found: {applications}")
                 # Find matching application based on donee information
@@ -1091,7 +1091,7 @@ class MedicalEquipment(models.Model):
             return None
             
         except Exception as e:
-            raise ValidationError(str(e))
+            # raise ValidationError(str(e))
             _logger.warning(f"Error occurred while searching portal applications: {str(e)}")
             return None
 
