@@ -77,6 +77,7 @@ class RiderCollection(models.Model):
                 'contact_number': collection.contact_number,
                 'box_location': collection.box_location,
                 'amount': collection.amount,
+                'date': collection.date,
                 'rider_id': collection.rider_id.id
             } for collection in collection_ids],
             'rider_ids': [

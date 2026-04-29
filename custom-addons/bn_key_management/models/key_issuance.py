@@ -118,7 +118,7 @@ class KeyIssuance(models.Model):
                 "body": f"Please enter the correct amount collected against {data['box_no']}",
             }
 
-        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', 'in', ['issued', 'overdue'])], limit=1)
+        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
 
         if not key_obj:
             return {
