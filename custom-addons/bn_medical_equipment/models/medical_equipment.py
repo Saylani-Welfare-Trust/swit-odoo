@@ -585,7 +585,6 @@ class MedicalEquipment(models.Model):
             _logger.info(f"URL: {url} Data: {data} api response: {result}")
             
             if not result.get('json', {}):
-                raise ValidationError(f"Unexpected API response format: {result}")
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
             
