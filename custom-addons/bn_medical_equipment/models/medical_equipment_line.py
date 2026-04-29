@@ -31,26 +31,33 @@ class DonationHomeServiceLine(models.Model):
         store=True
     )
     
-    allowed_lot_ids = fields.Many2many(
-        'stock.lot',
-        string="Allowed Lots",
-        compute="_compute_allowed_lot_ids",
-    )
+    # allowed_lot_ids = fields.Many2many(
+    #     'stock.lot',
+    #     string="Allowed Lots",
+    #     compute="_compute_allowed_lot_ids",
+    # )
     
+    @api.constrains('lot_ids', 'quantity')
+    def _check_lot_quantity(self):
+        for rec in self:
+            if rec.quantity and len(rec.lot_ids) > rec.quantity:
+                raise ValidationError(
+                    f"You can only select {rec.quantity} lot(s) based on the quantity."
+                )
 
-    @api.depends('product_id',)
-    def _compute_allowed_lot_ids(self):
-        for line in self:
-            if not line.product_id:
-                line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
-                continue
+    # @api.depends('product_id',)
+    # def _compute_allowed_lot_ids(self):
+    #     for line in self:
+    #         if not line.product_id:
+    #             line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
+    #             continue
 
-            lots = self.env['stock.lot'].search([
-                ('product_id', '=', line.product_id.id),
-            ])
+    #         lots = self.env['stock.lot'].search([
+    #             ('product_id', '=', line.product_id.id),
+    #         ])
 
-            lot_ids = lots.filtered(lambda l: not l.lot_consume)
-            line.allowed_lot_ids = lot_ids
+    #         lot_ids = lots.filtered(lambda l: not l.lot_consume)
+    #         line.allowed_lot_ids = lot_ids
 
     @api.depends('base_security_deposit', 'actual_deposit_percentage', 'quantity')
     def _compute_security_deposit(self):
