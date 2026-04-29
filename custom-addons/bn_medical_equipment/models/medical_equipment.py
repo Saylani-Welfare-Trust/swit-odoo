@@ -384,12 +384,19 @@ class MedicalEquipment(models.Model):
             }) for product_line in self.medical_equipment_line_ids],
         }
         
+
         # Create the stock picking
         stock_picking = self.env['stock.picking'].create(picking_vals)  
         stock_picking.action_confirm()
         stock_picking.action_assign()
         stock_picking.button_validate()
         
+        for product_line in self.medical_equipment_line_ids:
+            for lot in product_line.lot_ids:
+                if lot.lot_consume:
+                    raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
+                lot.lot_consume = True
+                
         # Link the stock picking to your medical equipment record
         self.write({
             'picking_id': stock_picking.id,
