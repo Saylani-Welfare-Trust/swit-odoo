@@ -136,6 +136,11 @@
                                         width="200"
                                         options="{'no_quick_create': True, 'no_create_edit': True}"
                                         readonly="1"/>
+                                    <field name="allowed_lot_ids" column_invisible="1" />
+                                    <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
+                                        string="Box No." 
+                                        domain="[('id', 'in', allowed_lot_ids)]" 
+                                        width="100"/>
 
                                     <field name="quantity" width="100"/>
                                     <field name="base_security_deposit" width="150" readonly="1"/>
