@@ -6,15 +6,8 @@ class GatewayConfigLine(models.Model):
     _description = "Gateway Config Line"
 
 
-    gateway_config_id = fields.Many2one('gateway.config', 
-                                        string="Gateway Config",
-                                        ondelete='cascade'   
+    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config",)
 
-                                        )
-
-    product_id = fields.Many2one('product.product', 
-                                 string="Product",
-                                 ondelete='set null' 
-)
+    product_id = fields.Many2one('product.product', string="Product",    ondelete='set null')
     
     name = fields.Char('Product Name')
