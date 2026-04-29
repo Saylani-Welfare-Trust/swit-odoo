@@ -409,8 +409,9 @@ patch(PaymentScreen.prototype, {
                         'register_pos_payment',
                         [data]
                     );
-
-                    if (result.status === 'success') {
+                    console.log("📤 Data sent for donation receipt creation:", data);
+                    console.log("📥 Result from donation receipt creation:", result);
+                    if (result.status === 'success') {Failed to create
                         currentOrder.set_source_document(result.receipt_name);
 
                         this.env.services.notification.add(
