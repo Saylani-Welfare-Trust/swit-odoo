@@ -11,7 +11,8 @@ class DonationHomeServiceLine(models.Model):
     medical_equipment_category_id = fields.Many2one('medical.equipment.category', string="Medical Equipment Category")
     product_id = fields.Many2one('product.product', string="Product",related='medical_equipment_category_id.product_id', store=True )
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
-    
+    lot_id = fields.Many2one('stock.lot', string="Lot")
+
     quantity = fields.Integer('Quantity', default=1)
     base_security_deposit = fields.Monetary(
         string='Base Security Deposit', 
@@ -29,6 +30,30 @@ class DonationHomeServiceLine(models.Model):
         compute='_compute_security_deposit',
         store=True
     )
+    
+    allowed_lot_ids = fields.Many2many(
+        'stock.lot',
+        string="Allowed Lots",
+        compute="_compute_allowed_lot_ids",
+        store=False
+    )
+    
+
+    @api.depends('product_id', 'donation_box_request_id.source_location_id')
+    def _compute_allowed_lot_ids(self):
+        for line in self:
+            if not line.product_id or not line.donation_box_request_id.source_location_id:
+                line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
+                continue
+
+            lots = self.env['stock.lot'].search([
+                ('product_id', '=', line.product_id.id),
+                # ('product_qty', '>', 0),
+                ('location_id', '=', line.donation_box_request_id.source_location_id.id),
+            ])
+
+            lot_ids = lots.filtered(lambda l: not l.lot_consume)
+            line.allowed_lot_ids = lot_ids
 
     @api.depends('base_security_deposit', 'actual_deposit_percentage', 'quantity')
     def _compute_security_deposit(self):
