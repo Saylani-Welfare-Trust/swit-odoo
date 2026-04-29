@@ -411,7 +411,7 @@ patch(PaymentScreen.prototype, {
                     );
                     console.log("📤 Data sent for donation receipt creation:", data);
                     console.log("📥 Result from donation receipt creation:", result);
-                    if (result.status === 'success') {Failed to create
+                    if (result.status === 'success') {
                         currentOrder.set_source_document(result.receipt_name);
 
                         this.env.services.notification.add(
