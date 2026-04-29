@@ -114,7 +114,7 @@ class ResPartner(models.Model):
         for rec in self:
             # For welfare-sensitive fields, if gender is female, required = True
             # (overrides the welfare exclusion)
-            rec.welfare_donee_female_required = rec.gender == 'female' or rec.welfare_donee_required_fields
+            rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
 
     @api.depends('name', 'category_id')
     def _set_donee_required_fields(self):
