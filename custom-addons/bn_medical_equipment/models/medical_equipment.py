@@ -350,7 +350,10 @@ class MedicalEquipment(models.Model):
             return_picking.action_confirm()
             return_picking.action_assign()
             return_picking.button_validate()
-            
+            for product_line in self.medical_equipment_line_ids:
+                for lot in product_line.lot_ids:
+                    if lot.lot_consume:
+                        lot.lot_consume = False
             # Show success message and open the return picking
             return True
         

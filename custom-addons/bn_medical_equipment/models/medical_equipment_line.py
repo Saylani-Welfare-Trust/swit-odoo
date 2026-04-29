@@ -11,7 +11,7 @@ class DonationHomeServiceLine(models.Model):
     medical_equipment_category_id = fields.Many2one('medical.equipment.category', string="Medical Equipment Category")
     product_id = fields.Many2one('product.product', string="Product",related='medical_equipment_category_id.product_id', store=True )
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
-    lot_ids = fields.Many2many('stock.lot', string="Allowed Lots")
+    lot_ids = fields.Many2many('stock.lot', string="Product No./Lot")
 
     quantity = fields.Integer('Quantity', default=1)
     base_security_deposit = fields.Monetary(

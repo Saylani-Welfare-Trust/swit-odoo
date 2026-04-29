@@ -139,6 +139,7 @@
                                     <field name="allowed_lot_ids" column_invisible="1" />
                                     <field name="lot_ids"
                                         options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
+                                        string="Product No./Lot"
                                         widget="many2many_tags"
                                         domain="[('product_id', '=', product_id), ('lot_consume', '=', False)]"
                                          width="100"
