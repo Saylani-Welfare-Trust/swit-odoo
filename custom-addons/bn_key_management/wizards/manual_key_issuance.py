@@ -81,7 +81,8 @@ class ManualKeyIssuance(models.TransientModel):
             # 🔴 Check if ANY key in this bunch is already issued
             issued_keys = self.env['key.issuance'].search([
                 ('key_id', 'in', bunch_keys.ids),
-                ('state', '=', 'issued')
+                ('state', 'in', ['issued', 'overdue']),
+                ('action_type', '=', 'manual')
             ])
 
             if issued_keys:

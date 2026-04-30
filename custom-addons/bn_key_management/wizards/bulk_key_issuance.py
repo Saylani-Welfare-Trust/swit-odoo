@@ -77,7 +77,7 @@ class BulkKeyIssuance(models.TransientModel):
             # 🚫 Check if any key in bunch is already issued manually
             manual_issued_keys = KeyIssuance.search([
                 ('key_id', 'in', keys.ids),
-                ('state', '=', 'issued'),
+                ('state', 'in', ['issued', 'overdue']),
                 ('action_type', '=', 'manual')
             ])
 
