@@ -19,7 +19,7 @@ class GatewayConfig(models.Model):
 
     account_id = fields.Many2one('account.account', string="Debit Account", tracking=True)
 
-    gateway_config_line_ids = fields.One2many('gateway.config.line', 'gateway_config_id', string="Gateway Config Lines")
+    # gateway_config_line_ids = fields.One2many('gateway.config.line', 'gateway_config_id', string="Gateway Config Lines")
     gateway_config_header_ids = fields.One2many('gateway.config.header', 'gateway_config_id', string="Gateway Config Headers")
     gateway_config_currency_ids = fields.One2many('gateway.config.currency', 'gateway_config_id', string="Gateway Config Currencies")
 
