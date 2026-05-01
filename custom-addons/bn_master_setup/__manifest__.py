@@ -6,7 +6,12 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Master Setup',
     'depends': [
-        'mail', 'product'
+        'base',
+        'mail',
+        'product',
+        'analytic',
+        'stock',
+        'account',
     ],
     'data': [
         'security/ir.model.access.csv',
