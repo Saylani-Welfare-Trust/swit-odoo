@@ -8,9 +8,7 @@ class GatewayConfigLine(models.Model):
 
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config",)
 
-    product_id = fields.Many2one('product.product', string="Product",    
-                                    ondelete='restrict'  # ← Change this from 'set null' to 'restrict'
-                                 )
+    product_id = fields.Many2one('product.product', string="Product")
     
     name = fields.Char('Product Name')
     
