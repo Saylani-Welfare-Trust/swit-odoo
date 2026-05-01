@@ -141,7 +141,8 @@
                                         string="Product No./Lot"
                                         widget="many2many_tags"
                                         domain="[('product_id', '=', product_id), ('lot_consume', '=', False)]"
-                                         width="100"
+                                        width="100"
+                                        required="1"
                                     />
 
                                     <field name="quantity" width="100"/>
