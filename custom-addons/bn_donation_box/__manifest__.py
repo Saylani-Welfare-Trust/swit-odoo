@@ -27,7 +27,7 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/stock_lot.xml',
-        # 'views/res_partner.xml',
+        'views/res_partner.xml',
         'views/donation_product_onhand.xml',
         'views/installation_category.xml',
         'reports/donation_box_report.xml',

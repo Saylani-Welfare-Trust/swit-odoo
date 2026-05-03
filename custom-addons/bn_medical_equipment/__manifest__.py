@@ -22,7 +22,7 @@
         'data/stock_picking_type.xml',
         'views/medical_equipment.xml',
         'views/medical_security_deposit.xml',
-        # 'views/res_partner.xml',
+        'views/res_partner.xml',
         'wizards/medical_equipment_donation.xml',
     ],
     'auto_install': False,
