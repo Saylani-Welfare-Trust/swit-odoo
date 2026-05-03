@@ -15,4 +15,3 @@ from . import welfare_teacher
 from . import welfare_inquiry_report
 from . import welfare_masjid
 from . import welfare_madarsa
-from . import hr_employee
