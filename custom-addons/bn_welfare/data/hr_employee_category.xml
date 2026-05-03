@@ -6,7 +6,10 @@
         <record id="inquiry_officer_hr_employee_category" model="hr.employee.category">
             <field name="name">Inquiry Officer</field>
         </record>
-    
+        <record id="marfat_officer_hr_employee_category" model="hr.employee.category">
+            <field name="name">Marfat Officer</field>
+        </record>
+
     </data>
 
 </odoo>

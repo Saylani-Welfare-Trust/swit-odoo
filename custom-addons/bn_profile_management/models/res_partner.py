@@ -47,6 +47,7 @@ class ResPartner(models.Model):
     has_cnic = fields.Selection(selection=general_selection, string="Has CNIC", default='yes', tracking=True)
     state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
     
+    area = fields.Many2one('bn_master_setup.area', string="Area", tracking=True)
     mobile = fields.Char(size=10)
     surname = fields.Char('Surname', tracking=True)
     cnic_no = fields.Char('CNIC No.', tracking=True, size=15)

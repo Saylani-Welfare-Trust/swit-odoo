@@ -48,6 +48,7 @@
                         <field name="is_donor" invisible="1"/>
                         <group name="general_info_col_1">
                             <field name="surname"  />
+                            <field name="area" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
                             <field name="gender" required="donee_required_fields" />
                             <field name="religion" />
 
