@@ -10,7 +10,7 @@ class MicrofinanceFamily(models.Model):
     education = fields.Char('Education')
     complete_name = fields.Char('Complete Name')
     monthly_income = fields.Char('Monthly Income')
-    
+    cnic_no = fields.Char('CNIC No')
     age = fields.Integer('Age')
 
     cnic_b_form = fields.Binary('CNIC / B Form')

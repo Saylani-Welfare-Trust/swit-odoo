@@ -166,6 +166,81 @@
                             </group>
                         </page>
                         
+                        <!-- Inquiry Committee Questions Tab -->
+                        <page name="inquiry_committee_questions" string="Inquiry Committee Questions" invisible="state not in ['inquiry', 'committee_approval', 'hod_approve', 'mem_approve', 'approve', 'disbursed', 'recurring']">
+                            <group>
+                                <group name="inquiry_questions_col_1">
+                                    <field name="applicant_occupation" readonly="state not in ['inquiry']" />
+                                    <field name="residence_ownership" readonly="state not in ['inquiry']" />
+                                </group>
+                                <group name="inquiry_questions_col_2">
+                                    <field name="total_children" readonly="state not in ['inquiry']" />
+                                    <field name="boys_count" readonly="state not in ['inquiry']" />
+                                    <field name="girls_count" readonly="state not in ['inquiry']" />
+                                </group>
+                            </group>
+                            <group>
+                                <field name="children_education_status" readonly="state not in ['inquiry']" widget="text" />
+                            </group>
+                            <group>
+                                <field name="main_issue" readonly="state not in ['inquiry']" widget="text" />
+                            </group>
+                        </page>
+                        
+                        <!-- Previous Disbursements Tab for HOD and Final Approval -->
+                        <page name="previous_disbursements" string="Previous Disbursements" invisible="state not in ['hod_approve', 'mem_approve', 'approve', 'disbursed', 'recurring']">
+                            <group>
+                                <p class="o_text_muted">History of all previous welfare disbursements to this donee:</p>
+                            </group>
+                            <field name="previous_welfare_ids" readonly="1" nolabel="1">
+                                <tree>
+                                    <field name="name" />
+                                    <field name="date" />
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'" decoration-info="state == 'recurring'" />
+                                    <field name="order_type" />
+                                </tree>
+                                <form>
+                                    <group>
+                                        <group name="previous_disburse_col_1">
+                                            <field name="name" />
+                                            <field name="date" />
+                                            <field name="state" />
+                                            <field name="order_type" />
+                                        </group>
+                                        <group name="previous_disburse_col_2">
+                                            <field name="donee_id" />
+                                            <field name="employee_id" />
+                                            <field name="is_individual" />
+                                        </group>
+                                    </group>
+                                    <notebook>
+                                        <page name="prev_disburse_items" string="Disbursement Items">
+                                            <field name="welfare_line_ids" readonly="1">
+                                                <tree>
+                                                    <field name="disbursement_category_id" />
+                                                    <field name="product_id" />
+                                                    <field name="quantity" />
+                                                    <field name="total_amount" />
+                                                    <field name="state" />
+                                                </tree>
+                                            </field>
+                                        </page>
+                                        <page name="prev_recurring_items" string="Recurring Items" invisible="order_type != 'recurring'">
+                                            <field name="welfare_recurring_line_ids" readonly="1">
+                                                <tree>
+                                                    <field name="disbursement_category_id" />
+                                                    <field name="product_id" />
+                                                    <field name="quantity" />
+                                                    <field name="recurring_duration" />
+                                                    <field name="state" />
+                                                </tree>
+                                            </field>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                        
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
                         <page name="committee_members_page" string="Committee Members" invisible="is_individual">
                             <field name="committee_member_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
@@ -560,6 +635,7 @@
                                     <field name="complete_name" />
                                     <field name="age" />
                                     <field name="relation" />
+                                    <field name="cnic_no" />
                                     <field name="cnic_b_form_name" column_invisible="1"/>
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
