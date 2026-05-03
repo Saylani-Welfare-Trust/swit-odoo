@@ -30,6 +30,7 @@
         'views/donation_in_kind_config.xml',
         'views/city.xml',
         'views/bank.xml',
+        'views/area.xml',
         'views/medical_equipment_category.xml',
         'views/product_master.xml',
         'views/advance_donation_category.xml',
