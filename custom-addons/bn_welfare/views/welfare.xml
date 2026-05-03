@@ -225,7 +225,6 @@
                                                     <field name="disbursement_category_id" />
                                                     <field name="product_id" />
                                                     <field name="quantity" />
-                                                    <field name="recurring_duration" />
                                                     <field name="state" />
                                                 </tree>
                                             </field>
