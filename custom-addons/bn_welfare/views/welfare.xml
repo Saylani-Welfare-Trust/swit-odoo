@@ -105,6 +105,7 @@
                         <page name="welfare_line" string="Disbursement Items">
                             <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
                                 <tree editable="bottom">
+                                    <field name="welfare_id" invisible="1" />
                                     <field name="product_domain" column_invisible="1" />
                                     <field name="analytic_account_domain" column_invisible="1" />
                                     <field name="is_collection_point_readonly" column_invisible="1" />
