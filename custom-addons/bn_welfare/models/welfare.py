@@ -791,31 +791,15 @@ class Welfare(models.Model):
         self.state = 'recurring'
         
     def action_committee_approval(self):
-        for record in self:
-
-            # Remarks check
-            if not record.committee_remarks:
-                raise ValidationError(_('Please enter Committee Remarks before approval.'))
-
-            # Document validation
-            missing_fields = []
-
-            if not record.application_form:
-                missing_fields.append("Application Form")
-            if not record.electricity_bill_file:
-                missing_fields.append("Electricity Bill")
-            if not record.gas_bill_file:
-                missing_fields.append("Gas Bill")
-            if not record.family_cnic:
-                missing_fields.append("Family CNIC")
-
-            if missing_fields:
-                raise ValidationError(_(
-                    "Please upload the following documents before approval:\n- %s"
-                ) % ("\n- ".join(missing_fields)))
-
-            # If everything is valid
-            record.state = 'committee_approval'
+        if not self.committee_remarks:
+            raise ValidationError(_('Please enter Committee Remarks before approval.'))
+        # if self.state == 'inquiry':
+        #     # Check HOD remarks
+        #     if not self.committee_remarks:
+        #         raise ValidationError('Please enter HOD Remarks before approval.')
+        #     # self.action_move_to_member()  # This moves to mem_approve
+        #     # message = 'Application approved by HOD and sent to Member'
+        self.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))
