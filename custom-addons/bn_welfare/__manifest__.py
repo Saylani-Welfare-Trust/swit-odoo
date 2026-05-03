@@ -17,6 +17,7 @@
         'data/ir_cron_auto_deliver.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        'views/hr_employee.xml',
         'views/welfare_institution_fetch_log.xml',
         'views/welfare.xml',
         'views/product_product.xml',
@@ -24,7 +25,6 @@
         'views/record_search.xml',
         'reports/report_welfare_collection_document.xml',
         'wizards/wizard_view.xml',
-        # 'views/welfare_tree_views.xml',  # Add this line
     ],
     'auto_install': False,
     'application': True,
