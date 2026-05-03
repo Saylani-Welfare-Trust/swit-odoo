@@ -16,9 +16,14 @@ order_type_selection = [
     ('both', 'Both'),
 ]
 
+payment_type_selection = [
+    ('self', 'Self'),
+    ('marfat', 'Marfat'),
+] 
 
 state_selection = [
     ('draft', 'Draft'),
+    ('pending', 'Pending'),
     ('delivered', 'Delivery Created'),
     ('disbursed', 'Disbursed'),
 ]
@@ -49,13 +54,14 @@ class WelfareLine(models.Model):
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
-
+    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", related='welfare_id.payment_type', store=True)
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string="Disbursement Application Type")
+    disbursement_officer_id = fields.Many2one('hr.employee', string="Disbursement Officer")
     # warehouse_id = fields.Many2one('stock.warehouse', string="Warehouse")
     # warehouse_domain = fields.Char('Warehouse Domain', compute='_compute_warehouse_domain', default="[]", store=True)
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
