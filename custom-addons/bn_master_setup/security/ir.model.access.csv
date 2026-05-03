@@ -23,3 +23,4 @@ access_advance_donation_category_line,advance.donation.category.line,bn_master_s
 access_qurbani_day,qurbani.day,model_qurbani_day,base.group_user,1,1,1,1
 access_qurbani_hijri,qurbani.hijri,model_qurbani_hijri,base.group_user,1,1,1,1
 access_chand_raat,chand.raat,model_chand_raat,base.group_user,1,1,1,1
+access_area,access.area,bn_master_setup.model_area,,1,1,1,1
