@@ -8,7 +8,7 @@ class PosOrder(models.Model):
     _inherit = 'pos.order'
 
     @api.model  
-    def whatsapp_send_receipt(self, order_id):
+    def sms_or_whatsapp_send_receipt(self, order_id):
         _logger.info('WHATSAPP: whatsapp_send_receipt called')
         return self.send_whatsapp_after_payment(order_id)
 
