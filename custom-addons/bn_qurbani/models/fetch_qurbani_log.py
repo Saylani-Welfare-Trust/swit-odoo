@@ -2,7 +2,7 @@ from odoo import models, fields
 
 
 class FetchLog(models.Model):
-    _name = 'fetch.log'
+    _name = 'fetch.qurbani.log'
     _description = "Fetch Log"
 
 
