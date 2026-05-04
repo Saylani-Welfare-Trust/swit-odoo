@@ -73,13 +73,28 @@
         </field>
     </record>
 
-    <record id="action_qurbani_order" model="ir.actions.act_window">
-        <field name="name">Qurbani Order</field>
+    <!-- Action for POS Qurbani Orders -->
+    <record id="action_pos_qurbani_order" model="ir.actions.act_window">
+        <field name="name">POS Qurbani Orders</field>
         <field name="res_model">qurbani.order</field>
         <field name="view_mode">tree,form</field>
+        <field name="domain">[('pos_qurabni_order', '=', True)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Let's create a new qurbani order....
+                List of Qurbani orders created from POS.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Web Qurbani Orders -->
+    <record id="action_web_qurbani_order" model="ir.actions.act_window">
+        <field name="name">Web Qurbani Orders</field>
+        <field name="res_model">qurbani.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('pos_qurabni_order', '=', False)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                List of Qurbani orders created from Web.
             </p>
         </field>
     </record>
@@ -91,10 +106,20 @@
         web_icon="bn_qurbani,static/description/icon.png"
         sequence="10"/>
 
-    <menuitem id="menu_qurbani_order"
-        name="Qurbani Orders"
+    <!-- POS Qurbani Order Menu -->
+    <menuitem id="menu_pos_qurbani_order"
+        name="POS Qurbani Order"
         parent="menu_qurbani_root"
-        action="action_qurbani_order"
-        sequence="1"/>
+        action="action_pos_qurbani_order"
+        sequence="1"
+        groups="bn_qurbani.qurbani_menu_group"/>
+
+    <!-- Web Qurbani Order Menu -->
+    <menuitem id="menu_web_qurbani_order"
+        name="Web Qurbani Order"
+        parent="menu_qurbani_root"
+        action="action_web_qurbani_order"
+        sequence="2"
+        groups="bn_qurbani.qurbani_menu_group"/>
 
 </odoo>
