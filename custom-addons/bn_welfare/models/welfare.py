@@ -261,18 +261,6 @@ class Welfare(models.Model):
         compute="_compute_show_disburse_button",
         store=False
     )
-    @api.onchange('donee_id', 'employee_category_id')
-    def _onchange_donee_id_set_employee_domain(self):
-        """Set domain for employee_id based on donee's area and employee category"""
-        if not self.donee_id or not self.donee_id.area:
-            # No donee or no area -> empty domain (no choices)
-            return {'domain': {'employee_id': [('id', '=', False)]}}
-        
-        domain = [('area', 'in', [self.donee_id.area.id])]
-        if self.employee_category_id:
-            domain.append(('category_ids', 'in', [self.employee_category_id.id]))
-        
-        return {'domain': {'employee_id': domain}}    
 
     @api.depends('donee_id')
     def _compute_previous_welfare_ids(self):
