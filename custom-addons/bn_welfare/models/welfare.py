@@ -282,16 +282,21 @@ class Welfare(models.Model):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
         if not self.donee_id:
             return
-        
-        # Find the most recent welfare record for this donee
-        previous_welfare = self.search([
+
+        # Build domain for previous welfare records
+        domain = [
             ('donee_id', '=', self.donee_id.id),
-            ('id', '!=', self.id),
             ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
-        ], order='date desc', limit=1)
+        ]
         
+        # Exclude current record only if it is already saved (has a real integer ID)
+        if self.id and isinstance(self.id, int) and self.id > 0:
+            domain.append(('id', '!=', self.id))
+        
+        previous_welfare = self.search(domain, order='date desc', limit=1)
+
         if previous_welfare:
-            # Auto-populate inquiry committee questions
+            # Auto-populate all fields (same as your original code)
             self.applicant_occupation = previous_welfare.applicant_occupation
             self.residence_ownership = previous_welfare.residence_ownership
             self.total_children = previous_welfare.total_children
@@ -300,7 +305,8 @@ class Welfare(models.Model):
             self.children_education_status = previous_welfare.children_education_status
             self.main_issue = previous_welfare.main_issue
             
-            # Auto-populate residence/house info
+             # Auto-populate residence/house info
+
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -311,8 +317,9 @@ class Welfare(models.Model):
             self.gas_bill = previous_welfare.gas_bill
             self.electricity_bill = previous_welfare.electricity_bill
             self.home_other_info = previous_welfare.home_other_info
-            
-            # Auto-populate financial info
+                      
+             # Auto-populate financial info
+
             self.monthly_income = previous_welfare.monthly_income
             self.outstanding_amount = previous_welfare.outstanding_amount
             self.monthly_household_expense = previous_welfare.monthly_household_expense
@@ -323,6 +330,7 @@ class Welfare(models.Model):
             self.institute_name = previous_welfare.institute_name
             
             # Auto-populate employment info
+
             self.designation = previous_welfare.designation
             self.company_name = previous_welfare.company_name
             self.company_phone = previous_welfare.company_phone
@@ -331,17 +339,18 @@ class Welfare(models.Model):
             self.monthly_salary = previous_welfare.monthly_salary
             
             # Auto-populate family info
+
             self.dependent_person = previous_welfare.dependent_person
             self.household_member = previous_welfare.household_member
             
             # Show notification about auto-population
+
             return {
                 'warning': {
                     'title': 'Data Auto-Populated',
                     'message': f'Form has been automatically populated with data from previous application dated {previous_welfare.date}.\n\nPrevious Disbursements can be viewed in the "Previous Disbursements" tab.'
                 }
             }
-
     @api.model
     def _auto_disburse_if_all_lines_delivered(self):
         records = self.search([('state', 'in', ['recurring', 'approve'])])
