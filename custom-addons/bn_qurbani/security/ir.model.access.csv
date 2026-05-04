@@ -15,3 +15,5 @@ access_generate_qurbani_demand,generate.qurbani.demand,model_generate_qurbani_de
 access_generate_qurbani_slaughter,generate.qurbani.slaughter,model_generate_qurbani_slaughter,,1,1,1,1
 access_qurbani_cow_slaughter,qurbani.cow.slaughter,model_qurbani_cow_slaughter,,1,1,1,1
 access_qurbani_goat_slaughter,qurbani.goat.slaughter,model_qurbani_goat_slaughter,,1,1,1,1
+access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,,1,1,1,1
+access_api_order_wizard,api.qurbani.wizard,model_api_qurbani_wizard,,1,1,1,1

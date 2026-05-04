@@ -41,6 +41,8 @@
         'wizards/generate_qurbani_slaughter.xml',
         'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
+        'wizards/api_order_wizard.xml',
+        'views/fetch_log.xml',
     ],
     'auto_install': False,
     'application': True,
