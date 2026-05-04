@@ -62,55 +62,6 @@ class BulkKeyIssuance(models.TransientModel):
 
             rec.domain_key_bunch_ids = [(6, 0, list(set(domain_ids)))]
 
-    # def action_issue(self):
-    #     if not self.rider_id:
-    #         raise ValidationError('Please Select a Rider')
-        
-    #     if not self.key_bunch_ids:
-    #         raise ValidationError('Please Select a Key Group to issue')
-
-    #     KeyIssuance = self.env['key.issuance']
-
-    #     for group in self.key_bunch_ids:
-    #         keys = group.key_ids
-
-    #         # 🚫 Check if any key in bunch is already issued manually
-    #         manual_issued_keys = KeyIssuance.search([
-    #             ('key_id', 'in', keys.ids),
-    #             ('state', '=', 'issued'),
-    #             ('action_type', '=', 'manual')
-    #         ])
-
-    #         if manual_issued_keys:
-    #             raise ValidationError(
-    #                 "❌ Cannot issue this Key Bunch!\n\n"
-    #                 "Some keys are already issued manually:\n" +
-    #                 "\n".join([f"  • {rec.key_id.name}" for rec in manual_issued_keys])
-    #             )
-
-    #         # ✅ Proceed with issuing keys
-    #         for key in keys:
-    #             if key.state != 'available':
-    #                 continue
-
-    #             # Optional: prevent duplicate issue same day
-    #             existing_issue = KeyIssuance.search([
-    #                 ('key_id', '=', key.id),
-    #                 ('issue_date', '=', self.date)
-    #             ], limit=1)
-
-    #             if existing_issue:
-    #                 continue
-
-    #             issuance = KeyIssuance.create({
-    #                 'rider_id': self.rider_id.id,
-    #                 'key_id': key.id,
-    #                 'action_type': 'bulk',  # explicitly mark
-    #             })
-    #             issuance.action_issue()
-
-
-
     def action_issue(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
@@ -118,23 +69,48 @@ class BulkKeyIssuance(models.TransientModel):
         if not self.key_bunch_ids:
             raise ValidationError('Please Select a Key Group to issue')
 
-        # To ensure all keys in bunch are available.
-        for group in self.key_bunch_ids:
-            issued_keys = group.key_ids.filtered(lambda k: k.state != 'available')
+        KeyIssuance = self.env['key.issuance']
 
-            if issued_keys:
+        for group in self.key_bunch_ids:
+            keys = group.key_ids
+
+            # 🚫 Check if any key in bunch is already issued manually
+            manual_issued_keys = KeyIssuance.search([
+                ('key_id', 'in', keys.ids),
+                ('state', '=', 'issued'),
+                ('action_type', '=', 'manual')
+            ])
+
+            if manual_issued_keys:
                 raise ValidationError(
-                    f"Cannot issue keys. These keys are not available: {', '.join(issued_keys.mapped('name'))}"
+                    "❌ Cannot issue this Key Bunch!\n\n"
+                    "Some keys are already issued manually:\n" +
+                    "\n".join([f"  • {rec.key_id.name}" for rec in manual_issued_keys])
                 )
 
-        for group in self.key_bunch_ids:
-            for key in group.key_ids:
-            
-                key_issuance_obj = self.env['key.issuance'].create({
+            # ✅ Proceed with issuing keys
+            for key in keys:
+                if key.state != 'available':
+                    continue
+
+                # Optional: prevent duplicate issue same day
+                existing_issue = KeyIssuance.search([
+                    ('key_id', '=', key.id),
+                    ('issue_date', '=', self.date)
+                ], limit=1)
+
+                if existing_issue:
+                    continue
+
+                issuance = KeyIssuance.create({
                     'rider_id': self.rider_id.id,
-                    'key_id': key.id
+                    'key_id': key.id,
+                    'action_type': 'bulk',  # explicitly mark
                 })
-                key_issuance_obj.action_issue()
+                issuance.action_issue()
+
+
+
 
 
     # def action_return(self):
