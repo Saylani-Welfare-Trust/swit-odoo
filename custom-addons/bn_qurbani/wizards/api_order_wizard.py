@@ -96,8 +96,8 @@ class APIDonationWizard(models.TransientModel):
         return True
 
     # ---------------------- Bulk API Operations ----------------------
-    def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host, history):
-        self.create_fetch_log(history.id, f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling')
+    def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host):
+        self.create_fetch_log( f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling')
 
         """Fetch donations from API with optimized session handling"""
         try:
