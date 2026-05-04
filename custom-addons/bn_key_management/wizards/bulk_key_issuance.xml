@@ -11,6 +11,7 @@
                     <group>
                         <group name="bulk_key_issuance_col_1">
                             <field name="employee_category_id" invisible="1" />
+                            <field name="rider_ids" invisible="1" />
                             <field name="domain_key_bunch_ids" invisible="1" />
 
                             <field name="date" required="1" readonly="1"/>

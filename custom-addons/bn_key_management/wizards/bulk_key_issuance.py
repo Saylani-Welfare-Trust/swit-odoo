@@ -14,7 +14,7 @@ class BulkKeyIssuance(models.TransientModel):
 
 
     action_type = fields.Selection(selection=action_type_selection, string="Type")
-
+    rider_ids = fields.Many2many('hr.employee', string="Rider IDs", compute="_set_rider_domain")
     domain_key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunchs", compute="_set_location_domain")
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
