@@ -1,3 +1,5 @@
+import json
+
 from odoo import models, fields, api
 from odoo.fields import Date
 from odoo.exceptions import UserError
@@ -70,6 +72,7 @@ class WelfareLine(models.Model):
     #     compute='_compute_net_amount',
     #     store=True
     # )
+    disbursement_officer_domain = fields.Char(compute="_compute_disbursement_officer_domain")
 
     # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
@@ -122,6 +125,18 @@ class WelfareLine(models.Model):
 
     # REMOVED - This write() method was problematic and has been merged with the manual tracking one below
     
+    
+    @api.depends('welfare_id.donee_id.area')
+    def _compute_disbursement_officer_domain(self):
+        for record in self:
+            domain = [
+                ('category_ids.name', '=', 'Marfat')
+            ]
+
+            if record.welfare_id and record.welfare_id.donee_id and record.welfare_id.donee_id.area:
+                domain.append(('area', '=', record.welfare_id.donee_id.area.id))
+
+            record.disbursement_officer_domain = json.dumps(domain)
     
     @api.model
     def _auto_mark_as_delivered_today(self):
