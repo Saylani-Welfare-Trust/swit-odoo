@@ -87,6 +87,18 @@ class BulkKeyIssuance(models.TransientModel):
                     "Some keys are already issued manually:\n" +
                     "\n".join([f"  • {rec.key_id.name}" for rec in manual_issued_keys])
                 )
+            
+             # 🚫 BLOCK IF KEY IS ALREADY ISSUED (BULK)
+            issued_keys = KeyIssuance.search([
+                ('key_id', 'in', keys.ids),
+                ('state', 'in', ['issued', 'overdue', 'donation_receive', 'pending']),
+                ('action_type', 'in', ['bulk'])  
+            ])
+
+            if issued_keys:
+                raise ValidationError(
+                    "Cannot issue this Key Bunch! Bunch has already issued."
+                )
 
             # ✅ Proceed with issuing keys
             for key in keys:
