@@ -73,12 +73,12 @@
         </field>
     </record>
 
-    <!-- Action for POS Qurbani Orders -->
+    <!-- Action for POS Qurbani Orders (field = True) -->
     <record id="action_pos_qurbani_order" model="ir.actions.act_window">
         <field name="name">POS Qurbani Orders</field>
         <field name="res_model">qurbani.order</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('pos_qurabni_order', '=', True)]</field>
+        <field name="domain">[('pos_qurbani_order', '=', True)]</field>   <!-- corrected field name -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 List of Qurbani orders created from POS.
@@ -86,27 +86,26 @@
         </field>
     </record>
 
-    <!-- Action for Web Qurbani Orders -->
+    <!-- Action for Web Qurbani Orders (field = False) -->
     <record id="action_web_qurbani_order" model="ir.actions.act_window">
         <field name="name">Web Qurbani Orders</field>
         <field name="res_model">qurbani.order</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('pos_qurabni_order', '=', False)]</field>
+        <field name="domain">[('pos_qurbani_order', '=', False)]</field>   <!-- corrected field name -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 List of Qurbani orders created from Web.
             </p>
         </field>
     </record>
-
-    <!-- Parent Menu -->
+    
     <menuitem id="menu_qurbani_root"
         name="Qurbani"
         groups="bn_qurbani.qurbani_menu_group"
         web_icon="bn_qurbani,static/description/icon.png"
         sequence="10"/>
 
-    <!-- POS Qurbani Order Menu -->
+    <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
     <menuitem id="menu_pos_qurbani_order"
         name="POS Qurbani Order"
         parent="menu_qurbani_root"
@@ -114,12 +113,12 @@
         sequence="1"
         groups="bn_qurbani.qurbani_menu_group"/>
 
-    <!-- Web Qurbani Order Menu -->
     <menuitem id="menu_web_qurbani_order"
         name="Web Qurbani Order"
         parent="menu_qurbani_root"
         action="action_web_qurbani_order"
         sequence="2"
         groups="bn_qurbani.qurbani_menu_group"/>
+
 
 </odoo>
