@@ -23,7 +23,7 @@ class QurbaniOrder(models.Model):
 
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
     pos_qurbani_order = fields.Boolean('POS Qurbani Order', default=True)
-
+    
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:
