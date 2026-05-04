@@ -16,7 +16,7 @@
     ],
     'assets': {
         'point_of_sale._assets_pos': [  
-            'bn_whatsapp/static/src/js/payment_screen.js',
+            'bn_sms_whatsapp/static/src/js/payment_screen.js',
         ],
     },
     'auto_install': False,
