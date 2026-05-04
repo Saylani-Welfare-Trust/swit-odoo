@@ -20,7 +20,7 @@ class APIDonationWizard(models.TransientModel):
     # source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
     # destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
 
-    def create_fetch_log(self, history_id, message, status, reason):
+    def create_fetch_log(self, message, status, reason):
         """Helper to create fetch log entries"""
         self.env['fetch.qurbani.log'].create({
             'name': message,
@@ -97,7 +97,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk API Operations ----------------------
     def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host):
-        self.create_fetch_log( f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling')
+        self.create_fetch_log( f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling','To Fetch the donations')
 
         """Fetch donations from API with optimized session handling"""
         try:
