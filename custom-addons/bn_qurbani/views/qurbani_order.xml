@@ -98,24 +98,30 @@
             </p>
         </field>
     </record>
-    
+
     <menuitem id="menu_qurbani_root"
         name="Qurbani"
         groups="bn_qurbani.qurbani_menu_group"
         web_icon="bn_qurbani,static/description/icon.png"
         sequence="10"/>
 
+    <menuitem id="menu_qurbani_order"
+        name="Qurbani Order"
+        parent="menu_qurbani_root"
+        sequence="1"
+        groups="bn_qurbani.qurbani_menu_group"/>
+
     <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
     <menuitem id="menu_pos_qurbani_order"
         name="POS Qurbani Order"
-        parent="menu_qurbani_root"
+        parent="menu_qurbani_order"
         action="action_pos_qurbani_order"
         sequence="1"
         groups="bn_qurbani.qurbani_menu_group"/>
 
     <menuitem id="menu_web_qurbani_order"
         name="Web Qurbani Order"
-        parent="menu_qurbani_root"
+        parent="menu_qurbani_order"
         action="action_web_qurbani_order"
         sequence="2"
         groups="bn_qurbani.qurbani_menu_group"/>
