@@ -61,12 +61,8 @@
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
                             <field name="employee_id" string="Inquiry Officer" 
-                            domain="[
-                                ('category_ids', 'in', [employee_category_id]),
-                                ('area', 'in', [donee_id.area.id])
-                                ]" 
-                            options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
-                            readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                                options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
+                                readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="institution_category" widget="radio" invisible="is_individual"/>
                             <field name="subcategory" invisible="is_individual"/>
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
