@@ -261,7 +261,20 @@ class Welfare(models.Model):
         compute="_compute_show_disburse_button",
         store=False
     )
+    employee_domain = fields.Char(compute="_compute_employee_domain")
 
+    @api.depends('donee_id.area', 'employee_category_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            domain = []
+
+            if record.employee_category_id:
+                domain.append(('category_ids', 'in', [record.employee_category_id.id]))
+
+            if record.donee_id and record.donee_id.area:
+                domain.append(('area', '=', record.donee_id.area.id))
+
+            record.employee_domain = json.dumps(domain)
     @api.depends('donee_id')
     def _compute_previous_welfare_ids(self):
         """Compute previous welfare disbursements for the same donee"""

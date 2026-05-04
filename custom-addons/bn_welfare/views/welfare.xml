@@ -52,6 +52,7 @@
 
                     <group>
                         <group name="welfare_col_1">
+                            <field name="employee_domain" invisible="1" />
                             <field name="employee_category_id" invisible="1" />
                             <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
                             <field name="is_synced" readonly="1" invisible="1" />
@@ -61,12 +62,9 @@
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
                             <field name="employee_id" string="Inquiry Officer" 
-                            domain="[
-                                ('category_ids', 'in', [employee_category_id]),
-                                ('area', 'in', [donee_id.area.id])
-                                ]" 
-                            options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
-                            readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                                domain="employee_domain" 
+                                options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
+                                readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="institution_category" widget="radio" invisible="is_individual"/>
                             <field name="subcategory" invisible="is_individual"/>
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
