@@ -25,28 +25,71 @@ class ManualKeyIssuance(models.TransientModel):
     date = fields.Date('Date', default=fields.Date.context_today)
 
 
-    @api.depends('action_type', 'date')
+    # @api.depends('action_type', 'date')
+    # def _compute_available_lot_ids(self):
+    #     for rec in self:
+    #         lot_ids = []
+
+    #         if rec.action_type == 'issue':
+    #             # Only available keys
+    #             keys = self.env['key'].search([
+    #                 ('state', '=', 'available'),
+    #                 ('lot_id', '!=', False)
+    #             ])
+    #             lot_ids = keys.mapped('lot_id').ids
+
+    #         elif rec.action_type == 'return':
+    #             # Keys where:
+    #             # payment received + submitted in POS + DN prepared
+    #             key_issuances = self.env['key.issuance'].search([
+    #                 ('state', 'in', ['donation_receive'])
+    #             ])
+    #             lot_ids = key_issuances.mapped('key_id.lot_id').ids
+
+    #         rec.available_lot_ids = [(6, 0, lot_ids)]
+
+    @api.depends('action_type')
     def _compute_available_lot_ids(self):
         for rec in self:
             lot_ids = []
 
             if rec.action_type == 'issue':
-                # Only available keys
+                # Only show lots whose ENTIRE bunch has all keys available
                 keys = self.env['key'].search([
                     ('state', '=', 'available'),
-                    ('lot_id', '!=', False)
+                    ('lot_id', '!=', False),
+                    ('key_bunch_id', '!=', False),
                 ])
-                lot_ids = keys.mapped('lot_id').ids
+                # Group by bunch and check if ALL keys in each bunch are available
+                bunch_ids = keys.mapped('key_bunch_id')
+                for bunch in bunch_ids:
+                    all_keys_available = all(
+                        k.state == 'available' for k in bunch.key_ids
+                    )
+                    if all_keys_available:
+                        lot_ids += bunch.key_ids.filtered(
+                            lambda k: k.lot_id
+                        ).mapped('lot_id').ids
 
             elif rec.action_type == 'return':
+                if not rec.rider_id:
+                    rec.available_lot_ids = [(6, 0, [])]
+                    continue
                 # Keys where:
                 # payment received + submitted in POS + DN prepared
+
+                # key_issuances = self.env['key.issuance'].search([
+                #     ('state', 'in', ['donation_receive' ])
+                # ])
+
                 key_issuances = self.env['key.issuance'].search([
-                    ('state', 'in', ['donation_receive'])
+                    ('rider_id', '=', rec.rider_id.id),
+                    ('state', 'in', ['issued', 'overdue', 'donation_receive', 'pending']),
                 ])
                 lot_ids = key_issuances.mapped('key_id.lot_id').ids
 
-            rec.available_lot_ids = [(6, 0, lot_ids)]
+            rec.available_lot_ids = [(6, 0, list(set(lot_ids)))]
+
 
     @api.depends('lot_id')
     def _set_key_id(self):
@@ -100,15 +143,20 @@ class ManualKeyIssuance(models.TransientModel):
 
         key_issuance_obj.action_issue()
 
+
     def action_return(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
         
         key = self.key_id
         
+        # key_issuance = self.env['key.issuance'].search([
+        #     ('key_id', '=', key.id), 
+        #     ('state', '=', 'issued')
+        # ], limit=1)
         key_issuance = self.env['key.issuance'].search([
             ('key_id', '=', key.id), 
-            ('state', '=', 'issued')
+            ('state', 'in', ['issued', 'overdue'])
         ], limit=1)
         
         if key_issuance:

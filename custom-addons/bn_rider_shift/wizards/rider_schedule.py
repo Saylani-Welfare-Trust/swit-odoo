@@ -97,11 +97,11 @@ class RiderSchedule(models.TransientModel):
         ])
 
         for box in boxes:
-            collection = self.env['rider.collection'].create({
-                'rider_id': employee.id,
-                'date': today,
-                'donation_box_registration_installation_id': box.id,
-            })
+            # collection = self.env['rider.collection'].create({
+            #     'rider_id': employee.id,
+            #     'date': today,
+            #     'donation_box_registration_installation_id': box.id,
+            # })
 
             line_vals.append((0, 0, {
                 'rider_collection_id': collection.id,

@@ -109,6 +109,29 @@ class BulkKeyIssuance(models.TransientModel):
                 })
                 issuance.action_issue()
 
+    # def action_return(self):
+    #     if not self.rider_id:
+    #         raise ValidationError('Please Select a Rider')
+
+    #     if not self.key_bunch_ids:
+    #         raise ValidationError('Please Select a Key Group')
+
+    #     for group in self.key_bunch_ids:
+    #         for key in group.key_ids:
+
+    #             key_issuance = self.env['key.issuance'].search([
+    #                 ('key_id', '=', key.id),
+    #                 ('rider_id', '=', self.rider_id.id),
+    #                 ('state', 'in', ['donation_receive', 'pending'])
+    #             ], limit=1)
+
+    #             if not key_issuance:
+    #                 continue
+
+    #             key_issuance.action_return()
+
+
+
     def action_return(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
@@ -116,16 +139,32 @@ class BulkKeyIssuance(models.TransientModel):
         if not self.key_bunch_ids:
             raise ValidationError('Please Select a Key Group')
 
+        invalid_keys = []
+        valid_issuances = []
+
         for group in self.key_bunch_ids:
             for key in group.key_ids:
 
                 key_issuance = self.env['key.issuance'].search([
                     ('key_id', '=', key.id),
                     ('rider_id', '=', self.rider_id.id),
-                    ('state', 'in', ['donation_receive', 'pending'])
                 ], limit=1)
 
-                if not key_issuance:
-                    continue
+                # No issuance OR wrong state
+                if not key_issuance or key_issuance.state not in ['donation_receive', 'pending']:
+                    invalid_keys.append(key.name)
+                else:
+                    valid_issuances.append(key_issuance)
 
-                key_issuance.action_return()
+        #  BLOCK if ANY invalid key found
+        if invalid_keys:
+            raise ValidationError(
+                "Cannot proceed with return.\n\n"
+                "All keys must be in 'Donation Received' or 'Pending' state.\n\n"
+                "Invalid keys:\n" +
+                "\n".join([f"  • {name}" for name in invalid_keys])
+            )
+
+        #  If all valid → process return
+        for issuance in valid_issuances:
+            issuance.action_return()
