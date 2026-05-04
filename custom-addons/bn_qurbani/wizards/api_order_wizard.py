@@ -654,45 +654,45 @@ class APIDonationWizard(models.TransientModel):
     #     self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # # ---------------------- Optimized Helper Methods ----------------------
-    # def _date_to_iso_z(self, date_val):
-    #     """Convert date to ISO Z format"""
-    #     if not date_val:
-    #         return None
-    #     dt = datetime.combine(date_val, time.min).replace(tzinfo=timezone.utc)
-    #     return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    def _date_to_iso_z(self, date_val):
+        """Convert date to ISO Z format"""
+        if not date_val:
+            return None
+        dt = datetime.combine(date_val, time.min).replace(tzinfo=timezone.utc)
+        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
-    # def _parse_iso_to_dt_fast(self, iso_str, history):
-    #     """Fast ISO datetime parsing"""
-    #     if not iso_str:
-    #         self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}")
+    def _parse_iso_to_dt_fast(self, iso_str, history):
+        """Fast ISO datetime parsing"""
+        if not iso_str:
+            self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}")
 
-    #         return None
-    #     try:
-    #         # Most common format first
-    #         if 'T' in iso_str:
-    #             # Handle ISO format with Z or timezone
-    #             if 'Z' in iso_str:
-    #                 return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
-    #             elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
-    #                 return datetime.fromisoformat(iso_str).replace(tzinfo=None)
-    #             else:
-    #                 return datetime.fromisoformat(iso_str)
-    #         else:
-    #             # Try common date formats
-    #             for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
-    #                 try:
-    #                     return datetime.strptime(iso_str, fmt)
-    #                 except ValueError:
-    #                     self.create_fetch_log(history.id, f"Failed to parse datetime '{iso_str}' with format '{fmt}'")
+            return None
+        try:
+            # Most common format first
+            if 'T' in iso_str:
+                # Handle ISO format with Z or timezone
+                if 'Z' in iso_str:
+                    return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
+                    return datetime.fromisoformat(iso_str).replace(tzinfo=None)
+                else:
+                    return datetime.fromisoformat(iso_str)
+            else:
+                # Try common date formats
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        return datetime.strptime(iso_str, fmt)
+                    except ValueError:
+                        self.create_fetch_log(history.id, f"Failed to parse datetime '{iso_str}' with format '{fmt}'")
 
-    #                     continue
-    #             # Fallback to naive parsing
-    #             return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
-    #     except Exception:
-    #         self.create_fetch_log(history.id, f"Failed to parse datetime: {iso_str}")
+                        continue
+                # Fallback to naive parsing
+                return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
+        except Exception:
+            self.create_fetch_log(history.id, f"Failed to parse datetime: {iso_str}")
 
-    #         _logger.debug('Failed to parse datetime: %s', iso_str)
-    #         return None
+            _logger.debug('Failed to parse datetime: %s', iso_str)
+            return None
 
     # # ---------------------- Journal Entry Creation ----------------------
     # def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
