@@ -84,7 +84,7 @@
                             <field name="application_form_name" invisible="1"/>
                             <field name="application_form" filename="application_form_name" readonly="state != 'draft'" />
                             <field name="frc_name" invisible="1"/>
-                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="1"/>
+                            <field name="frc" filename="frc_name" readonly="state != 'draft'" />
                             <field name="electricity_bill_name" invisible="1"/>
                             <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" />
                             <field name="gas_bill_name" invisible="1"/>
