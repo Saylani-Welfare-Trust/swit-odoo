@@ -267,12 +267,14 @@ class Welfare(models.Model):
         """Compute previous welfare disbursements for the same donee"""
         for rec in self:
             if rec.donee_id:
-                # Get all welfare records for the same donee, excluding current record
-                previous = self.search([
+                domain = [
                     ('donee_id', '=', rec.donee_id.id),
-                    ('id', '!=', rec.id),
                     ('state', 'in', ['disbursed', 'recurring'])
-                ], order='date desc')
+                ]
+                # Only exclude current record if it has a real integer ID (saved record)
+                if rec.id and isinstance(rec.id, int) and rec.id > 0:
+                    domain.append(('id', '!=', rec.id))
+                previous = self.search(domain, order='date desc')
                 rec.previous_welfare_ids = previous
             else:
                 rec.previous_welfare_ids = False
