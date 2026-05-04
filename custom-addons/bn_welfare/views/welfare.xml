@@ -122,13 +122,10 @@
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />
                                     <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
-                                    <field name="disbursement_officer_id" string="Disbursement Officer"
-                                        domain="[
-                                            ('category_ids.name', '=', 'Marfat'),
-                                            ('area', 'in', [welfare_id.donee_id.area.id])
-                                        ]"
-                                        options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-
+                                    <field name="disbursement_officer_id"
+                                        string="Disbursement Officer"
+                                        domain="disbursement_officer_domain"
+                                        options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="show_deliver_button" column_invisible="1"/>
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
