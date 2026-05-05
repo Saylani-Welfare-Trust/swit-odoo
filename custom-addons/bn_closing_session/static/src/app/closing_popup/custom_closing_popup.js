@@ -329,4 +329,15 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     canCancel() {
         return true;
     }
+
+    async handleClosingError(response) {
+        await this.popup.add(ErrorPopup, {
+            title: response.title || "Error",
+            body: response.message,
+            sound: response.type !== "alert",
+        });
+        if (response.redirect) {
+            this.pos.redirectToBackend();
+        }
+    }
 }
