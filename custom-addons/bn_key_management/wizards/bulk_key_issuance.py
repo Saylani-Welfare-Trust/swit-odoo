@@ -53,7 +53,6 @@ class BulkKeyIssuance(models.TransientModel):
                 KeyIssuance = self.env['key.issuance']
 
                 issuances = KeyIssuance.search([
-                    ('rider_id', '=', rec.rider_id.id),
                     ('state', '!=', 'returned')
                 ], order="key_id, id desc")
 
