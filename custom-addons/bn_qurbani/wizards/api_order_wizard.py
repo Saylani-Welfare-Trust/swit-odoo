@@ -55,7 +55,7 @@ class APIDonationWizard(models.TransientModel):
 
             return True
         
-        raise ValidationError(donations_info)
+        raise ValidationError(donations_info[0].read())
 
         # # Prepare bulk data
         # journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
@@ -127,7 +127,6 @@ class APIDonationWizard(models.TransientModel):
 
                 if not isinstance(data, dict) or 'donationsInfo' not in data:
                     self.env['fetch.qurbani.log'].create({
-                        'fetch_history_id': history.id,
                         'name': f"Invalid donations payload: {data}"
                     })
 
