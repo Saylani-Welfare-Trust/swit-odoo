@@ -34,7 +34,7 @@
                     <field name="currency_id" invisible="1"/>
 
                     <!-- POS Order Section (shown when pos_qurbani_order = True) -->
-                    <group invisible="pos_qurbani_order != True">
+                    <group>
                         <h2>POS Order Information</h2>
                         <group>
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
@@ -43,14 +43,53 @@
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
                                 <field style="width: 70% !important;" name="mobile" readonly="1" nolabel="1" />
                             </div>
-                            <field name="currency_id" invisible="1"/>
+                            <field name="currency_id" invisible="pos_qurbani_order != False"/>
+                        </group>
+                    </group>
+
+                    <!-- Web Order Section (shown when pos_qurbani_order = False) -->
+                    <group invisible="pos_qurbani_order != False" string="Web Order Information">
+                        <group name="web_order_col_1">
+                            <field name="api_response_id" readonly="1" />
+                            <field name="donation_type" readonly="1" />
+                            <field name="donation_from" readonly="1" />
+                            <field name="dn_number" readonly="1" />
+                            <field name="transaction_id" readonly="1" />
+                        </group>
+                        <group name="web_order_col_2">
+                            <field name="api_currency" readonly="1" />
+                            <field name="bank_charges" readonly="1" />
+                            <field name="api_created_at" readonly="1" />
+                            <field name="api_updated_at" readonly="1" />
+                        </group>
+                    </group>
+
+                    <!-- Donor Details Section (Web Orders) -->
+                    <group invisible="pos_qurbani_order != False" string="Donor Details">
+                        <group name="donor_details_col_1">
+                            <field name="donor_phone" readonly="1" />
+                            <field name="donor_email" readonly="1" />
+                            <field name="donor_cnic" readonly="1" />
+                        </group>
+                        <group name="donor_details_col_2">
+                            <field name="donor_country" readonly="1" />
+                            <field name="donor_ip_address" readonly="1" />
+                        </group>
+                    </group>
+
+                    <!-- Subscription Preferences (Web Orders) -->
+                    <group invisible="pos_qurbani_order != False" string="Subscription Preferences">
+                        <group name="subscriptions">
+                            <field name="subscription_news" />
+                            <field name="subscription_whatsapp" />
+                            <field name="subscription_sms" />
                         </group>
                     </group>
 
                     <!-- General Information (Both POS and Web) -->
                     <group string="Additional Information">
                         <field name="remarks" />
-                        <field name="amount" />
+                        <field name="amount" invisible="pos_qurbani_order == False"/>
                         <field name="total_amount" />
                     </group>
 
