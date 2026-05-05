@@ -123,7 +123,7 @@
 
                     <notebook>
                         <page string="Items">
-                            <field name="medical_equipment_line_ids">
+                            <field name="medical_equipment_line_ids" readonly="state not in ['draft', 'inquiry', 'completed','send_for_inquiry','ceo_approval']">
                                 <tree editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
 
