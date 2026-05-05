@@ -180,14 +180,14 @@ class QurbaniOrder(models.Model):
                 
                 # Find product by name (case-insensitive)
                 product = self.env['product.product'].search([
-                    ('name', 'ilike', item_name),
+                    ('name', 'ilike', "Qurbani Web"),
                     ('categ_id.name', 'ilike', 'qurbani')
                 ], limit=1)
                 
                 if not product:
                     # Try searching without category filter
                     product = self.env['product.product'].search([
-                        ('name', 'ilike', item_name)
+                        ('name', 'ilike', "Qurbani Web")
                     ], limit=1)
                 
                 if not product:
@@ -196,7 +196,6 @@ class QurbaniOrder(models.Model):
                 
                 quantity = int(item.get('qty', 1))
                 amount = float(item.get('price', 0))
-                total_line_amount += amount
                 
                 # Find day
                 day_name = item.get('day', '')
@@ -209,15 +208,28 @@ class QurbaniOrder(models.Model):
                     ('usage', '=', 'internal')
                 ], limit=1)
                 
-                order_lines.append((0, 0, {
-                    'product_id': product.id,
-                    'quantity': quantity,
-                    'amount': amount,
-                    'day_id': day.id if day else False,
-                    'hijri_id': hijri.id,
-                    'city_id': city.id if city else False,
-                    'hissa_name': item.get('share_names', [donor_name])[0] if item.get('share_names') else donor_name,
-                }))
+                # Get share names list
+                share_names = item.get('share_names', [donor_name])
+                if not share_names or share_names == []:
+                    share_names = [donor_name]
+                
+                # Loop through quantity and create individual lines
+                for idx in range(quantity):
+                    # Get the share name for this hissa (cycle through if needed)
+                    share_name = share_names[idx % len(share_names)] if share_names else donor_name
+                    
+                    # Create hissa_name with numbering
+                    hissa_name = f"{idx + 1}. {share_name}" if quantity > 1 else share_name
+                    
+                    order_lines.append((0, 0, {
+                        'product_id': product.id,
+                        'quantity': 1,  # Each line has quantity 1
+                        'amount': amount,
+                        'day_id': day.id if day else False,
+                        'hijri_id': hijri.id,
+                        'city_id': city.id if city else False,
+                        'hissa_name': hissa_name,
+                    }))
             
             # Create the qurbani order
             qurbani_order = self.env['qurbani.order'].create({
