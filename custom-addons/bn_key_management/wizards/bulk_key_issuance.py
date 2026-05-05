@@ -15,26 +15,62 @@ class BulkKeyIssuance(models.TransientModel):
 
     action_type = fields.Selection(selection=action_type_selection, string="Type")
 
-    domain_key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunchs", compute="_set_location_domain")
-
     rider_id = fields.Many2one('hr.employee', string="Rider")
-    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
     
     key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunch")
+    domain_rider_ids = fields.Many2many('hr.employee', string="Rider IDs", compute="_set_rider_domain")
+    domain_key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunchs", compute="_set_location_domain")
 
-    date = fields.Date('Date', default=fields.Date.context_today)
+    date = fields.Date('Date', default=fields.Date.today())
 
 
     @api.depends('date', 'action_type')
     def _set_rider_domain(self):
         for rec in self:
-            if rec.date:
+            rec.domain_rider_ids = [(6, 0, [])]
+
+            if rec.action_type == 'issue':
+
+                # 1. Riders from schedule
                 schedule_days = self.env['rider.schedule.day'].search([
                     ('date', '=', rec.date)
                 ])
-                rec.domain_rider_ids = [(6, 0, schedule_days.mapped('rider_shift_id.rider_id').ids)]
-            else:
-                rec.domain_rider_ids = [(6, 0, [])]
+
+                scheduled_riders = schedule_days.mapped('rider_shift_id.rider_id')
+
+                # 2. Riders already having issued keys on same date
+                issued_riders = self.env['key.issuance'].search([
+                    ('issue_date', '=', rec.date),
+                    ('state', '!=', 'returned')
+                ]).mapped('rider_id')
+
+                # 3. Remove already issued riders
+                available_riders = scheduled_riders - issued_riders
+
+                rec.domain_rider_ids = [(6, 0, available_riders.ids)]
+
+            elif rec.action_type == 'return':
+                KeyIssuance = self.env['key.issuance']
+
+                issuances = KeyIssuance.search([
+                    ('state', '!=', 'returned')
+                ], order="key_id, id desc")
+
+                latest_per_key = {}
+                for iss in issuances:
+                    if iss.key_id.id not in latest_per_key:
+                        latest_per_key[iss.key_id.id] = iss
+
+                rider_map = {}
+                for iss in latest_per_key.values():
+                    rider = iss.rider_id
+                    if not rider:
+                        continue
+                    rider_map.setdefault(rider.id, []).append(iss)
+
+                valid_riders = list(rider_map.keys())
+
+                rec.domain_rider_ids = [(6, 0, valid_riders)]
 
     @api.depends('date', 'action_type', 'rider_id')
     def _set_location_domain(self):
@@ -43,29 +79,58 @@ class BulkKeyIssuance(models.TransientModel):
 
             if rec.date and rec.rider_id:
 
-                schedule_days = self.env['rider.schedule.day'].search([
-                    ('rider_shift_id.rider_id', '=', rec.rider_id.id),
-                    ('date', '=', fields.Date.today())
-                ])
-
                 if rec.action_type == 'issue':
-                    # ✅ Only bunch assigned in shift
-                    domain_ids = schedule_days.mapped('key_bunch_id').ids
+
+                    # 1. All scheduled bunches for that rider on that date
+                    schedule_days = self.env['rider.schedule.day'].search([
+                        ('rider_shift_id.rider_id', '=', rec.rider_id.id),
+                        ('date', '=', rec.date)
+                    ])
+
+                    scheduled_bunches = schedule_days.mapped('key_bunch_id')
+
+                    # 2. Already issued bunches on same date
+                    issued_bunches = self.env['key.issuance'].search([
+                        ('rider_id', '=', rec.rider_id.id),
+                        ('issue_date', '=', rec.date),
+                        ('state', '!=', 'returned')
+                    ]).mapped('key_bunch_id')
+
+                    # 3. Remove already issued ones
+                    available_bunches = scheduled_bunches - issued_bunches
+
+                    domain_ids = available_bunches.ids
 
                 elif rec.action_type == 'return':
-                    # ✅ Only bunch where payment received
-                    issuances = self.env['key.issuance'].search([
-                        ('rider_id', '=', rec.rider_id.id),
-                        ('state', 'in', ['donation_receive', 'pending']),
-                    ])
-                    domain_ids = issuances.mapped('key_id.key_bunch_id').ids
+                    KeyIssuance = self.env['key.issuance']
 
-            rec.domain_key_bunch_ids = [(6, 0, list(set(domain_ids)))]
+                    issuances = KeyIssuance.search([
+                        ('rider_id', '=', rec.rider_id.id),
+                        ('state', '!=', 'returned')
+                    ], order="key_id, id desc")
+
+                    latest_per_key = {}
+                    for iss in issuances:
+                        if iss.key_id.id not in latest_per_key:
+                            latest_per_key[iss.key_id.id] = iss
+
+                    active_keys = [
+                        iss.key_id for iss in latest_per_key.values()
+                        if iss.state != 'returned'
+                    ]
+
+                    domain_ids = list(set(
+                        key.key_bunch_id.id
+                        for key in active_keys
+                        if key.key_bunch_id
+                    ))
+
+            rec.domain_key_bunch_ids = [(6, 0, domain_ids)]
 
     def action_issue(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
-        
+
         if not self.key_bunch_ids:
             raise ValidationError('Please Select a Key Group to issue')
 
@@ -74,38 +139,52 @@ class BulkKeyIssuance(models.TransientModel):
         for group in self.key_bunch_ids:
             keys = group.key_ids
 
-            # 🚫 Check if any key in bunch is already issued manually
-            manual_issued_keys = KeyIssuance.search([
+            # 🚫 1. Check ANY key already issued (active only)
+            issued_keys = KeyIssuance.search([
                 ('key_id', 'in', keys.ids),
-                ('state', 'in', ['issued', 'overdue']),
-                ('action_type', '=', 'manual')
+                ('state', '!=', 'returned')
             ])
 
-            if manual_issued_keys:
+            if issued_keys:
                 raise ValidationError(
                     "❌ Cannot issue this Key Bunch!\n\n"
-                    "Some keys are already issued manually:\n" +
-                    "\n".join([f"  • {rec.key_id.name}" for rec in manual_issued_keys])
+                    "Some keys are already issued:\n" +
+                    "\n".join([f"  • {rec.key_id.name}" for rec in issued_keys])
                 )
 
-            # ✅ Proceed with issuing keys
+            # 🚫 2. Prevent same-day duplicate issue (IMPORTANT FIX)
+            same_day_issue = KeyIssuance.search([
+                ('key_id', 'in', keys.ids),
+                ('issue_date', '=', self.date),
+                ('state', '!=', 'returned')
+            ])
+
+            if same_day_issue:
+                raise ValidationError(
+                    "❌ This Key Bunch already has issued keys for selected date."
+                )
+
+            # 🚫 3. Ensure bunch is not already assigned (any rider)
+            bunch_issued = KeyIssuance.search([
+                ('key_id.key_bunch_id', '=', group.id),
+                ('state', '!=', 'returned')
+            ])
+
+            if bunch_issued:
+                raise ValidationError(
+                    "❌ This Key Bunch is already issued to another rider."
+                )
+
+            # ✅ Issue keys
             for key in keys:
                 if key.state != 'available':
-                    continue
-
-                # Optional: prevent duplicate issue same day
-                existing_issue = KeyIssuance.search([
-                    ('key_id', '=', key.id),
-                    ('issue_date', '=', self.date)
-                ], limit=1)
-
-                if existing_issue:
                     continue
 
                 issuance = KeyIssuance.create({
                     'rider_id': self.rider_id.id,
                     'key_id': key.id,
-                    'action_type': 'bulk',  # explicitly mark
+                    'action_type': 'bulk',
+                    'issue_date': self.date,
                 })
                 issuance.action_issue()
 
@@ -116,16 +195,35 @@ class BulkKeyIssuance(models.TransientModel):
         if not self.key_bunch_ids:
             raise ValidationError('Please Select a Key Group')
 
-        for group in self.key_bunch_ids:
-            for key in group.key_ids:
+        KeyIssuance = self.env['key.issuance']
 
-                key_issuance = self.env['key.issuance'].search([
+        for group in self.key_bunch_ids:
+            keys = group.key_ids
+
+            invalid_keys = []
+            valid_issuances = []
+
+            for key in keys:
+                # 🔥 Get latest issuance for this key + rider
+                issuance = KeyIssuance.search([
                     ('key_id', '=', key.id),
                     ('rider_id', '=', self.rider_id.id),
-                    ('state', 'in', ['donation_receive', 'pending'])
-                ], limit=1)
+                ], order="id desc", limit=1)
 
-                if not key_issuance:
-                    continue
+                # ❌ If no issuance OR wrong state → block
+                if not issuance or issuance.state not in ['donation_receive', 'pending']:
+                    invalid_keys.append(key.name)
+                else:
+                    valid_issuances.append(issuance)
 
-                key_issuance.action_return()
+            # 🚫 Block entire bunch if any key invalid
+            if invalid_keys:
+                raise ValidationError(
+                    "❌ Cannot return this Key Bunch!\n\n"
+                    "Following keys are not in returnable state:\n" +
+                    "\n".join([f"  • {k}" for k in invalid_keys])
+                )
+
+            # ✅ All keys valid → return entire bunch
+            for issuance in valid_issuances:
+                issuance.action_return()

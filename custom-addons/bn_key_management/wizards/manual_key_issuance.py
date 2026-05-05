@@ -25,28 +25,51 @@ class ManualKeyIssuance(models.TransientModel):
     date = fields.Date('Date', default=fields.Date.context_today)
 
 
-    @api.depends('action_type', 'date')
+    @api.depends('action_type', 'date', 'rider_id')
     def _compute_available_lot_ids(self):
         for rec in self:
             lot_ids = []
 
-            if rec.action_type == 'issue':
-                # Only available keys
-                keys = self.env['key'].search([
-                    ('state', '=', 'available'),
-                    ('lot_id', '!=', False)
+            Key = self.env['key']
+            KeyIssuance = self.env['key.issuance']
+
+            if rec.action_type == 'issue' and rec.date:
+                # 🔴 Active issuances
+                active_issuances = KeyIssuance.search([
+                    ('state', '!=', 'returned')
                 ])
+                active_bunch_ids = active_issuances.mapped('key_id.key_bunch_id').ids
+
+                # 🔴 Same-day issuances
+                today_issuances = KeyIssuance.search([
+                    ('issue_date', '=', rec.date),
+                    ('state', '!=', 'returned')
+                ])
+                today_bunch_ids = today_issuances.mapped('key_id.key_bunch_id').ids
+
+                blocked_bunch_ids = list(set(active_bunch_ids + today_bunch_ids))
+
+                keys = Key.search([
+                    ('state', '=', 'available'),
+                    ('lot_id', '!=', False),
+                    ('key_bunch_id', 'not in', blocked_bunch_ids)
+                ])
+
                 lot_ids = keys.mapped('lot_id').ids
 
-            elif rec.action_type == 'return':
-                # Keys where:
-                # payment received + submitted in POS + DN prepared
-                key_issuances = self.env['key.issuance'].search([
-                    ('state', 'in', ['donation_receive'])
-                ])
-                lot_ids = key_issuances.mapped('key_id.lot_id').ids
+            elif rec.action_type == 'return' and rec.rider_id:
 
-            rec.available_lot_ids = [(6, 0, lot_ids)]
+                # 🔵 Only issued or overdue keys for selected rider
+                key_issuances = KeyIssuance.search([
+                    ('rider_id', '=', rec.rider_id.id),
+                    ('state', '!=', 'returned')
+                ])
+
+                keys = key_issuances.mapped('key_id')
+
+                lot_ids = keys.mapped('lot_id').ids
+
+            rec.available_lot_ids = [(6, 0, list(set(lot_ids)))]
 
     @api.depends('lot_id')
     def _set_key_id(self):
@@ -64,7 +87,7 @@ class ManualKeyIssuance(models.TransientModel):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
 
-        key = self.key_id  # ✅ correct (record, not ID)
+        key = self.key_id  # record
 
         if not key:
             raise ValidationError('Please select a key')
@@ -72,17 +95,19 @@ class ManualKeyIssuance(models.TransientModel):
         if key.state != 'available':
             raise ValidationError(f'Key "{key.name}" is not available for issuance')
 
+        if not self.date:
+            raise ValidationError('Please select issue date')
+
         # 🔍 Get key bunch
-        bunch = key.key_bunch_id  # assuming this relation exists
+        bunch = key.key_bunch_id
 
         if bunch:
             bunch_keys = bunch.key_ids
 
-            # 🔴 Check if ANY key in this bunch is already issued
+            # 🚫 1. Block if ANY key from bunch is already issued (active)
             issued_keys = self.env['key.issuance'].search([
                 ('key_id', 'in', bunch_keys.ids),
-                ('state', 'in', ['issued', 'overdue']),
-                ('action_type', '=', 'manual')
+                ('state', '=', 'issued')
             ])
 
             if issued_keys:
@@ -92,11 +117,24 @@ class ManualKeyIssuance(models.TransientModel):
                     "\n".join([f"  • {rec.key_id.name}" for rec in issued_keys])
                 )
 
+            # 🚫 2. SAME-DAY constraint (IMPORTANT FIX)
+            same_day_issue = self.env['key.issuance'].search([
+                ('key_id', 'in', bunch_keys.ids),
+                ('issue_date', '=', self.date),
+                ('state', '=', 'issued')
+            ])
+
+            if same_day_issue:
+                raise ValidationError(
+                    "❌ This key bunch already has an issue recorded for the selected date."
+                )
+
         # ✅ Safe to issue manually
         key_issuance_obj = self.env['key.issuance'].create({
             'rider_id': self.rider_id.id,
             'key_id': key.id,
-            'action_type': 'manual',  # ✅ important
+            'action_type': 'manual',
+            'issue_date': self.date,
         })
 
         key_issuance_obj.action_issue()
@@ -104,23 +142,26 @@ class ManualKeyIssuance(models.TransientModel):
     def action_return(self):
         if not self.rider_id:
             raise ValidationError('Please Select a Rider')
-        
-        key = self.key_id
-        
-        key_issuance = self.env['key.issuance'].search([
-            ('key_id', '=', key.id), 
-            ('state', '=', 'issued')
-        ], limit=1)
-        
-        if key_issuance:
-            raise ValidationError(f'Please move key "{key.name}" to Donation Received state first.')
 
-        key_issuance = self.env['key.issuance'].search([
+        key = self.key_id
+
+        if not key:
+            raise ValidationError('Please Select a Key')
+
+        KeyIssuance = self.env['key.issuance']
+
+        # 🔴 Find valid returnable record
+        key_issuance = KeyIssuance.search([
             ('key_id', '=', key.id),
             ('state', 'in', ['donation_receive', 'pending'])
         ], limit=1)
-        
-        if not key_issuance:
-            return
 
+        # ❌ If not found → cannot return
+        if not key_issuance:
+            raise ValidationError(
+                f'Key "{key.name}" cannot be returned.\n'
+                f'Only keys in "Donation Received" or "Pending" state can be returned.'
+            )
+
+        # 🚀 Proceed return
         key_issuance.action_return()

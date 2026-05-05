@@ -68,6 +68,14 @@ class KeyIssuance(models.Model):
             record.state = 'issued'
             record.key_id.state = 'issued'
 
+            # CREATE rider.collection record
+            self.env['rider.collection'].create({
+                'rider_id': record.rider_id.id,
+                'donation_box_registration_installation_id': record.key_id.donation_box_registration_installation_id.id,
+                'lot_id': record.key_id.lot_id.id,
+                'date': record.issue_date,
+            })
+
     def action_return(self):
         for record in self:
             record.state = 'returned'
