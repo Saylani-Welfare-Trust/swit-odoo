@@ -62,7 +62,7 @@ class ManualKeyIssuance(models.TransientModel):
                 # 🔵 Only issued or overdue keys for selected rider
                 key_issuances = KeyIssuance.search([
                     ('rider_id', '=', rec.rider_id.id),
-                    ('state', 'in', ['issued', 'overdue'])
+                    ('state', '!=', 'returned')
                 ])
 
                 keys = key_issuances.mapped('key_id')
