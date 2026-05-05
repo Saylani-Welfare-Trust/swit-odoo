@@ -300,35 +300,26 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async closeSession() {
-        try {
-            const ok = await this.pos.push_orders_with_closing_popup();
-            if (!ok) return;
+        const ok = await this.pos.push_orders_with_closing_popup();
+        if (!ok) return;
 
-            const bankDiffPairs = (this.props.other_payment_methods || [])
-                .filter((p) => p.type === "bank")
-                .map((p) => [p.id, this.getDifference(p.id)]);
+        const bankDiffPairs = (this.props.other_payment_methods || [])
+            .filter((p) => p.type === "bank")
+            .map((p) => [p.id, this.getDifference(p.id)]);
 
-            const response = await this.orm.call(
-                "pos.session",
-                "close_session_from_ui",
-                [
-                    this.pos.pos_session.id,
-                    bankDiffPairs,
-                    this.state.lines,
-                ]
-            );
+        const response = await this.orm.call(
+            "pos.session",
+            "close_session_from_ui",
+            [
+                this.pos.pos_session.id,
+                bankDiffPairs,
+                this.state.lines,
+            ]
+        );
 
-            if (!response?.successful)  this.handleClosingError(response);
+        if (!response?.successful) this.handleClosingError(response);
 
-            this.pos.redirectToBackend();
-        } catch (e) {
-            if (e instanceof ConnectionLostError) throw e;
-
-            await this.popup.add(ErrorPopup, {
-                title: _t("Error"),
-                body: _t("Session closing failed."),
-            });
-        }
+        this.pos.redirectToBackend();
     }
 
     async cancel() {
