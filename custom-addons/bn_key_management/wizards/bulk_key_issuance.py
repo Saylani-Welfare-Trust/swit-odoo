@@ -27,9 +27,7 @@ class BulkKeyIssuance(models.TransientModel):
     @api.depends('date', 'action_type')
     def _set_rider_domain(self):
         for rec in self:
-            if not rec.date:
-                rec.domain_rider_ids = [(6, 0, [])]
-                continue
+            rec.domain_rider_ids = [(6, 0, [])]
 
             if rec.action_type == 'issue':
 
