@@ -55,7 +55,7 @@ class APIDonationWizard(models.TransientModel):
 
             return True
         
-        raise ValidationError(donations_info[0].read())
+        raise ValidationError(str(donations_info[0]))
 
         # # Prepare bulk data
         # journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
