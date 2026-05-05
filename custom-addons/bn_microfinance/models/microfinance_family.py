@@ -43,7 +43,7 @@ class MicrofinanceFamily(models.Model):
                 welfare_records = self.env['welfare'].search([
                     ('cnic_no', '=', record.cnic_no)
                 ])
-                record.welfare_ids = welfare_records
+                record.welfare_ids =  [(6, 0, welfare_records.ids)]
                 record.welfare_count = len(welfare_records)
             else:
                 record.welfare_ids = False
