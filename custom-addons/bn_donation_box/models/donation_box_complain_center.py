@@ -62,8 +62,8 @@ class DonationBoxComplain(models.Model):
 
 
     def action_process(self):
-        if self.box_status != 'process':
-            raise ValidationError(f"Please contact your firendly administrator as you cannot set box status directly to '{self.box_status}'.")
+        # if self.box_status != 'process':
+        #     raise ValidationError(f"Please contact your firendly administrator as you cannot set box status directly to '{self.box_status}'.")
         
         self.status = 'process'
     
