@@ -28,7 +28,7 @@ class BulkKeyIssuance(models.TransientModel):
     def _set_rider_domain(self):
         for rec in self:
             if not rec.date:
-                rec.rider_ids = [(6, 0, [])]
+                rec.domain_rider_ids = [(6, 0, [])]
                 continue
 
             if rec.action_type == 'issue':
@@ -49,7 +49,7 @@ class BulkKeyIssuance(models.TransientModel):
                 # 3. Remove already issued riders
                 available_riders = scheduled_riders - issued_riders
 
-                rec.rider_ids = [(6, 0, available_riders.ids)]
+                rec.domain_rider_ids = [(6, 0, available_riders.ids)]
 
             elif rec.action_type == 'return':
                 KeyIssuance = self.env['key.issuance']
@@ -73,7 +73,7 @@ class BulkKeyIssuance(models.TransientModel):
 
                 valid_riders = list(rider_map.keys())
 
-                rec.rider_ids = [(6, 0, valid_riders)]
+                rec.domain_rider_ids = [(6, 0, valid_riders)]
 
     @api.depends('date', 'action_type', 'rider_id')
     def _set_location_domain(self):
