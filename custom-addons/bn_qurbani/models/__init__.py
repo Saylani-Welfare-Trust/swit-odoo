@@ -18,3 +18,4 @@ from . import qurbani_cow_slaughter
 from . import qurbani_goat_slaughter
 from . import pos_order
 from . import fetch_qurbani_log
+from . import qurbani_product_master

@@ -67,16 +67,13 @@ class KeyIssuance(models.Model):
 
             record.state = 'issued'
             record.key_id.state = 'issued'
-            
+
             # CREATE rider.collection record
             self.env['rider.collection'].create({
                 'rider_id': record.rider_id.id,
-                'donation_box_registration_installation_id':
-                    record.key_id.donation_box_registration_installation_id.id,
-
+                'donation_box_registration_installation_id': record.key_id.donation_box_registration_installation_id.id,
                 'lot_id': record.key_id.lot_id.id,
-                'date': fields.Date.today(),
-                'state': 'donation_not_collected',
+                'date': record.issue_date,
             })
 
     def action_return(self):
@@ -129,7 +126,9 @@ class KeyIssuance(models.Model):
                 "body": f"Please enter the correct amount collected against {data['box_no']}",
             }
 
-        key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('state', 'in', ['issued', 'overdue'])], limit=1)
+        key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
+        if not key_obj:
+            key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
 
         if not key_obj:
             return {

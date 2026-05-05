@@ -10,7 +10,6 @@ class PosPaymentMethod(models.Model):
         help="If checked, this payment method will not require slip number and payment breakdown in closing session. All payments will be managed as a single total, like the default Odoo flow."
     )
 
-
     restricted_account_id = fields.Many2one(
         'account.account',
         string='Restricted Receivable Account',

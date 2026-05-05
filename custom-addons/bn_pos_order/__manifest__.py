@@ -11,8 +11,9 @@
     'data': [
         'data/paper_format.xml',
         'security/group.xml',
-        'reports/duplicate_dn.xml',
         'views/pos_order.xml',
+        'reports/duplicate_dn.xml',
+        'reports/whatsapp_dn.xml',
     ],
     'auto_install': False,
     'application': False,

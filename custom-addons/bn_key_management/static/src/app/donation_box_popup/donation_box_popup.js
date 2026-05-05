@@ -52,6 +52,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             contact_person: collection.contact_person,
             contact_number: collection.contact_number,
             box_location: collection.box_location,
+            date: collection.date,
             check_validation: true
         };
         
