@@ -636,8 +636,10 @@
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
                                     <field name="monthly_income" />
-                                    <field name="welfare_ids" readonly="1" />
-                                </tree>
+                                    <field name="welfare_ids"
+                                            widget="many2many_tags"
+                                            options="{'no_create': True, 'no_edit': True}"/> 
+                            </tree>
                             </field>
                         </page>
                     </notebook>
