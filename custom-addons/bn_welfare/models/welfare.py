@@ -257,6 +257,13 @@ class Welfare(models.Model):
         store=False
     )
     
+    # Related Microfinance Family Records (linked by CNIC - computed)
+    microfinance_family_count = fields.Integer(
+        string="Family Members Count",
+        compute='_compute_microfinance_family_ids',
+        store=False
+    )
+    
     show_disburse_button = fields.Boolean(
         compute="_compute_show_disburse_button",
         store=False
@@ -291,6 +298,27 @@ class Welfare(models.Model):
                 rec.previous_welfare_ids = previous
             else:
                 rec.previous_welfare_ids = False
+
+    @api.depends('cnic_no')
+    def _compute_microfinance_family_ids(self):
+        """Search for microfinance family members with matching CNIC number"""
+        for record in self:
+            if record.cnic_no:
+                # Search for microfinance.family records where cnic_no matches
+                family_records = self.env['microfinance.family'].search([
+                    ('cnic_no', '=', record.cnic_no)
+                ])
+                record.microfinance_family_count = len(family_records)
+            else:
+                record.microfinance_family_count = 0
+    
+    def get_related_microfinance_family(self):
+        """Get all microfinance family members with matching CNIC"""
+        if self.cnic_no:
+            return self.env['microfinance.family'].search([
+                ('cnic_no', '=', self.cnic_no)
+            ])
+        return self.env['microfinance.family'].browse()
 
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):

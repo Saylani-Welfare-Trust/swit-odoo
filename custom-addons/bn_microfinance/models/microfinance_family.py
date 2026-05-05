@@ -18,16 +18,7 @@ class MicrofinanceFamily(models.Model):
 
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     
-    # Related welfare records linked by CNIC
-    welfare_ids = fields.Many2many(
-        'welfare',
-        'microfinance_family_welfare_rel',
-        'family_id',
-        'welfare_id',
-        string="Related Welfare Records",
-        compute='_compute_welfare_ids',
-        store=False
-    )
+    # Related welfare records linked by CNIC (computed)
     welfare_count = fields.Integer(
         string="Welfare Records Count",
         compute='_compute_welfare_ids',
@@ -43,11 +34,17 @@ class MicrofinanceFamily(models.Model):
                 welfare_records = self.env['welfare'].search([
                     ('cnic_no', '=', record.cnic_no)
                 ])
-                record.welfare_ids =  [(6, 0, welfare_records.ids)]
                 record.welfare_count = len(welfare_records)
             else:
-                record.welfare_ids = False
                 record.welfare_count = 0
+    
+    def get_related_welfare_records(self):
+        """Get all welfare records with matching CNIC"""
+        if self.cnic_no:
+            return self.env['welfare'].search([
+                ('cnic_no', '=', self.cnic_no)
+            ])
+        return self.env['welfare'].browse()
     
     def action_open_welfare(self):
         self.ensure_one()
