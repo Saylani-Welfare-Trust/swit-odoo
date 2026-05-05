@@ -40,7 +40,7 @@ class BulkKeyIssuance(models.TransientModel):
 
                 # 2. Riders already having issued keys on same date
                 issued_riders = self.env['key.issuance'].search([
-                    ('date', '=', rec.date),
+                    ('issue_date', '=', rec.date),
                     ('state', '!=', 'returned')
                 ]).mapped('rider_id')
 
@@ -93,7 +93,7 @@ class BulkKeyIssuance(models.TransientModel):
                     # 2. Already issued bunches on same date
                     issued_bunches = self.env['key.issuance'].search([
                         ('rider_id', '=', rec.rider_id.id),
-                        ('date', '=', rec.date),
+                        ('issue_date', '=', rec.date),
                         ('state', '!=', 'returned')
                     ]).mapped('key_bunch_id')
 
