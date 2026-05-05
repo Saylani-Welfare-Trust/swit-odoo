@@ -318,7 +318,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 ]
             );
 
-            if (!response?.successful) return;
+            if (!response?.successful)  this.handleClosingError(response);
 
             this.pos.redirectToBackend();
         } catch (e) {
