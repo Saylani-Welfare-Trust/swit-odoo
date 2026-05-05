@@ -20,7 +20,7 @@
         <field name="arch" type="xml">
             <form create="0" edit="1">
                 <header>
-                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
+                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight" invisible="pos_qurbani_order != True"/>
                 </header>
                 
                 <sheet>
@@ -29,11 +29,15 @@
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
 
-                    <group>
-                        <group name="qurbani_order_col_1">
+                    <!-- Hidden field for controlling visibility -->
+                    <field name="pos_qurbani_order" invisible="1" />
+                    <field name="currency_id" invisible="1"/>
+
+                    <!-- POS Order Section (shown when pos_qurbani_order = True) -->
+                    <group invisible="pos_qurbani_order != True">
+                        <h2>POS Order Information</h2>
+                        <group>
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
-                        </group>
-                        <group name="qurbani_order_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
@@ -41,6 +45,13 @@
                             </div>
                             <field name="currency_id" invisible="1"/>
                         </group>
+                    </group>
+
+                    <!-- General Information (Both POS and Web) -->
+                    <group string="Additional Information">
+                        <field name="remarks" />
+                        <field name="amount" />
+                        <field name="total_amount" />
                     </group>
 
                     <notebook>

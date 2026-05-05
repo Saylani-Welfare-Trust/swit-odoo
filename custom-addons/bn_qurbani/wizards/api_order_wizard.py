@@ -53,47 +53,36 @@ class APIDonationWizard(models.TransientModel):
         if not donations_info:
             self.create_fetch_log( f"No donations found for the given date range. {self.start_date} to {self.end_date}", 'No Data', 'No donations returned from API')
 
-            return True
+            return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Error',
+                'message': 'No donations found for the given date range.',
+                'type': 'danger',  # success / warning / danger
+                'sticky': False,    # True = stays until user closes
+            }
+        }
         
-        raise ValidationError(str(donations_info[0]))
+        # raise ValidationError(str(donations_info[0]))
+        for info in donations_info:
+            if not isinstance(info, dict):
+                self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
 
-        # # Prepare bulk data
-        # journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        # gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
-        # company_currency = company.currency_id
-        
-        # # Pre-fetch all required data in bulk
-        # all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
-        
-        # # Process donations in optimized way
-        # result = self._process_donations_bulk(
-        #     donations_info, journal, gateway_config, company_currency, all_data, history
-        # )
-        
-        # if result.get('new_donations') and journal and result.get('accumulators'):
-        #     # raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
-        #     move = self._create_grouped_journal_move(
-        #         journal, 
-        #         result['accumulators']['debit'],
-        #         result['accumulators']['credit'], 
-        #         company_currency,
-        #         history
-        #     ) 
+                _logger.error(f"Invalid donation entry: {info}")
+                continue
+            result = self.env['qurbani.order'].create_web_qurbani_order(info)
 
-        #     history.write({
-        #         'journal_entry_id': move.id,
-        #         'picking_id': result['picking_id'] if result.get('picking_id') else False,
-        #     })
-
-        #     # Bulk update fetch history
-        #     if result['new_donations']:
-        #         self.env['api.donation'].browse(result['new_donations']).write({
-        #             'fetch_history_id': history.id
-        #         })
-
-        # self.create_fetch_log(history.id, f"Donation fetch and processing completed successfully.", 'Completed', 'All operations completed successfully')
-
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': 'API data fetched successfully!',
+                'type': 'success',  # success / warning / danger
+                'sticky': False,    # True = stays until user closes
+            }
+        }
 
     # ---------------------- Bulk API Operations ----------------------
     def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host):
