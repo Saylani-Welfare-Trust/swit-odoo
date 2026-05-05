@@ -639,6 +639,10 @@
                                     <field name="welfare_ids"
                                             widget="many2many_tags"
                                             options="{'no_create': True, 'no_edit': True}"/> 
+                                    <button name="action_open_welfare"
+                                            type="object"
+                                            string="Open Welfare"
+                                            icon="fa-external-link"/>
                             </tree>
                             </field>
                         </page>
