@@ -146,6 +146,8 @@ class BulkKeyIssuance(models.TransientModel):
                 ('state', '!=', 'returned')
             ])
 
+            raise ValidationError(str(issued_keys))
+
             if issued_keys:
                 raise ValidationError(
                     "❌ Cannot issue this Key Bunch!\n\n"
