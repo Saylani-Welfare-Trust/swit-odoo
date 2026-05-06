@@ -52,8 +52,6 @@ patch(PaymentScreen.prototype, {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
-
-                    this.pos.is_qurbani = true
                 }
             })
         }
