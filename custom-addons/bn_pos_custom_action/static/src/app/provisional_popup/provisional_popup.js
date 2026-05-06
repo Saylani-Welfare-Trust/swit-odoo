@@ -80,6 +80,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     product_id: line.product.id,
                     quantity: line.quantity,
                     price: line.price,
+                    qurbani_schedule: line.qurbani_schedule || null,
                     remarks: line.customerNote
                 }
             )

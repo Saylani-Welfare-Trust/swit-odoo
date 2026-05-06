@@ -111,6 +111,7 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/>
                                     </div>
+                                    <div><strong>Remarks:</strong> <t t-esc="o.remarks or ''"/></div>
                                 </div>
                             </div>
 
@@ -126,7 +127,7 @@
                                 <tbody>
                                     <t t-foreach="o.direct_deposit_line_ids" t-as="line">
                                         <tr>
-                                            <td><t t-esc="line.product_id.display_name"/></td>
+                                            <td><t t-esc="line.product_id.name"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.amount) or 0) or 0"/></td>
                                             <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity*line.amount or 0)) or 0"/></td>
@@ -157,7 +158,7 @@
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="o.direct_deposit_line_ids" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
+                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
                                     </div>
@@ -182,18 +183,6 @@
             </t>
         </template>
 
-        <record id="report_direct_deposit_paperformat" model="report.paperformat">
-            <field name="name">A5 - Direct Deposit Receipt</field>
-            <field name="format">A5</field>
-            <field name="orientation">Portrait</field>
-            <field name="margin_top">0</field>
-            <field name="margin_bottom">10</field>
-            <field name="margin_left">4</field>
-            <field name="margin_right">4</field>
-            <field name="header_spacing">0</field>
-            <field name="dpi">90</field>
-        </record>
-
         <record id="report_direct_deposit_dn" model="ir.actions.report">
             <field name="name">Direct Deposit Receipt</field>
             <field name="model">direct.deposit</field>
@@ -203,7 +192,7 @@
             <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
             <field name="binding_type">report</field>
             <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
-            <field name="id" ref="report_direct_deposit_paperformat"/>
+            <field name="id" ref="bn_direct_deposit.report_direct_deposit_duplicate_paperformat"/>
         </record>
 
     </data>

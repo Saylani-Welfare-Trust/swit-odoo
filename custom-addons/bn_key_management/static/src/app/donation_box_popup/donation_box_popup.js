@@ -122,16 +122,12 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
      * Process partner assignment
      */
     async processPartner(record, selectedOrder) {
-        console.log(record);
-
         if (!record.donor_id) {
             return;
         }
 
         const partnerId = record.donor_id;
         let partner = await this.getOrLoadPartner(partnerId);
-
-        console.log(partner);
         
         if (partner) {
             this.assignPartnerToOrder(partner, selectedOrder);
@@ -164,13 +160,9 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             { limit: 1 }
         );
         
-        // console.log("Partner Data:", partnerData);
-        
         if (partnerData && partnerData.length > 0) {
             this.pos.db.add_partners([partnerData[0]]);
             const partner = this.pos.db.get_partner_by_id(partnerId);
-            
-            // console.log("Partner loaded to POS:", partner);
             
             return partner;
         }
@@ -182,11 +174,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
      * Assign partner to order
      */
     assignPartnerToOrder(partner, selectedOrder) {
-        console.log(partner);
-
         selectedOrder.set_partner(partner);
-        
-        // console.log("Partner set on order:", partner.name);
         
         this.notification.add(
             `Customer set to: ${partner.name}`,

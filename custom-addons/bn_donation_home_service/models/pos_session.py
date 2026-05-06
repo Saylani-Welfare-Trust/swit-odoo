@@ -28,8 +28,6 @@ class POSSession(models.Model):
         dhs_orders_by_document = {}
 
         for order in self._get_closed_orders():
-            # raise ValidationError(str(order))
-
             if order.company_id.anglo_saxon_accounting and order.is_invoiced or order.shipping_date:
                 continue
 

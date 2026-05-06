@@ -10,8 +10,6 @@ import {_t} from "@web/core/l10n/translation";
 
 patch(ActionScreen.prototype, {
     get checkMicrofinanceAccess(){
-        // console.log(this);
-
         return this.pos._microFinance || false;
     },
 
