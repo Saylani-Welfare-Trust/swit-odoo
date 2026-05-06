@@ -12,6 +12,7 @@ patch(Order.prototype, {
 
         // Include source_document if set
         json.source_document = this.source_document || false;
+        json.qurbani = this.qurbani || false;
 
         return json;
     },
@@ -28,5 +29,19 @@ patch(Order.prototype, {
      */
     get_source_document() {
         return this.source_document;
+    },
+
+    /**
+     * Setter for qurbani
+     */
+    set_qurbani(qurbani) {
+        this.qurbani = qurbani;
+    },
+
+    /**
+     * Getter for qurbani
+     */
+    get_qurbani() {
+        return this.qurbani;
     },
 });
