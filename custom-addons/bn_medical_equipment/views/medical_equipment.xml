@@ -77,9 +77,9 @@
                             <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" readonly = "not is_actual_deposit_editable"/>
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" invisible="1"/>
-                            <field name="cnic_no" readonly="state != 'draft'" required="1" />
+                            <field name="cnic_no" readonly="state != 'draft'" required="1" force_save="1"/>
                             <field name="street" string="Address" readonly="state != 'draft'" required="1"  force_save="1"/>
-                            <field name="city" required="1" readonly="state != 'draft'" />
+                            <field name="city" required="1" readonly="state != 'draft'" force_save="1" />
                             <field name="general_remarks" string="General Remarks" readonly="state != 'draft'" />
                             <field name="remarks_approval1" 
                                 required="case_type in ['50_percent', 'below_50_percent'] and state == 'ceo_approval'"
@@ -101,12 +101,12 @@
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1" /> 
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1"  force_save="1"/> 
                                 <field style="width: 70% !important;" name="mobile" readonly="state != 'draft'" nolabel="1" required="1" />
                             </div>
-                            <field name="gender" required="1" readonly="state != 'draft'" />
-                            <field name="date_of_birth" required="1" readonly="state != 'draft'" />
-                            <field name="age" readonly="1" />
+                            <field name="gender" required="1" readonly="state != 'draft'"  force_save="1"/>
+                            <field name="date_of_birth" required="1" readonly="state != 'draft'" force_save="1" />
+                            <field name="age" readonly="1"  force_save="1"/>
                             <field name="donee_id" string="Donee" readonly="state != 'draft'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="1" />
                             <field name="currency_id" invisible="1"/>
 
