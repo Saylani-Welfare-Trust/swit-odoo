@@ -5,14 +5,10 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
-        console.log("🔵 VALIDATE ORDER HIT! 🔵");
-
         // Get WhatsApp number BEFORE validation
         const order = this.currentOrder;
         const partner = order ? order.partner : null;
         const whatsappNumber = partner ? (partner.whatsapp || partner.mobile) : null;
-
-        console.log("WhatsApp:", whatsappNumber);
 
         // ✅ Store reference BEFORE component is destroyed
         const orderRef = order;
@@ -25,11 +21,7 @@ patch(PaymentScreen.prototype, {
                 // ⚠️ DO NOT use this.currentOrder here
                 const orderId = orderRef ? orderRef.server_id : null;
 
-                console.log("Order ID:", orderId);
-
                 if (orderId) {
-                    console.log("Sending WhatsApp for Order ID:", orderId);
-
                     fetch('/web/dataset/call_kw', {
                         method: 'POST',
                         headers: {
@@ -49,7 +41,6 @@ patch(PaymentScreen.prototype, {
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("Response:", data);
                         if (data.result?.status === 'success') {
                             console.log(data.result?.message);
                         }

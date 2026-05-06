@@ -65,8 +65,6 @@ async function printHtmlReport(action, env) {
 }
 
 registry.category("ir.actions.report handlers").add("html_print_handler", async (action, options, env) => {
-    // console.log(action);
-
     // Only handle HTML reports
     if (action.report_type === "qweb-pdf" || action.report_type === "qweb-html") {
         return printHtmlReport(action, env);

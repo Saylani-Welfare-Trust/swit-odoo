@@ -16,9 +16,6 @@ patch(Orderline.prototype, {
     },
 
     set_quantity(quantity, keep_price) {
-        console.log(quantity);
-        console.log(this);
-
         const order = this.order;
 
         if (order && this.hasQurbani(order)) {
