@@ -13,22 +13,31 @@ patch(PaymentScreen.prototype, {
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
             const equipmentId = medicalData.equipment_id;
+            const medical_equipment_request_no = medicalData.medical_equipment_request_no;
             const securityDepositId = medicalData.security_deposit_id;
             
             if (equipmentId) {
                 // First, get the current state of the medical equipment record
+                
                 const equipmentRecord = await this.env.services.orm.searchRead(
                     'medical.equipment',
                     [['id', '=', equipmentId]],
-                    ['name', 'state', 'medical_equipment_line_ids'],
+                    ['name', 'state', 'medical_equipment_line_ids','remaining_amount'],
                     { limit: 1 }
                 );
-                
+            
                 if (equipmentRecord && equipmentRecord.length > 0) {
                     const currentState = equipmentRecord[0].state;
-                    
+                    // console.log(`🔍 Current state of equipment ${medicalData.record_number}: ${currentState}`);
                     let newState;
-                    
+                    if (currentState === 'donate' ) {
+                        // console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
+                        const result = await this.env.services.orm.write(
+                            'medical.equipment',
+                            [equipmentId],
+                            { remaining_amount: 0 }
+                        );   
+                    }
                     // Condition 1: If state is 'draft', update to 'payment'
                     if (currentState === 'sd_received') {
                         // Check for negative quantities
@@ -92,27 +101,29 @@ patch(PaymentScreen.prototype, {
                     console.error("❌ [Medical Equipment] Equipment record not found");
                 }
             } else {
-                if (securityDepositId) {
-                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                // if (!securityDepositId) {
+                const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
 
-                    const payload = {
-                        deposit_id: securityDepositId,
-                        payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
-                        bank_name: currentOrder.bank_name,
-                        cheque_no: currentOrder.cheque_number,
-                        cheque_date: currentOrder.cheque_date,
-                        state: 'paid',
-                    }
-
-                    await this.env.services.orm.call(
-                        'medical.security.deposit', "set_security_depsoit_values",
-                        [payload]
-                    );
-
-                    currentOrder.set_source_document(medicalData.record_number);
+                const payload = {
+                    deposit_id: securityDepositId || null,
+                    payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                    bank_name: currentOrder.bank_name,
+                    medical_equipment_request_no: medical_equipment_request_no,
+                    cheque_no: currentOrder.cheque_number,
+                    cheque_date: currentOrder.cheque_date,
+                    state: 'paid',
                 }
+                console.log("📤 Payload for setting security deposit values:", payload);
 
-                console.error("❌ [Medical Equipment] No equipment ID found");
+                await this.env.services.orm.call(
+                    'medical.security.deposit', "set_security_depsoit_values",
+                    [payload]
+                );
+                currentOrder.set_source_document(medicalData.record_number);
+                // }
+                
+                console.log("✅ Security deposit values set successfully");
+                // console.error("❌ [Medical Equipment] No equipment ID found");
             }
             
         }
@@ -360,7 +371,7 @@ patch(PaymentScreen.prototype, {
         );
 
         if (donationLines && donationLines.length > 0) {
-            try {
+            // try {
                 
                 for (const donationLine of donationLines) {
                     
@@ -378,7 +389,7 @@ patch(PaymentScreen.prototype, {
 
                     // Prepare data for register_pos_payment
                     const data = {
-                        'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
+                        'payment_type': paymentMethod.type === 'Cash' ? 'cash' : 'cheque',
                         'is_donation_id': false,
                         'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
@@ -386,19 +397,20 @@ patch(PaymentScreen.prototype, {
                         'product_id': donationLine.product.id,
                     };
                     
-                    // Only add cheque fields if payment type is cheque
+                    // // Only add cheque fields if payment type is cheque
                     if (data.payment_type === 'cheque') {
-                        data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback
+                        // data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback                        
                         data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
                         data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
                     }
 
-                    const result = await this.env.services.orm.call(
+                    const result = await     this.env.services.orm.call(
                         'advance.donation.receipt',
                         'register_pos_payment',
                         [data]
                     );
-
+                    console.log("📤 Data sent for donation receipt creation:", data);
+                    console.log("📥 Result from donation receipt creation:", result);
                     if (result.status === 'success') {
                         currentOrder.set_source_document(result.receipt_name);
 
@@ -410,14 +422,6 @@ patch(PaymentScreen.prototype, {
                         throw new Error(result.body || 'Failed to create donation receipt');
                     }
                 }
-            } catch (error) {
-                console.error("❌ [Advance Donation] Error creating donation receipt:", error);
-                this.env.services.notification.add(
-                    "Failed to create donation receipt. Order cannot be completed.",
-                    { type: 'warning' }
-                );
-                return; // Stop the order if donation receipt creation fails
-            }
         }
         // --- WELFARE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
