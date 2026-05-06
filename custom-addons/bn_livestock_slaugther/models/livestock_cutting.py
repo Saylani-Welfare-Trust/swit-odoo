@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -16,8 +16,9 @@ class LivestockCutting(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
+    picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    name = fields.Char(related='product_id.name', string="Product Name", store=True)
+    name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
 
     quantity = fields.Integer('Quantity', default=1)
@@ -26,23 +27,29 @@ class LivestockCutting(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
+    is_picking = fields.Boolean('Is Picking')
+
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
+
+        return super(LivestockCutting, self).create(vals)
 
     def action_confirm(self):
         self.state = 'received'
     
     def action_validate_picking(self):
-        cutting_obj = self.env['live_stock_slaughter.cutting_material']
-        product_pro = self.product
+        cutting_obj = self.env['livestock.cutting.material']
+        product_pro = self.product_id
 
         cutting_record = cutting_obj.create({
-            'product': self.product.id,
+            'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
-            'product_code': self.product_code,
+            'code': self.code,
         })
-
-        if not self.picking_id:
-            raise ValidationError("No picking linked to this cutting record!")
 
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
@@ -61,7 +68,7 @@ class LivestockCutting(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': slaughter_location.id,
             'location_dest_id': cutting_location.id,
-            'origin': self.product or 'Live Stock Slaughter',
+            'origin': self.name or 'Live Stock Slaughter',
         })
 
         # Create the stock move
@@ -81,10 +88,12 @@ class LivestockCutting(models.Model):
         picking.action_assign()
         picking.button_validate()
 
+        self.is_picking = True
+
         return {
             'type': 'ir.actions.act_window',
             'name': 'Cutting Material Record',
-            'res_model': 'live_stock_slaughter.cutting_material',
+            'res_model': 'livestock.cutting.material',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',

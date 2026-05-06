@@ -9,9 +9,10 @@ class DonationHomeServiceLine(models.Model):
 
     medical_equipment_id = fields.Many2one('medical.equipment', string="Donation Home Service")
     medical_equipment_category_id = fields.Many2one('medical.equipment.category', string="Medical Equipment Category")
-    product_id = fields.Many2one(related='medical_equipment_category_id.product_id', string="Product", store=True)
+    product_id = fields.Many2one('product.product', string="Product",related='medical_equipment_category_id.product_id', store=True )
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
-    
+    lot_ids = fields.Many2many('stock.lot', string="Product No./Lot")
+
     quantity = fields.Integer('Quantity', default=1)
     base_security_deposit = fields.Monetary(
         string='Base Security Deposit', 
@@ -29,6 +30,34 @@ class DonationHomeServiceLine(models.Model):
         compute='_compute_security_deposit',
         store=True
     )
+    
+    # allowed_lot_ids = fields.Many2many(
+    #     'stock.lot',
+    #     string="Allowed Lots",
+    #     compute="_compute_allowed_lot_ids",
+    # )
+    
+    @api.constrains('lot_ids', 'quantity')
+    def _check_lot_quantity(self):
+        for rec in self:
+            if rec.quantity and len(rec.lot_ids) > rec.quantity:
+                raise ValidationError(
+                    f"You can only select {rec.quantity} lot(s) based on the quantity."
+                )
+
+    # @api.depends('product_id',)
+    # def _compute_allowed_lot_ids(self):
+    #     for line in self:
+    #         if not line.product_id:
+    #             line.allowed_lot_ids = [(5, 0, 0)]  # empty domain
+    #             continue
+
+    #         lots = self.env['stock.lot'].search([
+    #             ('product_id', '=', line.product_id.id),
+    #         ])
+
+    #         lot_ids = lots.filtered(lambda l: not l.lot_consume)
+    #         line.allowed_lot_ids = lot_ids
 
     @api.depends('base_security_deposit', 'actual_deposit_percentage', 'quantity')
     def _compute_security_deposit(self):

@@ -45,8 +45,8 @@ class MedicalEquipmentDonation(models.TransientModel):
                 continue
 
             income_account = (
-                product.property_account_income_id
-                or product.categ_id.property_account_income_categ_id
+                self.product_id.property_account_income_id
+                or self.product_id.categ_id.property_account_income_categ_id
             )
             expense_account = (
                 security_product.property_account_expense_id
@@ -90,4 +90,5 @@ class MedicalEquipmentDonation(models.TransientModel):
 
         self.medical_equipment_id.state = 'donate'
         self.medical_equipment_id.move_id = move.id
-        self.medical_equipment_id.remarks = self.remarks
+        self.medical_equipment_id.general_remarks = self.remarks
+        self.medical_equipment_id.remaining_amount = self.medical_equipment_id.total_amount - self.amount if self.amount else 0.0

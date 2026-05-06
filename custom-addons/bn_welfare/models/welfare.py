@@ -94,6 +94,7 @@ class Welfare(models.Model):
 
     frc = fields.Binary('FRC')
     frc_name = fields.Char('FRC Name')
+    
 
     electricity_bill_file = fields.Binary('Electricity Bill')
     electricity_bill_name = fields.Char('Electricity Bill Name')
@@ -233,11 +234,143 @@ class Welfare(models.Model):
         string='Madrasa Details'
     )
     
+    # Inquiry Committee Questions Tab
+    applicant_occupation = fields.Char('Applicant Occupation / Source of Income', tracking=True)
+    residence_ownership = fields.Selection([
+        ('owned', 'Owned'),
+        ('rented', 'Rented'),
+        ('shared', 'Shared'),
+    ], string='Residence Ownership', tracking=True)
+    total_children = fields.Integer('Total Number of Children', tracking=True)
+    boys_count = fields.Integer('Number of Boys', tracking=True)
+    girls_count = fields.Integer('Number of Girls', tracking=True)
+    children_education_status = fields.Text('Children Education Status', tracking=True, 
+        help="Specify whether children are studying in school, college, or university")
+    main_issue = fields.Text('Main Issue/Problem', tracking=True, 
+        help="Describe the main issue or problem being faced by the applicant or their family")
+    
+    # Previous Disbursements for same Donee
+    previous_welfare_ids = fields.One2many(
+        compute='_compute_previous_welfare_ids',
+        comodel_name='welfare',
+        string='Previous Disbursements to This Donee',
+        store=False
+    )
+    
     show_disburse_button = fields.Boolean(
         compute="_compute_show_disburse_button",
         store=False
     )
+    employee_domain = fields.Char(compute="_compute_employee_domain")
 
+    @api.depends('donee_id.area', 'employee_category_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            domain = []
+
+            if record.employee_category_id:
+                domain.append(('category_ids', 'in', [record.employee_category_id.id]))
+
+            if record.donee_id and record.donee_id.area:
+                domain.append(('area', '=', record.donee_id.area.id))
+
+            record.employee_domain = json.dumps(domain)
+    @api.depends('donee_id')
+    def _compute_previous_welfare_ids(self):
+        """Compute previous welfare disbursements for the same donee"""
+        for rec in self:
+            if rec.donee_id:
+                domain = [
+                    ('donee_id', '=', rec.donee_id.id),
+                    ('state', 'in', ['disbursed', 'recurring'])
+                ]
+                # Only exclude current record if it has a real integer ID (saved record)
+                if rec.id and isinstance(rec.id, int) and rec.id > 0:
+                    domain.append(('id', '!=', rec.id))
+                previous = self.search(domain, order='date desc')
+                rec.previous_welfare_ids = previous
+            else:
+                rec.previous_welfare_ids = False
+
+    @api.onchange('donee_id')
+    def _onchange_donee_id_populate_data(self):
+        """Auto-populate form data from most recent previous welfare record for existing donee"""
+        if not self.donee_id:
+            return
+
+        # Build domain for previous welfare records
+        domain = [
+            ('donee_id', '=', self.donee_id.id),
+            ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
+        ]
+        
+        # Exclude current record only if it is already saved (has a real integer ID)
+        if self.id and isinstance(self.id, int) and self.id > 0:
+            domain.append(('id', '!=', self.id))
+        
+        previous_welfare = self.search(domain, order='date desc', limit=1)
+
+        if previous_welfare:
+            # Auto-populate all fields (same as your original code)
+            self.applicant_occupation = previous_welfare.applicant_occupation
+            self.residence_ownership = previous_welfare.residence_ownership
+            self.total_children = previous_welfare.total_children
+            self.boys_count = previous_welfare.boys_count
+            self.girls_count = previous_welfare.girls_count
+            self.children_education_status = previous_welfare.children_education_status
+            self.main_issue = previous_welfare.main_issue
+            
+             # Auto-populate residence/house info
+
+            self.residence_type = previous_welfare.residence_type
+            self.home_phone_no = previous_welfare.home_phone_no
+            self.landlord_name = previous_welfare.landlord_name
+            self.landlord_cnic_no = previous_welfare.landlord_cnic_no
+            self.landlord_mobile = previous_welfare.landlord_mobile
+            self.rental_shared_duration = previous_welfare.rental_shared_duration
+            self.per_month_rent = previous_welfare.per_month_rent
+            self.gas_bill = previous_welfare.gas_bill
+            self.electricity_bill = previous_welfare.electricity_bill
+            self.home_other_info = previous_welfare.home_other_info
+                      
+             # Auto-populate financial info
+
+            self.monthly_income = previous_welfare.monthly_income
+            self.outstanding_amount = previous_welfare.outstanding_amount
+            self.monthly_household_expense = previous_welfare.monthly_household_expense
+            self.bank_account = previous_welfare.bank_account
+            self.bank_name = previous_welfare.bank_name
+            self.account_no = previous_welfare.account_no
+            self.other_loan = previous_welfare.other_loan
+            self.institute_name = previous_welfare.institute_name
+            
+            # Auto-populate employment info
+
+            self.designation = previous_welfare.designation
+            self.company_name = previous_welfare.company_name
+            self.company_phone = previous_welfare.company_phone
+            self.company_address = previous_welfare.company_address
+            self.service_duration = previous_welfare.service_duration
+            self.monthly_salary = previous_welfare.monthly_salary
+            # Auto-populate document fields
+            self.frc = previous_welfare.frc
+            self.application_form = previous_welfare.application_form
+            self.electricity_bill_file = previous_welfare.electricity_bill_file
+            self.gas_bill_file = previous_welfare.gas_bill_file
+            self.family_cnic = previous_welfare.family_cnic
+            
+            # Auto-populate family info
+            self.dependent_person = previous_welfare.dependent_person
+            self.household_member = previous_welfare.household_member
+            
+            # Show notification about auto-population
+
+            return {
+                'warning': {
+                    'title': 'Data Auto-Populated',
+                    'message': f'Form has been automatically populated with data from previous application dated {previous_welfare.date}.\n\nPrevious Disbursements can be viewed in the "Previous Disbursements" tab.'
+                }
+            }
     @api.model
     def _auto_disburse_if_all_lines_delivered(self):
         records = self.search([('state', 'in', ['recurring', 'approve'])])
@@ -725,14 +858,15 @@ class Welfare(models.Model):
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     
     def action_move_to_hod(self):
-        # if not self.hod_remarks:
-        #     raise ValidationError('Please enter HOD Remarks!')
+
+        if not self.hod_remarks:
+            raise ValidationError('Please enter HOD Remarks!')
         
         self.state = 'hod_approve'
     
     def action_move_to_member(self):
-        # if not self.member_remarks:
-        #     raise ValidationError('Please enter Member Remarks!')
+        if not self.member_remarks:
+            raise ValidationError('Please enter Member Remarks!')
         
         self.state = 'mem_approve'
     
@@ -789,9 +923,31 @@ class Welfare(models.Model):
         self.state = 'recurring'
         
     def action_committee_approval(self):
-        # if not self.committee_remarks:
-        #     raise ValidationError(_('Please enter Committee Remarks before approval.'))
-        self.state = 'committee_approval'
+        for record in self:
+
+            # Remarks check
+            if not record.committee_remarks:
+                raise ValidationError(_('Please enter Committee Remarks before approval.'))
+
+            # Document validation
+            missing_fields = []
+
+            if not record.application_form:
+                missing_fields.append("Application Form")
+            if not record.electricity_bill_file:
+                missing_fields.append("Electricity Bill")
+            if not record.gas_bill_file:
+                missing_fields.append("Gas Bill")
+            if not record.family_cnic:
+                missing_fields.append("Family CNIC")
+
+            if missing_fields:
+                raise ValidationError(_(
+                    "Please upload the following documents before approval:\n- %s"
+                ) % ("\n- ".join(missing_fields)))
+
+            # If everything is valid
+            record.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))
@@ -822,3 +978,28 @@ class Welfare(models.Model):
                     rec.state = state_flow[idx-1]
             except Exception:
                 pass
+
+    # Add this method to your welfare model
+
+    def action_open_full_edit_wizard(self):
+        """Open the full-width wizard for editing all fields"""
+        self.ensure_one()
+        
+        # Only allow in committee_approval and hod_approve states
+        if self.state not in ['inquiry', 'committee_approval']:
+            raise ValidationError(_('This option is only available in Committee Approval and HOD Approval states.'))
+        
+        return {
+            'name': _('Edit All Fields - Full View'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'welfare.fields.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': False,
+            'context': {
+                'default_welfare_id': self.id,
+                'active_id': self.id,
+                'active_model': 'welfare',
+            }
+        }
+        

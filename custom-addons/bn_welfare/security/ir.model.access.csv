@@ -9,3 +9,4 @@ access_welfare_inquiry_report,welfare.inquiry.report,bn_welfare.model_welfare_in
 access_welfare_madrasa,welfare.madrasa,bn_welfare.model_welfare_madrasa,,1,1,1,1
 access_welfare_masjid,welfare.masjid,bn_welfare.model_welfare_masjid,,1,1,1,1
 access_welfare_teacher,welfare.teacher,bn_welfare.model_welfare_teacher,,1,1,1,1
+access_welfare_fields_wizard_user,access_welfare_fields_wizard_user,model_welfare_fields_wizard,base.group_user,1,1,1,1

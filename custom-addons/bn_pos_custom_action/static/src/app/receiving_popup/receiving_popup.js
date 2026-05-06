@@ -4,6 +4,7 @@ import { useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { _t } from "@web/core/l10n/translation";
 
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
 
@@ -454,11 +455,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'medical.equipment',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donee_id', 'medical_equipment_line_ids'],
+                ['name', 'state', 'donee_id', 'medical_equipment_line_ids','remaining_amount'],
                 { limit: 1 }
             );
 
-            if (!['sd_received', 'refund'].includes(record[0].state)) {
+            if (!['sd_received', 'refund', 'donate'].includes(record[0].state)) {
                 this.notification.add(
                     "Unauthorized Provisional Order State",
                     { type: 'warning' }
@@ -694,7 +695,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             super.confirm();
         }
         
-        if (this.action_type === 'me') {
+        if (this.action_type === 'me' ) {
             // Process all record components
             await this.processEquipmentLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
@@ -791,7 +792,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
 
         const equipmentLines = await this.fetchEquipmentLines(record);
+        console.log("Fetched equipment lines:", equipmentLines);
         const addedProductsCount = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
+        console.log("Added products count:", addedProductsCount);
         
         this.notifyProductAdditionResult(addedProductsCount);
     }
@@ -858,15 +861,62 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Add products to POS order
      */
     async addProductsToOrder(lines, record, selectedOrder) {
-        let addedProductsCount = 0;
-        
-        for (let line of lines) {
-            if (await this.addProductLine(line, record, selectedOrder)) {
-                addedProductsCount++;
+        if (record.state !== 'donate'){
+            let addedProductsCount = 0;
+            console.log("Adding products for lines:", lines);
+            for (let line of lines) {
+                
+                if (await this.addProductLine(line, record, selectedOrder)) {
+                    addedProductsCount++;
+                }
             }
-        }
         
-        return addedProductsCount;
+            return addedProductsCount;  
+        }
+        else {
+            console.log("Processing donate state for medical equipment. Adding security deposit product with remaining amount as price extra.");
+                // 🚫 Check remaining amount first
+            if (!record.remaining_amount || record.remaining_amount <= 0) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: _t("Amount is already paid."),
+                });
+                return 0;
+            }
+            let addedProductsCount = 1;
+            const serviceProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+            
+            if (serviceProduct.length) {
+                // Get the product from POS DB
+                const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
+                
+                if (!product) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
+                    });
+                    
+                    return 0;
+                }
+                
+                // Add product to order
+                selectedOrder.add_product(product, {
+                    quantity: -1,
+                    price_extra: record.remaining_amount,
+                });
+            }
+
+            return addedProductsCount;      
+        }
     }
 
     /**
@@ -913,6 +963,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         
                         return
                     }
+                    console.log("Adding refund line with negative quantity and security deposit as price extra:", {
+                        product: product.name,
+                        quantity: quantity * -1,
+                        price_extra: line.security_deposit,
+                    });
                     
                     // Add product to order
                     selectedOrder.add_product(product, {

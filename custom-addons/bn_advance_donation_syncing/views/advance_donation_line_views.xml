@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='advance_donation_lines']//tree//field[@name='state']" position="after">
                     <field name="is_reserved" optional="hide" widget="boolean" string="Reserved"/>
+                    <field name="reserved_amount" optional="hide" widget="monetary" string="Reserved Amount" currency_field="currency_id"/>
                 </xpath>
             </field>
         </record>

@@ -86,6 +86,17 @@
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div><strong>Transaction No.:</strong> <t t-esc="o.transaction_ref or ''"/></div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="o.remarks.split('-')" t-as="remark">
+                                            <t t-if="remark">
+                                                <t t-esc="count"/>. <t t-esc="remark or '-'"/>
+                                                <br/>
+                                                <t t-set="count" t-value="count + 1"/>
+                                            </t>
+                                        </t>
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
@@ -197,7 +208,7 @@
             <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
             <field name="binding_type">report</field>
             <field name="print_report_name">'Deposit Receipt - %s' % (object.name)</field>
-            <field name="id" ref="bn_direct_deposit.report_direct_deposit_duplicate_paperformat"/>
+            <field name="id" ref="report_direct_deposit_duplicate_paperformat"/>
         </record>
 
     </data>

@@ -3,11 +3,11 @@ from datetime import date as td
 
 
 class AdvanceDonationLine(models.Model):
-    _name = 'advance.donation.line'
-    
+    _name = 'advance.donation.lines'
+    # _table = 'advance_donation_line_new'   
 
-    advance_donation_id = fields.Many2one('advance.donation', 'Donation ID')
-
+    advance_donation_id = fields.Many2one('advance.donation', 'Donation ID', ondelete='cascade', required=True)
+    # advance_donation_id = fields.Integer(string="Temp Fix")  # 👈 TEMP
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
     amount = fields.Monetary('Amount', currency_field='currency_id')
@@ -66,7 +66,6 @@ class AdvanceDonationLine(models.Model):
                 rec.date_visibility = True
             else: rec.date_visibility = False
     
-    
     @api.depends('paid_amount', 'amount')
     def _compute_installment_state(self):
         for rec in self:
@@ -80,3 +79,4 @@ class AdvanceDonationLine(models.Model):
     def action_print_line_non_cash_report(self):
         """Print non-cash donation report for this specific line"""
         return self.env.ref('bn_advance_donation.action_report_advance_donation_line_non_cash').report_action(self)
+    

@@ -18,7 +18,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
         rec = self.livestock_slaughter_id
 
         # basic validations
-        if not rec.product:
+        if not rec.product_id:
             raise ValidationError(_('Record has no product set.'))
         if not rec.quantity or rec.quantity <= 0:
             raise ValidationError(_('Quantity must be greater than 0.'))
@@ -31,7 +31,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
         # choose internal picking type for the company (fallback to any internal if company-specific not found)
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', rec.company_id.id)
+            ('warehouse_id.company_id', '=', self.env.company.id)
         ], limit=1)
         if not picking_type:
             picking_type = self.env['stock.picking.type'].search([('code', '=', 'internal')], limit=1)
@@ -39,19 +39,19 @@ class LivestockSlaugtherWizard(models.TransientModel):
             raise UserError(_('No internal picking type found. Configure a Warehouse with an Internal Transfers type.'))
 
         # ensure we have a concrete product.product
-        product = getattr(rec.product, 'product_variant_id', False) or (
-                    rec.product.product_variant_ids and rec.product.product_variant_ids[0])
+        product = getattr(rec.product_id, 'product_variant_id', False) or (
+                    rec.product_id.product_variant_ids and rec.product_id.product_variant_ids[0])
         if not product:
-            raise UserError(_('No product variant found for template: %s') % rec.product.display_name)
+            raise UserError(_('No product variant found for template: %s') % rec.product_id.display_name)
 
         # Build picking
         picking_vals = {
             'picking_type_id': picking_type.id,
             'location_id': src_loc.id,
             'location_dest_id': self.dest_location_id.id,
-            'partner_id': rec.donee.id if rec.donee else False,
-            'origin': rec.pos_name or _('Slaughter Transfer'),
-            'company_id': rec.company_id.id,
+            'partner_id': rec.donee_id.id if rec.donee_id else False,
+            'origin': self.livestock_slaughter_id.name or _('Slaughter Transfer'),
+            'company_id': self.env.company.id,
         }
         picking = self.env['stock.picking'].create(picking_vals)
 
@@ -64,7 +64,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'picking_id': picking.id,
             'location_id': src_loc.id,
             'location_dest_id': self.dest_location_id.id,
-            'company_id': rec.company_id.id,
+            'company_id': self.env.company.id,
         }
         self.env['stock.move'].create(move_vals)
 
@@ -84,7 +84,6 @@ class LivestockSlaugtherWizard(models.TransientModel):
         picking.button_validate()
 
         # Optionally, you can change the state of the slaughter record
-        # rec.state = 'received'  # or whatever makes sense
         rec.transfer_location = self.dest_location_id.id
         rec.transfer_bool = True
 

@@ -30,6 +30,6 @@ patch(PaymentScreen.prototype, {
             }
         }
 
-        super.validateOrder(isForceValidate);
+        return super.validateOrder(isForceValidate);
     }
 });

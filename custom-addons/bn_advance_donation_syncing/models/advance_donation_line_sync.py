@@ -12,3 +12,8 @@ class AdvanceDonationLineSync(models.Model):
         default=False,
         help='Indicates if this donation line is reserved for a welfare line or recurring order'
     )
+    reserved_amount = fields.Float(
+        'Reserved Amount',
+        default=0.0,
+        help='The amount reserved for this donation line'
+    )   

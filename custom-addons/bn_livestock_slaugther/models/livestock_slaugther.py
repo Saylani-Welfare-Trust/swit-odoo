@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
 
 
@@ -17,8 +17,10 @@ class LivestockSlaughter(models.Model):
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
+    transfer_location = fields.Many2one('stock.location', string='Destination Location')
+    source_location_id = fields.Many2one('stock.location', string='Source Location')
 
-    name = fields.Char(related='product_id.name', string="Product Name", store=True)
+    name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
     ref = fields.Char('Source Document')
 
@@ -30,7 +32,22 @@ class LivestockSlaughter(models.Model):
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
+    confirm_hide = fields.Boolean('Confirm Hide')
+    cutting_hide = fields.Boolean('Cutting Hide')
+    transfer_bool = fields.Boolean('Cutting Hide')
 
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            if vals.get('is_meat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
+            elif vals.get('is_goat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
+
+        return super(LivestockSlaughter, self).create(vals)
 
     def action_confirm(self):
         # Retrieve the 'Slaughter Stock' location
@@ -55,16 +72,16 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_new
+        product = self.product_id
         if not product:
-            raise ValidationError(f"Product with code '{self.product_code}' not found.")
+            raise ValidationError(f"Product with code '{self.code}' not found.")
 
         # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
-            'location_dest_id': location,
-            'origin': self.product or 'Live Stock Slaughter',
+            'location_dest_id': location.id,
+            'origin': self.product_id or 'Live Stock Slaughter',
         })
 
         # Create the stock move
@@ -93,7 +110,7 @@ class LivestockSlaughter(models.Model):
 
     def action_cutting(self):
         # Retrieve the 'Slaughter Stock' location
-        cutting_obj = self.env['live_stock_slaughter.cutting']
+        cutting_obj = self.env['livestock.cutting']
 
         location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         if not location:
@@ -108,7 +125,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
         # Retrieve the product based on the product code
-        product = self.product_new
+        product = self.product_id
 
 
         # Create the stock picking
@@ -116,7 +133,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.product_new.id or '',
+            'origin': self.product_id.id or '',
         })
 
         # Create the stock move
@@ -136,14 +153,12 @@ class LivestockSlaughter(models.Model):
         picking.action_assign()
 
         # Set the done quantities and validate the picking
-        # for move_line in picking.move_line_ids:
-        #     move_line.quantity = move_line.quantity_product_uom
         picking.button_validate()
         cutting_record = cutting_obj.create({
-            'product_new': self.product_new.id,
+            'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
-            'product_code': self.product_code,
+            'code': self.code,
             'picking_id': picking.id,
         })
 
@@ -152,7 +167,7 @@ class LivestockSlaughter(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': 'Cutting Record',
-            'res_model': 'live_stock_slaughter.cutting',
+            'res_model': 'livestock.cutting',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',

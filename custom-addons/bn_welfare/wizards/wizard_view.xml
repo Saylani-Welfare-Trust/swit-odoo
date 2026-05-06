@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_welfare_fields_wizard_form" model="ir.ui.view">
+        <field name="name">welfare.fields.wizard.form</field>
+        <field name="model">welfare.fields.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Edit Welfare Application - Full View">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Welfare Application Details - Full Page Editor</h1>
+                    </div>
+                    <div class="o_form_sheet_bg" style="max-height: 70vh; overflow-y: auto;">
+                        
+                        <!-- Basic Information Section -->
+                        <separator string="Basic Information" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="order_type"/>
+                                <field name="is_individual"/>
+                                <field name="cnic_no"/>
+                                <field name="father_name"/>
+                                <field name="father_cnic_no"/>
+                                <field name="old_system_id"/>
+                                <field name="applicantLocationLink"/>
+                                <field name="cnic_expiration_date"/>
+                            </group>
+                            <group>
+                                <field name="institution_category"/>
+                                <field name="subcategory"/>
+                                <field name="loan_request_amount"/>
+                                <field name="loan_tenure_expected"/>
+                                <field name="security_offered"/>
+                                <field name="currency_id" options="{'no_create': True}"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Remarks Section -->
+                        <separator string="Remarks" class="text-uppercase"/>
+                        <group>
+                            <field name="hod_remarks" string ="HOD Remarks"/>
+                            <field name="member_remarks" string ="Member Remarks"/>
+                            <field name="committee_remarks" string = "Committee Remarks"/>
+                            <field name="rejection_remarks" string ="Rejection Remarks"/>
+                        </group>
+                        
+                        <!-- Portal Details Section -->
+                        <separator string="Portal Details" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="portal_application_id"/>
+                                <field name="portal_donee_id"/>
+                                <field name="last_sync_date"/>
+                                <field name="is_synced"/>
+                                <field name="portal_sync_status"/>
+                            </group>
+                            <group>
+                                <field name="portal_last_sync_message"/>
+                                <field name="portal_review_notes"/>
+                                <field name="inquiry_media" widget="html"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Employment Information Section -->
+                        <separator string="Employment Information" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="designation"/>
+                                <field name="company_name"/>
+                                <field name="company_phone"/>
+                                <field name="company_address"/>
+                            </group>
+                            <group>
+                                <field name="service_duration"/>
+                                <field name="monthly_salary"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Education Information Section -->
+                        <separator string="Education Information" class="text-uppercase"/>
+                        <field name="education_lines_html" nolabel="1" widget="html"/>
+                        
+                        <!-- Residency Details Section -->
+                        <separator string="Residency Details" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="residence_type"/>
+                                <field name="home_phone_no"/>
+                                <field name="landlord_name"/>
+                                <field name="landlord_cnic_no"/>
+                                <field name="landlord_mobile"/>
+                            </group>
+                            <group>
+                                <field name="rental_shared_duration"/>
+                                <field name="per_month_rent"/>
+                                <field name="gas_bill"/>
+                                <field name="electricity_bill"/>
+                                <field name="home_other_info"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Financial Information Section -->
+                        <separator string="Financial Information" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="monthly_income"/>
+                                <field name="outstanding_amount"/>
+                                <field name="monthly_household_expense"/>
+                                <field name="bank_account"/>
+                                <field name="bank_name" invisible="bank_account != 'yes'"/>
+                                <field name="account_no" invisible="bank_account != 'yes'"/>
+                            </group>
+                            <group>
+                                <field name="institute_name"/>
+                                <field name="other_loan"/>
+                                <field name="aid_from_other_organization"/>
+                                <field name="have_applied_swit"/>
+                                <field name="driving_license"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Other Information Section -->
+                        <separator string="Other Information" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="dependent_person"/>
+                                <field name="household_member"/>
+                            </group>
+                            <group>
+                                <field name="details_1"/>
+                                <field name="details_2"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Family Details Section -->
+                        <separator string="Family Details" class="text-uppercase"/>
+                        <field name="family_lines_html" nolabel="1" widget="html"/>
+                        
+                        <!-- Guarantor Information Section -->
+                        <separator string="Guarantor Information" class="text-uppercase"/>
+                        <field name="guarantor_lines_html" nolabel="1" widget="html"/>
+                        
+                        <!-- Disbursement Items Section -->
+                        <separator string="Disbursement Items (Welfare Lines)" class="text-uppercase"/>
+                        <field name="welfare_lines_html" nolabel="1" widget="html"/>
+
+                        <!-- Recurring Welfare Lines Section -->
+                        <separator string="Recurring Welfare Lines" class="text-uppercase"/>
+                        <field name="recurring_lines_html" nolabel="1" widget="html"/>
+                        
+                        <!-- Committee Members Section -->
+                        <separator string="Committee Members" class="text-uppercase"/>
+                        <field name="committee_members_html" nolabel="1" widget="html"/>
+
+                        <!-- Teachers Section -->
+                        <separator string="Teachers" class="text-uppercase"/>
+                        <field name="teachers_html" nolabel="1" widget="html"/>
+
+                        <!-- Masjid Details Section -->
+                        <separator string="Masjid Details" class="text-uppercase"/>
+                        <field name="masjid_html" nolabel="1" widget="html"/>
+
+                        <!-- Madrasa Details Section -->
+                        <separator string="Madrasa Details" class="text-uppercase"/>
+                        <field name="madrasa_html" nolabel="1" widget="html"/>
+                        
+                        <!-- Attachments Section -->
+                        <separator string="Attachments" class="text-uppercase"/>
+                        <group>
+                            <group>
+                                <field name="application_form" filename="application_form_name" widget="binary"/>
+                                <field name="frc" filename="frc_name" widget="binary"/>
+                            </group>
+                            <group>
+                                <field name="electricity_bill_file" filename="electricity_bill_name" widget="binary"/>
+                                <field name="gas_bill_file" filename="gas_bill_name" widget="binary"/>
+                                <field name="family_cnic" filename="family_cnic_name" widget="binary"/>
+                            </group>
+                        </group>
+                        
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary"/>
+                    <!-- <button name="action_save_and_close" string="Save" type="object" class="btn-default"/> -->
+                    <button name="action_cancel" string="Cancel" type="object" class="btn-default"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_welfare_fields_wizard" model="ir.actions.act_window">
+        <field name="name">Edit All Fields - Full View</field>
+        <field name="res_model">welfare.fields.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_welfare"/>
+        <field name="binding_view_types">form</field>
+        <field name="view_id" ref="view_welfare_fields_wizard_form"/>
+    </record>
+</odoo>

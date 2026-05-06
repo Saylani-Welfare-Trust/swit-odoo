@@ -9,6 +9,7 @@
         'bn_profile_management',
         'bn_pos_custom_action',
         'stock',
+        'product',
     ],
     'data': [
         'security/group.xml',

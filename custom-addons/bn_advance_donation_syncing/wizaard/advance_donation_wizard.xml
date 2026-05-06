@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="Select Advance Donation">
                 <group>
-                    <field name="advance_donation_id" options="{'no_create': True}"/>
+                    <field name="advance_donation_id" options="{'no_create': True}" domain="[('product_id', '=', product_id)]"/>
                     <field name="product_id" options="{'no_create': True}"/>
                     <!-- Hidden context fields -->
                     <field name="welfare_line_id" invisible="1"/>
@@ -14,7 +14,7 @@
                     <field name="microfinance_id" invisible="1"/>
                 </group>
                 <footer>
-                    <button name="action_show_lines" string="Next" type="object" class="btn-primary"/>
+                    <button name="action_show_lines" string="Confirm" type="object" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

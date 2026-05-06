@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="chand_raat_singleton" model="chand.raat" >
+        <field name="date">2026-06-16</field>
+    </record>
+</odoo>

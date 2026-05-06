@@ -65,8 +65,8 @@ class LivestockCuttingMaterial(models.Model):
 
         # 2) for each material, bump the quant in that cutting location
         for record in self:
-            for material in record.material_ids:
-                product = material.product
+            for material in record.livestock_cutting_material_line_ids:
+                product = material.product_id
                 qty = material.quantity
 
                 # find or create the quant in the Cutting location
@@ -86,15 +86,15 @@ class LivestockCuttingMaterial(models.Model):
 
     def action_send_to_goat_and_meat(self):
         # 1) Find Cutting, Goat, and Meat locations
-        cutting_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Cutting')], limit=1)
-        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Goat')], limit=1)
-        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Livestock Meat')], limit=1)
+        cutting_loc = self.env['stock.location'].search([('name', 'ilike', 'Cutting')], limit=1)
+        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
+        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
 
         if not cutting_loc or not goat_loc or not meat_loc:
             raise ValidationError("Cutting, Goat, or Meat location not properly set!")
 
-        for material in self.material_ids:
-            product = material.product
+        for material in self.livestock_cutting_material_line_ids:
+            product = material.product_id
             qty = material.quantity
 
             # Decide target location
@@ -132,9 +132,9 @@ class LivestockCuttingMaterial(models.Model):
                     'quantity': qty,
                 })
 
-    def action_start(self):
+    def action_start_cutting(self):
         product_master = self.env['product.master']
-        needed_parents = product_master.search([('product_id', '=', self.product.id)], limit=1)
+        needed_parents = product_master.search([('product_id', '=', self.product_id.id)], limit=1)
 
         self.state = 'in_progress'
         self.start_time = fields.Datetime.now()
@@ -149,9 +149,9 @@ class LivestockCuttingMaterial(models.Model):
                     'quantity': line.quantity,
                 }))
 
-        self.material_ids = material_vals
+        self.livestock_cutting_material_line_ids = material_vals
 
-    def action_end(self):
+    def action_end_cutting(self):
         self.state = 'done'
         self.end_time = fields.Datetime.now()
 
@@ -163,7 +163,7 @@ class LivestockCuttingMaterial(models.Model):
             raise ValidationError("No such location Livestock Cutting found!")
 
         # 2) for each material line, subtract from that location’s quant
-        product = self.product
+        product = self.product_id
         used_qty = self.quantity
 
         # find the quant in Cutting location

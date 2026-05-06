@@ -21,9 +21,9 @@
                 <header>
                     <field name="state" invisible="1"/>
                     <field name="is_donee_register" invisible="1" />
-                    <field name="case_type" invisible="1" />
+                    <!-- <field name="case_type" invisible="1" /> -->
                     <field name="Portal_acknowledgment" invisible="1" />
-                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Complete" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
 
                     
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id" />
@@ -72,18 +72,18 @@
                     <group>
                         <group name="medical_equipment_col_1">
                             <field name="portal_application_id" invisible="1"/>
-
+                            <field name="is_actual_deposit_editable" invisible="1"/> 
                             <field name="approval_button_check" invisible="1"/>
                             <field name="employee_category_id" invisible="1" />
-                            <field name="actual_deposit_percentage" />
-                            <field name="case_type" readonly="1" string="Auto-Determined Case Type" />
-                            <field name="cnic_no" readonly="state != 'draft'" required="1" />
-                            <field name="street" string="Address" readonly="state != 'draft'" required="1" />
-                            <field name="city" required="1" readonly="state != 'draft'" />
+                            <field name="actual_deposit_percentage" readonly = "not is_actual_deposit_editable"/>
+                            <field name="case_type" readonly="1" string="Auto-Determined Case Type" invisible="1"/>
+                            <field name="cnic_no" readonly="state != 'draft'" required="1" force_save="1"/>
+                            <field name="street" string="Address" readonly="state != 'draft'" required="1"  force_save="1"/>
+                            <field name="city" required="1" readonly="state != 'draft'" force_save="1" />
                             <field name="general_remarks" string="General Remarks" readonly="state != 'draft'" />
                             <field name="remarks_approval1" 
                                 required="case_type in ['50_percent', 'below_50_percent'] and state == 'ceo_approval'"
-                                readonly="state != 'completed'"/>
+                                readonly="state not in ['inquiry','completed']"/>
 
                             <field name="remarks_approval2" 
                                 required="case_type in ['50_percent', 'below_50_percent'] and state == 'cfo_approval'"
@@ -92,19 +92,21 @@
                             <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" />
                             <field name="picking_id" invisible="1" readonly="1"/>
                            
-                            <field name="application_location_link" readonly="state != 'draft'" required="1" />
-                            <field name="loan_request_amount" readonly="state != 'draft'" />
+                            <field name="application_location_link" readonly="state != 'draft'" required="0" />
+                            <field name="total_amount" string="Loan request Amount" readonly="1"/>
+
+                            <!-- <field name="loan_request_amount" readonly="state != 'draft'" /> -->
                             <field name="last_sync_date" readonly="1" />
                         </group>
                         <group name="medical_equipment_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1" /> 
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="1"  force_save="1"/> 
                                 <field style="width: 70% !important;" name="mobile" readonly="state != 'draft'" nolabel="1" required="1" />
                             </div>
-                            <field name="gender" required="1" readonly="state != 'draft'" />
-                            <field name="date_of_birth" required="1" readonly="state != 'draft'" />
-                            <field name="age" readonly="1" />
+                            <field name="gender" required="1" readonly="state != 'draft'"  force_save="1"/>
+                            <field name="date_of_birth" required="1" readonly="state != 'draft'" force_save="1" />
+                            <field name="age" readonly="1"  force_save="1"/>
                             <field name="donee_id" string="Donee" readonly="state != 'draft'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="1" />
                             <field name="currency_id" invisible="1"/>
 
@@ -121,15 +123,32 @@
 
                     <notebook>
                         <page string="Items">
-                            <field name="medical_equipment_line_ids">
+                            <field name="medical_equipment_line_ids" readonly="state not in ['draft', 'inquiry', 'completed','send_for_inquiry','ceo_approval']">
                                 <tree editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
-                                    <field name="medical_equipment_category_id" string="Master Product" options="{'no_quick_create': True, 'no_create_edit': True}"/>
-                                    <field name="product_id" domain="[('is_medical_equipment', '=', True)]" options="{'no_quick_create': True, 'no_create_edit': True}"/>
-                                    <field name="quantity"/>
-                                    <field name="base_security_deposit" readonly="1"/>
-                                    <field name="actual_deposit_percentage" readonly="1"/>
-                                    <field name="security_deposit" readonly="1"/>
+
+                                    <field name="medical_equipment_category_id"
+                                        string="Master Product"
+                                        width="200"
+                                        options="{'no_quick_create': True, 'no_create_edit': True}"/>
+
+                                    <field name="product_id"
+                                        width="200"
+                                        options="{'no_quick_create': True, 'no_create_edit': True}"
+                                        readonly="1"/>
+                                    <field name="lot_ids"
+                                        options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
+                                        string="Product No./Lot"
+                                        widget="many2many_tags"
+                                        domain="[('product_id', '=', product_id), ('lot_consume', '=', False)]"
+                                        width="100"
+                                        required="1"
+                                    />
+
+                                    <field name="quantity" width="100"/>
+                                    <field name="base_security_deposit" width="150" readonly="1"/>
+                                    <field name="actual_deposit_percentage" width="150" readonly="1"/>
+                                    <field name="security_deposit" width="150" readonly="1"/>
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer">

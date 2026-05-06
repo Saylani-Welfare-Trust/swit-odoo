@@ -25,9 +25,6 @@ class POSSessionSlip(models.Model):
                 "status": "error"
             }
 
-        # raise ValidationError(str(session_id) + "----" + str(data))
-        # raise ValidationError(str(session_id) + "----" + str(data) + "----" + str(pos_payment_method.name))
-
         record = self.create({
             'bank_id': data['bank_id'],
             'pos_payment_method_id': data['payment_method_id'],

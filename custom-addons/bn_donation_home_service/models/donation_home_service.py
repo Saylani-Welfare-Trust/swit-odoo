@@ -339,7 +339,7 @@ class DonationHomeService(models.Model):
         # 5. Recalculate totals
         # -------------------------
         dhs.calculate_amount()
-        dhs.calculate_total_amount()
+        dhs.calculate_service_charges()
 
         return {
             "status": "success",
