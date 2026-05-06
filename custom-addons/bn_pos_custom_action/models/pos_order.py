@@ -9,7 +9,7 @@ class POSOrder(models.Model):
     source_document = fields.Char('Source Document')
     
     qurbani = fields.Boolean('Qurbani', default=False)
-    receive_voucher = fields.Boolean('Qurbani', default=False)
+    receive_voucher = fields.Boolean('Receive Voucher', default=False)
 
 
     def _order_fields(self, ui_order):
