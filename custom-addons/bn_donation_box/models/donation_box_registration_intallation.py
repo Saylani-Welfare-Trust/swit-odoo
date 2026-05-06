@@ -62,7 +62,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     
     def action_install(self):
         if not self.donor_id:
-            donor = self.env['res.partner'].search([('name', '=', self.shop_name)]) or None
+            donor = self.env['res.partner'].search([('name', '=', self.shop_name)], limit=1) or None
 
             if not donor:
                 donor = self.env['res.partner'].create({
