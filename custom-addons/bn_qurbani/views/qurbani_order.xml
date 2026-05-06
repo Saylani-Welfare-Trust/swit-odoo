@@ -20,7 +20,7 @@
         <field name="arch" type="xml">
             <form create="0" edit="1">
                 <header>
-                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight" invisible="pos_qurbani_order != True"/>
+                    <button string="Show POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
                 </header>
                 
                 <sheet>
@@ -29,68 +29,18 @@
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
 
-                    <!-- Hidden field for controlling visibility -->
-                    <field name="pos_qurbani_order" invisible="1" />
-                    <field name="currency_id" invisible="1"/>
-
-                    <!-- POS Order Section (shown when pos_qurbani_order = True) -->
                     <group>
-                        <h2>POS Order Information</h2>
-                        <group>
+                        <group name="qurbani_order_col_1">
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                        </group>
+                        <group name="qurbani_order_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
                                 <field style="width: 70% !important;" name="mobile" readonly="1" nolabel="1" />
                             </div>
-                            <field name="currency_id" invisible="pos_qurbani_order != False"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
-                    </group>
-
-                    <!-- Web Order Section (shown when pos_qurbani_order = False) -->
-                    <group invisible="pos_qurbani_order != False" string="Web Order Information">
-                        <group name="web_order_col_1">
-                            <field name="api_response_id" readonly="1" />
-                            <field name="donation_type" readonly="1" />
-                            <field name="donation_from" readonly="1" />
-                            <field name="dn_number" readonly="1" />
-                            <field name="transaction_id" readonly="1" />
-                        </group>
-                        <group name="web_order_col_2">
-                            <field name="api_currency" readonly="1" />
-                            <field name="bank_charges" readonly="1" />
-                            <field name="api_created_at" readonly="1" />
-                            <field name="api_updated_at" readonly="1" />
-                        </group>
-                    </group>
-
-                    <!-- Donor Details Section (Web Orders) -->
-                    <group invisible="pos_qurbani_order != False" string="Donor Details">
-                        <group name="donor_details_col_1">
-                            <field name="donor_phone" readonly="1" />
-                            <field name="donor_email" readonly="1" />
-                            <field name="donor_cnic" readonly="1" />
-                        </group>
-                        <group name="donor_details_col_2">
-                            <field name="donor_country" readonly="1" />
-                            <field name="donor_ip_address" readonly="1" />
-                        </group>
-                    </group>
-
-                    <!-- Subscription Preferences (Web Orders) -->
-                    <group invisible="pos_qurbani_order != False" string="Subscription Preferences">
-                        <group name="subscriptions">
-                            <field name="subscription_news" />
-                            <field name="subscription_whatsapp" />
-                            <field name="subscription_sms" />
-                        </group>
-                    </group>
-
-                    <!-- General Information (Both POS and Web) -->
-                    <group string="Additional Information">
-                        <field name="remarks" />
-                        <field name="amount" invisible="pos_qurbani_order == False"/>
-                        <field name="total_amount" />
                     </group>
 
                     <notebook>
@@ -123,32 +73,18 @@
         </field>
     </record>
 
-    <!-- Action for POS Qurbani Orders (field = True) -->
-    <record id="action_pos_qurbani_order" model="ir.actions.act_window">
-        <field name="name">POS Qurbani Orders</field>
+    <record id="action_qurbani_order" model="ir.actions.act_window">
+        <field name="name">Qurbani Order</field>
         <field name="res_model">qurbani.order</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('pos_qurbani_order', '=', True)]</field>   <!-- corrected field name -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                List of Qurbani orders created from POS.
+                Let's create a new qurbani order....
             </p>
         </field>
     </record>
 
-    <!-- Action for Web Qurbani Orders (field = False) -->
-    <record id="action_web_qurbani_order" model="ir.actions.act_window">
-        <field name="name">Web Qurbani Orders</field>
-        <field name="res_model">qurbani.order</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('pos_qurbani_order', '=', False)]</field>   <!-- corrected field name -->
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                List of Qurbani orders created from Web.
-            </p>
-        </field>
-    </record>
-
+    <!-- Parent Menu -->
     <menuitem id="menu_qurbani_root"
         name="Qurbani"
         groups="bn_qurbani.qurbani_menu_group"
@@ -156,25 +92,9 @@
         sequence="10"/>
 
     <menuitem id="menu_qurbani_order"
-        name="Qurbani Order"
+        name="Qurbani Orders"
         parent="menu_qurbani_root"
-        sequence="1"
-        groups="bn_qurbani.qurbani_menu_group"/>
-
-    <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
-    <menuitem id="menu_pos_qurbani_order"
-        name="POS Qurbani Order"
-        parent="menu_qurbani_order"
-        action="action_pos_qurbani_order"
-        sequence="1"
-        groups="bn_qurbani.qurbani_menu_group"/>
-
-    <menuitem id="menu_web_qurbani_order"
-        name="Web Qurbani Order"
-        parent="menu_qurbani_order"
-        action="action_web_qurbani_order"
-        sequence="2"
-        groups="bn_qurbani.qurbani_menu_group"/>
-
+        action="action_qurbani_order"
+        sequence="1"/>
 
 </odoo>
