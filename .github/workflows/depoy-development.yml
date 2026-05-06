@@ -13,7 +13,7 @@ jobs:
       - name: Checkout development
         uses: actions/checkout@v4
         with:
-          ref: development
+          ref: Development
           fetch-depth: 1
 
       - name: Setup SSH (decode base64 key + verify)
