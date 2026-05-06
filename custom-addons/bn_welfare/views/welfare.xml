@@ -26,9 +26,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_open_full_edit_wizard" type="object" string="Full Form View" class="btn-primary"   invisible="state not in ['inquiry', 'committee_approval']"/>
-
-                    <button string="Complete" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
@@ -52,7 +50,6 @@
 
                     <group>
                         <group name="welfare_col_1">
-                            <field name="employee_domain" invisible="1" />
                             <field name="employee_category_id" invisible="1" />
                             <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
                             <field name="is_synced" readonly="1" invisible="1" />
@@ -61,10 +58,7 @@
                                 domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
-                            <field name="employee_id" string="Inquiry Officer" 
-                                domain="employee_domain" 
-                                options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
-                                readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="institution_category" widget="radio" invisible="is_individual"/>
                             <field name="subcategory" invisible="is_individual"/>
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
@@ -72,9 +66,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'inquiry'" />
-                            <field name="hod_remarks" readonly="state != 'committee_approval'"/>
-                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'" />
+                            <field name="committee_remarks" readonly="state != 'committee_approval'" required="state == 'committee_approval'" />
+                            <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
+                            <field name="member_remarks" readonly="state != 'mem_approve'" required="state == 'mem_approve'" />
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 
@@ -82,15 +76,15 @@
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
                             <field name="application_form_name" invisible="1"/>
-                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" />
+                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="1"/>
                             <field name="frc_name" invisible="1"/>
-                            <field name="frc" filename="frc_name" readonly="state != 'draft'" />
+                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="1"/>
                             <field name="electricity_bill_name" invisible="1"/>
-                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" />
+                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" required="1"/>
                             <field name="gas_bill_name" invisible="1"/>
-                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" />
+                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" required="1"/>
                             <field name="family_cnic_name" invisible="1"/>
-                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" />
+                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
@@ -103,11 +97,10 @@
                         <page name="welfare_line" string="Disbursement Items">
                             <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
                                 <tree editable="bottom">
-                                    <field name="welfare_id" invisible="1" />
                                     <field name="product_domain" column_invisible="1" />
                                     <field name="analytic_account_domain" column_invisible="1" />
                                     <field name="is_collection_point_readonly" column_invisible="1" />
-                                    <field name="disbursement_officer_domain" column_invisible="1" />
+
                                     <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
@@ -115,17 +108,13 @@
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
-                                    <field name="payment_type" />
                                     <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
                                     <field name="quantity" />   
                                     <field name="amount" readonly="1" />
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />
                                     <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
-                                    <field name="disbursement_officer_id"
-                                        string="Disbursement Officer"
-                                        domain="disbursement_officer_domain"
-                                        options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+
                                     <field name="show_deliver_button" column_invisible="1"/>
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
@@ -161,80 +150,6 @@
                                     <field name="portal_donee_id" readonly="1" />
                                 </group>
                             </group>
-                        </page>
-                        
-                        <!-- Inquiry Committee Questions Tab -->
-                        <page name="inquiry_committee_questions" string="Inquiry Committee Questions" invisible="state not in ['inquiry', 'committee_approval', 'hod_approve', 'mem_approve', 'approve', 'disbursed', 'recurring']">
-                            <group>
-                                <group name="inquiry_questions_col_1">
-                                    <field name="applicant_occupation" readonly="state not in ['inquiry']" />
-                                    <field name="residence_ownership" readonly="state not in ['inquiry']" />
-                                </group>
-                                <group name="inquiry_questions_col_2">
-                                    <field name="total_children" readonly="state not in ['inquiry']" />
-                                    <field name="boys_count" readonly="state not in ['inquiry']" />
-                                    <field name="girls_count" readonly="state not in ['inquiry']" />
-                                </group>
-                            </group>
-                            <group>
-                                <field name="children_education_status" readonly="state not in ['inquiry']" widget="text" />
-                            </group>
-                            <group>
-                                <field name="main_issue" readonly="state not in ['inquiry']" widget="text" />
-                            </group>
-                        </page>
-                        
-                        <!-- Previous Disbursements Tab for HOD and Final Approval -->
-                        <page name="previous_disbursements" string="Previous Disbursements" invisible="state not in ['hod_approve', 'mem_approve', 'approve', 'disbursed', 'recurring']">
-                            <group>
-                                <p class="o_text_muted">History of all previous welfare disbursements to this donee:</p>
-                            </group>
-                            <field name="previous_welfare_ids" readonly="1" nolabel="1">
-                                <tree>
-                                    <field name="name" />
-                                    <field name="date" />
-                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'" decoration-info="state == 'recurring'" />
-                                    <field name="order_type" />
-                                </tree>
-                                <form>
-                                    <group>
-                                        <group name="previous_disburse_col_1">
-                                            <field name="name" />
-                                            <field name="date" />
-                                            <field name="state" />
-                                            <field name="order_type" />
-                                        </group>
-                                        <group name="previous_disburse_col_2">
-                                            <field name="donee_id" />
-                                            <field name="employee_id" />
-                                            <field name="is_individual" />
-                                        </group>
-                                    </group>
-                                    <notebook>
-                                        <page name="prev_disburse_items" string="Disbursement Items">
-                                            <field name="welfare_line_ids" readonly="1">
-                                                <tree>
-                                                    <field name="disbursement_category_id" />
-                                                    <field name="product_id" />
-                                                    <field name="quantity" />
-                                                    <field name="total_amount" />
-                                                    <field name="state" />
-                                                </tree>
-                                            </field>
-                                        </page>
-                                        <page name="prev_recurring_items" string="Recurring Items" invisible="order_type != 'recurring'">
-                                            <field name="welfare_recurring_line_ids" readonly="1">
-                                                <tree>
-                                                    <field name="disbursement_category_id" />
-                                                    <field name="product_id" />
-                                                    <field name="quantity" />
-                                                    <field name="state" />
-                                                </tree>
-                                            </field>
-                                        </page>
-                                    </notebook>
-                                </form>
-                            </field>
                         </page>
                         
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
@@ -631,19 +546,11 @@
                                     <field name="complete_name" />
                                     <field name="age" />
                                     <field name="relation" />
-                                    <field name="cnic_no" />
                                     <field name="cnic_b_form_name" column_invisible="1"/>
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
                                     <field name="monthly_income" />
-                                    <field name="welfare_ids"
-                                            widget="many2many_tags"
-                                            options="{'no_create': True, 'no_edit': True}"/> 
-                                    <button name="action_open_welfare"
-                                            type="object"
-                                            string="Open Welfare"
-                                            icon="fa-external-link"/>
-                            </tree>
+                                </tree>
                             </field>
                         </page>
                     </notebook>
