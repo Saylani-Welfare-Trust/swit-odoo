@@ -231,7 +231,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 });
             }
                
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             this.cancel()
         }
@@ -337,7 +337,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 });
             }
                
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             this.cancel()
         }

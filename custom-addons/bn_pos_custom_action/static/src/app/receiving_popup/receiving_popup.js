@@ -70,34 +70,34 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         
         // Handle different action types
         if (this.action_type === 'qb') {
-            this.pos.receive_voucher = false
+            selectedOrder.set_receive_voucher(false)
             
             await this.processQurbaniRecord(selectedOrder);
         } 
         if (this.action_type === 'dhs') {
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
             
             await this.processDHSRecord(selectedOrder);
         } 
         if (this.action_type === 'wf') {
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
             
             await this.processWelfareRecord(selectedOrder);
         }
         // Process medical equipment records
         if (this.action_type === 'me') {
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             await this.processMedicalEquipmentRecord(selectedOrder);
         }
         // Process microfinance records
         if (this.action_type === 'mf') {
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             await this.processMicrofinanceRecord(selectedOrder);
         }
         if (this.action_type === 'mf recovery') {
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             await this.processMicrofinanceRecoveryRecord(selectedOrder);
         }

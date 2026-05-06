@@ -59,4 +59,18 @@ patch(Order.prototype, {
     get_receive_voucher() {
         return this.receive_voucher;
     },
+
+    /**
+     * Setter for pos_cheque_order_id
+     */
+    set_pos_cheque_order_id(pos_cheque_order_id) {
+        this.pos_cheque_order_id = pos_cheque_order_id;
+    },
+
+    /**
+     * Getter for pos_cheque_order_id
+     */
+    get_pos_cheque_order_id() {
+        return this.pos_cheque_order_id;
+    },
 });
