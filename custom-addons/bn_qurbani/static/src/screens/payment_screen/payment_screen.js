@@ -47,6 +47,7 @@ patch(PaymentScreen.prototype, {
                 
                 if (data.status === 'success') {
                     currentOrder.set_source_document(data.name)
+                    currentOrder.set_qurbani(true)
 
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
@@ -68,6 +69,7 @@ patch(PaymentScreen.prototype, {
                     quantity: line.quantity,
                     price: line.price,
                     qurbani_schedule: line.qurbani_schedule || null,
+                    remarks: line.customerNote,
                 }
             )
         );
