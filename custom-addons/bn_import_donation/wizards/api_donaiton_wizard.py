@@ -260,10 +260,15 @@ class APIDonationWizard(models.TransientModel):
         gateway_product_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_line_ids:
-                gateway_product_lines[line.name.lower()] = { 'account_id': line.product_id.property_account_income_id.id }
-        
-        self.create_fetch_log(history.id, f"Gateway Product Lines: {gateway_product_lines}", 'Prefetching', 'Fetched gateway product lines')
 
+                product_name = (line.name or '').strip().lower()
+
+                if not product_name:
+                    continue
+
+                gateway_product_lines[product_name] = {
+                    'account_id': line.product_id.property_account_income_id.id
+                }
         # Get donor category IDs
         donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
         individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
