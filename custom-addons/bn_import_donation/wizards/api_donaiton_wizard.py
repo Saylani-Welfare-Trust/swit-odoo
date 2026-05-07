@@ -77,7 +77,7 @@ class APIDonationWizard(models.TransientModel):
         
         
         if result.get('new_donations') and journal and result.get('accumulators'):
-            # raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
+            raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
             move = self._create_grouped_journal_move(
                 journal, 
                 result['accumulators']['debit'],
@@ -85,7 +85,7 @@ class APIDonationWizard(models.TransientModel):
                 company_currency,
                 history
             ) 
-            raise ValidationError(str(move))
+            # raise ValidationError(str(move))
             history.write({
                 'journal_entry_id': move.id,
                 'picking_id': result['picking_id'] if result.get('picking_id') else False,
