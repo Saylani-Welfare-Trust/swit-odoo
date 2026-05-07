@@ -8,6 +8,15 @@ import { patch } from "@web/core/utils/patch";
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
+
+        // Generate sequence from backend
+        const sequence = await this.orm.call(
+            'ir.sequence',
+            'next_by_code',
+            ['pos_order_seq']
+        );
+
+        currentOrder.set_pos_order_seq(sequence);
         
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {

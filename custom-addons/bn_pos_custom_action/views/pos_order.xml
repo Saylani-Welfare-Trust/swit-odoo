@@ -11,6 +11,7 @@
                 <field name="source_document" readonly="1" />
                 <field name="receive_voucher" readonly="1" />
                 <field name="qurbani" readonly="1" />
+                <field name="pos_order_seq" readonly="1" />
             </xpath>
 
             <xpath expr="//field[@name='partner_id']" position="attributes">
