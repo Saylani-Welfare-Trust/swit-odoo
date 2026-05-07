@@ -174,6 +174,9 @@ class PosSession(models.Model):
                 else:
                     raise e
 
+            # ✅ FIX: Compute the balance after the account move is created
+            balance = sum(self.move_id.line_ids.mapped('balance'))
+
             # Verify balance
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
