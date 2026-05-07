@@ -205,7 +205,6 @@ class PosSession(models.Model):
                 self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
                 # ✅ Pass a dict, then call reconciliation (which now returns data)
                 reconciliation_data = self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
-                # If the reconciliation returns None (should not), keep original data
                 if reconciliation_data is not None:
                     data = reconciliation_data
             else:
@@ -320,18 +319,14 @@ class PosSession(models.Model):
     def _reconcile_account_move_lines(self, data):
         """
         Reconcile standard lines plus our split receivable lines.
-        IMPORTANT: Must return the data dictionary (or None) to be compatible
-        with other modules (e.g., pos_online_payment) that expect a dict.
+        Returns the data dictionary for chaining (required by pos_online_payment).
         """
-        # Ensure data is a dict
         if data is None:
             data = {}
             _logger.warning("_reconcile_account_move_lines called with None data, using empty dict")
 
-        # Call parent reconciliation (original Odoo method returns None)
         super()._reconcile_account_move_lines(data)
 
-        # Reconcile our split receivable lines
         split_line_ids = data.get('_split_receivable_lines', [])
         if split_line_ids:
             split_lines = self.env['account.move.line'].browse(split_line_ids)
@@ -346,7 +341,6 @@ class PosSession(models.Model):
                 else:
                     _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
 
-        # ✅ Return the data dictionary for chaining (required by pos_online_payment)
         return data
 
     def _extract_payment_method_id_from_line(self, line):
@@ -408,7 +402,13 @@ class PosSession(models.Model):
         result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
         if isinstance(result, dict):
             return {"successful": False, "message": result.get("name"), "redirect": True}
-        self.message_post(body="Point of Sale Session ended")
+        
+        # ✅ Safely post closing message, ignoring email configuration errors
+        try:
+            self.message_post(body="Point of Sale Session ended")
+        except Exception as e:
+            _logger.warning("Could not send closing message (email not configured): %s", str(e))
+        
         return {"successful": True}
 
     def show_session_slip(self):
