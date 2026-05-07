@@ -54,38 +54,31 @@ class PosSession(models.Model):
 
     def _compute_payment_breakdown(self):
         self.ensure_one()
-        breakdown_dict = {}
 
         slips = self.env['pos.session.slip'].search([
             ('session_id', '=', self.id)
         ])
 
+        result = {}
+
         for slip in slips:
             pm_id = slip.pos_payment_method_id.id
-            breakdown_dict.setdefault(pm_id, {
+
+            result.setdefault(pm_id, {
                 'restricted': [],
                 'unrestricted': [],
                 'neutral': [],
             })
 
-            restricted = self._get_restricted_category()
-            unrestricted = self._get_unrestricted_category()
-
             entry = {
-                'amount': slip.amount or 0.0,
-                'ref': slip.slip_no or '',
-                'record_id': slip.id,
+                'amount': slip.amount,
+                'ref': slip.ref,
                 'bank_id': slip.bank_id.id if slip.bank_id else False,
             }
 
-            if slip.type == restricted:
-                breakdown_dict[pm_id]['restricted'].append(entry)
-            elif slip.type == unrestricted:
-                breakdown_dict[pm_id]['unrestricted'].append(entry)
-            else:
-                breakdown_dict[pm_id]['neutral'].append(entry)
+            result[pm_id][slip.type].append(entry)
 
-        return breakdown_dict
+        return result
 
     def _is_restricted_product(self, product):
         """
@@ -725,49 +718,64 @@ class PosSession(models.Model):
         # However, there could be other payment methods, thus, session still
         # needs to be validated.
         return self._validate_session(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
+    
+    def _get_account(self, pm, key):
+        if key == 'restricted':
+            return pm.restricted_account_id or self.company_id.account_default_pos_restricted_receivable_account_id
 
-    def close_session_from_ui(self, bank_payment_method_diff_pairs=None, lines=None):
-        """Extended: Also receive restricted/unrestricted payment lines.
+        if key == 'unrestricted':
+            return pm.unrestricted_account_id or self.company_id.account_default_pos_unrestricted_receivable_account_id
 
-        param bank_payment_method_diff_pairs: list[(int, float)]
-            Pairs of payment_method_id and diff_amount which will be used to post
-            loss/profit when closing the session.
+        return pm.neutral_account_id or self.company_id.account_default_pos_neutrnal_receivable_account_id
+    
+    def _create_account_move_with_slips(self, breakdown):
+        move = self.env['account.move'].create({
+            'journal_id': self.config_id.journal_id.id,
+            'ref': self.name,
+            'move_type': 'entry',
+        })
 
-        param lines: dict[int, dict[str, list[dict]]]
-            Example:
-            {
-                5: { "restricted": [{"id": 1, "amount": 200.0, "ref": "slip-001"}],
-                    "unrestricted": [{"id": 2, "amount": 300.0, "ref": "slip-002"}]
-                },
-                7: { "restricted": [], "unrestricted": [{"id": 3, "amount": 500.0}] }
-            }
-        """
+        for pm_id, data in breakdown.items():
+            pm = self.env['pos.payment.method'].browse(pm_id)
 
-        _logger.warning("Lines Receive from Component close_session_from_ui: %s", str(lines))
+            for key in ['restricted', 'unrestricted', 'neutral']:
+                account = self._get_account(pm, key)
 
-        bank_payment_method_diffs = dict(bank_payment_method_diff_pairs or [])
+                for line in data.get(key, []):
+                    amount = line['amount']
+
+                    if not amount:
+                        continue
+
+                    self.env['account.move.line'].create({
+                        'move_id': move.id,
+                        'account_id': account.id,
+                        'name': f"{pm.name} - {line['ref']}",
+                        'debit': amount,
+                        'credit': 0.0,
+                    })
+
+        return move
+
+    def close_session_from_ui(self, *args, **kwargs):
         self.ensure_one()
 
-        # 🔹 Keep default logic intact
-        check_closing_session = self._cannot_close_session(bank_payment_method_diffs)
-        if check_closing_session:
-            return check_closing_session
+        # STEP 1: validate
+        if self.state == 'closed':
+            return {"successful": False, "message": "Already closed"}
 
-        # raise UserError(str(lines))
+        # STEP 2: compute from SLIPS ONLY
+        breakdown = self._compute_payment_breakdown()
 
-        validate_result = self.action_pos_session_closing_control(
-            bank_payment_method_diffs=bank_payment_method_diffs,
-            lines=lines
-        )
+        # STEP 3: create accounting move
+        move = self._create_account_move_with_slips(breakdown)
 
-        if isinstance(validate_result, dict):
-            return {
-                "successful": False,
-                "message": validate_result.get("name"),
-                "redirect": True,
-            }
+        # STEP 4: post move
+        move.action_post()
 
-        self.message_post(body="Point of Sale Session ended")
+        self.write({
+            'state': 'closed',
+        })
 
         return {"successful": True}
     
