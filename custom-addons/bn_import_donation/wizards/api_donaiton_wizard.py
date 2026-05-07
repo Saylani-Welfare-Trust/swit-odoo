@@ -75,8 +75,9 @@ class APIDonationWizard(models.TransientModel):
             donations_info, journal, gateway_config, company_currency, all_data, history
         )
         
+        
         if result.get('new_donations') and journal and result.get('accumulators'):
-            # raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
+            raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
             move = self._create_grouped_journal_move(
                 journal, 
                 result['accumulators']['debit'],
@@ -440,7 +441,7 @@ class APIDonationWizard(models.TransientModel):
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
-        raise ValidationError(str(picking))
+        # raise ValidationError(str(picking))
         self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
 
         return {
