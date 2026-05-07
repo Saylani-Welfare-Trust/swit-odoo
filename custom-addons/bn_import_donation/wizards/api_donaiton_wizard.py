@@ -343,13 +343,17 @@ class APIDonationWizard(models.TransientModel):
             for it in items:
                 item_name = ''
                 item_data = it.get('item', {})
+
                 if isinstance(item_data, dict) and 'en' in item_data:
                     item_name = item_data.get('en', {}).get('name', '')
 
+                normalized_item_name = (item_name or '').strip().lower()
+
                 # Find product from gateway config
                 product_line = gateway_config.gateway_config_line_ids.filtered(
-                    lambda l: l.name.lower() == item_name.lower()
+                    lambda l: (l.name or '').strip().lower() == normalized_item_name
                 )
+
                 product = product_line.product_id if product_line else False
 
                 if product and product.detailed_type == 'product':
