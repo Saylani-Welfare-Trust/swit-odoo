@@ -11,10 +11,13 @@ class PosSession(models.Model):
     _inherit = 'pos.session'
 
     # ------------------------------------------------------------
-    # CUSTOM FIELDS (related to company config)
+    # CUSTOM FIELDS (related to company)
     # ------------------------------------------------------------
     restricted_category = fields.Char(related='company_id.restricted_category', readonly=True)
     unrestricted_category = fields.Char(related='company_id.unrestricted_category', readonly=True)
+
+    def _get_closed_orders(self):
+        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
 
     # ------------------------------------------------------------
     # DATA COMPUTATION FOR THE CLOSING POPUP (split breakdown)
@@ -22,9 +25,10 @@ class PosSession(models.Model):
     def _compute_closing_details(self):
         """Compute restricted/unrestricted/neutral breakdown per payment method."""
         self.ensure_one()
+        # Use the same closed orders as the popup uses
         orders = self._get_closed_orders()
         breakdown = {}
-        for order in orders.filtered(lambda o: o.state in ['refund', 'paid']):
+        for order in orders:
             order_rest = order_unrest = order_neutral = 0.0
             for line in order.lines:
                 restriction = self._is_restricted_product(line.product_id)
@@ -136,7 +140,6 @@ class PosSession(models.Model):
     # OVERRIDE _validate_session to support split lines
     # ------------------------------------------------------------
     def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
-        """Extended to handle split slip lines."""
         bank_payment_method_diffs = bank_payment_method_diffs or {}
         self.ensure_one()
         data = {}
@@ -324,7 +327,7 @@ class PosSession(models.Model):
                     split_line_ids.append(line.id)
                     total_new_debit += amount
 
-        # Rounding adjustment
+        # Rounding adjustment (small diff)
         if not float_is_zero(total_new_debit - total_expected, precision_rounding=self.currency_id.rounding):
             diff = total_expected - total_new_debit
             default_neutral_account = self._get_neutral_receivable_account(self.payment_method_ids[0])
@@ -338,14 +341,14 @@ class PosSession(models.Model):
                 'credit': -diff if diff < 0 else 0,
                 'partner_id': False,
             })
-            _logger.info("Added rounding adjustment of %.2f", diff)
+            _logger.info("Added rounding adjustment of %.2f to balance split lines", diff)
 
         original_data['_split_receivable_lines'] = split_line_ids
 
         # Create bank difference lines
         self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
 
-        _logger.warning("Split accounting completed – created %d lines, total debit %.2f",
+        _logger.warning("Split accounting completed – created %d receivable lines, total debit %.2f",
                         len(split_line_ids), total_new_debit)
         return original_data
 
@@ -385,7 +388,7 @@ class PosSession(models.Model):
                 if matching:
                     (matching[0] | line).reconcile()
                 else:
-                    _logger.warning("No statement line matches split receivable %s (%.2f)", line.name, line.debit)
+                    _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
         return data
 
     def _extract_payment_method_id_from_line(self, line):
