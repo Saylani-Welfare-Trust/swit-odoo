@@ -11,6 +11,7 @@ patch(Order.prototype, {
         const json = super.export_as_JSON(...arguments);
 
         // Include source_document if set
+        json.pos_order_seq = this.pos_order_seq || false;
         json.source_document = this.source_document || false;
         json.receive_voucher = this.receive_voucher || false;
         json.qurbani = this.qurbani || false;
