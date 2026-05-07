@@ -9,6 +9,7 @@
         'point_of_sale'
     ],
     'data': [
+        'data/sequence.xml',
         'views/pos_order.xml',
         'views/res_company.xml',
     ],

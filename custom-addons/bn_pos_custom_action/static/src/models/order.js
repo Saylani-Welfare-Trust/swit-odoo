@@ -13,6 +13,7 @@ patch(Order.prototype, {
         // Include source_document if set
         json.source_document = this.source_document || false;
         json.receive_voucher = this.receive_voucher || false;
+        json.pos_order_seq = this.pos_order_seq || false;
         json.qurbani = this.qurbani || false;
 
         return json;
@@ -58,5 +59,33 @@ patch(Order.prototype, {
      */
     get_receive_voucher() {
         return this.receive_voucher;
+    },
+
+    /**
+     * Setter for pos_cheque_order_id
+     */
+    set_pos_cheque_order_id(pos_cheque_order_id) {
+        this.pos_cheque_order_id = pos_cheque_order_id;
+    },
+
+    /**
+     * Getter for pos_cheque_order_id
+     */
+    get_pos_cheque_order_id() {
+        return this.pos_cheque_order_id;
+    },
+
+    /**
+     * Setter for pos_order_seq
+     */
+    set_pos_order_seq(pos_order_seq) {
+        this.pos_order_seq = pos_order_seq;
+    },
+
+    /**
+     * Getter for pos_order_seq
+     */
+    get_pos_order_seq() {
+        return this.pos_order_seq;
     },
 });
