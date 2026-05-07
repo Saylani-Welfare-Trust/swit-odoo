@@ -885,7 +885,7 @@ class APIDonationWizard(models.TransientModel):
         # -----------------------------
         # Create & Post Move
         # -----------------------------
-        raise ValidationError(str(lines))
+        # raise ValidationError(str(lines))
         move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
