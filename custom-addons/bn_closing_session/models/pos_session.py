@@ -208,12 +208,14 @@ class PosSession(models.Model):
                 _logger.warning("_create_account_move returned None – using empty dict")
 
             balance = sum(self.move_id.line_ids.mapped('balance'))
-            raise UserError(str(balance))
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
                     pass
             except UserError:
                 self.env.cr.rollback()
+
+                self.move_id._check_balanced({'records': self.move_id.sudo()})
+
                 return self._close_session_action(balance)
 
             self.sudo()._post_statement_difference(cash_difference_before, False)
