@@ -446,7 +446,7 @@ class PosSession(models.Model):
     # ------------------------------------------------------------
     # HELPERS FOR ACCOUNTS AND CATEGORIES
     # ------------------------------------------------------------
-    def _get_receivable_account_account_type(self, payment_method):
+    def _get_receivable_account_account_type(self):
         return self.company_id.account_default_pos_restricted_receivable_account_id.account_type
     
     def _get_restricted_receivable_account(self, payment_method):
