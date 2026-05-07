@@ -250,7 +250,7 @@ class PosSession(models.Model):
         self._create_split_difference_lines(bank_payment_method_diffs)
         return data
 
-    # ---------- Override _validate_session to pass lines via context ----------
+    # ---------- Override _validate_session to read split lines from context ----------
     def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
         bank_payment_method_diffs = bank_payment_method_diffs or {}
         self.ensure_one()
@@ -270,9 +270,8 @@ class PosSession(models.Model):
 
             try:
                 with self.env.cr.savepoint():
+                    # Pass split lines via context (if any)
                     ctx = dict(self.env.context)
-                    if hasattr(self, '_split_lines_context'):
-                        ctx['pos_split_lines'] = self._split_lines_context
                     data = self.with_context(ctx).with_company(self.company_id).with_context(
                         check_move_validity=False, skip_invoice_sync=True
                     )._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
@@ -310,9 +309,9 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
-    # ---------- Override _create_account_move to handle split lines ----------
+    # ---------- Override _create_account_move to inject split lines if present ----------
     def _create_account_move(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
-        # First create the move using the standard method
+        # Create the move
         account_move = self.env['account.move'].create({
             'journal_id': self.config_id.journal_id.id,
             'date': fields.Date.context_today(self),
@@ -331,6 +330,7 @@ class PosSession(models.Model):
         if balancing_account and amount_to_balance:
             data = self._create_balancing_line(data, balancing_account, amount_to_balance)
 
+        # Check if split lines are in context
         split_lines = self.env.context.get('pos_split_lines')
         if split_lines:
             data = self._inject_split_receivable_lines(data, split_lines, bank_payment_method_diffs or {})
@@ -356,7 +356,7 @@ class PosSession(models.Model):
                     _logger.warning("No matching statement line for split receivable %s", line.name)
         return data
 
-    # ---------- Override close_session_from_ui to accept lines ----------
+    # ---------- Override close_session_from_ui to pass lines via context ----------
     def close_session_from_ui(self, bank_payment_method_diff_pairs=None, lines=None):
         bank_payment_method_diffs = dict(bank_payment_method_diff_pairs or [])
         self.ensure_one()
@@ -364,12 +364,9 @@ class PosSession(models.Model):
         if check_closing_session:
             return check_closing_session
 
-        self._split_lines_context = lines
-        try:
-            validate_result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_payment_method_diffs)
-        finally:
-            if hasattr(self, '_split_lines_context'):
-                del self._split_lines_context
+        # Pass split lines via context
+        session = self.with_context(pos_split_lines=lines)
+        validate_result = session.action_pos_session_closing_control(bank_payment_method_diffs=bank_payment_method_diffs)
 
         if isinstance(validate_result, dict):
             return {
