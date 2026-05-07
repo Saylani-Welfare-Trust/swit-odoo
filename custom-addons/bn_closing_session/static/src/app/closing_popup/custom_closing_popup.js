@@ -35,7 +35,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
-        this.report = useService("report");
+        this.action = useService("action");      // ✅ for reports
         this.hardwareProxy = useService("hardware_proxy");
 
         // State initialization
@@ -169,7 +169,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 type: type,
                 amount: numAmount || 0,
                 ref: ref || "",
-                bank_id: bank !== "0" ? parseInt(bank) : false,
+                bank_id: bank !== "0" ? parseInt(bank, 10) : false,
             },
         ]);
 
@@ -242,14 +242,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
     async downloadSalesReport() {
         const session = this.pos.pos_session;
-        const reportName = "point_of_sale.report_saledetails";
         const action = {
             type: "ir.actions.report",
-            report_name: reportName,
+            report_name: "point_of_sale.report_saledetails",
             report_type: "qweb-pdf",
             data: { session_id: session.id, config_id: session.config_id.id },
             context: { active_ids: [session.id] },
         };
-        this.report.doAction(action);
+        this.action.doAction(action);   // ✅ use action service, not report
     }
 }

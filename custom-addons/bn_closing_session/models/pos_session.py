@@ -10,10 +10,8 @@ class PosSession(models.Model):
     _inherit = 'pos.session'
 
     # ------------------------------------------------------------
-    # CUSTOM FIELDS (if not already present in upstream)
+    # CUSTOM FIELDS (if not already present upstream)
     # ------------------------------------------------------------
-    # These are added for completeness; they may already exist in your DB.
-    # If they exist, remove these lines to avoid duplication.
     restricted_category = fields.Char(related='company_id.restricted_category', readonly=True)
     unrestricted_category = fields.Char(related='company_id.unrestricted_category', readonly=True)
 
@@ -159,7 +157,6 @@ class PosSession(models.Model):
 
             _logger.warning("Lines received in _validate_session: %s", str(lines))
 
-            # Create account move – use split version if lines are provided
             try:
                 with self.env.cr.savepoint():
                     if lines:
@@ -183,7 +180,12 @@ class PosSession(models.Model):
                 else:
                     raise e
 
-            # Check balance after move creation
+            # Ensure data is a dictionary (never None)
+            if data is None:
+                data = {}
+                _logger.warning("_create_account_move returned None, using empty dict")
+
+            # Compute balance after move creation
             balance = sum(self.move_id.line_ids.mapped('balance'))
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
@@ -195,7 +197,6 @@ class PosSession(models.Model):
             self.sudo()._post_statement_difference(cash_difference_before, False)
 
             if self.move_id.line_ids:
-                # Post the move and update price fields
                 self.move_id.sudo().with_company(self.company_id)._post()
                 for dummy, amount_data in data.get('sales', {}).items():
                     self.env['account.move.line'].browse(amount_data['move_line_id']).sudo().with_company(self.company_id).write({
@@ -203,10 +204,9 @@ class PosSession(models.Model):
                         'price_total': abs(amount_data['amount_converted']) + abs(amount_data['tax_amount']),
                     })
                 self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
+                self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
             else:
                 self.move_id.sudo().unlink()
-
-            self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
         else:
             self.sudo()._post_statement_difference(self.cash_register_difference, False)
 
@@ -219,6 +219,8 @@ class PosSession(models.Model):
         """
         # Let the original method create the move (including all other lines)
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
+        if original_data is None:
+            original_data = {}
 
         # Remove the combined receivable lines that were just created
         receivable_lines = self.move_id.line_ids.filtered(
@@ -320,6 +322,9 @@ class PosSession(models.Model):
 
     def _reconcile_account_move_lines(self, data):
         """Reconcile both standard and split receivable lines."""
+        # Ensure data is a dict
+        if data is None:
+            data = {}
         # First let the original method reconcile everything else
         try:
             super()._reconcile_account_move_lines(data)
@@ -407,6 +412,17 @@ class PosSession(models.Model):
         self.message_post(body="Point of Sale Session ended")
         return {"successful": True}
 
+    def show_session_slip(self):
+        """Smart button to view deposit slips."""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Deposit Slips'),
+            'res_model': 'pos.session.slip',
+            'domain': [('session_id', '=', self.id)],
+            'view_mode': 'tree,form',
+            'target': 'current',
+        }
+
     # ------------------------------------------------------------
     # EXTRA METHODS FOR COMPANY FIELDS LOADING
     # ------------------------------------------------------------
@@ -414,12 +430,3 @@ class PosSession(models.Model):
         vals = super()._loader_params_res_company()
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         return vals
-    
-    def show_session_slip(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Deposit Slip',
-            'res_model': 'pos.session.slip',
-            'domain': [('session_id', '=', self.id)],
-            'view_mode': 'tree',
-        }
