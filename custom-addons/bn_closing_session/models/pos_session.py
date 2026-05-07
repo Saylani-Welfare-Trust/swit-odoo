@@ -388,7 +388,7 @@ class PosSession(models.Model):
             self.sudo()._post_statement_difference(cash_difference_before, False)
 
             if self.move_id.line_ids:
-                self.move_id.sudo().with_company(self.company_id)._post()
+                # self.move_id.sudo().with_company(self.company_id)._post()
                 for dummy, amount_data in data.get('sales', {}).items():
                     self.env['account.move.line'].browse(amount_data['move_line_id']).sudo().with_company(self.company_id).write({
                         'price_subtotal': abs(amount_data['amount_converted']),
