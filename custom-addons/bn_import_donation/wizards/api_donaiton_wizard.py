@@ -885,6 +885,7 @@ class APIDonationWizard(models.TransientModel):
         # -----------------------------
         # Create & Post Move
         # -----------------------------
+        raise ValidationError(str(lines))
         move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
@@ -894,7 +895,6 @@ class APIDonationWizard(models.TransientModel):
         })
 
         self.create_fetch_log(history.id, f"End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
-        raise ValidationError(str(move.id),str(lines))
         # move.action_post()
         return move
 
