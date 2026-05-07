@@ -414,3 +414,12 @@ class PosSession(models.Model):
         vals = super()._loader_params_res_company()
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         return vals
+    
+    def show_session_slip(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Deposit Slip',
+            'res_model': 'pos.session.slip',
+            'domain': [('session_id', '=', self.id)],
+            'view_mode': 'tree',
+        }
