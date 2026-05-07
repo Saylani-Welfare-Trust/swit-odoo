@@ -130,6 +130,28 @@ class PosSession(models.Model):
         }
 
     # ------------------------------------------------------------
+    # FORCE CLOSE WIZARD (for mismatch or balance errors)
+    # ------------------------------------------------------------
+    def _force_close_session_action(self, message):
+        """Return a wizard that forces the session to close without split accounting."""
+        wizard = self.env['pos.close.session.wizard'].create({
+            'amount_to_balance': 0,
+            'account_id': self._get_balancing_account().id,
+            'account_readonly': not self.env.user.has_group('account.group_account_readonly'),
+            'message': message or _("There is a mismatch between the split slips and the session totals.\n"
+                                    "You can force close the session using standard aggregated accounting."),
+        })
+        return {
+            'name': _("Force Close Session"),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'pos.close.session.wizard',
+            'res_id': wizard.id,
+            'target': 'new',
+            'context': {**self.env.context, 'active_ids': self.ids, 'active_model': 'pos.session'},
+        }
+
+    # ------------------------------------------------------------
     # OVERRIDES FOR CLOSING WITH SPLIT ACCOUNTING
     # ------------------------------------------------------------
     def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
@@ -154,7 +176,7 @@ class PosSession(models.Model):
 
             try:
                 with self.env.cr.savepoint():
-                    if lines and any(lines.values()):  # only use split if lines is non-empty
+                    if lines and any(lines.values()):
                         data = self.with_company(self.company_id).with_context(
                             check_move_validity=False, skip_invoice_sync=True
                         )._create_account_move_with_split_receivables(
@@ -175,6 +197,10 @@ class PosSession(models.Model):
                         data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
                 else:
                     raise e
+            except ValidationError as e:
+                # Split mismatch → offer force close wizard
+                self.env.cr.rollback()
+                return self._force_close_session_action(str(e))
 
             if data is None:
                 data = {}
@@ -211,12 +237,13 @@ class PosSession(models.Model):
 
     def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         """
-        Create account move but replace the combined receivable line with split lines.
-        Computes expected total from the session's orders instead of relying on existing receivable lines.
+        Create account move with split receivable lines.
+        If the total of split slips does not match the expected total (within threshold),
+        raises a ValidationError (will be caught and turned into a force‑close wizard).
         """
         _logger.warning("=== _create_account_move_with_split_receivables called with lines: %s", str(lines))
 
-        # First, create the move via standard method (this creates all non‑receivable lines)
+        # Standard account move creation (all non‑receivable lines)
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
         if original_data is None:
             original_data = {}
@@ -224,7 +251,7 @@ class PosSession(models.Model):
         if not self.move_id:
             raise ValidationError(_("No account move created for the session."))
 
-        # Compute expected total from the session's closed orders (sum of all payments)
+        # Expected total = sum of all payments in the session
         orders = self._get_closed_orders()
         total_expected = 0.0
         for order in orders:
@@ -233,7 +260,7 @@ class PosSession(models.Model):
                     total_expected += payment.amount
         _logger.warning("Total expected from orders (sum of payments): %s", total_expected)
 
-        # Remove any existing receivable lines (if any)
+        # Remove any existing receivable lines
         receivable_lines = self.move_id.line_ids.filtered(
             lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
         )
@@ -241,10 +268,8 @@ class PosSession(models.Model):
             original_total = sum(receivable_lines.mapped('debit'))
             _logger.warning("Found existing receivable lines with total debit: %s – removing them.", original_total)
             receivable_lines.unlink()
-        else:
-            _logger.warning("No existing receivable lines found – will create split lines from scratch.")
 
-        # Build split amounts from the UI lines
+        # Build split amounts from UI lines
         if not lines:
             raise ValidationError(_("Split accounting requires lines data – none provided."))
 
@@ -270,17 +295,25 @@ class PosSession(models.Model):
 
         _logger.warning("Total split amount from UI lines: %s (expected: %s)", total_split, total_expected)
 
-        # Check for severe mismatch (allow small rounding error)
+        # Mismatch handling
         diff = total_expected - total_split
         if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
-            _logger.warning("Split total differs from expected by %s – will add rounding adjustment", diff)
+            _logger.warning("Split total differs from expected by %s", diff)
+            # If the expected total is zero and split is non‑zero, that's a serious data issue
+            if float_is_zero(total_expected, precision_rounding=self.currency_id.rounding):
+                raise ValidationError(_(
+                    "The session has no payable orders (expected total = 0), but you entered split slips totaling %.2f. "
+                    "Please verify the session's orders or force close without split slips.", total_split
+                ))
+            # Otherwise, allow a small rounding error, else ask for force close
             if abs(diff) > self.currency_id.rounding * 100:
                 raise ValidationError(_(
                     "The total amount of split slips (%.2f) does not match the expected total (%.2f). "
-                    "Please verify your entries.", total_split, total_expected
+                    "Difference: %.2f. Please verify your entries or force close the session.",
+                    total_split, total_expected, abs(diff)
                 ))
 
-        # Create new split receivable lines
+        # Create split receivable lines
         total_new_debit = 0.0
         split_line_ids = []
         for pm_id, breakdown in payment_breakdown.items():
@@ -318,9 +351,8 @@ class PosSession(models.Model):
                     })
                     split_line_ids.append(line.id)
                     total_new_debit += amount
-                    _logger.debug("Created split receivable line: %s (%.2f)", name, amount)
 
-        # Rounding adjustment if needed
+        # Rounding adjustment (small diff)
         if not float_is_zero(total_new_debit - total_expected, precision_rounding=self.currency_id.rounding):
             diff = total_expected - total_new_debit
             default_neutral_account = self._get_neutral_receivable_account(self.payment_method_ids[0])
@@ -338,7 +370,7 @@ class PosSession(models.Model):
 
         original_data['_split_receivable_lines'] = split_line_ids
 
-        # Create bank difference lines (loss/profit)
+        # Create bank difference lines
         self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
 
         _logger.warning("Split accounting completed – created %d receivable lines, total debit %.2f",
@@ -444,7 +476,9 @@ class PosSession(models.Model):
             return check
         result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
         if isinstance(result, dict):
-            return {"successful": False, "message": result.get("name"), "redirect": True}
+            # This is a wizard response (force close)
+            return result
+        # Normal success
         try:
             self.message_post(body="Point of Sale Session ended")
         except Exception as e:
