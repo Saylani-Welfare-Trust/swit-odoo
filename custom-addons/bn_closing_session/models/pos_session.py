@@ -211,10 +211,17 @@ class PosSession(models.Model):
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
                     pass
-            except UserError:
+            except UserError as e:
                 self.env.cr.rollback()
 
-                self.move_id._check_balanced({'records': self.move_id.sudo()})
+                raise UserError(_(
+                    "Session closing failed because the journal entry is not balanced.\n\n"
+                    "Balance Difference: %s\n\n"
+                    "Original Error:\n%s"
+                ) % (
+                    balance,
+                    str(e)
+                ))
 
                 return self._close_session_action(balance)
 
