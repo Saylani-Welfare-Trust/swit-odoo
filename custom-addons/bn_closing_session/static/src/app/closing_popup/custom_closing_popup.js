@@ -1,15 +1,33 @@
 /** @odoo-module */
 
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
+import { SaleDetailsButton } from "@point_of_sale/app/navbar/sale_details_button/sale_details_button";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 import { useService } from "@web/core/utils/hooks";
 import { useState, onMounted } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
-import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
-import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_popup";
+import { useAsyncLockedMethod } from "@point_of_sale/app/utils/hooks";
 
 export class CustomClosingPopup extends AbstractAwaitablePopup {
+    static components = { SaleDetailsButton };
     static template = "CustomClosingPopup";
+
+    static props = [
+        "orders_details",
+        "opening_notes",
+        "default_cash_details",
+        "other_payment_methods",
+        "is_manager",
+        "amount_authorized_diff",
+        "bank_list",
+        "id",
+        "resolve",
+        "zIndex",
+        "close",
+        "confirmKey",
+        "cancelKey",
+    ];
 
     setup() {
         super.setup();
@@ -17,143 +35,221 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
+        this.report = useService("report");
+        this.hardwareProxy = useService("hardware_proxy");
 
+        // State initialization
         this.state = useState({
-            payments: {},
             notes: "",
+            payments: {},
+            lines: {},
+            newLines: {},
+            ...this._getInitialState(),
         });
 
+        // Helper to get payment method by id
+        this._getPaymentMethod = (id) =>
+            id === this.props.default_cash_details?.id
+                ? this.props.default_cash_details
+                : (this.props.other_payment_methods || []).find((m) => m.id === id);
+
+        // Initialize data structures for each payment method
+        const initPayment = (pm) => {
+            if (!pm?.id) return;
+            this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
+            this.state.newLines[pm.id] = {
+                restricted: { bank: "0", amount: "0", ref: "", record_id: 0 },
+                unrestricted: { bank: "0", amount: "0", ref: "", record_id: 0 },
+                neutral: { bank: "0", amount: "0", ref: "", record_id: 0 },
+            };
+            this.state.payments[pm.id] = this.state.payments[pm.id] || { counted: "0" };
+        };
+
+        if (this.props.default_cash_details) initPayment(this.props.default_cash_details);
+        (this.props.other_payment_methods || []).forEach(initPayment);
+
+        // Clean up old slips on mount
         onMounted(async () => {
-            await this.orm.call(
-                "pos.session.slip",
-                "delete_session_slips_for_session",
-                [this.pos.pos_session.id]
-            );
+            try {
+                await this.orm.call("pos.session.slip", "delete_session_slips_for_session", [this.pos.pos_session.id]);
+            } catch (e) {
+                console.warn("Slip cleanup failed", e);
+            }
         });
+
+        // Bind methods
+        this.handleAddLine = this.handleAddLine.bind(this);
+        this.handleRemoveLine = this.handleRemoveLine.bind(this);
+        this.confirm = useAsyncLockedMethod(this.confirm.bind(this));
     }
 
-    // -------------------------
-    // UTIL
-    // -------------------------
-
-    round(val) {
-        return Number(Number(val || 0).toFixed(2));
-    }
-
-    getPayment(paymentId) {
-        if (paymentId === this.props.default_cash_details?.id) {
-            return this.props.default_cash_details;
+    // ----- Initial state -----
+    _getInitialState() {
+        const s = { payments: {} };
+        if (this.props.default_cash_details) {
+            s.payments[this.props.default_cash_details.id] = { counted: "0" };
         }
-        return (this.props.other_payment_methods || []).find(p => p.id === paymentId);
+        (this.props.other_payment_methods || []).forEach((pm) => {
+            if (pm?.id != null) s.payments[pm.id] = { counted: "0" };
+        });
+        return s;
     }
 
+    // ----- Difference calculations -----
     getDifference(paymentId) {
-        const pm = this.getPayment(paymentId);
-        if (!pm) return 0;
-
-        const counted = this.round(this.state.payments[paymentId]?.counted);
-
-        // IMPORTANT: backend must send expected
-        const expected = this.round(pm.expected || 0);
-
-        return counted - expected;
+        const pm = this._getPaymentMethod(paymentId);
+        const counted = parseFloat(this.state.payments[paymentId]?.counted || 0);
+        const linesTotal = this._getLinesTotal(paymentId);
+        const expected = pm?.amount || 0;
+        return counted + linesTotal - expected;
     }
 
-    // -------------------------
-    // VALIDATION
-    // -------------------------
+    getRestrictedDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.restricted || 0;
+        const actual = (this.state.lines[paymentId]?.restricted || []).reduce((a, l) => a + (l.amount || 0), 0);
+        return actual - expected;
+    }
 
-    canConfirm() {
-        return Object.values(this.state.payments).every(p =>
-            this.env.utils.isValidFloat(p.counted)
+    getUnrestrictedDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.unrestricted || 0;
+        const actual = (this.state.lines[paymentId]?.unrestricted || []).reduce((a, l) => a + (l.amount || 0), 0);
+        return actual - expected;
+    }
+
+    getNeutralDifference(paymentId) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.neutral || 0;
+        const actual = (this.state.lines[paymentId]?.neutral || []).reduce((a, l) => a + (l.amount || 0), 0);
+        return actual - expected;
+    }
+
+    _getLinesTotal(paymentId) {
+        const lines = this.state.lines[paymentId] || {};
+        const sum = (arr) => (arr || []).reduce((a, x) => a + (x.amount || 0), 0);
+        return sum(lines.restricted) + sum(lines.unrestricted) + sum(lines.neutral);
+    }
+
+    // ----- UI helpers -----
+    shouldShowSlipInput(pm) {
+        return pm && !(pm.skip_amount_input === true || pm.skip_amount_input === "true");
+    }
+
+    shouldShowSlipHeaders() {
+        return (
+            this.shouldShowSlipInput(this.props.default_cash_details) ||
+            (this.props.other_payment_methods || []).some((pm) => this.shouldShowSlipInput(pm))
         );
+    }
+
+    formatCurrencyNeutral(value) {
+        const num = Number(value);
+        return this.env.utils.formatCurrency(Number.isFinite(num) ? num : 0);
+    }
+
+    // ----- Add / Remove slip lines -----
+    async handleAddLine(paymentId, type = "restricted") {
+        const pm = this._getPaymentMethod(paymentId);
+        const { amount, ref, bank } = this.state.newLines[paymentId][type];
+        const numAmount = parseFloat(amount);
+
+        if (this.shouldShowSlipInput(pm) && (!ref || isNaN(numAmount))) {
+            this.popup.add(ErrorPopup, {
+                title: _t("Invalid Input"),
+                body: _t("Amount and Reference are required."),
+            });
+            return;
+        }
+
+        const slip = await this.orm.call("pos.session.slip", "create_session_slip", [
+            this.pos.pos_session.id,
+            {
+                payment_method_id: paymentId,
+                type: type,
+                amount: numAmount || 0,
+                ref: ref || "",
+                bank_id: bank !== "0" ? parseInt(bank) : false,
+            },
+        ]);
+
+        if (slip?.status === "error") {
+            this.popup.add(ErrorPopup, { title: _t("Error"), body: _t("Slip creation failed.") });
+            return;
+        }
+
+        this.state.lines[paymentId][type].push({
+            id: Date.now(),
+            amount: numAmount || 0,
+            ref: ref || "",
+            bank: bank,
+            record_id: slip.id,
+        });
+
+        this.state.newLines[paymentId][type] = { bank: "0", amount: "0", ref: "", record_id: 0 };
+    }
+
+    async handleRemoveLine(paymentId, lineId, recordId, type) {
+        const res = await this.orm.call("pos.session.slip", "delete_session_slip", [recordId]);
+        if (res?.status !== "error") {
+            this.state.lines[paymentId][type] = this.state.lines[paymentId][type].filter((l) => l.id !== lineId);
+        }
+    }
+
+    // ----- Closing actions -----
+    canConfirm() {
+        return Object.values(this.state.payments).every((v) => this.env.utils.isValidFloat(v.counted));
+    }
+
+    canCancel() {
+        return true;
     }
 
     async confirm() {
-        const hasDiff = Object.keys(this.state.payments).some(id =>
-            !this.env.utils.floatIsZero(this.getDifference(Number(id)))
-        );
-
-        if (!this.pos.config.cash_control || !hasDiff) {
-            return this.closeSession();
-        }
-
-        const { confirmed } = await this.popup.add(ConfirmPopup, {
-            title: _t("Confirm Closing"),
-            body: _t("Differences detected. Do you want to continue?"),
-        });
-
-        if (confirmed) {
-            return this.closeSession();
-        }
+        await this.closeSession();
     }
 
-    // -------------------------
-    // SESSION CLOSE
-    // -------------------------
-
     async closeSession() {
-        const cashId = this.props.default_cash_details?.id;
+        const ok = await this.pos.push_orders_with_closing_popup();
+        if (!ok) return;
 
-        const counted = this.round(this.state.payments[cashId]?.counted);
+        // Prepare bank differences for each bank payment method
+        const bankDiffPairs = (this.props.other_payment_methods || [])
+            .filter((p) => p.type === "bank")
+            .map((p) => [p.id, this.getDifference(p.id)]);
 
-        await this.orm.call("pos.session", "post_closing_cash_details", [
+        const response = await this.orm.call("pos.session", "close_session_from_ui", [
             this.pos.pos_session.id,
-            counted,
+            bankDiffPairs,
+            this.state.lines,
         ]);
 
-        const result = await this.orm.call(
-            "pos.session",
-            "close_session_from_ui",
-            [this.pos.pos_session.id]
-        );
-
-        if (!result.successful) {
+        if (!response?.successful) {
             await this.popup.add(ErrorPopup, {
-                title: _t("Error"),
-                body: result.message || _t("Session closing failed"),
+                title: response.title || _t("Error"),
+                body: response.message,
             });
+            if (response.redirect) this.pos.redirectToBackend();
             return;
         }
 
         this.pos.redirectToBackend();
     }
 
-    // -------------------------
-    // SLIPS ONLY (NO ACCOUNTING LOGIC HERE)
-    // -------------------------
+    async cancel() {
+        if (this.canCancel()) super.cancel();
+    }
 
-    async handleAddLine(paymentId, type) {
-        const { amount, ref } = this.state.newLines?.[paymentId]?.[type] || {};
-
-        if (!amount || !ref) {
-            return this.popup.add(ErrorPopup, {
-                title: _t("Invalid"),
-                body: _t("Amount and reference required"),
-            });
-        }
-
-        const slip = await this.orm.call(
-            "pos.session.slip",
-            "create_session_slip",
-            [
-                this.pos.pos_session.id,
-                {
-                    payment_method_id: paymentId,
-                    amount: this.round(amount),
-                    ref,
-                    type,
-                },
-            ]
-        );
-
-        if (slip.status === "error") {
-            return this.popup.add(ErrorPopup, {
-                title: _t("Error"),
-                body: _t("Slip creation failed"),
-            });
-        }
-
-        this.state.newLines[paymentId][type] = { amount: 0, ref: "" };
+    async downloadSalesReport() {
+        const session = this.pos.pos_session;
+        const reportName = "point_of_sale.report_saledetails";
+        const action = {
+            type: "ir.actions.report",
+            report_name: reportName,
+            report_type: "qweb-pdf",
+            data: { session_id: session.id, config_id: session.config_id.id },
+            context: { active_ids: [session.id] },
+        };
+        this.report.doAction(action);
     }
 }

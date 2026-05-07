@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates id="template" xml:space="preserve">
+<templates id="custom_closing_popup_template" xml:space="preserve">
 
-    <!-- Responsive Closing Popup Component -->
     <t t-name="CustomClosingPopup" owl="1">
         <div class="popup close-pos-popup modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -85,7 +84,6 @@
                                                 <input class="form-control form-control-sm" placeholder="Slip No."
                                                     t-model="state.newLines[props.default_cash_details.id][type].ref"/>
                                             </td>
-                                            <!-- Amount column only if header exists -->
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td>
                                                     <t t-if="shouldShowSlipInput(props.default_cash_details)">
@@ -109,7 +107,6 @@
                                             </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
-                                            <!-- Amount column only if header exists -->
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td t-if="shouldShowSlipInput(props.default_cash_details)" t-esc="formatCurrencyNeutral(line?.amount)"/>
                                             </t>
@@ -177,7 +174,6 @@
                                                 <input class="form-control form-control-sm" placeholder="Slip No."
                                                     t-model="state.newLines[pm.id][type].ref"/>
                                             </td>
-                                            <!-- Amount column only if header exists -->
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td>
                                                     <t t-if="shouldShowSlipInput(pm)">
@@ -201,7 +197,6 @@
                                             </t>
                                             <td t-esc="line?.bank||''"/>
                                             <td t-esc="line?.ref||''"/>
-                                            <!-- Amount column only if header exists -->
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td t-if="shouldShowSlipInput(pm)" t-esc="formatCurrencyNeutral(line?.amount)"/>
                                             </t>
