@@ -343,8 +343,6 @@ class QurbaniOrder(models.Model):
 
                 'slaughter_id': slaughter_data.get('location'),
 
-                'slot_demand_id': demand.id,
-
                 'hissa_name': schedule.get('name', ''),
 
                 # DISTRIBUTION TIMES
