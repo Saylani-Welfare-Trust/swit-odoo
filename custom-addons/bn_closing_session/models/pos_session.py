@@ -154,7 +154,7 @@ class PosSession(models.Model):
 
             try:
                 with self.env.cr.savepoint():
-                    if lines and any(lines.values()):
+                    if lines and any(lines.values()):  # only use split if lines is non-empty
                         data = self.with_company(self.company_id).with_context(
                             check_move_validity=False, skip_invoice_sync=True
                         )._create_account_move_with_split_receivables(
@@ -175,10 +175,6 @@ class PosSession(models.Model):
                         data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
                 else:
                     raise e
-            except ValidationError as e:
-                # If split validation fails, fall back to standard accounting
-                _logger.warning("Split accounting failed: %s – falling back to standard accounting.", str(e))
-                data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
 
             if data is None:
                 data = {}
@@ -213,16 +209,252 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
-    # ... (all your imports and class definition remain the same) ...
+    from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.tools import float_compare, float_is_zero
+from odoo import models, fields, _, api
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
+class PosSession(models.Model):
+    _inherit = 'pos.session'
+
+    # ------------------------------------------------------------
+    # CUSTOM FIELDS
+    # ------------------------------------------------------------
+    restricted_category = fields.Char(related='company_id.restricted_category', readonly=True)
+    unrestricted_category = fields.Char(related='company_id.unrestricted_category', readonly=True)
+
+    # ------------------------------------------------------------
+    # DATA COMPUTATION FOR THE CLOSING POPUP
+    # ------------------------------------------------------------
+    def _compute_closing_details(self):
+        self.ensure_one()
+        orders = self._get_closed_orders()
+        breakdown = {}
+        for order in orders.filtered(lambda o: o.state in ['refund', 'paid']):
+            order_rest = order_unrest = order_neutral = 0.0
+            for line in order.lines:
+                restriction = self._is_restricted_product(line.product_id)
+                if restriction == 1:
+                    order_rest += line.price_subtotal_incl
+                elif restriction == 2:
+                    order_unrest += line.price_subtotal_incl
+                else:
+                    order_neutral += line.price_subtotal_incl
+            total = order_rest + order_unrest + order_neutral
+            if float_is_zero(total, precision_rounding=self.currency_id.rounding):
+                continue
+            ratios = (order_rest / total, order_unrest / total, order_neutral / total)
+            for payment in order.payment_ids:
+                pm_id = payment.payment_method_id.id
+                if pm_id not in breakdown:
+                    breakdown[pm_id] = {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}
+                breakdown[pm_id]['restricted'] += payment.amount * ratios[0]
+                breakdown[pm_id]['unrestricted'] += payment.amount * ratios[1]
+                breakdown[pm_id]['neutral'] += payment.amount * ratios[2]
+        return breakdown
+
+    def _compute_payment_breakdown_from_slips(self):
+        slips = self.env['pos.session.slip'].search([('session_id', '=', self.id)])
+        result = {}
+        for slip in slips:
+            pm_id = slip.pos_payment_method_id.id
+            result.setdefault(pm_id, {'restricted': [], 'unrestricted': [], 'neutral': []})
+            result[pm_id][slip.type].append({
+                'amount': slip.amount,
+                'ref': slip.ref,
+                'bank_id': slip.bank_id.id if slip.bank_id else False,
+            })
+        return result
+
+    def _is_restricted_product(self, product):
+        if not product.categ_id:
+            return 0
+        cat_name = product.categ_id.complete_name.lower()
+        restricted = self.company_id.restricted_category.lower()
+        unrestricted = self.company_id.unrestricted_category.lower()
+        if unrestricted in cat_name:
+            return 2
+        if restricted in cat_name:
+            return 1
+        return 0
+
+    def _get_closed_orders(self):
+        return self.order_ids.filtered(lambda o: o.state not in ['draft', 'cancel'])
+
+    def get_closing_control_data(self):
+        if not self.env.user.has_group('point_of_sale.group_pos_user'):
+            raise AccessError(_("You don't have the access rights to get the point of sale closing control data."))
+        self.ensure_one()
+
+        orders = self._get_closed_orders()
+        payments = orders.payment_ids.filtered(lambda p: p.payment_method_id.type != "pay_later")
+        cash_methods = self.payment_method_ids.filtered(lambda pm: pm.type == 'cash')
+        default_cash = cash_methods[0] if cash_methods else None
+        total_cash = sum(payments.filtered(lambda p: p.payment_method_id == default_cash).mapped('amount')) if default_cash else 0
+
+        last_session = self.search([('config_id', '=', self.config_id.id), ('id', '!=', self.id)], limit=1)
+        cash_moves = self.sudo().statement_line_ids.sorted('create_date')
+        cash_in_out = [{'name': f'Cash in {i+1}' if move.amount > 0 else f'Cash out {i+1}',
+                        'amount': move.amount} for i, move in enumerate(cash_moves)]
+
+        breakdown = self._compute_closing_details()
+        default_cash_details = None
+        if default_cash:
+            default_cash_details = {
+                'name': default_cash.name,
+                'amount': (last_session.cash_register_balance_end_real + total_cash +
+                           sum(cash_moves.mapped('amount'))),
+                'opening': last_session.cash_register_balance_end_real,
+                'payment_amount': total_cash,
+                'moves': cash_in_out,
+                'id': default_cash.id,
+                'breakdown': breakdown.get(default_cash.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
+                'skip_amount_input': default_cash.skip_amount_input,
+            }
+
+        other_methods = []
+        for pm in self.payment_method_ids - (default_cash if default_cash else self.env['pos.payment.method']):
+            pm_payments = orders.payment_ids.filtered(lambda p: p.payment_method_id == pm)
+            other_methods.append({
+                'name': pm.name,
+                'amount': sum(pm_payments.mapped('amount')),
+                'number': len(pm_payments),
+                'id': pm.id,
+                'type': pm.type,
+                'breakdown': breakdown.get(pm.id, {'restricted': 0.0, 'unrestricted': 0.0, 'neutral': 0.0}),
+                'skip_amount_input': pm.skip_amount_input,
+            })
+
+        banks = [{'id': bank.id, 'name': bank.name} for bank in self.env['account.journal'].search([]) if bank.show_in_pos]
+
+        return {
+            'orders_details': {'quantity': len(orders), 'amount': sum(orders.mapped('amount_total'))},
+            'opening_notes': self.opening_notes,
+            'default_cash_details': default_cash_details,
+            'other_payment_methods': other_methods,
+            'is_manager': self.user_has_groups("point_of_sale.group_pos_manager"),
+            'amount_authorized_diff': self.config_id.amount_authorized_diff if self.config_id.set_maximum_difference else None,
+            'bank_list': banks,
+        }
+
+    # ------------------------------------------------------------
+    # FORCE CLOSE WIZARD (for mismatch or balance errors)
+    # ------------------------------------------------------------
+    def _force_close_session_action(self, message):
+        """Return a wizard that forces the session to close without split accounting."""
+        wizard = self.env['pos.close.session.wizard'].create({
+            'amount_to_balance': 0,
+            'account_id': self._get_balancing_account().id,
+            'account_readonly': not self.env.user.has_group('account.group_account_readonly'),
+            'message': message or _("There is a mismatch between the split slips and the session totals.\n"
+                                    "You can force close the session using standard aggregated accounting."),
+        })
+        return {
+            'name': _("Force Close Session"),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'pos.close.session.wizard',
+            'res_id': wizard.id,
+            'target': 'new',
+            'context': {**self.env.context, 'active_ids': self.ids, 'active_model': 'pos.session'},
+        }
+
+    # ------------------------------------------------------------
+    # OVERRIDES FOR CLOSING WITH SPLIT ACCOUNTING
+    # ------------------------------------------------------------
+    def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
+        bank_payment_method_diffs = bank_payment_method_diffs or {}
+        self.ensure_one()
+        data = {}
+        sudo = self.user_has_groups('point_of_sale.group_pos_user')
+
+        if self.order_ids.filtered(lambda o: o.state != 'cancel') or self.sudo().statement_line_ids:
+            self.cash_real_transaction = sum(self.sudo().statement_line_ids.mapped('amount'))
+            if self.state == 'closed':
+                raise UserError(_('This session is already closed.'))
+            self._check_if_no_draft_orders()
+            self._check_invoices_are_posted()
+            cash_difference_before = self.cash_register_difference
+
+            if self.update_stock_at_closing:
+                self._create_picking_at_end_of_session()
+                self._get_closed_orders().filtered(lambda o: not o.is_total_cost_computed)._compute_total_cost_at_session_closing(self.picking_ids.move_ids)
+
+            _logger.warning("=== _validate_session: lines received = %s", str(lines))
+
+            try:
+                with self.env.cr.savepoint():
+                    if lines and any(lines.values()):
+                        data = self.with_company(self.company_id).with_context(
+                            check_move_validity=False, skip_invoice_sync=True
+                        )._create_account_move_with_split_receivables(
+                            balancing_account, amount_to_balance, bank_payment_method_diffs, lines
+                        )
+                    else:
+                        _logger.warning("No split lines provided – using standard accounting")
+                        data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
+            except AccessError as e:
+                if sudo:
+                    if lines and any(lines.values()):
+                        data = self.sudo().with_company(self.company_id).with_context(
+                            check_move_validity=False, skip_invoice_sync=True
+                        )._create_account_move_with_split_receivables(
+                            balancing_account, amount_to_balance, bank_payment_method_diffs, lines
+                        )
+                    else:
+                        data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
+                else:
+                    raise e
+            except ValidationError as e:
+                # Split mismatch → offer force close wizard
+                self.env.cr.rollback()
+                return self._force_close_session_action(str(e))
+
+            if data is None:
+                data = {}
+                _logger.warning("_create_account_move returned None – using empty dict")
+
+            balance = sum(self.move_id.line_ids.mapped('balance'))
+            try:
+                with self.move_id._check_balanced({'records': self.move_id.sudo()}):
+                    pass
+            except UserError:
+                self.env.cr.rollback()
+                return self._close_session_action(balance)
+
+            self.sudo()._post_statement_difference(cash_difference_before, False)
+
+            if self.move_id.line_ids:
+                self.move_id.sudo().with_company(self.company_id)._post()
+                for dummy, amount_data in data.get('sales', {}).items():
+                    self.env['account.move.line'].browse(amount_data['move_line_id']).sudo().with_company(self.company_id).write({
+                        'price_subtotal': abs(amount_data['amount_converted']),
+                        'price_total': abs(amount_data['amount_converted']) + abs(amount_data['tax_amount']),
+                    })
+                self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
+                reconciliation_data = self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
+                if reconciliation_data is not None:
+                    data = reconciliation_data
+            else:
+                self.move_id.sudo().unlink()
+        else:
+            self.sudo()._post_statement_difference(self.cash_register_difference, False)
+
+        self.write({'state': 'closed'})
+        return True
 
     def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         """
         Create account move with split receivable lines.
-        FIX: Expected total now includes ALL payments (including pay_later).
+        If the total of split slips does not match the expected total (within threshold),
+        raises a ValidationError (will be caught and turned into a force‑close wizard).
         """
         _logger.warning("=== _create_account_move_with_split_receivables called with lines: %s", str(lines))
 
-        # Standard account move (all non‑receivable lines)
+        # Standard account move creation (all non‑receivable lines)
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
         if original_data is None:
             original_data = {}
@@ -230,13 +462,14 @@ class PosSession(models.Model):
         if not self.move_id:
             raise ValidationError(_("No account move created for the session."))
 
-        # ✅ FIX: Compute expected total from ALL payments (including pay_later)
+        # Expected total = sum of all payments in the session
         orders = self._get_closed_orders()
         total_expected = 0.0
         for order in orders:
             for payment in order.payment_ids:
-                total_expected += payment.amount   # removed the 'pay_later' filter
-        _logger.warning("Total expected from orders (sum of ALL payments): %s", total_expected)
+                if payment.payment_method_id.type != 'pay_later':
+                    total_expected += payment.amount
+        _logger.warning("Total expected from orders (sum of payments): %s", total_expected)
 
         # Remove any existing receivable lines
         receivable_lines = self.move_id.line_ids.filtered(
@@ -273,14 +506,22 @@ class PosSession(models.Model):
 
         _logger.warning("Total split amount from UI lines: %s (expected: %s)", total_split, total_expected)
 
-        # Allow small rounding differences
+        # Mismatch handling
         diff = total_expected - total_split
         if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
-            _logger.warning("Split total differs from expected by %s – will add rounding adjustment", diff)
+            _logger.warning("Split total differs from expected by %s", diff)
+            # If the expected total is zero and split is non‑zero, that's a serious data issue
+            if float_is_zero(total_expected, precision_rounding=self.currency_id.rounding):
+                raise ValidationError(_(
+                    "The session has no payable orders (expected total = 0), but you entered split slips totaling %.2f. "
+                    "Please verify the session's orders or force close without split slips.", total_split
+                ))
+            # Otherwise, allow a small rounding error, else ask for force close
             if abs(diff) > self.currency_id.rounding * 100:
                 raise ValidationError(_(
                     "The total amount of split slips (%.2f) does not match the expected total (%.2f). "
-                    "Difference: %.2f. Please verify your entries.", total_split, total_expected, abs(diff)
+                    "Difference: %.2f. Please verify your entries or force close the session.",
+                    total_split, total_expected, abs(diff)
                 ))
 
         # Create split receivable lines
@@ -446,8 +687,130 @@ class PosSession(models.Model):
             return check
         result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
         if isinstance(result, dict):
-            # This can happen when the standard method returns a wizard (e.g., balancing error)
+            # This is a wizard response (force close)
             return result
+        # Normal success
+        try:
+            self.message_post(body="Point of Sale Session ended")
+        except Exception as e:
+            _logger.warning("Could not send closing message: %s", str(e))
+        return {"successful": True}
+
+    def show_session_slip(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Deposit Slips'),
+            'res_model': 'pos.session.slip',
+            'domain': [('session_id', '=', self.id)],
+            'view_mode': 'tree,form',
+            'target': 'current',
+        }
+
+    def _loader_params_res_company(self):
+        vals = super()._loader_params_res_company()
+        vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
+        return vals
+
+    def _create_split_difference_lines(self, bank_payment_method_diffs, payment_breakdown):
+        for pm_id, diff in bank_payment_method_diffs.items():
+            if float_is_zero(diff, precision_rounding=self.currency_id.rounding):
+                continue
+            pm = self.env['pos.payment.method'].browse(pm_id)
+            account = self._get_neutral_receivable_account(pm)
+            if not account:
+                _logger.warning("No neutral account for diff on %s – skipping", pm.name)
+                continue
+            self.env['account.move.line'].create({
+                'move_id': self.move_id.id,
+                'name': _("Bank difference - %s", pm.name),
+                'account_id': account.id,
+                'debit': diff if diff > 0 else 0,
+                'credit': -diff if diff < 0 else 0,
+                'partner_id': False,
+            })
+
+    def _reconcile_account_move_lines(self, data):
+        if data is None:
+            data = {}
+            _logger.warning("_reconcile_account_move_lines called with None data, using empty dict")
+
+        super()._reconcile_account_move_lines(data)
+
+        split_line_ids = data.get('_split_receivable_lines', [])
+        if split_line_ids:
+            split_lines = self.env['account.move.line'].browse(split_line_ids)
+            statement_lines = self.statement_line_ids
+            for line in split_lines:
+                matching = statement_lines.filtered(
+                    lambda sl: sl.payment_method_id.id == self._extract_payment_method_id_from_line(line) and
+                               float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
+                )
+                if matching:
+                    (matching[0] | line).reconcile()
+                else:
+                    _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
+
+        return data
+
+    def _extract_payment_method_id_from_line(self, line):
+        name = line.name or ''
+        for pm in self.payment_method_ids:
+            if pm.name in name:
+                return pm.id
+        return self.payment_method_ids.filtered(lambda p: p.type == 'bank')[:1].id
+
+    # ------------------------------------------------------------
+    # HELPERS FOR ACCOUNTS AND CATEGORIES
+    # ------------------------------------------------------------
+    def _get_restricted_receivable_account(self, payment_method):
+        return (payment_method.restricted_account_id or
+                self.company_id.account_default_pos_restricted_receivable_account_id)
+
+    def _get_neutral_receivable_account(self, payment_method):
+        return (payment_method.neutral_account_id or
+                self.company_id.account_default_pos_neutral_receivable_account_id)
+
+    def _get_unrestricted_receivable_account(self, payment_method):
+        return (payment_method.unrestricted_account_id or
+                self.company_id.account_default_pos_unrestricted_receivable_account_id)
+
+    # ------------------------------------------------------------
+    # OVERRIDES FOR CLOSING FLOW
+    # ------------------------------------------------------------
+    def action_pos_session_closing_control(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
+        _logger.warning("Lines in action_pos_session_closing_control: %s", str(lines))
+        bank_payment_method_diffs = bank_payment_method_diffs or {}
+        for session in self:
+            if any(order.state == 'draft' for order in session.order_ids):
+                raise UserError(_("You cannot close the POS when orders are still in draft"))
+            if session.state == 'closed':
+                raise UserError(_('This session is already closed.'))
+            session.write({'state': 'closing_control', 'stop_at': fields.Datetime.now()})
+            if not session.config_id.cash_control:
+                return session.action_pos_session_close(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
+            if session.rescue:
+                default_cash = self.payment_method_ids.filtered(lambda pm: pm.type == 'cash')[0]
+                orders = self._get_closed_orders()
+                total_cash = sum(orders.payment_ids.filtered(lambda p: p.payment_method_id == default_cash).mapped('amount')) + self.cash_register_balance_start
+                session.cash_register_balance_end_real = total_cash
+            return session.action_pos_session_validate(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
+
+    def action_pos_session_validate(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
+        return self.action_pos_session_close(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
+
+    def action_pos_session_close(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
+        return self._validate_session(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
+
+    def close_session_from_ui(self, bank_payment_method_diff_pairs=None, lines=None):
+        _logger.warning("=== close_session_from_ui: lines = %s", str(lines))
+        bank_diffs = dict(bank_payment_method_diff_pairs or [])
+        self.ensure_one()
+        check = self._cannot_close_session(bank_diffs)
+        if check:
+            return check
+        result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
+        if isinstance(result, dict):
+            return {"successful": False, "message": result.get("name"), "redirect": True}
         try:
             self.message_post(body="Point of Sale Session ended")
         except Exception as e:
