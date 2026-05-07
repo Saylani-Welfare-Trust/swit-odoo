@@ -22,7 +22,6 @@ class GenerateQurbaniDemand(models.TransientModel):
         SlaughterDemand = self.env['qurbani.slaughter.demand']
         SlaughterSlotDemand = self.env['qurbani.slaughter.slot.demand']
         Distribution = self.env['distribution.schedule']
-        CitySchedule = self.env['city.schedule']
 
         new_record = {}
 
@@ -34,14 +33,6 @@ class GenerateQurbaniDemand(models.TransientModel):
 
         if not self.slaughter_location_id:
             raise UserError("Slaughter location is required.")
-
-        # -----------------------------
-        # SYNC DISTRIBUTION SCHEDULES WITH LATEST POS PRODUCTS
-        # (Handle newly added products)
-        # -----------------------------
-        self._sync_distribution_pos_products(
-            Distribution, CitySchedule
-        )
 
         # -----------------------------
         # FETCH DISTRIBUTION RECORDS
@@ -207,68 +198,3 @@ class GenerateQurbaniDemand(models.TransientModel):
                         'start_time': slot['start_time'],
                         'end_time': slot['end_time'],
                     })
-
-    # -------------------------------------------------
-    # SYNC DISTRIBUTION POS PRODUCTS
-    # -------------------------------------------------
-    def _sync_distribution_pos_products(self, Distribution, CitySchedule):
-        """
-        Update distribution schedules with newly added POS products
-        from city schedules to ensure complete product coverage
-        for demand generation.
-        """
-        # Fetch all unique slaughter schedule IDs from distribution records
-        # that match the current hijri, day, and slaughter location
-        distribution_records = Distribution.search([
-            ('hijri_id', '=', self.hijri_id.id),
-            ('day_id', '=', self.day_id.id),
-            ('slaughter_location_id', '=', self.slaughter_location_id.id),
-        ])
-
-        if not distribution_records:
-            return
-
-        # Group by slaughter schedule to avoid redundant updates
-        slaughter_schedules_seen = set()
-
-        for record in distribution_records:
-            if not record.slaughter_schedule_id:
-                continue
-
-            slaughter = record.slaughter_schedule_id
-            if slaughter.id in slaughter_schedules_seen:
-                continue
-
-            slaughter_schedules_seen.add(slaughter.id)
-
-            # Find the corresponding city schedule
-            city_schedule = CitySchedule.search([
-                ('hijri_id', '=', self.hijri_id.id),
-                ('day_id', '=', self.day_id.id),
-                ('location_id', '=', slaughter.city_location_id.id),
-                ('inventory_product_id', '=', slaughter.inventory_product_id.id),
-                ('slaughter_location_id', '=', self.slaughter_location_id.id),
-            ], limit=1)
-
-            if not city_schedule:
-                continue
-
-            # Update all distribution records for this slaughter schedule
-            # with the latest pos_product_ids from city_schedule
-            related_distributions = Distribution.search([
-                ('slaughter_schedule_id', '=', slaughter.id),
-                ('inventory_product_id', '=', slaughter.inventory_product_id.id),
-            ])
-
-            if city_schedule.pos_product_ids and related_distributions:
-                for dist_record in related_distributions:
-                    # Merge existing and new pos_product_ids
-                    existing_product_ids = set(dist_record.pos_product_ids.ids)
-                    new_product_ids = set(city_schedule.pos_product_ids.ids)
-
-                    # If there are new products, update the distribution record
-                    if new_product_ids != existing_product_ids:
-                        merged_ids = list(existing_product_ids | new_product_ids)
-                        dist_record.write({
-                            'pos_product_ids': [(6, 0, merged_ids)]
-                        })
