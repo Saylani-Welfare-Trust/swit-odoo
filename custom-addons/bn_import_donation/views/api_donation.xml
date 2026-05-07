@@ -143,7 +143,7 @@
                                     <field name="hissa_name" />
                                     <field name="start_time" widget="float_time" readonly="1" />
                                     <field name="end_time" widget="float_time" readonly="1" />
-                                    <field name="currency_id" column_invisible="1" readonly="1" />
+                                    <!-- <field name="currency_id" column_invisible="1" readonly="1" /> -->
                                     <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
                                     <field name="quantity" readonly="1" />
                                     <field name="amount" readonly="1" />
