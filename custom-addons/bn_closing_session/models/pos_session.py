@@ -213,55 +213,16 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
+    # ... (all your imports and class definition remain the same) ...
+
     def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         """
         Create account move with split receivable lines.
-        If the split totals do not match the expected total, raises ValidationError.
+        FIX: Expected total now includes ALL payments (including pay_later).
         """
-        _logger.warning("=== _create_account_move_with_split_receivables called")
+        _logger.warning("=== _create_account_move_with_split_receivables called with lines: %s", str(lines))
 
-        # Compute expected total from the session's closed orders
-        orders = self._get_closed_orders()
-        total_expected = 0.0
-        for order in orders:
-            for payment in order.payment_ids:
-                if payment.payment_method_id.type != 'pay_later':
-                    total_expected += payment.amount
-        _logger.warning("Total expected from orders (sum of payments): %s", total_expected)
-
-        # Build split totals from UI lines
-        if not lines:
-            raise ValidationError(_("Split accounting requires lines data – none provided."))
-
-        total_split = 0.0
-        for pm_id, vals in lines.items():
-            for type_key in ['restricted', 'unrestricted', 'neutral']:
-                for entry in vals.get(type_key, []):
-                    amount = entry.get('amount', 0.0)
-                    if not float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                        total_split += amount
-
-        _logger.warning("Total split amount from UI lines: %s (expected: %s)", total_split, total_expected)
-
-        # If expected total is zero but split is non-zero, this is a data error (no orders)
-        if float_is_zero(total_expected, precision_rounding=self.currency_id.rounding):
-            if not float_is_zero(total_split, precision_rounding=self.currency_id.rounding):
-                raise ValidationError(_(
-                    "The session has no payable orders (expected total = 0), but you entered split slips totaling %.2f. "
-                    "Please verify the session's orders or close without split slips.", total_split
-                ))
-        else:
-            # Check mismatch (allow small rounding difference)
-            diff = total_expected - total_split
-            if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
-                if abs(diff) > self.currency_id.rounding * 100:
-                    raise ValidationError(_(
-                        "The total amount of split slips (%.2f) does not match the expected total (%.2f). "
-                        "Difference: %.2f. Please verify your entries.", total_split, total_expected, abs(diff)
-                    ))
-
-        # At this point, validation passed – proceed with split accounting
-        # First create the standard move (all non‑receivable lines)
+        # Standard account move (all non‑receivable lines)
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
         if original_data is None:
             original_data = {}
@@ -269,14 +230,29 @@ class PosSession(models.Model):
         if not self.move_id:
             raise ValidationError(_("No account move created for the session."))
 
+        # ✅ FIX: Compute expected total from ALL payments (including pay_later)
+        orders = self._get_closed_orders()
+        total_expected = 0.0
+        for order in orders:
+            for payment in order.payment_ids:
+                total_expected += payment.amount   # removed the 'pay_later' filter
+        _logger.warning("Total expected from orders (sum of ALL payments): %s", total_expected)
+
         # Remove any existing receivable lines
         receivable_lines = self.move_id.line_ids.filtered(
             lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
         )
-        receivable_lines.unlink()
+        if receivable_lines:
+            original_total = sum(receivable_lines.mapped('debit'))
+            _logger.warning("Found existing receivable lines with total debit: %s – removing them.", original_total)
+            receivable_lines.unlink()
 
-        # Build payment breakdown
+        # Build split amounts from UI lines
+        if not lines:
+            raise ValidationError(_("Split accounting requires lines data – none provided."))
+
         payment_breakdown = {}
+        total_split = 0.0
         for pm_id, vals in lines.items():
             pm = self.env['pos.payment.method'].browse(int(pm_id))
             if not pm:
@@ -292,7 +268,20 @@ class PosSession(models.Model):
                             'ref': entry.get('ref', ''),
                             'bank_id': entry.get('bank', False) and int(entry['bank']) or False,
                         })
+                        total_split += amount
             payment_breakdown[int(pm_id)] = breakdown
+
+        _logger.warning("Total split amount from UI lines: %s (expected: %s)", total_split, total_expected)
+
+        # Allow small rounding differences
+        diff = total_expected - total_split
+        if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
+            _logger.warning("Split total differs from expected by %s – will add rounding adjustment", diff)
+            if abs(diff) > self.currency_id.rounding * 100:
+                raise ValidationError(_(
+                    "The total amount of split slips (%.2f) does not match the expected total (%.2f). "
+                    "Difference: %.2f. Please verify your entries.", total_split, total_expected, abs(diff)
+                ))
 
         # Create split receivable lines
         total_new_debit = 0.0
@@ -333,9 +322,25 @@ class PosSession(models.Model):
                     split_line_ids.append(line.id)
                     total_new_debit += amount
 
+        # Rounding adjustment (small diff)
+        if not float_is_zero(total_new_debit - total_expected, precision_rounding=self.currency_id.rounding):
+            diff = total_expected - total_new_debit
+            default_neutral_account = self._get_neutral_receivable_account(self.payment_method_ids[0])
+            if not default_neutral_account:
+                raise ValidationError(_("No neutral receivable account configured."))
+            self.env['account.move.line'].create({
+                'move_id': self.move_id.id,
+                'name': _("Rounding adjustment for split slips"),
+                'account_id': default_neutral_account.id,
+                'debit': diff if diff > 0 else 0,
+                'credit': -diff if diff < 0 else 0,
+                'partner_id': False,
+            })
+            _logger.info("Added rounding adjustment of %.2f to balance split lines", diff)
+
         original_data['_split_receivable_lines'] = split_line_ids
 
-        # Add bank difference lines
+        # Create bank difference lines
         self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
 
         _logger.warning("Split accounting completed – created %d receivable lines, total debit %.2f",
