@@ -218,7 +218,7 @@ class PosSession(models.Model):
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
                     pass
-            except UserError:
+            except UserError as e:
                 self.env.cr.rollback()
 
                 raise UserError(_(
