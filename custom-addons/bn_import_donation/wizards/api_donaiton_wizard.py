@@ -402,14 +402,15 @@ class APIDonationWizard(models.TransientModel):
             if 'partner_key' in donation_val:
                 donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
                 del donation_val['partner_key']
-        raise ValidationError(str(donations_to_create))
+        # raise ValidationError(str(donations_to_create))
         # Bulk create donations
         if donations_to_create:
             new_donations = self.env['api.donation'].create(donations_to_create)
             new_donation_ids = new_donations.ids
         
         picking = False
-
+        
+        raise ValidationError(str(new_donation_ids))
         if stock_accumulator:
             picking_type = self.picking_type_id
             if not picking_type:
