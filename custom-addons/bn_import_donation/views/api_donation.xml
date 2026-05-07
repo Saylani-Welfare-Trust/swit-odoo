@@ -143,12 +143,13 @@
                                     <field name="hissa_name" />
                                     <field name="start_time" widget="float_time" readonly="1" />
                                     <field name="end_time" widget="float_time" readonly="1" />
-                                    <field name="currency_id" column_invisible="1" readonly="1" />
+                                    <field name="currency" column_invisible="1" readonly="1" />
                                     <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
                                     <field name="quantity" readonly="1" />
                                     <field name="amount" readonly="1" />
                                     <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                                     <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                                    <field name="api_donation_id" column_invisible="True"/>
                                 </tree>
                             </field>
                         </page>
