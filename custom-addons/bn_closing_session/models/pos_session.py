@@ -180,7 +180,7 @@ class PosSession(models.Model):
                 else:
                     raise e
 
-            # Ensure data is a dictionary (never None)
+            # ✅ CRITICAL FIX: Ensure data is never None
             if data is None:
                 data = {}
                 _logger.warning("_create_account_move returned None, using empty dict")
@@ -204,6 +204,7 @@ class PosSession(models.Model):
                         'price_total': abs(amount_data['amount_converted']) + abs(amount_data['tax_amount']),
                     })
                 self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
+                # ✅ Pass a dict, never None
                 self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
             else:
                 self.move_id.sudo().unlink()
@@ -322,14 +323,16 @@ class PosSession(models.Model):
 
     def _reconcile_account_move_lines(self, data):
         """Reconcile both standard and split receivable lines."""
-        # Ensure data is a dict
+        # ✅ Ensure data is a dict
         if data is None:
             data = {}
-        # First let the original method reconcile everything else
+            _logger.warning("_reconcile_account_move_lines called with None data, using empty dict")
+
+        # Call the original/parent method (which may be from pos_online_payment or other modules)
         try:
             super()._reconcile_account_move_lines(data)
         except Exception as e:
-            _logger.warning("Original reconciliation partially failed: %s", str(e))
+            _logger.warning("Parent reconciliation failed: %s", str(e))
 
         # Now reconcile our split receivable lines if any
         split_line_ids = data.get('_split_receivable_lines', [])
