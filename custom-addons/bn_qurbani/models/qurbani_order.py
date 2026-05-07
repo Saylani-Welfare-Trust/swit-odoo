@@ -1,9 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-import logging
-import re
 
-_logger = logging.getLogger(__name__)
+import re
 
 
 class QurbaniOrder(models.Model):
@@ -24,27 +22,8 @@ class QurbaniOrder(models.Model):
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
 
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
-    pos_qurbani_order = fields.Boolean('POS Qurbani Order', default=True)
-    
-    # API/Web Order Fields
-    api_response_id = fields.Char('API Response ID', help="Unique ID from API response")
-    donation_type = fields.Char('Donation Type', help="Type of donation (e.g., standard)")
-    donation_from = fields.Char('Donation From', help="Source of donation (e.g., web, pos)")
-    dn_number = fields.Char('DN Number', help="Donation Number from API")
-    bank_charges = fields.Monetary('Bank Charges', currency_field='currency_id', help="Bank charges from transaction")
-    transaction_id = fields.Char('Transaction ID', help="Payment transaction ID")
-    api_currency = fields.Char('API Currency', help="Original currency from API")
-    api_created_at = fields.Datetime('API Created At', help="Creation timestamp from API")
-    api_updated_at = fields.Datetime('API Updated At', help="Update timestamp from API")
-    donor_phone = fields.Char('Donor Phone', help="Original phone from API")
-    donor_email = fields.Char('Donor Email', help="Original email from API")
-    donor_cnic = fields.Char('Donor CNIC', help="Original CNIC from API")
-    donor_country = fields.Char('Donor Country', help="Original country from API")
-    donor_ip_address = fields.Char('Donor IP Address', help="IP address from API")
-    subscription_news = fields.Boolean('Subscription for News', default=False)
-    subscription_whatsapp = fields.Boolean('Subscription for WhatsApp', default=False)
-    subscription_sms = fields.Boolean('Subscription for SMS', default=False)
-    
+
+
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:

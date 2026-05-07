@@ -12,6 +12,8 @@ class GenerateQurbaniSlaughter(models.TransientModel):
 
     pos_product_id = fields.Many2one('product.product', string="POS Product")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
+
+    inventory_product_name = fields.Char(related='inventory_product_id.name', string="Inentory Product Name")
     
 
     def action_generate_slaughter(self):

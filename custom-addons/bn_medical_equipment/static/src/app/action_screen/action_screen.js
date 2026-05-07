@@ -10,20 +10,14 @@ import {_t} from "@web/core/l10n/translation";
 
 patch(ActionScreen.prototype, {
     get checkMedicalEquipmentAccess(){
-        // console.log(this);
-
         return this.pos._medicalEquipment || false;
     },
     
     get checkMedicalEquipmentSettleOrderAccess(){
-        // console.log(this);
-
         return this.pos._medicalEquipmentSettleOrder || false;
     },
     
     get checkMedicalEquipmentSecurityDepositAccess(){
-        // console.log(this);
-
         return this.pos._medicalEquipmentSecurityDeposit || false;
     },
 

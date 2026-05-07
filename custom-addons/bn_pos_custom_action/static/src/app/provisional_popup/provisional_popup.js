@@ -80,6 +80,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     product_id: line.product.id,
                     quantity: line.quantity,
                     price: line.price,
+                    qurbani_schedule: line.qurbani_schedule || null,
                     remarks: line.customerNote
                 }
             )
@@ -230,7 +231,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 });
             }
                
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             this.cancel()
         }
@@ -336,7 +337,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 });
             }
                
-            this.pos.receive_voucher = true
+            selectedOrder.set_receive_voucher(true)
 
             this.cancel()
         }

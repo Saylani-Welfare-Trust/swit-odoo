@@ -95,7 +95,7 @@ May Allah bless you!
     def _generate_pdf_from_report(self, order):
         try:
             pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_pos_order.pos_donation_receipt_template',
+                'bn_pos_order.pos_whatsapp_donation_receipt_template',
                 [order.id]
             )
             _logger.info('PDF generated: %s bytes', len(pdf_data))

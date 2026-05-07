@@ -8,6 +8,15 @@ import { patch } from "@web/core/utils/patch";
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
+
+        // Generate sequence from backend
+        const sequence = await this.orm.call(
+            'ir.sequence',
+            'next_by_code',
+            ['pos_order_seq']
+        );
+
+        currentOrder.set_pos_order_seq(sequence);
         
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
@@ -422,16 +431,6 @@ patch(PaymentScreen.prototype, {
                         throw new Error(result.body || 'Failed to create donation receipt');
                     }
                 }
-            // } catch (error) {
-            //     // console.log("📤 Data sent for donation receipt creation:", data);
-            //     // console.log("📥 Result from donation receipt creation:", result);
-            //     console.error("❌ [Advance Donation] Error creating donation receipt:", error);
-            //     this.env.services.notification.add(
-            //         "Failed to create donation receipt. Order cannot be completed.",
-            //         { type: 'warning' }
-            //     );
-            //     return; // Stop the order if donation receipt creation fails
-            // }
         }
         // --- WELFARE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
