@@ -698,7 +698,7 @@ class APIDonationWizard(models.TransientModel):
         is_foreign = currency_rec != company_currency
         
         # raise ValidationError(str(donation_vals.get('donation_item_ids', [])))
-
+        missing_account_products = []
         # Process items
         for it in donation_vals.get('donation_item_ids', []):
             item = it[2]  # (0, 0, values) format
@@ -712,6 +712,12 @@ class APIDonationWizard(models.TransientModel):
                 continue
             
             credit_account_id = config['account_id']
+            if not credit_account_id:
+                missing_account_products.append({
+                'product_name': product_name,
+                'config': config,
+                'reason': 'Missing gateway config or account_id'
+            })
             # raise ValidationError(str(credit_account_id)+" "+str(config)+" "+str(product_name))
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
@@ -741,7 +747,7 @@ class APIDonationWizard(models.TransientModel):
             c['credit_base'] += item_total_base
             if is_foreign:
                 c['amount_currency'] -= item_total
-
+        raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator)+" "+str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
