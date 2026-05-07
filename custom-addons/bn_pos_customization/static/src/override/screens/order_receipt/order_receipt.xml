@@ -38,7 +38,6 @@
                         <div>
                             <strong>DN #:</strong>
                             <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                            <t t-set="receipt_number" t-value="order.name.replace('Order ', '') or '0000'"/>
                             <t t-set="current_year" t-value="new Date().getFullYear()"/>
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="receipt_number"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>

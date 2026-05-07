@@ -206,12 +206,12 @@ class PosSession(models.Model):
         _logger.warning("Total expected (all payments): %s", total_expected)
 
         # Remove any existing receivable lines (the combined ones from the standard move)
-        receivable_account_type = self._get_receivable_account_type()
-        restricted_receivable_account_type = self._get_restricted_receivable_account_type()
-        unrestricted_receivable_account_type = self._get_neutral_receivable_account_type()
-        netural_receivable_account_type = self._get_unrestricted_receivable_account_type()
+        # receivable_account_type = self._get_receivable_account_type()
+        # restricted_receivable_account_type = self._get_restricted_receivable_account_type()
+        # unrestricted_receivable_account_type = self._get_neutral_receivable_account_type()
+        # netural_receivable_account_type = self._get_unrestricted_receivable_account_type()
         receivable_lines = self.move_id.line_ids.filtered(
-            lambda l: l.account_id.account_type in [receivable_account_type, restricted_receivable_account_type, unrestricted_receivable_account_type, netural_receivable_account_type] and l.debit > 0
+            lambda l: l.account_id.account_type in ['asset_receivable', 'asset_cash', 'liability_current'] and l.debit > 0
         )
         if receivable_lines:
             _logger.warning("Removing %d existing receivable lines (total debit: %s)",
