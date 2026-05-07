@@ -77,7 +77,7 @@ class APIDonationWizard(models.TransientModel):
         
         
         if result.get('new_donations') and journal and result.get('accumulators'):
-            # raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
+            raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
             move = self._create_grouped_journal_move(
                 journal, 
                 result['accumulators']['debit'],
@@ -747,7 +747,7 @@ class APIDonationWizard(models.TransientModel):
             c['credit_base'] += item_total_base
             if is_foreign:
                 c['amount_currency'] -= item_total
-        raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator)+" "+str(missing_account_products))
+        # raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator)+" "+str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
