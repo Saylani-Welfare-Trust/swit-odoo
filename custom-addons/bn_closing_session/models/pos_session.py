@@ -139,13 +139,13 @@ class PosSession(models.Model):
         """Return the account_type string of the company's default POS receivable account."""
         return self.company_id.account_default_pos_receivable_account_id.account_type
 
-    def _get_restricted_receivable_account_type(self, payment_method):
+    def _get_restricted_receivable_account_type(self):
         return self.company_id.account_default_pos_restricted_receivable_account_id.account_type
 
-    def _get_neutral_receivable_account_type(self, payment_method):
+    def _get_neutral_receivable_account_type(self):
         return self.company_id.account_default_pos_neutral_receivable_account_id.account_type
 
-    def _get_unrestricted_receivable_account_type(self, payment_method):
+    def _get_unrestricted_receivable_account_type(self):
         return self.company_id.account_default_pos_unrestricted_receivable_account_id.account_type
 
     def _get_restricted_receivable_account(self, payment_method):
