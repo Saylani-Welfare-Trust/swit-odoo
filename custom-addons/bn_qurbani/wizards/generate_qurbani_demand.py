@@ -40,7 +40,7 @@ class GenerateQurbaniDemand(models.TransientModel):
         distribution_schedule = Distribution.search([
             ('hijri_id', '=', self.hijri_id.id),
             ('day_id', '=', self.day_id.id),
-            ('slaughter_location_id', '=', self.slaughter_location_id.id)
+            ('slaughter_location_id', '=', self.slaughter_location_id.id),
             ('inventory_product_id', '=', self.inventory_product_id.id),
 
         ])
@@ -54,7 +54,9 @@ class GenerateQurbaniDemand(models.TransientModel):
         existing = SlaughterDemand.search([
             ('hijri_id', '=', self.hijri_id.id),
             ('day_id', '=', self.day_id.id),
-            ('slaughter_location_id', '=', self.slaughter_location_id.id)
+            ('slaughter_location_id', '=', self.slaughter_location_id.id),
+            ('inventory_product_id', '=', self.inventory_product_id.id),
+
         ], limit=1)
 
         if existing:
