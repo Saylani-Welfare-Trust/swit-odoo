@@ -28,7 +28,7 @@ class POSSessionSlip(models.Model):
         record = self.create({
             'bank_id': data['bank_id'],
             'pos_payment_method_id': data['payment_method_id'],
-            'type': self.env.company.unrestricted_category if data['type'] == 'unrestricted' else self.env.company.restricted_category if data['type'] == 'restricted' else "Uncategorized",
+            'type': self.env.company.unrestricted_category if data['type'] == 'unrestricted' else self.env.company.restricted_category if data['type'] == 'restricted' else "Non-Donation",
             'slip_no': data['ref'],
             'amount': data['amount'],
             'session_id': session_id
