@@ -45,6 +45,8 @@ class APIDonation(models.Model):
     transaction_id = fields.Char('Transaction Id')
 
     donation_item_ids = fields.One2many('api.donation.item', 'api_donation_id', string='Donation Item')
+    qurbani_order_line_ids = fields.One2many('api.qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
     fetch_history_id = fields.Many2one('fetch.history', string="Fetch History")
     donor_id = fields.Many2one('res.partner', string="Donor")
+    qurbani = fields.Boolean('Is Qurbani')

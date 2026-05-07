@@ -7,3 +7,4 @@ from . import api_donation_item
 from . import fetch_history
 from . import res_partner
 from . import fetch_log
+from . import api_qurbani_item

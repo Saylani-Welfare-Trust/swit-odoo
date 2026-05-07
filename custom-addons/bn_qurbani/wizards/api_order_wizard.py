@@ -36,34 +36,13 @@ class APIDonationWizard(models.TransientModel):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
-        company = self.env.company
-        if not (company.url and company.client_id and company.client_secret):
-            raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
-
-        # Fetch all required data in bulk before processing
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
-        origin_host = urlparse(base_url).hostname or ''
-
-        auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
-        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
-
-
-        # Get donations from API
-        donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host,)
-        if not donations_info:
-            self.create_fetch_log( f"No donations found for the given date range. {self.start_date} to {self.end_date}", 'No Data', 'No donations returned from API')
-
-            return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Error',
-                'message': 'No donations found for the given date range.',
-                'type': 'danger',  # success / warning / danger
-                'sticky': False,    # True = stays until user closes
-            }
-        }
-        
+        self.create_fetch_log( f"Start action_fetch_qurbani", 'API Fetch', 'Starting fetch Qurbani donations from donatio inflows')
+        donations_info = self.env['api.donation'].search([
+            ('qurbani', '=', True),
+            ('created_at', '>=', self.start_date),
+            ('created_at', '<=', self.end_date)
+            
+        ], limit=1)
         # raise ValidationError(str(donations_info[0]))
         for info in donations_info:
             if not isinstance(info, dict):
@@ -85,67 +64,67 @@ class APIDonationWizard(models.TransientModel):
         }
 
     # ---------------------- Bulk API Operations ----------------------
-    def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host):
+    # def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host):
 
-        """Fetch donations from API with optimized session handling"""
-        try:
-            with requests.Session() as session:
-                session.headers.update({
-                    'Origin': base_url,
-                    'x-forwarded-for': origin_host,
-                    'Content-Type': 'application/json',
-                })
+    #     """Fetch donations from API with optimized session handling"""
+    #     try:
+    #         with requests.Session() as session:
+    #             session.headers.update({
+    #                 'Origin': base_url,
+    #                 'x-forwarded-for': origin_host,
+    #                 'Content-Type': 'application/json',
+    #             })
 
-                # Authenticate
-                token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
-                session.headers.update({'authorization': f'bearer {token}'})
+    #             # Authenticate
+    #             token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
+    #             session.headers.update({'authorization': f'bearer {token}'})
 
-                # Prepare payload
-                payload = {'status': 'success'}
-                if self.start_date:
-                    payload['startDate'] = self._date_to_iso_z(self.start_date)
-                if self.end_date:
-                    payload['endDate'] = self._date_to_iso_z(self.end_date)
-                payload['qurbani'] = True
-                # Fetch donations
-                resp = session.post(donate_url, json=payload, timeout=60)
-                resp.raise_for_status()
-                data = resp.json()
+    #             # Prepare payload
+    #             payload = {'status': 'success'}
+    #             if self.start_date:
+    #                 payload['startDate'] = self._date_to_iso_z(self.start_date)
+    #             if self.end_date:
+    #                 payload['endDate'] = self._date_to_iso_z(self.end_date)
+    #             payload['qurbani'] = True
+    #             # Fetch donations
+    #             resp = session.post(donate_url, json=payload, timeout=60)
+    #             resp.raise_for_status()
+    #             data = resp.json()
 
-                # raise ValidationError(str(data))
+    #             # raise ValidationError(str(data))
 
-                if not isinstance(data, dict) or 'donationsInfo' not in data:
-                    self.env['fetch.qurbani.log'].create({
-                        'name': f"Invalid donations payload: {data}"
-                    })
+    #             if not isinstance(data, dict) or 'donationsInfo' not in data:
+    #                 self.env['fetch.qurbani.log'].create({
+    #                     'name': f"Invalid donations payload: {data}"
+    #                 })
 
-                    _logger.error('Invalid donations payload: %s', data)
-                    raise ValidationError(_('Invalid Donations Info'))
+    #                 _logger.error('Invalid donations payload: %s', data)
+    #                 raise ValidationError(_('Invalid Donations Info'))
 
-                self.create_fetch_log( f"End _fetch_donations_from_api", 'API Fetch', f"Completed fetching donations from API. Total donations fetched: {len(data.get('donationsInfo') or [])}")
+    #             self.create_fetch_log( f"End _fetch_donations_from_api", 'API Fetch', f"Completed fetching donations from API. Total donations fetched: {len(data.get('donationsInfo') or [])}")
 
-                return data.get('donationsInfo') or []
+    #             return data.get('donationsInfo') or []
 
-        except requests.exceptions.RequestException as e:
-            _logger.exception('API request error')
-            raise ValidationError(_('API request failed: %s') % str(e))
-        except ValueError as e:
-            _logger.error('Invalid JSON response: %s', str(e))
-            raise ValidationError(_('Invalid JSON received from API.'))
+    #     except requests.exceptions.RequestException as e:
+    #         _logger.exception('API request error')
+    #         raise ValidationError(_('API request failed: %s') % str(e))
+    #     except ValueError as e:
+    #         _logger.error('Invalid JSON response: %s', str(e))
+    #         raise ValidationError(_('Invalid JSON received from API.'))
 
-    def _authenticate(self, session, url, client_id, client_secret):
-        """Authenticate with API"""
-        try:
-            resp = session.post(url, json={"ClientID": client_id, "ClientSecret": client_secret}, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-            token = data.get('token')
-            if not token:
-                raise ValidationError(_('Token not found in the auth response. Please check credentials.'))
-            return token
-        except requests.exceptions.RequestException as e:
-            _logger.exception('Auth request error')
-            raise ValidationError(_('Authentication request failed: %s') % str(e))
+    # def _authenticate(self, session, url, client_id, client_secret):
+    #     """Authenticate with API"""
+    #     try:
+    #         resp = session.post(url, json={"ClientID": client_id, "ClientSecret": client_secret}, timeout=30)
+    #         resp.raise_for_status()
+    #         data = resp.json()
+    #         token = data.get('token')
+    #         if not token:
+    #             raise ValidationError(_('Token not found in the auth response. Please check credentials.'))
+    #         return token
+    #     except requests.exceptions.RequestException as e:
+    #         _logger.exception('Auth request error')
+    #         raise ValidationError(_('Authentication request failed: %s') % str(e))
 
     # # ---------------------- Bulk Data Pre-fetching ----------------------
     # def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):

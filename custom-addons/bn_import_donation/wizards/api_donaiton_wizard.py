@@ -507,6 +507,7 @@ class APIDonationWizard(models.TransientModel):
         # Prepare donation items
         items = info.get('items') or []
         orm_items = []
+        order_lines = []
         for it in items:
             types_name = ''
             item_name = ''
@@ -519,19 +520,85 @@ class APIDonationWizard(models.TransientModel):
             item_data = it.get('item', {})
             if isinstance(item_data, dict) and 'en' in item_data:
                 item_name = item_data.get('en', {}).get('name', '')
-            
-            orm_items.append({
-                'donation_type': it.get('donationType', ''),
-                'total': float(it.get('total', 0) or 0),
-                'price': it.get('price', 0),
-                'price_id': it.get('price_id', 0),
-                'qty': it.get('qty', 0),
-                'type': types_name,
-                'item': item_name,
-                'donation_no': it.get('donationNo', 0),
-                'is_priced_item': it.get('isPricedItem', False),
-            })
+            if  info.get('qurbani') != True:
+                orm_items.append({
+                    'donation_type': it.get('donationType', ''),
+                    'total': float(it.get('total', 0) or 0),
+                    'price': it.get('price', 0),
+                    'price_id': it.get('price_id', 0),
+                    'qty': it.get('qty', 0),
+                    'type': types_name,
+                    'item': item_name,
+                    'donation_no': it.get('donationNo', 0),
+                    'is_priced_item': it.get('isPricedItem', False),
+                })
+            else:
+                # Find product
+                product = self.env['product.product'].search([
+                    ('name', 'ilike', "Qurbani Web"),
+                    ('categ_id.name', 'ilike', 'qurbani')
+                ], limit=1)
 
+                if not product:
+                    product = self.env['product.product'].search([
+                        ('name', 'ilike', "Qurbani Web")
+                    ], limit=1)
+
+                if not product:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani product not found at index {info_idx}",
+                        'Error',
+                        f"Product Qurbani Web not found"
+                    )
+            
+                # Get current hijri
+                hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+                # Amount and quantity
+                quantity = int(it.get('qty', 1) or 1)
+                amount = float(it.get('price', 0) or 0)
+
+                # Find qurbani day
+                day_name = it.get('day', '')
+                day = self.env['qurbani.day'].search([
+                    ('name', 'ilike', day_name)
+                ], limit=1)
+
+                # Find city
+                city_name = donor.get('qurbaniCity', '')
+                city = self.env['stock.location'].search([
+                    ('name', 'ilike', city_name),
+                    ('usage', '=', 'internal')
+                ], limit=1)
+
+                # Share names
+                share_names = it.get('share_names', [donor.get('name', '')])
+
+                if not share_names:
+                    share_names = [donor.get('name', '')]
+
+                # Create separate line for each quantity
+                for idx in range(quantity):
+
+                    share_name = share_names[idx % len(share_names)]
+
+                    hissa_name = (
+                        f"{idx + 1}. {share_name}"
+                        if quantity > 1 else share_name
+                    )
+
+                    order_lines.append((0, 0, {
+                        'product_id': product.id,
+                        'quantity': 1,
+                        'amount': amount,
+                        'day_id': day.id if day else False,
+                        'hijri_id': hijri.id if hijri else False,
+                        'city_id': city.id if city else False,
+                        'hissa_name': hissa_name,
+                    }))
+              
+                
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         
         # Build donation values
@@ -574,7 +641,9 @@ class APIDonationWizard(models.TransientModel):
             'qurbani_city': donor.get('qurbaniCity', ''),
             'qurbani_day': donor.get('qurbaniDay', ''),
             'donation_item_ids': [(0, 0, it) for it in orm_items],
+            'qurbani_order_line_ids': order_lines,
             'fetch_history_id': history.id,
+            'qurbani': True if info.get('qurbani') == True else False,
         }
         
         # Set donor_id - either from cache, from new partner, or default

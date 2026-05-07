@@ -43,6 +43,90 @@ class QurbaniOrder(models.Model):
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
     
+    def create_web_qurbani_order(self, donation_record):
+        """
+        Create Qurbani Order directly from api.donation record
+        """
+
+        try:
+            order_lines = []
+
+            # Create lines directly from qurbani_order_line_ids
+            for line in donation_record.qurbani_order_line_ids:
+                order_lines.append((0, 0, {
+                    'product_id': line.product_id.id if line.product_id else False,
+                    'quantity': line.quantity or 1,
+                    'amount': line.amount or 0.0,
+                    'day_id': line.day_id.id if line.day_id else False,
+                    'hijri_id': line.hijri_id.id if line.hijri_id else False,
+                    'city_id': line.city_id.id if line.city_id else False,
+                    'hissa_name': line.hissa_name or '',
+                }))
+
+            qurbani_order = self.env['qurbani.order'].create({
+                'donor_id': donation_record.donor_id.id if donation_record.donor_id else False,
+                'currency_id': self.env['res.currency'].search(
+                    [('name', '=', donation_record.currency)],
+                    limit=1
+                ).id or self.env.company.currency_id.id,
+
+                'remarks': donation_record.remarks or '',
+                'total_amount': float(donation_record.total_amount or 0.0),
+                'qurbani_order_line_ids': order_lines,
+                'pos_qurbani_order': False,
+
+                # API / Donation Fields
+                'api_response_id': donation_record.import_id or '',
+                'donation_type': donation_record.donation_type or '',
+                'donation_from': donation_record.donation_from or '',
+                'dn_number': donation_record.dn_number or '',
+                'bank_charges': donation_record.bank_charges or 0.0,
+                'transaction_id': donation_record.transaction_id or '',
+                'api_currency': donation_record.currency or '',
+                'api_created_at': donation_record.created_at,
+                'api_updated_at': donation_record.updated_at,
+
+                # Donor Details
+                'donor_phone': donation_record.phone or '',
+                'donor_email': donation_record.email or '',
+                'donor_cnic': donation_record.cnic or '',
+                'donor_country': donation_record.country or '',
+                'donor_ip_address': donation_record.ip_address or '',
+
+                # Subscriptions
+                'subscription_news': donation_record.subscription_for_news,
+                'subscription_whatsapp': donation_record.subscription_for_whatsapp,
+                'subscription_sms': donation_record.subscription_for_sms,
+            })
+
+            return {
+                "status": "success",
+                "qurbani_order_id": qurbani_order.id,
+                "name": qurbani_order.name,
+                "message": "Web Qurbani Order created successfully"
+            }
+
+        except Exception as e:
+            _logger.error(f"Error creating web qurbani order: {str(e)}")
+
+            return {
+                "status": "error",
+                "message": str(e)
+            }    
+    @staticmethod
+    def _parse_iso_datetime(iso_string):
+        """Parse ISO 8601 datetime string to Odoo datetime format"""
+        if not iso_string:
+            return None
+        try:
+            from datetime import datetime
+            # Parse ISO 8601 format (e.g., '2026-05-04T20:01:19.593Z')
+            dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+            return dt.replace(tzinfo=None)
+        except Exception as e:
+            _logger.warning(f"Could not parse datetime {iso_string}: {str(e)}")
+            return None
+    
     def action_show_pos_order(self):
         self.ensure_one()
 
