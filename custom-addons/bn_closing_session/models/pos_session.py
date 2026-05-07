@@ -180,12 +180,11 @@ class PosSession(models.Model):
                 else:
                     raise e
 
-            # ✅ CRITICAL FIX: Ensure data is never None
+            # Guarantee data is a dict
             if data is None:
                 data = {}
                 _logger.warning("_create_account_move returned None, using empty dict")
 
-            # Compute balance after move creation
             balance = sum(self.move_id.line_ids.mapped('balance'))
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
@@ -204,7 +203,9 @@ class PosSession(models.Model):
                         'price_total': abs(amount_data['amount_converted']) + abs(amount_data['tax_amount']),
                     })
                 self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
-                # ✅ Pass a dict, never None
+                # Extra guard before reconciliation
+                if data is None:
+                    data = {}
                 self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
             else:
                 self.move_id.sudo().unlink()
@@ -218,12 +219,11 @@ class PosSession(models.Model):
         """
         Create account move but replace the combined receivable line with split lines.
         """
-        # Let the original method create the move (including all other lines)
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
         if original_data is None:
             original_data = {}
 
-        # Remove the combined receivable lines that were just created
+        # Remove the combined receivable lines
         receivable_lines = self.move_id.line_ids.filtered(
             lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
         )
@@ -250,7 +250,6 @@ class PosSession(models.Model):
         else:
             payment_breakdown = self._compute_payment_breakdown_from_slips()
 
-        # Create new split receivable lines
         total_new_debit = 0.0
         split_line_ids = []
         for pm_id, breakdown in payment_breakdown.items():
@@ -284,7 +283,7 @@ class PosSession(models.Model):
                     split_line_ids.append(line.id)
                     total_new_debit += amount
 
-        # If there is a rounding difference, adjust via neutral account
+        # Rounding adjustment
         if not float_is_zero(total_new_debit - total_original_debit, precision_rounding=self.currency_id.rounding):
             diff = total_original_debit - total_new_debit
             default_neutral_account = self._get_neutral_receivable_account(self.payment_method_ids[0])
@@ -299,14 +298,10 @@ class PosSession(models.Model):
             _logger.info("Adjusted receivable lines by %.2f to match original total", diff)
 
         original_data['_split_receivable_lines'] = split_line_ids
-
-        # Create bank difference lines (loss/profit) – use neutral account
         self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
-
         return original_data
 
     def _create_split_difference_lines(self, bank_payment_method_diffs, payment_breakdown):
-        """Post loss/profit lines for bank differences."""
         for pm_id, diff in bank_payment_method_diffs.items():
             if float_is_zero(diff, precision_rounding=self.currency_id.rounding):
                 continue
@@ -322,19 +317,17 @@ class PosSession(models.Model):
             })
 
     def _reconcile_account_move_lines(self, data):
-        """Reconcile both standard and split receivable lines."""
-        # ✅ Ensure data is a dict
+        """Guarantee data is a dict before calling parent methods."""
+        # ✅ Critical fix: convert None to empty dict
         if data is None:
             data = {}
             _logger.warning("_reconcile_account_move_lines called with None data, using empty dict")
 
-        # Call the original/parent method (which may be from pos_online_payment or other modules)
         try:
             super()._reconcile_account_move_lines(data)
         except Exception as e:
             _logger.warning("Parent reconciliation failed: %s", str(e))
 
-        # Now reconcile our split receivable lines if any
         split_line_ids = data.get('_split_receivable_lines', [])
         if not split_line_ids:
             return
@@ -402,7 +395,6 @@ class PosSession(models.Model):
         return self._validate_session(balancing_account, amount_to_balance, bank_payment_method_diffs, lines)
 
     def close_session_from_ui(self, bank_payment_method_diff_pairs=None, lines=None):
-        """Extended to accept split slip lines from the frontend."""
         _logger.warning("Lines in close_session_from_ui: %s", str(lines))
         bank_diffs = dict(bank_payment_method_diff_pairs or [])
         self.ensure_one()
@@ -416,7 +408,6 @@ class PosSession(models.Model):
         return {"successful": True}
 
     def show_session_slip(self):
-        """Smart button to view deposit slips."""
         return {
             'type': 'ir.actions.act_window',
             'name': _('Deposit Slips'),
@@ -426,9 +417,6 @@ class PosSession(models.Model):
             'target': 'current',
         }
 
-    # ------------------------------------------------------------
-    # EXTRA METHODS FOR COMPANY FIELDS LOADING
-    # ------------------------------------------------------------
     def _loader_params_res_company(self):
         vals = super()._loader_params_res_company()
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
