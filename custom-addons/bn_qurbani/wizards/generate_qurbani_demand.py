@@ -11,6 +11,8 @@ class GenerateQurbaniDemand(models.TransientModel):
     day_id = fields.Many2one('qurbani.day', string="Day")
 
     slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location')
+    inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
+
 
 
     def action_generate_demand(self):
@@ -39,6 +41,8 @@ class GenerateQurbaniDemand(models.TransientModel):
             ('hijri_id', '=', self.hijri_id.id),
             ('day_id', '=', self.day_id.id),
             ('slaughter_location_id', '=', self.slaughter_location_id.id)
+            ('inventory_product_id', '=', self.inventory_product_id.id),
+
         ])
 
         if not distribution_schedule:
