@@ -248,9 +248,13 @@ class APIDonationWizard(models.TransientModel):
         gateway_currency_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_currency_ids:
-                raise ValidationError(str(line.read()))
-                gateway_currency_lines[line.currency_id.name.lower()] = line.account_id.id
-        
+
+                currency_name = (line.currency_id.name or '').strip().lower()
+
+                if not currency_name:
+                    continue
+
+                gateway_currency_lines[currency_name] = line.account_id.id
         self.create_fetch_log(history.id, f"Gateway Currency Lines: {gateway_currency_lines}", 'Prefetching', 'Fetched gateway currency lines')
 
         gateway_product_lines = {}
