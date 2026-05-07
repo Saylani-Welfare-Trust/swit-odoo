@@ -143,7 +143,7 @@ class PosSession(models.Model):
         return self.company_id.account_default_pos_restricted_receivable_account_id.account_type
 
     def _get_neutral_receivable_account_type(self):
-        return self.company_id.account_default_pos_neutral_receivable_account_id.account_type
+        return self.company_id.account_default_pos_neutrnal_receivable_account_id.account_type
 
     def _get_unrestricted_receivable_account_type(self):
         return self.company_id.account_default_pos_unrestricted_receivable_account_id.account_type
@@ -154,7 +154,7 @@ class PosSession(models.Model):
 
     def _get_neutral_receivable_account(self, payment_method):
         return (payment_method.neutral_account_id or
-                self.company_id.account_default_pos_neutral_receivable_account_id)
+                self.company_id.account_default_pos_neutrnal_receivable_account_id)
 
     def _get_unrestricted_receivable_account(self, payment_method):
         return (payment_method.unrestricted_account_id or
