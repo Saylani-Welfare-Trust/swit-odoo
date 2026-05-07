@@ -712,7 +712,7 @@ class APIDonationWizard(models.TransientModel):
                 continue
             
             credit_account_id = config['account_id']
-            
+            raise ValidationError(str(credit_account_id)+" "+str(config)+" "+str(product_name))
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
             
