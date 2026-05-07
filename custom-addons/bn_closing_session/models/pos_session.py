@@ -383,10 +383,7 @@ class PosSession(models.Model):
                     pass
             except UserError as e:
                 self.env.cr.rollback()
-                raise UserError(_(
-                    "Session closing failed because the journal entry is not balanced.\n\n"
-                    "Balance Difference: %s\n\nOriginal Error:\n%s"
-                ) % (balance, str(e)))
+                return self._close_session_action(balance)
 
             self.sudo()._post_statement_difference(cash_difference_before, False)
 
