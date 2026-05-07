@@ -402,7 +402,7 @@ class APIDonationWizard(models.TransientModel):
             if 'partner_key' in donation_val:
                 donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
                 del donation_val['partner_key']
-        
+        raise ValidationError(str(donations_to_create))
         # Bulk create donations
         if donations_to_create:
             new_donations = self.env['api.donation'].create(donations_to_create)
