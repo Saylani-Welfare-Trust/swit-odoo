@@ -341,7 +341,7 @@ class QurbaniOrder(models.Model):
 
                 'distribution_id': distribution_data.get('location'),
 
-                'slaughter_location_id': slaughter_data.get('location'),
+                'slaughter_id': slaughter_data.get('location'),
 
                 'slot_demand_id': demand.id,
 
