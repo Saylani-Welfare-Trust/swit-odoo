@@ -198,17 +198,6 @@ class PosSession(models.Model):
                         data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
                 else:
                     raise e
-            except ValidationError as e:
-                # Split mismatch → offer force close wizard
-                self.env.cr.rollback()
-
-                raise UserError(_(
-                    "Original Error:\n%s"
-                ) % (
-                    str(e)
-                ))
-
-                # return self._force_close_session_action(str(e))
 
             if data is None:
                 data = {}
