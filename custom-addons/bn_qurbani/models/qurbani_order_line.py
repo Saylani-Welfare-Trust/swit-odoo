@@ -11,6 +11,7 @@ class QurbaniOrderLine(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', related='qurbani_order_id.currency_id')
     city_id = fields.Many2one('stock.location', string="City")
+    slaughter_id = fields.Many2one('stock.location', string="Salughter")
     distribution_id = fields.Many2one('stock.location', string="Distribution")
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
@@ -18,6 +19,8 @@ class QurbaniOrderLine(models.Model):
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')
 
+    slaughter_start_time = fields.Float('Start Time')
+    slaughter_end_time = fields.Float('End Time')
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
 
