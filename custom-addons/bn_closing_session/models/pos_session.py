@@ -280,7 +280,7 @@ class PosSession(models.Model):
 
         # Remove any existing receivable lines
         receivable_lines = self.move_id.line_ids.filtered(
-            lambda l: l.account_id.account_type in ['asset_receivable', 'asset_cash'] and l.debit > 0
+            lambda l: l.account_id.account_type == self._get_receivable_account_account_type() and l.debit > 0
         )
         if receivable_lines:
             original_total = sum(receivable_lines.mapped('debit'))
@@ -446,6 +446,9 @@ class PosSession(models.Model):
     # ------------------------------------------------------------
     # HELPERS FOR ACCOUNTS AND CATEGORIES
     # ------------------------------------------------------------
+    def _get_receivable_account_account_type(self, payment_method):
+        return self.company_id.account_default_pos_restricted_receivable_account_id.account_type
+    
     def _get_restricted_receivable_account(self, payment_method):
         return (payment_method.restricted_account_id or
                 self.company_id.account_default_pos_restricted_receivable_account_id)
