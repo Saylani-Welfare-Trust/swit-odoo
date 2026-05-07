@@ -15,6 +15,10 @@ class PosSession(models.Model):
     restricted_category = fields.Char(related='company_id.restricted_category', readonly=True)
     unrestricted_category = fields.Char(related='company_id.unrestricted_category', readonly=True)
 
+
+    def _get_closed_orders(self):
+        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
+
     # ------------------------------------------------------------
     # DATA COMPUTATION FOR THE CLOSING POPUP
     # ------------------------------------------------------------
@@ -22,7 +26,7 @@ class PosSession(models.Model):
         self.ensure_one()
         orders = self._get_closed_orders()
         breakdown = {}
-        for order in orders.filtered(lambda o: o.state in ['refund', 'paid']):
+        for order in orders:
             order_rest = order_unrest = order_neutral = 0.0
             for line in order.lines:
                 restriction = self._is_restricted_product(line.product_id)
@@ -69,9 +73,6 @@ class PosSession(models.Model):
         if restricted in cat_name:
             return 1
         return 0
-
-    def _get_closed_orders(self):
-        return self.order_ids.filtered(lambda o: o.state not in ['draft', 'cancel'])
 
     def get_closing_control_data(self):
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
