@@ -203,10 +203,11 @@ class PosSession(models.Model):
                         'price_total': abs(amount_data['amount_converted']) + abs(amount_data['tax_amount']),
                     })
                 self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')]).write({'state': 'done'})
-                # Extra guard before reconciliation
-                if data is None:
-                    data = {}
-                self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
+                # ✅ Pass a dict, then call reconciliation (which now returns data)
+                reconciliation_data = self.sudo().with_company(self.company_id)._reconcile_account_move_lines(data)
+                # If the reconciliation returns None (should not), keep original data
+                if reconciliation_data is not None:
+                    data = reconciliation_data
             else:
                 self.move_id.sudo().unlink()
         else:
@@ -317,33 +318,36 @@ class PosSession(models.Model):
             })
 
     def _reconcile_account_move_lines(self, data):
-        """Guarantee data is a dict before calling parent methods."""
-        # ✅ Critical fix: convert None to empty dict
+        """
+        Reconcile standard lines plus our split receivable lines.
+        IMPORTANT: Must return the data dictionary (or None) to be compatible
+        with other modules (e.g., pos_online_payment) that expect a dict.
+        """
+        # Ensure data is a dict
         if data is None:
             data = {}
             _logger.warning("_reconcile_account_move_lines called with None data, using empty dict")
 
-        try:
-            super()._reconcile_account_move_lines(data)
-        except Exception as e:
-            _logger.warning("Parent reconciliation failed: %s", str(e))
+        # Call parent reconciliation (original Odoo method returns None)
+        super()._reconcile_account_move_lines(data)
 
+        # Reconcile our split receivable lines
         split_line_ids = data.get('_split_receivable_lines', [])
-        if not split_line_ids:
-            return
+        if split_line_ids:
+            split_lines = self.env['account.move.line'].browse(split_line_ids)
+            statement_lines = self.statement_line_ids
+            for line in split_lines:
+                matching = statement_lines.filtered(
+                    lambda sl: sl.payment_method_id.id == self._extract_payment_method_id_from_line(line) and
+                               float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
+                )
+                if matching:
+                    (matching[0] | line).reconcile()
+                else:
+                    _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
 
-        split_lines = self.env['account.move.line'].browse(split_line_ids)
-        statement_lines = self.statement_line_ids
-
-        for line in split_lines:
-            matching = statement_lines.filtered(
-                lambda sl: sl.payment_method_id.id == self._extract_payment_method_id_from_line(line) and
-                           float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
-            )
-            if matching:
-                (matching[0] | line).reconcile()
-            else:
-                _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
+        # ✅ Return the data dictionary for chaining (required by pos_online_payment)
+        return data
 
     def _extract_payment_method_id_from_line(self, line):
         name = line.name or ''
