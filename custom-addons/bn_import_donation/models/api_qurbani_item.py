@@ -7,9 +7,9 @@ class ApiQurbaniOrderLine(models.Model):
     _description = "Api Qurbani Order Line"
 
 
-    api_donation_id = fields.Many2one('api.donation', string='Donation Data')
+    qurbani_order_id = fields.Many2one('qurbani.order', string="Qurbani Order")
     product_id = fields.Many2one('product.product', string="Product")
-    currency_id = fields.Many2one('res.currency', related='api_donation_id.currency_id')
+    currency_id = fields.Many2one('res.currency', related='qurbani_order_id.currency_id')
     city_id = fields.Many2one('stock.location', string="City")
     distribution_id = fields.Many2one('stock.location', string="Distribution")
     day_id = fields.Many2one('qurbani.day', string="Day")
