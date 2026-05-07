@@ -706,9 +706,25 @@ class APIDonationWizard(models.TransientModel):
             
             config = all_data['gateway_product_lines'].get(product_name.lower())
             if not config:
-                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
+                self.create_fetch_log(
+                    history.id,
+                    f"❌ Product NOT FOUND in gateway config: {product_name}",
+                    'Error',
+                    f"Missing config for product {product_name}"
+                )
+                _logger.warning("Missing gateway config for product: %s", product_name)
+                continue
 
-                _logger.warning(f"Product config not found for {product_name}")
+            credit_account_id = config.get('account_id')
+
+            if not credit_account_id:
+                self.create_fetch_log(
+                    history.id,
+                    f"❌ Product HAS NO ACCOUNT: {product_name}",
+                    'Error',
+                    f"No income account for product {product_name}"
+                )
+                _logger.error("Missing income account for product: %s", product_name)
                 continue
             
             credit_account_id = config['account_id']
