@@ -43,6 +43,7 @@ patch(PaymentScreen.prototype, {
                         title: _t("Error"),
                         body: data.body,
                     });
+                    return;
                 }
                 
                 if (data.status === 'success') {
