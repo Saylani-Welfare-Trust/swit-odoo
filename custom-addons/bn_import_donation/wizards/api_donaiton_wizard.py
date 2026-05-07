@@ -339,7 +339,7 @@ class APIDonationWizard(models.TransientModel):
                         donation_vals, all_data, company_currency,
                         debit_accumulator, credit_accumulator, history
                     )
-
+                # raise ValidationError(str(credit_accumulator))
             items = info.get('items') or []
             for it in items:
                 item_name = ''
@@ -712,12 +712,12 @@ class APIDonationWizard(models.TransientModel):
                 continue
             
             credit_account_id = config['account_id']
-            if not credit_account_id:
-                missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id'
-            })
+            # if not credit_account_id:
+            #     missing_account_products.append({
+            #     'product_name': product_name,
+            #     'config': config,
+            #     'reason': 'Missing gateway config or account_id'
+            # })
             # raise ValidationError(str(credit_account_id)+" "+str(config)+" "+str(product_name))
             item_total = float(item.get('total', 0))
             conv_rate = float(donation_vals.get('conversion_rate', 1.0))
@@ -747,7 +747,13 @@ class APIDonationWizard(models.TransientModel):
             c['credit_base'] += item_total_base
             if is_foreign:
                 c['amount_currency'] -= item_total
-        # raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator)+" "+str(missing_account_products))
+            missing_account_products.append({
+                'product_name': product_name,
+                'config': config,
+                'reason': 'Missing gateway config or account_id',
+                'credit': c,
+            })
+        raise ValidationError(str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
