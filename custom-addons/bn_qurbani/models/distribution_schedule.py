@@ -77,6 +77,7 @@ class DistributionSchedule(models.Model):
             # REMAINING HISSA
             # -----------------------------
             remaining = 0
+            slot_demand_id = False
             if slaughter:
                 slot_demand = self.env['qurbani.slaughter.slot.demand'].search([
                     ('day_id', '=', rec.day_id.id),
@@ -89,6 +90,7 @@ class DistributionSchedule(models.Model):
 
                 if slot_demand:
                     remaining = slot_demand.remaining_hissa
+                    slot_demand_id = slot_demand.id
 
             # -----------------------------
             # ONLY KEEP AVAILABLE SLOTS
@@ -118,6 +120,7 @@ class DistributionSchedule(models.Model):
                 "end_time": rec.end_time,
 
                 "remaining_hissa": remaining,
+                "slot_demand_id": slot_demand_id,
             })
 
         # ==================================================

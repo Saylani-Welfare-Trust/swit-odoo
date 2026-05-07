@@ -88,6 +88,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
                 end: slot.distribution_end_time,
             },
             remaining_hissa: slot.remaining_hissa,
+            slot_demand_id: slot.slot_demand_id,
             product: slot.product,
             day: slot.day,
         };

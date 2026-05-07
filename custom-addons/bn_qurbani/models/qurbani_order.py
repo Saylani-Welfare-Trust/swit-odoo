@@ -174,63 +174,53 @@ class QurbaniOrder(models.Model):
                 return 7
             elif "goat" in name:
                 return 1
+
             return 1
 
         # ==================================================
-        # 2. GET DEMAND
+        # 2. GET DEMAND USING slot_demand_id
         # ==================================================
         def _get_demand(line):
 
             schedule = line.get('qurbani_schedule', {})
             slot = schedule.get('slot', {})
 
-            key = (
-                line['product_id'],
-                slot.get('distribution', {}).get('location'),
-            )
+            slot_demand_id = slot.get('slot_demand_id')
 
-            if key in demand_cache:
-                return demand_cache[key]
-
-            distribution = self.env['distribution.schedule'].search([
-                ('pos_product_ids', 'in', line['product_id']),
-                ('location_id', '=', slot.get('distribution', {}).get('location')),
-                ('hijri_id', '=', Hijri.id),
-            ], limit=1)
-
-            if not distribution or not distribution.slaughter_schedule_id:
-                demand_cache[key] = False
+            if not slot_demand_id:
                 return False
 
-            slaughter = distribution.slaughter_schedule_id
+            if slot_demand_id in demand_cache:
+                return demand_cache[slot_demand_id]
 
-            demand = self.env['qurbani.slaughter.slot.demand'].search([
-                ('day_id', '=', distribution.day_id.id),
-                ('hijri_id', '=', distribution.hijri_id.id),
-                ('slaughter_location_id', '=', distribution.slaughter_location_id.id),
-                ('inventory_product_id', '=', distribution.inventory_product_id.id),
-                ('start_time', '<=', slot.get('slaughter', {}).get('start') or slaughter.start_time),
-                ('end_time', '>=', slot.get('slaughter', {}).get('end') or slaughter.end_time),
-            ], limit=1)
+            demand = self.env['qurbani.slaughter.slot.demand'].browse(
+                slot_demand_id
+            ).exists()
 
-            demand_cache[key] = demand
+            demand_cache[slot_demand_id] = demand
+
             return demand
 
         # ==================================================
         # 3. GROUP (ONLY HISSA COUNT)
         # ==================================================
-        for line in data['order_lines']:
+        for line in data.get('order_lines', []):
+
             product = self.env['product.product'].browse(line['product_id'])
 
             # ❌ Skip non-qurbani products
-            if 'qurbani' not in product.categ_id.name.lower():
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             demand = _get_demand(line)
-            if not demand:
-                continue
 
-            qty = int(line.get('quantity', 0))  # this is HISSA
+            if not demand:
+                return {
+                    "status": "error",
+                    "body": "Invalid slaughter slot selected."
+                }
+
+            qty = int(line.get('quantity', 0))
 
             if demand.id not in schedule_usage:
                 schedule_usage[demand.id] = {
@@ -249,7 +239,6 @@ class QurbaniOrder(models.Model):
             qty = usage['qty']
 
             available = demand.remaining_hissa
-            # available = (demand.total_hissa or 0) - (demand.current_hissa or 0)
 
             if qty > available:
                 return {
@@ -261,7 +250,7 @@ class QurbaniOrder(models.Model):
                 }
 
         # ==================================================
-        # 5. APPLY UPDATES (🔥 CORRECT INVENTORY-STYLE LOGIC)
+        # 5. APPLY UPDATES
         # ==================================================
         for usage in schedule_usage.values():
 
@@ -272,23 +261,23 @@ class QurbaniOrder(models.Model):
 
             old_current = demand.current_hissa or 0
 
-            # STEP 1: add hissa
+            # STEP 1: ADD HISSA
             total_hissa = old_current + incoming_hissa
 
-            # STEP 2: detect completed animals
+            # STEP 2: COMPLETED ANIMALS
             completed_animals = int(total_hissa // divisor)
 
-            # STEP 3: remaining hissa after full animals
+            # STEP 3: REMAINING HISSA
             remaining_hissa = total_hissa % divisor
 
-            # STEP 4: reduce remaining demand
+            # STEP 4: REMAINING DEMAND
             new_remaining_demand = max(
                 (demand.remaining_demand or 0) - completed_animals,
                 0
             )
 
             demand.write({
-                'current_hissa': remaining_hissa,   # 🔥 leftover like inventory
+                'current_hissa': remaining_hissa,
                 'booked_hissa': (demand.booked_hissa or 0) + incoming_hissa,
                 'remaining_demand': new_remaining_demand,
             })
@@ -298,37 +287,76 @@ class QurbaniOrder(models.Model):
         # ==================================================
         product_lines = []
 
-        for line in data['order_lines']:
+        for line in data.get('order_lines', []):
+
             product = self.env['product.product'].browse(line['product_id'])
 
             # ❌ Skip non-qurbani products
-            if 'qurbani' not in product.categ_id.name.lower():
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             schedule = line.get('qurbani_schedule', {})
             slot = schedule.get('slot', {})
 
-            product_lines.append((0, 0, {
+            demand = _get_demand(line)
+
+            if not demand:
+                continue
+
+            slaughter_data = slot.get('slaughter', {})
+            distribution_data = slot.get('distribution', {})
+
+            # ==================================================
+            # GET CITY
+            # ==================================================
+            city_id = False
+
+            if demand.slaughter_location_id:
+                city_id = (
+                    demand.slaughter_location_id.location_id.id
+                    if hasattr(demand.slaughter_location_id, 'location_id')
+                    else False
+                )
+
+            # fallback from schedule city
+            if not city_id and schedule.get('city'):
+                city = self.env['stock.location'].search([
+                    ('name', '=', schedule.get('city'))
+                ], limit=1)
+
+                city_id = city.id if city else False
+
+            # ==================================================
+            # BUILD LINE
+            # ==================================================
+            vals = {
                 'product_id': line.get('product_id'),
                 'quantity': line.get('quantity'),
                 'amount': line.get('price'),
 
-                'day_id': self.env['qurbani.day'].search([
-                    ('name', '=', slot.get('day'))
-                ], limit=1).id,
+                'day_id': demand.day_id.id,
+                'hijri_id': demand.hijri_id.id,
 
-                'hijri_id': Hijri.id,
+                'city_id': city_id,
 
-                'city_id': self.env['stock.location'].search([
-                    ('name', '=', schedule.get('city'))
-                ], limit=1).id,
+                'distribution_id': distribution_data.get('location'),
 
-                'distribution_id': self.env['stock.location'].browse(slot.get('distribution', {}).get('location')).id,
+                'slaughter_location_id': slaughter_data.get('location'),
+
+                'slot_demand_id': demand.id,
 
                 'hissa_name': schedule.get('name', ''),
-                'start_time': slot.get('distribution', {}).get('start'),
-                'end_time': slot.get('distribution', {}).get('end'),
-            }))
+
+                # DISTRIBUTION TIMES
+                'start_time': distribution_data.get('start'),
+                'end_time': distribution_data.get('end'),
+
+                # SLAUGHTER TIMES
+                'slaughter_start_time': slaughter_data.get('start'),
+                'slaughter_end_time': slaughter_data.get('end'),
+            }
+
+            product_lines.append((0, 0, vals))
 
         # ==================================================
         # 7. CREATE ORDER
@@ -340,6 +368,9 @@ class QurbaniOrder(models.Model):
 
         qurbani.calculate_amount()
 
+        # ==================================================
+        # 8. SUCCESS
+        # ==================================================
         return {
             "status": "success",
             "id": qurbani.id,
