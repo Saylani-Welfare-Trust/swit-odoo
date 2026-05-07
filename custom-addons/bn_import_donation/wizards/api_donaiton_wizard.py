@@ -410,7 +410,7 @@ class APIDonationWizard(models.TransientModel):
         
         picking = False
         
-        raise ValidationError(str(new_donation_ids))
+        # raise ValidationError(str(new_donation_ids))
         if stock_accumulator:
             picking_type = self.picking_type_id
             if not picking_type:
@@ -440,7 +440,7 @@ class APIDonationWizard(models.TransientModel):
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
-
+        raise ValidationError(str(picking))
         self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
 
         return {
