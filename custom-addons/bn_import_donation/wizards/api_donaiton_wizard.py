@@ -339,7 +339,7 @@ class APIDonationWizard(models.TransientModel):
                         donation_vals, all_data, company_currency,
                         debit_accumulator, credit_accumulator, history
                     )
-                raise ValidationError(str(credit_accumulator))
+                # raise ValidationError(str(credit_accumulator))
             items = info.get('items') or []
             for it in items:
                 item_name = ''
