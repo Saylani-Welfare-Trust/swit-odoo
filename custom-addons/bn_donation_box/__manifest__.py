@@ -29,7 +29,7 @@
         'views/stock_lot.xml',
         'views/res_partner.xml',
         'views/donation_product_onhand.xml',
-        'views/installation_category.xml',
+        # 'views/installation_category.xml',
         'views/res_company.xml',
         'reports/donation_box_report.xml',
     ],
