@@ -46,7 +46,7 @@ class APIDonationWizard(models.TransientModel):
         # raise ValidationError(str(donations_info[0].read()))
         objects=[]
         for info in donations_info:
-            try:
+            # try:
                 # if not isinstance(info, dict):
                 #     self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
 
@@ -56,11 +56,11 @@ class APIDonationWizard(models.TransientModel):
              # raise ValidationError(result)
              objects.append(result)
              
-            except Exception as e:
-                self.create_fetch_log( f"Error processing donation {info.id}: {str(e)}", 'Error', 'Exception occurred while processing a donation')
+            # except Exception as e:
+            #     self.create_fetch_log( f"Error processing donation {info.id}: {str(e)}", 'Error', 'Exception occurred while processing a donation')
 
-                _logger.exception(f"Error processing donation {info.id}")
-                continue
+            #     _logger.exception(f"Error processing donation {info.id}")
+            #     continue
         raise ValidationError(objects)
         return {
             'type': 'ir.actions.client',
