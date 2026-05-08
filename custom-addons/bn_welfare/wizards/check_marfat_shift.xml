@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Check Marfat Shift Wizard Form View -->
+    <record id="check_marfat_shift_form" model="ir.ui.view">
+        <field name="name">check.marfat.shift.form</field>
+        <field name="model">check.marfat.shift</field>
+        <field name="arch" type="xml">
+            <form string="Check Assigned Officer (Marfat) Shift">
+                <header>
+                    <button name="action_check_shift" string="Check Shift" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Check Assigned Officer Disbursements</h2>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="assigned_officer_id" required="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Disbursement Lines" class="text-uppercase"/>
+                    <field name="disbursement_line_ids" readonly="1" nolabel="1">
+                        <tree>
+                            <field name="welfare_id" string="Welfare Record"/>
+                            <field name="disbursement_category_id" string="Disbursement Category"/>
+                            <field name="product_id" string="Product"/>
+                            <field name="collection_point" string="Collection Point"/>
+                            <field name="collection_date" string="Collection Date"/>
+                            <field name="quantity" string="Quantity"/>
+                            <field name="total_amount" string="Total Amount"/>
+                            <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'" string="State"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Check Marfat Shift -->
+    <record id="action_check_marfat_shift" model="ir.actions.act_window">
+        <field name="name">Check Assigned Officer Shift</field>
+        <field name="res_model">check.marfat.shift</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item for Check Marfat Shift -->
+    <menuitem
+        id="menu_check_marfat_shift"
+        name="Check Assigned Officer Shift"
+        action="action_check_marfat_shift"
+        parent="welfare_menu"
+        sequence="25"/>
+
+</odoo>

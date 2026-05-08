@@ -143,22 +143,6 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="assigned_officer_disbursement" string="Assigned Officer Disbursements">
-                            <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" domain="[('payment_type', '=', 'assigned_officer')]">
-                                <tree editable="bottom">
-                                    <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True}" />
-                                    <field name="collection_point" />
-                                    <field name="collection_date" />
-                                    <field name="quantity" />   
-                                    <field name="amount" readonly="1" />
-                                    <field name="total_amount" readonly="1" />
-                                    <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
-                                </tree>
-                            </field>
-                        </page>
                         <page name="portal_details" string="Portal Details" invisible="portal_sync_status != 'synced'">
                             <group>
                                 <group name="portal_details_col_1">
