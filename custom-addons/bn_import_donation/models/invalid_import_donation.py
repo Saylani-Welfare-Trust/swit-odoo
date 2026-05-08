@@ -27,14 +27,14 @@ class InvalidImportDonation(models.Model):
     hide_button = fields.Boolean('Hide Button', default=False)
 
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #     for rec in self:
+    #         if rec.mobile:
+    #             if not re.fullmatch(r"\d{10}", rec.mobile):
+    #                 raise ValidationError(
+    #                     "Mobile number must contain exactly 10 digits."
+    #                 )
 
     def action_approve(self):
         donation_id = self.env['donation'].search([('transaction_id', '=', self.transaction_id)])
