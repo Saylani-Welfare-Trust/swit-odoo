@@ -45,11 +45,11 @@ class APIDonationWizard(models.TransientModel):
         ], limit=1)
         # raise ValidationError(str(donations_info[0].read()))
         for info in donations_info:
-            if not isinstance(info, dict):
-                self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
+            # if not isinstance(info, dict):
+            #     self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
 
-                _logger.error(f"Invalid donation entry: {info}")
-                continue
+            #     _logger.error(f"Invalid donation entry: {info}")
+            #     continue
             result = self.env['qurbani.order'].create_web_qurbani_order(info)
             raise ValidationError(result)
         return {
