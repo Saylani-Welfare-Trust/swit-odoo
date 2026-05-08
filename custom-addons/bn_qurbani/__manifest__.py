@@ -14,6 +14,7 @@
         'bn_pos_order',
     ],
     'data': [
+        'data/server_action.xml',
         'data/sequence.xml',
         'data/chand_raat.xml',
         'data/qurbani_day.xml',
