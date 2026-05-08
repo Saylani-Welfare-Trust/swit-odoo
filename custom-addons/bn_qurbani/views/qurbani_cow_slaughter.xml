@@ -5,7 +5,7 @@
         <field name="name">qurbani.cow.slaughter.view.tree</field>
         <field name="model">qurbani.cow.slaughter</field>
         <field name="arch" type="xml">
-            <tree create="0" delete="0" editable="bottom">
+            <tree create="0" delete="0">
                 <field name="video_file_name" column_invisible="1" />
                 <field name="image_file_name" column_invisible="1" />
 
@@ -32,6 +32,15 @@
                         <label for="name" string="Slaughter Sequencwe" />
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
+
+                    <group>
+                        <group name="qurbani_cow_slaughter_col_1">
+                            <field name="video" filename="video_file_name" />
+                        </group>
+                        <group name="qurbani_cow_slaughter_col_2">
+                            <field name="image" filename="image_file_name" />
+                        </group>
+                    </group>
 
                     <notebook>
                         <page name="qurbani_order" string="Qurbani Order">

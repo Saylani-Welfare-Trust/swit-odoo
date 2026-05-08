@@ -34,6 +34,15 @@
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
 
+                    <group>
+                        <group name="qurbani_goat_slaughter_col_1">
+                            <field name="video" filename="video_file_name" />
+                        </group>
+                        <group name="qurbani_goat_slaughter_col_2">
+                            <field name="image" filename="image_file_name" />
+                        </group>
+                    </group>
+
                     <notebook>
                         <page name="qurbani_order" string="Qurbani Order">
                             <field name="qurbani_goat_slaughter_line" readonly="1">
