@@ -40,6 +40,7 @@
         'wizards/qurbani_schedule.xml',
         'wizards/generate_qurbani_demand.xml',
         'wizards/generate_qurbani_slaughter.xml',
+        'wizards/api_order_wizard.xml',
         'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
     ],
