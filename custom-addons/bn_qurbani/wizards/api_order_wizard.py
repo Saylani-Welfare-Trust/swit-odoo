@@ -44,6 +44,7 @@ class APIDonationWizard(models.TransientModel):
             
         ], limit=1)
         # raise ValidationError(str(donations_info[0].read()))
+        objects=[]
         for info in donations_info:
             try:
                 # if not isinstance(info, dict):
@@ -53,11 +54,14 @@ class APIDonationWizard(models.TransientModel):
                 #     continue
              result = self.env['qurbani.order'].create_web_qurbani_order(info)
              # raise ValidationError(result)
+             objects.append(result)
+             
             except Exception as e:
                 self.create_fetch_log( f"Error processing donation {info.id}: {str(e)}", 'Error', 'Exception occurred while processing a donation')
 
                 _logger.exception(f"Error processing donation {info.id}")
                 continue
+        raise ValidationError(objects)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
