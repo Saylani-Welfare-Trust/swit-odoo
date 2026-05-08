@@ -21,6 +21,32 @@ class QurbaniOrder(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
 
+    # POS vs Web Order indicator
+    pos_qurbani_order = fields.Boolean('POS Order', default=True)
+
+    # API/Web Order Fields
+    api_response_id = fields.Char('API Response ID')
+    donation_type = fields.Char('Donation Type')
+    donation_from = fields.Char('Donation From')
+    dn_number = fields.Char('DN Number')
+    transaction_id = fields.Char('Transaction ID')
+    api_currency = fields.Char('API Currency')
+    bank_charges = fields.Monetary('Bank Charges', currency_field='currency_id')
+    api_created_at = fields.Datetime('API Created At')
+    api_updated_at = fields.Datetime('API Updated At')
+
+    # Donor Details
+    donor_phone = fields.Char('Donor Phone')
+    donor_email = fields.Char('Donor Email')
+    donor_cnic = fields.Char('Donor CNIC')
+    donor_country = fields.Char('Donor Country')
+    donor_ip_address = fields.Char('Donor IP Address')
+
+    # Subscription Preferences
+    subscription_news = fields.Boolean('Subscribe to News')
+    subscription_whatsapp = fields.Boolean('Subscribe to WhatsApp')
+    subscription_sms = fields.Boolean('Subscribe to SMS')
+
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
 
