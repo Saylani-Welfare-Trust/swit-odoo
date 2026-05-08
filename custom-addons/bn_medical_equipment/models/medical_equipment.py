@@ -786,6 +786,11 @@ class MedicalEquipment(models.Model):
             recovery_picking.origin = self.name
             recovery_picking.is_medical_recovery = True
             
+            for product_line in self.medical_equipment_line_ids:
+                for lot in product_line.lot_ids:
+                    if lot.lot_consume:
+                        lot.lot_consume = False
+            # Show success message and open the return picking
             # Update medical equipment record
             self.write({
                 'recovery_picking_id': recovery_picking.id,
