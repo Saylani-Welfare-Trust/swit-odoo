@@ -90,14 +90,14 @@ class ResPartner(models.Model):
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
     # required_optional_fields = fields.Boolean('Required Optional Fields', compute="_compute_required_flags", store=True)
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #     for rec in self:
+    #         if rec.mobile:
+    #             if not re.fullmatch(r"\d{10}", rec.mobile):
+    #                 raise ValidationError(
+    #                     "Mobile number must contain exactly 10 digits."
+    #                 )
 
     @api.depends('name', 'category_id')
     def _set_welfare_donee_required_fields(self):
