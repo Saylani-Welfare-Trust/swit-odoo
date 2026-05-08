@@ -161,6 +161,7 @@
     <menuitem id="menu_qurbani_order"
         name="Qurbani Order"
         parent="menu_qurbani_root"
+        action="action_pos_qurbani_order"
         sequence="1"
         groups="bn_qurbani.qurbani_menu_group"/>
 
