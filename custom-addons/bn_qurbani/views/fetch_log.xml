@@ -29,7 +29,7 @@
         id="fetch_log_menu"
         name="Fetch Logs"
         action="fetch_log_action"
-        parent="menu_qurbani_root"
+        parent="bn_qurbani.menu_qurbani_order"
         sequence="3"/>
 
 </odoo>
