@@ -32,6 +32,7 @@ class PosMakePayment(models.TransientModel):
 
                     if slaughter_slot_demand:
                         slaughter_slot_demand.booked_hissa -= qurbani_order_line.quantity
+                        slaughter_slot_demand.current_hissa -= qurbani_order_line.quantity
                         slaughter_slot_demand.remaining_hissa += qurbani_order_line.quantity
                 
                 qurbani_order_line.unlink()
