@@ -34,7 +34,7 @@
         id="fetch_donation_menu"
         name="Fetch Web Orders"
         action="api_donation_wizard_action"
-        parent="bn_qurbani.menu_qurbani_order"
+        parent="menu_qurbani_root"
         sequence="100"/>
 
 </odoo>
