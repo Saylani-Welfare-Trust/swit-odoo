@@ -26,6 +26,6 @@ class QurbaniCowSlaughter(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_slaughter_sequence') or ('New')
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_slaughter') or ('New')
 
         return super(QurbaniCowSlaughter, self).create(vals)

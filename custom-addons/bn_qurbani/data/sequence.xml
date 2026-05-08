@@ -19,14 +19,14 @@
     
         <record id="qurbani_cow_slaughter_sequence" model="ir.sequence">
             <field name="name">Qurbani Cow Slaughter</field>
-            <field name="code">qurbani_cow_slaighter</field>
+            <field name="code">qurbani_cow_slaughter</field>
             <field name="prefix">QCS/%(year)s/</field>
             <field name="padding">5</field>
         </record>
 
         <record id="qurbani_goat_slaughter_sequence" model="ir.sequence">
             <field name="name">Qurbani Goat Slaughter</field>
-            <field name="code">qurbani_goat_slaighter</field>
+            <field name="code">qurbani_goat_slaughter</field>
             <field name="prefix">QGS/%(year)s/</field>
             <field name="padding">5</field>
         </record>
