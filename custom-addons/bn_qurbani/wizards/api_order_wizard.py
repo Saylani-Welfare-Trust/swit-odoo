@@ -39,8 +39,8 @@ class APIDonationWizard(models.TransientModel):
         self.create_fetch_log( f"Start action_fetch_qurbani", 'API Fetch', 'Starting fetch Qurbani donations from donatio inflows')
         donations_info = self.env['api.donation'].search([
             ('qurbani', '=', True),
-            ('created_at', '>=', self.start_date),
-            ('created_at', '<=', self.end_date)
+            # ('created_at', '>=', self.start_date),
+            # ('created_at', '<=', self.end_date)
             
         ], limit=1)
         # raise ValidationError(str(donations_info[0].read()))
