@@ -1,8 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-
+import logging
 import re
-
+_logger = logging.getLogger(__name__)
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
