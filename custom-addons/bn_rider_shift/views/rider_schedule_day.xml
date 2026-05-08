@@ -61,8 +61,7 @@
                     <!-- Complaint Center -->
                     <group string="Complain Center">
                         <field name="complaint_id" options="{'no_create': True}" />
-                        <field name="is_complain_generated" invisible="0" />
-                        <button name="action_generate_complaint" string="Generate Complain" type="object" class="btn-primary"  invisible="is_complain_generated == True"/>
+                        <button name="action_generate_complaint" string="Generate Complain" type="object" class="btn-primary" />
                         <button name="action_view_complaints" string="All List" type="object" class="btn-secondary" />
                     </group>
                     
