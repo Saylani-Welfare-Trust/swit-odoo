@@ -10,7 +10,6 @@ class GenerateQurbaniSlaughter(models.TransientModel):
     hijri_id = fields.Many2one('hijri', string="Hijri")
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
 
-    pos_product_id = fields.Many2one('product.product', string="POS Product")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
 
     inventory_product_name = fields.Char(related='inventory_product_id.name', string="Inentory Product Name")
