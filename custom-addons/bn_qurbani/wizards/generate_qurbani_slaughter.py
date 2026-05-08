@@ -52,15 +52,15 @@ class GenerateQurbaniSlaughter(models.TransientModel):
                 ('end_time', '=', demand.end_time),
             ])
 
-            total_hissa = demand.total_hissa or 0
-            remaining_hissa = total_hissa - existing_count
+            total_demand = demand.total_demand or 0
+            remaining_demand = total_demand - existing_count
 
-            if remaining_hissa <= 0:
+            if remaining_demand <= 0:
                 continue
 
             # 🔹 Create records
             vals_list = []
-            for i in range(remaining_hissa):
+            for i in range(remaining_demand):
                 vals_list.append({
                     'hijri_id': demand.hijri_id.id,
                     'day_id': demand.day_id.id,
