@@ -32,44 +32,94 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_qurbani(self):
         self.ensure_one()
 
-
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
-        self.create_fetch_log( f"Start action_fetch_qurbani", 'API Fetch', 'Starting fetch Qurbani donations from donatio inflows')
-        donations_info = self.env['api.donation'].search([
-            ('qurbani', '=', True),
-            # ('created_at', '>=', self.start_date),
-            # ('created_at', '<=', self.end_date)
-            
-        ], limit=1)
-        # raise ValidationError(str(donations_info[0].read()))
-        objects=[]
+        self.create_fetch_log(f"Start action_fetch_qurbani", 'API Fetch', 'Starting fetch Qurbani donations from donation inflows')
+        
+        # Build search domain
+        domain = [('qurbani', '=', True)]
+        
+        # Handle date range filtering (created_at is a Datetime field)
+        if self.start_date:
+            # Convert date to datetime at start of day
+            start_datetime = f"{self.start_date} 00:00:00"
+            domain.append(('created_at', '>=', start_datetime))
+        
+        if self.end_date:
+            # Convert date to datetime at end of day
+            end_datetime = f"{self.end_date} 23:59:59"
+            domain.append(('created_at', '<=', end_datetime))
+        
+        # Fetch ALL matching donations (remove limit=1)
+        donations_info = self.env['api.donation'].search(domain)
+        
+        if not donations_info:
+            self.create_fetch_log(f"No qurbani donations found for the given date range", 'Info', 'Search returned no results')
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Info',
+                    'message': 'No qurbani donations found for the given date range',
+                    'type': 'info',
+                    'sticky': False,
+                }
+            }
+        
+        self.create_fetch_log(f"Found {len(donations_info)} qurbani donations to process", 'API Fetch', f"Processing {len(donations_info)} donations")
+        
+        created_count = 0
+        failed_count = 0
+        results = []
+        
         for info in donations_info:
-            # try:
-                # if not isinstance(info, dict):
-                #     self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
-
-                #     _logger.error(f"Invalid donation entry: {info}")
-                #     continue
-             result = self.env['qurbani.order'].create_web_qurbani_order(info)
-             # raise ValidationError(result)
-             objects.append(result)
-             
-            # except Exception as e:
-            #     self.create_fetch_log( f"Error processing donation {info.id}: {str(e)}", 'Error', 'Exception occurred while processing a donation')
-
-            #     _logger.exception(f"Error processing donation {info.id}")
-            #     continue
-        raise ValidationError(objects)
+            try:
+                # Convert Odoo record to dictionary
+                donation_dict = info.read()[0]
+                
+                # Create qurbani order from donation
+                result = self.env['qurbani.order'].create_web_qurbani_order(donation_dict)
+                
+                if result.get('status') == 'success':
+                    created_count += 1
+                    self.create_fetch_log(
+                        f"Successfully created Qurbani Order {result.get('name')} for donation {info.name}",
+                        'Success',
+                        f"Qurbani Order ID: {result.get('qurbani_order_id')}"
+                    )
+                    results.append(result)
+                else:
+                    failed_count += 1
+                    error_msg = result.get('message', 'Unknown error')
+                    self.create_fetch_log(
+                        f"Failed to create order for donation {info.name}: {error_msg}",
+                        'Error',
+                        f"Error details: {error_msg}"
+                    )
+                    
+            except Exception as e:
+                failed_count += 1
+                self.create_fetch_log(
+                    f"Error processing donation {info.name}: {str(e)}",
+                    'Error',
+                    f"Exception: {str(e)}"
+                )
+                _logger.exception(f"Error processing donation {info.id}")
+                continue
+        
+        # Return summary notification
+        summary_msg = f"Processed {len(donations_info)} donations: {created_count} succeeded, {failed_count} failed"
+        self.create_fetch_log(f"End action_fetch_qurbani", 'API Fetch', summary_msg)
+        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': 'Success',
-                'message': 'Qurbani orders created successfully!',
-                'type': 'success',  # success / warning / danger
-                'sticky': False,    # True = stays until user closes
+                'title': 'Processing Complete',
+                'message': summary_msg,
+                'type': 'success' if failed_count == 0 else 'warning',
+                'sticky': False,
             }
         }
 
