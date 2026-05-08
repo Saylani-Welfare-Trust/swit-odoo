@@ -77,52 +77,73 @@ class QurbaniOrder(models.Model):
         try:
             order_lines = []
 
-            # Create lines directly from qurbani_order_line_ids
-            for line in donation_record.qurbani_order_line_ids:
-                order_lines.append((0, 0, {
-                    'product_id': line.product_id.id if line.product_id else False,
-                    'quantity': line.quantity or 1,
-                    'amount': line.amount or 0.0,
-                    'day_id': line.day_id.id if line.day_id else False,
-                    'hijri_id': line.hijri_id.id if line.hijri_id else False,
-                    'city_id': line.city_id.id if line.city_id else False,
-                    'hissa_name': line.hissa_name or '',
-                }))
+            # Handle qurbani_order_line_ids - can be list of IDs or objects
+            qurbani_line_ids = donation_record.get('qurbani_order_line_ids', [])
+            
+            if qurbani_line_ids:
+                # If it's a list of IDs, fetch the actual line objects
+                if isinstance(qurbani_line_ids, list) and qurbani_line_ids:
+                    if isinstance(qurbani_line_ids[0], int):
+                        # It's a list of IDs, fetch from api.qurbani.order.line
+                        qurbani_lines = self.env['api.qurbani.order.line'].browse(qurbani_line_ids)
+                    else:
+                        qurbani_lines = qurbani_line_ids
+                else:
+                    qurbani_lines = qurbani_line_ids if isinstance(qurbani_line_ids, list) else [qurbani_line_ids]
+
+                # Create lines from qurbani_order_line_ids
+                for line in qurbani_lines:
+                    order_lines.append((0, 0, {
+                        'product_id': line.product_id.id if hasattr(line, 'product_id') and line.product_id else False,
+                        'quantity': line.quantity if hasattr(line, 'quantity') else 1,
+                        'amount': line.amount if hasattr(line, 'amount') else 0.0,
+                        'day_id': line.day_id.id if hasattr(line, 'day_id') and line.day_id else False,
+                        'hijri_id': line.hijri_id.id if hasattr(line, 'hijri_id') and line.hijri_id else False,
+                        'city_id': line.city_id.id if hasattr(line, 'city_id') and line.city_id else False,
+                        'hissa_name': line.hissa_name if hasattr(line, 'hissa_name') else '',
+                    }))
+
+            # Get donor_id - can be tuple (id, name) or just id
+            donor_id = donation_record.get('donor_id')
+            if isinstance(donor_id, tuple):
+                donor_id = donor_id[0]
+
+            # Get currency
+            currency_id = self.env['res.currency'].search(
+                [('name', '=', donation_record.get('currency', 'USD'))],
+                limit=1
+            ).id or self.env.company.currency_id.id
 
             qurbani_order = self.env['qurbani.order'].create({
-                'donor_id': donation_record.donor_id.id if donation_record.donor_id else False,
-                'currency_id': self.env['res.currency'].search(
-                    [('name', '=', donation_record.currency)],
-                    limit=1
-                ).id or self.env.company.currency_id.id,
-
-                'remarks': donation_record.remarks or '',
-                'total_amount': float(donation_record.total_amount or 0.0),
+                'donor_id': donor_id or False,
+                'currency_id': currency_id,
+                'remarks': donation_record.get('remarks', ''),
+                'total_amount': float(donation_record.get('total_amount', 0.0)),
                 'qurbani_order_line_ids': order_lines,
                 'pos_qurbani_order': False,
 
                 # API / Donation Fields
-                'api_response_id': donation_record.import_id or '',
-                'donation_type': donation_record.donation_type or '',
-                'donation_from': donation_record.donation_from or '',
-                'dn_number': donation_record.dn_number or '',
-                'bank_charges': donation_record.bank_charges or 0.0,
-                'transaction_id': donation_record.transaction_id or '',
-                'api_currency': donation_record.currency or '',
-                'api_created_at': donation_record.created_at,
-                'api_updated_at': donation_record.updated_at,
+                'api_response_id': donation_record.get('import_id', ''),
+                'donation_type': donation_record.get('donation_type', ''),
+                'donation_from': donation_record.get('donation_from', ''),
+                'dn_number': donation_record.get('dn_number', ''),
+                'bank_charges': float(donation_record.get('bank_charges', 0.0)),
+                'transaction_id': donation_record.get('transaction_id', ''),
+                'api_currency': donation_record.get('currency', ''),
+                'api_created_at': donation_record.get('created_at'),
+                'api_updated_at': donation_record.get('updated_at'),
 
                 # Donor Details
-                'donor_phone': donation_record.phone or '',
-                'donor_email': donation_record.email or '',
-                'donor_cnic': donation_record.cnic or '',
-                'donor_country': donation_record.country or '',
-                'donor_ip_address': donation_record.ip_address or '',
+                'donor_phone': donation_record.get('phone', ''),
+                'donor_email': donation_record.get('email', ''),
+                'donor_cnic': donation_record.get('cnic', ''),
+                'donor_country': donation_record.get('country', ''),
+                'donor_ip_address': donation_record.get('ip_address', ''),
 
                 # Subscriptions
-                'subscription_news': donation_record.subscription_for_news,
-                'subscription_whatsapp': donation_record.subscription_for_whatsapp,
-                'subscription_sms': donation_record.subscription_for_sms,
+                'subscription_news': donation_record.get('subscription_for_news', False),
+                'subscription_whatsapp': donation_record.get('subscription_for_whatsapp', False),
+                'subscription_sms': donation_record.get('subscription_for_sms', False),
             })
 
             return {
