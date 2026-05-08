@@ -45,19 +45,25 @@ class APIDonationWizard(models.TransientModel):
         ], limit=1)
         # raise ValidationError(str(donations_info[0].read()))
         for info in donations_info:
-            # if not isinstance(info, dict):
-            #     self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
+            try:
+                # if not isinstance(info, dict):
+                #     self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
 
-            #     _logger.error(f"Invalid donation entry: {info}")
-            #     continue
-            result = self.env['qurbani.order'].create_web_qurbani_order(info)
-            raise ValidationError(result)
+                #     _logger.error(f"Invalid donation entry: {info}")
+                #     continue
+             result = self.env['qurbani.order'].create_web_qurbani_order(info)
+             # raise ValidationError(result)
+            except Exception as e:
+                self.create_fetch_log( f"Error processing donation {info.id}: {str(e)}", 'Error', 'Exception occurred while processing a donation')
+
+                _logger.exception(f"Error processing donation {info.id}")
+                continue
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': 'Success',
-                'message': 'API data fetched successfully!',
+                'message': 'Qurbani orders created successfully!',
                 'type': 'success',  # success / warning / danger
                 'sticky': False,    # True = stays until user closes
             }
