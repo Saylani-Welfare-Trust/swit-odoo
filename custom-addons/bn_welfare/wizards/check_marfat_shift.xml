@@ -52,6 +52,7 @@
         name="Check Assigned Officer Shift"
         action="action_check_marfat_shift"
         parent="welfare_menu"
+        groups="bn_welfare.welfare_group"
         sequence="25"/>
 
 </odoo>
