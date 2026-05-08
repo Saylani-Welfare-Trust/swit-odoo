@@ -58,7 +58,7 @@
                 <field name="remaining_demand" readonly="1"/>
                 <field name="total_hissa" readonly="1"/>
                 <field name="booked_hissa" readonly="1"/>
-                <field name="current_hissa" readonly="1"/>
+                <field name="current_hissa" readonly="1" column_invisible="1" />
                 <field name="remaining_hissa" readonly="1"/>
 
                 <button string="History" name="action_open_chatter" type="object" class="oe_highlight"/>
