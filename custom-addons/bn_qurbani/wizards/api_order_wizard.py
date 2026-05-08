@@ -51,7 +51,7 @@ class APIDonationWizard(models.TransientModel):
                 _logger.error(f"Invalid donation entry: {info}")
                 continue
             result = self.env['qurbani.order'].create_web_qurbani_order(info)
-
+            raise ValidationError(result)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
