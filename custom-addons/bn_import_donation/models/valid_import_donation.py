@@ -24,11 +24,11 @@ class ValidImportDonation(models.Model):
     is_student = fields.Boolean('Is Student', default=False)
 
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #     for rec in self:
+    #         if rec.mobile:
+    #             if not re.fullmatch(r"\d{10}", rec.mobile):
+    #                 raise ValidationError(
+    #                     "Mobile number must contain exactly 10 digits."
+    #                 )

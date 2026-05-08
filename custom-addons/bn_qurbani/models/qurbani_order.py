@@ -50,14 +50,14 @@ class QurbaniOrder(models.Model):
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #     for rec in self:
+    #         if rec.mobile:
+    #             if not re.fullmatch(r"\d{10}", rec.mobile):
+    #                 raise ValidationError(
+    #                     "Mobile number must contain exactly 10 digits."
+    #                 )
 
     @api.model
     def create(self, vals):
