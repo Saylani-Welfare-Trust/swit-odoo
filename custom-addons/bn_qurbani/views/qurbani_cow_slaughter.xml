@@ -10,8 +10,6 @@
                 <field name="image_file_name" column_invisible="1" />
 
                 <field name="name" readonly="1" />
-                <field name="qurbani_order_no" readonly="1" />
-                <field name="qurbani_order_line_no" readonly="1" />
                 <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
