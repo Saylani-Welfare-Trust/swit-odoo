@@ -43,7 +43,7 @@ class APIDonationWizard(models.TransientModel):
             ('created_at', '<=', self.end_date)
             
         ], limit=1)
-        raise ValidationError(str(donations_info[0].read()))
+        # raise ValidationError(str(donations_info[0].read()))
         for info in donations_info:
             if not isinstance(info, dict):
                 self.create_fetch_log( f"Invalid donation entry: {info}", 'Error', 'Donation entry is not a valid dictionary')
