@@ -165,13 +165,13 @@
 
     <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
     <menuitem id="menu_pos_qurbani_order"
-        name="POS Qurbani Order"
+        name="POS Order"
         parent="menu_qurbani_order"
         action="action_pos_qurbani_order"
         sequence="1"/>
 
     <menuitem id="menu_web_qurbani_order"
-        name="Web Qurbani Order"
+        name="Web Order"
         parent="menu_qurbani_order"
         action="action_web_qurbani_order"
         sequence="2"/>
