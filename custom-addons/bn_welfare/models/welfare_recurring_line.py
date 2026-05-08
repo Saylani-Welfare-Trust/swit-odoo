@@ -15,6 +15,11 @@ collection_point_selection = [
     ('branch', 'Branch'),
 ]
 
+payment_type_selection = [
+    ('self', 'Self'),
+    ('assigned_officer', 'Assigned Officer (Marfat)'),
+]
+
 
 class WelfareRecurringLine(models.Model):
 
@@ -37,6 +42,8 @@ class WelfareRecurringLine(models.Model):
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
+    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
+    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('is_welfare_marfat', '=', True)]")
 
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
 

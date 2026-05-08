@@ -13,6 +13,10 @@ order_type_selection = [
     ('both', 'Both'),
 ]
 
+payment_type_selection = [
+    ('self', 'Self'),
+    ('assigned_officer', 'Assigned Officer (Marfat)'),
+]
 
 state_selection = [
     ('draft', 'Draft'),
@@ -44,6 +48,8 @@ class WelfareLine(models.Model):
 
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
+    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
+    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('is_welfare_marfat', '=', True)]")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
