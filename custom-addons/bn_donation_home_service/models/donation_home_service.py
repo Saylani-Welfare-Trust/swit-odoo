@@ -63,6 +63,9 @@ class DonationHomeService(models.Model):
     def calculate_amount(self):
         self.amount = sum(line.amount * line.quantity for line in self.donation_home_service_line_ids)
 
+    def calculate_service_charges(self):
+        self.total_amount = self.amount + self.service_charges
+
     def calculate_total_amount(self):
         self.total_amount = self.amount + self.service_charges
     
