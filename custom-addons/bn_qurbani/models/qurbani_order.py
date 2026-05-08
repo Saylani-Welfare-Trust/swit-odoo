@@ -11,7 +11,7 @@ class QurbaniOrder(models.Model):
 
     donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
-    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
+    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True, readonly=True)
 
     name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
@@ -85,7 +85,7 @@ class QurbaniOrder(models.Model):
                 if isinstance(qurbani_line_ids, list) and qurbani_line_ids:
                     if isinstance(qurbani_line_ids[0], int):
                         # It's a list of IDs, fetch from api.qurbani.order.line
-                        qurbani_lines = self.env['api.qurbani.order.line'].browse(qurbani_line_ids)
+                        qurbani_lines = self.env['api.qurbani.order.line'].browse(qurbani_line_ids).exists()
                     else:
                         qurbani_lines = qurbani_line_ids
                 else:
@@ -93,6 +93,9 @@ class QurbaniOrder(models.Model):
 
                 # Create lines from qurbani_order_line_ids
                 for line in qurbani_lines:
+                    if not line.exists():
+                        continue
+                    
                     order_lines.append((0, 0, {
                         'product_id': line.product_id.id if hasattr(line, 'product_id') and line.product_id else False,
                         'quantity': line.quantity if hasattr(line, 'quantity') else 1,
@@ -103,16 +106,29 @@ class QurbaniOrder(models.Model):
                         'hissa_name': line.hissa_name if hasattr(line, 'hissa_name') else '',
                     }))
 
-            # Get donor_id - can be tuple (id, name) or just id
+            # Get donor_id - can be tuple (id, name) or just id - VALIDATE IT EXISTS
             donor_id = donation_record.get('donor_id')
             if isinstance(donor_id, tuple):
                 donor_id = donor_id[0]
+            
+            # Validate donor exists if provided
+            if donor_id and isinstance(donor_id, int):
+                donor_check = self.env['res.partner'].browse(donor_id).exists()
+                if not donor_check:
+                    _logger.warning(f"Donor ID {donor_id} does not exist, setting to False")
+                    donor_id = False
 
-            # Get currency
+            # Get currency - VALIDATE IT EXISTS
+            currency_name = donation_record.get('currency', 'USD')
             currency_id = self.env['res.currency'].search(
-                [('name', '=', donation_record.get('currency', 'USD'))],
+                [('name', '=', currency_name)],
                 limit=1
-            ).id or self.env.company.currency_id.id
+            )
+            if not currency_id:
+                _logger.warning(f"Currency {currency_name} not found, using company currency")
+                currency_id = self.env.company.currency_id
+            
+            currency_id = currency_id.id if currency_id else self.env.company.currency_id.id
 
             qurbani_order = self.env['qurbani.order'].create({
                 'donor_id': donor_id or False,
@@ -141,9 +157,9 @@ class QurbaniOrder(models.Model):
                 'donor_ip_address': donation_record.get('ip_address', ''),
 
                 # Subscriptions
-                'subscription_news': donation_record.get('subscription_for_news', False),
-                'subscription_whatsapp': donation_record.get('subscription_for_whatsapp', False),
-                'subscription_sms': donation_record.get('subscription_for_sms', False),
+                'subscription_news': bool(donation_record.get('subscription_for_news', False)),
+                'subscription_whatsapp': bool(donation_record.get('subscription_for_whatsapp', False)),
+                'subscription_sms': bool(donation_record.get('subscription_for_sms', False)),
             })
 
             return {
@@ -154,7 +170,7 @@ class QurbaniOrder(models.Model):
             }
 
         except Exception as e:
-            _logger.error(f"Error creating web qurbani order: {str(e)}")
+            _logger.error(f"Error creating web qurbani order: {str(e)}", exc_info=True)
 
             return {
                 "status": "error",
