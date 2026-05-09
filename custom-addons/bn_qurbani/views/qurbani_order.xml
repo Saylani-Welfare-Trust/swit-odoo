@@ -169,10 +169,15 @@
         parent="menu_qurbani_order"
         action="action_pos_qurbani_order"
         sequence="1"/>
+    
+    <menuitem id="menu_web"
+        name="Web"
+        parent="menu_qurbani_order"
+        sequence="1"/>
 
     <menuitem id="menu_web_qurbani_order"
-        name="Web Order"
-        parent="menu_qurbani_order"
+        name="Order"
+        parent="menu_web"
         action="action_web_qurbani_order"
         sequence="2"/>
 

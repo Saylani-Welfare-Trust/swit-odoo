@@ -1,4 +1,3 @@
-from . import location_option
 from . import installation_category
 from . import header_type
 from . import gateway_config
