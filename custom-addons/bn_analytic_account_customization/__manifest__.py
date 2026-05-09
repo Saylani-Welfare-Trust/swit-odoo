@@ -8,6 +8,7 @@
     'depends': [
         'hr_expense',
         'analytic',
+        'bn_master_setup',
     ],
     'data': [
         'security/ir.model.access.csv',
