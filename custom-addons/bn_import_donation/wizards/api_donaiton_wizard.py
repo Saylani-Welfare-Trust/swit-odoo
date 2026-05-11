@@ -463,8 +463,8 @@ class APIDonationWizard(models.TransientModel):
             return None
         
         # Parse dates
-        created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
-        updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
+        created_dt = self._parse_iso_to_dt_fast(info.get('date'), history)
+        updated_dt = self._parse_iso_to_dt_fast(info.get('date'), history)
         
         # Get currency and conversion rate - ensure we have a valid currency
         currency_name = info.get('currency', '') or ''
@@ -481,7 +481,7 @@ class APIDonationWizard(models.TransientModel):
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0)
-        total_local = total_amount * conv_rate
+        total_local = total_amount / conv_rate
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
