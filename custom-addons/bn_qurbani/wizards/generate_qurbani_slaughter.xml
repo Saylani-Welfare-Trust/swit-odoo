@@ -42,7 +42,7 @@
 
     <menuitem
         id="generate_qurbani_slaughter_menu"
-        name="Qurbani Slaughter"
+        name="Slaughter"
         action="generate_qurbani_slaughter_action"
         parent="bn_qurbani.qurbani_generate_menu"
         sequence="1"/>

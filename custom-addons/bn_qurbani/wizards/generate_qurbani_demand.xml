@@ -42,13 +42,13 @@
 
     <menuitem
         id="qurbani_generate_menu"
-        name="Generate"
+        name="Generate Qurbani"
         parent="qurbani_coniguration_menu"
         sequence="0"/>
 
     <menuitem
         id="generate_qurbani_demand_menu"
-        name="Qurbani Demand"
+        name="Demand"
         action="generate_qurbani_demand_action"
         parent="qurbani_generate_menu"
         sequence="1"/>
