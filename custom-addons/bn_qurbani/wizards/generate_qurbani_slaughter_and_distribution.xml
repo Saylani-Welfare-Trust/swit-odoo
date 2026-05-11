@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="generate_qurbani_slaughter_view_form" model="ir.ui.view">
-        <field name="name">generate.qurbani.slaughter.view.form</field>
-        <field name="model">generate.qurbani.slaughter</field>
+    <record id="generate_qurbani_slaughter_and_distribution_view_form" model="ir.ui.view">
+        <field name="name">generate.qurbani.slaughter.and.distribution.view.form</field>
+        <field name="model">generate.qurbani.slaughter.and.distribution</field>
         <field name="arch" type="xml">
             <form>
                 <sheet>
@@ -28,9 +28,9 @@
         </field>
     </record>
 
-    <record id="generate_qurbani_slaughter_action" model="ir.actions.act_window">
+    <record id="generate.qurbani.slaughter.and.distribution_action" model="ir.actions.act_window">
         <field name="name">Generate Qurbani Slaughter</field>
-        <field name="res_model">generate.qurbani.slaughter</field>
+        <field name="res_model">generate.qurbani.slaughter.and.distribution</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="help" type="html">
@@ -41,9 +41,9 @@
     </record>
 
     <menuitem
-        id="generate_qurbani_slaughter_menu"
+        id="generate_qurbani_slaughter_and_distribution_menu"
         name="Slaughter"
-        action="generate_qurbani_slaughter_action"
+        action="generate_qurbani_slaughter_and_distribution_action"
         parent="bn_qurbani.qurbani_generate_menu"
         sequence="1"/>
 
