@@ -50,8 +50,9 @@
 
                     <group>
                         <group name="welfare_col_1">
-                            <field name="employee_category_id" invisible="1" />
                             <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
+                            <field name="employee_category_id" invisible="1" />
+                            <field name="employee_category_id_officer" invisible="1" />
                             <field name="is_synced" readonly="1" invisible="1" />
                             <field name="is_individual" widget="boolean_toggle" invisible="1"/>
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
@@ -131,7 +132,7 @@
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="payment_type" />
-                                    <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
+                                    <field name="employee_id" string="Assigned Officer(Marfat)" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                                     <field name="collection_point" />
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_date" />

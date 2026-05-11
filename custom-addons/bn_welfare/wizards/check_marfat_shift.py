@@ -6,10 +6,16 @@ class CheckMarfatShift(models.TransientModel):
     _name = 'check.marfat.shift'
     _description = 'Check Assigned Officer (Marfat) Shift Disbursements'
 
+    employee_category_id_officer = fields.Many2one(
+        'hr.employee.category', 
+        string="Employee Category", 
+        default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id
+    )
+    
     assigned_officer_id = fields.Many2one(
         'hr.employee',
         string="Assigned Officer (Marfat)",
-        domain="[('is_welfare_marfat', '=', True)]",
+        domain="[('category_ids', 'in', [employee_category_id_officer])]",
         required=True
     )
     

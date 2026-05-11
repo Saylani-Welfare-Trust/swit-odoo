@@ -45,11 +45,12 @@ class WelfareLine(models.Model):
 
     product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
+    employee_category_id_officer = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
 
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
     payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
-    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('is_welfare_marfat', '=', True)]")
+    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 

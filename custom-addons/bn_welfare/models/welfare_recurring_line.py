@@ -29,6 +29,7 @@ class WelfareRecurringLine(models.Model):
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     name = fields.Char('Name', compute='_compute_name', store=True)
+    employee_category_id_officer = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
         
     donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
@@ -43,7 +44,7 @@ class WelfareRecurringLine(models.Model):
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
     payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
-    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('is_welfare_marfat', '=', True)]")
+    assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
 
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
 
