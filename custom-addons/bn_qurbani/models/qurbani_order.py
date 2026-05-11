@@ -457,12 +457,12 @@ class QurbaniOrder(models.Model):
                     'product_id': line.product_id.id,
                 })]
 
-                qurbani_cow_distribution.qurbani_cow_distribution_line = [(0, 0, {
+                qurbani_cow_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
                     'product_id': line.product_id.id,
-                })]
+                })
 
             if 'goat' in product.name.lower():
 
@@ -491,12 +491,12 @@ class QurbaniOrder(models.Model):
                     'product_id': line.product_id.id,
                 })]
 
-                qurbani_goat_distribution.qurbani_goat_distribution_line = [(0, 0, {
+                qurbani_goat_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
                     'product_id': line.product_id.id,
-                })]
+                })
 
         # ==================================================
         # 8. SUCCESS
