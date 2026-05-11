@@ -21,9 +21,13 @@ class QurbaniGoatDistribution(models.Model):
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
-    slot_full = fields.Integer('Slot Full', compute="_set_slot_full", store=True)
-
     qurbani_goat_distribution_line = fields.One2many('qurbani.goat.distribution.line', 'qurbani_goat_distribution_id', string="Qurbani Goat Distribution Line")
+
+    product_id = fields.Many2one('product.product', string="Product")
+
+    qurbani_order_no = fields.Char('QO No.')
+    qurbani_order_line_no = fields.Char('QOL No.')
+    hissa_name = fields.Char('Hissa Name')
 
 
     @api.model
@@ -32,8 +36,3 @@ class QurbaniGoatDistribution(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_distribution') or ('New')
 
         return super(QurbaniGoatDistribution, self).create(vals)
-    
-    @api.depends('qurbani_goat_distribution_line.hissa_name')
-    def _set_slot_full(self):
-        for rec in self:
-            rec.slot_full = len(rec.qurbani_goat_distribution_line)

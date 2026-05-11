@@ -136,8 +136,8 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                         ('end_time', '=', distribution_schedule.end_time),
                     ])
 
-                    total_demand = demand.total_demand or 0
-                    remaining_demand = total_demand - existing_count
+                    booked_hissa = demand.booked_hissa or 0
+                    remaining_demand = booked_hissa - existing_count
 
                     if remaining_demand <= 0:
                         continue
