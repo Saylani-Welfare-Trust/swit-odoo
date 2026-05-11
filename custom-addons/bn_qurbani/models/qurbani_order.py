@@ -446,7 +446,7 @@ class QurbaniOrder(models.Model):
                     ('hijri_id', '=', line.hijri_id.id),
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
-                    ('slaughter_location_id', '=', line.distribution_id.id),
+                    ('distribution_location_id', '=', line.distribution_id.id),
                     ('slot_full', '<=', 7),
                 ], limit=1)
 
@@ -454,14 +454,14 @@ class QurbaniOrder(models.Model):
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
-                    'option': 'no' if 'no' in line.product_id.name.lower() else 'yes',
+                    'product_id': line.product_id.id,
                 })]
 
                 qurbani_cow_distribution.qurbani_cow_distribution_line = [(0, 0, {
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
-                    'option': 'no' if 'no' in line.product_id.name.lower() else 'yes',
+                    'product_id': line.product_id.id,
                 })]
 
             if 'goat' in product.name.lower():
@@ -480,7 +480,7 @@ class QurbaniOrder(models.Model):
                     ('hijri_id', '=', line.hijri_id.id),
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
-                    ('slaughter_location_id', '=', line.distribution_id.id),
+                    ('distribution_location_id', '=', line.distribution_id.id),
                     ('slot_full', '<=', 7),
                 ], limit=1)
 
@@ -488,14 +488,14 @@ class QurbaniOrder(models.Model):
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
-                    'option': 'no' if 'no' in line.product_id.name.lower() else 'yes',
+                    'product_id': line.product_id.id,
                 })]
 
                 qurbani_goat_distribution.qurbani_goat_distribution_line = [(0, 0, {
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
                     'hissa_name': line.hissa_name,
-                    'option': 'no' if 'no' in line.product_id.name.lower() else 'yes',
+                    'product_id': line.product_id.id,
                 })]
 
         # ==================================================

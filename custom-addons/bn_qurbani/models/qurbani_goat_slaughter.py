@@ -8,6 +8,7 @@ class QurbaniGoatSlaughter(models.Model):
 
     hijri_id = fields.Many2one('hijri', string="Hijri")
     day_id = fields.Many2one('qurbani.day', string="Day")
+    inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
 
     start_time = fields.Float('Start Time')

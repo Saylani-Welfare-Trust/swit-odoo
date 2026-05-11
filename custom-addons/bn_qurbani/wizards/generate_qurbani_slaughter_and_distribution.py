@@ -71,6 +71,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                 ('day_id', '=', demand.day_id.id),
                 ('hijri_id', '=', demand.hijri_id.id),
                 ('slaughter_location_id', '=', demand.slaughter_location_id.id),
+                ('inventory_product_id', '=', demand.inventory_product_id.id),
                 ('start_time', '=', demand.start_time),
                 ('end_time', '=', demand.end_time),
             ])
@@ -88,6 +89,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                     'hijri_id': demand.hijri_id.id,
                     'day_id': demand.day_id.id,
                     'slaughter_location_id': demand.slaughter_location_id.id,
+                    'inventory_product_id': demand.inventory_product_id.id,
                     'start_time': demand.start_time,
                     'end_time': demand.end_time,
                 })
@@ -129,6 +131,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                         ('day_id', '=', distribution_schedule.day_id.id),
                         ('hijri_id', '=', distribution_schedule.hijri_id.id),
                         ('distribution_location_id', '=', distribution_schedule.location_id.id),
+                        ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id),
                         ('start_time', '=', distribution_schedule.start_time),
                         ('end_time', '=', distribution_schedule.end_time),
                     ])
@@ -146,6 +149,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                             'hijri_id': distribution_schedule.hijri_id.id,
                             'day_id': distribution_schedule.day_id.id,
                             'distribution_location_id': distribution_schedule.location_id.id,
+                            'inventory_product_id': distribution_schedule.inventory_product_id.id,
                             'start_time': distribution_schedule.start_time,
                             'end_time': distribution_schedule.end_time,
                         })
