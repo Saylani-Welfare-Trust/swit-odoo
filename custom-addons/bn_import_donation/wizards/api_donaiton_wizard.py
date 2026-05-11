@@ -411,19 +411,19 @@ class APIDonationWizard(models.TransientModel):
                         if temp_id:
                             temp_id_to_partner[temp_id] = partner_record.id
 
-                # Then when updating donation_vals, use partner_temp_id:
-                for donation_val in donations_to_create:
-                    if 'partner_temp_id' in donation_val:
-                        donation_val['donor_id'] = temp_id_to_partner.get(donation_val['partner_temp_id'])
-                        del donation_val['partner_temp_id']
+        # Then when updating donation_vals, use partner_temp_id:
+        for donation_val in donations_to_create:
+            if 'partner_temp_id' in donation_val:
+                donation_val['donor_id'] = temp_id_to_partner.get(donation_val['partner_temp_id'])
+                del donation_val['partner_temp_id']
 
             # raise ValidationError(str(partner_to_create))
         
-        # Update partner IDs in donation values
-        for donation_val in donations_to_create:
-            if 'partner_key' in donation_val:
-                donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
-                del donation_val['partner_key']
+        # # Update partner IDs in donation values
+        # for donation_val in donations_to_create:
+        #     if 'partner_key' in donation_val:
+        #         donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
+        #         del donation_val['partner_key']
         # raise ValidationError(str(donations_to_create))
         # Bulk create donations
         if donations_to_create:
