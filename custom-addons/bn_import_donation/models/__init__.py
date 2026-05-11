@@ -1,5 +1,5 @@
-from . import product_product
 from . import product_template
+from . import product_product
 from . import import_donation
 from . import invalid_import_donation
 from . import valid_import_donation
