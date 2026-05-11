@@ -7,6 +7,7 @@
     'category': 'BytesNode/Import Donation',
     'depends': [
         'bn_profile_management',
+        'bn_master_setup',
     ],
     'data': [
         'data/sequence.xml',
