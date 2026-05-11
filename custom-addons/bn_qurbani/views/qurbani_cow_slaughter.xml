@@ -14,7 +14,7 @@
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="start_time" widget="float_time" readonly="1" />
                 <field name="end_time" widget="float_time" readonly="1" />
-                <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
 
                 <field name="video" filename="video_file_name" />
                 <field name="image" filename="image_file_name" />
@@ -38,7 +38,7 @@
                             <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                             <field name="start_time" widget="float_time" readonly="1" />
                             <field name="video" filename="video_file_name" />
-                            <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                            <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                         </group>
                         <group name="qurbani_cow_slaughter_col_2">
                             <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
