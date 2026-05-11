@@ -21,8 +21,6 @@ class QurbaniCowDistribution(models.Model):
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
-    qurbani_cow_distribution_line = fields.One2many('qurbani.cow.distribution.line', 'qurbani_cow_distribution_id', string="Qurbani Cow Distribution Line")
-
     product_id = fields.Many2one('product.product', string="Product")
 
     qurbani_order_no = fields.Char('QO No.')
