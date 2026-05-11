@@ -14,6 +14,7 @@
         'bn_pos_order',
     ],
     'data': [
+        'data/server_action.xml',
         'data/sequence.xml',
         'data/chand_raat.xml',
         'data/qurbani_day.xml',
@@ -36,11 +37,14 @@
         'views/qurbani_cow_slaughter.xml',
         'views/qurbani_goat_slaughter.xml',
         'views/pos_order.xml',
+        'views/fetch_log.xml',
         'wizards/qurbani_schedule.xml',
         'wizards/generate_qurbani_demand.xml',
         'wizards/generate_qurbani_slaughter.xml',
+        'wizards/api_order_wizard.xml',
         'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
+        
     ],
     'auto_install': False,
     'application': True,
