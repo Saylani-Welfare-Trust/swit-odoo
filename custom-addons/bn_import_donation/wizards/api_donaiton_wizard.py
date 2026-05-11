@@ -534,7 +534,7 @@ class APIDonationWizard(models.TransientModel):
                     'temp_id': temp_id,          # add this field (not an Odoo field, just dict key)
                 }
                 partner_to_create.append(partner_vals)
-                donation_vals['partner_temp_id'] = temp_id   # store temp id in donation vals
+                partner_key = temp_id
                 partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
@@ -684,8 +684,8 @@ class APIDonationWizard(models.TransientModel):
         # Set donor_id - either from cache, from new partner, or default
         if donor_id:
             donation_vals['donor_id'] = donor_id
-        elif partner_key is not None:
-            donation_vals['partner_key'] = partner_key
+        elif partner_key:
+            donation_vals['partner_temp_id'] = partner_key
         else:
             donation_vals['donor_id'] = all_data['default_partner_id']
 
