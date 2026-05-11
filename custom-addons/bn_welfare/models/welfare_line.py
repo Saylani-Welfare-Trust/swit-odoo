@@ -114,7 +114,7 @@ class WelfareLine(models.Model):
     def action_set_pending(self):
         """
         Create a new welfare record with only the pending disbursement line.
-        Original welfare keeps all its lines unchanged.
+        Both the original line and the new line are set to 'pending' state.
         The new welfare record's state will also be set to 'pending'.
         """
         action = {
@@ -135,7 +135,7 @@ class WelfareLine(models.Model):
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
                     'date': fields.Date.today(),
-                    'state': 'pending',  # Set to pending state
+                    'state': 'draft',  
                     'order_type': welfare.order_type,
                     'institution_category': welfare.institution_category,
                     'subcategory': welfare.subcategory,
@@ -145,11 +145,13 @@ class WelfareLine(models.Model):
                 new_welfare = self.env['welfare'].create(new_welfare_vals)
                 
                 # Copy ONLY this disbursement line to the new welfare with pending state
-                # Original line remains unchanged in the original welfare
                 record.copy(default={
                     'welfare_id': new_welfare.id,
                     'state': 'pending',
                 })
+                
+                # Set the original disbursement line to pending state as well
+                record.state = 'pending'
                 
                 # Return action to open the new welfare record
                 action['res_model'] = 'welfare'
