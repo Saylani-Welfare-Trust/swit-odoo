@@ -316,19 +316,14 @@ class APIDonationWizard(models.TransientModel):
         donations_to_create = []
         partner_to_create = []
         partner_mapping = {}
-        # Testing counters
-        total_partner_requests = 0
-        duplicate_partner_count = 0
-        existing_partner_count = 0
-        new_partner_to_create_count = 0
-        actually_created_partner_count = 0
+        
         for info_idx, info in enumerate(donations_info):
             import_id = info.get('_id')
             if not import_id or import_id in all_data['existing_import_ids']:
                 self.create_fetch_log(history.id, f"Skipping donation with import_id {import_id} (already exists or missing)", 'Skipped', f"Donation with import_id {import_id} is skipped because it already exists or is missing")
 
                 continue
-            # raise ValidationError(str(info))
+
             # Prepare donation values efficiently
             donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping, history)
             if donation_vals:
@@ -367,21 +362,11 @@ class APIDonationWizard(models.TransientModel):
                     stock_accumulator[product.id] += qty
         
         # Bulk create partners first
-        temp_id_to_partner = {}
         if partner_to_create:
             # 🔹 Deduplicate partner_to_create (mobile + country)
             seen = set()
             unique_partners = []
-            total_partner_requests = len(partner_to_create)
 
-            _logger.warning(f"TOTAL PARTNER REQUESTS: {total_partner_requests}")
-
-            self.create_fetch_log(
-                history.id,
-                f"TOTAL PARTNER REQUESTS: {total_partner_requests}",
-                'Testing',
-                f"Partners requested for creation: {total_partner_requests}"
-            )
             for vals in partner_to_create:
                 key = (
                     vals.get('mobile'),
@@ -392,16 +377,6 @@ class APIDonationWizard(models.TransientModel):
                     unique_partners.append(vals)
 
             partner_to_create[:] = unique_partners
-            duplicate_partner_count = total_partner_requests - len(unique_partners)
-
-            _logger.warning(f"DUPLICATE PARTNERS REMOVED: {duplicate_partner_count}")
-
-            self.create_fetch_log(
-                history.id,
-                f"DUPLICATE PARTNERS REMOVED: {duplicate_partner_count}",
-                'Testing',
-                f"Duplicate partners removed: {duplicate_partner_count}"
-            )
 
             # 🔹 Filter out partners that already exist
             partners_to_create_final = []
@@ -414,78 +389,20 @@ class APIDonationWizard(models.TransientModel):
                 if not existing_partner:
                     partners_to_create_final.append(vals)
                 else:
-                    existing_partner_count += 1
+                    _logger.info(f"Partner already exists: {existing_partner.name}")
 
-                    _logger.warning(
-                        f"PARTNER ALREADY EXISTS: {existing_partner.name} | "
-                        f"Mobile: {vals.get('mobile')}"
-                    )
-
-                    temp_id = vals.get('temp_id')
-                    if temp_id:
-                        temp_id_to_partner[temp_id] = existing_partner.id
-            new_partner_to_create_count = len(partners_to_create_final)
-
-            _logger.warning(
-                f"NEW PARTNERS TO CREATE: {new_partner_to_create_count}"
-            )
-
-            self.create_fetch_log(
-                history.id,
-                f"NEW PARTNERS TO CREATE: {new_partner_to_create_count}",
-                'Testing',
-                f"New partners queued for creation: {new_partner_to_create_count}"
-            )
             if partners_to_create_final:
                 created_partners = self.env['res.partner'].create(partners_to_create_final)
-                # Keep mapping before removing temp_id
-                partner_create_payload = []
-                temp_ids = []
-
-                for vals in partners_to_create_final:
-                    vals_copy = vals.copy()
-
-                    temp_ids.append(vals_copy.pop('temp_id', False))
-                    partner_create_payload.append(vals_copy)
-
-                created_partners = self.env['res.partner'].create(partner_create_payload)
-
-                # Map created partners back
-                for temp_id, partner in zip(temp_ids, created_partners):
-                    if temp_id:
-                        temp_id_to_partner[temp_id] = partner.id
+                # Register partners in bulk
                 created_partners.action_register()
-                actually_created_partner_count = len(created_partners)
-
-                _logger.warning(
-                    f"ACTUALLY CREATED PARTNERS: {actually_created_partner_count}"
-                )
-
-                self.create_fetch_log(
-                    history.id,
-                    f"ACTUALLY CREATED PARTNERS: {actually_created_partner_count}",
-                    'Testing',
-                    f"Partners actually created in database: {actually_created_partner_count}"
-                )
-                # Build mapping from temp_id to actual partner id
-                temp_id_to_partner = {}
-                for temp_id, partner in zip(temp_ids, created_partners):
-                    if temp_id:
-                        temp_id_to_partner[temp_id] = partner.id
-
-        # Then when updating donation_vals, use partner_temp_id:
-        for donation_val in donations_to_create:
-            if 'partner_temp_id' in donation_val:
-                donation_val['donor_id'] = temp_id_to_partner.get(donation_val['partner_temp_id'])
-                del donation_val['partner_temp_id']
 
             # raise ValidationError(str(partner_to_create))
         
-        # # Update partner IDs in donation values
-        # for donation_val in donations_to_create:
-        #     if 'partner_key' in donation_val:
-        #         donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
-        #         del donation_val['partner_key']
+        # Update partner IDs in donation values
+        for donation_val in donations_to_create:
+            if 'partner_key' in donation_val:
+                donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
+                del donation_val['partner_key']
         # raise ValidationError(str(donations_to_create))
         # Bulk create donations
         if donations_to_create:
@@ -526,28 +443,7 @@ class APIDonationWizard(models.TransientModel):
             picking.button_validate()
         # raise ValidationError(str(picking))
         self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
-        _logger.warning(
-            "PARTNER SUMMARY => "
-            f"Requested: {total_partner_requests}, "
-            f"Duplicates Removed: {duplicate_partner_count}, "
-            f"Already Existing: {existing_partner_count}, "
-            f"To Create: {new_partner_to_create_count}, "
-            f"Actually Created: {actually_created_partner_count}"
-        )
 
-        self.create_fetch_log(
-            history.id,
-            (
-                "PARTNER SUMMARY => "
-                f"Requested: {total_partner_requests}, "
-                f"Duplicates Removed: {duplicate_partner_count}, "
-                f"Already Existing: {existing_partner_count}, "
-                f"To Create: {new_partner_to_create_count}, "
-                f"Actually Created: {actually_created_partner_count}"
-            ),
-            'Testing',
-            'Partner creation summary'
-        )
         return {
             'new_donations': new_donation_ids,
             'accumulators': {
@@ -585,7 +481,7 @@ class APIDonationWizard(models.TransientModel):
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0)
-        total_local = total_amount / conv_rate
+        total_local = total_amount * conv_rate
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
@@ -607,18 +503,21 @@ class APIDonationWizard(models.TransientModel):
                         break
             
             if not donor_id:
-                temp_id = f"temp_{len(partner_to_create)}_{fields.Datetime.now().timestamp()}"
+                # raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
+
+                # Create new partner
                 partner_vals = {
                     'name': donor.get('name', ''),
                     'mobile': mobile,
                     'email': donor.get('email', ''),
                     'country_code_id': country_id,
                     'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    'temp_id': temp_id,          # add this field (not an Odoo field, just dict key)
+                    # 'original_index': len(partner_to_create)  # Store index for mapping
                 }
+                
                 partner_to_create.append(partner_vals)
-                partner_key = temp_id
-                # partner_key = len(partner_to_create) - 1
+                # Temporary key for later mapping
+                partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
         
@@ -767,8 +666,8 @@ class APIDonationWizard(models.TransientModel):
         # Set donor_id - either from cache, from new partner, or default
         if donor_id:
             donation_vals['donor_id'] = donor_id
-        elif partner_key:
-            donation_vals['partner_temp_id'] = partner_key
+        elif partner_key is not None:
+            donation_vals['partner_key'] = partner_key
         else:
             donation_vals['donor_id'] = all_data['default_partner_id']
 
