@@ -115,6 +115,7 @@ class WelfareLine(models.Model):
         """
         Create a new welfare record with only the pending disbursement line.
         Original welfare keeps all its lines unchanged.
+        The new welfare record's state will also be set to 'pending'.
         """
         action = {
             'type': 'ir.actions.act_window',
@@ -134,7 +135,7 @@ class WelfareLine(models.Model):
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
                     'date': fields.Date.today(),
-                    'state': 'draft',
+                    'state': 'pending',  # Set to pending state
                     'order_type': welfare.order_type,
                     'institution_category': welfare.institution_category,
                     'subcategory': welfare.subcategory,
