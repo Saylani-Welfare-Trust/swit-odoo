@@ -17,4 +17,4 @@ class APIDonationItemModel(models.Model):
     
     is_priced_item = fields.Boolean('Is Priced Item')
 
-    api_donation_id = fields.Many2one('api.donation', string='Donation Data')
+    api_donation_id = fields.Many2one('api.donation', string='Donation Data', ondelete='cascade')
