@@ -2,9 +2,18 @@ from odoo import models, fields
 from odoo.exceptions import UserError
 
 
+type_selection = [
+    ('slaughter', 'Slaughter'),
+    ('distribution', 'Distribution'),
+]
+
+
 class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     _name = 'generate.qurbani.slaughter.and.distribution'
     _description = "Generate Qurbani Slaughter And Distribution"
+
+
+    type = fields.Selection(selection=type_selection, string="Type")
 
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
