@@ -32,7 +32,7 @@ class QurbaniCowSlaughter(models.Model):
 
         return super(QurbaniCowSlaughter, self).create(vals)
     
-    @api.depends()
+    @api.depends('qurbani_goat_distribution_line')
     def _set_slot_full(self):
         for rec in self:
             rec.slot_full = len(rec.qurbani_goat_distribution_line)
