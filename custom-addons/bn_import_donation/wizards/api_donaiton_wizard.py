@@ -438,6 +438,22 @@ class APIDonationWizard(models.TransientModel):
             )
             if partners_to_create_final:
                 created_partners = self.env['res.partner'].create(partners_to_create_final)
+                # Keep mapping before removing temp_id
+                partner_create_payload = []
+                temp_ids = []
+
+                for vals in partners_to_create_final:
+                    vals_copy = vals.copy()
+
+                    temp_ids.append(vals_copy.pop('temp_id', False))
+                    partner_create_payload.append(vals_copy)
+
+                created_partners = self.env['res.partner'].create(partner_create_payload)
+
+                # Map created partners back
+                for temp_id, partner in zip(temp_ids, created_partners):
+                    if temp_id:
+                        temp_id_to_partner[temp_id] = partner.id
                 created_partners.action_register()
                 actually_created_partner_count = len(created_partners)
 
@@ -453,19 +469,9 @@ class APIDonationWizard(models.TransientModel):
                 )
                 # Build mapping from temp_id to actual partner id
                 temp_id_to_partner = {}
-                for partner in created_partners:
-                    # Retrieve the original temp_id from the partner (you could store it in a custom field,
-                    # or match by mobile+country if you ensure uniqueness)
-                    # Simpler: because we just created them, we can iterate over partners_to_create_final
-                    # and match using the same temp_id stored in the dictionary.
-                    # But partners_to_create_final are the dicts we passed; we need to know which temp_id
-                    # corresponds to which created partner.
-                    # The create() returns records in the same order as the list (if no duplicates filtered).
-                    # So we can zip them:
-                    for partner_dict, partner_record in zip(partners_to_create_final, created_partners):
-                        temp_id = partner_dict.get('temp_id')
-                        if temp_id:
-                            temp_id_to_partner[temp_id] = partner_record.id
+                for temp_id, partner in zip(temp_ids, created_partners):
+                    if temp_id:
+                        temp_id_to_partner[temp_id] = partner.id
 
         # Then when updating donation_vals, use partner_temp_id:
         for donation_val in donations_to_create:
