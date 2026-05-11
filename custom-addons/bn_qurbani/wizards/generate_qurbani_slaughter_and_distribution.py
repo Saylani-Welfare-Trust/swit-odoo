@@ -140,5 +140,3 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                         })
 
                     DistributionModel.create(distribution_vals)
-
-        return True
