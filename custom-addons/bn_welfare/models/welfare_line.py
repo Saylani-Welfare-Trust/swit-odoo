@@ -136,7 +136,7 @@ class WelfareLine(models.Model):
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
                     'date': welfare.date if welfare.date else fields.Date.today(),
-                    'state': 'draft',  
+                    'state': 'hod_approve',  
                     'order_type': welfare.order_type if welfare.order_type else False,
                     'institution_category': welfare.institution_category if welfare.institution_category else False,
                     'subcategory': welfare.subcategory if welfare.subcategory else False,
