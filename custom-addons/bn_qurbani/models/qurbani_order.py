@@ -441,6 +441,8 @@ class QurbaniOrder(models.Model):
                     ('slot_full', '<=', 7),
                 ])
 
+                raise ValidationError(str(qurbani_cow_slaughter))
+
                 qurbani_cow_slaughter.qurbani_cow_slaughter_line = [(6, 0, {
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
