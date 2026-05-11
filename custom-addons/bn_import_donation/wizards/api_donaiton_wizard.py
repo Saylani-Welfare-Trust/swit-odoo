@@ -463,8 +463,8 @@ class APIDonationWizard(models.TransientModel):
             return None
         
         # Parse dates
-        created_dt = self._parse_iso_to_dt_fast(info.get('date'), history)
-        updated_dt = self._parse_iso_to_dt_fast(info.get('date'), history)
+        created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
+        updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
         
         # Get currency and conversion rate - ensure we have a valid currency
         currency_name = info.get('currency', '') or ''
