@@ -316,7 +316,12 @@ class APIDonationWizard(models.TransientModel):
         donations_to_create = []
         partner_to_create = []
         partner_mapping = {}
-        
+        # Testing counters
+        total_partner_requests = 0
+        duplicate_partner_count = 0
+        existing_partner_count = 0
+        new_partner_to_create_count = 0
+        actually_created_partner_count = 0
         for info_idx, info in enumerate(donations_info):
             import_id = info.get('_id')
             if not import_id or import_id in all_data['existing_import_ids']:
@@ -367,7 +372,16 @@ class APIDonationWizard(models.TransientModel):
             # 🔹 Deduplicate partner_to_create (mobile + country)
             seen = set()
             unique_partners = []
+            total_partner_requests = len(partner_to_create)
 
+            _logger.warning(f"TOTAL PARTNER REQUESTS: {total_partner_requests}")
+
+            self.create_fetch_log(
+                history.id,
+                f"TOTAL PARTNER REQUESTS: {total_partner_requests}",
+                'Testing',
+                f"Partners requested for creation: {total_partner_requests}"
+            )
             for vals in partner_to_create:
                 key = (
                     vals.get('mobile'),
@@ -378,6 +392,16 @@ class APIDonationWizard(models.TransientModel):
                     unique_partners.append(vals)
 
             partner_to_create[:] = unique_partners
+            duplicate_partner_count = total_partner_requests - len(unique_partners)
+
+            _logger.warning(f"DUPLICATE PARTNERS REMOVED: {duplicate_partner_count}")
+
+            self.create_fetch_log(
+                history.id,
+                f"DUPLICATE PARTNERS REMOVED: {duplicate_partner_count}",
+                'Testing',
+                f"Duplicate partners removed: {duplicate_partner_count}"
+            )
 
             # 🔹 Filter out partners that already exist
             partners_to_create_final = []
@@ -390,12 +414,43 @@ class APIDonationWizard(models.TransientModel):
                 if not existing_partner:
                     partners_to_create_final.append(vals)
                 else:
-                    _logger.info(f"Partner already exists: {existing_partner.name}")
+                    existing_partner_count += 1
 
+                    _logger.warning(
+                        f"PARTNER ALREADY EXISTS: {existing_partner.name} | "
+                        f"Mobile: {vals.get('mobile')}"
+                    )
+
+                    temp_id = vals.get('temp_id')
+                    if temp_id:
+                        temp_id_to_partner[temp_id] = existing_partner.id
+            new_partner_to_create_count = len(partners_to_create_final)
+
+            _logger.warning(
+                f"NEW PARTNERS TO CREATE: {new_partner_to_create_count}"
+            )
+
+            self.create_fetch_log(
+                history.id,
+                f"NEW PARTNERS TO CREATE: {new_partner_to_create_count}",
+                'Testing',
+                f"New partners queued for creation: {new_partner_to_create_count}"
+            )
             if partners_to_create_final:
                 created_partners = self.env['res.partner'].create(partners_to_create_final)
                 created_partners.action_register()
-                
+                actually_created_partner_count = len(created_partners)
+
+                _logger.warning(
+                    f"ACTUALLY CREATED PARTNERS: {actually_created_partner_count}"
+                )
+
+                self.create_fetch_log(
+                    history.id,
+                    f"ACTUALLY CREATED PARTNERS: {actually_created_partner_count}",
+                    'Testing',
+                    f"Partners actually created in database: {actually_created_partner_count}"
+                )
                 # Build mapping from temp_id to actual partner id
                 temp_id_to_partner = {}
                 for partner in created_partners:
@@ -465,7 +520,28 @@ class APIDonationWizard(models.TransientModel):
             picking.button_validate()
         # raise ValidationError(str(picking))
         self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
+        _logger.warning(
+            "PARTNER SUMMARY => "
+            f"Requested: {total_partner_requests}, "
+            f"Duplicates Removed: {duplicate_partner_count}, "
+            f"Already Existing: {existing_partner_count}, "
+            f"To Create: {new_partner_to_create_count}, "
+            f"Actually Created: {actually_created_partner_count}"
+        )
 
+        self.create_fetch_log(
+            history.id,
+            (
+                "PARTNER SUMMARY => "
+                f"Requested: {total_partner_requests}, "
+                f"Duplicates Removed: {duplicate_partner_count}, "
+                f"Already Existing: {existing_partner_count}, "
+                f"To Create: {new_partner_to_create_count}, "
+                f"Actually Created: {actually_created_partner_count}"
+            ),
+            'Testing',
+            'Partner creation summary'
+        )
         return {
             'new_donations': new_donation_ids,
             'accumulators': {
