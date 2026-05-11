@@ -66,7 +66,6 @@ class GenerateQurbaniSlaughter(models.TransientModel):
                     'slaughter_location_id': demand.slaughter_location_id.id,
                     'start_time': demand.start_time,
                     'end_time': demand.end_time,
-                    'hissa_name': f"Hissa {existing_count + i + 1}",
                 })
 
             SlaughterModel.create(vals_list)

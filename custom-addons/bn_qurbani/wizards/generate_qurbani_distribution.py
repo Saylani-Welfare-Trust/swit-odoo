@@ -21,7 +21,8 @@ class GenerateQurbaniDistribution(models.TransientModel):
         self.ensure_one()
 
         Demand = self.env['qurbani.slaughter.slot.demand']
-        Demand = self.env['qurbani.slaughter.slot.demand']
+        SlaughterSchedule = self.env['slaughter.schedule']
+        DistributionSchedule = self.env['distribution.schedule']
 
         demands = Demand.search([
             ('day_id', '=', self.day_id.id),
@@ -45,32 +46,42 @@ class GenerateQurbaniDistribution(models.TransientModel):
 
         for demand in demands:
 
-
-            # 🔹 Count existing records
-            existing_count = DistributionModel.search_count([
+            slaughter_schedules = SlaughterSchedule.search([
                 ('day_id', '=', demand.day_id.id),
                 ('hijri_id', '=', demand.hijri_id.id),
-                ('distribution_location_id', '=', demand.slaughter_location_id.id),
+                ('location_id', '=', demand.slaughter_location_id.id),
                 ('start_time', '=', demand.start_time),
                 ('end_time', '=', demand.end_time),
             ])
 
-            total_demand = demand.total_demand or 0
-            remaining_demand = total_demand - existing_count
+            for slaughter_schedule in slaughter_schedules:
+                distribution_schedules = DistributionSchedule.search([('slaughter_schedule_id', '=', slaughter_schedule.id)])
 
-            if remaining_demand <= 0:
-                continue
+                for distribution_schedule in distribution_schedules:
+                    # 🔹 Count existing records
+                    existing_count = DistributionModel.search_count([
+                        ('day_id', '=', distribution_schedule.day_id.id),
+                        ('hijri_id', '=', distribution_schedule.hijri_id.id),
+                        ('distribution_location_id', '=', distribution_schedule.location_id.id),
+                        ('start_time', '=', distribution_schedule.start_time),
+                        ('end_time', '=', distribution_schedule.end_time),
+                    ])
 
-            # 🔹 Create records
-            vals_list = []
-            for i in range(remaining_demand):
-                vals_list.append({
-                    'hijri_id': demand.hijri_id.id,
-                    'day_id': demand.day_id.id,
-                    'slaughter_location_id': demand.slaughter_location_id.id,
-                    'start_time': demand.start_time,
-                    'end_time': demand.end_time,
-                    'hissa_name': f"Hissa {existing_count + i + 1}",
-                })
+                    total_demand = demand.total_demand or 0
+                    remaining_demand = total_demand - existing_count
 
-            SlaughterModel.create(vals_list)
+                    if remaining_demand <= 0:
+                        continue
+
+                    # 🔹 Create records
+                    vals_list = []
+                    for i in range(remaining_demand):
+                        vals_list.append({
+                            'hijri_id': distribution_schedule.hijri_id.id,
+                            'day_id': distribution_schedule.day_id.id,
+                            'slaughter_location_id': distribution_schedule.location_id.id,
+                            'start_time': distribution_schedule.start_time,
+                            'end_time': distribution_schedule.end_time,
+                        })
+
+                    DistributionModel.create(vals_list)

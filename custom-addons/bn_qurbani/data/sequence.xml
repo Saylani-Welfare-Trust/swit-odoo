@@ -31,6 +31,20 @@
             <field name="padding">5</field>
         </record>
     
+        <record id="qurbani_cow_distribution_sequence" model="ir.sequence">
+            <field name="name">Qurbani Cow Distribution</field>
+            <field name="code">qurbani_cow_distribution</field>
+            <field name="prefix">QCD/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+
+        <record id="qurbani_goat_distribution_sequence" model="ir.sequence">
+            <field name="name">Qurbani Goat Distribution</field>
+            <field name="code">qurbani_goat_distribution</field>
+            <field name="prefix">QGD/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
     </data>
 
 </odoo>
