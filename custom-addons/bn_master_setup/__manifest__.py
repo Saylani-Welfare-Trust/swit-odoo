@@ -11,6 +11,7 @@
         'product',
         'stock',
         'account',
+        'product',
     ],
     'data': [
         'security/ir.model.access.csv',
