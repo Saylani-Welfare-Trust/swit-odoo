@@ -1,4 +1,4 @@
-from odoo import api, fields, models, _
+from odoo import models, fields
 from odoo.exceptions import UserError
 
 
@@ -6,32 +6,14 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     _name = 'generate.qurbani.slaughter.and.distribution'
     _description = "Generate Qurbani Slaughter And Distribution"
 
-
-    hijri_id = fields.Many2one('hijri', string="Hijri")
     day_id = fields.Many2one('qurbani.day', string="Day")
+    hijri_id = fields.Many2one('hijri', string="Hijri")
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
+
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
-
-
-    def _get_demands(self):
-
-        Demand = self.env['qurbani.slaughter.slot.demand']
-
-        demands = Demand.search([
-            ('day_id', '=', self.day_id.id),
-            ('hijri_id', '=', self.hijri_id.id),
-            ('slaughter_location_id', '=', self.slaughter_location_id.id),
-            ('inventory_product_id', '=', self.inventory_product_id.id),
-        ])
-
-        if not demands:
-            raise UserError(_("No demand record found!"))
-
-        return demands
-
+    
 
     def _get_product_models(self):
-
         product_name = (self.inventory_product_id.name or "").lower()
 
         if 'cow' in product_name:
@@ -46,28 +28,36 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                 'distribution': self.env['qurbani.goat.distribution'],
             }
 
-        raise UserError(_("Unknown product type! Define Cow or Goat."))
+        raise UserError("Unknown product type! Define Cow or Goat.")
+
+
+    def _get_demands(self):
+        Demand = self.env['qurbani.slaughter.slot.demand']
+
+        demands = Demand.search([
+            ('day_id', '=', self.day_id.id),
+            ('hijri_id', '=', self.hijri_id.id),
+            ('slaughter_location_id', '=', self.slaughter_location_id.id),
+            ('inventory_product_id', '=', self.inventory_product_id.id),
+        ])
+
+        if not demands:
+            raise UserError("No demand record found!")
+
+        return demands
 
 
     def action_generate_slaughter_and_distribution(self):
         self.ensure_one()
 
-        SlaughterSchedule = self.env['slaughter.schedule']
-        DistributionSchedule = self.env['distribution.schedule']
-
         demands = self._get_demands()
         models = self._get_product_models()
 
         SlaughterModel = models['slaughter']
-        DistributionModel = models['distribution']
 
         for demand in demands:
 
-            # =====================================================
-            # 🔹 GENERATE SLAUGHTER
-            # =====================================================
-
-            existing_slaughter_count = SlaughterModel.search_count([
+            existing_count = SlaughterModel.search_count([
                 ('day_id', '=', demand.day_id.id),
                 ('hijri_id', '=', demand.hijri_id.id),
                 ('slaughter_location_id', '=', demand.slaughter_location_id.id),
@@ -76,26 +66,39 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
             ])
 
             total_demand = demand.total_demand or 0
-            remaining_slaughter = total_demand - existing_slaughter_count
+            remaining_demand = total_demand - existing_count
 
-            if remaining_slaughter > 0:
+            if remaining_demand <= 0:
+                continue
 
-                slaughter_vals = []
+            vals_list = []
 
-                for i in range(remaining_slaughter):
-                    slaughter_vals.append({
-                        'hijri_id': demand.hijri_id.id,
-                        'day_id': demand.day_id.id,
-                        'slaughter_location_id': demand.slaughter_location_id.id,
-                        'start_time': demand.start_time,
-                        'end_time': demand.end_time,
-                    })
+            for i in range(remaining_demand):
+                vals_list.append({
+                    'hijri_id': demand.hijri_id.id,
+                    'day_id': demand.day_id.id,
+                    'slaughter_location_id': demand.slaughter_location_id.id,
+                    'start_time': demand.start_time,
+                    'end_time': demand.end_time,
+                })
 
-                SlaughterModel.create(slaughter_vals)
+            SlaughterModel.create(vals_list)
+        
+        self.action_generate_distribution()
 
-            # =====================================================
-            # 🔹 GENERATE DISTRIBUTION
-            # =====================================================
+
+    def action_generate_distribution(self):
+        self.ensure_one()
+
+        SlaughterSchedule = self.env['slaughter.schedule']
+        DistributionSchedule = self.env['distribution.schedule']
+
+        demands = self._get_demands()
+        models = self._get_product_models()
+
+        DistributionModel = models['distribution']
+
+        for demand in demands:
 
             slaughter_schedules = SlaughterSchedule.search([
                 ('day_id', '=', demand.day_id.id),
@@ -113,7 +116,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
 
                 for distribution_schedule in distribution_schedules:
 
-                    existing_distribution_count = DistributionModel.search_count([
+                    existing_count = DistributionModel.search_count([
                         ('day_id', '=', distribution_schedule.day_id.id),
                         ('hijri_id', '=', distribution_schedule.hijri_id.id),
                         ('distribution_location_id', '=', distribution_schedule.location_id.id),
@@ -121,17 +124,16 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                         ('end_time', '=', distribution_schedule.end_time),
                     ])
 
-                    remaining_distribution = (
-                        total_demand - existing_distribution_count
-                    )
+                    total_demand = demand.total_demand or 0
+                    remaining_demand = total_demand - existing_count
 
-                    if remaining_distribution <= 0:
+                    if remaining_demand <= 0:
                         continue
 
-                    distribution_vals = []
+                    vals_list = []
 
-                    for i in range(remaining_distribution):
-                        distribution_vals.append({
+                    for i in range(remaining_demand):
+                        vals_list.append({
                             'hijri_id': distribution_schedule.hijri_id.id,
                             'day_id': distribution_schedule.day_id.id,
                             'distribution_location_id': distribution_schedule.location_id.id,
@@ -139,4 +141,4 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                             'end_time': distribution_schedule.end_time,
                         })
 
-                    DistributionModel.create(distribution_vals)
+                    DistributionModel.create(vals_list)
