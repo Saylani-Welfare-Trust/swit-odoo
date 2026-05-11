@@ -6,18 +6,12 @@
         <field name="model">qurbani.goat.distribution</field>
         <field name="arch" type="xml">
             <tree create="0" delete="0" editable="bottom">
-                <field name="video_file_name" column_invisible="1" />
-                <field name="image_file_name" column_invisible="1" />
-
                 <field name="name" readonly="1" />
                 <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="start_time" widget="float_time" readonly="1" />
                 <field name="end_time" widget="float_time" readonly="1" />
                 <field name="distribution_location_id" string="Location" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
-
-                <field name="video" filename="video_file_name" />
-                <field name="image" filename="image_file_name" />
 
                 <field name="qurbani_order_no" />
                 <field name="qurbani_order_line_no" />

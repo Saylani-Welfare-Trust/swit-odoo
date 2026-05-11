@@ -14,12 +14,7 @@ class QurbaniCowDistribution(models.Model):
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
 
-    video = fields.Binary('Video')
-    image = fields.Binary('Image')
-
     name = fields.Char('Name')
-    video_file_name = fields.Char('Video File Name')
-    image_file_name = fields.Char('Image File Name')
 
     product_id = fields.Many2one('product.product', string="Product")
 
