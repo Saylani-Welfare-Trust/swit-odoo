@@ -44,7 +44,7 @@
         id="generate_qurbani_slaughter_menu"
         name="Generate Qurbani Slaughter"
         action="generate_qurbani_slaughter_action"
-        parent="bn_qurbani.qurbani_coniguration_menu"
+        parent="bn_qurbani.qurbani_generate_menu"
         sequence="1"/>
 
 </odoo>

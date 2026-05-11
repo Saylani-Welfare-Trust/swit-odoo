@@ -44,7 +44,7 @@
         id="generate_qurbani_distribution_menu"
         name="Generate Qurbani Distribution"
         action="generate_qurbani_distribution_action"
-        parent="bn_qurbani.qurbani_coniguration_menu"
+        parent="bn_qurbani.qurbani_generate_menu"
         sequence="1"/>
 
 </odoo>
