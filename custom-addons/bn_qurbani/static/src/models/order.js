@@ -14,7 +14,8 @@ patch(Order.prototype, {
             ...result,
 
             favor: this.favor,
-            is_qurbani: this.pos.is_qurbani,
+            pos_order_seq: this.pos_order_seq,
+            is_qurbani: this.qurbani || false,
             first_para_halfnama: this.pos.company.first_para_halfnama,
             second_para_halfnama: this.pos.company.second_para_halfnama,
             third_para_halfnama: this.pos.company.third_para_halfnama,

@@ -2,22 +2,25 @@ from odoo import models, fields
 from odoo.exceptions import UserError
 
 
-class GenerateQurbaniSlaughter(models.TransientModel):
-    _name = 'generate.qurbani.slaughter'
-    _description = "Generate Qurbani Slaughter"
+class GenerateQurbaniDistribution(models.TransientModel):
+    _name = 'generate.qurbani.distribution'
+    _description = "Generate Qurbani Distribution"
 
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
-    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
+    slaughter_location_id = fields.Many2one('stock.location', string="Distribution Location")
 
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
 
     inventory_product_name = fields.Char(related='inventory_product_id.name', string="Inentory Product Name")
+
+    pos_product_id = fields.Many2many('product.product', string='POS Products', tracking=True)
     
 
-    def action_generate_slaughter(self):
+    def action_generate_distribution(self):
         self.ensure_one()
 
+        Demand = self.env['qurbani.slaughter.slot.demand']
         Demand = self.env['qurbani.slaughter.slot.demand']
 
         demands = Demand.search([
@@ -34,19 +37,20 @@ class GenerateQurbaniSlaughter(models.TransientModel):
         product_name = (self.inventory_product_id.name or "").lower()
 
         if 'cow' in product_name:
-            SlaughterModel = self.env['qurbani.cow.slaughter']
+            DistributionModel = self.env['qurbani.cow.distribution']
         elif 'goat' in product_name:
-            SlaughterModel = self.env['qurbani.goat.slaughter']
+            DistributionModel = self.env['qurbani.goat.distribution']
         else:
             raise UserError("Unknown product type! Define Cow or Goat.")
 
         for demand in demands:
 
+
             # 🔹 Count existing records
-            existing_count = SlaughterModel.search_count([
+            existing_count = DistributionModel.search_count([
                 ('day_id', '=', demand.day_id.id),
                 ('hijri_id', '=', demand.hijri_id.id),
-                ('slaughter_location_id', '=', demand.slaughter_location_id.id),
+                ('distribution_location_id', '=', demand.slaughter_location_id.id),
                 ('start_time', '=', demand.start_time),
                 ('end_time', '=', demand.end_time),
             ])

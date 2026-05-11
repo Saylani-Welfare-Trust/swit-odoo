@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 
 
 class QurbaniGoatSlaughter(models.Model):
@@ -13,12 +13,19 @@ class QurbaniGoatSlaughter(models.Model):
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
 
-    qurbani_order_no = fields.Char('QO No.')
-    qurbani_order_line_no = fields.Char('QOL No.')
-
     video = fields.Binary('Video')
     image = fields.Binary('Image')
 
-    hissa_name = fields.Char('Hissa Name')
+    name = fields.Char('Name')
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
+
+    qurbani_goat_slaughter_line = fields.One2many('qurbani.goat.slaughter.line', 'qurbani_goat_slaughter_id', string="Qurbani Cow Slaughter Line")
+
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_slaughter') or ('New')
+
+        return super(QurbaniGoatSlaughter, self).create(vals)

@@ -43,6 +43,7 @@ patch(PaymentScreen.prototype, {
                         title: _t("Error"),
                         body: data.body,
                     });
+                    return;
                 }
                 
                 if (data.status === 'success') {
@@ -52,8 +53,6 @@ patch(PaymentScreen.prototype, {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
-
-                    this.pos.is_qurbani = true
                 }
             })
         }

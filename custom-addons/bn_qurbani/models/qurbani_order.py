@@ -1,8 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-
+import logging
 import re
-
+_logger = logging.getLogger(__name__)
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
@@ -11,7 +11,7 @@ class QurbaniOrder(models.Model):
 
     donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
-    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
+    country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True, readonly=True)
 
     name = fields.Char('Name', default="New")
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
@@ -21,17 +21,43 @@ class QurbaniOrder(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
 
+    # POS vs Web Order indicator
+    pos_qurbani_order = fields.Boolean('POS Order', default=True)
+
+    # API/Web Order Fields
+    api_response_id = fields.Char('API Response ID')
+    donation_type = fields.Char('Donation Type')
+    donation_from = fields.Char('Donation From')
+    dn_number = fields.Char('DN Number')
+    transaction_id = fields.Char('Transaction ID')
+    api_currency = fields.Char('API Currency')
+    bank_charges = fields.Monetary('Bank Charges', currency_field='currency_id')
+    api_created_at = fields.Datetime('API Created At')
+    api_updated_at = fields.Datetime('API Updated At')
+
+    # Donor Details
+    donor_phone = fields.Char('Donor Phone')
+    donor_email = fields.Char('Donor Email')
+    donor_cnic = fields.Char('Donor CNIC')
+    donor_country = fields.Char('Donor Country')
+    donor_ip_address = fields.Char('Donor IP Address')
+
+    # Subscription Preferences
+    subscription_news = fields.Boolean('Subscribe to News')
+    subscription_whatsapp = fields.Boolean('Subscribe to WhatsApp')
+    subscription_sms = fields.Boolean('Subscribe to SMS')
+
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #     for rec in self:
+    #         if rec.mobile:
+    #             if not re.fullmatch(r"\d{10}", rec.mobile):
+    #                 raise ValidationError(
+    #                     "Mobile number must contain exactly 10 digits."
+    #                 )
 
     @api.model
     def create(self, vals):
@@ -42,6 +68,127 @@ class QurbaniOrder(models.Model):
     
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
+    
+    def create_web_qurbani_order(self, donation_record):
+        """
+        Create Qurbani Order directly from api.donation record
+        """
+
+        try:
+            order_lines = []
+
+            # Handle qurbani_order_line_ids - can be list of IDs or objects
+            qurbani_line_ids = donation_record.get('qurbani_order_line_ids', [])
+            
+            if qurbani_line_ids:
+                # If it's a list of IDs, fetch the actual line objects
+                if isinstance(qurbani_line_ids, list) and qurbani_line_ids:
+                    if isinstance(qurbani_line_ids[0], int):
+                        # It's a list of IDs, fetch from api.qurbani.order.line
+                        qurbani_lines = self.env['api.qurbani.order.line'].browse(qurbani_line_ids).exists()
+                    else:
+                        qurbani_lines = qurbani_line_ids
+                else:
+                    qurbani_lines = qurbani_line_ids if isinstance(qurbani_line_ids, list) else [qurbani_line_ids]
+
+                # Create lines from qurbani_order_line_ids
+                for line in qurbani_lines:
+                    if not line.exists():
+                        continue
+                    
+                    order_lines.append((0, 0, {
+                        'product_id': line.product_id.id if hasattr(line, 'product_id') and line.product_id else False,
+                        'quantity': line.quantity if hasattr(line, 'quantity') else 1,
+                        'amount': line.amount if hasattr(line, 'amount') else 0.0,
+                        'day_id': line.day_id.id if hasattr(line, 'day_id') and line.day_id else False,
+                        'hijri_id': line.hijri_id.id if hasattr(line, 'hijri_id') and line.hijri_id else False,
+                        'city_id': line.city_id.id if hasattr(line, 'city_id') and line.city_id else False,
+                        'hissa_name': line.hissa_name if hasattr(line, 'hissa_name') else '',
+                    }))
+
+            # Get donor_id - can be tuple (id, name) or just id - VALIDATE IT EXISTS
+            donor_id = donation_record.get('donor_id')
+            if isinstance(donor_id, tuple):
+                donor_id = donor_id[0]
+            
+            # Validate donor exists if provided
+            if donor_id and isinstance(donor_id, int):
+                donor_check = self.env['res.partner'].browse(donor_id).exists()
+                if not donor_check:
+                    _logger.warning(f"Donor ID {donor_id} does not exist, setting to False")
+                    donor_id = False
+
+            # Get currency - VALIDATE IT EXISTS
+            currency_name = donation_record.get('currency', 'USD')
+            currency_id = self.env['res.currency'].search(
+                [('name', '=', currency_name)],
+                limit=1
+            )
+            if not currency_id:
+                _logger.warning(f"Currency {currency_name} not found, using company currency")
+                currency_id = self.env.company.currency_id
+            
+            currency_id = currency_id.id if currency_id else self.env.company.currency_id.id
+
+            qurbani_order = self.env['qurbani.order'].create({
+                'donor_id': donor_id or False,
+                'currency_id': currency_id,
+                'remarks': donation_record.get('remarks', ''),
+                'total_amount': float(donation_record.get('total_amount', 0.0)),
+                'qurbani_order_line_ids': order_lines,
+                'pos_qurbani_order': False,
+
+                # API / Donation Fields
+                'api_response_id': donation_record.get('import_id', ''),
+                'donation_type': donation_record.get('donation_type', ''),
+                'donation_from': donation_record.get('donation_from', ''),
+                'dn_number': donation_record.get('dn_number', ''),
+                'bank_charges': float(donation_record.get('bank_charges', 0.0)),
+                'transaction_id': donation_record.get('transaction_id', ''),
+                'api_currency': donation_record.get('currency', ''),
+                'api_created_at': donation_record.get('created_at'),
+                'api_updated_at': donation_record.get('updated_at'),
+
+                # Donor Details
+                'donor_phone': donation_record.get('phone', ''),
+                'donor_email': donation_record.get('email', ''),
+                'donor_cnic': donation_record.get('cnic', ''),
+                'donor_country': donation_record.get('country', ''),
+                'donor_ip_address': donation_record.get('ip_address', ''),
+
+                # Subscriptions
+                'subscription_news': bool(donation_record.get('subscription_for_news', False)),
+                'subscription_whatsapp': bool(donation_record.get('subscription_for_whatsapp', False)),
+                'subscription_sms': bool(donation_record.get('subscription_for_sms', False)),
+            })
+
+            return {
+                "status": "success",
+                "qurbani_order_id": qurbani_order.id,
+                "name": qurbani_order.name,
+                "message": "Web Qurbani Order created successfully"
+            }
+
+        except Exception as e:
+            _logger.error(f"Error creating web qurbani order: {str(e)}", exc_info=True)
+
+            return {
+                "status": "error",
+                "message": str(e)
+            }    
+    @staticmethod
+    def _parse_iso_datetime(iso_string):
+        """Parse ISO 8601 datetime string to Odoo datetime format"""
+        if not iso_string:
+            return None
+        try:
+            from datetime import datetime
+            # Parse ISO 8601 format (e.g., '2026-05-04T20:01:19.593Z')
+            dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+            return dt.replace(tzinfo=None)
+        except Exception as e:
+            _logger.warning(f"Could not parse datetime {iso_string}: {str(e)}")
+            return None
     
     def action_show_pos_order(self):
         self.ensure_one()
@@ -90,63 +237,53 @@ class QurbaniOrder(models.Model):
                 return 7
             elif "goat" in name:
                 return 1
+
             return 1
 
         # ==================================================
-        # 2. GET DEMAND
+        # 2. GET DEMAND USING slot_demand_id
         # ==================================================
         def _get_demand(line):
 
             schedule = line.get('qurbani_schedule', {})
             slot = schedule.get('slot', {})
 
-            key = (
-                line['product_id'],
-                slot.get('distribution', {}).get('location'),
-            )
+            slot_demand_id = slot.get('slot_demand_id')
 
-            if key in demand_cache:
-                return demand_cache[key]
-
-            distribution = self.env['distribution.schedule'].search([
-                ('pos_product_ids', 'in', line['product_id']),
-                ('location_id', '=', slot.get('distribution', {}).get('location')),
-                ('hijri_id', '=', Hijri.id),
-            ], limit=1)
-
-            if not distribution or not distribution.slaughter_schedule_id:
-                demand_cache[key] = False
+            if not slot_demand_id:
                 return False
 
-            slaughter = distribution.slaughter_schedule_id
+            if slot_demand_id in demand_cache:
+                return demand_cache[slot_demand_id]
 
-            demand = self.env['qurbani.slaughter.slot.demand'].search([
-                ('day_id', '=', distribution.day_id.id),
-                ('hijri_id', '=', distribution.hijri_id.id),
-                ('slaughter_location_id', '=', distribution.slaughter_location_id.id),
-                ('inventory_product_id', '=', distribution.inventory_product_id.id),
-                ('start_time', '<=', slot.get('slaughter', {}).get('start') or slaughter.start_time),
-                ('end_time', '>=', slot.get('slaughter', {}).get('end') or slaughter.end_time),
-            ], limit=1)
+            demand = self.env['qurbani.slaughter.slot.demand'].browse(
+                slot_demand_id
+            ).exists()
 
-            demand_cache[key] = demand
+            demand_cache[slot_demand_id] = demand
+
             return demand
 
         # ==================================================
         # 3. GROUP (ONLY HISSA COUNT)
         # ==================================================
-        for line in data['order_lines']:
+        for line in data.get('order_lines', []):
+
             product = self.env['product.product'].browse(line['product_id'])
 
             # ❌ Skip non-qurbani products
-            if 'qurbani' not in product.categ_id.name.lower():
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             demand = _get_demand(line)
-            if not demand:
-                continue
 
-            qty = int(line.get('quantity', 0))  # this is HISSA
+            if not demand:
+                return {
+                    "status": "error",
+                    "body": "Invalid slaughter slot selected."
+                }
+
+            qty = int(line.get('quantity', 0))
 
             if demand.id not in schedule_usage:
                 schedule_usage[demand.id] = {
@@ -165,7 +302,6 @@ class QurbaniOrder(models.Model):
             qty = usage['qty']
 
             available = demand.remaining_hissa
-            # available = (demand.total_hissa or 0) - (demand.current_hissa or 0)
 
             if qty > available:
                 return {
@@ -177,7 +313,7 @@ class QurbaniOrder(models.Model):
                 }
 
         # ==================================================
-        # 5. APPLY UPDATES (🔥 CORRECT INVENTORY-STYLE LOGIC)
+        # 5. APPLY UPDATES
         # ==================================================
         for usage in schedule_usage.values():
 
@@ -188,23 +324,23 @@ class QurbaniOrder(models.Model):
 
             old_current = demand.current_hissa or 0
 
-            # STEP 1: add hissa
+            # STEP 1: ADD HISSA
             total_hissa = old_current + incoming_hissa
 
-            # STEP 2: detect completed animals
+            # STEP 2: COMPLETED ANIMALS
             completed_animals = int(total_hissa // divisor)
 
-            # STEP 3: remaining hissa after full animals
+            # STEP 3: REMAINING HISSA
             remaining_hissa = total_hissa % divisor
 
-            # STEP 4: reduce remaining demand
+            # STEP 4: REMAINING DEMAND
             new_remaining_demand = max(
                 (demand.remaining_demand or 0) - completed_animals,
                 0
             )
 
             demand.write({
-                'current_hissa': remaining_hissa,   # 🔥 leftover like inventory
+                'current_hissa': remaining_hissa,
                 'booked_hissa': (demand.booked_hissa or 0) + incoming_hissa,
                 'remaining_demand': new_remaining_demand,
             })
@@ -214,37 +350,74 @@ class QurbaniOrder(models.Model):
         # ==================================================
         product_lines = []
 
-        for line in data['order_lines']:
+        for line in data.get('order_lines', []):
+
             product = self.env['product.product'].browse(line['product_id'])
 
             # ❌ Skip non-qurbani products
-            if 'qurbani' not in product.categ_id.name.lower():
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             schedule = line.get('qurbani_schedule', {})
             slot = schedule.get('slot', {})
 
-            product_lines.append((0, 0, {
+            demand = _get_demand(line)
+
+            if not demand:
+                continue
+
+            slaughter_data = slot.get('slaughter', {})
+            distribution_data = slot.get('distribution', {})
+
+            # ==================================================
+            # GET CITY
+            # ==================================================
+            city_id = False
+
+            if demand.slaughter_location_id:
+                city_id = (
+                    demand.slaughter_location_id.location_id.id
+                    if hasattr(demand.slaughter_location_id, 'location_id')
+                    else False
+                )
+
+            # fallback from schedule city
+            if not city_id and schedule.get('city'):
+                city = self.env['stock.location'].search([
+                    ('name', '=', schedule.get('city'))
+                ], limit=1)
+
+                city_id = city.id if city else False
+
+            # ==================================================
+            # BUILD LINE
+            # ==================================================
+            vals = {
                 'product_id': line.get('product_id'),
                 'quantity': line.get('quantity'),
                 'amount': line.get('price'),
 
-                'day_id': self.env['qurbani.day'].search([
-                    ('name', '=', slot.get('day'))
-                ], limit=1).id,
+                'day_id': demand.day_id.id,
+                'hijri_id': demand.hijri_id.id,
 
-                'hijri_id': Hijri.id,
+                'city_id': city_id,
 
-                'city_id': self.env['stock.location'].search([
-                    ('name', '=', schedule.get('city'))
-                ], limit=1).id,
+                'distribution_id': distribution_data.get('location'),
 
-                'distribution_id': self.env['stock.location'].browse(slot.get('distribution', {}).get('location')).id,
+                'slaughter_id': slaughter_data.get('location'),
 
                 'hissa_name': schedule.get('name', ''),
-                'start_time': slot.get('distribution', {}).get('start'),
-                'end_time': slot.get('distribution', {}).get('end'),
-            }))
+
+                # DISTRIBUTION TIMES
+                'start_time': distribution_data.get('start'),
+                'end_time': distribution_data.get('end'),
+
+                # SLAUGHTER TIMES
+                'slaughter_start_time': slaughter_data.get('start'),
+                'slaughter_end_time': slaughter_data.get('end'),
+            }
+
+            product_lines.append((0, 0, vals))
 
         # ==================================================
         # 7. CREATE ORDER
@@ -256,6 +429,9 @@ class QurbaniOrder(models.Model):
 
         qurbani.calculate_amount()
 
+        # ==================================================
+        # 8. SUCCESS
+        # ==================================================
         return {
             "status": "success",
             "id": qurbani.id,
