@@ -45,8 +45,11 @@ class WelfareLine(models.Model):
 
     product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
-    employee_category_id_officer = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
-
+    employee_category_id_officer = fields.Many2one(
+        'hr.employee.category', 
+        string="Employee Category", 
+        default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
+    )
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
     payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
