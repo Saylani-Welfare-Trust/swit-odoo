@@ -2,8 +2,8 @@ from odoo import models, fields, api, _
 
 
 class QurbaniGoatDistribution(models.Model):
-    _name = 'qurbani.cow.distribution'
-    _description = "Qurbani Cow Distribution"
+    _name = 'qurbani.goat.distribution'
+    _description = "Qurbani Goat Distribution"
 
 
     hijri_id = fields.Many2one('hijri', string="Hijri")
