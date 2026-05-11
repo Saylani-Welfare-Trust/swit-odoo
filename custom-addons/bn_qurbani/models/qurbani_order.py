@@ -429,6 +429,40 @@ class QurbaniOrder(models.Model):
 
         qurbani.calculate_amount()
 
+        for line in qurbani.qurbani_order_line_ids:
+            if 'cow' in product.name.lower():
+                qurbani_cow_slaughter = self.env['qurbani.cow.slaughter'].search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('start_time', '=', line.slaughter_start_time),
+                    ('end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                    ('slot_full', '<=', 7),
+                ])
+
+                qurbani_cow_slaughter.qurbani_cow_slaughter_line = [(6, 0, {
+                    'qurbani_order_no': line.qurbani_order_id.name,
+                    'qurbani_order_line_no': line.name,
+                    'hissa_name': line.hissa_name,
+                })]
+            if 'goat' in product.name.lower():
+                qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('start_time', '=', line.slaughter_start_time),
+                    ('end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                    ('slot_full', '<=', 7),
+                ])
+
+                qurbani_goat_slaughter.qurbani_goat_slaughter_line = [(6, 0, {
+                    'qurbani_order_no': line.qurbani_order_id.name,
+                    'qurbani_order_line_no': line.name,
+                    'hissa_name': line.hissa_name,
+                })]
+
         # ==================================================
         # 8. SUCCESS
         # ==================================================
