@@ -71,8 +71,11 @@ class Welfare(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     is_individual = fields.Boolean('Is Individual', default=False) 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
-    employee_category_id_officer = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
-
+    employee_category_id_officer = fields.Many2one(
+        'hr.employee.category', 
+        string="Employee Category", 
+        default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
+    )
     
     name = fields.Char('Name', default="NEW")
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
