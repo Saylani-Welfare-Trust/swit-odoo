@@ -18,6 +18,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
+    distribution_location_id = fields.Many2one('stock.location', string="Distribution Location")
 
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
     
@@ -118,7 +119,8 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
             for slaughter_schedule in slaughter_schedules:
 
                 distribution_schedules = DistributionSchedule.search([
-                    ('slaughter_schedule_id', '=', slaughter_schedule.id)
+                    ('slaughter_schedule_id', '=', slaughter_schedule.id),
+                    ('location_id', '=', self.distribution_location_id.id)
                 ])
 
                 for distribution_schedule in distribution_schedules:
