@@ -28,7 +28,7 @@
         </field>
     </record>
 
-    <record id="generate.qurbani.slaughter.and.distribution_action" model="ir.actions.act_window">
+    <record id="generate_qurbani_slaughter_and_distribution_action" model="ir.actions.act_window">
         <field name="name">Generate Qurbani Slaughter</field>
         <field name="res_model">generate.qurbani.slaughter.and.distribution</field>
         <field name="view_mode">form</field>
