@@ -8,7 +8,7 @@ class GenerateQurbaniDistribution(models.TransientModel):
 
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
-    distribtuion_location_id = fields.Many2one('stock.location', string="Distribution Location")
+    distribution_location_id = fields.Many2one('stock.location', string="Distribution Location")
 
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
 
