@@ -53,8 +53,8 @@
                                 <tree>
                                     <field name="qurbani_order_no" />
                                     <field name="qurbani_order_line_no" />
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="hissa_name" />
-                                    <field name="option" />
                                 </tree>
                             </field>
                         </page>
