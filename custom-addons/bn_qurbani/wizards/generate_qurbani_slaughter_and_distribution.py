@@ -83,8 +83,6 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                 })
 
             SlaughterModel.create(vals_list)
-        
-        self.action_generate_distribution()
 
 
     def action_generate_distribution(self):
