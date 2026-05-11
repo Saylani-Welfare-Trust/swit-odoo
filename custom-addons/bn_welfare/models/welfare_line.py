@@ -111,7 +111,50 @@ class WelfareLine(models.Model):
 
 
     manual_total = fields.Boolean(default=False)
-
+    def action_set_pending(self):
+        """
+        Create a new welfare record with only the pending disbursement line.
+        Original welfare keeps all its lines unchanged.
+        """
+        action = {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'target': 'current',
+        }
+        
+        for record in self:
+            if record.welfare_id:
+                # Get the original welfare
+                welfare = record.welfare_id
+                
+                # Create new welfare record based on the current welfare
+                new_welfare_vals = {
+                    'name': welfare.name,
+                    'donee_id': welfare.donee_id.id,
+                    'employee_id': welfare.employee_id.id if welfare.employee_id else False,
+                    'is_individual': welfare.is_individual,
+                    'date': fields.Date.today(),
+                    'state': 'draft',
+                    'order_type': welfare.order_type,
+                    'institution_category': welfare.institution_category,
+                    'subcategory': welfare.subcategory,
+                }
+                
+                # Create the new welfare record
+                new_welfare = self.env['welfare'].create(new_welfare_vals)
+                
+                # Copy ONLY this disbursement line to the new welfare with pending state
+                # Original line remains unchanged in the original welfare
+                record.copy(default={
+                    'welfare_id': new_welfare.id,
+                    'state': 'pending',
+                })
+                
+                # Return action to open the new welfare record
+                action['res_model'] = 'welfare'
+                action['res_id'] = new_welfare.id
+        
+        return action
     @api.model
     def create(self, vals):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
