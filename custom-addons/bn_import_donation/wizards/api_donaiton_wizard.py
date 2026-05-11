@@ -362,6 +362,7 @@ class APIDonationWizard(models.TransientModel):
                     stock_accumulator[product.id] += qty
         
         # Bulk create partners first
+        temp_id_to_partner = {}
         if partner_to_create:
             # 🔹 Deduplicate partner_to_create (mobile + country)
             seen = set()
@@ -535,7 +536,7 @@ class APIDonationWizard(models.TransientModel):
                 }
                 partner_to_create.append(partner_vals)
                 partner_key = temp_id
-                partner_key = len(partner_to_create) - 1
+                # partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
         
