@@ -323,7 +323,7 @@ class APIDonationWizard(models.TransientModel):
                 self.create_fetch_log(history.id, f"Skipping donation with import_id {import_id} (already exists or missing)", 'Skipped', f"Donation with import_id {import_id} is skipped because it already exists or is missing")
 
                 continue
-
+            raise ValidationError(str(info))
             # Prepare donation values efficiently
             donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping, history)
             if donation_vals:
