@@ -410,8 +410,29 @@ class APIDonationWizard(models.TransientModel):
 
             if partners_to_create_final:
                 created_partners = self.env['res.partner'].create(partners_to_create_final)
-                # Register partners in bulk
                 created_partners.action_register()
+                
+                # Build mapping from temp_id to actual partner id
+                temp_id_to_partner = {}
+                for partner in created_partners:
+                    # Retrieve the original temp_id from the partner (you could store it in a custom field,
+                    # or match by mobile+country if you ensure uniqueness)
+                    # Simpler: because we just created them, we can iterate over partners_to_create_final
+                    # and match using the same temp_id stored in the dictionary.
+                    # But partners_to_create_final are the dicts we passed; we need to know which temp_id
+                    # corresponds to which created partner.
+                    # The create() returns records in the same order as the list (if no duplicates filtered).
+                    # So we can zip them:
+                    for partner_dict, partner_record in zip(partners_to_create_final, created_partners):
+                        temp_id = partner_dict.get('temp_id')
+                        if temp_id:
+                            temp_id_to_partner[temp_id] = partner_record.id
+
+                # Then when updating donation_vals, use partner_temp_id:
+                for donation_val in donations_to_create:
+                    if 'partner_temp_id' in donation_val:
+                        donation_val['donor_id'] = temp_id_to_partner.get(donation_val['partner_temp_id'])
+                        del donation_val['partner_temp_id']
 
             # raise ValidationError(str(partner_to_create))
         
@@ -520,19 +541,17 @@ class APIDonationWizard(models.TransientModel):
                         break
             
             if not donor_id:
-                # raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
-
-                # Create new partner
+                temp_id = f"temp_{len(partner_to_create)}_{fields.Datetime.now().timestamp()}"
                 partner_vals = {
                     'name': donor.get('name', ''),
                     'mobile': mobile,
                     'email': donor.get('email', ''),
                     'country_code_id': country_id,
                     'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    # 'original_index': len(partner_to_create)  # Store index for mapping
+                    'temp_id': temp_id,          # add this field (not an Odoo field, just dict key)
                 }
                 partner_to_create.append(partner_vals)
-                # Temporary key for later mapping
+                donation_vals['partner_temp_id'] = temp_id   # store temp id in donation vals
                 partner_key = len(partner_to_create) - 1
         else:
             donor_id = all_data['default_partner_id']
