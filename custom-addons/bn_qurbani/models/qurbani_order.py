@@ -447,7 +447,6 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
-                    ('slot_full', '<=', 7),
                 ], limit=1)
 
                 qurbani_cow_slaughter.qurbani_cow_slaughter_line = [(0, 0, {
@@ -481,7 +480,6 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
-                    ('slot_full', '<=', 7),
                 ], limit=1)
 
                 qurbani_goat_slaughter.qurbani_goat_slaughter_line = [(0, 0, {
