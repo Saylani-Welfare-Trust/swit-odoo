@@ -54,6 +54,7 @@
                                     <field name="qurbani_order_no" />
                                     <field name="qurbani_order_line_no" />
                                     <field name="hissa_name" />
+                                    <field name="option" />
                                 </tree>
                             </field>
                         </page>

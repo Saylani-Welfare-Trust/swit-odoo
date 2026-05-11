@@ -13,7 +13,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     _description = "Generate Qurbani Slaughter And Distribution"
 
 
-    type = fields.Selection(selection=type_selection, string="Type")
+    type = fields.Selection(selection=type_selection, string="Type", default='slaughter')
 
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri")
