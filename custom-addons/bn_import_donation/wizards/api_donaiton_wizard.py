@@ -62,6 +62,23 @@ class APIDonationWizard(models.TransientModel):
 
             return True
 
+        # 🔹 TESTING MODE: Filter to only first 5 normal + is_qurbani=True donations
+        filtered_donations = []
+        for donation in donations_info:
+            if filtered_donations and len(filtered_donations) >= 5:
+                break
+            # Filter by is_qurbani=True and type='normal'
+            if donation.get('is_qurbani') == True :
+                filtered_donations.append(donation)
+        
+        donations_info = filtered_donations
+        self.create_fetch_log(history.id, f"TESTING MODE: Filtered donations to {len(donations_info)} records (first 5 with is_qurbani=True and type='normal')", 'Filtered', f"Processing limited to first 5 normal+qurbani donations for testing")
+
+        if not donations_info:
+            self.create_fetch_log(history.id, f"No normal qurbani donations found for testing. {self.start_date} to {self.end_date}", 'No Data', 'No matching donations found')
+
+            return True
+
         # Prepare bulk data
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
