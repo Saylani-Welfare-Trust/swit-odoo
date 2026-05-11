@@ -80,7 +80,9 @@ class ResPartner(models.Model):
     details = fields.Text('Details', tracking=True)
 
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
-    country_code_id = fields.Many2one('res.country', string="Phone Code")
+    
+    
+    country_code_id = fields.Many2one('res.country', string="Phone Code", default=_default_country_code)
 
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
@@ -90,6 +92,8 @@ class ResPartner(models.Model):
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
     
+    def _default_country_code(self):
+        return self.env['res.country'].search([('name', '=', 'Pakistan')], limit=1).id or False
     
     @api.constrains('mobile')
     def _check_mobile_number(self):
