@@ -299,10 +299,16 @@ class APIDonationWizard(models.TransientModel):
         }
 
     # ---------------------- Bulk Processing ----------------------
-    def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data, history):
-        self.create_fetch_log(history.id, f"Start _process_donations_bulk", "Processing", "Starting to process donations in bulk with optimized operations")
+    # ---------------------- TESTING / DEBUG COUNTERS ----------------------
 
-        """Process donations in bulk with optimized operations"""
+    def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data, history):
+        self.create_fetch_log(
+            history.id,
+            f"Start _process_donations_bulk",
+            "Processing",
+            "Starting to process donations in bulk with optimized operations"
+        )
+
         new_donation_ids = []
         debit_accumulator = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
         credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0})
@@ -311,37 +317,71 @@ class APIDonationWizard(models.TransientModel):
         StockMove = self.env['stock.move']
 
         stock_accumulator = defaultdict(float)
-        
-        # Prepare bulk create data
+
+        # -----------------------------
+        # DEBUG / TESTING COUNTERS
+        # -----------------------------
+        total_records = 0
+        skipped_records = 0
+        processed_records = 0
+
+        total_partner_requests = 0
+        duplicate_partner_requests = 0
+        already_existing_partners = 0
+        actually_created_partners = 0
+
         donations_to_create = []
         partner_to_create = []
         partner_mapping = {}
-        
-        for info_idx, info in enumerate(donations_info):
-            import_id = info.get('_id')
-            if not import_id or import_id in all_data['existing_import_ids']:
-                self.create_fetch_log(history.id, f"Skipping donation with import_id {import_id} (already exists or missing)", 'Skipped', f"Donation with import_id {import_id} is skipped because it already exists or is missing")
 
+        for info_idx, info in enumerate(donations_info):
+
+            total_records += 1
+
+            import_id = info.get('_id')
+
+            if not import_id or import_id in all_data['existing_import_ids']:
+                skipped_records += 1
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Skipping donation with import_id {import_id} (already exists or missing)",
+                    'Skipped',
+                    f"Donation with import_id {import_id} is skipped because it already exists or is missing"
+                )
                 continue
 
-            # Prepare donation values efficiently
-            donation_vals = self._prepare_donation_vals_fast(info, all_data, info_idx, partner_to_create, partner_mapping, history)
-            if donation_vals:
-                self.create_fetch_log(history.id, f"Prepared donation values for index {info_idx}: {donation_vals}", 'Processing', 'Prepared donation values for bulk processing')
+            processed_records += 1
 
+            donation_vals = self._prepare_donation_vals_fast(
+                info,
+                all_data,
+                info_idx,
+                partner_to_create,
+                partner_mapping,
+                history
+            )
+
+            if donation_vals:
                 donations_to_create.append(donation_vals)
 
-                self.create_fetch_log(history.id, f"{gateway_config} and {journal} exist", 'Processing', 'Gateway config and journal exist')
-
-                # Accumulate journal lines if gateway config exists
                 if gateway_config and journal:
                     self._accumulate_donation_lines_fast(
-                        donation_vals, all_data, company_currency,
-                        debit_accumulator, credit_accumulator, history
+                        donation_vals,
+                        all_data,
+                        company_currency,
+                        debit_accumulator,
+                        credit_accumulator,
+                        history
                     )
-                # raise ValidationError(str(credit_accumulator))
+
+            # -----------------------------
+            # STOCK PROCESSING
+            # -----------------------------
             items = info.get('items') or []
+
             for it in items:
+
                 item_name = ''
                 item_data = it.get('item', {})
 
@@ -350,7 +390,6 @@ class APIDonationWizard(models.TransientModel):
 
                 normalized_item_name = (item_name or '').strip().lower()
 
-                # Find product from gateway config
                 product_line = gateway_config.gateway_config_line_ids.filtered(
                     lambda l: (l.name or '').strip().lower() == normalized_item_name
                 )
@@ -360,60 +399,182 @@ class APIDonationWizard(models.TransientModel):
                 if product and product.detailed_type == 'product':
                     qty = float(it.get('qty') or 1.0)
                     stock_accumulator[product.id] += qty
-        
-        # Bulk create partners first
-        if partner_to_create:
-            # 🔹 Deduplicate partner_to_create (mobile + country)
-            seen = set()
-            unique_partners = []
 
-            for vals in partner_to_create:
-                key = (
-                    vals.get('mobile'),
-                    vals.get('country_code_id')
+        # ==========================================================
+        # PARTNER DEBUGGING SECTION
+        # ==========================================================
+
+        self.create_fetch_log(
+            history.id,
+            f"Partner requests before deduplication: {len(partner_to_create)}",
+            'Debug',
+            'Total partner requests collected'
+        )
+
+        total_partner_requests = len(partner_to_create)
+
+        # -----------------------------
+        # REMOVE DUPLICATES
+        # -----------------------------
+        seen = set()
+        unique_partners = []
+
+        for vals in partner_to_create:
+
+            key = (
+                vals.get('mobile'),
+                vals.get('country_code_id')
+            )
+
+            if key not in seen:
+                seen.add(key)
+                unique_partners.append(vals)
+            else:
+                duplicate_partner_requests += 1
+
+        self.create_fetch_log(
+            history.id,
+            f"Duplicate partner requests removed: {duplicate_partner_requests}",
+            'Debug',
+            'Duplicate partner requests based on mobile + country'
+        )
+
+        partner_to_create[:] = unique_partners
+
+        self.create_fetch_log(
+            history.id,
+            f"Unique partners after deduplication: {len(partner_to_create)}",
+            'Debug',
+            'Unique partner records remaining'
+        )
+
+        # -----------------------------
+        # CHECK EXISTING PARTNERS
+        # -----------------------------
+        partners_to_create_final = []
+
+        for vals in partner_to_create:
+
+            existing_partner = self.env['res.partner'].search([
+                '|',
+                ('email', '=', vals.get('email')),
+                ('mobile', '=', vals.get('mobile')),
+            ], limit=1)
+
+            if not existing_partner:
+                partners_to_create_final.append(vals)
+            else:
+                already_existing_partners += 1
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Partner already exists: {existing_partner.name}",
+                    'Debug',
+                    f"Existing partner found for mobile={vals.get('mobile')}"
                 )
-                if key not in seen:
-                    seen.add(key)
-                    unique_partners.append(vals)
 
-            partner_to_create[:] = unique_partners
+        self.create_fetch_log(
+            history.id,
+            f"Partners already existing in DB: {already_existing_partners}",
+            'Debug',
+            'Existing partners count'
+        )
 
-            # 🔹 Filter out partners that already exist
-            partners_to_create_final = []
-            for vals in partner_to_create:
-                existing_partner = self.env['res.partner'].search([
-                    '|',
-                    ('email', '=', vals.get('email')),
-                    ('mobile', '=', vals.get('mobile')),
-                ], limit=1)
-                if not existing_partner:
-                    partners_to_create_final.append(vals)
-                else:
-                    _logger.info(f"Partner already exists: {existing_partner.name}")
+        self.create_fetch_log(
+            history.id,
+            f"Partners remaining to create: {len(partners_to_create_final)}",
+            'Debug',
+            'Final partner creation count'
+        )
 
-            if partners_to_create_final:
-                created_partners = self.env['res.partner'].create(partners_to_create_final)
-                # Register partners in bulk
-                created_partners.action_register()
+        # -----------------------------
+        # ACTUAL CREATE
+        # -----------------------------
+        created_partners = self.env['res.partner']
 
-            # raise ValidationError(str(partner_to_create))
-        
-        # Update partner IDs in donation values
+        if partners_to_create_final:
+
+            created_partners = self.env['res.partner'].create(partners_to_create_final)
+
+            actually_created_partners = len(created_partners)
+
+            self.create_fetch_log(
+                history.id,
+                f"Actually created partners: {actually_created_partners}",
+                'Success',
+                'Partners successfully created'
+            )
+
+            created_partners.action_register()
+
+        # ==========================================================
+        # FINAL DEBUG SUMMARY
+        # ==========================================================
+
+        debug_summary = f"""
+    ===========================
+    DONATION IMPORT SUMMARY
+    ===========================
+
+    TOTAL API RECORDS: {total_records}
+
+    SKIPPED RECORDS: {skipped_records}
+
+    PROCESSED RECORDS: {processed_records}
+
+    ---------------------------
+    PARTNER SUMMARY
+    ---------------------------
+
+    TOTAL PARTNER REQUESTS: {total_partner_requests}
+
+    DUPLICATE PARTNER REQUESTS: {duplicate_partner_requests}
+
+    ALREADY EXISTING PARTNERS: {already_existing_partners}
+
+    FINAL PARTNERS TO CREATE: {len(partners_to_create_final)}
+
+    ACTUALLY CREATED PARTNERS: {actually_created_partners}
+
+    ===========================
+    """
+
+        _logger.warning(debug_summary)
+
+        self.create_fetch_log(
+            history.id,
+            debug_summary,
+            'Debug Summary',
+            'Final testing/debugging summary'
+        )
+
+        # ==========================================================
+        # UPDATE DONATION VALUES
+        # ==========================================================
+
         for donation_val in donations_to_create:
             if 'partner_key' in donation_val:
-                donation_val['donor_id'] = partner_mapping.get(donation_val['partner_key'])
+                donation_val['donor_id'] = partner_mapping.get(
+                    donation_val['partner_key']
+                )
                 del donation_val['partner_key']
-        # raise ValidationError(str(donations_to_create))
-        # Bulk create donations
+
+        # -----------------------------
+        # CREATE DONATIONS
+        # -----------------------------
         if donations_to_create:
             new_donations = self.env['api.donation'].create(donations_to_create)
             new_donation_ids = new_donations.ids
-        
+
+        # -----------------------------
+        # STOCK PICKING
+        # -----------------------------
         picking = False
-        
-        # raise ValidationError(str(new_donation_ids))
+
         if stock_accumulator:
+
             picking_type = self.picking_type_id
+
             if not picking_type:
                 raise ValidationError(_("Stock Picking Type is missing."))
 
@@ -425,13 +586,14 @@ class APIDonationWizard(models.TransientModel):
             })
 
             for product_id, qty in stock_accumulator.items():
+
                 product = self.env['product.product'].browse(product_id)
 
                 StockMove.create({
                     'name': product.display_name,
                     'product_id': product.id,
                     'product_uom_qty': qty,
-                    'quantity': qty,   # 🔑 IMPORTANT
+                    'quantity': qty,
                     'product_uom': product.uom_id.id,
                     'picking_id': picking.id,
                     'location_id': self.source_location_id.id,
@@ -441,8 +603,13 @@ class APIDonationWizard(models.TransientModel):
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
-        # raise ValidationError(str(picking))
-        self.create_fetch_log(history.id, f"End _process_donations_bulk", 'Processing', 'Completed processing donations in bulk with optimized operations')
+
+        self.create_fetch_log(
+            history.id,
+            f"End _process_donations_bulk",
+            'Processing',
+            'Completed processing donations in bulk with optimized operations'
+        )
 
         return {
             'new_donations': new_donation_ids,
@@ -452,7 +619,7 @@ class APIDonationWizard(models.TransientModel):
             },
             'picking_id': picking.id if picking else False
         }
-
+        
     def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
         self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
 
