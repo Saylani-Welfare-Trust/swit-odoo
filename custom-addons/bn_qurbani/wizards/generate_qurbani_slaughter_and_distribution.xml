@@ -21,7 +21,7 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button string="Generate" type="object" name="action_generate_slaughter" class="btn-primary"/>
+                    <button string="Generate" type="object" name="action_generate_slaughter_and_distribution" class="btn-primary"/>
                     <button string="Close" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
