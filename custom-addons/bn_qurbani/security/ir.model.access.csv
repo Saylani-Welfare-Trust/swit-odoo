@@ -18,8 +18,6 @@ access_qurbani_cow_slaughter_line,qurbani.cow.slaughter.line,model_qurbani_cow_s
 access_qurbani_goat_slaughter,qurbani.goat.slaughter,model_qurbani_goat_slaughter,,1,1,1,1
 access_qurbani_goat_slaughter_line,qurbani.goat.slaughter.line,model_qurbani_goat_slaughter_line,,1,1,1,1
 access_qurbani_cow_distribution,qurbani.cow.distribution,model_qurbani_cow_distribution,,1,1,1,1
-access_qurbani_cow_distribution_line,qurbani.cow.distribution.line,model_qurbani_cow_distribution_line,,1,1,1,1
 access_qurbani_goat_distribution,qurbani.goat.distribution,model_qurbani_goat_distribution,,1,1,1,1
-access_qurbani_goat_distribution_line,qurbani.goat.distribution.line,model_qurbani_goat_distribution_line,,1,1,1,1
 access_api_qurbani_wizard,api.qurbani.wizard,model_api_qurbani_wizard,,1,1,1,1
 access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,,1,1,1,1
