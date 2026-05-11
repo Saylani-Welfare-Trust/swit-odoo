@@ -42,7 +42,7 @@
 
     <menuitem
         id="generate_qurbani_slaughter_and_distribution_menu"
-        name="Slaughter &map; Distribution"
+        name="Slaughter &amp; Distribution"
         action="generate_qurbani_slaughter_and_distribution_action"
         parent="bn_qurbani.qurbani_generate_menu"
         sequence="1"/>
