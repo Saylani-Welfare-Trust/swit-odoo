@@ -56,7 +56,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
         return demands
 
 
-    def action_generate_slaughter_and_distribution(self):
+    def action_generate_slaughter(self):
         self.ensure_one()
 
         demands = self._get_demands()
