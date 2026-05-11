@@ -160,6 +160,7 @@
 
     <menuitem id="menu_qurbani_order"
         name="Qurbani Order"
+        action="action_pos_qurbani_order"
         parent="menu_qurbani_root"
         sequence="1"/>
 
