@@ -473,7 +473,7 @@ class Welfare(models.Model):
         if vals.get('name', _('NEW')) == _('NEW'):
             vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
         
-        return super(Welfare, self).create(vals)
+        return super().create(vals)
     
     def clean_url(self, url) :
         return (

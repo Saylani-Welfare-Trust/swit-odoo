@@ -22,6 +22,7 @@ state_selection = [
     ('draft', 'Draft'),
     ('delivered', 'Delivery Created'),
     ('disbursed', 'Disbursed'),
+    ('pending', 'Pending'),
 ]
 
 recurring_duration_selection = [
