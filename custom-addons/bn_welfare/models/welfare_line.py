@@ -114,6 +114,7 @@ class WelfareLine(models.Model):
     def action_set_pending(self):
         """
         Create a new welfare record with only the pending disbursement line.
+        Copy all available data from the original welfare record to the new one.
         Both the original line and the new line are set to 'pending' state.
         The new welfare record's state will also be set to 'pending'.
         """
@@ -128,17 +129,82 @@ class WelfareLine(models.Model):
                 # Get the original welfare
                 welfare = record.welfare_id
                 
-                # Create new welfare record based on the current welfare
+                # Create new welfare record based on the current welfare with all available fields
                 new_welfare_vals = {
                     'name': welfare.name,
-                    'donee_id': welfare.donee_id.id,
+                    'donee_id': welfare.donee_id.id if welfare.donee_id else False,
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
-                    'date': fields.Date.today(),
-                    'state': 'draft',  
-                    'order_type': welfare.order_type,
-                    'institution_category': welfare.institution_category,
-                    'subcategory': welfare.subcategory,
+                    'date': welfare.date if welfare.date else fields.Date.today(),
+                    'state': 'pending',  
+                    'order_type': welfare.order_type if welfare.order_type else False,
+                    'institution_category': welfare.institution_category if welfare.institution_category else False,
+                    'subcategory': welfare.subcategory if welfare.subcategory else False,
+                    'old_system_id': welfare.old_system_id if welfare.old_system_id else False,
+                    'applicantLocationLink': welfare.applicantLocationLink if welfare.applicantLocationLink else False,
+                    # Document Fields
+                    'application_form': welfare.application_form if welfare.application_form else False,
+                    'application_form_name': welfare.application_form_name if welfare.application_form_name else False,
+                    'frc': welfare.frc if welfare.frc else False,
+                    'frc_name': welfare.frc_name if welfare.frc_name else False,
+                    'electricity_bill_file': welfare.electricity_bill_file if welfare.electricity_bill_file else False,
+                    'electricity_bill_name': welfare.electricity_bill_name if welfare.electricity_bill_name else False,
+                    'gas_bill_file': welfare.gas_bill_file if welfare.gas_bill_file else False,
+                    'gas_bill_name': welfare.gas_bill_name if welfare.gas_bill_name else False,
+                    'family_cnic': welfare.family_cnic if welfare.family_cnic else False,
+                    'family_cnic_name': welfare.family_cnic_name if welfare.family_cnic_name else False,
+                    # Remarks Fields
+                    'hod_remarks': welfare.hod_remarks if welfare.hod_remarks else False,
+                    'member_remarks': welfare.member_remarks if welfare.member_remarks else False,
+                    'committee_remarks': welfare.committee_remarks if welfare.committee_remarks else False,
+                    'rejection_remarks': welfare.rejection_remarks if welfare.rejection_remarks else False,
+                    'portal_review_notes': welfare.portal_review_notes if welfare.portal_review_notes else False,
+                    'inquiry_media': welfare.inquiry_media if welfare.inquiry_media else False,
+                    # Employee Information
+                    'designation': welfare.designation if welfare.designation else False,
+                    'company_name': welfare.company_name if welfare.company_name else False,
+                    'company_phone': welfare.company_phone if welfare.company_phone else False,
+                    'company_address': welfare.company_address if welfare.company_address else False,
+                    'service_duration': welfare.service_duration if welfare.service_duration else 0,
+                    'monthly_salary': welfare.monthly_salary if welfare.monthly_salary else 0,
+                    # House Ownership / Residency Details
+                    'residence_type': welfare.residence_type if welfare.residence_type else False,
+                    'home_phone_no': welfare.home_phone_no if welfare.home_phone_no else False,
+                    'landlord_cnic_no': welfare.landlord_cnic_no if welfare.landlord_cnic_no else False,
+                    'landlord_mobile': welfare.landlord_mobile if welfare.landlord_mobile else False,
+                    'landlord_name': welfare.landlord_name if welfare.landlord_name else False,
+                    'rental_shared_duration': welfare.rental_shared_duration if welfare.rental_shared_duration else 0,
+                    'per_month_rent': welfare.per_month_rent if welfare.per_month_rent else 0,
+                    'gas_bill': welfare.gas_bill if welfare.gas_bill else 0,
+                    'electricity_bill': welfare.electricity_bill if welfare.electricity_bill else 0,
+                    'home_other_info': welfare.home_other_info if welfare.home_other_info else False,
+                    # Other Finance
+                    'monthly_income': welfare.monthly_income if welfare.monthly_income else 0,
+                    'outstanding_amount': welfare.outstanding_amount if welfare.outstanding_amount else 0,
+                    'monthly_household_expense': welfare.monthly_household_expense if welfare.monthly_household_expense else 0,
+                    'bank_account': welfare.bank_account if welfare.bank_account else False,
+                    'bank_name': welfare.bank_name if welfare.bank_name else False,
+                    'account_no': welfare.account_no if welfare.account_no else False,
+                    'institute_name': welfare.institute_name if welfare.institute_name else False,
+                    'other_loan': welfare.other_loan if welfare.other_loan else False,
+                    # Other Information
+                    'aid_from_other_organization': welfare.aid_from_other_organization if welfare.aid_from_other_organization else False,
+                    'have_applied_swit': welfare.have_applied_swit if welfare.have_applied_swit else False,
+                    'details_1': welfare.details_1 if welfare.details_1 else False,
+                    'details_2': welfare.details_2 if welfare.details_2 else False,
+                    'driving_license': welfare.driving_license if welfare.driving_license else False,
+                    # Request Details
+                    'loan_request_amount': welfare.loan_request_amount if welfare.loan_request_amount else 0,
+                    'loan_tenure_expected': welfare.loan_tenure_expected if welfare.loan_tenure_expected else False,
+                    'security_offered': welfare.security_offered if welfare.security_offered else False,
+                    # Family Detail
+                    'dependent_person': welfare.dependent_person if welfare.dependent_person else 0,
+                    'household_member': welfare.household_member if welfare.household_member else 0,
+                    # Inquiry Committee Questions
+                    'applicant_occupation': welfare.applicant_occupation if welfare.applicant_occupation else False,
+                    'residence_ownership': welfare.residence_ownership if welfare.residence_ownership else False,
+                    'total_children': welfare.total_children if welfare.total_children else 0,
+                    'boys_count': welfare.boys_count if welfare.boys_count else 0,
                 }
                 
                 # Create the new welfare record
