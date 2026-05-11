@@ -8,8 +8,6 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="inventory_product_name" invisible="1" />
-
                         <group name="generate_slaughter_col_1">
                             <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
                             <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
