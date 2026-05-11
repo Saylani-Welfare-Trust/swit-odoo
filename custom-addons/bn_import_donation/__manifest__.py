@@ -8,6 +8,7 @@
     'depends': [
         'bn_profile_management',
         'bn_master_setup',
+        'product'
     ],
     'data': [
         'data/sequence.xml',
