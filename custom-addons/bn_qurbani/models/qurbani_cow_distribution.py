@@ -20,7 +20,7 @@ class QurbaniCowDistribution(models.Model):
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
-    slot_full = fields.Interger('Slot Full', compute="_set_slot_full", store=True)
+    slot_full = fields.Integer('Slot Full', compute="_set_slot_full", store=True)
 
     qurbani_cow_distribution_line = fields.One2many('qurbani.cow.distribution.line', 'qurbani_cow_distribution_id', string="Qurbani Cow Distribution Line")
 

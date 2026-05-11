@@ -20,7 +20,7 @@ class QurbaniGoatSlaughter(models.Model):
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
-    slot_full = fields.Interger('Slot Full', compute="_set_slot_full", store=True)
+    slot_full = fields.Integer('Slot Full', compute="_set_slot_full", store=True)
 
     qurbani_goat_slaughter_line = fields.One2many('qurbani.goat.slaughter.line', 'qurbani_goat_slaughter_id', string="Qurbani Cow Slaughter Line")
 
