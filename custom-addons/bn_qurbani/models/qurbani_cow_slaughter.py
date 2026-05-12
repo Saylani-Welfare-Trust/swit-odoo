@@ -37,4 +37,4 @@ class QurbaniCowSlaughter(models.Model):
     def _set_slot_full(self):
         for rec in self:
             rec.slot_full = len(rec.qurbani_cow_slaughter_line)
-            rec.actual_slot_full = len(rec.qurbani_goat_slaughter_line)
+            rec.actual_slot_full = len(rec.qurbani_cow_slaughter_line)
