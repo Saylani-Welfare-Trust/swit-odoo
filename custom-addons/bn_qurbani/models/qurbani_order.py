@@ -438,7 +438,7 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.slaughter_start_time),
                     ('end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('slot_full', '<=', 7),
+                    ('slot_full', '<=', 8),
                 ], limit=1)
 
                 qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
@@ -476,7 +476,7 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.slaughter_start_time),
                     ('end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('slot_full', '<=', 7),
+                    ('slot_full', '<=', 8),
                 ], limit=1)
 
                 qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
