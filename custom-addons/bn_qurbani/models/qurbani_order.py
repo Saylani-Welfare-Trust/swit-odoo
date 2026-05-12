@@ -444,6 +444,9 @@ class QurbaniOrder(models.Model):
                 qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
+                    ('slaughter_start_time', '=', line.slaughter_start_time),
+                    ('slaughter_end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_location_id.id),
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
@@ -479,6 +482,9 @@ class QurbaniOrder(models.Model):
                 qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
+                    ('slaughter_start_time', '=', line.slaughter_start_time),
+                    ('slaughter_end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_location_id.id),
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
