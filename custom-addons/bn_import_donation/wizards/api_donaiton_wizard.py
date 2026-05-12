@@ -724,7 +724,7 @@ class APIDonationWizard(models.TransientModel):
                 domain = []
                 for word in words:
                     domain.append(('name', 'ilike', word))
-
+                raise ValidationError(str(domain))
                 product = self.env['web.qurbani.product'].search(domain, limit=1)
 
                 raise ValidationError(
