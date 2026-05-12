@@ -8,6 +8,7 @@
     'depends': [
         'bn_profile_management',
         'bn_pos_custom_action',
+        'bn_donation_box',
         'stock',
         'product',
     ],
