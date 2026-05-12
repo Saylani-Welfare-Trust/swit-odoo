@@ -72,6 +72,7 @@ class APIDonationWizard(models.TransientModel):
                 donation_dict = info.read()[0]
                 
                 # Create qurbani order from donation
+                raise ValidationError(str(donation_dict))
                 result = self.env['qurbani.order'].create_web_qurbani_order(donation_dict)
                 
                 if result.get('status') == 'success':
