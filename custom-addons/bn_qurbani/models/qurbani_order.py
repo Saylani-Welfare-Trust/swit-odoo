@@ -89,16 +89,16 @@ class QurbaniOrder(models.Model):
 
         # ---------- Helper: get hijri from datetime ----------
         def _get_hijri_from_date(dt):
-            if not dt:
+            # if not dt:
                 return self.env['hijri'].search([], order='id desc', limit=1)
-            # Convert to date if datetime
-            if hasattr(dt, 'date'):
-                dt = dt.date()
-            # Search hijri where gregorian date matches (assuming you have a field)
-            hijri = self.env['hijri'].search([('date', '=', dt)], limit=1)
-            if not hijri:
-                hijri = self.env['hijri'].search([], order='id desc', limit=1)
-            return hijri
+            # # Convert to date if datetime
+            # if hasattr(dt, 'date'):
+            #     dt = dt.date()
+            # # Search hijri where gregorian date matches (assuming you have a field)
+            # hijri = self.env['hijri'].search([('date', '=', dt)], limit=1)
+            # if not hijri:
+            #     hijri = self.env['hijri'].search([], order='id desc', limit=1)
+            # return hijri
 
         # ---------- Helper: get demand for a donation line ----------
         def _get_demand(line, default_day, default_hijri, default_product):
