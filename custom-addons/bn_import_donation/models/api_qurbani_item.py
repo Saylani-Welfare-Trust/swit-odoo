@@ -28,6 +28,47 @@ class ApiQurbaniOrderLine(models.Model):
     amount = fields.Float('Amount')
     active = fields.Boolean('Active', default=True)
 
+    @api.model
+    def _update_database_constraint(self):
+        """
+        Fix the database constraint to allow SET NULL on product_id deletion
+        This handles cases where the database has CASCADE constraint instead of SET NULL
+        """
+        try:
+            with self.env.cr.cursor() as cr:
+                # Check if the problematic constraint exists
+                cr.execute("""
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE table_name = 'api_qurbani_order_line'
+                    AND constraint_type = 'FOREIGN KEY'
+                    AND constraint_name LIKE '%product_id%'
+                """)
+                result = cr.fetchone()
+                
+                if result:
+                    constraint_name = result[0]
+                    _logger.info(f"Found constraint: {constraint_name}. Attempting to update...")
+                    
+                    try:
+                        # Drop the old constraint
+                        cr.execute(f"ALTER TABLE api_qurbani_order_line DROP CONSTRAINT {constraint_name}")
+                        
+                        # Create new constraint with SET NULL
+                        cr.execute("""
+                            ALTER TABLE api_qurbani_order_line
+                            ADD CONSTRAINT api_qurbani_order_line_product_id_fkey
+                            FOREIGN KEY (product_id)
+                            REFERENCES product_product (id)
+                            ON DELETE SET NULL
+                        """)
+                        self.env.cr.commit()
+                        _logger.info("Successfully updated database constraint to SET NULL")
+                    except Exception as e:
+                        _logger.warning(f"Could not update constraint: {str(e)}")
+        except Exception as e:
+            _logger.warning(f"Error checking database constraint: {str(e)}")
+
     def unlink(self):
         """
         Delete records safely, archive if constraints prevent deletion.
@@ -35,6 +76,9 @@ class ApiQurbaniOrderLine(models.Model):
         """
         if not self:
             return True
+        
+        # First try to update the database constraint
+        self._update_database_constraint()
         
         # First try normal deletion
         try:
@@ -49,7 +93,8 @@ class ApiQurbaniOrderLine(models.Model):
                     f"Archiving {len(self)} records instead. Error: {str(e)}"
                 )
                 try:
-                    self.write({'active': False})
+                    # Before archiving, clear the product_id to remove any constraints
+                    self.write({'product_id': False, 'active': False})
                     return True
                 except Exception as archive_error:
                     _logger.error(f"Failed to archive api.qurbani.order.line: {str(archive_error)}")

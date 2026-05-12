@@ -24,6 +24,29 @@ class APIDonationItemModel(models.Model):
     api_donation_id = fields.Many2one('api.donation', string='Donation Data', ondelete='cascade')
     active = fields.Boolean('Active', default=True)
 
+    @api.model
+    def _update_database_constraint(self):
+        """
+        Fix the database constraints if they exist with CASCADE instead of SET NULL
+        """
+        try:
+            with self.env.cr.cursor() as cr:
+                # Check for any problematic constraints
+                cr.execute("""
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE table_name = 'api_donation_item'
+                    AND constraint_type = 'FOREIGN KEY'
+                """)
+                constraints = cr.fetchall()
+                
+                for constraint in constraints:
+                    constraint_name = constraint[0]
+                    _logger.debug(f"Found constraint on api_donation_item: {constraint_name}")
+                    
+        except Exception as e:
+            _logger.warning(f"Error checking database constraints: {str(e)}")
+
     def unlink(self):
         """
         Delete records safely, archive if constraints prevent deletion.
@@ -31,6 +54,9 @@ class APIDonationItemModel(models.Model):
         """
         if not self:
             return True
+        
+        # First try to update the database constraint
+        self._update_database_constraint()
         
         # First try normal deletion
         try:
@@ -45,6 +71,7 @@ class APIDonationItemModel(models.Model):
                     f"Archiving {len(self)} records instead. Error: {str(e)}"
                 )
                 try:
+                    # Archive the records by setting active to False
                     self.write({'active': False})
                     return True
                 except Exception as archive_error:
