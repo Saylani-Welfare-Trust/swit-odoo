@@ -721,7 +721,7 @@ class APIDonationWizard(models.TransientModel):
                 product_name = item_data.get('en', {}).get('name', '')
 
                 product = self.env['web.qurbani.product'].search([
-                    ('name', 'ilike', product_name),
+                    # ('name', 'ilike', product_name),
                 ], limit=1)
 
                 raise ValidationError(
