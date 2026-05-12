@@ -456,6 +456,8 @@ class QurbaniOrder(models.Model):
                     'product_id': line.product_id.id,
                 })]
 
+                qurbani_cow_slaughter._set_slot_full()
+
                 qurbani_cow_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
                     'qurbani_order_line_no': line.name,
@@ -488,6 +490,8 @@ class QurbaniOrder(models.Model):
                     'hissa_name': line.hissa_name,
                     'product_id': line.product_id.id,
                 })]
+
+                qurbani_goat_slaughter._set_slot_full()
 
                 qurbani_goat_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
