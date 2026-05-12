@@ -19,7 +19,7 @@
     </record>
     <menuitem id="menu_qurbani_hijri"
           name="Web Qurbani Products"
-          parent="qurbani_menu"
+          parent="qurbani_coniguration_menu"
           action="action_web_qurbani_product"
           sequence="1"/>
 </odoo>
