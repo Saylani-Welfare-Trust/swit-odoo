@@ -718,9 +718,8 @@ class APIDonationWizard(models.TransientModel):
                 })
             else:
                 # Find product
-                product = self.env['product.product'].search([
+                product = self.env['web.qurbani.product'].search([
                     ('name', 'ilike', "Qurbani Web"),
-                    ('categ_id.name', 'ilike', 'qurbani')
                 ], limit=1)
 
                 if not product:

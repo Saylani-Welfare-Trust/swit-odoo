@@ -37,6 +37,7 @@
         'views/qurbani_day.xml',
         'views/qurbani_hijri.xml',
         'views/chand_raat_date.xml',
+        'views/web_qurbani_product.xml',
     ],
     'auto_install': False,
     'application': True,
