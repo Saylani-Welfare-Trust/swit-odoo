@@ -134,6 +134,9 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                         ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id),
                         ('start_time', '=', distribution_schedule.start_time),
                         ('end_time', '=', distribution_schedule.end_time),
+                        ('slaughter_location_id', '=', demand.slaughter_location_id.id),
+                        ('slaughter_start_time', '=', demand.start_time),
+                        ('slaughter_end_time', '=', demand.end_time),
                     ])
 
                     booked_hissa = demand.booked_hissa or 0
@@ -152,6 +155,9 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                             'inventory_product_id': distribution_schedule.inventory_product_id.id,
                             'start_time': distribution_schedule.start_time,
                             'end_time': distribution_schedule.end_time,
+                            'slaughter_location_id': demand.slaughter_location_id.id,
+                            'slaughter_start_time': demand.start_time,
+                            'slaughter_end_time': demand.end_time,
                         })
 
                     DistributionModel.create(vals_list)
