@@ -488,6 +488,7 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
+                    ('qurbani_order_no', '=', False),
                 ], limit=1)
 
                 if qurbani_cow_distribution:
@@ -553,6 +554,7 @@ class QurbaniOrder(models.Model):
                     ('start_time', '=', line.start_time),
                     ('end_time', '=', line.end_time),
                     ('distribution_location_id', '=', line.distribution_id.id),
+                    ('qurbani_order_no', '=', False),
                 ], limit=1)
 
                 if qurbani_goat_distribution:
