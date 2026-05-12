@@ -29,7 +29,6 @@
         'views/medical_equipment_category.xml',
         'views/product_master.xml',
         'views/advance_donation_category.xml',
-        'views/web_qurbani_product.xml',
     ],
     'auto_install': False,
     'application': True,

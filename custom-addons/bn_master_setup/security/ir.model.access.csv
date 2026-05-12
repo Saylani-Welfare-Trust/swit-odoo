@@ -15,4 +15,3 @@ access_product_master_line,access.product.master.line,bn_master_setup.model_prod
 access_advance_donation_category,advance.donation.category,bn_master_setup.model_advance_donation_category,,1,1,1,1
 access_advance_donation_category_line,advance.donation.category.line,bn_master_setup.model_advance_donation_category_line,,1,1,1,1
 access_area,access.area,bn_master_setup.model_area,,1,1,1,1
-access_web_qurbani_product,access.web.qurbani.product,bn_master_setup.model_web_qurbani_product,,1,1,1,1
