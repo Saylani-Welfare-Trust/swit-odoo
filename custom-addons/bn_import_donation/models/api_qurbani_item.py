@@ -1,5 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ApiQurbaniOrderLine(models.Model):
@@ -23,3 +26,14 @@ class ApiQurbaniOrderLine(models.Model):
     quantity = fields.Integer('Quantity', default=1)
 
     amount = fields.Float('Amount')
+    active = fields.Boolean('Active', default=True)
+
+    def unlink(self):
+        """Archive instead of hard delete to avoid constraint violations"""
+        try:
+            return super().unlink()
+        except Exception as e:
+            # If deletion fails due to constraints, archive instead
+            _logger.warning(f"Deletion failed for api.qurbani.order.line, archiving instead: {str(e)}")
+            self.write({'active': False})
+            return True

@@ -1,4 +1,7 @@
 from odoo import fields, models
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class APIDonationItemModel(models.Model):
@@ -18,3 +21,14 @@ class APIDonationItemModel(models.Model):
     is_priced_item = fields.Boolean('Is Priced Item')
 
     api_donation_id = fields.Many2one('api.donation', string='Donation Data', ondelete='cascade')
+    active = fields.Boolean('Active', default=True)
+
+    def unlink(self):
+        """Archive instead of hard delete to avoid constraint violations"""
+        try:
+            return super().unlink()
+        except Exception as e:
+            # If deletion fails due to constraints, archive instead
+            _logger.warning(f"Deletion failed for api.donation.item, archiving instead: {str(e)}")
+            self.write({'active': False})
+            return True
