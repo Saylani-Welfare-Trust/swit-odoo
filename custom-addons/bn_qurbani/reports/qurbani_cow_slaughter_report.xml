@@ -23,10 +23,10 @@
                         <tbody>
                             <t t-foreach="order.qurbani_cow_slaughter_line" t-as="line" t-key="line.id">
                                 <tr>
-                                    <td><t t-esc="line.qurbani_order_no"/>
-                                    <td><t t-esc="line.qurbani_order_line_no"/>
-                                    <td><t t-esc="line.product_id.name"/>
-                                    <td><t t-esc="line.hissa_name"/>
+                                    <td><t t-esc="line.qurbani_order_no"/></td>
+                                    <td><t t-esc="line.qurbani_order_line_no"/></td>
+                                    <td><t t-esc="line.product_id.name"/></td>
+                                    <td><t t-esc="line.hissa_name"/></td>
                                 </tr>
                             </t>
                         </tbody>
