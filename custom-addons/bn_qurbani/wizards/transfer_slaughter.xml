@@ -28,7 +28,7 @@
                     <group>
                         <group name="transfer_slaughter_col_1_1">
                             <field name="qurbani_cow_slaughter_id" string="From" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_id" />
-                            <field name="qurbani_cow_slaughter_line_id" string="From" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_line_id" />
+                            <field name="qurbani_cow_slaughter_line_id" invisible="1" />
                         </group>
                         <group name="transfer_slaughter_col_1_2">
                             <field name="cow_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_id" />
