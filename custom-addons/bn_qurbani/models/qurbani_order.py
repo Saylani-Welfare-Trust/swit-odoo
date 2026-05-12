@@ -562,3 +562,12 @@ class QurbaniOrder(models.Model):
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
                     })
+        
+        # ==================================================
+        # 8. SUCCESS
+        # ==================================================
+        return {
+            "status": "success",
+            "id": qurbani.id,
+            "name": qurbani.name,
+        }
