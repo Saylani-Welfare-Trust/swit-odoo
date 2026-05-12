@@ -719,10 +719,13 @@ class APIDonationWizard(models.TransientModel):
             else:
 
                 product_name = item_data.get('en', {}).get('name', '')
+                words = product_name.split()
 
-                product = self.env['web.qurbani.product'].search([
-                    ('name', 'ilike', product_name),
-                ], limit=1)
+                domain = []
+                for word in words:
+                    domain.append(('name', 'ilike', word))
+
+                product = self.env['web.qurbani.product'].search(domain, limit=1)
 
                 raise ValidationError(
                     f"Product Name: {product_name}\nFound Product: {product.name if product else 'Not Found'}"
