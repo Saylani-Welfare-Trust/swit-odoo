@@ -14,4 +14,3 @@ from . import product_master_line
 from . import advance_donation_category
 from . import advance_donation_category_line
 from . import area
-from . import web_qurbani_product
