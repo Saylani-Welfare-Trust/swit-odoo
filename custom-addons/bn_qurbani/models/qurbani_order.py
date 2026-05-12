@@ -462,6 +462,7 @@ class QurbaniOrder(models.Model):
                 })
 
                 qurbani_cow_slaughter._set_slot_full()
+                self.env.cr.commit()
 
                 qurbani_cow_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
@@ -502,6 +503,7 @@ class QurbaniOrder(models.Model):
                 })
 
                 qurbani_goat_slaughter._set_slot_full()
+                self.env.cr.commit()
 
                 qurbani_goat_distribution.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
