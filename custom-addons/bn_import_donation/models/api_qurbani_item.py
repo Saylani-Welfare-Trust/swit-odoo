@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ class ApiQurbaniOrderLine(models.Model):
 
 
     qurbani_order_id = fields.Many2one('api.donation', string="Qurbani Order", ondelete='cascade')
-    product_id = fields.Many2one('product.product', string="Product",     ondelete='cascade')
+    product_id = fields.Many2one('product.product', string="Product", ondelete='set null')
     city_id = fields.Many2one('stock.location', string="City", ondelete='set null')
     distribution_id = fields.Many2one('stock.location', string="Distribution", ondelete='set null')
     day_id = fields.Many2one('qurbani.day', string="Day", ondelete='set null')
@@ -29,11 +29,57 @@ class ApiQurbaniOrderLine(models.Model):
     active = fields.Boolean('Active', default=True)
 
     def unlink(self):
-        """Archive instead of hard delete to avoid constraint violations"""
-        try:
-            return super().unlink()
-        except Exception as e:
-            # If deletion fails due to constraints, archive instead
-            _logger.warning(f"Deletion failed for api.qurbani.order.line, archiving instead: {str(e)}")
-            self.write({'active': False})
+        """
+        Delete records safely, archive if constraints prevent deletion.
+        Handles foreign key constraints gracefully.
+        """
+        if not self:
             return True
+        
+        # First try normal deletion
+        try:
+            return super(ApiQurbaniOrderLine, self).unlink()
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # If it's a foreign key or constraint violation, archive instead
+            if any(keyword in error_msg for keyword in ['foreign key', 'constraint', 'violates', 'fkey']):
+                _logger.warning(
+                    f"Deletion constraint violation for api.qurbani.order.line records. "
+                    f"Archiving {len(self)} records instead. Error: {str(e)}"
+                )
+                try:
+                    self.write({'active': False})
+                    return True
+                except Exception as archive_error:
+                    _logger.error(f"Failed to archive api.qurbani.order.line: {str(archive_error)}")
+                    raise UserError(
+                        _("Cannot delete or archive records: %s") % str(archive_error)
+                    )
+            else:
+                # Re-raise if it's not a constraint-related error
+                _logger.error(f"Unexpected error deleting api.qurbani.order.line: {str(e)}")
+                raise
+    
+    @api.model
+    def delete_or_archive_orphaned_records(self):
+        """
+        Clean up orphaned api.qurbani.order.line records that don't have:
+        - A valid qurbani_order_id (api.donation)
+        - A product_id (if required)
+        """
+        orphaned_records = self.search([
+            ('qurbani_order_id', '=', False),
+        ])
+        
+        if orphaned_records:
+            try:
+                orphaned_records.unlink()
+                _logger.info(f"Deleted {len(orphaned_records)} orphaned api.qurbani.order.line records")
+            except Exception as e:
+                _logger.warning(
+                    f"Failed to delete orphaned records, archiving instead: {str(e)}"
+                )
+                orphaned_records.write({'active': False})
+        
+        return True
