@@ -91,6 +91,21 @@ class ResPartner(models.Model):
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
     
     
+    @api.onchange('category_id')
+    def _onchange_category_id(self):
+        for rec in self:
+            has_employee_tag = any(
+                'employee' in (tag.name or '').lower()
+                for tag in rec.category_id
+            )
+
+            if has_employee_tag:
+                advance_account_id = self.env['account.account'].search([('code', '=', '102501001')]).id
+                petty_cash_account_id = self.env['account.account'].search([('code', '=', '202101010')]).id
+
+                rec.property_account_receivable_id = advance_account_id
+                rec.property_account_payable_id = petty_cash_account_id
+
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:
