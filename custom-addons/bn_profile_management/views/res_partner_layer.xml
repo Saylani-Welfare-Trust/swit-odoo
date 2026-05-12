@@ -126,9 +126,7 @@
                     <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Change Request" name="action_change_request" type="object" class="oe_highlight" invisible="state != 'register'" />
                     
-                    <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" />
-                    
-                    <!-- <button string="Generate MF Applciation" name="action_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register'" /> -->
+                    <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register' or is_donor" />
                
                     <field name="state" widget="statusbar" statusbar_visible="draft, register"/>
                 </header>
@@ -139,10 +137,13 @@
 
                     <field name="avatar_128" invisible="1"/>
                     <field name="user_id" invisible="1"/>
-                    <field name="image_1920" widget="image" class="oe_avatar" required="welfare_donee_female_required" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" />
+                    <field name="image_1920" widget="image" class="oe_avatar" required="not is_donor" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" />
                     <div class="oe_title mb24">
                         <field name="is_company" invisible="1"/>
-                        <field name="welfare_donee_female_required" invisible="1"/>
+                        <field name="welfare_donee_required_fields" invisible="1" />
+                        <field name="welfare_donee_female_required" invisible="1" />
+                        <field name="is_change_request" invisible="1" />
+                        <field name="donee_required_fields" invisible="1" />
                         <field name="is_donor" invisible="1"/>
                         <field name="commercial_partner_id" invisible="1"/>
                         <field name="active" invisible="1"/>
@@ -182,11 +183,7 @@
                         <page name="general_info" string="General Information">
                             <group>
                                 <group name="general_info_col_1">
-                                    <field name="is_change_request" invisible="1" />
-                                    <field name="donee_required_fields" invisible="1" />
                                     <field name="surname" />
-                                    <field name="welfare_donee_required_fields" invisible="1" />
-                                    <field name="welfare_donee_female_required" invisible="1" />
                                     <field name="area" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
                                     <field name="gender" required="donee_required_fields" />
                                     <field name="religion" />
@@ -252,6 +249,11 @@
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
             </form>
         </field>
     </record>
@@ -265,7 +267,8 @@
             'default_category_id': [(6, 0, [
                 ref('bn_profile_management.donee_partner_category'),
                 ref('bn_profile_management.individual_partner_category')
-            ])]
+            ])],
+            'country_code_id': 177
         }"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -288,7 +291,8 @@
             'default_category_id': [(6, 0, [
                 ref('bn_profile_management.donor_partner_category'),
                 ref('bn_profile_management.individual_partner_category')
-            ])]
+            ])],
+            'country_code_id': 177
         }"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
