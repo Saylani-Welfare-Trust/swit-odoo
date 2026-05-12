@@ -783,7 +783,7 @@ class APIDonationWizard(models.TransientModel):
               
                 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
-        
+        raise ValidationError(str(info))
         # Build donation values
         donation_vals = {
             'import_id': info.get('_id', ''),
