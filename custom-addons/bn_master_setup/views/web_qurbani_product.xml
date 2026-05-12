@@ -5,7 +5,7 @@
         <field name="name">web.qurbani.product.tree.view</field>
         <field name="model">web.qurbani.product</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree editable="bottom" string="Web Qurbani Product">
                 <field name="name"/>
                 <field name="product_id"/>
             </tree>
