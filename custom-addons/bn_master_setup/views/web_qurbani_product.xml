@@ -18,7 +18,7 @@
         <field name="view_mode">tree</field>
     </record>
     <menuitem id="menu_qurbani_hijri"
-          name="Hijri"
+          name="Web Qurbani Products"
           parent="qurbani_menu"
           action="action_web_qurbani_product"
           sequence="1"/>
