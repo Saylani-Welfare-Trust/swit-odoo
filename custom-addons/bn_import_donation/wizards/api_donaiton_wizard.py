@@ -721,7 +721,7 @@ class APIDonationWizard(models.TransientModel):
                 product_name = item_data.get('en', {}).get('name', '')
                 words = product_name.split()
 
-                domain = []
+                domain = ['|','|']
                 for word in words:
                     domain.append(('name', 'ilike', word))
                 # raise ValidationError(str(domain))
