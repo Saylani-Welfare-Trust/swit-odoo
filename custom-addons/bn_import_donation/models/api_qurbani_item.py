@@ -11,7 +11,7 @@ class ApiQurbaniOrderLine(models.Model):
 
 
     qurbani_order_id = fields.Many2one('api.donation', string="Qurbani Order", ondelete='cascade')
-    product_id = fields.Many2one('product.product', string="Product", ondelete='set null')
+    product_id = fields.Many2one('product.product', string="Product",     ondelete='cascade')
     city_id = fields.Many2one('stock.location', string="City", ondelete='set null')
     distribution_id = fields.Many2one('stock.location', string="Distribution", ondelete='set null')
     day_id = fields.Many2one('qurbani.day', string="Day", ondelete='set null')
