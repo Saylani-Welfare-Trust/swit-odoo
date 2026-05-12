@@ -452,12 +452,14 @@ class QurbaniOrder(models.Model):
                     ('distribution_location_id', '=', line.distribution_id.id),
                 ], limit=1)
 
-                qurbani_cow_slaughter.qurbani_cow_slaughter_line = [(0, 0, {
-                    'qurbani_order_no': line.qurbani_order_id.name,
-                    'qurbani_order_line_no': line.name,
-                    'hissa_name': line.hissa_name,
-                    'product_id': line.product_id.id,
-                })]
+                qurbani_cow_slaughter.write({
+                    'qurbani_cow_slaughter_line': [(0, 0, {
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                    })]
+                })
 
                 qurbani_cow_slaughter._set_slot_full()
 
@@ -490,12 +492,14 @@ class QurbaniOrder(models.Model):
                     ('distribution_location_id', '=', line.distribution_id.id),
                 ], limit=1)
 
-                qurbani_goat_slaughter.qurbani_goat_slaughter_line = [(0, 0, {
-                    'qurbani_order_no': line.qurbani_order_id.name,
-                    'qurbani_order_line_no': line.name,
-                    'hissa_name': line.hissa_name,
-                    'product_id': line.product_id.id,
-                })]
+                qurbani_goat_slaughter.write({
+                    'qurbani_goat_slaughter_line': [(0, 0, {
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                    })]
+                })
 
                 qurbani_goat_slaughter._set_slot_full()
 
