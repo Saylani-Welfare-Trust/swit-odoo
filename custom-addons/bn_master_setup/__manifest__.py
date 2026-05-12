@@ -11,7 +11,6 @@
         'product',
         'stock',
         'account',
-        'product',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -34,9 +33,6 @@
         'views/medical_equipment_category.xml',
         'views/product_master.xml',
         'views/advance_donation_category.xml',
-        'views/qurbani_day.xml',
-        'views/qurbani_hijri.xml',
-        'views/chand_raat_date.xml',
         'views/web_qurbani_product.xml',
     ],
     'auto_install': False,

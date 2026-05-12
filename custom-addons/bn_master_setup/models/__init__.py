@@ -18,8 +18,5 @@ from . import product_master
 from . import product_master_line
 from . import advance_donation_category
 from . import advance_donation_category_line
-from . import qurbani_day
-from . import qurbani_hijri
-from . import chand_raat_date
 from . import area
 from . import web_qurbani_product
