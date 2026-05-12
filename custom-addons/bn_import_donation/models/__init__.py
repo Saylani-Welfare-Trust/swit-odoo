@@ -6,7 +6,6 @@ from . import valid_import_donation
 from . import donation
 from . import api_donation
 from . import api_donation_item
-from . import api_qurbani_item
 from . import fetch_history
 from . import res_partner
 from . import fetch_log
@@ -15,3 +14,4 @@ from . import gateway_config
 from . import gateway_config_line
 from . import gateway_config_header
 from . import gateway_config_currency
+from . import api_qurbani_item
