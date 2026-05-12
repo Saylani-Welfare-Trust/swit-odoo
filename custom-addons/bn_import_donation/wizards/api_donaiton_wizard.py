@@ -704,7 +704,7 @@ class APIDonationWizard(models.TransientModel):
             item_data = it.get('item', {})
             if isinstance(item_data, dict) and 'en' in item_data:
                 item_name = item_data.get('en', {}).get('name', '')
-            if  info.get('qurbani') != True:
+            if info.get('qurbani') != True:
                 orm_items.append({
                     'donation_type': it.get('donationType', ''),
                     'total': float(it.get('total', 0) or 0),
@@ -717,11 +717,16 @@ class APIDonationWizard(models.TransientModel):
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
-                # Find product
+
+                product_name = item_data.get('en', {}).get('name', '')
+
                 product = self.env['web.qurbani.product'].search([
-                    ('name', 'ilike', "Qurbani Web"),
+                    ('name', 'ilike', product_name),
                 ], limit=1)
-                raise ValidationError(str(item_data))
+
+                raise ValidationError(
+                    f"Product Name: {product_name}\nFound Product: {product.name if product else 'Not Found'}"
+                )
                 if not product:
                     product = self.env['product.product'].search([
                         ('name', 'ilike', "Qurbani Web")
