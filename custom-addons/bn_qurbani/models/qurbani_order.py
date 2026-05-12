@@ -430,17 +430,55 @@ class QurbaniOrder(models.Model):
         qurbani.calculate_amount()
 
         for line in qurbani.qurbani_order_line_ids:
-            if 'cow' in product.name.lower():
 
-                qurbani_cow_slaughter = self.env['qurbani.cow.slaughter'].search([
+            product_name = (line.product_id.name or "").lower()
+
+            # ==================================================
+            # COW
+            # ==================================================
+            if 'cow' in product_name:
+
+                slaughter_records = self.env['qurbani.cow.slaughter'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
                     ('start_time', '=', line.slaughter_start_time),
                     ('end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('slot_full', '<=', 8),
-                ], limit=1)
+                ], order='id asc')
 
+                qurbani_cow_slaughter = False
+
+                # PICK FIRST RECORD HAVING < 8 LINES
+                for rec in slaughter_records:
+
+                    current_count = len(rec.qurbani_cow_slaughter_line)
+
+                    if current_count < 8:
+                        qurbani_cow_slaughter = rec
+                        break
+
+                if not qurbani_cow_slaughter:
+                    return {
+                        "status": "error",
+                        "body": "No empty cow slaughter slot available."
+                    }
+
+                # APPEND LINE
+                qurbani_cow_slaughter.write({
+                    'qurbani_cow_slaughter_line': [(0, 0, {
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                    })]
+                })
+
+                # UPDATE SLOT FULL
+                qurbani_cow_slaughter.slot_full = len(
+                    qurbani_cow_slaughter.qurbani_cow_slaughter_line
+                )
+
+                # DISTRIBUTION
                 qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
@@ -452,8 +490,47 @@ class QurbaniOrder(models.Model):
                     ('distribution_location_id', '=', line.distribution_id.id),
                 ], limit=1)
 
-                qurbani_cow_slaughter.write({
-                    'qurbani_cow_slaughter_line': [(0, 0, {
+                if qurbani_cow_distribution:
+                    qurbani_cow_distribution.write({
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                    })
+
+            # ==================================================
+            # GOAT
+            # ==================================================
+            elif 'goat' in product_name:
+
+                slaughter_records = self.env['qurbani.goat.slaughter'].search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('start_time', '=', line.slaughter_start_time),
+                    ('end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                ], order='id asc')
+
+                qurbani_goat_slaughter = False
+
+                # PICK FIRST RECORD HAVING < 8 LINES
+                for rec in slaughter_records:
+
+                    current_count = len(rec.qurbani_goat_slaughter_line)
+
+                    if current_count < 8:
+                        qurbani_goat_slaughter = rec
+                        break
+
+                if not qurbani_goat_slaughter:
+                    return {
+                        "status": "error",
+                        "body": "No empty goat slaughter slot available."
+                    }
+
+                # APPEND LINE
+                qurbani_goat_slaughter.write({
+                    'qurbani_goat_slaughter_line': [(0, 0, {
                         'qurbani_order_no': line.qurbani_order_id.name,
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
@@ -461,27 +538,12 @@ class QurbaniOrder(models.Model):
                     })]
                 })
 
-                qurbani_cow_slaughter._set_slot_full()
-                self.env.cr.commit()
+                # UPDATE SLOT FULL
+                qurbani_goat_slaughter.slot_full = len(
+                    qurbani_goat_slaughter.qurbani_goat_slaughter_line
+                )
 
-                qurbani_cow_distribution.write({
-                    'qurbani_order_no': line.qurbani_order_id.name,
-                    'qurbani_order_line_no': line.name,
-                    'hissa_name': line.hissa_name,
-                    'product_id': line.product_id.id,
-                })
-
-            if 'goat' in product.name.lower():
-
-                qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
-                    ('day_id', '=', line.day_id.id),
-                    ('hijri_id', '=', line.hijri_id.id),
-                    ('start_time', '=', line.slaughter_start_time),
-                    ('end_time', '=', line.slaughter_end_time),
-                    ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('slot_full', '<=', 8),
-                ], limit=1)
-
+                # DISTRIBUTION
                 qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
@@ -493,30 +555,10 @@ class QurbaniOrder(models.Model):
                     ('distribution_location_id', '=', line.distribution_id.id),
                 ], limit=1)
 
-                qurbani_goat_slaughter.write({
-                    'qurbani_goat_slaughter_line': [(0, 0, {
+                if qurbani_goat_distribution:
+                    qurbani_goat_distribution.write({
                         'qurbani_order_no': line.qurbani_order_id.name,
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
-                    })]
-                })
-
-                qurbani_goat_slaughter._set_slot_full()
-                self.env.cr.commit()
-
-                qurbani_goat_distribution.write({
-                    'qurbani_order_no': line.qurbani_order_id.name,
-                    'qurbani_order_line_no': line.name,
-                    'hissa_name': line.hissa_name,
-                    'product_id': line.product_id.id,
-                })
-
-        # ==================================================
-        # 8. SUCCESS
-        # ==================================================
-        return {
-            "status": "success",
-            "id": qurbani.id,
-            "name": qurbani.name,
-        }
+                    })
