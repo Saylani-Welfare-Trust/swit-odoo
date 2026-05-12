@@ -9,7 +9,7 @@
                 <sheet>
                     <group>
                         <group name="transfer_slaughter_col_1">
-                            <field name="type" options="{'horizontal': True}" widget="radio">
+                            <field name="type" options="{'horizontal': True}" widget="radio" />
 
                             <field name="actual_qurbani_cow_slaughter_id"  domain="[('slot_full', '!=', 7)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type != 'cow'" />
                             <field name="actual_qurbani_goat_slaughter_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type == 'cow'" />
