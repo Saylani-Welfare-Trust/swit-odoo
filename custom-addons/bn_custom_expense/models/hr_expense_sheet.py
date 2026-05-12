@@ -39,6 +39,6 @@ class HRExpenseSheet(models.Model):
     
     def unlink(self):
         if self.state == 'approve':
-            raise ValidationError('No one have right to delete an approved expense.')
+            raise ValidationError('No one have right to delete an approved expense sheet.')
         
         return super(HRExpenseSheet, self).unlink()
