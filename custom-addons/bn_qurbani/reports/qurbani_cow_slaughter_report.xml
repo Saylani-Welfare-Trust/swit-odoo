@@ -10,7 +10,7 @@
                     <t t-set="count" t-value="count + 1"/>
 
                     <div class="page">
-                        <h2><span t-esc="'%05d' % count"/></h2>
+                        <h2>Cow - <span t-esc="'%05d' % count"/></h2>
 
                         <table class="table table-bordered">
                             <thead>
