@@ -16,10 +16,10 @@
                 <field name="end_time" widget="float_time" readonly="1" />
                 <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
 
-                <field name="qurbani_order_no" />
-                <field name="qurbani_order_line_no" />
-                <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="hissa_name" />
+                <field name="qurbani_order_no" readonly="1" />
+                <field name="qurbani_order_line_no" readonly="1" />
+                <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="hissa_name" readonly="1" />
 
                 <field name="video" filename="video_file_name" />
                 <field name="image" filename="image_file_name" />
