@@ -12,6 +12,10 @@
                     <div class="page">
                         <h2>Cow - <span t-esc="'%05d' % count"/></h2>
 
+                        <div class="row">
+                            <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.display_name"</spna>
+                        </div>
+
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
