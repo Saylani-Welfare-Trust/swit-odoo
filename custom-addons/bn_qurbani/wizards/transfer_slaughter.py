@@ -24,13 +24,13 @@ class TransferSlaughter(models.TransientModel):
     actual_cow_slaughter_location_id = fields.Many2one(related='actual_qurbani_cow_slaughter_id.slaughter_location_id', string="Cow Slaughter")
     
     cow_start_time = fields.Float(related='actual_qurbani_cow_slaughter_id.start_time', string="Start Time", store=True)
-    cow_start_time = fields.Float(related='actual_qurbani_cow_slaughter_id.end_time', string="End Time", store=True)
+    cow_end_time = fields.Float(related='actual_qurbani_cow_slaughter_id.end_time', string="End Time", store=True)
 
     actual_qurbani_goat_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Goat Slaughter")
     actual_goat_slaughter_location_id = fields.Many2one(related='actual_qurbani_goat_slaughter_id.slaughter_location_id', string="Goat Slaughter")
     
     goat_start_time = fields.Float(related='actual_qurbani_goat_slaughter_id.start_time', string="Start Time", store=True)
-    goat_start_time = fields.Float(related='actual_qurbani_goat_slaughter_id.end_time', string="End Time", store=True)
+    goat_end_time = fields.Float(related='actual_qurbani_goat_slaughter_id.end_time', string="End Time", store=True)
 
     
     qurbani_cow_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Cow Slaughter")
