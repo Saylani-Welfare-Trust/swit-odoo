@@ -504,45 +504,22 @@ class QurbaniOrder(models.Model):
             # ==================================================
             elif 'goat' in product_name:
 
-                slaughter_records = self.env['qurbani.goat.slaughter'].search([
+                qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
                     ('day_id', '=', line.day_id.id),
                     ('hijri_id', '=', line.hijri_id.id),
                     ('start_time', '=', line.slaughter_start_time),
                     ('end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                ], order='id asc')
+                    ('qurbani_order_no', '=', False),
+                ], limit=1)
 
-                qurbani_goat_slaughter = False
-
-                # PICK FIRST RECORD HAVING < 8 LINES
-                for rec in slaughter_records:
-
-                    current_count = len(rec.qurbani_goat_slaughter_line)
-
-                    if current_count < 7:
-                        qurbani_goat_slaughter = rec
-                        break
-
-                if not qurbani_goat_slaughter:
-                    return {
-                        "status": "error",
-                        "body": "No empty goat slaughter slot available."
-                    }
-
-                # APPEND LINE
-                qurbani_goat_slaughter.write({
-                    'qurbani_goat_slaughter_line': [(0, 0, {
+                if qurbani_goat_slaughter:
+                    qurbani_goat_slaughter.write({
                         'qurbani_order_no': line.qurbani_order_id.name,
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
-                    })]
-                })
-
-                # UPDATE SLOT FULL
-                qurbani_goat_slaughter.slot_full = len(
-                    qurbani_goat_slaughter.qurbani_goat_slaughter_line
-                )
+                    })
 
                 # DISTRIBUTION
                 qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([

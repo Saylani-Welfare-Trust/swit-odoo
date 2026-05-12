@@ -45,6 +45,7 @@
         'wizards/generate_qurbani_demand.xml',
         'wizards/generate_qurbani_slaughter_and_distribution.xml',
         'wizards/api_order_wizard.xml',
+        'wizards/transfer_slaughter.xml',
         'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
         'reports/qurbani_cow_slaughter_report.xml',

@@ -32,3 +32,15 @@ class QurbaniCowSlaughter(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_slaughter') or ('New')
 
         return super(QurbaniCowSlaughter, self).create(vals)
+    
+    def action_transfer(self):
+        return {
+            'name': _('Transfer Slaughter'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'transfer.slaughter',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_qurbani_cow_slaughter_id': self.id,
+            }
+        }

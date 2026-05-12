@@ -57,6 +57,8 @@
                                     <field name="qurbani_order_line_no" />
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="hissa_name" />
+
+                                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
                                 </tree>
                             </field>
                         </page>

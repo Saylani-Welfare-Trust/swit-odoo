@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="transfer_slaughter_view_form" model="ir.ui.view">
+        <field name="name">transfer.slaughter.view.form</field>
+        <field name="model">transfer.slaughter</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group name="transfer_slaughter_col_1">
+                            <field name="type" options="{'horizontal': True}" widget="radio">
+
+                            <field name="actual_qurbani_cow_slaughter_id"  domain="[('slot_full', '!=', 7)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type != 'cow'" />
+                            <field name="actual_qurbani_goat_slaughter_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type == 'cow'" />
+                        
+                            <field name="cow_start_time" invisible="type != 'cow'" />
+                            <field name="goat_start_time" invisible="type == 'cow'" />
+                        </group>
+                        <group name="transfer_slaughter_col_2">
+                            <field name="actual_cow_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type != 'cow'" />
+                            <field name="actual_goat_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type == 'cow'" />
+                            
+                            <field name="cow_end_time" invisible="type != 'cow'" />
+                            <field name="goat_end_time" invisible="type == 'cow'" />
+                        </group>
+                    </group>
+                </sheet>
+                 <footer>
+                    <button string="Generate" type="object" name="action_tranfer" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
