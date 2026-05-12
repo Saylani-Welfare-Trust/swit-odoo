@@ -25,7 +25,7 @@
     </record>
 
     <record id="qurbani_goat_distribution_action" model="ir.actions.act_window">
-        <field name="name">Distribution Goat</field>
+        <field name="name">Goat Distribution</field>
         <field name="res_model">qurbani.goat.distribution</field>
         <field name="view_mode">tree</field>
         <field name="help" type="html">
