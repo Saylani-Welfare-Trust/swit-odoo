@@ -21,7 +21,7 @@ class BulkKeyIssuance(models.TransientModel):
     domain_rider_ids = fields.Many2many('hr.employee', string="Rider IDs", compute="_set_rider_domain")
     domain_key_bunch_ids = fields.Many2many('key.bunch', string="Key Bunchs", compute="_set_location_domain")
 
-    date = fields.Date('Date', default=fields.Date.contoday()text_today)
+    date = fields.Date('Date', default=fields.Date.context_today)
 
 
     @api.depends('date', 'action_type')
