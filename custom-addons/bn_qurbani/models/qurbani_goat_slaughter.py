@@ -17,7 +17,7 @@ class QurbaniGoatSlaughter(models.Model):
     video = fields.Binary('Video')
     image = fields.Binary('Image')
 
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New")
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 

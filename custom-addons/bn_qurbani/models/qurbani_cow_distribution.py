@@ -17,7 +17,7 @@ class QurbaniCowDistribution(models.Model):
     slaughter_start_time = fields.Float('Start Time')
     slaughter_end_time = fields.Float('End Time')
 
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New")
 
     product_id = fields.Many2one('product.product', string="Product")
 
