@@ -11,18 +11,31 @@
                         <group name="transfer_slaughter_col_1">
                             <field name="type" options="{'horizontal': True}" widget="radio" />
 
-                            <field name="actual_qurbani_cow_slaughter_id"  domain="[('slot_full', '!=', 7)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type != 'cow'" />
-                            <field name="actual_qurbani_goat_slaughter_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type == 'cow'" />
-                        
-                            <field name="cow_start_time" invisible="type != 'cow'" />
-                            <field name="goat_start_time" invisible="type == 'cow'" />
+                            <field name="actual_qurbani_cow_slaughter_id" string="To" domain="[('slot_full', '!=', 7)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type != 'cow'" />
+                            <field name="actual_qurbani_goat_slaughter_id" string="To" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" invisible="type == 'cow'" />
                         </group>
                         <group name="transfer_slaughter_col_2">
-                            <field name="actual_cow_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type != 'cow'" />
-                            <field name="actual_goat_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type == 'cow'" />
+                            <field name="actual_cow_slaughter_location_id" string="Location" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type != 'cow'" />
+                            <field name="actual_goat_slaughter_location_id" string="Location" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type == 'cow'" />
                             
+                            <field name="cow_start_time" invisible="type != 'cow'" />
+                            <field name="goat_start_time" invisible="type == 'cow'" />
                             <field name="cow_end_time" invisible="type != 'cow'" />
                             <field name="goat_end_time" invisible="type == 'cow'" />
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group name="transfer_slaughter_col_1_1">
+                            <field name="qurbani_cow_slaughter_id" string="From" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_id" />
+                            <field name="qurbani_cow_slaughter_line_id" string="From" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_line_id" />
+                        </group>
+                        <group name="transfer_slaughter_col_1_2">
+                            <field name="cow_slaughter_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_id" />
+                            <field name="cow_product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not qurbani_cow_slaughter_line_id" />
+                            <field name="cow_qurbani_order_line_no" invisible="not qurbani_cow_slaughter_line_id" />
+                            <field name="cow_hissa_name" invisible="not qurbani_cow_slaughter_line_id" />
+
                         </group>
                     </group>
                 </sheet>
