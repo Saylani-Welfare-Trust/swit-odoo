@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="bn_qurbani.qurbani_cow_slaughter_report">
+        <t t-call="web.html_container">
+            <t t-set="count" t-value="0"/>
+
+            <t t-foreach="docs" t-as="o">
+                <t t-set="count" t-value="count + 1"/>
+
+                <t t-call="web.external_layout">
+                    <h2><span t-esc="'%05d' % count"/></h2>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>QO No.</th>
+                                <th>QOL No.</th>
+                                <th>Product</th>
+                                <th>Hissa Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="order.qurbani_cow_slaughter_line" t-as="line" t-key="line.id">
+                                <tr>
+                                    <td><t t-esc="line.qurbani_order_no"/>
+                                    <td><t t-esc="line.qurbani_order_line_no"/>
+                                    <td><t t-esc="line.product_id.name"/>
+                                    <td><t t-esc="line.hissa_name"/>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="qurbani_cow_slaughter_report" model="ir.actions.report">
+        <field name="name">Qurbani Cow Slaughter</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_qurbani.qurbani_cow_slaughter_report</field>
+        <field name="report_file">bn_qurbani.qurbani_cow_slaughter_report</field>
+        <field name="binding_model_id" ref="bn_qurbani.model_qurbani_cow_slaughter"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>
