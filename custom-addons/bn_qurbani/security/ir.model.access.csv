@@ -21,3 +21,4 @@ access_qurbani_cow_distribution,qurbani.cow.distribution,model_qurbani_cow_distr
 access_qurbani_goat_distribution,qurbani.goat.distribution,model_qurbani_goat_distribution,,1,1,1,1
 access_api_qurbani_wizard,api.qurbani.wizard,model_api_qurbani_wizard,,1,1,1,1
 access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,,1,1,1,1
+access_web_qurbani_product,access.web.qurbani.product,bn_master_setup.model_web_qurbani_product,,1,1,1,1

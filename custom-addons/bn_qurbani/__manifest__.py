@@ -40,6 +40,7 @@
         'views/fetch_log.xml',
         'views/qurbani_cow_distribution.xml',
         'views/qurbani_goat_distribution.xml',
+        'views/web_qurbani_product.xml',
         'wizards/qurbani_schedule.xml',
         'wizards/generate_qurbani_demand.xml',
         'wizards/generate_qurbani_slaughter_and_distribution.xml',
