@@ -13,7 +13,12 @@
                         <h2>Goat - <span t-esc="'%05d' % count"/></h2>
 
                         <div class="row">
-                            <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.display_name"/></spna>
+                            <div class="col-6">
+                                <span>Record No.</span> - <spna><t t-esc="o.name"/></spna>
+                            </div>
+                            <div class="col-6">
+                                <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.display_name"/></spna>
+                            </div>
                         </div>
 
                         <table class="table table-bordered">
