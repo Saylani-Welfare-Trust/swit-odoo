@@ -741,6 +741,8 @@ class APIDonationWizard(models.TransientModel):
                     product = self.env['product.product'].search([
                         ('name', 'ilike', "Qurbani Web")
                     ], limit=1)
+                else:
+                    product = product.product_id
 
                 if not product:
                     self.create_fetch_log(
@@ -786,7 +788,7 @@ class APIDonationWizard(models.TransientModel):
                         if quantity > 1 else share_name
                     )
 
-                    order_lines.append((0, 0, {
+                    order_lines.append([0, 0, {
                         'product_id': product.id,
                         'quantity': 1,
                         'amount': amount,
@@ -794,7 +796,7 @@ class APIDonationWizard(models.TransientModel):
                         'hijri_id': hijri.id if hijri else False,
                         'city_id': city.id if city else False,
                         'hissa_name': hissa_name,
-                    }))
+                    }])
               
                 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
