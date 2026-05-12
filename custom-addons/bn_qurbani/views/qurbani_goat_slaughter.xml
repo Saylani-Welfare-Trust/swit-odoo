@@ -16,7 +16,7 @@
                 <field name="end_time" widget="float_time" readonly="1" />
                 <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
 
-                <field name="actual_slot_full" string="Slot Full" />
+                <field name="slot_full" />
 
                 <field name="video" filename="video_file_name" />
                 <field name="image" filename="image_file_name" />
