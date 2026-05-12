@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="bn_qurbani.qurbani_goat_slaughter_report">
+    <template id="bn_qurbani.qurbani_goat_slaughter_report_template">
         <t t-call="web.html_container">
             <t t-set="count" t-value="0"/>
 
@@ -40,8 +40,8 @@
         <field name="name">Qurbani Goat Slaughter</field>
         <field name="model">qurbani.goat.slaughter</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_qurbani.qurbani_goat_slaughter_report</field>
-        <field name="report_file">bn_qurbani.qurbani_goat_slaughter_report</field>
+        <field name="report_name">bn_qurbani.qurbani_goat_slaughter_report_template</field>
+        <field name="report_file">bn_qurbani.qurbani_goat_slaughter_report_template</field>
         <field name="binding_model_id" ref="bn_qurbani.model_qurbani_goat_slaughter"/>
         <field name="binding_type">report</field>
     </record>
