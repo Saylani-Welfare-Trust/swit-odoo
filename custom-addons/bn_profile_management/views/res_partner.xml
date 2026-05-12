@@ -95,7 +95,6 @@
             </xpath>
 
             <xpath expr="//field[@name='mobile']" position="replace">
-                <label for="mobile"/>
                 <div style="display: flex;">
                     <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
                     <field style="width: 70% !important;" name="mobile" nolabel="1" />
