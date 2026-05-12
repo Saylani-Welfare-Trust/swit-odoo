@@ -17,7 +17,7 @@
                 <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
 
                 <field name="slot_full" />
-                
+
                 <field name="video" filename="video_file_name" />
                 <field name="image" filename="image_file_name" />
             </tree>
@@ -68,7 +68,7 @@
     </record>
 
     <record id="qurbani_goat_slaughter_action" model="ir.actions.act_window">
-        <field name="name">Goat</field>
+        <field name="name">Slaughter Goat</field>
         <field name="res_model">qurbani.goat.slaughter</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

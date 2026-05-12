@@ -67,7 +67,7 @@
     </record>
 
     <record id="qurbani_cow_slaughter_action" model="ir.actions.act_window">
-        <field name="name">Cow</field>
+        <field name="name">Slaughter Cow</field>
         <field name="res_model">qurbani.cow.slaughter</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
