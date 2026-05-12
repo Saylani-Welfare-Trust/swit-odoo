@@ -453,7 +453,7 @@ class QurbaniOrder(models.Model):
 
                     current_count = len(rec.qurbani_cow_slaughter_line)
 
-                    if current_count < 8:
+                    if current_count < 7:
                         qurbani_cow_slaughter = rec
                         break
 
@@ -518,7 +518,7 @@ class QurbaniOrder(models.Model):
 
                     current_count = len(rec.qurbani_goat_slaughter_line)
 
-                    if current_count < 8:
+                    if current_count < 7:
                         qurbani_goat_slaughter = rec
                         break
 
