@@ -50,3 +50,7 @@ class TransferSlaughter(models.TransientModel):
     goat_qurbani_order_no = fields.Char(related='qurbani_goat_slaughter_id.qurbani_order_no', string="QO No.", store=True)
     goat_qurbani_order_line_no = fields.Char(related='qurbani_goat_slaughter_id.qurbani_order_line_no', string="QOL No.", store=True)
     goat_hissa_name = fields.Char(related='qurbani_goat_slaughter_id.hissa_name', string="Hissa Name", store=True)
+
+
+    def action_tranfer(self):
+        pass
