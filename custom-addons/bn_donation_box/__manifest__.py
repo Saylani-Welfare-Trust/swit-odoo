@@ -11,6 +11,7 @@
         'bn_stock_location',
         'bn_pos_custom_action',
         'bn_profile_management',
+        'bn_import_donation',
     ],
     'data': [
         'security/groups.xml',
