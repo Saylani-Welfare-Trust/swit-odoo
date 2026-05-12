@@ -15,7 +15,6 @@
     'data': [
         'security/ir.model.access.csv',
         'security/group.xml',
-        'data/chand_raat_date.xml',
         'data/disbursement_category.xml',
         'views/menu.xml',
         'views/installation_category.xml',
