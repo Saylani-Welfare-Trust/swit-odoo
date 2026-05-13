@@ -62,6 +62,7 @@ class QurbaniCowSlaughter(models.Model):
             'context': {
                 'default_qurbani_cow_slaughter_id': self.id,
                 'default_type': 'cow',
+                'default_option': 'hole',
             }
         }
     
