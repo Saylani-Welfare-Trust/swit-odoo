@@ -38,10 +38,10 @@ class QurbaniCowSlaughter(models.Model):
     @api.depends('slot_full')
     def _set_state(self):
         for rec in self:
+            rec.state = 'available'
+                
             if rec.slot_full == 7:
                 rec.state = 'full'
-                
-            rec.state = 'available'
 
     @api.model
     def create(self, vals):
