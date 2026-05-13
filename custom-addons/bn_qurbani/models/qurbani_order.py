@@ -5,6 +5,8 @@ import re
 import json
 from datetime import datetime, time
 _logger = logging.getLogger(__name__)
+from datetime import datetime
+
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
@@ -85,6 +87,19 @@ class QurbaniOrder(models.Model):
         # ---------- Helper: get latest hijri (same as POS method) ----------
         def _get_latest_hijri():
             return self.env['hijri'].search([], order='id desc', limit=1)
+
+
+        def convert_to_24hr(time_str):
+            if not time_str:
+                return False
+
+            try:
+                return datetime.strptime(
+                    time_str.strip(),
+                    "%I:%M %p"
+                ).strftime("%H:%M:%S")
+            except:
+                return time_str
 
         # ---------- Helper: get demand for a donation line with detailed error ----------
         def _get_demand(line, default_day, default_hijri, default_product):
@@ -299,8 +314,8 @@ COMPLETE DONATION RECORD:
                     'hissa_name': line_data['hissa_name'],
                     'start_time': demand.start_time,
                     'end_time': demand.end_time,
-                    'slaughter_start_time': demand.start_time,
-                    'slaughter_end_time': demand.end_time,
+                    'slaughter_start_time': convert_to_24hr(demand.start_time),
+                    'slaughter_end_time': convert_to_24hr(demand.end_time),
                 }
                 product_lines.append((0, 0, vals))
 
