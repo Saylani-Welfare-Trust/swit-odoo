@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="bn_qurbani.qurbani_cow_slaughter_report">
+    <template id="bn_qurbani.qurbani_cow_slaughter_report_template">
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <t t-foreach="docs" t-as="o">
@@ -40,5 +40,15 @@
             </t>
         </t>
     </template>
+
+    <record id="qurbani_cow_slaughter_report" model="ir.actions.report">
+        <field name="name">Qurbani Cow Slaughter</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_qurbani.qurbani_cow_slaughter_report_template</field>
+        <field name="report_file">bn_qurbani.qurbani_cow_slaughter_report_template</field>
+        <field name="binding_model_id" ref="bn_qurbani.model_qurbani_cow_slaughter"/>
+        <field name="binding_type">report</field>
+    </record>
 
 </odoo>
