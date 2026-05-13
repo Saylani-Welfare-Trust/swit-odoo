@@ -35,7 +35,7 @@
                                     <field name="collection_date" string="Collection Date"/>
                                     <field name="quantity" string="Quantity"/>
                                     <field name="total_amount" string="Total Amount"/>
-                                    <button name="action_mark_selected_as_collected" string="Mark Selected as Collected" type="object" class="btn-primary"/>                                    
+                                    <button name="mark_selected_as_collected" string="Mark Selected as Collected" type="object" class="btn-primary"/>                                    
                                     <field name="state" 
                                             widget="selection" 
                                             options="{'always_reload': True}"

@@ -64,7 +64,7 @@ class CheckMarfatShift(models.TransientModel):
             'target': 'new',
         }
 
-    def action_mark_selected_as_collected(self):
+    def mark_selected_as_collected(self):
         """Mark all selected disbursement lines as collected"""
         for line in self.disbursement_line_ids:
             if line.state != 'collected':
