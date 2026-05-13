@@ -125,32 +125,34 @@
 
                     <notebook>
                         <page string="Items">
-                            <field name="state" invisible="1"/>
                             <field name="medical_equipment_line_ids" readonly="state == 'closed' or state not in ['draft', 'inquiry', 'completed','send_for_inquiry','ceo_approval']">
                                 <tree editable="bottom">
-                                    <field name="state" invisible="1"/>
+                                    <!-- Remove this line - state doesn't exist in line model -->
+                                    <!-- <field name="state" invisible="1"/> -->
+                                    
                                     <field name="currency_id" column_invisible="1"/>
 
                                     <field name="medical_equipment_category_id"
                                         string="Master Product"
                                         width="200"
                                         options="{'no_quick_create': True, 'no_create_edit': True}"
-                                        readonly="state == 'closed'"/>
+                                        readonly="parent.state == 'closed'"/>
 
                                     <field name="product_id"
                                         width="200"
                                         options="{'no_quick_create': True, 'no_create_edit': True}"
-                                        readonly="state == 'closed'"/>
+                                        readonly="parent.state == 'closed'"/>
+                                    
                                     <field name="lot_ids"
                                         options="{'no_create': True, 'no_edit': True, 'no_open': True}" 
                                         string="Product No./Lot"
                                         widget="many2many_tags"
                                         domain="[('product_id', '=', product_id), ('lot_consume', '=', False)]"
                                         width="100"
-                                        readonly="state == 'closed'"
+                                        readonly="parent.state == 'closed'"
                                     />
 
-                                    <field name="quantity" width="100" readonly="state == 'closed'"/>
+                                    <field name="quantity" width="100" readonly="parent.state == 'closed'"/>
                                     <field name="base_security_deposit" width="150" readonly="1"/>
                                     <field name="actual_deposit_percentage" width="150" readonly="1"/>
                                     <field name="security_deposit" width="150" readonly="1"/>
