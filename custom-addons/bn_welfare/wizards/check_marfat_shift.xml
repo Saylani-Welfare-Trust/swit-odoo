@@ -22,8 +22,11 @@
                     </group>
 
                     <separator string="Disbursement Lines" class="text-uppercase"/>
-                    <page string="Disbursement Lines">
-                        <field name="disbursement_line_ids" readonly="1" nolabel="1">
+                    
+                    <!-- Put page inside notebook -->
+                    <notebook>
+                        <page string="Disbursement Lines">
+                            <field name="disbursement_line_ids" readonly="1" nolabel="1">
                                 <tree>
                                     <field name="welfare_id" string="Welfare Record"/>
                                     <field name="disbursement_category_id" string="Disbursement Category"/>
@@ -42,7 +45,8 @@
                                             decoration-danger="state == 'rejected'"/>
                                 </tree>
                             </field>
-                    </page>
+                        </page>
+                    </notebook>
   
                 </sheet>
             </form>
