@@ -389,14 +389,15 @@ COMPLETE DONATION RECORD:
                     qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        ('slaughter_start_time', '=', line.slaughter_start_time),
-                        ('slaughter_end_time', '=', line.slaughter_end_time),
+                        # ('slaughter_start_time', '=', line.slaughter_start_time),
+                        # ('slaughter_end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                         ('start_time', '=', line.start_time),
                         ('end_time', '=', line.end_time),
                         ('distribution_location_id', '=', line.distribution_id.id),
                         ('qurbani_order_no', '=', False),
                     ], limit=1)
+                    # raise ValidationError(f"Distribution search domain: day {line.day_id.id}, hijri {line.hijri_id.id}, slaughter_start_time {line.slaughter_start_time}, slaughter_end_time {line.slaughter_end_time}, slaughter_location_id {line.slaughter_id.id}, start_time {line.start_time}, end_time {line.end_time}, distribution_location_id {line.distribution_id.id}")
                     if qurbani_cow_distribution:
                         qurbani_cow_distribution.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
