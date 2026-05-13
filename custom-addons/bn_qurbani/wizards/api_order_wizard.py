@@ -1,6 +1,8 @@
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError
 import logging
+import json
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -72,13 +74,12 @@ class APIDonationWizard(models.TransientModel):
                 donation_dict = info.read()[0]
                 
                 # Create qurbani order from donation
-                # raise ValidationError(str(donation_dict))
                 result = self.env['qurbani.order'].create_web_qurbani_order(donation_dict)
                 
                 if result.get('status') == 'success':
                     created_count += 1
                     self.create_fetch_log(
-                        f"Successfully created Qurbani Order {result.get('name')} for donation {info.name}",
+                        f"✓ SUCCESS - Qurbani Order {result.get('name')} | Donation: {info.name} (ID: {info.id})",
                         'Success',
                         f"Qurbani Order ID: {result.get('qurbani_order_id')}"
                     )
@@ -86,36 +87,62 @@ class APIDonationWizard(models.TransientModel):
                 else:
                     failed_count += 1
                     error_msg = result.get('message', 'Unknown error')
+                    
+                    # Create log with unique identifier
+                    unique_id = f"[ID-{info.id}] {info.name}"
+                    
                     self.create_fetch_log(
-                        f"Failed to create order for donation {info.name}: {error_msg}",
+                        f"✗ FAILED - {unique_id}",
                         'Error',
-                        f"Error details: {error_msg}"
+                        f"Error: {error_msg}"
                     )
                     
             except Exception as e:
                 failed_count += 1
+                
+                try:
+                    donation_data = info.read()[0]
+                except:
+                    donation_data = {}
 
-                donation_data = info.read()[0]
+                # Create unique identifier for this failed record
+                unique_id = f"[ID-{info.id}] {info.name}"
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                # Format donation data as JSON for better readability
+                try:
+                    donation_json = json.dumps(donation_data, indent=2, default=str)
+                except:
+                    donation_json = str(donation_data)
 
+                # Create comprehensive error details
                 error_details = f"""
-                Donation ID: {info.id}
-                Donation Name: {info.name}
+================== FAILED RECORD DETAILS ==================
+Timestamp: {timestamp}
+Unique ID: {unique_id}
+Donation ID: {info.id}
+Donation Name: {info.name}
 
-                Full Donation Record:
-                {donation_data}
+EXCEPTION ERROR:
+{str(e)}
 
-                Exception:
-                {str(e)}
+COMPLETE DONATION RECORD OBJECT:
+{donation_json}
+
+STACK TRACE:
+{_logger.exception("Error details below")}
+==========================================
                 """
 
+                # Create the log entry with unique identifier in the name
                 self.create_fetch_log(
-                    f"Qurbani Record {info.name}",
+                    f"✗ FAILED [{timestamp}] - {unique_id}",
                     'Error',
                     error_details
                 )
 
                 _logger.exception(
-                    f"Error processing donation ID {info.id}: {donation_data}"
+                    f"Error processing donation ID {info.id} ({info.name}): {str(e)}"
                 )
 
                 continue
@@ -123,6 +150,13 @@ class APIDonationWizard(models.TransientModel):
         # Return summary notification
         summary_msg = f"Processed {len(donations_info)} donations: {created_count} succeeded, {failed_count} failed"
         self.create_fetch_log(f"End action_fetch_qurbani", 'API Fetch', summary_msg)
+        
+        if failed_count > 0:
+            self.create_fetch_log(
+                f"SUMMARY: {created_count} successful | {failed_count} FAILED",
+                'Summary',
+                f"Check detailed logs for failed records. Failed donations have unique IDs for easy identification."
+            )
         
         return {
             'type': 'ir.actions.client',

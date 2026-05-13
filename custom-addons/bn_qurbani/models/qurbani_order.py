@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import logging
 import re
+import json
 from datetime import datetime, time
 _logger = logging.getLogger(__name__)
 
@@ -188,10 +189,34 @@ class QurbaniOrder(models.Model):
 
             if not order_lines_data:
                 error_summary = "; ".join(line_errors) if line_errors else "No donation lines found or all lines invalid"
+                
+                donor_name = donation_name or donation_record.get('name', 'Unknown')
+                donation_id = donation_record.get('id', 'Unknown')
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                try:
+                    donation_json = json.dumps(donation_record, indent=2, default=str)
+                except:
+                    donation_json = str(donation_record)
+                
+                detailed_reason = f"""
+================== NO VALID ORDER LINES ==================
+Timestamp: {timestamp}
+Donation Name: {donor_name}
+Donation ID: {donation_id}
+
+Error Summary:
+{error_summary}
+
+COMPLETE DONATION RECORD:
+{donation_json}
+========================================================
+                """
+                
                 self.env['fetch.qurbani.log'].create({
-                    'name': f"No valid order lines for donation {donation_name or donation_record.get('name', 'Unknown')}",
+                    'name': f"✗ NO VALID LINES [{timestamp}] - [ID-{donation_id}] {donor_name}",
                     'status': 'Error',
-                    'reason': error_summary
+                    'reason': detailed_reason
                 })
                 return {
                     "status": "error",
@@ -204,10 +229,34 @@ class QurbaniOrder(models.Model):
                 requested = usage['qty']
                 available = demand.remaining_hissa
                 if requested > available:
+                    donor_name = donation_name or donation_record.get('name', 'Unknown')
+                    donation_id = donation_record.get('id', 'Unknown')
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    try:
+                        donation_json = json.dumps(donation_record, indent=2, default=str)
+                    except:
+                        donation_json = str(donation_record)
+                    
+                    detailed_reason = f"""
+================== NOT ENOUGH HISSA ==================
+Timestamp: {timestamp}
+Donation Name: {donor_name}
+Donation ID: {donation_id}
+Demand ID: {demand.id}
+
+Hissa Error:
+Need {requested} hissa, only {available} available
+
+COMPLETE DONATION RECORD:
+{donation_json}
+====================================================
+                    """
+                    
                     self.env['fetch.qurbani.log'].create({
-                        'name': f"Validation failed for donation {donation_name or donation_record.get('name', 'Unknown')} demand {demand.id}",
+                        'name': f"✗ NOT ENOUGH HISSA [{timestamp}] - [ID-{donation_id}] {donor_name}",
                         'status': 'Error',
-                        'reason': f"Need {requested} hissa, only {available} available"
+                        'reason': detailed_reason
                     })
                     return {
                         "status": "error",
@@ -383,7 +432,42 @@ class QurbaniOrder(models.Model):
             }
 
         except Exception as e:
-            _logger.error(f"Error creating web qurbani order: {str(e)}", exc_info=True)
+            # Capture complete donation object for debugging
+            try:
+                donation_json = json.dumps(donation_record, indent=2, default=str)
+            except:
+                donation_json = str(donation_record)
+            
+            donor_name = donation_name or donation_record.get('name', 'Unknown')
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            donation_id = donation_record.get('id', 'Unknown')
+            
+            # Create detailed error log
+            error_log_message = f"✗ FAILED [{timestamp}] - [ID-{donation_id}] {donor_name}"
+            error_log_reason = f"""
+================== DONATION PROCESSING FAILED ==================
+Timestamp: {timestamp}
+Donation Name: {donor_name}
+Donation ID: {donation_id}
+
+ERROR MESSAGE:
+{str(e)}
+
+COMPLETE DONATION RECORD OBJECT:
+{donation_json}
+
+TRACEBACK:
+{_logger.exception("Full exception trace below")}
+================================================================
+            """
+            
+            self.env['fetch.qurbani.log'].create({
+                'name': error_log_message,
+                'status': 'Error',
+                'reason': error_log_reason
+            })
+            
+            _logger.error(f"Error creating web qurbani order for {donor_name} (ID: {donation_id}): {str(e)}", exc_info=True)
             return {
                 "status": "error",
                 "message": str(e)
