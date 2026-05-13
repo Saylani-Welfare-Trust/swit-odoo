@@ -37,6 +37,7 @@ status_selection = [
     ('donate', 'Donate'),
     ('waiting_for_inventory_approval', 'Waiting for Inventory Approval'),
     ('recovered', 'Recovered'),
+    ('closed', 'Closed'),
 ]
 
 case_type_selection = [
@@ -394,11 +395,7 @@ class MedicalEquipment(models.Model):
         stock_picking.action_assign()
         stock_picking.button_validate()
         
-        for product_line in self.medical_equipment_line_ids:
-            for lot in product_line.lot_ids:
-                if lot.lot_consume:
-                    raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
-                lot.lot_consume = True
+        
                 
         # Link the stock picking to your medical equipment record
         self.write({
@@ -837,6 +834,11 @@ class MedicalEquipment(models.Model):
         if self.donee_id and self.donee_id.state != 'register':
             raise ValidationError(_('Donee must be in register state before completing the application.'))
         else:
+            for product_line in self.medical_equipment_line_ids:
+                for lot in product_line.lot_ids:
+                    if lot.lot_consume:
+                        raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
+                    lot.lot_consume = True
             self.state = 'completed'
 
     def _mark_application_synced(self):
