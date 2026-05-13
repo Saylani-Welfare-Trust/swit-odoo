@@ -834,8 +834,10 @@ class MedicalEquipment(models.Model):
     def action_complete(self):
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
-        self.state = 'completed'
-            
+        if self.donee_id and self.donee_id.state != 'register':
+            raise ValidationError(_('Donee must be in register state before completing the application.'))
+        else:
+            self.state = 'completed'
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
