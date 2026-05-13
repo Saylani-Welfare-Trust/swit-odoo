@@ -75,22 +75,15 @@ class QurbaniOrder(models.Model):
         Create Qurbani Order from api.donation using slaughter‑slot logic.
         Falls back to donation_record['qurbani_day'] and created_at when lines lack day/hijri.
         """
-
-
-        # ---------- Helper: get or create day from string like '1st' ----------
+        # ---------- Helper: get day from name ----------
         def _get_day_from_name(day_name):
             if not day_name:
-                return False
-            day = self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
-            # if not day:
-            #     # create if needed (adjust as per your model fields)
-            #     day = self.env['qurbani.day'].create({'name': day_name})
-            return day
+                return self.env['qurbani.day']
+            return self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
 
-        # ---------- Helper: get hijri from datetime ----------
-        def _get_hijri_from_date(dt):
-
-                return self.env['hijri'].search([], order='id desc', limit=1)
+        # ---------- Helper: get latest hijri (same as POS method) ----------
+        def _get_latest_hijri():
+            return self.env['hijri'].search([], order='id desc', limit=1)
 
         # ---------- Helper: get demand for a donation line ----------
         def _get_demand(line, default_day, default_hijri, default_product):
@@ -139,7 +132,7 @@ class QurbaniOrder(models.Model):
                 ], limit=1)
                 if cow_product:
                     demand_domain.append(('inventory_product_id', '=', cow_product.id))
-            else:
+            else:  # goat
                 goat_product = self.env['product.product'].search([
                     ('categ_id.name', 'ilike', 'goat'),
                     ('detailed_type', '=', 'service')
@@ -148,7 +141,8 @@ class QurbaniOrder(models.Model):
                     demand_domain.append(('inventory_product_id', '=', goat_product.id))
 
             demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
-            
+            if not demand:
+                raise ValidationError(f"No available demand slot for day {day_id}, hijri {hijri_id}, product {product.name}")
             return demand
 
         # ---------- Main logic ----------
@@ -160,26 +154,29 @@ class QurbaniOrder(models.Model):
             elif not donation_lines:
                 donation_lines = []
 
-            # Prepare default day and hijri from donation_record
+            # Prepare default day and hijri (latest hijri as in POS)
             default_day = _get_day_from_name(donation_record.get('qurbani_day'))
-            default_hijri = _get_hijri_from_date(donation_record.get('created_at'))
-
-            # Default product (optional) – you may need to search for a generic cow/goat product
-            default_product = False  # Not used if lines have product_id
+            default_hijri = _get_latest_hijri()   # same as POS method
+            default_product = False
 
             schedule_usage = {}
             order_lines_data = []
 
             for api_line in donation_lines:
-                
-                
                 if not api_line.exists():
                     _logger.warning(f"Line {api_line.id if api_line else '?'} does not exist")
                     continue
-                # raise ValidationError(str(api_line.read()))
-                demand = _get_demand(api_line, default_day, default_hijri, default_product)
-                if not demand:
-                    # Log the failure reason (already logged inside _get_demand)
+
+                try:
+                    demand = _get_demand(api_line, default_day, default_hijri, default_product)
+                except ValidationError as e:
+                    # Log the specific error and skip this line
+                    _logger.warning(f"Skipping line {api_line.id}: {str(e)}")
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"Invalid qurbani line",
+                        'status': 'Error',
+                        'reason': str(e)
+                    })
                     continue
 
                 qty = int(api_line.quantity or 1)
@@ -208,7 +205,7 @@ class QurbaniOrder(models.Model):
                     "message": "No valid qurbani lines found in donation"
                 }
 
-            # Validation and demand update (same as before)
+            # Validation and demand update
             for usage in schedule_usage.values():
                 demand = usage['demand']
                 requested = usage['qty']
@@ -266,7 +263,7 @@ class QurbaniOrder(models.Model):
                 }
                 product_lines.append((0, 0, vals))
 
-            # Donor and currency (unchanged)
+            # Donor and currency
             donor_id = donation_record.get('donor_id')
             if isinstance(donor_id, tuple):
                 donor_id = donor_id[0]
@@ -306,7 +303,7 @@ class QurbaniOrder(models.Model):
                 'subscription_sms': bool(donation_record.get('subscription_for_sms', False)),
             })
 
-            # Link to cow/goat slaughter & distribution (same as before – unchanged)
+            # Link to cow/goat slaughter & distribution (with existence checks)
             for line in qurbani_order.qurbani_order_line_ids:
                 product_name = (line.product_id.name or "").lower()
                 if 'cow' in product_name:
@@ -322,15 +319,20 @@ class QurbaniOrder(models.Model):
                         if len(rec.qurbani_cow_slaughter_line) < 7:
                             qurbani_cow_slaughter = rec
                             break
-                    qurbani_cow_slaughter.write({
-                        'qurbani_cow_slaughter_line': [(0, 0, {
-                            'qurbani_order_no': line.qurbani_order_id.name,
-                            'qurbani_order_line_no': line.name,
-                            'hissa_name': line.hissa_name,
-                            'product_id': line.product_id.id,
-                        })]
-                    })
-                    qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
+
+                    # FIX: Check if a valid record was found before writing
+                    if qurbani_cow_slaughter:
+                        qurbani_cow_slaughter.write({
+                            'qurbani_cow_slaughter_line': [(0, 0, {
+                                'qurbani_order_no': line.qurbani_order_id.name,
+                                'qurbani_order_line_no': line.name,
+                                'hissa_name': line.hissa_name,
+                                'product_id': line.product_id.id,
+                            })]
+                        })
+                        qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
+                    else:
+                        _logger.warning(f"No cow slaughter slot available for line {line.id}")
 
                     qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                         ('day_id', '=', line.day_id.id),
@@ -350,6 +352,7 @@ class QurbaniOrder(models.Model):
                             'hissa_name': line.hissa_name,
                             'product_id': line.product_id.id,
                         })
+
                 elif 'goat' in product_name:
                     qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
                         ('day_id', '=', line.day_id.id),
@@ -366,6 +369,7 @@ class QurbaniOrder(models.Model):
                             'hissa_name': line.hissa_name,
                             'product_id': line.product_id.id,
                         })
+
                     qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
@@ -397,7 +401,8 @@ class QurbaniOrder(models.Model):
             return {
                 "status": "error",
                 "message": str(e)
-            }    
+            } 
+            
     @staticmethod
     def _parse_iso_datetime(iso_string):
         """Parse ISO 8601 datetime string to Odoo datetime format"""
