@@ -22,7 +22,6 @@ class QurbaniCowSlaughterLine(models.Model):
             'target': 'new',
             'context': {
                 'default_qurbani_cow_slaughter_line_id': self.id,
-                'default_type': 'cow',
                 'default_option': 'single',
             }
         }

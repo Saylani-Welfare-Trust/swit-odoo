@@ -49,7 +49,6 @@ class QurbaniGoatSlaughter(models.Model):
             'target': 'new',
             'context': {
                 'default_qurbani_goat_slaughter_id': self.id,
-                'default_type': 'goat',
                 'default_option': 'hole',
             }
         }

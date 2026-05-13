@@ -1,11 +1,6 @@
 from odoo import models, fields
 
 
-type_selection = [
-    ('cow', 'Cow'),
-    ('goat', 'Goat'),
-]
-
 option_selection = [
     ('single', 'Single'),
     ('hole', 'Hole'),
@@ -17,7 +12,6 @@ class TransferSlaughter(models.TransientModel):
     _description = "Transfer Slaughter"
 
 
-    type = fields.Selection(selection=type_selection, string="Type", default="cow")
     option = fields.Selection(selection=option_selection, string="Option", default="single")
     
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
