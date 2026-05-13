@@ -40,6 +40,8 @@ class QurbaniCowSlaughter(models.Model):
         for rec in self:
             if rec.slot_full == 7:
                 rec.state = 'full'
+                
+            rec.state = 'available'
 
     @api.model
     def create(self, vals):

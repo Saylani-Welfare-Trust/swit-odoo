@@ -45,25 +45,46 @@ class TransferSlaughter(models.TransientModel):
 
     def action_tranfer(self):
         if self.option == 'hole':
+
+            # ==================================================
+            # COW
+            # ==================================================
             if self.qurbani_cow_slaughter_id and self.actual_qurbani_cow_slaughter_id:
+
                 vals_lst = []
+                lines_to_delete = self.env['qurbani.cow.slaughter.line']
 
                 for line in self.qurbani_cow_slaughter_id.qurbani_cow_slaughter_line:
-                    vals_lst.append([(0, 0, {
+
+                    vals_lst.append((0, 0, {
                         'qurbani_order_no': line.qurbani_order_no,
                         'qurbani_order_line_no': line.qurbani_order_line_no,
                         'product_id': line.product_id.id,
                         'hissa_name': line.hissa_name,
-                    })])
+                    }))
 
-                    line.unlink()
+                    lines_to_delete |= line
 
+                # CREATE IN TARGET
                 self.actual_qurbani_cow_slaughter_id.write({
                     'qurbani_cow_slaughter_line': vals_lst
                 })
 
-                self.actual_qurbani_cow_slaughter_id.slot_full = 7
+                # DELETE OLD LINES
+                lines_to_delete.unlink()
+
+                # UPDATE COUNTS
+                self.actual_qurbani_cow_slaughter_id.slot_full = len(
+                    self.actual_qurbani_cow_slaughter_id.qurbani_cow_slaughter_line
+                )
+
+                self.qurbani_cow_slaughter_id.slot_full = 0
+
+            # ==================================================
+            # GOAT
+            # ==================================================
             elif self.qurbani_goat_slaughter_id and self.actual_qurbani_goat_slaughter_id:
+
                 self.actual_qurbani_goat_slaughter_id.write({
                     'qurbani_order_no': self.qurbani_goat_slaughter_id.qurbani_order_no,
                     'qurbani_order_line_no': self.qurbani_goat_slaughter_id.qurbani_order_line_no,
@@ -71,12 +92,20 @@ class TransferSlaughter(models.TransientModel):
                     'hissa_name': self.qurbani_goat_slaughter_id.hissa_name,
                 })
 
-                self.qurbani_goat_slaughter_id.qurbani_order_no = ''
-                self.qurbani_goat_slaughter_id.qurbani_order_line_no = ''
-                self.qurbani_goat_slaughter_id.product_id = None
-                self.qurbani_goat_slaughter_id.hissa_name = ''
+                self.qurbani_goat_slaughter_id.write({
+                    'qurbani_order_no': '',
+                    'qurbani_order_line_no': '',
+                    'product_id': False,
+                    'hissa_name': '',
+                })
+
         else:
+
+            # ==================================================
+            # SINGLE TRANSFER
+            # ==================================================
             if self.qurbani_cow_slaughter_line_id and self.actual_qurbani_cow_slaughter_id:
+
                 self.actual_qurbani_cow_slaughter_id.write({
                     'qurbani_cow_slaughter_line': [(0, 0, {
                         'qurbani_order_no': self.qurbani_cow_slaughter_line_id.qurbani_order_no,
@@ -86,6 +115,12 @@ class TransferSlaughter(models.TransientModel):
                     })]
                 })
 
-                self.actual_qurbani_cow_slaughter_id.slot += 1
-
                 self.qurbani_cow_slaughter_line_id.unlink()
+
+                self.actual_qurbani_cow_slaughter_id.slot_full = len(
+                    self.actual_qurbani_cow_slaughter_id.qurbani_cow_slaughter_line
+                )
+
+                self.qurbani_cow_slaughter_id.slot_full = len(
+                    self.qurbani_cow_slaughter_id.qurbani_cow_slaughter_line
+                )
