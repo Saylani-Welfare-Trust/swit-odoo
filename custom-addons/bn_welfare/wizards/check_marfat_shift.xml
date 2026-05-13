@@ -23,31 +23,29 @@
 
                     <separator string="Disbursement Lines" class="text-uppercase"/>
                     
-                    <!-- Put page inside notebook -->
-                    <notebook>
-                        <page string="Disbursement Lines">
-                            <field name="disbursement_line_ids" readonly="1" nolabel="1">
-                                <tree>
-                                    <field name="welfare_id" string="Welfare Record"/>
-                                    <field name="disbursement_category_id" string="Disbursement Category"/>
-                                    <field name="product_id" string="Product"/>
-                                    <field name="collection_point" string="Collection Point"/>
-                                    <field name="collection_date" string="Collection Date"/>
-                                    <field name="quantity" string="Quantity"/>
-                                    <field name="total_amount" string="Total Amount"/>
-                                    <button name="mark_selected_as_collected" string="Mark Selected as Collected" type="object" class="btn-primary"/>                                    
-                                    <field name="state" 
-                                            widget="selection" 
-                                            options="{'always_reload': True}"
-                                            decoration-warning="state == 'draft'" 
-                                            decoration-success="state == 'collected'"
-                                            decoration-info="state in ['submitted', 'approved']"
-                                            decoration-danger="state == 'rejected'"/>
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
-  
+                    <field name="disbursement_line_ids" nolabel="1">
+                        <tree>
+                            <field name="welfare_id" string="Welfare Record"/>
+                            <field name="disbursement_category_id" string="Disbursement Category"/>
+                            <field name="product_id" string="Product"/>
+                            <field name="collection_point" string="Collection Point"/>
+                            <field name="collection_date" string="Collection Date"/>
+                            <field name="quantity" string="Quantity"/>
+                            <field name="total_amount" string="Total Amount" sum="Total"/>
+                            <field name="state" 
+                                    widget="badge"
+                                    decoration-warning="state == 'draft'" 
+                                    decoration-success="state == 'collected'"
+                                    decoration-info="state == 'submitted'"
+                                    decoration-danger="state == 'rejected'"/>
+                            <!-- Button to open detailed wizard -->
+                            <button name="%(action_welfare_line_wizard)d" 
+                                    string="View Details" 
+                                    type="action" 
+                                    class="btn-info btn-sm"
+                                    context="{'default_welfare_line_id': active_id}"/>
+                        </tree>
+                    </field>
                 </sheet>
             </form>
         </field>

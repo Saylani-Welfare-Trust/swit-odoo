@@ -24,6 +24,7 @@
         'views/record_search.xml',
         'reports/report_welfare_collection_document.xml',
         'wizards/check_marfat_shift.xml',
+        'wizards/wizard_form_view.xml',
     ],
     'auto_install': False,
     'application': True,
