@@ -9,8 +9,8 @@
                 <sheet>
                     <group>
                         <group name="transfer_slaughter_col_1">
-                            <field name="type" options="{'horizontal': True}" widget="radio" readonly="1" invisible="1" />
-                            <field name="option" options="{'horizontal': True}" widget="radio" readonly="1" invisible="1" />
+                            <field name="type" options="{'horizontal': True}" widget="radio" invisible="1" />
+                            <field name="option" options="{'horizontal': True}" widget="radio" invisible="1" />
 
                             <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
 
