@@ -14,32 +14,45 @@
                         <h2>Check Assigned Officer Disbursements</h2>
                     </div>
                     
-                    <group>
+                    <group name="officer_info">
                         <group>
                             <field name="employee_category_id_officer" invisible="1" />
-                            <field name="assigned_officer_id" required="1"/>
+                            <field name="assigned_officer_id" required="1" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="officer_name" string="Officer Name"/>
+                            <field name="officer_address" string="Address"/>
                         </group>
                     </group>
 
                     <separator string="Disbursement Lines" class="text-uppercase"/>
-                    <field name="disbursement_line_ids" readonly="1" nolabel="1">
-                        <tree>
-                            <field name="welfare_id" string="Welfare Record"/>
-                            <field name="disbursement_category_id" string="Disbursement Category"/>
-                            <field name="product_id" string="Product"/>
-                            <field name="collection_point" string="Collection Point"/>
-                            <field name="collection_date" string="Collection Date"/>
-                            <field name="quantity" string="Quantity"/>
-                            <field name="total_amount" string="Total Amount"/>
-                               <field name="state" 
-                                       widget="selection" 
-                                       options="{'always_reload': True}"
-                                       decoration-warning="state == 'draft'" 
-                                       decoration-success="state == 'collected'"
-                                       decoration-info="state in ['submitted', 'approved']"
-                                       decoration-danger="state == 'rejected'"/>
+                    
+                    <!-- Scrollable tree with only state field editable -->
+                    <field name="disbursement_line_ids" nolabel="1">
+                        <tree editable="bottom" create="false" delete="false" style="max-height: 400px; overflow-y: auto;">
+                            <field name="welfare_id" string="Welfare Record" readonly="1"/>
+                            <field name="disbursement_category_id" string="Disbursement Category" readonly="1"/>
+                            <field name="product_id" string="Product" readonly="1"/>
+                            <field name="collection_point" string="Collection Point" readonly="1"/>
+                            <field name="collection_date" string="Collection Date" readonly="1"/>
+                            <field name="quantity" string="Quantity" readonly="1"/>
+                            <field name="total_amount" string="Total Amount" readonly="1"/>
+                            <field name="state" 
+                                   widget="selection" 
+                                   options="{'always_reload': True}"
+                                   readonly="0"
+                                   required="1"
+                                   decoration-warning="state == 'draft'" 
+                                   decoration-success="state == 'collected'"
+                                   decoration-info="state in ['submitted', 'approved']"
+                                   decoration-danger="state == 'rejected'"/>
                         </tree>
                     </field>
+                    
+                    <footer>
+                        <button name="action_mark_as_collected" string="Mark all as Collected" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
                 </sheet>
             </form>
         </field>
@@ -51,6 +64,7 @@
         <field name="res_model">check.marfat.shift</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+        <field name="view_id" ref="check_marfat_shift_form"/>
     </record>
 
     <!-- Menu Item for Check Marfat Shift -->
