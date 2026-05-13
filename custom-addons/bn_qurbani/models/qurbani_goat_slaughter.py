@@ -31,7 +31,9 @@ class QurbaniGoatSlaughter(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_slaughter') or ('New')
+            slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
+
+            vals['name'] = f'Goat - {str(slaughter_location.cow_sequence_number).zfill(5)}'
 
         return super(QurbaniGoatSlaughter, self).create(vals)
     

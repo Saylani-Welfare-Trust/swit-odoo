@@ -1,6 +1,12 @@
 from odoo import models, fields, api, _
 
 
+state_selection = [
+    ('available', 'Available'),
+    ('full', 'Full')
+]
+
+
 class QurbaniCowSlaughter(models.Model):
     _name = 'qurbani.cow.slaughter'
     _description = "Qurbani Cow Slaughter"
@@ -21,15 +27,25 @@ class QurbaniCowSlaughter(models.Model):
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
+    state = fields.Selection(selection=state_selection, string="State", compute="_set_state", default='available', store=True)
+
     slot_full = fields.Integer('Slot Full')
 
     qurbani_cow_slaughter_line = fields.One2many('qurbani.cow.slaughter.line', 'qurbani_cow_slaughter_id', string="Qurbani Cow Slaughter Line")
 
 
+    @api.depends('slot_full')
+    def _set_state(self):
+        for rec in self:
+            if rec.slot_full == 7:
+                rec.state = 'full'
+
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_slaughter') or ('New')
+            slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
+
+            vals['name'] = f'Cow - {str(slaughter_location.cow_sequence_number).zfill(5)}'
 
         return super(QurbaniCowSlaughter, self).create(vals)
     
