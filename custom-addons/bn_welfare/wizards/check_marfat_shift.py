@@ -7,18 +7,18 @@ class CheckMarfatShift(models.TransientModel):
     _description = 'Check Assigned Officer (Marfat) Shift Disbursements'
 
     employee_category_id_officer = fields.Many2one(
-        'hr.employee.category', 
-        string="Employee Category", 
+        'hr.employee.category',
+        string="Employee Category",
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id
     )
-    
+
     assigned_officer_id = fields.Many2one(
         'hr.employee',
         string="Assigned Officer (Marfat)",
         domain="[('category_ids', 'in', [employee_category_id_officer])]",
         required=True
     )
-    
+
     # Display fields for the results
     disbursement_line_ids = fields.Many2many(
         'welfare.line',
@@ -30,15 +30,17 @@ class CheckMarfatShift(models.TransientModel):
     @api.depends('assigned_officer_id')
     def _compute_disbursement_lines(self):
         """
-        Fetch all disbursement lines for the selected assigned officer
+        Fetch all disbursement lines for the selected assigned officer with today's collection date
         """
         for rec in self:
             if rec.assigned_officer_id:
-                # Find all welfare lines assigned to this officer
+                today = fields.Date.today()
+                # Find all welfare lines assigned to this officer with today's collection date
                 welfare_lines = self.env['welfare.line'].search([
                     ('assigned_officer_id', '=', rec.assigned_officer_id.id),
+                    ('collection_date', '=', today)
                 ])
-                
+
                 rec.disbursement_line_ids = welfare_lines
             else:
                 rec.disbursement_line_ids = False
@@ -49,10 +51,10 @@ class CheckMarfatShift(models.TransientModel):
         """
         if not self.assigned_officer_id:
             raise UserError("Please select an Assigned Officer (Marfat)")
-        
+
         # Trigger recompute of disbursement_line_ids
         self._compute_disbursement_lines()
-        
+
         # Return action to refresh the view
         return {
             'type': 'ir.actions.act_window',
@@ -61,3 +63,4 @@ class CheckMarfatShift(models.TransientModel):
             'view_mode': 'form',
             'target': 'new',
         }
+
