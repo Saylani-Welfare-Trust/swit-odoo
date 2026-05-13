@@ -12,7 +12,7 @@
                             <field name="type" options="{'horizontal': True}" widget="radio" readonly="1" invisible="1" />
                             <field name="option" options="{'horizontal': True}" widget="radio" readonly="1" invisible="1" />
 
-                            <field name="slaughter_location_id" string="Location" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
 
                             <field name="start_time" widget="float_time" />
                             <field name="end_time" widget="float_time" />
