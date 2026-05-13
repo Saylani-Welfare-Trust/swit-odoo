@@ -533,6 +533,28 @@ class APIDonationWizard(models.TransientModel):
                     f"Partners successfully created. IDs: {created_partners.ids}"
                 )
                 
+                # ====================================================
+                # POPULATE PARTNER MAPPING
+                # ====================================================
+                # Map created partners by (mobile, country_code_id) for donations lookup
+                for idx, partner_vals in enumerate(partners_to_create_final):
+                    partner_key = (partner_vals.get('mobile'), partner_vals.get('country_code_id'))
+                    if idx < len(created_partners):
+                        partner_mapping[partner_key] = created_partners[idx].id
+                        self.create_fetch_log(
+                            history.id,
+                            f"Mapped partner key {partner_key} to partner ID {created_partners[idx].id}",
+                            'Debug',
+                            f"Partner mapping for mobile={partner_vals.get('mobile')}, country={partner_vals.get('country_code_id')}"
+                        )
+                
+                self.create_fetch_log(
+                    history.id,
+                    f"Partner mapping completed: {len(partner_mapping)} mappings created",
+                    'Success',
+                    f"Mappings: {partner_mapping}"
+                )
+                
                 # Try to register partners
                 try:
                     created_partners.action_register()
@@ -629,12 +651,43 @@ STACK TRACE:
         # UPDATE DONATION VALUES
         # ==========================================================
 
+        donations_with_partner = 0
+        donations_without_partner = 0
+        
         for donation_val in donations_to_create:
             if 'partner_key' in donation_val:
-                donation_val['donor_id'] = partner_mapping.get(
-                    donation_val['partner_key']
-                )
+                partner_id = partner_mapping.get(donation_val['partner_key'])
+                if partner_id:
+                    donation_val['donor_id'] = partner_id
+                    donations_with_partner += 1
+                else:
+                    # Partner not found in mapping
+                    partner_key = donation_val['partner_key']
+                    self.create_fetch_log(
+                        history.id,
+                        f"⚠ Donation could not be linked to partner",
+                        'Warning',
+                        f"Partner key {partner_key} not found in mapping for donor {donation_val.get('name', 'Unknown')}"
+                    )
+                    donations_without_partner += 1
                 del donation_val['partner_key']
+            else:
+                # No partner_key means donor_id was already set (from cache or default)
+                if donation_val.get('donor_id'):
+                    donations_with_partner += 1
+                else:
+                    donations_without_partner += 1
+        
+        self.create_fetch_log(
+            history.id,
+            f"Donation-Partner Linking Results",
+            'Success',
+            f"""
+Donations with Partner ID: {donations_with_partner}
+Donations without Partner ID: {donations_without_partner}
+Total Donations to Create: {len(donations_to_create)}
+            """
+        )
 
         # -----------------------------
         # CREATE DONATIONS
@@ -747,8 +800,6 @@ STACK TRACE:
                         break
             
             if not donor_id:
-                # raise ValidationError(str(all_data['partner_cache'])+" "+str(mobile)+" "+str(country_id))
-
                 # Create new partner
                 partner_vals = {
                     'name': donor.get('name', ''),
@@ -756,12 +807,11 @@ STACK TRACE:
                     'email': donor.get('email', ''),
                     'country_code_id': country_id,
                     'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                    # 'original_index': len(partner_to_create)  # Store index for mapping
                 }
                 
                 partner_to_create.append(partner_vals)
-                # Temporary key for later mapping
-                partner_key = len(partner_to_create) - 1
+                # Use (mobile, country_id) tuple as key for mapping later
+                partner_key = (mobile, country_id)
         else:
             donor_id = all_data['default_partner_id']
         
