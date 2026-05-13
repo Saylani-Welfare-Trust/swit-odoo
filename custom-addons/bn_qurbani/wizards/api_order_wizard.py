@@ -109,7 +109,7 @@ class APIDonationWizard(models.TransientModel):
                 """
 
                 self.create_fetch_log(
-                    f"Error processing donation {info.name}",
+                    f"Qurbani Record {info.name}",
                     'Error',
                     error_details
                 )
