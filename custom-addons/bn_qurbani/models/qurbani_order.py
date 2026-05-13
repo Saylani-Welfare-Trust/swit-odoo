@@ -386,19 +386,93 @@ COMPLETE DONATION RECORD:
                         })
                         qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
 
-                    qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
-                        # ('day_id', '=', line.day_id.id),
-                        # ('hijri_id', '=', line.hijri_id.id),
-                        # ('slaughter_start_time', '=', convert_to_24hr(line.slaughter_start_time)),
-                        # ('slaughter_end_time', '=', convert_to_24hr(line.slaughter_end_time)),
-                        # ('slaughter_location_id', '=', line.slaughter_id.id),
-                        # ('start_time', '=', convert_to_24hr(line.start_time)),
-                        # ('end_time', '=', convert_to_24hr(line.end_time)),
-                        # ('distribution_location_id', '=', line.distribution_id.id),
-                        # ('qurbani_order_no', '=', False),
-                    ], limit=1)
-                    # raise ValidationError(f"Distribution search domain: day {line.day_id.id}, hijri {line.hijri_id.id}, slaughter_start_time {line.slaughter_start_time}, slaughter_end_time {line.slaughter_end_time}, slaughter_location_id {line.slaughter_id.id}, start_time {line.start_time}, end_time {line.end_time}, distribution_location_id {line.distribution_id.id}")
-                    raise ValidationError(qurbani_cow_distribution.read())   
+                    # Cow distribution search with detailed logging
+                    search_domain = [
+                        ('day_id', '=', line.day_id.id),
+                        ('hijri_id', '=', line.hijri_id.id),
+                        ('slaughter_start_time', '=', line.slaughter_start_time),
+                        ('slaughter_end_time', '=', line.slaughter_end_time),
+                        ('slaughter_location_id', '=', line.slaughter_id.id),
+                        ('start_time', '=', line.start_time),
+                        ('end_time', '=', line.end_time),
+                        ('distribution_location_id', '=', line.distribution_id.id),
+                        ('qurbani_order_no', '=', False),
+                    ]
+                    
+                    qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
+                    
+                    if qurbani_cow_distribution:
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"✓ COW DIST FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'status': 'Success',
+                            'reason': f"""
+                            COW DISTRIBUTION SEARCH SUCCESSFUL
+                            ==================================
+                            Order: {line.qurbani_order_id.name}
+                            Order Line: {line.name}
+                            Distribution Record ID: {qurbani_cow_distribution.id}
+
+                            Search Criteria Used:
+                            - day_id: {line.day_id.id}
+                            - hijri_id: {line.hijri_id.id}
+                            - slaughter_start_time: {line.slaughter_start_time}
+                            - slaughter_end_time: {line.slaughter_end_time}
+                            - slaughter_location_id: {line.slaughter_id.id}
+                            - start_time: {line.start_time}
+                            - end_time: {line.end_time}
+                            - distribution_location_id: {line.distribution_id.id}
+                            - qurbani_order_no: False
+
+                            Matched Record Details:
+                            {json.dumps(qurbani_cow_distribution.read()[0], indent=2, default=str)}
+                            """
+                        })
+                    else:
+                        # Fallback search to see what's available
+                        all_dist = self.env['qurbani.cow.distribution'].search([('qurbani_order_no', '=', False)], limit=10)
+                        available_records = []
+                        if all_dist:
+                            for d in all_dist:
+                                available_records.append({
+                                    'id': d.id,
+                                    'day_id': d.day_id.id,
+                                    'hijri_id': d.hijri_id.id,
+                                    'slaughter_start_time': d.slaughter_start_time,
+                                    'slaughter_end_time': d.slaughter_end_time,
+                                    'slaughter_location_id': d.slaughter_location_id.id,
+                                    'start_time': d.start_time,
+                                    'end_time': d.end_time,
+                                    'distribution_location_id': d.distribution_location_id.id,
+                                })
+                        
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"✗ COW DIST NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'status': 'Debug',
+                            'reason': f"""
+                                COW DISTRIBUTION SEARCH FAILED - DEBUGGING INFO
+                                ================================================
+                                Order: {line.qurbani_order_id.name}
+                                Order Line: {line.name}
+
+                                Search Criteria That Failed:
+                                - day_id: {line.day_id.id}
+                                - hijri_id: {line.hijri_id.id}
+                                - slaughter_start_time: {line.slaughter_start_time}
+                                - slaughter_end_time: {line.slaughter_end_time}
+                                - slaughter_location_id: {line.slaughter_id.id}
+                                - start_time: {line.start_time}
+                                - end_time: {line.end_time}
+                                - distribution_location_id: {line.distribution_id.id}
+                                - qurbani_order_no: False
+
+                                Available Unlinked Distribution Records (showing first 10):
+                                {json.dumps(available_records, indent=2, default=str)}
+
+                                Note: Check if any of above records match your criteria. 
+                                Compare field values and types carefully (especially time fields and location IDs).
+                                                            """
+                                                        })
+                    
                     if qurbani_cow_distribution:
                         qurbani_cow_distribution.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
