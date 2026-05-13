@@ -7,8 +7,8 @@ type_selection = [
 ]
 
 option_selection = [
+    ('single', 'Single'),
     ('hole', 'Hole'),
-    ('line', 'Line'),
 ]
 
 
@@ -18,19 +18,16 @@ class TransferSlaughter(models.TransientModel):
 
 
     type = fields.Selection(selection=type_selection, string="Type", default="cow")
-    option = fields.Selection(selection=option_selection, string="Option", default="cow")
+    option = fields.Selection(selection=option_selection, string="Option", default="single")
     
-    actual_qurbani_cow_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Cow Slaughter")
-    actual_cow_slaughter_location_id = fields.Many2one(related='actual_qurbani_cow_slaughter_id.slaughter_location_id', string="Slaughter Location")
-    
-    cow_start_time = fields.Float(related='actual_qurbani_cow_slaughter_id.start_time', string="Start Time", store=True)
-    cow_end_time = fields.Float(related='actual_qurbani_cow_slaughter_id.end_time', string="End Time", store=True)
+    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
 
-    actual_qurbani_goat_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Goat Slaughter")
-    actual_goat_slaughter_location_id = fields.Many2one(related='actual_qurbani_goat_slaughter_id.slaughter_location_id', string="Slaughter Location")
-    
-    goat_start_time = fields.Float(related='actual_qurbani_goat_slaughter_id.start_time', string="Start Time", store=True)
-    goat_end_time = fields.Float(related='actual_qurbani_goat_slaughter_id.end_time', string="End Time", store=True)
+    start_time = fields.Float('Start Time')
+    end_time = fields.Float('End Time')
+
+
+    actual_qurbani_cow_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Cow Slaughter")
+    actual_qurbani_goat_slaughter_id = fields.Many2one('qurbani.goat.slaughter', string="Goat Slaughter")
 
     
     qurbani_cow_slaughter_id = fields.Many2one('qurbani.cow.slaughter', string="Cow Slaughter")
