@@ -27,16 +27,9 @@
 
                     <separator string="Disbursement Lines" class="text-uppercase"/>
                     
-                    <!-- Scrollable tree with only state field editable and donee details -->
+                    <!-- Scrollable tree with only state field editable -->
                     <field name="disbursement_line_ids" nolabel="1">
                         <tree editable="bottom" create="false" delete="false" style="max-height: 400px; overflow-y: auto;">
-                            <!-- Donee Information -->
-                            <field name="donee_name" string="Donee Name" readonly="1"/>
-                            <field name="donee_address" string="Donee Address" readonly="1"/>
-                            <field name="donee_mobile" string="Mobile" readonly="1"/>
-                            <field name="donee_cnic" string="CNIC" readonly="1"/>
-                            
-                            <!-- Disbursement Information -->
                             <field name="welfare_id" string="Welfare Record" readonly="1"/>
                             <field name="disbursement_category_id" string="Disbursement Category" readonly="1"/>
                             <field name="product_id" string="Product" readonly="1"/>
@@ -44,8 +37,6 @@
                             <field name="collection_date" string="Collection Date" readonly="1"/>
                             <field name="quantity" string="Quantity" readonly="1"/>
                             <field name="total_amount" string="Total Amount" readonly="1"/>
-                            
-                            <!-- Editable State Field -->
                             <field name="state" 
                                    widget="selection" 
                                    options="{'always_reload': True}"
