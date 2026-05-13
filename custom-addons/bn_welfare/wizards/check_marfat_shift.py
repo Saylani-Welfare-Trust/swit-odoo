@@ -64,9 +64,12 @@ class CheckMarfatShift(models.TransientModel):
             'target': 'new',
         }
 
-    def change_state_to_collected_button(self, line_id):
-        """
-        Change the state of a welfare line to 'collected'
-        """
-        line = self.env['welfare.line'].browse(line_id)
-        line.write({'state': 'collected'})
+    def action_mark_selected_as_collected(self):
+        """Mark all selected disbursement lines as collected"""
+        for line in self.disbursement_line_ids:
+            if line.state != 'collected':
+                line.write({'state': 'collected'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
