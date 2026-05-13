@@ -60,7 +60,9 @@ class TransferSlaughter(models.TransientModel):
 
                 self.actual_qurbani_cow_slaughter_id.write({
                     'qurbani_cow_slaughter_line': vals_lst
-                }) 
+                })
+
+                self.actual_qurbani_cow_slaughter_id.slot_full = 7
             elif self.qurbani_goat_slaughter_id and self.actual_qurbani_goat_slaughter_id:
                 self.actual_qurbani_goat_slaughter_id.write({
                     'qurbani_order_no': self.qurbani_goat_slaughter_id.qurbani_order_no,
@@ -83,5 +85,7 @@ class TransferSlaughter(models.TransientModel):
                         'hissa_name': self.qurbani_cow_slaughter_line_id.hissa_name,
                     })]
                 })
+
+                self.actual_qurbani_cow_slaughter_id.slot += 1
 
                 self.qurbani_cow_slaughter_line_id.unlink()
