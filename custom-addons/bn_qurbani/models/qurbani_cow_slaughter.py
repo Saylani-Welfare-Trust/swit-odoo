@@ -65,7 +65,8 @@ class QurbaniCowSlaughter(models.Model):
         }
     
     def action_print_report(self):
-        if self.slot_full < 7:
-            raise ValidationError('Cannot generate an incomplete cow for sluaghter report.')
-        
+        for rec in self:
+            if rec.slot_full < 7:
+                raise ValidationError('Cannot generate an incomplete cow for sluaghter report.')
+            
         return self.env.ref('bn_qurbani.qurbani_cow_slaughter_report').report_action(self)
