@@ -8,7 +8,7 @@
             <tree default_order="create_date desc">
                 <field name="name"/>
                 <field name="donee_id"/>
-                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['payment_received', 'payment_return', 'validate']" decoration-success="state == 'return'" decoration-danger="state == 'closed'"/>
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['payment_received', 'payment_return', 'validate']" decoration-success="state == 'return'" decoration-danger="state == 'closed'"/>
             </tree>
         </field>
     </record>
@@ -21,7 +21,6 @@
                 <header>
                     <field name="state" invisible="1"/>
                     <field name="is_donee_register" invisible="1" />
-                    <!-- <field name="case_type" invisible="1" /> -->
                     <field name="Portal_acknowledgment" invisible="1" />
                     <button string="Complete" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft' or state == 'closed'" />
                     <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state not in ['draft', 'completed','inquiry','send_for_inquiry','ceo_approval','cfo_approval'] or state == 'closed'" />
@@ -43,8 +42,8 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, payment_return, send_for_inquiry, inquiry" />
                 </header>
                 <sheet>
-                    <field name="state" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
+                        <field name="state" invisible="1"/>
                         <field name="picking_id" invisible="1"/>
                         <field name="return_picking_id" invisible="1"/>
 
@@ -71,6 +70,7 @@
                     </div>
 
                     <group>
+                        <field name="state" invisible="1"/>
                         <group name="medical_equipment_col_1">
                             <field name="portal_application_id" invisible="1"/>
                             <field name="is_actual_deposit_editable" invisible="1"/> 
@@ -96,10 +96,10 @@
                             <field name="application_location_link" readonly="state != 'draft' or state == 'closed'" required="0" />
                             <field name="total_amount" string="Loan request Amount" readonly="1"/>
 
-                            <!-- <field name="loan_request_amount" readonly="state != 'draft'" /> -->
                             <field name="last_sync_date" readonly="1" />
                         </group>
                         <group name="medical_equipment_col_2">
+                            <field name="state" invisible="1"/>
                             <label for="mobile"/>
                             <div style="display: flex;">
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft' or state == 'closed'" style="width: 30% !important;" name="country_code_id" nolabel="1" required="state != 'closed'" force_save="1"/> 
@@ -117,15 +117,18 @@
                         </group>
                     </group>
 
-                    <group string="Welfare Portal Information" invisible="case_type != 'below_50_percent' or state == 'closed'">
-                        <field name="welfare_portal_id" readonly="state == 'closed'" />
-                        <field name="Portal_acknowledgment" readonly="state == 'closed'" />
+                    <group string="Welfare Portal Information" invisible="case_type != 'below_50_percent'">
+                        <field name="state" invisible="1"/>
+                        <field name="welfare_portal_id" readonly="1" />
+                        <field name="Portal_acknowledgment" readonly="1" />
                     </group>
 
                     <notebook>
                         <page string="Items">
+                            <field name="state" invisible="1"/>
                             <field name="medical_equipment_line_ids" readonly="state == 'closed' or state not in ['draft', 'inquiry', 'completed','send_for_inquiry','ceo_approval']">
                                 <tree editable="bottom">
+                                    <field name="state" invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
 
                                     <field name="medical_equipment_category_id"
