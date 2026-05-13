@@ -142,8 +142,6 @@
                                         widget="many2many_tags"
                                         domain="[('product_id', '=', product_id), ('lot_consume', '=', False)]"
                                         width="100"
-                                        invisible="product_id.tracking == 'none'" 
-                                        required="product_id.tracking != 'none'"
                                     />
 
                                     <field name="quantity" width="100"/>
