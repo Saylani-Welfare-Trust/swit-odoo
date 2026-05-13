@@ -44,5 +44,44 @@ class TransferSlaughter(models.TransientModel):
 
 
     def action_tranfer(self):
-        if self.qurbani_cow_slaughter_line_id:
-            pass
+        if self.option == 'hole':
+            if self.qurbani_cow_slaughter_id and self.actual_qurbani_cow_slaughter_id:
+                vals_lst = []
+
+                for line in self.qurbani_cow_slaughter_id.qurbani_cow_slaughter_line:
+                    vals_lst.append([(0, 0, {
+                        'qurbani_order_no': line.qurbani_order_no,
+                        'qurbani_order_line_no': line.qurbani_order_line_no,
+                        'product_id': line.product_id.id,
+                        'hissa_name': line.hissa_name,
+                    })])
+
+                    line.unlink()
+
+                self.actual_qurbani_cow_slaughter_id.write({
+                    'qurbani_cow_slaughter_line': vals_lst
+                }) 
+            elif self.qurbani_goat_slaughter_id and self.actual_qurbani_goat_slaughter_id:
+                self.actual_qurbani_goat_slaughter_id.write({
+                    'qurbani_order_no': self.qurbani_goat_slaughter_id.qurbani_order_no,
+                    'qurbani_order_line_no': self.qurbani_goat_slaughter_id.qurbani_order_line_no,
+                    'product_id': self.qurbani_goat_slaughter_id.product_id.id,
+                    'hissa_name': self.qurbani_goat_slaughter_id.hissa_name,
+                })
+
+                self.qurbani_goat_slaughter_id.qurbani_order_no = ''
+                self.qurbani_goat_slaughter_id.qurbani_order_line_no = ''
+                self.qurbani_goat_slaughter_id.product_id = None
+                self.qurbani_goat_slaughter_id.hissa_name = ''
+        else:
+            if self.qurbani_cow_slaughter_line_id and self.actual_qurbani_cow_slaughter_id:
+                self.actual_qurbani_cow_slaughter_id.write({
+                    'qurbani_cow_slaughter_line': [(0, 0, {
+                        'qurbani_order_no': self.qurbani_cow_slaughter_line_id.qurbani_order_no,
+                        'qurbani_order_line_no': self.qurbani_cow_slaughter_line_id.qurbani_order_line_no,
+                        'product_id': self.qurbani_cow_slaughter_line_id.product_id.id,
+                        'hissa_name': self.qurbani_cow_slaughter_line_id.hissa_name,
+                    })]
+                })
+
+                self.qurbani_cow_slaughter_line_id.unlink()
