@@ -301,7 +301,9 @@ COMPLETE DONATION RECORD:
                 city_id = api_line.city_id.id if api_line.city_id else False
                 if not city_id and demand.slaughter_location_id.location_id:
                     city_id = demand.slaughter_location_id.location_id.id
-
+                distribution_location_id = self.env['stock.location'].search(
+                    [('complete_name', 'ilike', 'SDC/Karachi/Online / Website')], limit=1
+                ).id
                 vals = {
                     'product_id': line_data['product_id'],
                     'quantity': line_data['quantity'],
@@ -309,7 +311,7 @@ COMPLETE DONATION RECORD:
                     'day_id': demand.day_id.id,
                     'hijri_id': demand.hijri_id.id,
                     'city_id': city_id,
-                    'distribution_id': demand.slaughter_location_id.id,
+                    'distribution_id': distribution_location_id,
                     'slaughter_id': demand.slaughter_location_id.id,
                     'hissa_name': line_data['hissa_name'],
                     'start_time': demand.start_time,
@@ -390,8 +392,8 @@ COMPLETE DONATION RECORD:
                     search_domain = [
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        ('slaughter_start_time', '=', line.slaughter_start_time),
-                        ('slaughter_end_time', '=', line.slaughter_end_time),
+                        # ('slaughter_start_time', '=', line.slaughter_start_time),
+                        # ('slaughter_end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                         ('start_time', '=', line.start_time),
                         ('end_time', '=', line.end_time),
@@ -499,8 +501,8 @@ COMPLETE DONATION RECORD:
                     qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        ('slaughter_start_time', '=', line.slaughter_start_time),
-                        ('slaughter_end_time', '=', line.slaughter_end_time),
+                        # ('slaughter_start_time', '=', line.slaughter_start_time),
+                        # ('slaughter_end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                         ('start_time', '=', line.start_time),
                         ('end_time', '=', line.end_time),
