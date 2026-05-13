@@ -462,6 +462,27 @@ class APIDonationWizard(models.TransientModel):
             ], limit=1)
 
             if not existing_partner:
+                # Validate partner data before adding to create list
+                if not vals.get('name'):
+                    self.create_fetch_log(
+                        history.id,
+                        f"⚠ Skipping partner with missing name",
+                        'Warning',
+                        f"Partner data missing name field: {vals}"
+                    )
+                    _logger.warning(f"Skipping partner with missing name: {vals}")
+                    continue
+                    
+                if not vals.get('mobile') and not vals.get('email'):
+                    self.create_fetch_log(
+                        history.id,
+                        f"⚠ Skipping partner {vals.get('name')} with missing mobile and email",
+                        'Warning',
+                        f"Partner must have at least mobile or email: {vals}"
+                    )
+                    _logger.warning(f"Skipping partner with no contact: {vals}")
+                    continue
+                
                 partners_to_create_final.append(vals)
             else:
                 already_existing_partners += 1
@@ -470,7 +491,7 @@ class APIDonationWizard(models.TransientModel):
                     history.id,
                     f"Partner already exists: {existing_partner.name}",
                     'Debug',
-                    f"Existing partner found for mobile={vals.get('mobile')}"
+                    f"Existing partner found for mobile={vals.get('mobile')}, email={vals.get('email')}"
                 )
 
         self.create_fetch_log(
@@ -493,19 +514,73 @@ class APIDonationWizard(models.TransientModel):
         created_partners = self.env['res.partner']
 
         if partners_to_create_final:
+            try:
+                self.create_fetch_log(
+                    history.id,
+                    f"Attempting to create {len(partners_to_create_final)} partners",
+                    'Processing',
+                    f"Partner data: {partners_to_create_final}"
+                )
+                
+                created_partners = self.env['res.partner'].create(partners_to_create_final)
+                
+                actually_created_partners = len(created_partners)
+                
+                self.create_fetch_log(
+                    history.id,
+                    f"✓ Successfully created {actually_created_partners} partners",
+                    'Success',
+                    f"Partners successfully created. IDs: {created_partners.ids}"
+                )
+                
+                # Try to register partners
+                try:
+                    created_partners.action_register()
+                    self.create_fetch_log(
+                        history.id,
+                        f"✓ Successfully registered {actually_created_partners} partners",
+                        'Success',
+                        f"Partners successfully registered"
+                    )
+                except Exception as register_error:
+                    self.create_fetch_log(
+                        history.id,
+                        f"⚠ Warning: Partners created but registration failed",
+                        'Warning',
+                        f"Partners were created but action_register failed: {str(register_error)}"
+                    )
+                    _logger.warning(f"Partner registration error: {str(register_error)}")
+                    
+            except Exception as create_error:
+                actually_created_partners = 0
+                self.create_fetch_log(
+                    history.id,
+                    f"✗ FAILED to create partners",
+                    'Error',
+                    f"""
+================== PARTNER CREATION FAILED ==================
+Total Partners Attempted: {len(partners_to_create_final)}
 
-            created_partners = self.env['res.partner'].create(partners_to_create_final)
+ERROR MESSAGE:
+{str(create_error)}
 
-            actually_created_partners = len(created_partners)
+PARTNER DATA ATTEMPTED:
+{partners_to_create_final}
 
+STACK TRACE:
+{_logger.exception("Full exception trace:")}
+============================================================
+                    """
+                )
+                _logger.exception(f"Partner creation failed: {str(create_error)}")
+                raise ValidationError(f"Failed to create partners: {str(create_error)}")
+        else:
             self.create_fetch_log(
                 history.id,
-                f"Actually created partners: {actually_created_partners}",
-                'Success',
-                'Partners successfully created'
+                "No partners to create",
+                'Info',
+                'No new partners needed creation'
             )
-
-            created_partners.action_register()
 
         # ==========================================================
         # FINAL DEBUG SUMMARY
@@ -535,6 +610,8 @@ class APIDonationWizard(models.TransientModel):
     FINAL PARTNERS TO CREATE: {len(partners_to_create_final)}
 
     ACTUALLY CREATED PARTNERS: {actually_created_partners}
+    
+    PARTNER CREATION STATUS: {'✓ SUCCESS' if actually_created_partners == len(partners_to_create_final) else '✗ PARTIAL/FAILED' if actually_created_partners > 0 else '✗ FAILED'}
 
     ===========================
     """
@@ -545,7 +622,7 @@ class APIDonationWizard(models.TransientModel):
             history.id,
             debug_summary,
             'Debug Summary',
-            'Final testing/debugging summary'
+            'Final testing/debugging summary with partner creation validation'
         )
 
         # ==========================================================
