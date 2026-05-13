@@ -100,53 +100,14 @@ class APIDonationWizard(models.TransientModel):
             except Exception as e:
                 failed_count += 1
                 
-                try:
-                    donation_data = info.read()[0]
-                except:
-                    donation_data = {}
-
-                # Create unique identifier for this failed record
-                unique_id = f"[ID-{info.id}] {info.name}"
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
-                # Format donation data as JSON for better readability
-                try:
-                    donation_json = json.dumps(donation_data, indent=2, default=str)
-                except:
-                    donation_json = str(donation_data)
-
-                # Create comprehensive error details
-                error_details = f"""
-================== FAILED RECORD DETAILS ==================
-Timestamp: {timestamp}
-Unique ID: {unique_id}
-Donation ID: {info.id}
-Donation Name: {info.name}
-
-EXCEPTION ERROR:
-{str(e)}
-
-COMPLETE DONATION RECORD OBJECT:
-{donation_json}
-
-STACK TRACE:
-{_logger.exception("Error details below")}
-==========================================
-                """
-
                 # Create the log entry with unique identifier in the name
                 self.create_fetch_log(
                     f"✗ FAILED [{timestamp}] - {unique_id}",
                     'Error',
-                    error_details
+                    str(e)
                 )
-
-                _logger.exception(
-                    f"Error processing donation ID {info.id} ({info.name}): {str(e)}"
-                )
-
-                continue
-        
         # Return summary notification
         summary_msg = f"Processed {len(donations_info)} donations: {created_count} succeeded, {failed_count} failed"
         self.create_fetch_log(f"End action_fetch_qurbani", 'API Fetch', summary_msg)
