@@ -36,7 +36,7 @@ class DonationHomeServiceLine(models.Model):
     #     string="Allowed Lots",
     #     compute="_compute_allowed_lot_ids",
     # )
-    @api.constrains('lot_ids')
+    @api.constrains('lot_ids', 'product_id')
     def _check_lot_ids(self):
         for record in self:
             # Only validate if tracking is required
