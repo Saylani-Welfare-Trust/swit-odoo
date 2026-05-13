@@ -49,8 +49,8 @@
         'wizards/transfer_slaughter.xml',
         'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
-        # 'reports/qurbani_cow_slaughter_report.xml',
-        # 'reports/qurbani_goat_slaughter_report.xml',
+        'reports/qurbani_cow_slaughter_report.xml',
+        'reports/qurbani_goat_slaughter_report.xml',
         
     ],
     'auto_install': False,
