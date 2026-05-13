@@ -154,7 +154,8 @@ class MedicalEquipment(models.Model):
                     raise ValidationError(
                         "Mobile number must contain exactly 10 digits."
                     )
-
+    def action_reject(self):
+        self.state = 'closed'
 
     @api.depends('date_of_birth')
     def _compute_age(self):
