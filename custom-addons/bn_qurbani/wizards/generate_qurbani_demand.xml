@@ -37,7 +37,7 @@
     <menuitem
         id="qurbani_coniguration_menu"
         name="Configuration"
-        parent="bn_qurbani.menu_qurbani_root"
+        parent="bn_qurbani.qurbani_menu"
         sequence="10"/>
 
     <menuitem
