@@ -496,3 +496,14 @@ class WelfareLine(models.Model):
                 StockMoveLine.create(move_line_vals)
                 picking.action_assign()
                 self.state = 'delivered'
+
+
+    def mark_selected_as_collected(self):
+        """Mark all selected disbursement lines as collected"""
+        for line in self.disbursement_line_ids:
+            if line.state != 'collected':
+                line.write({'state': 'collected'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }        
