@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 state_selection = [
@@ -60,3 +61,9 @@ class QurbaniCowSlaughter(models.Model):
                 'default_qurbani_cow_slaughter_id': self.id,
             }
         }
+    
+    def action_print_report(self):
+        if self.slot_full < 7:
+            raise ValidationError('Cannot generate an incomplete cow for sluaghter report.')
+        
+        return self.env.ref('bn_qurbani.qurbani_cow_slaughter_report').report_action(self)

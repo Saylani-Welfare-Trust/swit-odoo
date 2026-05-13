@@ -5,7 +5,7 @@
         <field name="name">qurbani.goat.distribution.view.tree</field>
         <field name="model">qurbani.goat.distribution</field>
         <field name="arch" type="xml">
-            <tree create="0" delete="0" editable="bottom">
+            <tree create="0" delete="0">
                 <field name="name" readonly="1" />
                 <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>

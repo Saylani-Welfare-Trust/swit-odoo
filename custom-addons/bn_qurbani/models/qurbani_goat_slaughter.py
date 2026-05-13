@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class QurbaniGoatSlaughter(models.Model):
@@ -48,3 +49,6 @@ class QurbaniGoatSlaughter(models.Model):
                 'default_qurbani_goat_slaughter_id': self.id,
             }
         }
+    
+    def action_print_report(self):
+        return self.env.ref('bn_qurbani.qurbani_goat_slaughter_report').report_action(self)
