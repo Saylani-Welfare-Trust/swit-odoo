@@ -82,36 +82,26 @@ class QurbaniOrder(models.Model):
             if not day_name:
                 return False
             day = self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
-            if not day:
-                # create if needed (adjust as per your model fields)
-                day = self.env['qurbani.day'].create({'name': day_name})
+            # if not day:
+            #     # create if needed (adjust as per your model fields)
+            #     day = self.env['qurbani.day'].create({'name': day_name})
             return day
 
         # ---------- Helper: get hijri from datetime ----------
         def _get_hijri_from_date(dt):
-            # if not dt:
+
                 return self.env['hijri'].search([], order='id desc', limit=1)
-            # # Convert to date if datetime
-            # if hasattr(dt, 'date'):
-            #     dt = dt.date()
-            # # Search hijri where gregorian date matches (assuming you have a field)
-            # hijri = self.env['hijri'].search([('date', '=', dt)], limit=1)
-            # if not hijri:
-            #     hijri = self.env['hijri'].search([], order='id desc', limit=1)
-            # return hijri
 
         # ---------- Helper: get demand for a donation line ----------
         def _get_demand(line, default_day, default_hijri, default_product):
             product = line.product_id or default_product
             if not product:
-                _logger.warning(f"Line {line.id if line else '?'} has no product_id")
-                return False
+                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
             # Check product category contains 'qurbani'
             categ_name = (product.categ_id.name or '').lower()
             if 'qurbani' not in categ_name:
                 raise ValidationError(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
-                return False
 
             # Determine animal type
             product_name = (product.name or '').lower()
@@ -120,27 +110,19 @@ class QurbaniOrder(models.Model):
             elif 'goat' in product_name:
                 animal_type = 'goat'
             else:
-                _logger.warning(f"Product {product.name} not identified as cow/goat")
-                return False
+                raise ValidationError(f"Product {product.name} not identified as cow/goat")
 
             # Slaughter location for online donations
             slaughter_location = self.env['stock.location'].search(
                 [('complete_name', 'ilike', 'SDC/Karachi/Online Head Office')], limit=1
             )
-            if not slaughter_location:
-                slaughter_location = self.env['stock.location'].create({
-                    'name': 'Online Head Office',
-                    'location_id': self.env.ref('stock.stock_location_locations').id,
-                    'complete_name': 'SDC/Karachi/Online Head Office'
-                })
 
             # Use line's day/hijri or fallback to defaults
             day_id = line.day_id.id if line.day_id else (default_day.id if default_day else False)
             hijri_id = line.hijri_id.id if line.hijri_id else (default_hijri.id if default_hijri else False)
 
             if not day_id or not hijri_id:
-                _logger.error(f"Cannot determine day/hijri for line {line.id}. day={day_id}, hijri={hijri_id}")
-                return False
+                raise ValidationError(f"Cannot determine day/hijri for line {line.id}. day={day_id}, hijri={hijri_id}")
 
             # Find demand record
             demand_domain = [
@@ -166,24 +148,7 @@ class QurbaniOrder(models.Model):
                     demand_domain.append(('inventory_product_id', '=', goat_product.id))
 
             demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
-
-            # Create if missing
-            if not demand:
-                start_dt = datetime.combine(default_day.date if default_day else datetime.today(), time(9, 0))
-                end_dt = datetime.combine(default_day.date if default_day else datetime.today(), time(17, 0))
-                inv_product = cow_product if animal_type == 'cow' else goat_product
-                demand = self.env['qurbani.slaughter.slot.demand'].create({
-                    'day_id': day_id,
-                    'hijri_id': hijri_id,
-                    'slaughter_location_id': slaughter_location.id,
-                    'inventory_product_id': inv_product.id if inv_product else False,
-                    'start_time': start_dt,
-                    'end_time': end_dt,
-                    'remaining_demand': 100,
-                    'remaining_hissa': 700 if animal_type == 'cow' else 100,
-                    'current_hissa': 0,
-                    'booked_hissa': 0,
-                })
+            
             return demand
 
         # ---------- Main logic ----------
@@ -357,15 +322,6 @@ class QurbaniOrder(models.Model):
                         if len(rec.qurbani_cow_slaughter_line) < 7:
                             qurbani_cow_slaughter = rec
                             break
-                    if not qurbani_cow_slaughter:
-                        qurbani_cow_slaughter = self.env['qurbani.cow.slaughter'].create({
-                            'day_id': line.day_id.id,
-                            'hijri_id': line.hijri_id.id,
-                            'start_time': line.slaughter_start_time,
-                            'end_time': line.slaughter_end_time,
-                            'slaughter_location_id': line.slaughter_id.id,
-                            'slot_full': 0,
-                        })
                     qurbani_cow_slaughter.write({
                         'qurbani_cow_slaughter_line': [(0, 0, {
                             'qurbani_order_no': line.qurbani_order_id.name,
