@@ -80,26 +80,28 @@ class QurbaniOrder(models.Model):
         # ---------- Helper: get or create day from string like '1st' ----------
         def _get_day_from_name(day_name):
             if not day_name:
-                return self.env['qurbani.day']  # Return empty recordset
+                return False
             day = self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
+            # if not day:
+            #     # create if needed (adjust as per your model fields)
+            #     day = self.env['qurbani.day'].create({'name': day_name})
             return day
 
         # ---------- Helper: get hijri from datetime ----------
         def _get_hijri_from_date(dt):
+
                 return self.env['hijri'].search([], order='id desc', limit=1)
 
         # ---------- Helper: get demand for a donation line ----------
         def _get_demand(line, default_day, default_hijri, default_product):
             product = line.product_id or default_product
             if not product:
-                _logger.warning(f"Line {line.id if line else '?'} has no product_id")
-                return False
+                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
-            # Check product category contains 'qurbani' - skip if not qurbani product
+            # Check product category contains 'qurbani'
             categ_name = (product.categ_id.name or '').lower()
             if 'qurbani' not in categ_name:
-                _logger.warning(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
-                return False
+                raise ValidationError(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
 
             # Determine animal type
             product_name = (product.name or '').lower()
@@ -108,8 +110,7 @@ class QurbaniOrder(models.Model):
             elif 'goat' in product_name:
                 animal_type = 'goat'
             else:
-                _logger.warning(f"Product {product.name} not identified as cow/goat")
-                return False
+                raise ValidationError(f"Product {product.name} not identified as cow/goat")
 
             # Slaughter location for online donations
             slaughter_location = self.env['stock.location'].search(
@@ -121,8 +122,7 @@ class QurbaniOrder(models.Model):
             hijri_id = line.hijri_id.id if line.hijri_id else (default_hijri.id if default_hijri else False)
 
             if not day_id or not hijri_id:
-                _logger.warning(f"Cannot determine day/hijri for line {line.id}. day={day_id}, hijri={hijri_id}")
-                return False
+                raise ValidationError(f"Cannot determine day/hijri for line {line.id}. day={day_id}, hijri={hijri_id}")
 
             # Find demand record
             demand_domain = [
@@ -149,7 +149,7 @@ class QurbaniOrder(models.Model):
 
             demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
             
-            return demand if demand else False
+            return demand
 
         # ---------- Main logic ----------
         try:
@@ -179,7 +179,7 @@ class QurbaniOrder(models.Model):
                 # raise ValidationError(str(api_line.read()))
                 demand = _get_demand(api_line, default_day, default_hijri, default_product)
                 if not demand:
-                    # Skip lines that don't have valid demand (already logged inside _get_demand)
+                    # Log the failure reason (already logged inside _get_demand)
                     continue
 
                 qty = int(api_line.quantity or 1)
@@ -322,18 +322,15 @@ class QurbaniOrder(models.Model):
                         if len(rec.qurbani_cow_slaughter_line) < 7:
                             qurbani_cow_slaughter = rec
                             break
-                    if qurbani_cow_slaughter:
-                        qurbani_cow_slaughter.write({
-                            'qurbani_cow_slaughter_line': [(0, 0, {
-                                'qurbani_order_no': line.qurbani_order_id.name,
-                                'qurbani_order_line_no': line.name,
-                                'hissa_name': line.hissa_name,
-                                'product_id': line.product_id.id,
-                            })]
-                        })
-                        qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
-                    else:
-                        _logger.warning(f"No available cow slaughter slot found for line {line.id}")
+                    qurbani_cow_slaughter.write({
+                        'qurbani_cow_slaughter_line': [(0, 0, {
+                            'qurbani_order_no': line.qurbani_order_id.name,
+                            'qurbani_order_line_no': line.name,
+                            'hissa_name': line.hissa_name,
+                            'product_id': line.product_id.id,
+                        })]
+                    })
+                    qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
 
                     qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                         ('day_id', '=', line.day_id.id),
@@ -476,7 +473,6 @@ class QurbaniOrder(models.Model):
             slot_demand_id = slot.get('slot_demand_id')
 
             if not slot_demand_id:
-                _logger.warning("No slot_demand_id found in line schedule")
                 return False
 
             if slot_demand_id in demand_cache:
@@ -485,11 +481,6 @@ class QurbaniOrder(models.Model):
             demand = self.env['qurbani.slaughter.slot.demand'].browse(
                 slot_demand_id
             ).exists()
-
-            if not demand:
-                _logger.warning(f"Demand with id {slot_demand_id} does not exist")
-                demand_cache[slot_demand_id] = False
-                return False
 
             demand_cache[slot_demand_id] = demand
 
@@ -504,14 +495,15 @@ class QurbaniOrder(models.Model):
 
             # ❌ Skip non-qurbani products
             if 'qurbani' not in (product.categ_id.name or '').lower():
-                _logger.warning(f"Skipping non-qurbani product: {product.name}")
                 continue
 
             demand = _get_demand(line)
 
             if not demand:
-                _logger.warning(f"Could not get demand for line, skipping")
-                continue
+                return {
+                    "status": "error",
+                    "body": "Invalid slaughter slot selected."
+                }
 
             qty = int(line.get('quantity', 0))
 
@@ -582,15 +574,10 @@ class QurbaniOrder(models.Model):
 
         for line in data.get('order_lines', []):
 
-            product = self.env['product.product'].browse(line.get('product_id'))
-            
-            if not product:
-                _logger.warning(f"Product not found for line")
-                continue
+            product = self.env['product.product'].browse(line['product_id'])
 
             # ❌ Skip non-qurbani products
             if 'qurbani' not in (product.categ_id.name or '').lower():
-                _logger.warning(f"Skipping non-qurbani product: {product.name}")
                 continue
 
             schedule = line.get('qurbani_schedule', {})
@@ -599,7 +586,6 @@ class QurbaniOrder(models.Model):
             demand = _get_demand(line)
 
             if not demand:
-                _logger.warning(f"Could not get demand for line, skipping")
                 continue
 
             slaughter_data = slot.get('slaughter', {})
@@ -658,13 +644,6 @@ class QurbaniOrder(models.Model):
         # ==================================================
         # 7. CREATE ORDER
         # ==================================================
-        if not product_lines:
-            _logger.warning("No valid product lines to create qurbani order")
-            return {
-                "status": "error",
-                "body": "No valid product lines found"
-            }
-
         qurbani = self.env['qurbani.order'].create({
             'donor_id': data['donor_id'],
             'qurbani_order_line_ids': product_lines,

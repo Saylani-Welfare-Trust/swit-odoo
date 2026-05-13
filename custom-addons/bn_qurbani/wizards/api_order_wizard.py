@@ -93,11 +93,12 @@ class APIDonationWizard(models.TransientModel):
                     )
                     
             except Exception as e:
+                raise ValidationError(f"Error processing donation {info.read()}: {str(e)}")
                 failed_count += 1
                 self.create_fetch_log(
-                    f"Failed to create order for donation {info.name}: {str(e)}",
+                    f"Error processing donation {info.name}: {str(e)}",
                     'Error',
-                    f"Error details: {str(e)}"
+                    f"Exception: {str(e)}"
                 )
                 _logger.exception(f"Error processing donation {info.id}")
                 continue
