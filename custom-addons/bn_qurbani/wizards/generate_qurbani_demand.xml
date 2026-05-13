@@ -35,15 +35,9 @@
     </record>
 
     <menuitem
-        id="qurbani_coniguration_menu"
-        name="Configuration"
-        parent="bn_qurbani.qurbani_menu"
-        sequence="10"/>
-
-    <menuitem
         id="qurbani_generate_menu"
         name="Generate Qurbani"
-        parent="qurbani_coniguration_menu"
+        parent="bn_qurbani.qurbani_menu"
         sequence="0"/>
 
     <menuitem
