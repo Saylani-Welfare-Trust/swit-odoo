@@ -34,7 +34,9 @@ class QurbaniGoatSlaughter(models.Model):
         if vals.get('name', _('New') == _('New')):
             slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
 
-            vals['name'] = f'Goat - {str(slaughter_location.cow_sequence_number).zfill(5)}'
+            vals['name'] = f'Goat - {str(slaughter_location.goat_sequence_number).zfill(5)}'
+
+            slaughter_location.goat_sequence_number += 1
 
         return super(QurbaniGoatSlaughter, self).create(vals)
     

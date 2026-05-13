@@ -48,6 +48,8 @@ class QurbaniCowSlaughter(models.Model):
 
             vals['name'] = f'Cow - {str(slaughter_location.cow_sequence_number).zfill(5)}'
 
+            slaughter_location.cow_sequence_number += 1
+
         return super(QurbaniCowSlaughter, self).create(vals)
     
     def action_transfer(self):
