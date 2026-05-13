@@ -110,7 +110,7 @@ class QurbaniOrder(models.Model):
             # Check product category contains 'qurbani'
             categ_name = (product.categ_id.name or '').lower()
             if 'qurbani' not in categ_name:
-                _logger.warning(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
+                raise ValidationError(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
                 return False
 
             # Determine animal type
@@ -206,6 +206,8 @@ class QurbaniOrder(models.Model):
             order_lines_data = []
 
             for api_line in donation_lines:
+                
+                
                 if not api_line.exists():
                     _logger.warning(f"Line {api_line.id if api_line else '?'} does not exist")
                     continue
