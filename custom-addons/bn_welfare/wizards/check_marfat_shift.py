@@ -64,3 +64,9 @@ class CheckMarfatShift(models.TransientModel):
             'target': 'new',
         }
 
+    def change_state_to_collected_button(self, line_id):
+        """
+        Change the state of a welfare line to 'collected'
+        """
+        line = self.env['welfare.line'].browse(line_id)
+        line.write({'state': 'collected'})

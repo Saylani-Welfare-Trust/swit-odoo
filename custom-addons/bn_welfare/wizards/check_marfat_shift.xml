@@ -22,24 +22,28 @@
                     </group>
 
                     <separator string="Disbursement Lines" class="text-uppercase"/>
-                    <field name="disbursement_line_ids" readonly="1" nolabel="1">
-                        <tree>
-                            <field name="welfare_id" string="Welfare Record"/>
-                            <field name="disbursement_category_id" string="Disbursement Category"/>
-                            <field name="product_id" string="Product"/>
-                            <field name="collection_point" string="Collection Point"/>
-                            <field name="collection_date" string="Collection Date"/>
-                            <field name="quantity" string="Quantity"/>
-                            <field name="total_amount" string="Total Amount"/>
-                               <field name="state" 
-                                       widget="selection" 
-                                       options="{'always_reload': True}"
-                                       decoration-warning="state == 'draft'" 
-                                       decoration-success="state == 'collected'"
-                                       decoration-info="state in ['submitted', 'approved']"
-                                       decoration-danger="state == 'rejected'"/>
-                        </tree>
-                    </field>
+                    <page string="Disbursement Lines">
+                        <field name="disbursement_line_ids" readonly="1" nolabel="1">
+                                <tree>
+                                    <field name="welfare_id" string="Welfare Record"/>
+                                    <field name="disbursement_category_id" string="Disbursement Category"/>
+                                    <field name="product_id" string="Product"/>
+                                    <field name="collection_point" string="Collection Point"/>
+                                    <field name="collection_date" string="Collection Date"/>
+                                    <field name="quantity" string="Quantity"/>
+                                    <field name="total_amount" string="Total Amount"/>
+                                    <button name="change_state_to_collected_button" string="Mark as Collected" type="object" class="oe_link" />
+                                    <field name="state" 
+                                            widget="selection" 
+                                            options="{'always_reload': True}"
+                                            decoration-warning="state == 'draft'" 
+                                            decoration-success="state == 'collected'"
+                                            decoration-info="state in ['submitted', 'approved']"
+                                            decoration-danger="state == 'rejected'"/>
+                                </tree>
+                            </field>
+                    </page>
+  
                 </sheet>
             </form>
         </field>
