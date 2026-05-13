@@ -209,7 +209,7 @@ class QurbaniOrder(models.Model):
                 if not api_line.exists():
                     _logger.warning(f"Line {api_line.id if api_line else '?'} does not exist")
                     continue
-
+                raise ValidationError(str(api_line.read()))
                 demand = _get_demand(api_line, default_day, default_hijri, default_product)
                 if not demand:
                     # Log the failure reason (already logged inside _get_demand)
