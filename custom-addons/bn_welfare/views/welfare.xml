@@ -38,28 +38,23 @@
                     <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
-                    
-                    <button string="View Previous Disbursement" name="action_view_previous_disbursement" type="object" 
-                        class="btn btn-info" 
-                        invisible="not previous_disbursement_id"
-                        help="Click to view the most recent previous disbursement for this donee" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
-                </header>
+                </header>   
 
                 <sheet>
+                    <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id or state != 'draft'">
+                        <strong>Previous Record Available:</strong> This donee has previous disbursements.
+                        <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                            class="btn btn-sm btn-info"
+                            invisible="not previous_disbursement_id" />
+                    </div>
                     <div class="oe_title">
                         <label for="name" string="Name"/>
                         <h1><field name="name" class="oe_inline" readonly="1" /></h1>
                     </div>
                     
                     <!-- Previous Disbursement Alert -->
-                    <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id">
-                        <strong>Previous Record Available:</strong> This donee has previous disbursements.
-                        <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
-                            class="btn btn-sm btn-info"
-                            invisible="not previous_disbursement_id" />
-                    </div>
 
                     <group>
                         <group name="welfare_col_1">
