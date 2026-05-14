@@ -4,7 +4,8 @@ from odoo.exceptions import ValidationError
 
 state_selection = [
     ('available', 'Available'),
-    ('full', 'Full')
+    ('full', 'Full'),
+    ('transfer', 'Transfer'),
 ]
 
 

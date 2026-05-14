@@ -28,6 +28,8 @@ class QurbaniGoatSlaughter(models.Model):
     qurbani_order_line_no = fields.Char('QOL No.')
     hissa_name = fields.Char('Hissa Name')
 
+    is_transfer = fields.Boolean('Is Transfer')
+
 
     @api.model
     def create(self, vals):

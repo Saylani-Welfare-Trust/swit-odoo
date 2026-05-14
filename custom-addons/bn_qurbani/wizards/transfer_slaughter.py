@@ -79,6 +79,7 @@ class TransferSlaughter(models.TransientModel):
                 )
 
                 self.qurbani_cow_slaughter_id.slot_full = 0
+                self.qurbani_cow_slaughter_id.state = 'transfer'
 
             # ==================================================
             # GOAT
@@ -97,6 +98,7 @@ class TransferSlaughter(models.TransientModel):
                     'qurbani_order_line_no': '',
                     'product_id': False,
                     'hissa_name': '',
+                    'is_tranfser': True,
                 })
 
         else:
