@@ -170,13 +170,29 @@
                             </group>
                         </page>
                         <page string="Inquiry Committee Questions">
-                            <group>
-                                <field name="x_donee_house_status" string="What is the donee's residential status? Does he own the house or live in a rented house?"/>
-                                <field name="x_number_of_children" string="How many children does the donee have?"/>
-                                <field name="x_number_of_sons" string="How many sons does the donee have?"/>
-                                <field name="x_number_of_daughters" string="How many daughters does the donee have?"/>
-                                <field name="x_children_education" string="Where do the children study? (School, College, or University)"/>
-                                <field name="x_donee_issues" string="What are the issues/concerns related to the donee?"/>
+                            <group string="Inquiry Questions" name="inquiry_group">
+                                <group name="inquiry_col_1">
+                                    <field name="x_donee_house_status" 
+                                        string="Residential Status" 
+                                        placeholder="e.g., Own House, Rented House, Living with relatives"/>
+                                    <field name="x_number_of_children" 
+                                        string="Total Children" 
+                                        placeholder="Enter total number"/>
+                                    <field name="x_number_of_sons" 
+                                        string="Sons" 
+                                        placeholder="Enter number of sons"/>
+                                </group>
+                                <group name="inquiry_col_2">
+                                    <field name="x_number_of_daughters" 
+                                        string="Daughters" 
+                                        placeholder="Enter number of daughters"/>
+                                    <field name="x_children_education" 
+                                        string="Children's Education" 
+                                        placeholder="e.g., School, College, University, or Multiple"/>
+                                    <field name="x_donee_issues" 
+                                        string="Issues/Concerns" 
+                                        placeholder="Describe any issues or concerns related to the donee..."/>
+                                </group>
                             </group>
                         </page>
                         
