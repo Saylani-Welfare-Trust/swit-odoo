@@ -190,6 +190,8 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
             required_distribution = record.total_hissa
 
+            raise UserError(str(required_distribution))
+        
             # CREATE
             if len(distribution_records) < required_distribution:
 
@@ -205,8 +207,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'slaughter_start_time': record.start_time,
                     'slaughter_end_time': record.end_time,
                 } for i in range(missing)])
-
-            raise UserError(str(required_distribution))
 
             # DELETE (ONLY UNUSED)
             elif len(distribution_records) > required_distribution:
