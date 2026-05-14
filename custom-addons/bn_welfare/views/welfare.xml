@@ -577,23 +577,22 @@
                             </field>
                         </page>
                         <page name="family_member" string="Family Details" invisible="not is_individual">
-                            <group>
-                                <group name="family_member_col_1">
-                                    <field name="dependent_person" />
-                                </group>
-                                <group name="family_member_col_2">
-                                    <field name="household_member" />
-                                </group>
-                            </group>
                             <field name="family_line_ids">
-                                <tree editable="bottom">
+                                <tree editable="bottom" decoration-warning="cnic_no in existing_donee_cnics">
                                     <field name="complete_name" />
                                     <field name="age" />
                                     <field name="relation" />
-                                    <field name="cnic_b_form_name" column_invisible="1"/>
-                                    <field name="cnic_b_form" filename="cnic_b_form_name"/>
+                                    <field name="cnic_no" />
                                     <field name="education" />
                                     <field name="monthly_income" />
+                                    
+                                    <!-- Button that opens client action -->
+                                    <button name="%(your_module.open_disbursement_for_cnic)d"
+                                            type="action"
+                                            string="View History"
+                                            class="btn-sm btn-info"
+                                            invisible="not cnic_no"
+                                            context="{'default_cnic': cnic_no}"/>
                                 </tree>
                             </field>
                         </page>
