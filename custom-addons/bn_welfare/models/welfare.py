@@ -312,7 +312,7 @@ class Welfare(models.Model):
             if rec.donee_id:
                 domain = [
                     ('donee_id', '=', rec.donee_id.id),
-                    ('state', 'in', ['disbursed', 'recurring'])
+                    ('state', 'in', ['disbursed', 'recurring','approve'])
                 ]
                 # Only exclude current record if it has a real integer ID (saved record)
                 if rec.id and isinstance(rec.id, int) and rec.id > 0:
