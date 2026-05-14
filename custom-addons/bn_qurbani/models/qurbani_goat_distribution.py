@@ -1,4 +1,13 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
+
+
+state_selection = [
+    ('pending', 'Pending'),
+    ('deleiverd', 'Delivered'),
+    ('not_applicable', 'Not Applicable'),
+    ('approved', 'Approved'),
+]
 
 
 class QurbaniGoatDistribution(models.Model):
@@ -24,6 +33,10 @@ class QurbaniGoatDistribution(models.Model):
     qurbani_order_no = fields.Char('QO No.')
     qurbani_order_line_no = fields.Char('QOL No.')
     hissa_name = fields.Char('Hissa Name')
+    
+    state = fields.Selection(selection=state_selection, string="State", default='Pending')
+
+    remarks = fields.Text('Remarks')
 
 
     @api.model
@@ -32,3 +45,22 @@ class QurbaniGoatDistribution(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_distribution') or ('New')
 
         return super(QurbaniGoatDistribution, self).create(vals)
+    
+    def action_approved(self):
+        for rec in self:
+            if not rec.remarks:
+                raise ValidationError('Please enter the remarks first for No meet approval.')
+            
+            rec.state = 'approved'
+    
+    def action_print_report(self):
+        record_lst = []
+
+        for rec in self:
+            if rec.state not in ['pending', 'approved']:
+                raise ValidationError(f'A record {rec.name} has already been delivered / delivery is not applicable.')
+            elif 'yes' in rec.product_id.name.lower():
+                rec.state = 'delivered'
+                record_lst.append(rec)
+
+        return self.env.ref('bn_qurbani.qurbani_goat_distribution_report').report_action(record_lst)

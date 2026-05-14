@@ -53,15 +53,8 @@ class QurbaniOrder(models.Model):
 
     qurbani_order_line_ids = fields.One2many('qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
+    is_sync = fields.Boolean('Is Sync')
 
-    # @api.constrains('mobile')
-    # def _check_mobile_number(self):
-    #     for rec in self:
-    #         if rec.mobile:
-    #             if not re.fullmatch(r"\d{10}", rec.mobile):
-    #                 raise ValidationError(
-    #                     "Mobile number must contain exactly 10 digits."
-    #                 )
 
     @api.model
     def create(self, vals):
@@ -886,6 +879,7 @@ TRACEBACK:
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
+                        'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                     })
 
             # ==================================================
@@ -929,6 +923,7 @@ TRACEBACK:
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
+                        'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                     })
         
         # ==================================================

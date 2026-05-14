@@ -22,3 +22,4 @@ access_api_qurbani_wizard,api.qurbani.wizard,model_api_qurbani_wizard,,1,1,1,1
 access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,,1,1,1,1
 access_web_qurbani_product,access.web.qurbani.product,model_web_qurbani_product,,1,1,1,1
 access_transfer_slaughter,access.transfer.slaughter,model_transfer_slaughter,,1,1,1,1
+access_sync_slaughter_and_distribution,access.sync.slaughter.and.distribution,model_sync_slaughter_and_distribution,,1,1,1,1

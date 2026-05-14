@@ -6,6 +6,10 @@
         <field name="model">qurbani.goat.distribution</field>
         <field name="arch" type="xml">
             <tree create="0" delete="0">
+                <header>
+                    <button string="Print" name="action_print_report" type="object" class="oe_highlight"/>
+                </header>
+
                 <field name="name" readonly="1" />
                 <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
                 <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
@@ -16,10 +20,12 @@
                 <field name="end_time" widget="float_time" readonly="1" />
                 <field name="distribution_location_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
 
-                <field name="qurbani_order_no" />
-                <field name="qurbani_order_line_no" />
-                <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="hissa_name" />
+                <field name="qurbani_order_no" readonly="1" />
+                <field name="qurbani_order_line_no" readonly="1" />
+                <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                <field name="hissa_name" readonly="1" />
+
+                <button string="Approve" name="action_approved" type="object" class="oe_highlight"/>
             </tree>
         </field>
     </record>

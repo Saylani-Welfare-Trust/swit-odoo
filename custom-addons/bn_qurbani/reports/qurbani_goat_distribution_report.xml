@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="bn_qurbani.qurbani_goat_slaughter_report_template">
+    <template id="bn_qurbani.qurbani_goat_distribution_report_template">
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <t t-foreach="docs" t-as="o">
@@ -10,7 +10,7 @@
 
                         <div class="row">
                             <div class="col-6">
-                                <span>Location</span> <spna><t t-esc="o.slaughter_location_id.name"/></spna>
+                                <span>Location</span> <spna><t t-esc="o.distribution_location_id.name"/></spna>
                             </div>
                             <div class="col-6">
                                 <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
@@ -36,13 +36,13 @@
         </t>
     </template>
 
-    <record id="qurbani_goat_slaughter_report" model="ir.actions.report">
-        <field name="name">Qurbani Goat Slaughter</field>
-        <field name="model">qurbani.goat.slaughter</field>
+    <record id="qurbani_goat_distribution_report" model="ir.actions.report">
+        <field name="name">Qurbani goat Distribution</field>
+        <field name="model">qurbani.goat.distribution</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_qurbani.qurbani_goat_slaughter_report_template</field>
-        <field name="report_file">bn_qurbani.qurbani_goat_slaughter_report_template</field>
-        <field name="binding_model_id" ref="bn_qurbani.model_qurbani_goat_slaughter"/>
+        <field name="report_name">bn_qurbani.qurbani_goat_distribution_report_template</field>
+        <field name="report_file">bn_qurbani.qurbani_goat_distribution_report_template</field>
+        <field name="binding_model_id" ref="bn_qurbani.model_qurbani_goat_distribution"/>
         <field name="binding_type">report</field>
     </record>
 

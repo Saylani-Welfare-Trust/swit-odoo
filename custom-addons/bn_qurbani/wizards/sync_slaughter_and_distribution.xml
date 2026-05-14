@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sync_slaughter_and_distribution_view_form" model="ir.ui.view">
+        <field name="name">sync.slaughter.and.distribution.view.form</field>
+        <field name="model">sync.slaughter.and.distribution</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="start_date"/>
+                    </group>
+                    <group>
+                        <field name="end_date"/>
+                    </group>
+                </group>
+                <footer>
+                    <button string="Sync" name="action_sync" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="sync_slaughter_and_distribution_action" model="ir.actions.act_window">
+        <field name="name">Sync Distribution</field>
+        <field name="res_model">sync.slaughter.and.distribution</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+
+    <menuitem
+        id="sync_slaughter_and_distribution_menu"
+        name="Sync Ditribution"
+        action="sync_slaughter_and_distribution_action"
+        parent="bn_qurbani.qurbani_menu"
+        sequence="5"/>
+
+</odoo>

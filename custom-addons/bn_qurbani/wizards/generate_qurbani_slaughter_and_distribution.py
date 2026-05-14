@@ -121,8 +121,13 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
             for slaughter_schedule in slaughter_schedules:
 
                 distribution_schedules = DistributionSchedule.search([
+                    ('day_id', '=', demand.day_id.id),
+                    ('hijri_id', '=', demand.hijri_id.id),
                     ('slaughter_schedule_id', '=', slaughter_schedule.id),
-                    ('location_id', '=', self.distribution_location_id.id)
+                    # ('slaughter_schedule_id.location_id', '=', demand.slaughter_location_id.id),
+                    # ('slaughter_schedule_id.start_time', '=', demand.start_time),
+                    # ('slaughter_schedule_id.end_time', '=', demand.end_time),
+                    ('location_id', '=', self.distribution_location_id.id),
                 ])
 
                 for distribution_schedule in distribution_schedules:
