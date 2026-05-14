@@ -171,12 +171,12 @@
                         </page>
                         <page string="Inquiry Committee Questions">
                             <group>
-                                <field name="x_donee_house_status" string="What is the donee's residential status? Does he own the house or live in a rented house?"/>
-                                <field name="x_number_of_children" string="How many children does the donee have?"/>
-                                <field name="x_number_of_sons" string="How many sons does the donee have?"/>
-                                <field name="x_number_of_daughters" string="How many daughters does the donee have?"/>
-                                <field name="x_children_education" string="Where do the children study? (School, College, or University)"/>
-                                <field name="x_donee_issues" string="What are the issues/concerns related to the donee?"/>
+                                <field name="donee_house_status" string="What is the donee's residential status? Does he own the house or live in a rented house?"/>
+                                <field name="number_of_children" string="How many children does the donee have?"/>
+                                <field name="number_of_sons" string="How many sons does the donee have?"/>
+                                <field name="number_of_daughters" string="How many daughters does the donee have?"/>
+                                <field name="children_education" string="Where do the children study? (School, College, or University)"/>
+                                <field name="donee_issues" string="What are the issues/concerns related to the donee?"/>
                             </group>
                         </page>
                         
