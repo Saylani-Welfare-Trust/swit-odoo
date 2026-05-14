@@ -189,8 +189,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
             ], order='id')
 
             required_distribution = record.total_hissa
-
-            raise UserError(str(required_distribution)+" "+str(len(distribution_records))+" "+str(len(distribution_records[required_distribution:]))+" "+str(distribution_records[required_distribution:]))
         
             # CREATE
             if len(distribution_records) < required_distribution:
