@@ -190,12 +190,12 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
             required_distribution = record.total_hissa
 
-            raise UserError(str(required_distribution))
+            raise UserError(str(required_distribution)+" "+str(distribution_records))
         
             # CREATE
             if len(distribution_records) < required_distribution:
 
-                missing = required_distribution - len(distribution_records)
+                missing = required_distribution - len(len(distribution_records))
 
                 DistributionModel.create([{
                     'day_id': record.day_id.id,
