@@ -468,6 +468,7 @@ COMPLETE DONATION RECORD:
                                                             """
                                                         })
                     
+                    
                     if qurbani_cow_distribution:
                         qurbani_cow_distribution.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
