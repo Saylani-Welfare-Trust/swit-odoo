@@ -23,3 +23,5 @@ access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,,1,1,1,1
 access_web_qurbani_product,access.web.qurbani.product,model_web_qurbani_product,,1,1,1,1
 access_transfer_slaughter,access.transfer.slaughter,model_transfer_slaughter,,1,1,1,1
 access_sync_slaughter_and_distribution,access.sync.slaughter.and.distribution,model_sync_slaughter_and_distribution,,1,1,1,1
+access_web_qurbani_distribution_center,access.web.qurbani.distribution.center,model_web_qurbani_distribution_center,,1,1,1,1
+access_web_qurbani_slaughter_center,access.web.qurbani.slaughter.center,model_web_qurbani_slaughter_center,,1,1,1,1
