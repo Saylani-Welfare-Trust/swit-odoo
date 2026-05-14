@@ -32,7 +32,7 @@
 
     <menuitem
         id="sync_slaughter_and_distribution_menu"
-        name="Sync Ditribution"
+        name="Sync Slaughter &amp; Ditribution"
         action="sync_slaughter_and_distribution_action"
         parent="bn_qurbani.qurbani_menu"
         sequence="5"/>
