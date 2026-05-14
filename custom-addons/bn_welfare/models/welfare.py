@@ -274,7 +274,6 @@ class Welfare(models.Model):
         compute="_compute_show_disburse_button",
         store=False
     )
-    has_existing_donee = fields.Boolean(string="Has Existing Donee", compute="_compute_has_existing_donee")
     employee_domain = fields.Char(compute="_compute_employee_domain")
         # Inquiry Committee Questions Fields
     x_donee_house_status = fields.char(string="Residential Status, Does he own the house or live in a rented house?")
@@ -289,106 +288,6 @@ class Welfare(models.Model):
 
     x_donee_issues = fields.Text(string="Donee Issues", help="What are the issues/concerns related to the donee?")
 
-
-
-    @api.depends('family_line_ids.cnic_no')
-    def _compute_has_existing_donee(self):
-        for record in self:
-            existing = False
-            for member in record.family_line_ids:
-                if member.cnic_no and self._check_existing_donee(member.cnic_no):
-                    existing = True
-                    break
-            record.has_existing_donee = existing
-
-    def _check_existing_donee(self, cnic_no):
-        """Check if a donee with this CNIC exists in any welfare record"""
-        if not cnic_no:
-            return False
-        
-        # Search for any welfare record (not current one) with this CNIC in family members
-        existing = self.search([
-            ('id', '!=', self.id),
-            ('family_line_ids.cnic_no', '=', cnic_no)
-        ], limit=1)
-        
-        return bool(existing)
-
-    def action_view_existing_donee_disbursements(self):
-        """Open popup showing disbursements for the CNIC"""
-        cnic_no = self.env.context.get('default_cnic')
-        return self._get_disbursement_popup_action(cnic_no)
-
-    def action_view_donee_disbursements(self):
-        """Called from tree view button"""
-        cnic_no = self.cnic_no
-        return self._get_disbursement_popup_action(cnic_no)
-
-    def _get_disbursement_popup_action(self, cnic_no):
-        """Get the action to show disbursements in a popup"""
-        if not cnic_no:
-            raise UserError(_("No CNIC number provided."))
-        
-        # Find the welfare record(s) with this CNIC
-        welfare_records = self.search([
-            ('id', '!=', self.id),
-            ('family_line_ids.cnic_no', '=', cnic_no)
-        ])
-        
-        if not welfare_records:
-            raise UserError(_("No existing donee found with this CNIC."))
-        
-        # Get all disbursement records for these welfare records
-        # Assuming you have a 'disbursement_ids' or 'disbursement_line_ids' field
-        # Adjust the model name and field according to your actual structure
-        
-        disbursements = self.env['disbursement.line'].search([
-            ('welfare_id', 'in', welfare_records.ids)
-        ])
-        
-        # Or if using a different model, adjust accordingly:
-        # disbursements = self.env['welfare.disbursement'].search([
-        #     ('welfare_id', 'in', welfare_records.ids)
-        # ])
-        
-        if not disbursements:
-            # Show info message if no disbursements found
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'welfare',
-                'view_mode': 'tree',
-                'target': 'new',
-                'name': _('Donee Information'),
-                'views': [(False, 'tree')],
-                'domain': [('id', 'in', welfare_records.ids)],
-            }
-        
-        # Return action to show disbursements in a popup
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'disbursement.line',  # Replace with your actual model
-            'view_mode': 'tree,form',
-            'target': 'new',  # This opens in popup
-            'name': _('Disbursement History for CNIC: %s') % cnic_no,
-            'domain': [('id', 'in', disbursements.ids)],
-            'views': [
-                (self.env.ref('your_module.view_disbursement_line_tree').id, 'tree'),
-                (self.env.ref('your_module.view_disbursement_line_form').id, 'form'),
-            ] if self.env.ref('your_module.view_disbursement_line_tree', False) else [(False, 'tree'), (False, 'form')],
-        }
-
-    @api.onchange('family_line_ids.cnic_no')
-    def _onchange_cnic_no(self):
-        """Optional: Show warning when CNIC matches existing donee"""
-        for record in self:
-            for member in record.family_line_ids:
-                if member.cnic_no and record._check_existing_donee(member.cnic_no):
-                    return {
-                        'warning': {
-                            'title': _('Existing Donee Found'),
-                            'message': _('A donee with CNIC %s already exists in the system. Please check the disbursement history.') % member.cnic_no,
-                        }
-                    
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
         for record in self:
