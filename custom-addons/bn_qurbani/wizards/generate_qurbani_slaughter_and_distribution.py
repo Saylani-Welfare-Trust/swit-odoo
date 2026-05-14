@@ -133,4 +133,3 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                 })
 
             DistributionModel.create(vals_list)
-            
