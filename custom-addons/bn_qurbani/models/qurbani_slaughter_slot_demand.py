@@ -204,7 +204,9 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'end_time': record.end_time,
                     'slaughter_start_time': record.start_time,
                     'slaughter_end_time': record.end_time,
-                } for _ in range(missing)])
+                } for i in range(missing)])
+
+            raise UserError(str(required_distribution))
 
             # DELETE (ONLY UNUSED)
             elif len(distribution_records) > required_distribution:
