@@ -6,7 +6,7 @@
         <field name="model">qurbani.order</field>
         <field name="inherit_id" ref="bn_qurbani.qurbani_order_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='name']" position="after">
+            <xpath expr="//field[@name='remarks']" position="after">
                 <field name="description" widget="word_editor"/>
             </xpath>
         </field>
