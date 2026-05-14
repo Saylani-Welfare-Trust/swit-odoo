@@ -128,11 +128,9 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # ==================================================
     # ONCHANGE MAIN LOGIC
     # ==================================================
-    @api.onchange('total_demand')
-    def _onchange_total_demand(self):
+    def update_demand(self):
 
         for record in self:
-
             if not record.inventory_product_id:
                 continue
 
@@ -175,16 +173,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                         continue
 
                     rec.unlink()
-
-    @api.onchange('total_hissa')
-    def _onchange_total_hissa(self):
-
-        for record in self:
-
-            if not record.inventory_product_id:
-                continue
-
-            SlaughterModel, DistributionModel = record._get_models()
 
             distribution_records = DistributionModel.search([
                 ('day_id', '=', record.day_id.id),
