@@ -868,9 +868,6 @@ TRACEBACK:
                     ('slaughter_start_time', '=', line.slaughter_start_time),
                     ('slaughter_end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('start_time', '=', line.start_time),
-                    ('end_time', '=', line.end_time),
-                    ('distribution_location_id', '=', line.distribution_id.id),
                     ('qurbani_order_no', '=', False),
                 ], limit=1)
 
@@ -880,6 +877,9 @@ TRACEBACK:
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
+                        'start_time': line.start_time,
+                        'end_time': line.end_time,
+                        'distribution_location_id': line.distribution_id.id,
                         'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                     })
 
@@ -912,9 +912,6 @@ TRACEBACK:
                     ('slaughter_start_time', '=', line.slaughter_start_time),
                     ('slaughter_end_time', '=', line.slaughter_end_time),
                     ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ('start_time', '=', line.start_time),
-                    ('end_time', '=', line.end_time),
-                    ('distribution_location_id', '=', line.distribution_id.id),
                     ('qurbani_order_no', '=', False),
                 ], limit=1)
 
@@ -924,6 +921,9 @@ TRACEBACK:
                         'qurbani_order_line_no': line.name,
                         'hissa_name': line.hissa_name,
                         'product_id': line.product_id.id,
+                        'start_time': line.start_time,
+                        'end_time': line.end_time,
+                        'distribution_location_id': line.distribution_id.id,
                         'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                     })
         

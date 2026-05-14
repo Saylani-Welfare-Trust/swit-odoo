@@ -100,56 +100,37 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     def action_generate_distribution(self):
         self.ensure_one()
 
-        DistributionSchedule = self.env['distribution.schedule']
-
         demands = self._get_demands()
         models = self._get_product_models()
 
         DistributionModel = models['distribution']
 
         for demand in demands:
-            distribution_schedules = DistributionSchedule.search([
+            existing_count = DistributionModel.search_count([
                 ('day_id', '=', demand.day_id.id),
                 ('hijri_id', '=', demand.hijri_id.id),
                 ('slaughter_location_id', '=', demand.slaughter_location_id.id),
-                ('slaughter_schedule_id.start_time', '=', demand.start_time),
-                ('slaughter_schedule_id.end_time', '=', demand.end_time),
-                ('location_id', '=', self.distribution_location_id.id),
+                ('inventory_product_id', '=', demand.inventory_product_id.id),
+                ('start_time', '=', demand.start_time),
+                ('end_time', '=', demand.end_time),
             ])
 
-            for distribution_schedule in distribution_schedules:
+            total_hissa = demand.total_hissa or 0
+            remaining_demand = total_hissa - existing_count
 
-                existing_count = DistributionModel.search_count([
-                    ('day_id', '=', demand.day_id.id),
-                    ('hijri_id', '=', demand.hijri_id.id),
-                    ('distribution_location_id', '=', distribution_schedule.location_id.id),
-                    ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id),
-                    ('start_time', '=', distribution_schedule.start_time),
-                    ('end_time', '=', distribution_schedule.end_time),
-                    ('slaughter_location_id', '=', demand.slaughter_location_id.id),
-                    ('slaughter_start_time', '=', demand.start_time),
-                    ('slaughter_end_time', '=', demand.end_time),
-                ])
+            if remaining_demand <= 0:
+                continue
 
-                total_hissa = demand.total_hissa or 0
-                remaining_demand = total_hissa - existing_count
+            vals_list = []
 
-                if remaining_demand <= 0:
-                    continue
+            for i in range(remaining_demand):
+                vals_list.append({
+                    'hijri_id': demand.hijri_id.id,
+                    'day_id': demand.day_id.id,
+                    'inventory_product_id': demand.inventory_product_id.id,
+                    'slaughter_location_id': demand.slaughter_location_id.id,
+                    'slaughter_start_time': demand.start_time,
+                    'slaughter_end_time': demand.end_time,
+                })
 
-                vals_list = []
-
-                for i in range(remaining_demand):
-                    vals_list.append({
-                        'hijri_id': distribution_schedule.hijri_id.id,
-                        'day_id': distribution_schedule.day_id.id,
-                        'distribution_location_id': distribution_schedule.location_id.id,
-                        'inventory_product_id': distribution_schedule.inventory_product_id.id,
-                        'start_time': distribution_schedule.start_time,
-                        'end_time': distribution_schedule.end_time,
-                        'slaughter_location_id': demand.slaughter_location_id.id,
-                        'slaughter_start_time': demand.start_time,
-                        'slaughter_end_time': demand.end_time,
-                    })
-
-                DistributionModel.create(vals_list)
+            DistributionModel.create(vals_list)
