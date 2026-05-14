@@ -569,15 +569,36 @@
                                     <field name="household_member" />
                                 </group>
                             </group>
+                            
+                            <!-- Add button here to check existing donee -->
+                            <div class="alert alert-warning" role="alert" invisible="not has_existing_donee" style="margin-bottom: 10px;">
+                                <strong>Warning!</strong> This CNIC belongs to an existing donee with previous disbursements.
+                                <button name="action_view_existing_donee_disbursements" 
+                                        string="View Disbursement History" 
+                                        type="object" 
+                                        class="btn btn-sm btn-warning"
+                                        context="{'default_cnic': cnic_no}"/>
+                            </div>
+                            
                             <field name="family_line_ids">
                                 <tree editable="bottom">
                                     <field name="complete_name" />
                                     <field name="age" />
                                     <field name="relation" />
+                                    <field name="cnic_no" />
                                     <field name="cnic_b_form_name" column_invisible="1"/>
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
                                     <field name="monthly_income" />
+                                    
+                                    <!-- Add button in tree view for each family member -->
+                                    <button name="action_view_donee_disbursements" 
+                                            type="object" 
+                                            string="History" 
+                                            class="btn-sm btn-info"
+                                            icon="fa-history"
+                                            invisible="not cnic_no"
+                                            context="{'default_cnic': cnic_no}"/>
                                 </tree>
                             </field>
                         </page>
