@@ -262,6 +262,14 @@ class Welfare(models.Model):
         store=False
     )
     
+    previous_disbursement_id = fields.Many2one(
+        compute='_compute_previous_disbursement_id',
+        comodel_name='welfare',
+        string='Most Recent Previous Disbursement',
+        store=False,
+        help='Link to the most recent previous disbursement for this donee'
+    )
+    
     show_disburse_button = fields.Boolean(
         compute="_compute_show_disburse_button",
         store=False
@@ -296,6 +304,23 @@ class Welfare(models.Model):
                 rec.previous_welfare_ids = previous
             else:
                 rec.previous_welfare_ids = False
+
+    @api.depends('donee_id')
+    def _compute_previous_disbursement_id(self):
+        """Compute the most recent previous disbursement for the same donee"""
+        for rec in self:
+            if rec.donee_id:
+                domain = [
+                    ('donee_id', '=', rec.donee_id.id),
+                    ('state', 'in', ['disbursed', 'recurring'])
+                ]
+                # Only exclude current record if it has a real integer ID (saved record)
+                if rec.id and isinstance(rec.id, int) and rec.id > 0:
+                    domain.append(('id', '!=', rec.id))
+                previous = self.search(domain, order='date desc', limit=1)
+                rec.previous_disbursement_id = previous[0] if previous else False
+            else:
+                rec.previous_disbursement_id = False
 
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):

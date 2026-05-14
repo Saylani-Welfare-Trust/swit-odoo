@@ -38,6 +38,12 @@
                     <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
+                    
+                    <button string="View Previous Disbursement" name="%(bn_welfare.welfare_action_individual)d" type="action" 
+                        class="btn btn-info" 
+                        context="{'active_id': previous_disbursement_id}"
+                        invisible="not previous_disbursement_id"
+                        help="Click to view the most recent previous disbursement for this donee" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>
@@ -46,6 +52,15 @@
                     <div class="oe_title">
                         <label for="name" string="Name"/>
                         <h1><field name="name" class="oe_inline" readonly="1" /></h1>
+                    </div>
+                    
+                    <!-- Previous Disbursement Alert -->
+                    <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id">
+                        <strong>Previous Record Available:</strong> This donee has previous disbursements.
+                        <button string="View Most Recent Disbursement" name="%(bn_welfare.welfare_action_individual)d" type="action" 
+                            class="btn btn-sm btn-info"
+                            context="{'active_id': previous_disbursement_id}"
+                            invisible="not previous_disbursement_id" />
                     </div>
 
                     <group>
@@ -59,6 +74,7 @@
                                 domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
+                            <field name="previous_disbursement_id" invisible="1" />
                             <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="institution_category" widget="radio" invisible="is_individual"/>
                             <field name="subcategory" invisible="is_individual"/>
