@@ -276,27 +276,17 @@ class Welfare(models.Model):
     )
     employee_domain = fields.Char(compute="_compute_employee_domain")
         # Inquiry Committee Questions Fields
-    x_donee_house_status = fields.Selection([
-        ('own', 'Own House'),
-        ('rented', 'Rented House'),
-        ('other', 'Other')
-    ], string="Residential Status", help="Does he own the house or live in a rented house?")
+    the_donee_house_status = fields.char(string="Residential Status, Does he own the house or live in a rented house?")
 
-    x_number_of_children = fields.Integer(string="Number of Children")
+    the_number_of_children = fields.Integer(string="Number of Children")
 
-    x_number_of_sons = fields.Integer(string="Number of Sons")
+    the_number_of_sons = fields.Integer(string="Number of Sons")
 
-    x_number_of_daughters = fields.Integer(string="Number of Daughters")
+    the_number_of_daughters = fields.Integer(string="Number of Daughters")
 
-    x_children_education = fields.Selection([
-        ('school', 'School'),
-        ('college', 'College'),
-        ('university', 'University'),
-        ('multiple', 'Multiple Levels'),
-        ('none', 'Not Studying')
-    ], string="Children's Education", help="Where do the children study?")
+    the_children_education = fields.char(string="Children's Education, Where do the children study?")
 
-    x_donee_issues = fields.Text(string="Donee Issues", help="What are the issues/concerns related to the donee?")
+    the_donee_issues = fields.Text(string="Donee Issues", help="What are the issues/concerns related to the donee?")
 
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
