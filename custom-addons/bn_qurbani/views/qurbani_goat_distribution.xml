@@ -27,7 +27,6 @@
 
                 <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state not in ['pending', 'delivered']" decoration-success="state == 'delivered'" />
 
-
                 <button string="Approve" name="action_approved" type="object" class="oe_highlight"/>
             </tree>
         </field>

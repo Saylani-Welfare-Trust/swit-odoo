@@ -54,13 +54,24 @@ class QurbaniGoatDistribution(models.Model):
             rec.state = 'approved'
     
     def action_print_report(self):
-        record_lst = []
+        records_to_print = self.env[self._name]
 
         for rec in self:
-            if rec.state not in ['pending', 'approved']:
-                raise ValidationError(f'A record {rec.name} has already been delivered / delivery is not applicable.')
-            elif 'yes' in rec.product_id.name.lower():
-                rec.state = 'delivered'
-                record_lst.append(rec)
 
-        return self.env.ref('bn_qurbani.qurbani_goat_distribution_report').report_action(record_lst)
+            # STOP invalid records
+            if rec.state not in ['pending', 'approved']:
+                raise ValidationError(
+                    f'A record {rec.name} has already been delivered / delivery is not applicable.'
+                )
+
+            # PROCESS RECORD
+            if 'yes' in rec.product_id.name.lower():
+                rec.state = 'delivered'
+
+            # ADD FOR PRINTING
+            records_to_print |= rec
+
+        # PRINT ONLY PROCESSED/VALID RECORDS
+        return self.env.ref(
+            'bn_qurbani.qurbani_goat_distribution_report'
+        ).report_action(records_to_print)
