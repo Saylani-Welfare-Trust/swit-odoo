@@ -24,8 +24,8 @@
                 <field name="qurbani_order_line_no" readonly="1" />
                 <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                 <field name="hissa_name" readonly="1" />
-                
-                <field name="state" widget="badge" decoration-info="state == 'pending'" decoration-info="state not in ['pending', 'delivered]" decoration-success="state == 'delivered'" />
+
+                <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state not in ['pending', 'delivered]" decoration-success="state == 'delivered'" />
 
                 <button string="Approve" name="action_approved" type="object" class="oe_highlight"/>
             </tree>
