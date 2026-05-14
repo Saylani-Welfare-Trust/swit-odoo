@@ -145,7 +145,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                 ('day_id', '=', record.day_id.id),
                 ('hijri_id', '=', record.hijri_id.id),
                 ('slaughter_location_id', '=', record.slaughter_location_id.id),
-                ('inventory_product_id', '=', record.inventory_product_id.id),
                 ('start_time', '=', record.start_time),
                 ('end_time', '=', record.end_time),
             ], order='id')
@@ -161,7 +160,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'day_id': record.day_id.id,
                     'hijri_id': record.hijri_id.id,
                     'slaughter_location_id': record.slaughter_location_id.id,
-                    'inventory_product_id': record.inventory_product_id.id,
                     'start_time': record.start_time,
                     'end_time': record.end_time,
                 } for i in range(missing)])
@@ -186,7 +184,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                 ('day_id', '=', record.day_id.id),
                 ('hijri_id', '=', record.hijri_id.id),
                 ('slaughter_location_id', '=', record.slaughter_location_id.id),
-                ('inventory_product_id', '=', record.inventory_product_id.id),
                 ('slaughter_start_time', '=', record.start_time),
                 ('slaughter_end_time', '=', record.end_time),
             ], order='id')
@@ -203,7 +200,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'hijri_id': record.hijri_id.id,
                     'slaughter_location_id': record.slaughter_location_id.id,
                     'distribution_location_id': record.distribution_location_id.id,
-                    'inventory_product_id': record.inventory_product_id.id,
                     'start_time': record.start_time,
                     'end_time': record.end_time,
                     'slaughter_start_time': record.start_time,
