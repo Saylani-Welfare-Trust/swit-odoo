@@ -172,24 +172,24 @@
                         <page string="Inquiry Committee Questions">
                             <group string="Inquiry Questions" name="inquiry_group">
                                 <group name="inquiry_col_1">
-                                    <field name="x_donee_house_status" 
+                                    <field name="donee_house_status" 
                                         string="Residential Status" 
                                         placeholder="e.g., Own House, Rented House, Living with relatives"/>
-                                    <field name="x_number_of_children" 
+                                    <field name="number_of_children" 
                                         string="Total Children" 
                                         placeholder="Enter total number"/>
-                                    <field name="x_number_of_sons" 
+                                    <field name="number_of_sons" 
                                         string="Sons" 
                                         placeholder="Enter number of sons"/>
                                 </group>
                                 <group name="inquiry_col_2">
-                                    <field name="x_number_of_daughters" 
+                                    <field name="number_of_daughters" 
                                         string="Daughters" 
                                         placeholder="Enter number of daughters"/>
-                                    <field name="x_children_education" 
+                                    <field name="children_education" 
                                         string="Children's Education" 
                                         placeholder="e.g., School, College, University, or Multiple"/>
-                                    <field name="x_donee_issues" 
+                                    <field name="donee_issues" 
                                         string="Issues/Concerns" 
                                         placeholder="Describe any issues or concerns related to the donee..."/>
                                 </group>
