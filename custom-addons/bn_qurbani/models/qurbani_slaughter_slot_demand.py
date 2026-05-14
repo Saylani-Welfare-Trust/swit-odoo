@@ -128,8 +128,8 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # ==================================================
     # ONCHANGE MAIN LOGIC
     # ==================================================
-    @api.onchange('demand')
-    def _onchange_demand(self):
+    @api.onchange('total_demand')
+    def _onchange_total_demand(self):
 
         for record in self:
 
@@ -138,9 +138,6 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
             SlaughterModel, DistributionModel = record._get_models()
 
-            # ==================================================
-            # SLAUGHTER SYNC
-            # ==================================================
             slaughter_records = SlaughterModel.search([
                 ('day_id', '=', record.day_id.id),
                 ('hijri_id', '=', record.hijri_id.id),
@@ -164,22 +161,31 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'end_time': record.end_time,
                 } for i in range(missing)])
 
-            # DELETE (ONLY UNUSED)
+            # DELETE
             elif len(slaughter_records) > required_slaughter:
 
                 extra = slaughter_records[required_slaughter:]
 
                 for rec in extra:
-                    # protect used records
+
                     if hasattr(rec, 'qurbani_cow_slaughter_line') and rec.qurbani_cow_slaughter_line:
                         continue
+
                     if hasattr(rec, 'qurbani_order_no') and rec.qurbani_order_no:
                         continue
+
                     rec.unlink()
 
-            # ==================================================
-            # DISTRIBUTION SYNC (BASED ON HISSA)
-            # ==================================================
+    @api.onchange('total_hissa')
+    def _onchange_total_hissa(self):
+
+        for record in self:
+
+            if not record.inventory_product_id:
+                continue
+
+            SlaughterModel, DistributionModel = record._get_models()
+
             distribution_records = DistributionModel.search([
                 ('day_id', '=', record.day_id.id),
                 ('hijri_id', '=', record.hijri_id.id),
@@ -189,7 +195,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
             ], order='id')
 
             required_distribution = record.total_hissa
-        
+
             # CREATE
             if len(distribution_records) < required_distribution:
 
@@ -203,14 +209,16 @@ class QurbaniSlaughterSlotDemand(models.Model):
                     'slaughter_end_time': record.end_time,
                 } for i in range(missing)])
 
-            # DELETE (ONLY UNUSED)
+            # DELETE
             elif len(distribution_records) > required_distribution:
 
                 extra = distribution_records[required_distribution:]
 
                 for rec in extra:
+
                     if rec.qurbani_order_no:
                         continue
+
                     rec.unlink()
 
     def action_open_chatter(self):
