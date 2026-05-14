@@ -111,103 +111,142 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # ==================================================
     # PRODUCT TYPE HELPERS
     # ==================================================
-    def _is_cow(self):
-        return 'cow' in (self.inventory_product_id.name or '').lower()
+    def _get_product_models(self):
+        product_name = (self.inventory_product_id.name or "").lower()
 
-    def _get_models(self):
-        if self._is_cow():
-            return (
-                self.env['qurbani.cow.slaughter'],
-                self.env['qurbani.cow.distribution']
-            )
-        return (
-            self.env['qurbani.goat.slaughter'],
-            self.env['qurbani.goat.distribution']
-        )
+        if 'cow' in product_name:
+            return {
+                'slaughter': self.env['qurbani.cow.slaughter'],
+                'distribution': self.env['qurbani.cow.distribution'],
+            }
+
+        elif 'goat' in product_name:
+            return {
+                'slaughter': self.env['qurbani.goat.slaughter'],
+                'distribution': self.env['qurbani.goat.distribution'],
+            }
+
+        raise UserError("Unknown product type! Define Cow or Goat.")
+
+
+    def _get_demands(self, record):
+
+        Demand = self.env['qurbani.slaughter.slot.demand']
+
+        demands = Demand.search([
+            ('day_id', '=', record.day_id.id),
+            ('hijri_id', '=', record.hijri_id.id),
+            ('slaughter_location_id', '=', record.slaughter_location_id.id),
+            ('inventory_product_id', '=', record.inventory_product_id.id),
+        ])
+
+        if not demands:
+            raise UserError("No demand record found!")
+
+        return demands
+
 
     # ==================================================
-    # ONCHANGE MAIN LOGIC
+    # UPDATE DEMAND
     # ==================================================
     def update_demand(self):
 
         for record in self:
+
             if not record.inventory_product_id:
                 continue
 
-            SlaughterModel, DistributionModel = record._get_models()
+            models = record._get_product_models()
 
-            slaughter_records = SlaughterModel.search([
-                ('day_id', '=', record.day_id.id),
-                ('hijri_id', '=', record.hijri_id.id),
-                ('slaughter_location_id', '=', record.slaughter_location_id.id),
-                ('start_time', '=', record.start_time),
-                ('end_time', '=', record.end_time),
-            ], order='id')
+            SlaughterModel = models['slaughter']
+            DistributionModel = models['distribution']
 
-            required_slaughter = record.total_demand
+            demands = record._get_demands(record)
 
-            # CREATE
-            if len(slaughter_records) < required_slaughter:
+            for demand in demands:
 
-                missing = required_slaughter - len(slaughter_records)
+                # ==================================================
+                # SLAUGHTER LOGIC
+                # ==================================================
+                slaughter_records = SlaughterModel.search([
+                    ('day_id', '=', demand.day_id.id),
+                    ('hijri_id', '=', demand.hijri_id.id),
+                    ('slaughter_location_id', '=', demand.slaughter_location_id.id),
+                    ('inventory_product_id', '=', demand.inventory_product_id.id),
+                    ('start_time', '=', demand.start_time),
+                    ('end_time', '=', demand.end_time),
+                ], order='id')
 
-                SlaughterModel.create([{
-                    'day_id': record.day_id.id,
-                    'hijri_id': record.hijri_id.id,
-                    'slaughter_location_id': record.slaughter_location_id.id,
-                    'start_time': record.start_time,
-                    'end_time': record.end_time,
-                } for i in range(missing)])
+                required_slaughter = demand.total_demand or 0
 
-            # DELETE
-            elif len(slaughter_records) > required_slaughter:
+                # CREATE
+                if len(slaughter_records) < required_slaughter:
 
-                extra = slaughter_records[required_slaughter:]
+                    missing = required_slaughter - len(slaughter_records)
 
-                for rec in extra:
+                    SlaughterModel.create([{
+                        'day_id': demand.day_id.id,
+                        'hijri_id': demand.hijri_id.id,
+                        'slaughter_location_id': demand.slaughter_location_id.id,
+                        'inventory_product_id': demand.inventory_product_id.id,
+                        'start_time': demand.start_time,
+                        'end_time': demand.end_time,
+                    } for i in range(missing)])
 
-                    if hasattr(rec, 'qurbani_cow_slaughter_line') and rec.qurbani_cow_slaughter_line:
-                        continue
+                # DELETE
+                elif len(slaughter_records) > required_slaughter:
 
-                    if hasattr(rec, 'qurbani_order_no') and rec.qurbani_order_no:
-                        continue
+                    extra = slaughter_records[required_slaughter:]
 
-                    rec.unlink()
+                    for rec in extra:
 
-            distribution_records = DistributionModel.search([
-                ('day_id', '=', record.day_id.id),
-                ('hijri_id', '=', record.hijri_id.id),
-                ('slaughter_location_id', '=', record.slaughter_location_id.id),
-                ('slaughter_start_time', '=', record.start_time),
-                ('slaughter_end_time', '=', record.end_time),
-            ], order='id')
+                        if hasattr(rec, 'qurbani_cow_slaughter_line') and rec.qurbani_cow_slaughter_line:
+                            continue
 
-            required_distribution = record.total_hissa
+                        if hasattr(rec, 'qurbani_order_no') and rec.qurbani_order_no:
+                            continue
 
-            # CREATE
-            if len(distribution_records) < required_distribution:
+                        rec.unlink()
 
-                missing = required_distribution - len(distribution_records)
+                # ==================================================
+                # DISTRIBUTION LOGIC
+                # ==================================================
+                distribution_records = DistributionModel.search([
+                    ('day_id', '=', demand.day_id.id),
+                    ('hijri_id', '=', demand.hijri_id.id),
+                    ('slaughter_location_id', '=', demand.slaughter_location_id.id),
+                    ('inventory_product_id', '=', demand.inventory_product_id.id),
+                    ('slaughter_start_time', '=', demand.start_time),
+                    ('slaughter_end_time', '=', demand.end_time),
+                ], order='id')
 
-                DistributionModel.create([{
-                    'day_id': record.day_id.id,
-                    'hijri_id': record.hijri_id.id,
-                    'slaughter_location_id': record.slaughter_location_id.id,
-                    'slaughter_start_time': record.start_time,
-                    'slaughter_end_time': record.end_time,
-                } for i in range(missing)])
+                required_distribution = demand.total_hissa or 0
 
-            # DELETE
-            elif len(distribution_records) > required_distribution:
+                # CREATE
+                if len(distribution_records) < required_distribution:
 
-                extra = distribution_records[required_distribution:]
+                    missing = required_distribution - len(distribution_records)
 
-                for rec in extra:
+                    DistributionModel.create([{
+                        'day_id': demand.day_id.id,
+                        'hijri_id': demand.hijri_id.id,
+                        'inventory_product_id': demand.inventory_product_id.id,
+                        'slaughter_location_id': demand.slaughter_location_id.id,
+                        'slaughter_start_time': demand.start_time,
+                        'slaughter_end_time': demand.end_time,
+                    } for i in range(missing)])
 
-                    if rec.qurbani_order_no:
-                        continue
+                # DELETE
+                elif len(distribution_records) > required_distribution:
 
-                    rec.unlink()
+                    extra = distribution_records[required_distribution:]
+
+                    for rec in extra:
+
+                        if rec.qurbani_order_no:
+                            continue
+
+                        rec.unlink()
 
     def action_open_chatter(self):
         self.ensure_one()
