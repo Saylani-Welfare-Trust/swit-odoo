@@ -39,9 +39,8 @@
                     
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
                     
-                    <button string="View Previous Disbursement" name="%(bn_welfare.welfare_action_individual)d" type="action" 
+                    <button string="View Previous Disbursement" name="action_view_previous_disbursement" type="object" 
                         class="btn btn-info" 
-                        context="{'active_id': previous_disbursement_id}"
                         invisible="not previous_disbursement_id"
                         help="Click to view the most recent previous disbursement for this donee" />
 
@@ -57,9 +56,8 @@
                     <!-- Previous Disbursement Alert -->
                     <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id">
                         <strong>Previous Record Available:</strong> This donee has previous disbursements.
-                        <button string="View Most Recent Disbursement" name="%(bn_welfare.welfare_action_individual)d" type="action" 
+                        <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
-                            context="{'active_id': previous_disbursement_id}"
                             invisible="not previous_disbursement_id" />
                     </div>
 

@@ -985,6 +985,19 @@ class Welfare(models.Model):
     
     def action_disburse(self):
         self.state = 'disbursed'
+    
+    def action_view_previous_disbursement(self):
+        """Open the form view of the most recent previous disbursement"""
+        self.ensure_one()
+        if self.previous_disbursement_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'welfare',
+                'res_id': self.previous_disbursement_id.id,
+                'target': 'current',
+            }
+        return {}
         
     def action_reverse_state(self):
         state_flow = [
