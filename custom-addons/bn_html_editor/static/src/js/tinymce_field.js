@@ -76,6 +76,7 @@ export class WordEditor extends Component {
 }
 
 
+
 registry.category("fields").add("word_editor", {
     component: WordEditor,
 });
