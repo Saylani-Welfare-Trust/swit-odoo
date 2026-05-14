@@ -110,8 +110,8 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
                 ('hijri_id', '=', demand.hijri_id.id),
                 ('slaughter_location_id', '=', demand.slaughter_location_id.id),
                 ('inventory_product_id', '=', demand.inventory_product_id.id),
-                ('start_time', '=', demand.start_time),
-                ('end_time', '=', demand.end_time),
+                ('slaughter_start_time', '=', demand.start_time),
+                ('slaughter_end_time', '=', demand.end_time),
             ])
 
             total_hissa = demand.total_hissa or 0
