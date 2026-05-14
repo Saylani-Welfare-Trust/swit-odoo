@@ -4,7 +4,7 @@ from odoo.exceptions import ValidationError
 
 state_selection = [
     ('pending', 'Pending'),
-    ('deleiverd', 'Delivered'),
+    ('delivered', 'Delivered'),
     ('not_applicable', 'Not Applicable'),
     ('approved', 'Approved'),
 ]

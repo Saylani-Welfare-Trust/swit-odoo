@@ -4,7 +4,7 @@ from odoo.exceptions import ValidationError
 
 state_selection = [
     ('pending', 'Pending'),
-    ('deleiverd', 'Delivered'),
+    ('delivered', 'Delivered'),
     ('not_applicable', 'Not Applicable'),
     ('approved', 'Approved'),
 ]
@@ -52,7 +52,7 @@ class QurbaniCowDistribution(models.Model):
                 raise ValidationError('Please enter the remarks first for No meet approval.')
             
             rec.state = 'approved'
-            
+
     def action_print_report(self):
         record_lst = []
 
