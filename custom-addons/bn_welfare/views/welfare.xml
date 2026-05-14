@@ -588,12 +588,14 @@
                             <field name="family_line_ids">
                                 <tree editable="bottom">
                                     <field name="complete_name" />
+                                    <field name="cnic_no" />
                                     <field name="age" />
                                     <field name="relation" />
                                     <field name="cnic_b_form_name" column_invisible="1"/>
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
                                     <field name="monthly_income" />
+                                    <button name="action_view_disbursement_history" string="View History" type="object" class="btn-info" />
                                 </tree>
                             </field>
                         </page>
