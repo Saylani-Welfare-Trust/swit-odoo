@@ -38,11 +38,10 @@ class MicrofinanceFamily(models.Model):
                 }
             }
         
-        # Collect all disbursement lines from these welfare records
-        disbursement_lines = self.env['welfare.line']
-        for welfare in welfare_records:
-            if welfare.welfare_line_ids:
-                disbursement_lines |= welfare.welfare_line_ids
+        # Get all disbursement lines from these welfare records
+        disbursement_lines = self.env['welfare.line'].search([
+            ('welfare_id', 'in', welfare_records.ids)
+        ])
         
         if not disbursement_lines:
             return {
@@ -55,12 +54,17 @@ class MicrofinanceFamily(models.Model):
                 }
             }
         
-        # Open disbursement lines in a list view
+        # Open disbursement lines in a list view with all available fields
         return {
             'type': 'ir.actions.act_window',
             'name': f'Disbursement History - CNIC: {self.cnic_no}',
             'res_model': 'welfare.line',
             'view_mode': 'tree,form',
+            'view_id': self.env.ref('bn_welfare.view_welfare_line_tree').id if self.env.ref('bn_welfare.view_welfare_line_tree', raise_if_not_found=False) else False,
             'domain': [('id', 'in', disbursement_lines.ids)],
+            'context': {
+                'create': False,  # Disable creating new lines from history view
+                'edit': False,    # Disable editing from history view (optional)
+            },
             'target': 'current',
         }
