@@ -23,5 +23,3 @@ from . import pos_order
 from . import fetch_qurbani_log
 from . import web_qurbani_product
 from . import stock_location
-from . import web_qurbani_distribution_center
-from . import slaughter_distribution_center
