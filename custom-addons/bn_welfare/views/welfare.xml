@@ -175,15 +175,15 @@
                                     <field name="donee_house_status" 
                                         string="Residential Status" 
                                         placeholder="e.g., Own House, Rented House, Living with relatives"/>
-                                    <field name="number_of_children" 
+                                    <field name="num_of_children" 
                                         string="Total Children" 
                                         placeholder="Enter total number"/>
-                                    <field name="number_of_sons" 
+                                    <field name="num_of_sons" 
                                         string="Sons" 
                                         placeholder="Enter number of sons"/>
                                 </group>
                                 <group name="inquiry_col_2">
-                                    <field name="number_of_daughters" 
+                                    <field name="num_of_daughters" 
                                         string="Daughters" 
                                         placeholder="Enter number of daughters"/>
                                     <field name="children_education" 
