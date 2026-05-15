@@ -401,7 +401,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
         try {
 
-            const records = await this.orm.searchRead(
+            let records = await this.orm.searchRead(
                 'qurbani.cow.distribution',
                 [['name', '=', this.state.record_number], ['state', '=', 'full']],
                 ['id'],
@@ -418,10 +418,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             }
 
             // GET ALL IDS
-            const ids = records.map(record => record.id);
+            let ids = records.map(record => record.id);
 
             // CALL PYTHON METHOD
-            const action = await this.orm.call(
+            let action = await this.orm.call(
                 'qurbani.cow.distribution',
                 'action_print_report',
                 [ids]
@@ -430,7 +430,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             // PRINT REPORT
             await this.action.doAction(action);
 
-            const records = await this.orm.searchRead(
+            records = await this.orm.searchRead(
                 'qurbani.goat.distribution',
                 [['name', '=', this.state.record_number]],
                 ['id'],
@@ -447,10 +447,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             }
 
             // GET ALL IDS
-            const ids = records.map(record => record.id);
+            ids = records.map(record => record.id);
 
             // CALL PYTHON METHOD
-            const action = await this.orm.call(
+            action = await this.orm.call(
                 'qurbani.goat.distribution',
                 'action_print_report',
                 [ids]
