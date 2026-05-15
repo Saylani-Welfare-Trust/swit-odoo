@@ -91,6 +91,9 @@ class SyncSalughterAndDistribution(models.Model):
                             'qurbani_order_line_no': line.name,
                             'hissa_name': line.hissa_name,
                             'product_id': line.product_id.id,
+                            'start_time': line.start_time,
+                            'end_time': line.end_time,
+                            'distribution_location_id': line.distribution_id.id,
                             'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                         })
 
@@ -136,6 +139,9 @@ class SyncSalughterAndDistribution(models.Model):
                             'qurbani_order_line_no': line.name,
                             'hissa_name': line.hissa_name,
                             'product_id': line.product_id.id,
+                            'start_time': line.start_time,
+                            'end_time': line.end_time,
+                            'distribution_location_id': line.distribution_id.id,
                             'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                         })
 
