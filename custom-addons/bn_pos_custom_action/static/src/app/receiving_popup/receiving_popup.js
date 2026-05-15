@@ -400,8 +400,6 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     async processQurbaniRecord(selectedOrder) {
         try {
 
-            console.log(this);
-
             let found = false;
 
             // ============================================
@@ -428,7 +426,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     [cowIds]
                 );
 
-                await this.action.doAction(cowAction);
+                await this.env.services.action.doAction(cowAction);
             }
 
             // ============================================
@@ -455,7 +453,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     [goatIds]
                 );
 
-                await this.action.doAction(goatAction);
+                await this.env.services.action.doAction(goatAction);
             }
 
             // ============================================
