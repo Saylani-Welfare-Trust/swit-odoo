@@ -400,6 +400,8 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
     async processQurbaniRecord(selectedOrder) {
         try {
 
+            console.log(this);
+
             let found = false;
 
             // ============================================
