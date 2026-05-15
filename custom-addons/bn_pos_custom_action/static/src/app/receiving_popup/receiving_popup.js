@@ -398,66 +398,76 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process Donation Home Service record
      */
     async processQurbaniRecord(selectedOrder) {
-
         try {
 
-            let records = await this.orm.searchRead(
+            let found = false;
+
+            // ============================================
+            // COW DISTRIBUTION
+            // ============================================
+            let cowRecords = await this.orm.searchRead(
                 'qurbani.cow.distribution',
-                [['qurbani_order_no', '=', this.state.record_number], ['state', 'not in', ['delivered', 'not_applicable']]],
-                ['id'],
+                [
+                    ['qurbani_order_no', '=', this.state.record_number],
+                    ['state', 'not in', ['delivered', 'not_applicable']]
+                ],
+                ['id']
             );
 
-            if (!records.length) {
+            if (cowRecords.length) {
+
+                found = true;
+
+                let cowIds = cowRecords.map(record => record.id);
+
+                let cowAction = await this.orm.call(
+                    'qurbani.cow.distribution',
+                    'action_print_report',
+                    [cowIds]
+                );
+
+                await this.action.doAction(cowAction);
+            }
+
+            // ============================================
+            // GOAT DISTRIBUTION
+            // ============================================
+            let goatRecords = await this.orm.searchRead(
+                'qurbani.goat.distribution',
+                [
+                    ['qurbani_order_no', '=', this.state.record_number],
+                    ['state', 'not in', ['delivered', 'not_applicable']]
+                ],
+                ['id']
+            );
+
+            if (goatRecords.length) {
+
+                found = true;
+
+                let goatIds = goatRecords.map(record => record.id);
+
+                let goatAction = await this.orm.call(
+                    'qurbani.goat.distribution',
+                    'action_print_report',
+                    [goatIds]
+                );
+
+                await this.action.doAction(goatAction);
+            }
+
+            // ============================================
+            // NOTHING FOUND
+            // ============================================
+            if (!found) {
 
                 this.notification.add(
-                    "No records found",
+                    "No pending distribution records found",
                     { type: "danger" }
                 );
 
                 return;
             }
-
-            // GET ALL IDS
-            let ids = records.map(record => record.id);
-
-            // CALL PYTHON METHOD
-            let action = await this.orm.call(
-                'qurbani.cow.distribution',
-                'action_print_report',
-                [ids]
-            );
-
-            // PRINT REPORT
-            await this.action.doAction(action);
-
-            records = await this.orm.searchRead(
-                'qurbani.goat.distribution',
-                [['qurbani_order_no', '=', this.state.record_number], ['state', 'not in', ['delivered', 'not_applicable']]],
-                ['id'],
-            );
-
-            if (!records.length) {
-
-                this.notification.add(
-                    "No records found",
-                    { type: "danger" }
-                );
-
-                return;
-            }
-
-            // GET ALL IDS
-            ids = records.map(record => record.id);
-
-            // CALL PYTHON METHOD
-            action = await this.orm.call(
-                'qurbani.goat.distribution',
-                'action_print_report',
-                [ids]
-            );
-
-            // PRINT REPORT
-            await this.action.doAction(action);
 
             super.confirm();
 
