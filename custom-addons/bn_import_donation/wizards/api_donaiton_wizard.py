@@ -850,19 +850,20 @@ class APIDonationWizard(models.TransientModel):
                 product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
             
                 config = all_data['gateway_product_lines'].get(product_key)
-                self.create_fetch_log(
-                    history.id,
-                    f"Processing Qurbani item at index {info_idx}",
-                    'Processing',
-                    (
-                        f"Product Key: {product_key}\n"
-                        f"Gateway Product: {config}\n"
-                        f"Gateway Product ID: {config.get('product_id') if config else 'No Config'}\n"
-                        f"Product Found: {product.display_name if product else 'No Product'}"
-                    )
-                )
+                
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
+                    self.create_fetch_log(
+                        history.id,
+                        f"Processing Qurbani item at index {info_idx}",
+                        'Processing',
+                        (
+                            f"Product Key: {product_key}\n"
+                            f"Gateway Product: {config}\n"
+                            f"Gateway Product ID: {config.get('product_id') if config else 'No Config'}\n"
+                            f"Product Found: {product.display_name if product else 'No Product'}"
+                        )
+                    )
                 if not product:
                     self.create_fetch_log(
                         history.id,

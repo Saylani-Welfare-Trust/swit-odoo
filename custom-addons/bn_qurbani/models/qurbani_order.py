@@ -111,7 +111,7 @@ class QurbaniOrder(models.Model):
             # else:
             #     raise ValidationError(f"Product {product.name} not identified as cow/goat")
 
-            slaughter_location = self.env['stock.location'].search( limit=1, order='id dsc',)
+            slaughter_location = self.env['stock.location'].search([], limit=1, order='id dsc',)
             if not slaughter_location:
                 raise ValidationError("Slaughter location 'SDC/Karachi/Online Head Office' not found")
 
