@@ -295,7 +295,7 @@ class QurbaniOrder(models.Model):
                 if not city_id and demand.slaughter_location_id.location_id:
                     city_id = demand.slaughter_location_id.location_id.id
                 distribution_location_id = self.env['stock.location'].search(
-                    [('complete_name', 'ilike', str(line.city_id.name + '/' + line.branch))], limit=1
+                    [('complete_name', 'ilike', str(line_data['city_id'].name + '/' + line_data['branch']))], limit=1
                 ).id
                 vals = {
                     'product_id': line_data['product_id'],
