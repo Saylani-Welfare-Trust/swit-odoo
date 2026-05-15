@@ -848,13 +848,15 @@ class APIDonationWizard(models.TransientModel):
                 
                 product = False
                 product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
-                # raise ValidationError(
-                #     f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
-                #     f"Product Key: {product_key}"
-                # )            
+            
                 config = all_data['gateway_product_lines'].get(product_key)
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
+                    raise ValidationError(
+                    f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
+                    f"Product Key: {product_key}"
+                    f"Product found: {product.name if product else 'Not Found'}"
+                )
                 if not product:
                     self.create_fetch_log(
                         history.id,
@@ -862,7 +864,6 @@ class APIDonationWizard(models.TransientModel):
                         'Error',
                         f"Product Qurbani Web not found Gateway Product Lines: {all_data['gateway_product_lines']}Product Key: {product_key}"
                         )
-                    pass
                 # Get current hijri
                 hijri = self.env['hijri'].search([], order="id desc", limit=1)
 
