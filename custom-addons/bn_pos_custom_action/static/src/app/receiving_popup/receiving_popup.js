@@ -403,7 +403,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             let records = await this.orm.searchRead(
                 'qurbani.cow.distribution',
-                [['name', '=', this.state.record_number], ['state', '=', 'full']],
+                [['qurbani_order_no', '=', this.state.record_number], ['state', 'not in', ['delivered', 'not_applicable']]],
                 ['id'],
             );
 
@@ -432,7 +432,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             records = await this.orm.searchRead(
                 'qurbani.goat.distribution',
-                [['name', '=', this.state.record_number]],
+                [['qurbani_order_no', '=', this.state.record_number], ['state', 'not in', ['delivered', 'not_applicable']]],
                 ['id'],
             );
 
