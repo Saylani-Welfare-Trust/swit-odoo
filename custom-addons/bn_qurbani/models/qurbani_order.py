@@ -807,6 +807,7 @@ TRACEBACK:
         qurbani = self.env['qurbani.order'].create({
             'donor_id': data['donor_id'],
             'qurbani_order_line_ids': product_lines,
+            'is_sync': True
         })
 
         qurbani.calculate_amount()
