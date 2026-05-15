@@ -63,10 +63,8 @@ class QurbaniCowDistribution(models.Model):
                 raise ValidationError(
                     f'A record {rec.name} has already been delivered / delivery is not applicable.'
                 )
-
-            # PROCESS RECORD
-            if 'yes' in rec.product_id.name.lower():
-                rec.state = 'delivered'
+            
+            rec.state = 'delivered'
 
             # ADD FOR PRINTING
             records_to_print |= rec
