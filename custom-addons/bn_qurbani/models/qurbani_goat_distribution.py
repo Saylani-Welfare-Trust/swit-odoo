@@ -34,7 +34,7 @@ class QurbaniGoatDistribution(models.Model):
     qurbani_order_line_no = fields.Char('QOL No.')
     hissa_name = fields.Char('Hissa Name')
     
-    state = fields.Selection(selection=state_selection, string="State", default='Pending')
+    state = fields.Selection(selection=state_selection, string="State", default='pending')
 
     remarks = fields.Text('Remarks')
 
