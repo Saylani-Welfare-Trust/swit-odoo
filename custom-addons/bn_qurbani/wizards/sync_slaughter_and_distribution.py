@@ -37,6 +37,7 @@ class SyncSalughterAndDistribution(models.Model):
                         ('start_time', '=', line.slaughter_start_time),
                         ('end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
+                        ('state', '!=', 'transfer'),
                     ], order='id asc')
 
                     qurbani_cow_slaughter = False
@@ -105,6 +106,7 @@ class SyncSalughterAndDistribution(models.Model):
                         ('end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                         ('qurbani_order_no', '=', False),
+                        ('is_transfer', '=', False),
                     ], limit=1)
 
                     if qurbani_goat_slaughter:
