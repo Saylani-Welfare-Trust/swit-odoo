@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="web_qurbani_distribution_center_tree_view" model="ir.ui.view">
+        <field name="name">web.qurbani.distribution.center.tree.view</field>
+        <field name="model">web.qurbani.distribution.center</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" string="Web Qurbani Distribution Center">
+                <field name="name"/>
+                <field name="distribution_center_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_web_qurbani_distribution_center" model="ir.actions.act_window">
+        <field name="name">Web Qurbani Distribution Center</field>
+        <field name="res_model">web.qurbani.distribution.center</field>
+        <field name="view_mode">tree</field>
+    </record>
+    
+    <menuitem id="menu_qurbani_distribution_center"
+          name="Web Qurbani Distribution Centers"
+          parent="bn_qurbani.qurbani_menu"
+          action="action_web_qurbani_distribution_center"
+          sequence="2"
+           />
+
+</odoo>
