@@ -34,7 +34,7 @@
         id="sync_slaughter_and_distribution_menu"
         name="Sync Slaughter &amp; Ditribution"
         action="sync_slaughter_and_distribution_action"
-        parent="bn_qurbani.qurbani_menu"
+        parent="bn_qurbani.menu_qurbani_root"
         sequence="5"/>
 
 </odoo>
