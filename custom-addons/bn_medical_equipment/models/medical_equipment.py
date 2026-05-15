@@ -128,6 +128,11 @@ class MedicalEquipment(models.Model):
         string="Initial Deposit %",
         readonly=True
     )
+    medical_equipment_reference_id = fields.Many2one(
+        'medical.equipment.reference',
+        string='Medical Equipment Reference',
+        help='Reference selected from Master Setup medical equipment references.'
+    )
 
     @api.depends('state', 'case_type')
     def _compute_is_actual_deposit_editable(self):
@@ -182,6 +187,10 @@ class MedicalEquipment(models.Model):
     @api.depends('actual_deposit_percentage', 'state', 'initial_deposit_percentage')
     def _compute_case_type(self):
         for record in self:
+            if record.medical_equipment_reference_id:
+                record.case_type = 'above_50_percent'
+                continue
+
             percentage = record.actual_deposit_percentage
 
             # ✅ Draft: fully dynamic
@@ -213,6 +222,11 @@ class MedicalEquipment(models.Model):
             else:
                 record.case_type = '50_percent'
 
+    @api.onchange('medical_equipment_reference_id')
+    def _onchange_medical_equipment_reference_id(self):
+        if self.medical_equipment_reference_id:
+            self.actual_deposit_percentage = 0.0
+
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):
         if self.date_of_birth:
@@ -239,6 +253,10 @@ class MedicalEquipment(models.Model):
 
 
     def write(self, vals):
+        if vals.get('medical_equipment_reference_id'):
+            vals['actual_deposit_percentage'] = 0.0
+            vals.setdefault('initial_deposit_percentage', 0.0)
+
         if 'actual_deposit_percentage' in vals:
             for record in self:
                 new_value = vals.get('actual_deposit_percentage')
@@ -296,9 +314,12 @@ class MedicalEquipment(models.Model):
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
-            
-        if 'actual_deposit_percentage' in vals:
-             vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
+
+        if vals.get('medical_equipment_reference_id'):
+            vals['actual_deposit_percentage'] = 0.0
+            vals.setdefault('initial_deposit_percentage', 0.0)
+        elif 'actual_deposit_percentage' in vals:
+            vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
 
         return super(MedicalEquipment, self).create(vals)
     

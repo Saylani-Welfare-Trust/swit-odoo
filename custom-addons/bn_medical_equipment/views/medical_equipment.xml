@@ -77,6 +77,7 @@
                             <field name="approval_button_check" invisible="1"/>
                             <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" readonly="state == 'closed' or not is_actual_deposit_editable"/>
+                            <field name="medical_equipment_reference_id" options="{'no_create': True, 'no_open': True}"/>
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" invisible="1"/>
                             <field name="cnic_no" readonly="state != 'draft' or state == 'closed'" required="state != 'closed'" force_save="1"/>
                             <field name="street" string="Address" readonly="state != 'draft' or state == 'closed'" required="state != 'closed'" force_save="1"/>
