@@ -890,7 +890,7 @@ class APIDonationWizard(models.TransientModel):
                 if not share_names:
                     share_names = [donor.get('name', '')]
                 branch = it.get('qurbaniBranch', '')
-                distribution_id = self.env['qurbani.distribution'].search([
+                distribution_id = self.env['web.qurbani.distribution.center'].search([
                     ('name', '=', f"{city.name}/{branch}")
                 ], limit=1).distribution_center_id.id if city and branch else False
                 # Create separate line for each quantity
