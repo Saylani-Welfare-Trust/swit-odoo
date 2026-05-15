@@ -268,7 +268,8 @@ class APIDonationWizard(models.TransientModel):
                     continue
 
                 gateway_product_lines[product_name] = {
-                    'account_id': line.product_id.property_account_income_id.id
+                    'account_id': line.product_id.property_account_income_id.id,
+                    'product_id': line.product_id.id,
                 }
         # Get donor category IDs
         donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
@@ -844,33 +845,12 @@ Total Donations to Create: {len(donations_to_create)}
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
-
-                product_name = item_data.get('en', {}).get('name', '')
-                words = product_name.split()
-
-                # Build domain with OR logic for multiple words
-                if len(words) == 1:
-                    domain = [('name', 'ilike', words[0])]
-                elif len(words) > 1:
-                    domain = ['|'] * (len(words) - 1)
-                    for word in words:
-                        domain.append(('name', 'ilike', word))
-                else:
-                    domain = []
                 
-                # raise ValidationError(str(domain))
-                product = self.env['web.qurbani.product'].search(domain, limit=1) if domain else None
-
-                # raise ValidationError(
-                #     f"Product Name: {product_name}\nFound Product: {product.name if product else 'Not Found' }\nSearch Domain: {domain}"
-                # )
-                if not product:
-                    product = self.env['product.product'].search([
-                        ('name', 'ilike', "Qurbani Web")
-                    ], limit=1)
-                else:
-                    product = product.product_id
-
+                product = False
+                product_key = (f"{it.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
+                config = all_data['gateway_product_lines'].get(product_key)
+                if config:
+                    product = self.env['product.product'].browse(config['product_id'])
                 if not product:
                     self.create_fetch_log(
                         history.id,
@@ -889,7 +869,7 @@ Total Donations to Create: {len(donations_to_create)}
                 # Find qurbani day
                 day_name = it.get('day', '')
                 day = self.env['qurbani.day'].search([
-                    ('name', 'ilike', day_name)
+                    ('web_qurbani_day', '=', day_name)
                 ], limit=1)
 
                 # Find city
