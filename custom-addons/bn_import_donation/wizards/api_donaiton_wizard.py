@@ -848,8 +848,10 @@ class APIDonationWizard(models.TransientModel):
                 
                 product = False
                 product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
-                raise ValidationError( str(all_data['gateway_product_lines']),str(product_key))
-            
+                raise ValidationError(
+                    f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
+                    f"Product Key: {product_key}"
+                )            
                 config = all_data['gateway_product_lines'].get(product_key)
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
