@@ -581,18 +581,18 @@ class APIDonationWizard(models.TransientModel):
                     f"✗ FAILED to create partners",
                     'Error',
                     f"""
-================== PARTNER CREATION FAILED ==================
-Total Partners Attempted: {len(partners_to_create_final)}
+                        ================== PARTNER CREATION FAILED ==================
+                        Total Partners Attempted: {len(partners_to_create_final)}
 
-ERROR MESSAGE:
-{str(create_error)}
+                        ERROR MESSAGE:
+                        {str(create_error)}
 
-PARTNER DATA ATTEMPTED:
-{partners_to_create_final}
+                        PARTNER DATA ATTEMPTED:
+                        {partners_to_create_final}
 
-STACK TRACE:
-{_logger.exception("Full exception trace:")}
-============================================================
+                        STACK TRACE:
+                        {_logger.exception("Full exception trace:")}
+                        ============================================================
                     """
                 )
                 _logger.exception(f"Partner creation failed: {str(create_error)}")
@@ -610,34 +610,34 @@ STACK TRACE:
         # ==========================================================
 
         debug_summary = f"""
-    ===========================
-    DONATION IMPORT SUMMARY
-    ===========================
+            ===========================
+            DONATION IMPORT SUMMARY
+            ===========================
 
-    TOTAL API RECORDS: {total_records}
+            TOTAL API RECORDS: {total_records}
 
-    SKIPPED RECORDS: {skipped_records}
+            SKIPPED RECORDS: {skipped_records}
 
-    PROCESSED RECORDS: {processed_records}
+            PROCESSED RECORDS: {processed_records}
 
-    ---------------------------
-    PARTNER SUMMARY
-    ---------------------------
+            ---------------------------
+            PARTNER SUMMARY
+            ---------------------------
 
-    TOTAL PARTNER REQUESTS: {total_partner_requests}
+            TOTAL PARTNER REQUESTS: {total_partner_requests}
 
-    DUPLICATE PARTNER REQUESTS: {duplicate_partner_requests}
+            DUPLICATE PARTNER REQUESTS: {duplicate_partner_requests}
 
-    ALREADY EXISTING PARTNERS: {already_existing_partners}
+            ALREADY EXISTING PARTNERS: {already_existing_partners}
 
-    FINAL PARTNERS TO CREATE: {len(partners_to_create_final)}
+            FINAL PARTNERS TO CREATE: {len(partners_to_create_final)}
 
-    ACTUALLY CREATED PARTNERS: {actually_created_partners}
-    
-    PARTNER CREATION STATUS: {'✓ SUCCESS' if actually_created_partners == len(partners_to_create_final) else '✗ PARTIAL/FAILED' if actually_created_partners > 0 else '✗ FAILED'}
+            ACTUALLY CREATED PARTNERS: {actually_created_partners}
+            
+            PARTNER CREATION STATUS: {'✓ SUCCESS' if actually_created_partners == len(partners_to_create_final) else '✗ PARTIAL/FAILED' if actually_created_partners > 0 else '✗ FAILED'}
 
-    ===========================
-    """
+            ===========================
+            """
 
         _logger.warning(debug_summary)
 
@@ -684,11 +684,11 @@ STACK TRACE:
             f"Donation-Partner Linking Results",
             'Success',
             f"""
-Donations with Partner ID: {donations_with_partner}
-Donations without Partner ID: {donations_without_partner}
-Total Donations to Create: {len(donations_to_create)}
-            """
-        )
+                Donations with Partner ID: {donations_with_partner}
+                Donations without Partner ID: {donations_without_partner}
+                Total Donations to Create: {len(donations_to_create)}
+                            """
+            )
 
         # -----------------------------
         # CREATE DONATIONS
@@ -847,7 +847,7 @@ Total Donations to Create: {len(donations_to_create)}
             else:
                 
                 product = False
-                product_key = (f"{it.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
+                product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
                 config = all_data['gateway_product_lines'].get(product_key)
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
@@ -884,7 +884,10 @@ Total Donations to Create: {len(donations_to_create)}
 
                 if not share_names:
                     share_names = [donor.get('name', '')]
-
+                branch = it.get('qurbaniBranch', '')
+                distribution_id = self.env['qurbani.distribution'].search([
+                    ('name', '=', f"{city.name}/{branch}")
+                ], limit=1).distribution_center_id.id if city and branch else False
                 # Create separate line for each quantity
                 for idx in range(quantity):
 
@@ -903,6 +906,8 @@ Total Donations to Create: {len(donations_to_create)}
                         'hijri_id': hijri.id if hijri else False,
                         'city_id': city.id if city else False,
                         'hissa_name': hissa_name,
+                        'distribution_id': distribution_id,
+                        'branch': branch,
                     }])
               
                 
@@ -1018,7 +1023,7 @@ Total Donations to Create: {len(donations_to_create)}
                 # Round foreign amount to currency precision
                 item_total = currency_rec.round(item_total)
             
-            item_total_base = item_total * conv_rate
+            item_total_base = item_total / conv_rate
             # Round base amount to company currency precision
             item_total_base = company_currency.round(item_total_base)
             

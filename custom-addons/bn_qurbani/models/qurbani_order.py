@@ -99,21 +99,19 @@ class QurbaniOrder(models.Model):
             if not product:
                 raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
-            categ_name = (product.categ_id.name or '').lower()
-            if 'qurbani' not in categ_name:
-                raise ValidationError(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
+            # categ_name = (product.categ_id.name or '').lower()
+            # if 'qurbani' not in categ_name:
+            #     raise ValidationError(f"Product {product.name} category '{categ_name}' missing 'qurbani', skipping")
 
-            product_name = (product.name or '').lower()
-            if 'cow' in product_name:
-                animal_type = 'cow'
-            elif 'goat' in product_name:
-                animal_type = 'goat'
-            else:
-                raise ValidationError(f"Product {product.name} not identified as cow/goat")
+            # product_name = (product.name or '').lower()
+            # if 'cow' in product_name:
+            #     animal_type = 'cow'
+            # elif 'goat' in product_name:
+            #     animal_type = 'goat'
+            # else:
+            #     raise ValidationError(f"Product {product.name} not identified as cow/goat")
 
-            slaughter_location = self.env['stock.location'].search(
-                [('complete_name', 'ilike', 'SDC/Karachi/Online Head Office')], limit=1
-            )
+            slaughter_location = self.env['stock.location'].search( limit=1, order='id dsc',)
             if not slaughter_location:
                 raise ValidationError("Slaughter location 'SDC/Karachi/Online Head Office' not found")
 
@@ -127,23 +125,24 @@ class QurbaniOrder(models.Model):
                 ('day_id', '=', day_id),
                 ('hijri_id', '=', hijri_id),
                 ('slaughter_location_id', '=', slaughter_location.id),
-                ('remaining_hissa', '>', 0)
+                ('remaining_hissa', '>', 0),
+                ('inventory_product_id', '=', product)  # ensure product is set on demand
             ]
 
-            if animal_type == 'cow':
-                cow_product = self.env['product.product'].search([
-                    ('categ_id.name', 'ilike', 'cow'),
-                    ('detailed_type', '=', 'service')
-                ], limit=1)
-                if cow_product:
-                    demand_domain.append(('inventory_product_id', '=', cow_product.id))
-            else:
-                goat_product = self.env['product.product'].search([
-                    ('categ_id.name', 'ilike', 'goat'),
-                    ('detailed_type', '=', 'service')
-                ], limit=1)
-                if goat_product:
-                    demand_domain.append(('inventory_product_id', '=', goat_product.id))
+            # if animal_type == 'cow':
+            #     cow_product = self.env['product.product'].search([
+            #         ('categ_id.name', 'ilike', 'cow'),
+            #         ('detailed_type', '=', 'service')
+            #     ], limit=1)
+            #     if cow_product:
+            #         demand_domain.append(('inventory_product_id', '=', cow_product.id))
+            # else:
+            #     goat_product = self.env['product.product'].search([
+            #         ('categ_id.name', 'ilike', 'goat'),
+            #         ('detailed_type', '=', 'service')
+            #     ], limit=1)
+            #     if goat_product:
+                    # demand_domain.append(('inventory_product_id', '=', goat_product.id))
 
             demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
             if not demand:
@@ -192,6 +191,8 @@ class QurbaniOrder(models.Model):
                     'product_id': api_line.product_id.id,
                     'amount': api_line.amount or 0.0,
                     'hissa_name': api_line.hissa_name or '',
+                    'branch': api_line.branch or '',
+                    'city_id': api_line.city_id.id if api_line.city_id else False
                 })
 
             if not order_lines_data:
@@ -207,18 +208,18 @@ class QurbaniOrder(models.Model):
                     donation_json = str(donation_record)
                 
                 detailed_reason = f"""
-================== NO VALID ORDER LINES ==================
-Timestamp: {timestamp}
-Donation Name: {donor_name}
-Donation ID: {donation_id}
+                    ================== NO VALID ORDER LINES ==================
+                    Timestamp: {timestamp}
+                    Donation Name: {donor_name}
+                    Donation ID: {donation_id}
 
-Error Summary:
-{error_summary}
+                    Error Summary:
+                    {error_summary}
 
-COMPLETE DONATION RECORD:
-{donation_json}
-========================================================
-                """
+                    COMPLETE DONATION RECORD:
+                    {donation_json}
+                    ========================================================
+                                    """
                 
                 self.env['fetch.qurbani.log'].create({
                     'name': f"✗ NO VALID LINES [{timestamp}] - [ID-{donation_id}] {donor_name}",
@@ -246,19 +247,19 @@ COMPLETE DONATION RECORD:
                         donation_json = str(donation_record)
                     
                     detailed_reason = f"""
-================== NOT ENOUGH HISSA ==================
-Timestamp: {timestamp}
-Donation Name: {donor_name}
-Donation ID: {donation_id}
-Demand ID: {demand.id}
+                        ================== NOT ENOUGH HISSA ==================
+                        Timestamp: {timestamp}
+                        Donation Name: {donor_name}
+                        Donation ID: {donation_id}
+                        Demand ID: {demand.id}
 
-Hissa Error:
-Need {requested} hissa, only {available} available
+                        Hissa Error:
+                        Need {requested} hissa, only {available} available
 
-COMPLETE DONATION RECORD:
-{donation_json}
-====================================================
-                    """
+                        COMPLETE DONATION RECORD:
+                        {donation_json}
+                        ====================================================
+                                            """
                     
                     self.env['fetch.qurbani.log'].create({
                         'name': f"✗ NOT ENOUGH HISSA [{timestamp}] - [ID-{donation_id}] {donor_name}",
@@ -294,7 +295,7 @@ COMPLETE DONATION RECORD:
                 if not city_id and demand.slaughter_location_id.location_id:
                     city_id = demand.slaughter_location_id.location_id.id
                 distribution_location_id = self.env['stock.location'].search(
-                    [('complete_name', 'ilike', 'SDC/Karachi/Online / Website')], limit=1
+                    [('complete_name', 'ilike', str(line.city_id.name + '/' + line.branch))], limit=1
                 ).id
                 vals = {
                     'product_id': line_data['product_id'],
@@ -303,6 +304,7 @@ COMPLETE DONATION RECORD:
                     'day_id': demand.day_id.id,
                     'hijri_id': demand.hijri_id.id,
                     'city_id': city_id,
+                    'branch': line_data['branch'],
                     'distribution_id': distribution_location_id,
                     'slaughter_id': demand.slaughter_location_id.id,
                     'hissa_name': line_data['hissa_name'],
@@ -466,7 +468,6 @@ COMPLETE DONATION RECORD:
                                 Compare field values and types carefully (especially time fields and location IDs).
                                                             """
                                                         })
-                    
                     
                     if qurbani_cow_distribution:
                         qurbani_cow_distribution.write({
