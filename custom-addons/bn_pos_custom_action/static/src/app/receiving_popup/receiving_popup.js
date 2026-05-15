@@ -403,7 +403,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             const records = await this.orm.searchRead(
                 'qurbani.cow.distribution',
-                [['name', '=', this.state.record_number]],
+                [['name', '=', this.state.record_number], ['state', '=', 'full']],
                 ['id'],
             );
 
