@@ -225,6 +225,28 @@ class WelfareLine(models.Model):
                 action['res_id'] = new_welfare.id
         
         return action
+
+    def action_mark_pending(self):
+        """Mark the current line as pending."""
+        self.write({'state': 'pending'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
+
+    def open_disbursement_popup(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Disbursement Details',
+            'res_model': 'welfare.line',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_welfare.view_welfare_line_form_popup').id,
+            'target': 'new',
+            'context': {'form_view_initial_mode': 'view'},
+        }
+
     @api.model
     def create(self, vals):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)

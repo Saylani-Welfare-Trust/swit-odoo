@@ -26,7 +26,7 @@
                     <!-- Put page inside notebook -->
                     <notebook>
                         <page string="Disbursement Lines">
-                            <field name="disbursement_line_ids" readonly="1" nolabel="1">
+                            <field name="disbursement_line_ids" readonly="1" nolabel="1" mode="tree">
                                 <tree>
                                     <field name="welfare_id" string="Welfare Record"/>
                                     <field name="disbursement_category_id" string="Disbursement Category"/>
@@ -35,7 +35,8 @@
                                     <field name="collection_date" string="Collection Date"/>
                                     <field name="quantity" string="Quantity"/>
                                     <field name="total_amount" string="Total Amount"/>
-                                    <button name="mark_selected_as_collected" string="Mark Selected as Collected" type="object" class="btn-primary"/>                                    
+                                    <button name="open_disbursement_popup" string="Details" type="object" class="btn-secondary"/>
+                                    <button name="mark_selected_as_collected" string="Mark Selected as Collected" type="object" class="btn-primary"/>
                                     <field name="state" 
                                             widget="selection" 
                                             options="{'always_reload': True}"
