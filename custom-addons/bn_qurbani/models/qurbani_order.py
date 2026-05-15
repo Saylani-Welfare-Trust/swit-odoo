@@ -23,7 +23,6 @@ class QurbaniOrder(models.Model):
     remarks = fields.Text('Remarks')
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
-    total_amount = fields.Monetary('Total Amount', currency_field='currency_id')
 
     # POS vs Web Order indicator
     pos_qurbani_order = fields.Boolean('POS Order', default=True)
