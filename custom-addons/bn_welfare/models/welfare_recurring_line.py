@@ -149,7 +149,7 @@ class WelfareRecurringLine(models.Model):
     def action_disbursed(self):
         # Mark as disbursed and update welfare if all lines are delivered/disbursed
         self.state = 'disbursed'
-        if self.advance_donation_line_id:
+        if getattr(self, 'advance_donation_line_id', False):
             self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
         # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
