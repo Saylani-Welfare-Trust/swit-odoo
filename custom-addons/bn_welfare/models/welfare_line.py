@@ -236,13 +236,16 @@ class WelfareLine(models.Model):
 
     def open_disbursement_popup(self):
         self.ensure_one()
+        popup = self.env['welfare.line.disbursement.popup'].create({
+            'line_id': self.id,
+        })
         return {
             'type': 'ir.actions.act_window',
             'name': 'Disbursement Details',
-            'res_model': 'welfare.line',
-            'res_id': self.id,
+            'res_model': 'welfare.line.disbursement.popup',
+            'res_id': popup.id,
             'view_mode': 'form',
-            'view_id': self.env.ref('bn_welfare.view_welfare_line_form_popup').id,
+            'view_id': self.env.ref('bn_welfare.view_welfare_line_disbursement_popup_form').id,
             'target': 'new',
             'context': {'form_view_initial_mode': 'view'},
         }

@@ -54,22 +54,22 @@
         </field>
     </record>
 
-    <record id="view_welfare_line_form_popup" model="ir.ui.view">
-        <field name="name">welfare.line.form.popup</field>
-        <field name="model">welfare.line</field>
+    <record id="view_welfare_line_disbursement_popup_form" model="ir.ui.view">
+        <field name="name">welfare.line.disbursement.popup.form</field>
+        <field name="model">welfare.line.disbursement.popup</field>
         <field name="arch" type="xml">
             <form string="Disbursement Details" create="false" edit="false">
                 <sheet>
                     <group string="Donee Information">
-                        <field name="welfare_id" invisible="1"/>
-                        <field name="welfare_id.donee_id" readonly="1"/>
-                        <field name="welfare_id.donee_id.cnic_no" readonly="1" string="CNIC"/>
-                        <field name="welfare_id.donee_id.mobile" readonly="1" string="Mobile"/>
-                        <field name="welfare_id.donee_id.street" readonly="1" string="Street"/>
-                        <field name="welfare_id.donee_id.street2" readonly="1" string="Street 2"/>
-                        <field name="welfare_id.donee_id.city" readonly="1" string="City"/>
-                        <field name="welfare_id.donee_id.state_id" readonly="1"/>
-                        <field name="welfare_id.donee_id.country_id" readonly="1"/>
+                        <field name="line_id" invisible="1"/>
+                        <field name="donee_id" readonly="1"/>
+                        <field name="donee_cnic_no" readonly="1"/>
+                        <field name="donee_mobile" readonly="1"/>
+                        <field name="donee_street" readonly="1"/>
+                        <field name="donee_street2" readonly="1"/>
+                        <field name="donee_city" readonly="1"/>
+                        <field name="donee_state_id" readonly="1"/>
+                        <field name="donee_country_id" readonly="1"/>
                     </group>
                     <group string="Disbursement Information">
                         <field name="disbursement_category_id" readonly="1"/>
