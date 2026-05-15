@@ -188,7 +188,7 @@ class MedicalEquipment(models.Model):
     def _compute_case_type(self):
         for record in self:
             if record.medical_equipment_reference_id:
-                record.case_type = 'above_50_percent'
+                record.case_type = '50_percent'
                 continue
 
             percentage = record.actual_deposit_percentage
