@@ -7,6 +7,7 @@ _logger = logging.getLogger(__name__)
 state_selection = [
     ('draft', 'Draft'),
     ('delivered', 'Delivery Created'),
+    ('collected', 'Collected'),
     ('disbursed', 'Disbursed'),
 ]
 
@@ -147,8 +148,8 @@ class WelfareRecurringLine(models.Model):
         return bill
 
     def action_disbursed(self):
-        # Mark as disbursed and update welfare if all lines are delivered/disbursed
-        self.state = 'disbursed'
+        # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
+        self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
         if getattr(self, 'advance_donation_line_id', False):
             self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
