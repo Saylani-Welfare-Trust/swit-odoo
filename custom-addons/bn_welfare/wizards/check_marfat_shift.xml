@@ -84,8 +84,8 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary" attrs="{'invisible': [('state','=','disbursed')]}"/>
-                    <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary" attrs="{'invisible': [('state','=','pending')]}"/>
+                    <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
+                    <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary"/>
                     <button string="Close" class="btn-link" special="cancel"/>
                 </footer>
             </form>
