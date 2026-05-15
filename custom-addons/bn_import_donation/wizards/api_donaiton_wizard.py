@@ -852,7 +852,10 @@ class APIDonationWizard(models.TransientModel):
                 config = all_data['gateway_product_lines'].get(product_key)
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
-                    raise ValidationError(
+                    self.create_fetch_log(
+                    history.id,
+                    f"Processing Qurbani item at index {info_idx}",
+                    'Processing',
                     f"Product Key: {product_key}"
                     f"gatway_product: {config}"
                     f"gatway_product_id: {config['product_id']}"
