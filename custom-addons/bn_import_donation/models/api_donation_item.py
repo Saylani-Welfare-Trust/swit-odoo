@@ -1,9 +1,14 @@
-from odoo import fields, models
+from odoo import fields, models, api, _
+from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class APIDonationItemModel(models.Model):
     _name = 'api.donation.item'
     _description = 'API Donation Item'
+
 
     donation_type = fields.Char('Donation Type')
     donation_no = fields.Char('Donation No')
@@ -16,4 +21,5 @@ class APIDonationItemModel(models.Model):
     
     is_priced_item = fields.Boolean('Is Priced Item')
 
-    api_donation_id = fields.Many2one('api.donation', string='Donation Data')
+    api_donation_id = fields.Many2one('api.donation', string='Donation Data', ondelete='cascade')
+    active = fields.Boolean('Active', default=True)

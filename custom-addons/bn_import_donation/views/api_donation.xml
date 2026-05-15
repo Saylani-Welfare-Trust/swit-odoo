@@ -40,6 +40,7 @@
                             <field name="created_at"/>
                         </group>
                         <group>
+                            <field name="qurbani" widget="boolean_toggle"/>
                             <field name="dn_number"/>
                             <field name="phone"/>
                             <field name="cnic"/>
@@ -115,7 +116,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Donation Item" name="donation_item">
+                        <page string="Donation Item" name="donation_item" invisible="qurbani">
                             <field name="donation_item_ids" string="Donation Item">
                                 <tree string="Donation Item">
                                     <field name="donation_type"/>
@@ -128,6 +129,26 @@
                                     <field name="total"/>
                                     <field name="price_id"/>
                                     <field name="api_donation_id" column_invisible="True"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <notebook>
+                        <page string=" Qurbani Items" invisible="not qurbani">
+                            <field name="qurbani_order_line_ids">
+                                <tree create="0" delete="0" editable="bottom">
+                                    <!-- <field name="name" readonly="1" /> -->
+                                    <field name="day_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="hijri_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="hissa_name" />
+                                    <!-- <field name="start_time" widget="float_time" readonly="1" /> -->
+                                    <!-- <field name="end_time" widget="float_time" readonly="1" /> -->
+                                    <!-- <field name="currency_id" column_invisible="1" readonly="1" /> -->
+                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
+                                    <field name="quantity" readonly="1" />
+                                    <field name="amount" readonly="1" />
+                                    <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                                    <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                                 </tree>
                             </field>
                         </page>

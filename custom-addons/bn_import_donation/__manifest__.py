@@ -7,6 +7,8 @@
     'category': 'BytesNode/Import Donation',
     'depends': [
         'bn_profile_management',
+        'bn_master_setup',
+        'product'
     ],
     'data': [
         'data/sequence.xml',
@@ -22,6 +24,10 @@
         'views/fetch_history.xml',
         'views/fetch_log.xml',
         'views/res_partner.xml',
+        'views/product_template.xml',
+        'views/product_product.xml',
+        'views/header_type.xml',
+        'views/gateway_config.xml',
         'reports/import_donation.xml',
         'reports/api_donation.xml',
     ],
