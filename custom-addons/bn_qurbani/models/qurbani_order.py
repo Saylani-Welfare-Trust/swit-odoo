@@ -126,7 +126,7 @@ class QurbaniOrder(models.Model):
                 ('hijri_id', '=', hijri_id),
                 ('slaughter_location_id', '=', slaughter_location.id),
                 ('remaining_hissa', '>', 0),
-                ('inventory_product_id', '=', product)  # ensure product is set on demand
+                ('inventory_product_id', '=', product.id)  # ensure product is set on demand
             ]
 
             # if animal_type == 'cow':
