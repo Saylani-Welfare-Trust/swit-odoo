@@ -848,10 +848,10 @@ class APIDonationWizard(models.TransientModel):
                 
                 product = False
                 product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
-                raise ValidationError(
-                    f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
-                    f"Product Key: {product_key}"
-                )            
+                # raise ValidationError(
+                #     f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
+                #     f"Product Key: {product_key}"
+                # )            
                 config = all_data['gateway_product_lines'].get(product_key)
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
@@ -860,59 +860,59 @@ class APIDonationWizard(models.TransientModel):
                         history.id,
                         f"Qurbani product not found at index {info_idx}",
                         'Error',
-                        f"Product Qurbani Web not found"
-                    )
-                else:
-                    # Get current hijri
-                    hijri = self.env['hijri'].search([], order="id desc", limit=1)
-
-                    # Amount and quantity
-                    quantity = int(it.get('qty', 1) or 1)
-                    amount = float(it.get('price', 0) or 0)
-
-                    # Find qurbani day
-                    day_name = it.get('day', '')
-                    day = self.env['qurbani.day'].search([
-                        ('web_qurbani_day', '=', day_name)
-                    ], limit=1)
-
-                    # Find city
-                    city_name = donor.get('qurbaniCity', '')
-                    city = self.env['stock.location'].search([
-                        ('name', 'ilike', city_name),
-                        ('usage', '=', 'internal')
-                    ], limit=1)
-
-                    # Share names
-                    share_names = it.get('share_names', [donor.get('name', '')])
-
-                    if not share_names:
-                        share_names = [donor.get('name', '')]
-                    branch = it.get('qurbaniBranch', '')
-                    distribution_id = self.env['qurbani.distribution'].search([
-                        ('name', '=', f"{city.name}/{branch}")
-                    ], limit=1).distribution_center_id.id if city and branch else False
-                    # Create separate line for each quantity
-                    for idx in range(quantity):
-
-                        share_name = share_names[idx % len(share_names)]
-
-                        hissa_name = (
-                            f"{idx + 1}. {share_name}"
-                            if quantity > 1 else share_name
+                        f"Product Qurbani Web not found Gateway Product Lines: {all_data['gateway_product_lines']}Product Key: {product_key}"
                         )
+                    pass
+                # Get current hijri
+                hijri = self.env['hijri'].search([], order="id desc", limit=1)
 
-                        order_lines.append([0, 0, {
-                            'product_id': product.id,
-                            'quantity': 1,
-                            'amount': amount,
-                            'day_id': day.id if day else False,
-                            'hijri_id': hijri.id if hijri else False,
-                            'city_id': city.id if city else False,
-                            'hissa_name': hissa_name,
-                            'distribution_id': distribution_id,
-                            'branch': branch,
-                        }])
+                # Amount and quantity
+                quantity = int(it.get('qty', 1) or 1)
+                amount = float(it.get('price', 0) or 0)
+
+                # Find qurbani day
+                day_name = it.get('day', '')
+                day = self.env['qurbani.day'].search([
+                    ('web_qurbani_day', '=', day_name)
+                ], limit=1)
+
+                # Find city
+                city_name = donor.get('qurbaniCity', '')
+                city = self.env['stock.location'].search([
+                    ('name', 'ilike', city_name),
+                    ('usage', '=', 'internal')
+                ], limit=1)
+
+                # Share names
+                share_names = it.get('share_names', [donor.get('name', '')])
+
+                if not share_names:
+                    share_names = [donor.get('name', '')]
+                branch = it.get('qurbaniBranch', '')
+                distribution_id = self.env['qurbani.distribution'].search([
+                    ('name', '=', f"{city.name}/{branch}")
+                ], limit=1).distribution_center_id.id if city and branch else False
+                # Create separate line for each quantity
+                for idx in range(quantity):
+
+                    share_name = share_names[idx % len(share_names)]
+
+                    hissa_name = (
+                        f"{idx + 1}. {share_name}"
+                        if quantity > 1 else share_name
+                    )
+
+                    order_lines.append([0, 0, {
+                        'product_id': product.id if product else False,
+                        'quantity': 1,
+                        'amount': amount,
+                        'day_id': day.id if day else False,
+                        'hijri_id': hijri.id if hijri else False,
+                        'city_id': city.id if city else False,
+                        'hissa_name': hissa_name,
+                        'distribution_id': distribution_id if distribution_id else False,
+                        'branch': branch,
+                    }])
               
                 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
