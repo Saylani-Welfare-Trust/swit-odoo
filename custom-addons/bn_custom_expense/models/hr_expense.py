@@ -24,3 +24,9 @@ class HRExpense(models.Model):
     def _onchange_payment_mode(self):
         if self.payment_mode == 'company_account':
             raise ValidationError('Expense payment mode can be set as ( Company ).')
+        
+    def unlink(self):
+        if self.state == 'approved':
+            raise ValidationError('No one have right to delete an approved expense.')
+        
+        return super(HRExpense, self).unlink()

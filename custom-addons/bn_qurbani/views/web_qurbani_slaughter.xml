@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="web_qurbani_slaughter_center_tree_view" model="ir.ui.view">
+        <field name="name">web.qurbani.slaughter.center.tree.view</field>
+        <field name="model">web.qurbani.slaughter.center</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" string="Web Qurbani Slaughter Center">
+                <field name="name"/>
+                <field name="slaughter_center_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_web_qurbani_slaughter_center" model="ir.actions.act_window">
+        <field name="name">Web Qurbani Slaughter Center</field>
+        <field name="res_model">web.qurbani.slaughter.center</field>
+        <field name="view_mode">tree</field>
+    </record>
+    
+    <menuitem id="menu_qurbani_slaughter_center"
+          name="Web Qurbani Slaughter Centers"
+          parent="menu_qurbani_Web"
+          action="action_web_qurbani_slaughter_center"
+          sequence="2"
+           />
+
+</odoo>

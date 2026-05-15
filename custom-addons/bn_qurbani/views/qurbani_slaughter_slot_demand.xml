@@ -62,6 +62,7 @@
                 <field name="remaining_hissa" readonly="1"/>
 
                 <button string="History" name="action_open_chatter" type="object" class="oe_highlight"/>
+                <button string="Update Demand" name="update_demand" type="object" class="oe_highlight"/>
             </tree>
         </field>
     </record>

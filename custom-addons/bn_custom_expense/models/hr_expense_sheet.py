@@ -1,4 +1,5 @@
 from odoo import models
+from odoo.exceptions import ValidationError
 from odoo.tools.misc import clean_context
 
 
@@ -29,3 +30,15 @@ class HRExpenseSheet(models.Model):
         self.activity_update()
 
         return moves
+    
+    def action_reset_approval_expense_sheets(self):
+        if self.state == 'approve':
+            raise ValidationError('Cannot set an approve expense to draft.')
+        
+        return super(HRExpenseSheet, self).action_reset_approval_expense_sheets()
+    
+    def unlink(self):
+        if self.state == 'approve':
+            raise ValidationError('No one have right to delete an approved expense sheet.')
+        
+        return super(HRExpenseSheet, self).unlink()

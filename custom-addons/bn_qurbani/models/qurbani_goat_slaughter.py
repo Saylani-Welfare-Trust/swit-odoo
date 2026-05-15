@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class QurbaniGoatSlaughter(models.Model):
@@ -8,6 +9,7 @@ class QurbaniGoatSlaughter(models.Model):
 
     hijri_id = fields.Many2one('hijri', string="Hijri")
     day_id = fields.Many2one('qurbani.day', string="Day")
+    inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
 
     start_time = fields.Float('Start Time')
@@ -16,16 +18,42 @@ class QurbaniGoatSlaughter(models.Model):
     video = fields.Binary('Video')
     image = fields.Binary('Image')
 
-    name = fields.Char('Name')
+    name = fields.Char('Name', default="New")
     video_file_name = fields.Char('Video File Name')
     image_file_name = fields.Char('Image File Name')
 
-    qurbani_goat_slaughter_line = fields.One2many('qurbani.goat.slaughter.line', 'qurbani_goat_slaughter_id', string="Qurbani Cow Slaughter Line")
+    product_id = fields.Many2one('product.product', string="Product")
+
+    qurbani_order_no = fields.Char('QO No.')
+    qurbani_order_line_no = fields.Char('QOL No.')
+    hissa_name = fields.Char('Hissa Name')
+
+    is_transfer = fields.Boolean('Is Transfer')
 
 
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_slaughter') or ('New')
+            slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
+
+            vals['name'] = f'Goat - {str(slaughter_location.goat_sequence_number).zfill(5)}'
+
+            slaughter_location.goat_sequence_number += 1
 
         return super(QurbaniGoatSlaughter, self).create(vals)
+    
+    def action_transfer(self):
+        return {
+            'name': _('Transfer Slaughter'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'transfer.slaughter',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_qurbani_goat_slaughter_id': self.id,
+                'default_option': 'hole',
+            }
+        }
+    
+    def action_print_report(self):
+        return self.env.ref('bn_qurbani.qurbani_goat_slaughter_report').report_action(self)

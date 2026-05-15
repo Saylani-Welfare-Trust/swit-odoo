@@ -17,6 +17,10 @@ from . import pos_session
 from . import qurbani_cow_slaughter
 from . import qurbani_cow_slaughter_line
 from . import qurbani_goat_slaughter
-from . import qurbani_goat_slaughter_line
+from . import qurbani_cow_distribution
+from . import qurbani_goat_distribution
 from . import pos_order
 from . import fetch_qurbani_log
+from . import stock_location
+from . import web_qurbani_distribution_center
+from . import web_qurbani_slaughter_center

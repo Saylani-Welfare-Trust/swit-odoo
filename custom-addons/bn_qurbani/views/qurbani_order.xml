@@ -88,9 +88,8 @@
 
                     <!-- General Information (Both POS and Web) -->
                     <group string="Additional Information">
+                        <field name="amount" string="Total Amount" invisible="pos_qurbani_order == False"/>
                         <field name="remarks" />
-                        <field name="amount" invisible="pos_qurbani_order == False"/>
-                        <field name="total_amount" />
                     </group>
 
                     <notebook>
@@ -160,7 +159,6 @@
 
     <menuitem id="menu_qurbani_order"
         name="Qurbani Order"
-        action="action_pos_qurbani_order"
         parent="menu_qurbani_root"
         sequence="1"/>
 
