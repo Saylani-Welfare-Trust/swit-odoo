@@ -853,9 +853,10 @@ class APIDonationWizard(models.TransientModel):
                 if config:
                     product = self.env['product.product'].browse(config['product_id'])
                     raise ValidationError(
-                    f"Gateway Product Lines: {all_data['gateway_product_lines']}\n"
                     f"Product Key: {product_key}"
-                    f"Product found: {product.name if product else 'Not Found'}"
+                    f"gatway_product: {config}"
+                    f"gatway_product_id: {config['product_id']}"
+                    f"Product found: {product}"
                 )
                 if not product:
                     self.create_fetch_log(
