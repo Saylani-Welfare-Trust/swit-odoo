@@ -398,22 +398,71 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      * Process Donation Home Service record
      */
     async processQurbaniRecord(selectedOrder) {
-        try {
-            const record = await this.orm.searchRead(
-                'qurbani.order',
-                [['name', '=', this.state.record_number]],
-                ['name'],
-                { limit: 1 }
-            );
-            
-            if (record && record.length > 0) {
-                this.report.doAction("bn_qurbani.qurbani_token_report", [
-                    record.id,
-                ]);
 
-                super.confirm();
+        try {
+
+            const records = await this.orm.searchRead(
+                'qurbani.cow.distribution',
+                [['name', '=', this.state.record_number]],
+                ['id'],
+            );
+
+            if (!records.length) {
+
+                this.notification.add(
+                    "No records found",
+                    { type: "danger" }
+                );
+
+                return;
             }
+
+            // GET ALL IDS
+            const ids = records.map(record => record.id);
+
+            // CALL PYTHON METHOD
+            const action = await this.orm.call(
+                'qurbani.cow.distribution',
+                'action_print_report',
+                [ids]
+            );
+
+            // PRINT REPORT
+            await this.action.doAction(action);
+
+            const records = await this.orm.searchRead(
+                'qurbani.goat.distribution',
+                [['name', '=', this.state.record_number]],
+                ['id'],
+            );
+
+            if (!records.length) {
+
+                this.notification.add(
+                    "No records found",
+                    { type: "danger" }
+                );
+
+                return;
+            }
+
+            // GET ALL IDS
+            const ids = records.map(record => record.id);
+
+            // CALL PYTHON METHOD
+            const action = await this.orm.call(
+                'qurbani.goat.distribution',
+                'action_print_report',
+                [ids]
+            );
+
+            // PRINT REPORT
+            await this.action.doAction(action);
+
+            super.confirm();
+
         } catch (error) {
+
             this.handleProcessingError(error);
         }
     }

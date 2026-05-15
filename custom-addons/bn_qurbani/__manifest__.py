@@ -49,7 +49,6 @@
         'wizards/api_order_wizard.xml',
         'wizards/transfer_slaughter.xml',
         'wizards/sync_slaughter_and_distribution.xml',
-        'reports/qurbani_token.xml',
         'reports/duplicate_dn.xml',
         'reports/qurbani_cow_slaughter_report.xml',
         'reports/qurbani_goat_slaughter_report.xml',
