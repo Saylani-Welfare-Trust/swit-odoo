@@ -18,6 +18,14 @@
                         </div>
                         <div class="row">
                             <div class="col-6">
+                                <span>Start Time</span> <spna><t t-esc="o.start_tim"/></spna>
+                            </div>
+                            <div class="col-6">
+                                <span>End Time</span> <spna><t t-esc="o.end_time"/></spna>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
                                 <span>QOL No.</span> <spna><t t-esc="o.qurbani_order_line_no"/></spna>
                             </div>
                             <div class="col-6">
