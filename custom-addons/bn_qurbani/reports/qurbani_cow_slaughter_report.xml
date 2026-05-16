@@ -16,10 +16,10 @@
                         </div>
                         <div class="row">
                             <div class="col-6">
-                                <span>Start Time</span> <spna><t t-esc="o.start_time"/></spna>
+                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
                             </div>
                             <div class="col-6">
-                                <span>End Time</span> <spna><t t-esc="o.end_time"/></spna>
+                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
                             </div>
                         </div>
 
