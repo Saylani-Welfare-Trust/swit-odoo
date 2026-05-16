@@ -28,6 +28,8 @@
                 <field name="video" filename="video_file_name" />
                 <field name="image" filename="image_file_name" />
 
+                <field name="state" widget="badge" decoration-info="state == 'available'" decoration-success="state == 'full'" />
+
                 <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
             </tree>
         </field>
