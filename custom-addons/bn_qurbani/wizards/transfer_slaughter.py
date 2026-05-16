@@ -98,7 +98,7 @@ class TransferSlaughter(models.TransientModel):
                     'qurbani_order_line_no': '',
                     'product_id': False,
                     'hissa_name': '',
-                    'is_tranfser': True,
+                    'state': 'transfer',
                 })
 
         else:

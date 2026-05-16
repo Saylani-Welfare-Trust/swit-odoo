@@ -109,7 +109,7 @@ class SyncSalughterAndDistribution(models.Model):
                         ('end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                         ('qurbani_order_no', '=', False),
-                        ('is_transfer', '=', False),
+                        ('state', '!=', 'transfer'),
                     ], limit=1)
 
                     if qurbani_goat_slaughter:

@@ -2,6 +2,13 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
+state_selection = [
+    ('available', 'Available'),
+    ('full', 'Full'),
+    ('transfer', 'Transfer'),
+]
+
+
 class QurbaniGoatSlaughter(models.Model):
     _name = 'qurbani.goat.slaughter'
     _description = "Qurbani Goat Slaughter"
@@ -28,8 +35,16 @@ class QurbaniGoatSlaughter(models.Model):
     qurbani_order_line_no = fields.Char('QOL No.')
     hissa_name = fields.Char('Hissa Name')
 
-    is_transfer = fields.Boolean('Is Transfer')
+    state = fields.Selection(selection=state_selection, string="State", compute="_set_state", default='available', store=True)
 
+
+    @api.depends('qurbani_order_no')
+    def _set_state(self):
+        for rec in self:
+            rec.state = 'available'
+                
+            if rec.qurbani_order_no:
+                rec.state = 'full'
 
     @api.model
     def create(self, vals):
