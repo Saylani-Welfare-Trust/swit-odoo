@@ -33,6 +33,17 @@
         </field>
     </record>
 
+    <record id="qurbani_goat_slaughter_view_search" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.view.search</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="arch" type="xml">
+            <search>
+                <filter name="start_time" string="Start Time" context="{'group_by': 'start_time'}" />
+                <filter name="end_time" string="End Time" context="{'group_by': 'end_time'}" />
+            </search>
+        </field>
+    </record>
+
     <record id="qurbani_goat_distribution_action" model="ir.actions.act_window">
         <field name="name">Goat Distribution</field>
         <field name="res_model">qurbani.goat.distribution</field>
