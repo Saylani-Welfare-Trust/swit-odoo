@@ -5,8 +5,8 @@
         <field name="name">qurbani.day.view.tree</field>
         <field name="model">qurbani.day</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
-                <field name="name" />
+            <tree create="0" delete="0" editable="bottom">
+                <field name="name" readonly="1" />
                 <field name="web_qurbani_day" />
             </tree>
         </field>
