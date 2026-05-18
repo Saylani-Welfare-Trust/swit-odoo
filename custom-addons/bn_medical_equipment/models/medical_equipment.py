@@ -141,10 +141,11 @@ class MedicalEquipment(models.Model):
     )
     
     def _compute_reference_lines(self):
-        """Fetch lines from selected reference"""
         for record in self:
-            if record.medical_equipment_reference_id and hasattr(record.medical_equipment_reference_id, 'line_ids'):
-                record.reference_line_ids = record.medical_equipment_reference_id.line_ids
+            ref = record.medical_equipment_reference_id
+            if ref:
+                print(f"Reference {ref.id} has lines: {ref.line_ids.ids}")
+                record.reference_line_ids = ref.line_ids
             else:
                 record.reference_line_ids = False
                 
