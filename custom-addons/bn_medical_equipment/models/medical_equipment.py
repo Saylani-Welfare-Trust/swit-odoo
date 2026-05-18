@@ -145,7 +145,7 @@ class MedicalEquipment(models.Model):
         for record in self:
             if record.medical_equipment_reference_id:
                 # Find all records that reference this reference
-                referring_records = self.env['medical.equipment.history'].search([
+                referring_records = self.env['medical.equipment'].search([
                     ('medical_equipment_reference_id', '=', record.medical_equipment_reference_id.id)
                 ])
                 # Collect all line_ids from those records (flatten)
