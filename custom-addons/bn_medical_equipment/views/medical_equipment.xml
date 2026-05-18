@@ -78,6 +78,7 @@
                             <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" readonly="state == 'closed' or not is_actual_deposit_editable"/>
                             <field name="medical_equipment_reference_id" options="{'no_create': True, 'no_open': True}"/>
+                            <button name="action_open_reference" type="object" string="Open Reference" class="btn-link" invisible="not medical_equipment_reference_id"/>
                             <field name="case_type" readonly="1" string="Auto-Determined Case Type" invisible="1"/>
                             <field name="cnic_no" readonly="state != 'draft' or state == 'closed'" required="state != 'closed'" force_save="1"/>
                             <field name="street" string="Address" readonly="state != 'draft' or state == 'closed'" required="state != 'closed'" force_save="1"/>
@@ -166,6 +167,7 @@
                         <page string="Reference Items" invisible="not medical_equipment_reference_id">
                             <group string="Reference Information">
                                 <field name="medical_equipment_reference_id" readonly="1"/>
+                                <button name="action_open_reference" type="object" string="Open Reference" class="btn-secondary"/>
                             </group>
                             <field name="reference_line_ids" readonly="1">
                                 <tree string="Reference Items">
@@ -173,7 +175,6 @@
                                     <field name="product_id"/>
                                     <field name="quantity"/>
                                     <field name="base_security_deposit"/>
-                                    <field name="actual_deposit_percentage"/>
                                     <field name="security_deposit"/>
                                 </tree>
                             </field>
@@ -227,5 +228,97 @@
         action="donaiton_box_operation_action"
         parent="medical_equipment_menu"
         sequence="2"/>
+
+    <!-- Reference Line Tree View (for embedded list) -->
+    <record id="medical_equipment_reference_line_view_tree" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.line.tree</field>
+        <field name="model">medical.equipment.reference.line</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="medical_equipment_category_id"/>
+                <field name="product_id"/>
+                <field name="quantity"/>
+                <field name="base_security_deposit" sum="Total Base Deposit"/>
+                <field name="security_deposit" sum="Total Security Deposit"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Reference Form View -->
+    <record id="medical_equipment_reference_view_form" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.form</field>
+        <field name="model">medical.equipment.reference</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="contact_id" options="{'no_create': True}"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Items">
+                            <field name="line_ids" context="{'default_currency_id': currency_id}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Reference Kanban View (boxes) -->
+    <record id="medical_equipment_reference_view_kanban" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.kanban</field>
+        <field name="model">medical.equipment.reference</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="line_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_image"/>
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                <div>Items: <field name="line_count"/></div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Reference Tree View (alternative list view) -->
+    <record id="medical_equipment_reference_view_tree" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.tree</field>
+        <field name="model">medical.equipment.reference</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="contact_id"/>
+                <field name="line_count" string="Items"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action for References -->
+    <record id="medical_equipment_reference_action" model="ir.actions.act_window">
+        <field name="name">References</field>
+        <field name="res_model">medical.equipment.reference</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first medical equipment reference. Each reference can contain multiple items.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item under Medical Equipment -->
+    <menuitem id="medical_equipment_reference_menu"
+            name="References"
+            parent="medical_equipment_menu"
+            action="medical_equipment_reference_action"
+            sequence="1"/>        
 
 </odoo>
