@@ -26,29 +26,4 @@
         </field>
     </record>
 
-    <record id="bn_profile_management_base_view_partner_form_inherit_bn_pos_order" model="ir.ui.view">
-        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.pos.order</field>
-        <field name="model">res.partner</field>
-        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//page[@name='pos']" position="inside">
-                <field name="custom_pos_order_line_ids" readonly="1">
-                    <tree>
-                        <field name="currency_id" column_invisible="True"/>
-                        <field name="name" decoration-bf="1"/>
-                        <field name="session_id" readonly="state != 'draft'"/>
-                        <field name="date_order"/>
-                        <field name="config_id"/>
-                        <field name="pos_reference"/>
-                        <field name="tracking_number" optional="hide"/>
-                        <field name="partner_id"/>
-                        <field string="Cashier" name="user_id" widget="many2one_avatar_user" readonly="state in ['done', 'invoiced']"/>
-                        <field name="amount_total" sum="Amount total" widget="monetary" decoration-bf="1"/>
-                        <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state not in ('draft','cancel')"/>
-                    </tree>
-                </field>
-            </xpath>
-        </field>
-    </record>
-
 </odoo>
