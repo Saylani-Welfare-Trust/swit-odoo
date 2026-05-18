@@ -30,6 +30,40 @@ class DonationHomeServiceLine(models.Model):
         compute='_compute_security_deposit',
         store=True
     )
+    reference_line_ids = fields.One2many(
+    'medical.equipment.line',          # change to 'medical.equipment.reference.line' if different
+    compute='_compute_reference_lines',
+    string='Reference Items',
+    readonly=True
+)
+
+    @api.depends('medical_equipment_reference_id')
+    def _compute_reference_lines(self):
+        """Auto‑detect and fetch lines from the selected reference."""
+        for record in self:
+            lines = self.env['medical.equipment.line'].browse()
+            ref = record.medical_equipment_reference_id
+            
+            if ref:
+                # 1) Try common one2many field names on the reference
+                for candidate in ['line_ids', 'reference_line_ids', 'medical_equipment_line_ids']:
+                    if hasattr(ref, candidate) and ref[candidate]:
+                        lines = ref[candidate]
+                        break
+                
+                # 2) If not found, search for lines linked via 'reference_id' on the line model
+                if not lines and 'reference_id' in self.env['medical.equipment.line']._fields:
+                    lines = self.env['medical.equipment.line'].search([
+                        ('reference_id', '=', ref.id)
+                    ])
+                
+                # 3) If still nothing, try a different line model (if exists)
+                if not lines and 'medical.equipment.reference.line' in self.env.registry:
+                    lines = self.env['medical.equipment.reference.line'].search([
+                        ('reference_id', '=', ref.id)
+                    ])
+            
+            record.reference_line_ids = lines
     
     # allowed_lot_ids = fields.Many2many(
     #     'stock.lot',
