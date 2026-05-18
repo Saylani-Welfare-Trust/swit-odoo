@@ -32,12 +32,9 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_disbursed(self):
-        self.line_id.action_disbursed()
-        lines = self.welfare_id.welfare_line_ids
-        self.line_id.write({
-            'state': 'disbursed',
-            'rec.state': 'disbursed' if lines and all(l.state == 'disbursed' for l in lines) else None
-        })
+        self.welfare_id.action_disbursed()
+        self.line_id.write({'state': 'disbursed'})
+
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
 
