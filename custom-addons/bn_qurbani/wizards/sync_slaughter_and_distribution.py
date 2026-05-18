@@ -20,7 +20,7 @@ class SyncSalughterAndDistribution(models.Model):
                 ('create_date', '<=', end_datetime),
             ])
         else:
-            orders = self.env['qurbani.order'].browse(self.id)
+            orders = self.env['qurbani.order'].browse(self.ids)
 
         for order in orders:
             for line in order.qurbani_order_line_ids:
