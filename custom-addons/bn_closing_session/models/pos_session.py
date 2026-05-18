@@ -318,6 +318,7 @@ class PosSession(models.Model):
                         len(split_line_ids), total_new_debit)
         return original_data
 
+
     def _create_account_move(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
         raise ValidationError('hit')
 
