@@ -16,6 +16,7 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/direct_deposit.xml',
+        'views/pos_direct_deposit.xml',
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
         'reports/direct_deposit_dn_report.xml',
