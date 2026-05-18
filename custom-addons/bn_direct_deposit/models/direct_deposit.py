@@ -135,6 +135,8 @@ class DirectDeposit(models.Model):
         dd.calculate_amount()
         dd.set_remarks()
 
+        self.env['qurbani.order'].create_qurbani_record(data)
+
         return {
             "status": "success",
             "id": dd.id
