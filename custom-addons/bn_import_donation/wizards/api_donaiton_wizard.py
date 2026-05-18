@@ -915,62 +915,244 @@ class APIDonationWizard(models.TransientModel):
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
-                
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Qurbani Processing Started",
+                    "Qurbani",
+                    f"""
+                    =====================================
+                    STARTING QURBANI PROCESSING
+                    =====================================
+
+                    Donation Import ID: {info.get('_id')}
+                    Donation Index: {info_idx}
+
+                    RAW ITEM:
+                    {it}
+
+                    DONOR:
+                    {donor}
+
+                    =====================================
+                    """
+                )
+
                 product = False
-                product_key = (f"{info.get('donationType', '')}" f"{item_name}" f"{types_name}").strip().lower()
-            
+
+                product_key = (
+                    f"{info.get('donationType', '')}"
+                    f"{item_name}"
+                    f"{types_name}"
+                ).strip().lower()
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Generated Product Key",
+                    "Qurbani",
+                    f"""
+                    Product Key Generated:
+                    {product_key}
+
+                    Available Gateway Product Keys:
+                    {list(all_data['gateway_product_lines'].keys())}
+                    """
+                )
+
                 config = all_data['gateway_product_lines'].get(product_key)
-                
+
                 if config:
-                    product = self.env['product.product'].browse(config['product_id'])
+
                     self.create_fetch_log(
                         history.id,
-                        f"Processing Qurbani item at index {info_idx}",
-                        'Processing',
-                        (
-                            f"Product Key: {product_key}\n"
-                            f"Gateway Product: {config}\n"
-                            f"Gateway Product ID: {config.get('product_id') if config else 'No Config'}\n"
-                            f"Product Found: {product.display_name if product else 'No Product'}"
-                        )
+                        f"Gateway Config Found",
+                        "Qurbani",
+                        f"""
+                        Config Found:
+
+                        {config}
+                        """
                     )
-                if not product:
+
+                    product = self.env['product.product'].browse(config['product_id'])
+
                     self.create_fetch_log(
                         history.id,
-                        f"Qurbani product not found at index {info_idx}",
-                        'Error',
-                        f"Product Qurbani Web not found Gateway Product Lines: {all_data['gateway_product_lines']}Product Key: {product_key}"
-                        )
-                # Get current hijri
+                        f"Product Lookup",
+                        "Qurbani",
+                        f"""
+                        Product ID: {config.get('product_id')}
+
+                        Product Exists:
+                        {'YES' if product.exists() else 'NO'}
+
+                        Product Name:
+                        {product.display_name if product else 'N/A'}
+
+                        Product Type:
+                        {product.detailed_type if product else 'N/A'}
+                        """
+                    )
+
+                else:
+
+                    self.create_fetch_log(
+                        history.id,
+                        f"Gateway Config NOT Found",
+                        "Qurbani",
+                        f"""
+                        Product Key:
+                        {product_key}
+
+                        No matching gateway config found.
+
+                        Available Keys:
+                        {list(all_data['gateway_product_lines'].keys())}
+                        """
+                    )
+
+                if not product:
+
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani Product Missing",
+                        "Error",
+                        f"""
+                        Product could not be resolved.
+
+                        Product Key:
+                        {product_key}
+
+                        Item Name:
+                        {item_name}
+
+                        Type Name:
+                        {types_name}
+                        """
+                    )
+
                 hijri = self.env['hijri'].search([], order="id desc", limit=1)
 
-                # Amount and quantity
+                self.create_fetch_log(
+                    history.id,
+                    f"Hijri Lookup",
+                    "Qurbani",
+                    f"""
+                    Hijri Found:
+                    {'YES' if hijri else 'NO'}
+
+                    Hijri ID:
+                    {hijri.id if hijri else False}
+                    """
+                )
+
                 quantity = int(it.get('qty', 1) or 1)
                 amount = float(it.get('price', 0) or 0)
 
-                # Find qurbani day
+                self.create_fetch_log(
+                    history.id,
+                    f"Quantity & Amount",
+                    "Qurbani",
+                    f"""
+                    Quantity:
+                    {quantity}
+
+                    Amount:
+                    {amount}
+                    """
+                )
+
                 day_name = it.get('day', '')
+
                 day = self.env['qurbani.day'].search([
                     ('web_qurbani_day', '=', day_name)
                 ], limit=1)
 
-                # Find city
+                self.create_fetch_log(
+                    history.id,
+                    f"Qurbani Day Lookup",
+                    "Qurbani",
+                    f"""
+                    API Day:
+                    {day_name}
+
+                    Day Found:
+                    {'YES' if day else 'NO'}
+
+                    Day ID:
+                    {day.id if day else False}
+                    """
+                )
+
                 city_name = donor.get('qurbaniCity', '')
+
                 city = self.env['stock.location'].search([
                     ('name', 'ilike', city_name),
                     ('usage', '=', 'internal')
                 ], limit=1)
 
-                # Share names
+                self.create_fetch_log(
+                    history.id,
+                    f"City Lookup",
+                    "Qurbani",
+                    f"""
+                    API City:
+                    {city_name}
+
+                    City Found:
+                    {'YES' if city else 'NO'}
+
+                    City ID:
+                    {city.id if city else False}
+
+                    City Name:
+                    {city.name if city else False}
+                    """
+                )
+
                 share_names = it.get('share_names', [donor.get('name', '')])
 
                 if not share_names:
                     share_names = [donor.get('name', '')]
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Share Names",
+                    "Qurbani",
+                    f"""
+                    Share Names:
+                    {share_names}
+                    """
+                )
+
                 branch = it.get('qurbaniBranch', '')
-                distribution_id = self.env['web.qurbani.distribution.center'].search([
-                    ('name', '=', f"{city.name}/{branch}")
-                ], limit=1).distribution_center_id.id if city and branch else False
-                # Create separate line for each quantity
+
+                distribution_rec = False
+
+                if city and branch:
+
+                    distribution_rec = self.env['web.qurbani.distribution.center'].search([
+                        ('name', '=', f"{city.name}/{branch}")
+                    ], limit=1)
+
+                distribution_id = distribution_rec.distribution_center_id.id if distribution_rec else False
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Distribution Lookup",
+                    "Qurbani",
+                    f"""
+                    Branch:
+                    {branch}
+
+                    Distribution Record Found:
+                    {'YES' if distribution_rec else 'NO'}
+
+                    Distribution ID:
+                    {distribution_id}
+                    """
+                )
+
                 for idx in range(quantity):
 
                     share_name = share_names[idx % len(share_names)]
@@ -980,7 +1162,7 @@ class APIDonationWizard(models.TransientModel):
                         if quantity > 1 else share_name
                     )
 
-                    order_lines.append([0, 0, {
+                    line_vals = {
                         'product_id': product.id if product else False,
                         'quantity': 1,
                         'amount': amount,
@@ -990,8 +1172,34 @@ class APIDonationWizard(models.TransientModel):
                         'hissa_name': hissa_name,
                         'distribution_id': distribution_id if distribution_id else False,
                         'branch': branch,
-                    }])
-              
+                    }
+
+                    self.create_fetch_log(
+                        history.id,
+                        f"Creating Qurbani Line",
+                        "Qurbani",
+                        f"""
+                        Line #{idx + 1}
+
+                        Values:
+                        {line_vals}
+                        """
+                    )
+
+                    order_lines.append([0, 0, line_vals])
+
+                self.create_fetch_log(
+                    history.id,
+                    f"Qurbani Lines Generated",
+                    "Qurbani",
+                    f"""
+                    Total Order Lines:
+                    {len(order_lines)}
+
+                    Final Order Lines:
+                    {order_lines}
+                    """
+                )     
                 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         # raise ValidationError(str(info))
