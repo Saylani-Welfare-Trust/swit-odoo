@@ -74,7 +74,8 @@ class CheckMarfatShift(models.TransientModel):
                 # Find all welfare lines assigned to this officer with today's collection date
                 welfare_lines = self.env['welfare.line'].search([
                     ('assigned_officer_id', '=', rec.assigned_officer_id.id),
-                    ('collection_date', '=', today)
+                    ('collection_date', '=', today),
+                    ('state', 'in', ['approve','recurring'])  # Only show lines that are approved or recurring
                 ])
 
                 rec.disbursement_line_ids = welfare_lines
