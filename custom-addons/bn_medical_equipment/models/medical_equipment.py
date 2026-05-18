@@ -133,21 +133,20 @@ class MedicalEquipment(models.Model):
         string='Medical Equipment Reference',
         help='Reference selected from Master Setup medical equipment references.'
     )
-    # reference_line_ids = fields.One2many(
-    #     'medical.equipment.line',
-    #     compute='_compute_reference_lines',
-    #     string='Reference Items',
-    #     readonly=True
-    # )
+    reference_line_ids = fields.One2many(
+        'medical.equipment.line',
+        compute='_compute_reference_lines',
+        string='Reference Items',
+        readonly=True
+    )
     
-    # def _compute_reference_lines(self):
-    #     """Fetch lines from selected reference"""
-    #     for record in self:
-    #         if record.medical_equipment_reference_id and hasattr(record.medical_equipment_reference_id, 'line_ids'):
-    #             record.reference_line_ids = record.medical_equipment_reference_id.line_ids
-    #         else:
-    #             record.reference_line_ids = False
-    
+    def _compute_reference_lines(self):
+        """Fetch lines from selected reference"""
+        for record in self:
+            if record.medical_equipment_reference_id and hasattr(record.medical_equipment_reference_id, 'line_ids'):
+                record.reference_line_ids = record.medical_equipment_reference_id.line_ids
+            else:
+                record.reference_line_ids = False
                 
     @api.depends('state', 'case_type')
     def _compute_is_actual_deposit_editable(self):

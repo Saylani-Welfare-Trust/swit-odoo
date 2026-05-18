@@ -164,22 +164,19 @@
                             </group>
                         </page>
                         <page string="Reference Items" invisible="not medical_equipment_reference_id">
-                            <group string="Selected Reference">
-                                <field name="medical_equipment_reference_id" readonly="1" options="{'no_create': True}"/>
+                            <group string="Reference Information">
+                                <field name="medical_equipment_reference_id" readonly="1"/>
                             </group>
                             <field name="reference_line_ids" readonly="1">
-                                <tree string="Reference Line Items">
-                                    <field name="medical_equipment_category_id" string="Master Product"/>
-                                    <field name="product_id" string="Product"/>
+                                <tree string="Reference Items">
+                                    <field name="medical_equipment_category_id"/>
+                                    <field name="product_id"/>
                                     <field name="quantity"/>
-                                    <field name="base_security_deposit" string="Base Deposit"/>
-                                    <field name="actual_deposit_percentage" string="Actual Deposit %"/>
-                                    <field name="security_deposit" string="Security Deposit"/>
+                                    <field name="base_security_deposit"/>
+                                    <field name="actual_deposit_percentage"/>
+                                    <field name="security_deposit"/>
                                 </tree>
                             </field>
-                            <div invisible="reference_line_ids" class="alert alert-info">
-                                <p>No items found in this reference.</p>
-                            </div>
                         </page>
                     </notebook>
                 </sheet>
