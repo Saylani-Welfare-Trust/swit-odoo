@@ -46,6 +46,6 @@ class HREmployee(models.Model):
             
     def create(self, vals):
         if 'barcode' in vals:
-            vals['name'] = vals['name'] + " " + vals['barcode']
-            
+            vals['name'] = vals['name'] + " ( " + vals['barcode'] + " )"
+
         return super(HREmployee, self).create(vals)
