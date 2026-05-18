@@ -130,7 +130,10 @@ class Welfare(models.Model):
         string="Inquiry Media",
         sanitize=False,   # IMPORTANT
     )
-
+    required_approval_for_limit = fields.Selection([
+        ('hod', 'HOD Approval Required'),
+        ('member', 'Member Approval Required')
+    ], string="Required Approval Based on Amount", compute="_compute_required_approval", store=False)
 
 
     # Employee Informaiton Fields
@@ -302,6 +305,12 @@ class Welfare(models.Model):
         string="Donee Issues", 
         help="What are the issues/concerns related to the donee?"
     )
+    def _compute_required_approval(self):
+        for rec in self:
+            if rec._check_amount_within_hod_limit():
+                rec.required_approval_for_limit = 'hod'
+            else:
+                rec.required_approval_for_limit = 'member'
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -865,16 +874,18 @@ class Welfare(models.Model):
         }
 
     def action_send_for_inquiry(self):
+        """Send for Inquiry - No automatic routing"""
         if not self:
             raise UserError("Please select at least one record.")
-
+        
         invalid = self.filtered(lambda r: r.state != 'completed')
         if invalid:
             raise UserError("Some selected records are not completed and cannot be processed.")
-
+        
+        # Your existing portal sync code...
         success_msgs = []
         error_msgs = []
-
+        
         for rec in self:
             if not rec.name:
                 error_msgs.append(f"[{rec.display_name}] Donee name is required.")
@@ -885,13 +896,14 @@ class Welfare(models.Model):
             try:
                 rec.write({
                     'portal_sync_status': 'syncing',
-                    'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}"
+                    'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}",
+                    'state': 'send_for_inquiry'  # Just move to send_for_inquiry
                 })
+                # Your existing sync logic...
                 existing_donee = rec._check_donee_exists_in_portal()
                 result = rec._handle_new_application(existing_donee)
                 rec._update_sync_status_success(result)
                 rec._create_sync_chatter_message(result)
-                rec.state = 'send_for_inquiry'
                 success_msgs.append(f"[{rec.display_name}] {result['message']}")
             except Exception as e:
                 error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
@@ -902,7 +914,8 @@ class Welfare(models.Model):
                 })
                 rec.message_post(body=f"❌ {error_message}")
                 error_msgs.append(error_message)
-
+        
+        # Show results
         summary = ""
         if success_msgs:
             summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
@@ -910,30 +923,26 @@ class Welfare(models.Model):
             summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
         if not summary:
             summary = "No records processed."
-
+        
         return self._show_notification('Send for Inquiry Results', summary, 'info')
 
     
     def action_move_to_hod(self):
-        """HOD Approval with automatic limit check"""
+        """HOD Approval - No limit check here"""
         for record in self:
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
             
-            # Check if request exceeds limits
-            if not record.can_hod_approve():
-                # If limit crossed, automatically move to member approval
-                record.state = 'mem_approve'
-                record.message_post(body="Request auto-routed to Member Approval due to limit exceedance.")
-            else:
-                record.state = 'hod_approve'
+            # No limit check - just move to HOD approval
+            record.state = 'hod_approve'
     
     def action_move_to_member(self):
-        """Member Approval"""
+        """Member Approval - No limit check here"""
         for record in self:
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             
+            # No limit check - just move to member approval
             record.state = 'mem_approve'
     
     def action_approve(self):
@@ -1017,17 +1026,28 @@ class Welfare(models.Model):
                     month += 1
 
         self.state = 'recurring'
-        
-    def action_committee_approval(self):
-        for record in self:
 
-            # Remarks check
+    
+    def action_committee_approval(self):
+        """Committee Approval - Check limits here"""
+        for record in self:
+            # Check if amount exceeds HOD limit
+            within_limit = record._check_amount_within_hod_limit()
+            
+            if not within_limit:
+                # Amount exceeds HOD limit, add warning/note
+                record.message_post(body="""
+                    <b>⚠️ Amount Limit Notice</b><br/>
+                    Request amount ({}) exceeds HOD limit. 
+                    This request will require Member Approval instead of HOD Approval.
+                """.format(record.loan_request_amount))
+            
+            # Your existing committee approval validations
             if not record.committee_remarks:
                 raise ValidationError(_('Please enter Committee Remarks before approval.'))
-
+            
             # Document validation
             missing_fields = []
-
             if not record.application_form:
                 missing_fields.append("Application Form")
             if not record.electricity_bill_file:
@@ -1036,14 +1056,41 @@ class Welfare(models.Model):
                 missing_fields.append("Gas Bill")
             if not record.family_cnic:
                 missing_fields.append("Family CNIC")
-
+            
             if missing_fields:
                 raise ValidationError(_(
                     "Please upload the following documents before approval:\n- %s"
                 ) % ("\n- ".join(missing_fields)))
-
-            # If everything is valid
+            
+            # Set state to committee_approval
             record.state = 'committee_approval'
+        
+    # def action_committee_approval(self):
+    #     for record in self:
+
+    #         # Remarks check
+    #         if not record.committee_remarks:
+    #             raise ValidationError(_('Please enter Committee Remarks before approval.'))
+
+    #         # Document validation
+    #         missing_fields = []
+
+    #         if not record.application_form:
+    #             missing_fields.append("Application Form")
+    #         if not record.electricity_bill_file:
+    #             missing_fields.append("Electricity Bill")
+    #         if not record.gas_bill_file:
+    #             missing_fields.append("Gas Bill")
+    #         if not record.family_cnic:
+    #             missing_fields.append("Family CNIC")
+
+    #         if missing_fields:
+    #             raise ValidationError(_(
+    #                 "Please upload the following documents before approval:\n- %s"
+    #             ) % ("\n- ".join(missing_fields)))
+
+    #         # If everything is valid
+    #         record.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))
@@ -1112,70 +1159,71 @@ class Welfare(models.Model):
             }
         }
         
-    
-    def _check_amount_limit(self):
-        """Check if request amount exceeds group limit"""
+
+    def _check_amount_within_hod_limit(self):
+        """Check if request amount is within HOD limit"""
         self.ensure_one()
         
-        # Get current user's groups
-        user_groups = self.env.user.groups_id
+        # Get HOD group limit configuration
+        hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
+        if not hod_group:
+            return True  # No HOD group configured
         
-        # Find limit for this user's group
         limit = self.env['welfare.approval.limit'].search([
-            ('group_id', 'in', user_groups.ids),
+            ('group_id', '=', hod_group.id),
             ('active', '=', True)
         ], limit=1)
         
         if not limit:
-            return True
+            return True  # No limit configured
         
         # Check amount limit
         if self.loan_request_amount > limit.max_amount_limit:
-            return False
-        
-        return True
-    
-    def _check_product_limit(self):
-        """Check if products are allowed for this group"""
-        self.ensure_one()
-        
-        if not self.welfare_line_ids:
-            return True
-        
-        # Get current user's groups
-        user_groups = self.env.user.groups_id
-        
-        # Find limit for this user's group
-        limit = self.env['welfare.approval.limit'].search([
-            ('group_id', 'in', user_groups.ids),
-            ('active', '=', True)
-        ], limit=1)
-        
-        if not limit or not limit.allowed_product_master_ids:
-            return True
-        
-        # Check each product line
-        for line in self.welfare_line_ids:
-            # Find which product master this product belongs to
-            product_master = self.env['product.master'].search([
-                ('product_id', '=', line.product_id.id)
-            ], limit=1)
-            
-            if product_master and product_master not in limit.allowed_product_master_ids:
-                return False
-        
-        return True
-    
-    def can_hod_approve(self):
-        """Check if HOD can approve this request"""
-        self.ensure_one()
-        
-        # Check amount limit
-        if not self._check_amount_limit():
-            return False
+            return False  # Exceeds HOD limit
         
         # Check product limit
-        if not self._check_product_limit():
-            return False
+        if limit.allowed_product_master_ids:
+            for line in self.welfare_line_ids:
+                product_master = self.env['product.master'].search([
+                    ('product_id', '=', line.product_id.id)
+                ], limit=1)
+                if product_master and product_master not in limit.allowed_product_master_ids:
+                    return False
         
-        return True
+        return True  # Within HOD limit
+    
+    def get_required_approval_level(self):
+        """Determine required approval level based on limit"""
+        self.ensure_one()
+        
+        if self._check_amount_within_hod_limit():
+            return 'hod'  # Within limit - HOD can approve
+        else:
+            return 'member'  # Exceeds limit - Member must approve  
+    
+    def can_user_approve_hod(self):
+        """Check if current user can approve as HOD"""
+        self.ensure_one()
+        
+        # Check if user has HOD group
+        hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
+        if not hod_group or self.env.user not in hod_group.users:
+            return False, "User is not in HOD group"
+        
+        # Check if request is within HOD limit
+        if not self._check_amount_within_hod_limit():
+            return False, "Request exceeds HOD limit. Only Member can approve."
+        
+        return True, "HOD can approve"
+    
+    def can_user_approve_member(self):
+        """Check if current user can approve as Member"""
+        self.ensure_one()
+        
+        # Check if user has Member group
+        member_group = self.env.ref('bn_welfare.group_welfare_member', raise_if_not_found=False)
+        if not member_group or self.env.user not in member_group.users:
+            return False, "User is not in Member group"
+        
+        # Member can always approve (no limit check for member)
+        return True, "Member can approve"
