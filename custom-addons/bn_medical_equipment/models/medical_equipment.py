@@ -133,7 +133,12 @@ class MedicalEquipment(models.Model):
         string='Medical Equipment Reference',
         help='Reference selected from Master Setup medical equipment references.'
     )
-
+    reference_line_ids = fields.One2many(
+        'medical.equipment.reference.line',
+        related='medical_equipment_reference_id.line_ids',
+        string='Reference Items',
+        readonly=True
+    )
     @api.depends('state', 'case_type')
     def _compute_is_actual_deposit_editable(self):
         for record in self:

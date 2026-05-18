@@ -163,6 +163,25 @@
                                 <field name="total_amount" readonly="1"/>
                             </group>
                         </page>
+                        <page string="Reference Items" attrs="{'invisible': [('medical_equipment_reference_id', '=', False)]}">
+                            <group string="Selected Reference Information">
+                                <field name="medical_equipment_reference_id" readonly="1"/>
+                            </group>
+                            <field name="reference_line_ids" readonly="1">
+                                <tree string="Reference Items">
+                                    <field name="medical_equipment_category_id" string="Master Product"/>
+                                    <field name="product_id" string="Product"/>
+                                    <field name="quantity" string="Quantity"/>
+                                    <field name="base_security_deposit" string="Base Security Deposit"/>
+                                    <field name="actual_deposit_percentage" string="Actual Deposit %"/>
+                                    <field name="security_deposit" string="Security Deposit"/>
+                                    <field name="description" string="Description" optional="hide"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="medical_equipment_reference_id.total_amount" string="Reference Total Amount" readonly="1"/>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
             </form>
