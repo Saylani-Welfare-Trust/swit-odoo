@@ -185,33 +185,38 @@ class PosSession(models.Model):
                     'partner_id': False,
                 })
 
-    def _create_account_move(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
-        raise ValidationError('hit')
+    def _create_bank_payment_moves(self, data):
+        # -------------------------------------------------
+        # SKIP STANDARD COMBINED BANK PAYMENT MOVES
+        # -------------------------------------------------
+        if self.env.context.get('skip_combine_payment'):
+            _logger.warning(
+                "Skipping _create_bank_payment_moves "
+                "for split accounting"
+            )
+            return data
 
-        """ Create account.move and account.move.line records for this session.
+        combine_receivables_bank = data.get('combine_receivables_bank')
+        split_receivables_bank = data.get('split_receivables_bank')
+        bank_payment_method_diffs = data.get('bank_payment_method_diffs')
+        MoveLine = data.get('MoveLine')
+        payment_method_to_receivable_lines = {}
+        payment_to_receivable_lines = {}
+        for payment_method, amounts in combine_receivables_bank.items():
+            combine_receivable_line = MoveLine.create(self._get_combine_receivable_vals(payment_method, amounts['amount'], amounts['amount_converted']))
+            payment_receivable_line = self._create_combine_account_payment(payment_method, amounts, diff_amount=bank_payment_method_diffs.get(payment_method.id) or 0)
+            payment_method_to_receivable_lines[payment_method] = combine_receivable_line | payment_receivable_line
 
-        Side-effects include:
-            - setting self.move_id to the created account.move record
-            - reconciling cash receivable lines, invoice receivable lines and stock output lines
-        """
-        account_move = self.env['account.move'].create({
-            'journal_id': self.config_id.journal_id.id,
-            'date': fields.Date.context_today(self),
-            'ref': self.name,
-        })
-        self.write({'move_id': account_move.id})
+        for payment, amounts in split_receivables_bank.items():
+            split_receivable_line = MoveLine.create(self._get_split_receivable_vals(payment, amounts['amount'], amounts['amount_converted']))
+            payment_receivable_line = self._create_split_account_payment(payment, amounts)
+            payment_to_receivable_lines[payment] = split_receivable_line | payment_receivable_line
 
-        data = {'bank_payment_method_diffs': bank_payment_method_diffs or {}}
-        data = self._accumulate_amounts(data)
-        data = self._create_non_reconciliable_move_lines(data)
-        # data = self._create_bank_payment_moves(data)
-        data = self._create_pay_later_receivable_lines(data)
-        data = self._create_cash_statement_lines_and_cash_move_lines(data)
-        data = self._create_invoice_receivable_lines(data)
-        data = self._create_stock_output_lines(data)
-        if balancing_account and amount_to_balance:
-            data = self._create_balancing_line(data, balancing_account, amount_to_balance)
+        for bank_payment_method in self.payment_method_ids.filtered(lambda pm: pm.type == 'bank' and pm.split_transactions):
+            self._create_diff_account_move_for_split_payment_method(bank_payment_method, bank_payment_method_diffs.get(bank_payment_method.id) or 0)
 
+        data['payment_method_to_receivable_lines'] = payment_method_to_receivable_lines
+        data['payment_to_receivable_lines'] = payment_to_receivable_lines
         return data
 
     # ------------------------------------------------------------
@@ -221,7 +226,14 @@ class PosSession(models.Model):
         _logger.warning("=== _create_account_move_with_split_receivables called")
 
         # First, let the standard method create all non‑receivable lines
-        original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
+        original_data = super(
+            PosSession,
+            self.with_context(skip_combine_payment=True)
+        )._create_account_move(
+            balancing_account,
+            amount_to_balance,
+            bank_payment_method_diffs
+        )
         if original_data is None:
             original_data = {}
 
