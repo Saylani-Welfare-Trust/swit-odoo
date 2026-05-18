@@ -163,6 +163,21 @@
                                 <field name="total_amount" readonly="1"/>
                             </group>
                         </page>
+                        <page string="Reference Items" attrs="{'invisible': [('medical_equipment_reference_id', '=', False)]}">
+                            <group string="Reference Information">
+                                <field name="medical_equipment_reference_id" readonly="1"/>
+                            </group>
+                            <field name="reference_line_ids" readonly="1">
+                                <tree string="Reference Items">
+                                    <field name="medical_equipment_category_id"/>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="base_security_deposit"/>
+                                    <field name="actual_deposit_percentage"/>
+                                    <field name="security_deposit"/>
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
             </form>
