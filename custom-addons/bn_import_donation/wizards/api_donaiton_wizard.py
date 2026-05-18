@@ -372,7 +372,11 @@ class APIDonationWizard(models.TransientModel):
 
                 # Find product from gateway config
                 product_line = gateway_config.gateway_config_line_ids.filtered(
-                    lambda l: l.name.lower() == item_name.lower()
+                    lambda l: (
+                        l.name
+                        and item_name
+                        and l.name.strip().lower() == item_name.strip().lower()
+                    )
                 )
                 product = product_line.product_id if product_line else False
 
