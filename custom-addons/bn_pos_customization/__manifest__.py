@@ -15,6 +15,7 @@
         'views/pos_config.xml',
         'views/pos_session.xml',
         'views/pos_assets_index.xml',
+        'views/pos_direct_deposit.xml',
     ],
     'auto_install': False,
     'application': False,
