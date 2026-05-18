@@ -163,7 +163,7 @@
                                 <field name="total_amount" readonly="1"/>
                             </group>
                         </page>
-                        <page string="Reference Items" attrs="{'invisible': [('medical_equipment_reference_id', '=', False)]}">
+                        <page string="Reference Items" invisible="not medical_equipment_reference_id">
                             <group string="Reference Information">
                                 <field name="medical_equipment_reference_id" readonly="1"/>
                             </group>
