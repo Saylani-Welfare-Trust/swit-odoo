@@ -40,7 +40,7 @@ state_selection = [
     ('inquiry', 'Inquiry Officer'),
     ('committee_approval', 'Committee Approval'),
     ('hod_approve', 'HOD Approval'),
-    ('mem_approve', 'Member Approval'),
+    ('mem_approve', 'Final Approval'),
     ('approve', 'Approved'),
     ('recurring', 'Recurring'),
     ('disbursed', 'Disbursed'),
