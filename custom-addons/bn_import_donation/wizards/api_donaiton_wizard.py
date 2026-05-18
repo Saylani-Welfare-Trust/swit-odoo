@@ -255,8 +255,42 @@ class APIDonationWizard(models.TransientModel):
         gateway_product_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_line_ids:
-                gateway_product_lines[line.name.lower()] = { 'account_id': line.product_id.property_account_income_id.id }
-        
+
+                if not line.name:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Skipping gateway config line ID {line.id} because name is missing",
+                        'Skipped',
+                        'Gateway config line has empty name'
+                    )
+                    continue
+
+                if not line.product_id:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Skipping gateway config line ID {line.id} because product is missing",
+                        'Skipped',
+                        'Gateway config line has no product'
+                    )
+                    continue
+
+                account_id = (
+                    line.product_id.property_account_income_id.id
+                    or line.product_id.categ_id.property_account_income_categ_id.id
+                )
+
+                if not account_id:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Skipping gateway config line {line.name} because no income account found",
+                        'Skipped',
+                        'No income account configured'
+                    )
+                    continue
+
+                gateway_product_lines[line.name.strip().lower()] = {
+                    'account_id': account_id
+                }
         self.create_fetch_log(history.id, f"Gateway Product Lines: {gateway_product_lines}", 'Prefetching', 'Fetched gateway product lines')
 
         # Get donor category IDs
@@ -617,9 +651,13 @@ class APIDonationWizard(models.TransientModel):
         # Process items
         for it in donation_vals.get('donation_item_ids', []):
             item = it[2]  # (0, 0, values) format
-            product_name = f"{item.get('donation_type', '')}{item.get('item', '')}{item.get('type', '')}"
-            
-            config = all_data['gateway_product_lines'].get(product_name.lower())
+            product_name = (
+                f"{item.get('donation_type', '')}"
+                f"{item.get('item', '')}"
+                f"{item.get('type', '')}"
+            ).strip().lower()
+
+            config = all_data['gateway_product_lines'].get(product_name)
             if not config:
                 self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
 
