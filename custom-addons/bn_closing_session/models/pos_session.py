@@ -174,7 +174,9 @@ class PosSession(models.Model):
             pm = self.env['pos.payment.method'].browse(pm_id)
             account = self._get_neutral_receivable_account(pm)
             if account:
-                self.env['account.move.line'].create({
+                self.env['account.move.line'].with_context(
+                    check_move_validity=False
+                ).create({
                     'move_id': self.move_id.id,
                     'name': _("Bank difference - %s", pm.name),
                     'account_id': account.id,
@@ -210,16 +212,28 @@ class PosSession(models.Model):
         restricted_receivable_account_type = self._get_restricted_receivable_account_type()
         unrestricted_receivable_account_type = self._get_neutral_receivable_account_type()
         netural_receivable_account_type = self._get_unrestricted_receivable_account_type()
+        # ------------------------------------------------------------
+        # SAFELY NEUTRALIZE RECEIVABLE LINES (DO NOT DELETE)
+        # ------------------------------------------------------------
         receivable_lines = self.move_id.line_ids.filtered(
-            # lambda l: l.account_id.account_type in ['asset_receivable', 'asset_cash', 'liability_current'] and l.debit > 0
-            lambda l: l.account_id.account_type in [receivable_account_type, restricted_receivable_account_type, unrestricted_receivable_account_type, netural_receivable_account_type] and l.debit > 0
+            lambda l: l.account_id.account_type in [
+                receivable_account_type,
+                restricted_receivable_account_type,
+                unrestricted_receivable_account_type,
+                netural_receivable_account_type
+            ] and l.debit > 0
         )
+
         if receivable_lines:
-            _logger.warning("Removing %d existing receivable lines (total debit: %s)",
-                            len(receivable_lines), sum(receivable_lines.mapped('debit')))
-            receivable_lines.unlink()
-        else:
-            _logger.warning("No existing receivable lines found to remove.")
+            _logger.warning(
+                "Neutralizing %d receivable lines instead of deleting",
+                len(receivable_lines)
+            )
+
+            receivable_lines.with_context(check_move_validity=False).write({
+                'debit': 0.0,
+                'credit': 0.0,
+            })
 
         if not lines:
             raise UserError(_("Split accounting requires lines data – none provided."))
@@ -283,7 +297,9 @@ class PosSession(models.Model):
                     if not account:
                         raise UserError(_("No account defined for %s (%s)", pm.name, label))
                     name = f"{self.name} - {label} {pm.name} - {ref}".strip()
-                    line = self.env['account.move.line'].create({
+                    line = self.env['account.move.line'].with_context(
+                        check_move_validity=False
+                    ).create({
                         'move_id': self.move_id.id,
                         'name': name,
                         'account_id': account.id,
@@ -308,23 +324,38 @@ class PosSession(models.Model):
     def _reconcile_account_move_lines(self, data):
         if data is None:
             data = {}
-        # Call original reconciliation (this will handle taxes, stock etc.)
+
         super()._reconcile_account_move_lines(data)
 
-        # Reconcile only the split lines we added
         split_line_ids = data.get('_split_receivable_lines', [])
-        if split_line_ids:
-            split_lines = self.env['account.move.line'].browse(split_line_ids)
-            statement_lines = self.statement_line_ids
-            for line in split_lines:
-                matching = statement_lines.filtered(
-                    lambda sl: sl.payment_method_id.id == self._extract_payment_method_id_from_line(line) and
-                               float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
+        if not split_line_ids:
+            return data
+
+        split_lines = self.env['account.move.line'].browse(split_line_ids).exists()
+        statement_lines = self.statement_line_ids
+
+        for line in split_lines:
+            pm_id = self._extract_payment_method_id_from_line(line)
+
+            matching = statement_lines.filtered(
+                lambda sl:
+                    sl.payment_method_id.id == pm_id and
+                    float_compare(
+                        abs(sl.amount),
+                        line.debit,
+                        precision_rounding=self.currency_id.rounding
+                    ) == 0
+            )
+
+            if matching:
+                (matching[0] | line).reconcile()
+            else:
+                _logger.warning(
+                    "No matching statement line for %s (%s)",
+                    line.name,
+                    line.debit
                 )
-                if matching:
-                    (matching[0] | line).reconcile()
-                else:
-                    _logger.warning("No matching statement line for split receivable %s (amount %s)", line.name, line.debit)
+
         return data
 
     # ------------------------------------------------------------
