@@ -144,12 +144,12 @@ class MedicalEquipment(models.Model):
     def _compute_reference_lines(self):
         for record in self:
             if record.medical_equipment_reference_id:
-                # Find all records that reference this reference
+                # Find all medical.equipment records that use the same reference
                 referring_records = self.env['medical.equipment'].search([
                     ('medical_equipment_reference_id', '=', record.medical_equipment_reference_id.id)
                 ])
-                # Collect all line_ids from those records (flatten)
-                all_lines = referring_records.mapped('line_ids')
+                # Collect all medical_equipment_line_ids from those records
+                all_lines = referring_records.mapped('medical_equipment_line_ids')
                 record.reference_line_ids = all_lines
             else:
                 record.reference_line_ids = False
