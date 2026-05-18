@@ -185,13 +185,40 @@ class PosSession(models.Model):
                     'partner_id': False,
                 })
 
+    def _create_account_move(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
+        raise ValidationError('hit')
+
+        """ Create account.move and account.move.line records for this session.
+
+        Side-effects include:
+            - setting self.move_id to the created account.move record
+            - reconciling cash receivable lines, invoice receivable lines and stock output lines
+        """
+        account_move = self.env['account.move'].create({
+            'journal_id': self.config_id.journal_id.id,
+            'date': fields.Date.context_today(self),
+            'ref': self.name,
+        })
+        self.write({'move_id': account_move.id})
+
+        data = {'bank_payment_method_diffs': bank_payment_method_diffs or {}}
+        data = self._accumulate_amounts(data)
+        data = self._create_non_reconciliable_move_lines(data)
+        # data = self._create_bank_payment_moves(data)
+        data = self._create_pay_later_receivable_lines(data)
+        data = self._create_cash_statement_lines_and_cash_move_lines(data)
+        data = self._create_invoice_receivable_lines(data)
+        data = self._create_stock_output_lines(data)
+        if balancing_account and amount_to_balance:
+            data = self._create_balancing_line(data, balancing_account, amount_to_balance)
+
+        return data
+
     # ------------------------------------------------------------
     # MAIN SPLIT LOGIC (replaces standard receivable lines)
     # ------------------------------------------------------------
     def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         _logger.warning("=== _create_account_move_with_split_receivables called")
-
-        raise ValidationError('hit')
 
         # First, let the standard method create all non‑receivable lines
         original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
