@@ -27,6 +27,9 @@
             <form>
                 <header>
                     <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                            class="btn btn-sm btn-info"
+                            invisible="not previous_disbursement_id" />
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
@@ -45,9 +48,9 @@
                 <sheet>
                     <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id or state != 'draft'">
                         <strong>Previous Record Available:</strong> This donee has previous disbursements.
-                        <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                        <!-- <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
-                            invisible="not previous_disbursement_id" />
+                            invisible="not previous_disbursement_id" /> -->
                     </div>
                     <div class="oe_title">
                         <label for="name" string="Name"/>
