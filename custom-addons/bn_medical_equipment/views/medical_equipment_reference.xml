@@ -1,46 +1,66 @@
+<!-- views/welfare_limit_views.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="medical_equipment_reference_view_tree" model="ir.ui.view">
-        <field name="name">medical.equipment.reference.view.tree</field>
-        <field name="model">medical.equipment.reference</field>
+    <!-- Tree View -->
+    <record id="view_welfare_approval_limit_tree" model="ir.ui.view">
+        <field name="name">welfare.approval.limit.tree</field>
+        <field name="model">welfare.approval.limit</field>
         <field name="arch" type="xml">
-            <tree editable="bottom">
-                <field name="name"/>
-                <field name="contact_id"/>
+            <tree string="Approval Limits">
+                <field name="group_id"/>
+                <field name="group_name"/>
+                <field name="max_amount_limit" widget="monetary"/>
+                <field name="allowed_product_master_ids" widget="many2many_tags"/>
+                <field name="active"/>
             </tree>
         </field>
     </record>
 
-    <record id="medical_equipment_reference_view_form" model="ir.ui.view">
-        <field name="name">medical.equipment.reference.view.form</field>
-        <field name="model">medical.equipment.reference</field>
+    <!-- Form View -->
+    <record id="view_welfare_approval_limit_form" model="ir.ui.view">
+        <field name="name">welfare.approval.limit.form</field>
+        <field name="model">welfare.approval.limit</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="Approval Limit Configuration">
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="contact_id"/>
+                        <group>
+                            <field name="group_id" required="1"/>
+                            <field name="max_amount_limit" widget="monetary" required="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="allowed_product_master_ids" 
+                                   widget="many2many_tags"
+                                   placeholder="Leave empty to allow all products"/>
+                            <field name="active"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <record id="medical_equipment_reference_action" model="ir.actions.act_window">
-        <field name="name">Medical Equipment Reference</field>
-        <field name="res_model">medical.equipment.reference</field>
+    <!-- Action -->
+    <record id="action_welfare_approval_limit" model="ir.actions.act_window">
+        <field name="name">Approval Limits</field>
+        <field name="res_model">welfare.approval.limit</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Add reference names and select a contact from the contact list.
+                Configure approval limits for HOD group
+            </p>
+            <p>
+                Set maximum amount and allowed products for HOD approval.
+                If limit is crossed, request will automatically go to Member Approval.
             </p>
         </field>
     </record>
 
-    <menuitem
-        id="medical_equipment_reference_menu"
-        name="Medical Equipment Reference"
-        action="medical_equipment_reference_action"
-        parent="bn_master_setup.master_setup_menu"
-        sequence="7"/>
+    <!-- Menu under your existing master setup menu -->
+    <menuitem id="welfare_approval_limits_menu" 
+              name="Approval Limits" 
+              parent="bn_master_setup.master_setup_menu"
+              action="action_welfare_approval_limit"
+              sequence="7"/>
 </odoo>
