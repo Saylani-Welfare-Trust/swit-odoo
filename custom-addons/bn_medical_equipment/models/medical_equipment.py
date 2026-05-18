@@ -134,24 +134,14 @@ class MedicalEquipment(models.Model):
         help='Reference selected from Master Setup medical equipment references.'
     )
     reference_line_ids = fields.One2many(
-        'medical.equipment.reference.line',   # changed from 'medical.equipment.line'
+        'medical.equipment.line',
         compute='_compute_reference_lines',
         string='Reference Items',
         readonly=True
     )
-    def action_open_reference(self):
-        self.ensure_one()
-        if not self.medical_equipment_reference_id:
-            raise ValidationError("No reference selected.")
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Medical Equipment Reference',
-            'res_model': 'medical.equipment.reference',
-            'res_id': self.medical_equipment_reference_id.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+    
     def _compute_reference_lines(self):
+        """Fetch lines from selected reference"""
         for record in self:
             if record.medical_equipment_reference_id and hasattr(record.medical_equipment_reference_id, 'line_ids'):
                 record.reference_line_ids = record.medical_equipment_reference_id.line_ids
@@ -1207,40 +1197,3 @@ class MedicalEquipment(models.Model):
         )
         return result
     
-class MedicalEquipmentReferenceLine(models.Model):
-    _name = 'medical.equipment.reference.line'
-    _description = 'Medical Equipment Reference Line'
-
-    reference_id = fields.Many2one('medical.equipment.reference', required=True, ondelete='cascade')
-    medical_equipment_category_id = fields.Many2one('medical.equipment.category', required=True)
-    product_id = fields.Many2one('product.product', related='medical_equipment_category_id.product_id', store=True)
-    quantity = fields.Integer(default=1)
-    base_security_deposit = fields.Monetary(
-        string='Base Security Deposit',
-        related='medical_equipment_category_id.security_deposit',
-        currency_field='currency_id'
-    )
-    security_deposit = fields.Monetary(
-        string='Security Deposit',
-        compute='_compute_security_deposit',
-        store=True,
-        currency_field='currency_id'
-    )
-    currency_id = fields.Many2one('res.currency', related='reference_id.currency_id')
-
-    @api.depends('base_security_deposit', 'quantity')
-    def _compute_security_deposit(self):
-        for line in self:
-            line.security_deposit = line.base_security_deposit * line.quantity
-
-
-class MedicalEquipmentReference(models.Model):
-    _inherit = 'medical.equipment.reference'
-
-    line_ids = fields.One2many('medical.equipment.reference.line', 'reference_id', string='Items')
-    line_count = fields.Integer(compute='_compute_line_count')
-    currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
-
-    def _compute_line_count(self):
-        for ref in self:
-            ref.line_count = len(ref.line_ids)
