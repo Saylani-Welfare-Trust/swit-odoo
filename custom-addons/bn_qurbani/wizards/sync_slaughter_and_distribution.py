@@ -11,7 +11,6 @@ class SyncSalughterAndDistribution(models.Model):
 
 
     def action_sync(self):
-
         start_datetime = datetime.combine(self.start_date, time.min)
         end_datetime = datetime.combine(self.end_date, time.max)
 
