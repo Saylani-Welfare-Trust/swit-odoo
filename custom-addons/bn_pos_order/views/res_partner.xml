@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='pos']" position="inside">
-                <field name="pos_order_line_ids" readonly="1">
+                <field name="custom_pos_order_line_ids" readonly="1">
                     <tree>
                         <field name="currency_id" column_invisible="True"/>
                         <field name="name" decoration-bf="1"/>
@@ -32,7 +32,7 @@
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='pos']" position="inside">
-                <field name="pos_order_line_ids" readonly="1">
+                <field name="custom_pos_order_line_ids" readonly="1">
                     <tree>
                         <field name="currency_id" column_invisible="True"/>
                         <field name="name" decoration-bf="1"/>
