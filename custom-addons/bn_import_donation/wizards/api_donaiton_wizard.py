@@ -902,6 +902,29 @@ class APIDonationWizard(models.TransientModel):
             item_data = it.get('item', {})
             if isinstance(item_data, dict) and 'en' in item_data:
                 item_name = item_data.get('en', {}).get('name', '')
+            self.create_fetch_log(
+                    history.id,
+                    f"Qurbani Processing Started",
+                    "Qurbani",
+                    f"""
+                    =====================================
+                    STARTING QURBANI PROCESSING
+                    =====================================
+
+                    Donation Import ID: {info.get('_id')}
+                    Donation Index: {info_idx}
+                    Record Type: {info.get('qurbani')}
+
+                    RAW ITEM:
+                    {it}
+
+                    DONOR:
+                    {donor}
+
+                    =====================================
+                    """
+                )
+            
             if info.get('qurbani') != True:
                 orm_items.append({
                     'donation_type': it.get('donationType', ''),
@@ -975,24 +998,6 @@ class APIDonationWizard(models.TransientModel):
                     )
 
                     product = self.env['product.product'].browse(config['product_id'])
-
-                    self.create_fetch_log(
-                        history.id,
-                        f"Product Lookup",
-                        "Qurbani",
-                        f"""
-                        Product ID: {config.get('product_id')}
-
-                        Product Exists:
-                        {'YES' if product.exists() else 'NO'}
-
-                        Product Name:
-                        {product.display_name if product else 'N/A'}
-
-                        Product Type:
-                        {product.detailed_type if product else 'N/A'}
-                        """
-                    )
 
                 else:
 
