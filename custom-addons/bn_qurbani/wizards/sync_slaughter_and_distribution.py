@@ -26,6 +26,45 @@ class SyncSalughterAndDistribution(models.Model):
 
                 product_name = (line.product_id.name or "").lower()
 
+                slaughter_exists = False
+                distribution_exists = False
+
+                # ==================================================
+                # CHECK ALREADY SYNCED - COW
+                # ==================================================
+                if 'cow' in product_name:
+
+                    slaughter_exists = self.env['qurbani.cow.slaughter'].search_count([
+                        ('qurbani_cow_slaughter_line.qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_cow_slaughter_line.qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                    distribution_exists = self.env['qurbani.cow.distribution'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                # ==================================================
+                # CHECK ALREADY SYNCED - GOAT
+                # ==================================================
+                elif 'goat' in product_name:
+
+                    slaughter_exists = self.env['qurbani.goat.slaughter'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                    distribution_exists = self.env['qurbani.goat.distribution'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                # ==================================================
+                # IF ALREADY EXISTS THEN SKIP
+                # ==================================================
+                if slaughter_exists and distribution_exists:
+                    continue
+
                 # ==================================================
                 # COW
                 # ==================================================
@@ -42,22 +81,27 @@ class SyncSalughterAndDistribution(models.Model):
 
                     qurbani_cow_slaughter = False
 
-                    # PICK FIRST RECORD HAVING < 8 LINES
+                    # PICK FIRST RECORD HAVING < 7 LINES
                     for rec in slaughter_records:
 
                         current_count = len(rec.qurbani_cow_slaughter_line)
 
                         if current_count < 7:
-                            qurbani_cow_slaughter = rec
-                            break
+
+                            existing_line = rec.qurbani_cow_slaughter_line.filtered(
+                                lambda l:
+                                    l.qurbani_order_no == line.qurbani_order_id.name and
+                                    l.qurbani_order_line_no == line.name
+                            )
+
+                            if not existing_line:
+                                qurbani_cow_slaughter = rec
+                                break
 
                     if not qurbani_cow_slaughter:
-                        return {
-                            "status": "error",
-                            "body": "No empty cow slaughter slot available."
-                        }
+                        continue
 
-                    # APPEND LINE
+                    # APPEND SLAUGHTER LINE
                     qurbani_cow_slaughter.write({
                         'qurbani_cow_slaughter_line': [(0, 0, {
                             'qurbani_order_no': line.qurbani_order_id.name,
@@ -72,7 +116,9 @@ class SyncSalughterAndDistribution(models.Model):
                         qurbani_cow_slaughter.qurbani_cow_slaughter_line
                     )
 
+                    # ==================================================
                     # DISTRIBUTION
+                    # ==================================================
                     qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
@@ -86,6 +132,7 @@ class SyncSalughterAndDistribution(models.Model):
                     ], limit=1)
 
                     if qurbani_cow_distribution:
+
                         qurbani_cow_distribution.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
                             'qurbani_order_line_no': line.name,
@@ -94,7 +141,9 @@ class SyncSalughterAndDistribution(models.Model):
                             'start_time': line.start_time,
                             'end_time': line.end_time,
                             'distribution_location_id': line.distribution_id.id,
-                            'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
+                            'state': 'not_applicable'
+                            if 'no' in line.product_id.name.lower()
+                            else 'pending',
                         })
 
                 # ==================================================
@@ -113,6 +162,7 @@ class SyncSalughterAndDistribution(models.Model):
                     ], limit=1)
 
                     if qurbani_goat_slaughter:
+
                         qurbani_goat_slaughter.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
                             'qurbani_order_line_no': line.name,
@@ -120,7 +170,9 @@ class SyncSalughterAndDistribution(models.Model):
                             'product_id': line.product_id.id,
                         })
 
+                    # ==================================================
                     # DISTRIBUTION
+                    # ==================================================
                     qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
@@ -134,6 +186,7 @@ class SyncSalughterAndDistribution(models.Model):
                     ], limit=1)
 
                     if qurbani_goat_distribution:
+
                         qurbani_goat_distribution.write({
                             'qurbani_order_no': line.qurbani_order_id.name,
                             'qurbani_order_line_no': line.name,
@@ -142,7 +195,50 @@ class SyncSalughterAndDistribution(models.Model):
                             'start_time': line.start_time,
                             'end_time': line.end_time,
                             'distribution_location_id': line.distribution_id.id,
-                            'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
+                            'state': 'not_applicable'
+                            if 'no' in line.product_id.name.lower()
+                            else 'pending',
                         })
 
-            order.is_sync = True
+            # ==================================================
+            # MARK ORDER AS SYNCED
+            # ==================================================
+            remaining_unsynced = False
+
+            for line in order.qurbani_order_line_ids:
+
+                product_name = (line.product_id.name or "").lower()
+
+                slaughter_exists = False
+                distribution_exists = False
+
+                if 'cow' in product_name:
+
+                    slaughter_exists = self.env['qurbani.cow.slaughter'].search_count([
+                        ('qurbani_cow_slaughter_line.qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_cow_slaughter_line.qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                    distribution_exists = self.env['qurbani.cow.distribution'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                elif 'goat' in product_name:
+
+                    slaughter_exists = self.env['qurbani.goat.slaughter'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                    distribution_exists = self.env['qurbani.goat.distribution'].search_count([
+                        ('qurbani_order_no', '=', line.qurbani_order_id.name),
+                        ('qurbani_order_line_no', '=', line.name),
+                    ]) > 0
+
+                if not (slaughter_exists and distribution_exists):
+                    remaining_unsynced = True
+                    break
+
+            if not remaining_unsynced:
+                order.is_sync = True
