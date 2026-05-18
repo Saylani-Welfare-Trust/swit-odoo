@@ -324,6 +324,40 @@ class PosSession(models.Model):
         _logger.warning("Split accounting completed – created %d lines, total debit %.2f",
                         len(split_line_ids), total_new_debit)
         return original_data
+
+    def _create_bank_payment_moves(self, data):
+        """Override to skip combined bank payment moves when context flag is set."""
+        if self.env.context.get('skip_combine_payment'):
+            # Only handle split payments; ignore combined ones
+            MoveLine = data.get('MoveLine')
+            split_receivables_bank = data.get('split_receivables_bank')
+            bank_payment_method_diffs = data.get('bank_payment_method_diffs')
+            payment_to_receivable_lines = {}
+
+            for payment, amounts in split_receivables_bank.items():
+                split_receivable_line = MoveLine.create(
+                    self._get_split_receivable_vals(payment, amounts['amount'], amounts['amount_converted'])
+                )
+                payment_receivable_line = self._create_split_account_payment(payment, amounts)
+                payment_to_receivable_lines[payment] = split_receivable_line | payment_receivable_line
+
+            for bank_payment_method in self.payment_method_ids.filtered(lambda pm: pm.type == 'bank' and pm.split_transactions):
+                self._create_diff_account_move_for_split_payment_method(
+                    bank_payment_method, bank_payment_method_diffs.get(bank_payment_method.id) or 0
+                )
+
+            data['payment_to_receivable_lines'] = payment_to_receivable_lines
+            return data
+        else:
+            return super()._create_bank_payment_moves(data)
+
+    def _create_combine_account_payment(self, payment_method, amounts, diff_amount):
+        """Override to skip combined account payment creation when context flag is set."""
+        if self.env.context.get('skip_combine_payment'):
+            # Return an empty recordset (the caller expects an account.move.line)
+            return self.env['account.move.line']
+        else:
+            return super()._create_combine_account_payment(payment_method, amounts, diff_amount)
     
     # ------------------------------------------------------------
     # RECONCILIATION (only for split lines)
