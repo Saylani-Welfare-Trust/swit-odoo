@@ -17,4 +17,6 @@ class WelfareApprovalLimit(models.Model):
     # Product limits using your product.master
     allowed_product_master_ids = fields.Many2many('product.master', string="Allowed Products")
     
+
+    
     active = fields.Boolean(string="Active", default=True)
