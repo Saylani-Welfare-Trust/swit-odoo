@@ -57,14 +57,12 @@
     </record>
 
     <!-- Menu under Master Setup -->
-    <menuitem id="menu_welfare_master_setup" 
-              name="Welfare Master" 
-              parent="base.menu_base_config"
-              sequence="100"/>
+
     
     <menuitem id="menu_welfare_approval_limits" 
               name="Approval Limits" 
-              parent="menu_welfare_master_setup"
+              parent="bn_master_setup.master_setup_menu"
               action="action_welfare_approval_limit"
               sequence="10"/>
+
 </odoo>
