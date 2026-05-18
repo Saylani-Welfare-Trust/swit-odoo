@@ -17,7 +17,6 @@ class SyncSalughterAndDistribution(models.Model):
         orders = self.env['qurbani.order'].search([
             ('create_date', '>=', start_datetime),
             ('create_date', '<=', end_datetime),
-            ('is_sync', '=', False)
         ])
 
         for order in orders:
