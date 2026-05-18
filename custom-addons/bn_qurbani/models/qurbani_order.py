@@ -930,6 +930,8 @@ TRACEBACK:
                         'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
                     })
         
+        qurbani.is_sync = True
+
         # ==================================================
         # 8. SUCCESS
         # ==================================================
