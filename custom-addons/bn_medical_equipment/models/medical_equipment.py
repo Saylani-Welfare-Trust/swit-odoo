@@ -139,13 +139,18 @@ class MedicalEquipment(models.Model):
         string='Reference Items',
         readonly=True
     )
-    
+        
+    @api.depends('medical_equipment_reference_id')
     def _compute_reference_lines(self):
         for record in self:
-            ref = record.medical_equipment_reference_id
-            if ref:
-                print(f"Reference {ref.id} has lines: {ref.line_ids.ids}")
-                record.reference_line_ids = ref.line_ids
+            if record.medical_equipment_reference_id:
+                # Find all records that reference this reference
+                referring_records = self.env['medical.equipment.history'].search([
+                    ('medical_equipment_reference_id', '=', record.medical_equipment_reference_id.id)
+                ])
+                # Collect all line_ids from those records (flatten)
+                all_lines = referring_records.mapped('line_ids')
+                record.reference_line_ids = all_lines
             else:
                 record.reference_line_ids = False
                 
