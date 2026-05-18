@@ -1040,7 +1040,7 @@ class APIDonationWizard(models.TransientModel):
             'qurbani': True if info.get('qurbani') == True else False,
         }
         
-        raise ValidationError(str(donation_vals))
+    
         # Set donor_id - either from cache, from new partner, or default
         if donor_id:
             donation_vals['donor_id'] = donor_id
