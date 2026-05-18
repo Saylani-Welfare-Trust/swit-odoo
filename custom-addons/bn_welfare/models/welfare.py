@@ -40,7 +40,7 @@ state_selection = [
     ('inquiry', 'Inquiry Officer'),
     ('committee_approval', 'Committee Approval'),
     ('hod_approve', 'HOD Approval'),
-    ('mem_approve', 'Member Approval'),
+    ('mem_approve', 'Final Approval'),
     ('approve', 'Approved'),
     ('recurring', 'Recurring'),
     ('disbursed', 'Disbursed'),
@@ -912,33 +912,73 @@ class Welfare(models.Model):
             summary = "No records processed."
 
         return self._show_notification('Send for Inquiry Results', summary, 'info')
+
     
     def action_move_to_hod(self):
-
-        if not self.hod_remarks:
-            raise ValidationError('Please enter HOD Remarks!')
-        
-        self.state = 'hod_approve'
+        """HOD Approval with automatic limit check"""
+        for record in self:
+            if not record.hod_remarks:
+                raise ValidationError('Please enter HOD Remarks!')
+            
+            # Check if request exceeds limits
+            if not record.can_hod_approve():
+                # If limit crossed, automatically move to member approval
+                record.state = 'mem_approve'
+                record.message_post(body="Request auto-routed to Member Approval due to limit exceedance.")
+            else:
+                record.state = 'hod_approve'
     
     def action_move_to_member(self):
-        if not self.member_remarks:
-            raise ValidationError('Please enter Member Remarks!')
-        
-        self.state = 'mem_approve'
+        """Member Approval"""
+        for record in self:
+            if not record.member_remarks:
+                raise ValidationError('Please enter Member Remarks!')
+            
+            record.state = 'mem_approve'
     
     def action_approve(self):
-        if self.order_type == 'recurring':
-            for line in self.welfare_line_ids:
-                if self.env['welfare.recurring.line'].search_count([
-                    ('donee_id', '=', self.donee_id.id),
-                    ('disbursement_category_id', '=', line.disbursement_category_id.id),
-                    ('state', '=', 'draft')
-                ]):
-                    pass
-        self.state = 'approve'
-
-        # Trigger the welfare collection report for printing/giving to the person
+        """Final approval logic"""
+        for record in self:
+            if record.order_type == 'recurring':
+                for line in record.welfare_line_ids:
+                    if self.env['welfare.recurring.line'].search_count([
+                        ('donee_id', '=', record.donee_id.id),
+                        ('disbursement_category_id', '=', line.disbursement_category_id.id),
+                        ('state', '=', 'draft')
+                    ]):
+                        pass
+            
+            record.state = 'approve'
+        
+        # Print report
         return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
+    
+    # def action_move_to_hod(self):
+
+    #     if not self.hod_remarks:
+    #         raise ValidationError('Please enter HOD Remarks!')
+        
+    #     self.state = 'hod_approve'
+    
+    # def action_move_to_member(self):
+    #     if not self.member_remarks:
+    #         raise ValidationError('Please enter Member Remarks!')
+        
+    #     self.state = 'mem_approve'
+    
+    # def action_approve(self):
+    #     if self.order_type == 'recurring':
+    #         for line in self.welfare_line_ids:
+    #             if self.env['welfare.recurring.line'].search_count([
+    #                 ('donee_id', '=', self.donee_id.id),
+    #                 ('disbursement_category_id', '=', line.disbursement_category_id.id),
+    #                 ('state', '=', 'draft')
+    #             ]):
+    #                 pass
+    #     self.state = 'approve'
+
+    #     # Trigger the welfare collection report for printing/giving to the person
+    #     return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
 
     def action_reject(self):
         if not self.rejection_remarks:
@@ -1072,3 +1112,70 @@ class Welfare(models.Model):
             }
         }
         
+    
+    def _check_amount_limit(self):
+        """Check if request amount exceeds group limit"""
+        self.ensure_one()
+        
+        # Get current user's groups
+        user_groups = self.env.user.groups_id
+        
+        # Find limit for this user's group
+        limit = self.env['welfare.approval.limit'].search([
+            ('group_id', 'in', user_groups.ids),
+            ('active', '=', True)
+        ], limit=1)
+        
+        if not limit:
+            return True
+        
+        # Check amount limit
+        if self.loan_request_amount > limit.max_amount_limit:
+            return False
+        
+        return True
+    
+    def _check_product_limit(self):
+        """Check if products are allowed for this group"""
+        self.ensure_one()
+        
+        if not self.welfare_line_ids:
+            return True
+        
+        # Get current user's groups
+        user_groups = self.env.user.groups_id
+        
+        # Find limit for this user's group
+        limit = self.env['welfare.approval.limit'].search([
+            ('group_id', 'in', user_groups.ids),
+            ('active', '=', True)
+        ], limit=1)
+        
+        if not limit or not limit.allowed_product_master_ids:
+            return True
+        
+        # Check each product line
+        for line in self.welfare_line_ids:
+            # Find which product master this product belongs to
+            product_master = self.env['product.master'].search([
+                ('product_id', '=', line.product_id.id)
+            ], limit=1)
+            
+            if product_master and product_master not in limit.allowed_product_master_ids:
+                return False
+        
+        return True
+    
+    def can_hod_approve(self):
+        """Check if HOD can approve this request"""
+        self.ensure_one()
+        
+        # Check amount limit
+        if not self._check_amount_limit():
+            return False
+        
+        # Check product limit
+        if not self._check_product_limit():
+            return False
+        
+        return True

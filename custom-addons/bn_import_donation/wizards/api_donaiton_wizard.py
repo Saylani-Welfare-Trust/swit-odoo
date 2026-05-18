@@ -58,9 +58,79 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
         if not donations_info:
-            self.create_fetch_log(history.id, f"No donations found for the given date range. {self.start_date} to {self.end_date}", 'No Data', 'No donations returned from API')
-
+            self.create_fetch_log(
+                history.id,
+                f"No donations found for the given date range. {self.start_date} to {self.end_date}",
+                'No Data',
+                'No donations returned from API'
+            )
             return True
+
+
+        # =========================================================
+        # COUNT NORMAL VS QURBANI RECORDS
+        # =========================================================
+
+        total_records = len(donations_info)
+
+        qurbani_records = [
+            rec for rec in donations_info
+            if rec.get('qurbani') is True
+        ]
+
+        normal_records = [
+            rec for rec in donations_info
+            if rec.get('qurbani') is not True
+        ]
+
+        qurbani_count = len(qurbani_records)
+        normal_count = len(normal_records)
+
+        # Log summary
+        self.create_fetch_log(
+            history.id,
+            "Donation Type Summary",
+            "Summary",
+            f"""
+                ==============================
+                API DONATION FETCH SUMMARY
+                ==============================
+
+                Total Records Fetched: {total_records}
+
+                Qurbani Records: {qurbani_count}
+
+                Normal Donation Records: {normal_count}
+
+                ==============================
+            """
+        )
+
+        # Optional detailed log for qurbani records
+        if qurbani_records:
+            qurbani_ids = [
+                str(r.get('_id'))
+                for r in qurbani_records
+            ]
+
+            self.create_fetch_log(
+                history.id,
+                "Qurbani Records Found",
+                "Qurbani",
+                f"""
+                    Total Qurbani Records: {qurbani_count}
+
+                    Import IDs:
+                    {', '.join(qurbani_ids)}
+                """
+            )
+        else:
+            self.create_fetch_log(
+                history.id,
+                "No Qurbani Records Found",
+                "Qurbani",
+                "API returned zero qurbani=True records"
+            )
 
         # Prepare bulk data
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
@@ -970,6 +1040,7 @@ class APIDonationWizard(models.TransientModel):
             'qurbani': True if info.get('qurbani') == True else False,
         }
         
+        raise ValidationError(str(donation_vals))
         # Set donor_id - either from cache, from new partner, or default
         if donor_id:
             donation_vals['donor_id'] = donor_id

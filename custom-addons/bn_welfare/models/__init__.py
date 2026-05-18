@@ -16,3 +16,4 @@ from . import welfare_inquiry_report
 from . import welfare_masjid
 from . import welfare_madarsa
 from . import hr_employee
+from . import welfare_limit
