@@ -319,6 +319,8 @@ class PosSession(models.Model):
         return original_data
 
     def _create_account_move(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None):
+        raise ValidationError('hit')
+
         """ Create account.move and account.move.line records for this session.
 
         Side-effects include:
