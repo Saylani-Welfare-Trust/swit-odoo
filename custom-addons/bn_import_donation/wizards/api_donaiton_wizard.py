@@ -939,8 +939,55 @@ class APIDonationWizard(models.TransientModel):
                     'donation_no': it.get('donationNo', 0),
                     'is_priced_item': it.get('isPricedItem', False),
                 })
-            else:
-                # Normal distribution case (fulfillment != 'donate')
+            
+            else:   # qurbani == True
+                # -------------------------------------------------------------
+                # 1. Product resolution (from your upper code)
+                # -------------------------------------------------------------
+                product = False
+                product_key = (
+                    f"{info.get('donationType', '')}"
+                    f"{item_name}"
+                    f"{types_name}"
+                ).strip().lower()
+
+                config = all_data['gateway_product_lines'].get(product_key)
+                if config:
+                    product = self.env['product.product'].browse(config['product_id'])
+                    self.create_fetch_log(
+                        history.id,
+                        f"Processing Qurbani item at index {info_idx}",
+                        'Processing',
+                        (
+                            f"Product Key: {product_key}\n"
+                            f"Gateway Product: {config}\n"
+                            f"Gateway Product ID: {config.get('product_id') if config else 'No Config'}\n"
+                            f"Product Found: {product.display_name if product else 'No Product'}"
+                        )
+                    )
+                if not product:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani product not found at index {info_idx}",
+                        'Error',
+                        f"Product Qurbani Web not found. Gateway Product Lines: {all_data['gateway_product_lines']} Product Key: {product_key}"
+                    )
+
+                # -------------------------------------------------------------
+                # 2. Hijri, quantity, amount, day (from upper code)
+                # -------------------------------------------------------------
+                hijri = self.env['hijri'].search([], order="id desc", limit=1)
+                quantity = int(it.get('qty', 1) or 1)
+                amount = float(it.get('price', 0) or 0)
+
+                day_name = it.get('day', '')
+                day = self.env['qurbani.day'].search([
+                    ('web_qurbani_day', '=', day_name)
+                ], limit=1)
+
+                # -------------------------------------------------------------
+                # 3. City lookup (from lower code, improved)
+                # -------------------------------------------------------------
                 city_name = donor.get('qurbaniCity', '')
                 branch = it.get('qurbaniBranch', '')
                 self.create_fetch_log(
@@ -950,16 +997,18 @@ class APIDonationWizard(models.TransientModel):
                     f"City from donor: '{city_name}', Branch from item: '{branch}'"
                 )
 
-                # -----------------------------------------------------------------
-                # City lookup with detailed logging
-                # -----------------------------------------------------------------
                 city = False
                 if city_name:
-                    # Use exact match (=) not ilike to avoid false positives
+                    # Use exact match first, then ilike as fallback
                     city = self.env['stock.location'].search([
-                        ('name', 'ilike', city_name),
+                        ('name', '=', city_name),
                         ('usage', '=', 'internal')
                     ], limit=1)
+                    if not city:
+                        city = self.env['stock.location'].search([
+                            ('name', 'ilike', city_name),
+                            ('usage', '=', 'internal')
+                        ], limit=1)
                     self.create_fetch_log(
                         history.id,
                         f"City Lookup Result",
@@ -974,9 +1023,9 @@ class APIDonationWizard(models.TransientModel):
                         f"qurbaniCity is empty – cannot determine distribution location."
                     )
 
-                # -----------------------------------------------------------------
-                # Distribution center lookup/creation
-                # -----------------------------------------------------------------
+                # -------------------------------------------------------------
+                # 4. Distribution center lookup/creation (from lower code)
+                # -------------------------------------------------------------
                 distribution_id = False
                 if city or branch:
                     distribution_name = f"{city.name if city else ''}/{branch}"
@@ -1000,25 +1049,28 @@ class APIDonationWizard(models.TransientModel):
                             f"Existing record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
                         )
                     else:
-                        # -----------------------------------------------------------------
-                        # Default stock location search – IMPROVED with exact match and logging
-                        # -----------------------------------------------------------------
-                        
+                        # Default stock location (fixed search without non‑standard field)
                         default_center_name = "SDC/Karachi/Online / Website"
                         self.create_fetch_log(
                             history.id,
                             f"Searching for Default Stock Location",
                             "Qurbani",
-                            f"Looking for stock.location with name='{default_center_name}' and is_distribution_location=True"
+                            f"Looking for stock.location with name='{default_center_name}'"
                         )
+                        # Search by exact name, no extra boolean field
                         default_center = self.env['stock.location'].search([
-                            ('complete_name', '=', default_center_name)
+                            ('name', '=', default_center_name)
                         ], limit=1)
+                        # If not found, try complete_name (some views use hierarchical name)
+                        if not default_center:
+                            default_center = self.env['stock.location'].search([
+                                ('complete_name', '=', default_center_name)
+                            ], limit=1)
                         
                         if default_center:
                             self.create_fetch_log(
                                 history.id,
-                                f"Stock Location Found",
+                                f"Default Stock Location Found",
                                 "Qurbani",
                                 f"Found: {default_center.name} (ID {default_center.id})"
                             )
@@ -1048,7 +1100,7 @@ class APIDonationWizard(models.TransientModel):
                                 f"Similar locations found: {similar_names if similar_names else 'None'}. "
                                 f"Please verify the location exists in Odoo."
                             )
-                            # Optionally, you could fallback to the first internal location
+                            # Fallback to first internal location
                             fallback_center = self.env['stock.location'].search([
                                 ('usage', '=', 'internal')
                             ], limit=1)
@@ -1070,7 +1122,43 @@ class APIDonationWizard(models.TransientModel):
                         f"Distribution Center Skipped",
                         "Qurbani",
                         "Both city and branch are empty – no distribution center created."
-                    )            
+                    )
+
+                # -------------------------------------------------------------
+                # 5. Share names (from upper code)
+                # -------------------------------------------------------------
+                share_names = it.get('share_names', [donor.get('name', '')])
+                if not share_names:
+                    share_names = [donor.get('name', '')]
+
+                # -------------------------------------------------------------
+                # 6. Create qurbani order lines (from upper code)
+                # -------------------------------------------------------------
+                for idx in range(quantity):
+                    share_name = share_names[idx % len(share_names)]
+                    hissa_name = (
+                        f"{idx + 1}. {share_name}"
+                        if quantity > 1 else share_name
+                    )
+
+                    line_vals = {
+                        'product_id': product.id if product else False,
+                        'quantity': 1,
+                        'amount': amount,
+                        'day_id': day.id if day else False,
+                        'hijri_id': hijri.id if hijri else False,
+                        'city_id': city.id if city else False,
+                        'hissa_name': hissa_name,
+                        'distribution_id': distribution_id,
+                        'branch': branch,
+                    }
+                    order_lines.append([0, 0, line_vals])
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani Order Line Created",
+                        "Qurbani",
+                        f"Line {idx+1}/{quantity}: {line_vals}"
+                    )
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         # raise ValidationError(str(info))
         # Build donation values
