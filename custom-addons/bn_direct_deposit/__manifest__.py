@@ -8,7 +8,6 @@
     'depends': [
         'bn_pos_cheque',
         'bn_donation_home_service',
-    
     ],
     'data': [
         'data/server_action.xml',

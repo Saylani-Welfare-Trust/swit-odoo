@@ -12,6 +12,7 @@
         'bn_pos_payment_method',
         'bn_res_company',
         'bn_pos_order',
+        'bn_direct_deposit',
     ],
     'data': [
         'data/server_action.xml',

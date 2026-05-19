@@ -40,7 +40,6 @@ class DirectDeposit(models.Model):
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
-    qurbani_order_id = fields.Many2one('qurbani.order', string="Qurbani Order")
 
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
     
