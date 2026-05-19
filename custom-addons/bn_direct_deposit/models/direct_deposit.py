@@ -40,6 +40,7 @@ class DirectDeposit(models.Model):
 
     move_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
+    qurbani_order_id = fields.Many2one('qurbani.order', string="Qurbani Order")
 
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
     
@@ -135,7 +136,9 @@ class DirectDeposit(models.Model):
         dd.calculate_amount()
         dd.set_remarks()
 
-        self.env['qurbani.order'].create_qurbani_record(data)
+        qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+        qurbani_order_id = qurbani_details.get('id')
 
         return {
             "status": "success",
@@ -266,6 +269,19 @@ class DirectDeposit(models.Model):
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
     def action_not_clear(self):
+        for line in self.qurbani_order_id.qurbani_order_line_ids:
+            distribution_schedule = self.env['distribution.schedule'].search([('day_id', '=', line.day_id.id), ('hijri_id', '=', line.hijri_id.id), ('pos_product_ids', 'in', [line.product_id.id]), ('start_time', '=', line.start_time), ('end_time', '=', line.end_time), ('location_id', '=', line.distribution_id.id)])
+
+            if distribution_schedule:
+                slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].search([('day_id', '=', line.day_id.id), ('hijri_id', '=', line.hijri_id.id), ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id), ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time), ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)])
+
+                if slaughter_slot_demand:
+                    slaughter_slot_demand.booked_hissa -= line.quantity
+                    slaughter_slot_demand.current_hissa -= line.quantity
+                    slaughter_slot_demand.remaining_hissa += line.quantity
+            
+            line.unlink()
+
         self.state = 'not_clear'
 
     def action_transfer_to_dhs(self):
