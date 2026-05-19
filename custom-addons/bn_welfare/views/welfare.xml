@@ -30,7 +30,7 @@
                     <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
                             invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
-                    <button name ="action_open_edit_wizard" string="Edit Application" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
+                    <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
