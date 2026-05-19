@@ -356,9 +356,13 @@ class QurbaniOrder(models.Model):
             })
 
             # Cow/goat slaughter & distribution links (unchanged, but add existence checks)
+                        # Cow/goat slaughter & distribution links (conditional on distribution_id)
             for line in qurbani_order.qurbani_order_line_ids:
                 product_name = (line.product_id.name or "").lower()
+                
+                # ------------------- SLAUGHTER (always) -------------------
                 if 'cow' in product_name:
+                    # Find or create cow slaughter slot (always needed)
                     slaughter_records = self.env['qurbani.cow.slaughter'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
@@ -381,102 +385,19 @@ class QurbaniOrder(models.Model):
                             })]
                         })
                         qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
-
-                    # Cow distribution search with detailed logging
-                    search_domain = [
-                        ('day_id', '=', line.day_id.id),
-                        ('hijri_id', '=', line.hijri_id.id),
-                        # ('slaughter_start_time', '=', line.slaughter_start_time),
-                        # ('slaughter_end_time', '=', line.slaughter_end_time),
-                        ('slaughter_location_id', '=', line.slaughter_id.id),
-                        # ('start_time', '=', line.start_time),
-                        # ('end_time', '=', line.end_time),
-                        ('distribution_location_id', '=', line.distribution_id.id),
-                        ('qurbani_order_no', '=', False),
-                    ]
-                    
-                    qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
-                    
-                    if qurbani_cow_distribution:
                         self.env['fetch.qurbani.log'].create({
-                            'name': f"✓ COW DIST FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'name': f"✓ COW SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
                             'status': 'Success',
-                            'reason': f"""
-                            COW DISTRIBUTION SEARCH SUCCESSFUL
-                            ==================================
-                            Order: {line.qurbani_order_id.name}
-                            Order Line: {line.name}
-                            Distribution Record ID: {qurbani_cow_distribution.id}
-
-                            Search Criteria Used:
-                            - day_id: {line.day_id.id}
-                            - hijri_id: {line.hijri_id.id}
-                            - slaughter_start_time: {line.slaughter_start_time}
-                            - slaughter_end_time: {line.slaughter_end_time}
-                            - slaughter_location_id: {line.slaughter_id.id}
-                            - start_time: {line.start_time}
-                            - end_time: {line.end_time}
-                            - distribution_location_id: {line.distribution_id.id}
-                            - qurbani_order_no: False
-
-                            Matched Record Details:
-                            {json.dumps(qurbani_cow_distribution.read()[0], indent=2, default=str)}
-                            """
+                            'reason': f"Linked to slaughter slot ID {qurbani_cow_slaughter.id}"
                         })
                     else:
-                        # Fallback search to see what's available
-                        all_dist = self.env['qurbani.cow.distribution'].search([('qurbani_order_no', '=', False)], limit=10)
-                        available_records = []
-                        if all_dist:
-                            for d in all_dist:
-                                available_records.append({
-                                    'id': d.id,
-                                    'day_id': d.day_id.id,
-                                    'hijri_id': d.hijri_id.id,
-                                    'slaughter_start_time': d.slaughter_start_time,
-                                    'slaughter_end_time': d.slaughter_end_time,
-                                    'slaughter_location_id': d.slaughter_location_id.id,
-                                    'start_time': d.start_time,
-                                    'end_time': d.end_time,
-                                    'distribution_location_id': d.distribution_location_id.id,
-                                })
-                        
                         self.env['fetch.qurbani.log'].create({
-                            'name': f"✗ COW DIST NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
-                            'status': 'Debug',
-                            'reason': f"""
-                                COW DISTRIBUTION SEARCH FAILED - DEBUGGING INFO
-                                ================================================
-                                Order: {line.qurbani_order_id.name}
-                                Order Line: {line.name}
-
-                                Search Criteria That Failed:
-                                - day_id: {line.day_id.id.name}
-                                - hijri_id: {line.hijri_id.id.name}
-                                # - slaughter_start_time: {line.slaughter_start_time}
-                                # - slaughter_end_time: {line.slaughter_end_time}
-                                - slaughter_location_id: {line.slaughter_id.id.name}
-                                - start_time: {line.start_time}
-                                - end_time: {line.end_time}
-                                - distribution_location_id: {line.distribution_id.id.name}
-                                - qurbani_order_no: False
-
-                                Available Unlinked Distribution Records (showing first 10):
-                                {json.dumps(available_records, indent=2, default=str)}
-
-                                Note: Check if any of above records match your criteria. 
-                                Compare field values and types carefully (especially time fields and location IDs).
-                                                            """
-                                                        })
-                    
-                    if qurbani_cow_distribution:
-                        qurbani_cow_distribution.write({
-                            'qurbani_order_no': line.qurbani_order_id.name,
-                            'qurbani_order_line_no': line.name,
-                            'hissa_name': line.hissa_name,
-                            'product_id': line.product_id.id,
+                            'name': f"⚠ COW SLAUGHTER NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'status': 'Warning',
+                            'reason': f"No available cow slaughter slot matching criteria."
                         })
                 elif 'goat' in product_name:
+                    # Goat slaughter (always)
                     qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
@@ -492,25 +413,88 @@ class QurbaniOrder(models.Model):
                             'hissa_name': line.hissa_name,
                             'product_id': line.product_id.id,
                         })
-                    qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
-                        ('day_id', '=', line.day_id.id),
-                        ('hijri_id', '=', line.hijri_id.id),
-                        # ('slaughter_start_time', '=', line.slaughter_start_time),
-                        # ('slaughter_end_time', '=', line.slaughter_end_time),
-                        ('slaughter_location_id', '=', line.slaughter_id.id),
-                        ('start_time', '=', line.start_time),
-                        ('end_time', '=', line.end_time),
-                        ('distribution_location_id', '=', line.distribution_id.id),
-                        ('qurbani_order_no', '=', False),
-                    ], limit=1)
-                    if qurbani_goat_distribution:
-                        qurbani_goat_distribution.write({
-                            'qurbani_order_no': line.qurbani_order_id.name,
-                            'qurbani_order_line_no': line.name,
-                            'hissa_name': line.hissa_name,
-                            'product_id': line.product_id.id,
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"✓ GOAT SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'status': 'Success',
+                            'reason': f"Linked to slaughter slot ID {qurbani_goat_slaughter.id}"
                         })
-
+                    else:
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"⚠ GOAT SLAUGHTER NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                            'status': 'Warning',
+                            'reason': f"No available goat slaughter slot."
+                        })
+                
+                # ------------------- DISTRIBUTION (only if distribution_id exists) -------------------
+                if line.distribution_id:
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"Distribution ID present - Order {line.qurbani_order_id.name}, Line {line.name}",
+                        'status': 'Info',
+                        'reason': f"Attempting to link distribution record. Distribution ID: {line.distribution_id.id}"
+                    })
+                    
+                    if 'cow' in product_name:
+                        # Cow distribution search (only if distribution_id exists)
+                        search_domain = [
+                            ('day_id', '=', line.day_id.id),
+                            ('hijri_id', '=', line.hijri_id.id),
+                            ('slaughter_location_id', '=', line.slaughter_id.id),
+                            ('distribution_location_id', '=', line.distribution_id.id),
+                            ('qurbani_order_no', '=', False),
+                        ]
+                        qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
+                        
+                        if qurbani_cow_distribution:
+                            qurbani_cow_distribution.write({
+                                'qurbani_order_no': line.qurbani_order_id.name,
+                                'qurbani_order_line_no': line.name,
+                                'hissa_name': line.hissa_name,
+                                'product_id': line.product_id.id,
+                            })
+                            self.env['fetch.qurbani.log'].create({
+                                'name': f"✓ COW DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                                'status': 'Success',
+                                'reason': f"Distribution record ID {qurbani_cow_distribution.id}"
+                            })
+                        else:
+                            self.env['fetch.qurbani.log'].create({
+                                'name': f"✗ COW DISTRIBUTION NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                                'status': 'Error',
+                                'reason': f"No unlinked cow distribution matching: day {line.day_id.id}, hijri {line.hijri_id.id}, slaughter loc {line.slaughter_id.id}, distribution loc {line.distribution_id.id}"
+                            })
+                    elif 'goat' in product_name:
+                        # Goat distribution (only if distribution_id exists)
+                        qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search([
+                            ('day_id', '=', line.day_id.id),
+                            ('hijri_id', '=', line.hijri_id.id),
+                            ('slaughter_location_id', '=', line.slaughter_id.id),
+                            ('distribution_location_id', '=', line.distribution_id.id),
+                            ('qurbani_order_no', '=', False),
+                        ], limit=1)
+                        if qurbani_goat_distribution:
+                            qurbani_goat_distribution.write({
+                                'qurbani_order_no': line.qurbani_order_id.name,
+                                'qurbani_order_line_no': line.name,
+                                'hissa_name': line.hissa_name,
+                                'product_id': line.product_id.id,
+                            })
+                            self.env['fetch.qurbani.log'].create({
+                                'name': f"✓ GOAT DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                                'status': 'Success',
+                                'reason': f"Distribution record ID {qurbani_goat_distribution.id}"
+                            })
+                        else:
+                            self.env['fetch.qurbani.log'].create({
+                                'name': f"✗ GOAT DISTRIBUTION NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
+                                'status': 'Error',
+                                'reason': f"No unlinked goat distribution matching criteria."
+                            })
+                else:
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"Distribution SKIPPED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                        'status': 'Info',
+                        'reason': "No distribution_id on this line. Only slaughter linking performed."
+                    })
             return {
                 "status": "success",
                 "qurbani_order_id": qurbani_order.id,
@@ -532,21 +516,21 @@ class QurbaniOrder(models.Model):
             # Create detailed error log
             error_log_message = f"✗ FAILED [{timestamp}] - [ID-{donation_id}] {donor_name}"
             error_log_reason = f"""
-================== DONATION PROCESSING FAILED ==================
-Timestamp: {timestamp}
-Donation Name: {donor_name}
-Donation ID: {donation_id}
+                ================== DONATION PROCESSING FAILED ==================
+                Timestamp: {timestamp}
+                Donation Name: {donor_name}
+                Donation ID: {donation_id}
 
-ERROR MESSAGE:
-{str(e)}
+                ERROR MESSAGE:
+                {str(e)}
 
-COMPLETE DONATION RECORD OBJECT:
-{donation_json}
+                COMPLETE DONATION RECORD OBJECT:
+                {donation_json}
 
-TRACEBACK:
-{_logger.exception("Full exception trace below")}
-================================================================
-            """
+                TRACEBACK:
+                {_logger.exception("Full exception trace below")}
+                ================================================================
+                            """
             
             self.env['fetch.qurbani.log'].create({
                 'name': error_log_message,
