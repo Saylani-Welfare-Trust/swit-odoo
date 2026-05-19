@@ -25,3 +25,4 @@ from . import stock_location
 from . import web_qurbani_distribution_center
 from . import web_qurbani_slaughter_center
 from . import direct_depsoit
+from . import donation_home_service
