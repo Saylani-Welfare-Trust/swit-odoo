@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
+from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
@@ -938,6 +939,31 @@ class APIDonationWizard(models.TransientModel):
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
+                raise ValidationError(_(
+                    f"""
+                    ==============================
+                    FULL QURBANI PAYLOAD
+                    ==============================
+
+                    MAIN INFO:
+                    {pformat(info)}
+
+                    ------------------------------
+                    DONOR DETAILS:
+                    {pformat(donor)}
+
+                    ------------------------------
+                    CURRENT ITEM:
+                    {pformat(it)}
+
+                    ------------------------------
+                    ALL ITEMS:
+                    {pformat(items)}
+
+                    ==============================
+                    """
+                ))
+
 
                 self.create_fetch_log(
                     history.id,
@@ -1133,12 +1159,62 @@ class APIDonationWizard(models.TransientModel):
                 branch = it.get('qurbaniBranch', '')
 
                 distribution_rec = False
+                distribution_id = False
 
-                if city and branch:
+                distribution_name = f"{city.name}/{branch}"
 
-                    distribution_rec = self.env['web.qurbani.distribution.center'].search([
-                        ('name', '=', f"{city.name}/{branch}")
+                # Search existing distribution center mapping
+                distribution_rec = self.env['web.qurbani.distribution.center'].search([
+                    ('name', '=', distribution_name)
+                ], limit=1)
+
+                # If not found -> create automatically
+                if not distribution_rec:
+
+                    # Default stock location
+                    default_distribution_center = self.env['stock.location'].search([
+                        ('name', '=', 'SDC/Karachi/Online / Website')
                     ], limit=1)
+
+                    if default_distribution_center:
+
+                        distribution_rec = self.env['web.qurbani.distribution.center'].create({
+                            'name': distribution_name,
+                            'distribution_center_id': default_distribution_center.id,
+                        })
+
+                        self.create_fetch_log(
+                            history.id,
+                            "Distribution Center Auto Created",
+                            "Qurbani",
+                            f"""
+                            Distribution mapping was missing.
+
+                            Created New Record:
+
+                            Name:
+                            {distribution_name}
+
+                            Distribution Center:
+                            {default_distribution_center.name}
+
+                            Record ID:
+                            {distribution_rec.id}
+                            """
+                        )
+
+                    else:
+
+                        self.create_fetch_log(
+                            history.id,
+                            "Default Distribution Center Missing",
+                            "Error",
+                            """
+                            Could not find default stock.location:
+
+                            SDC/Karachi/Online / Website
+                            """
+                        )
 
                 distribution_id = distribution_rec.distribution_center_id.id if distribution_rec else False
 
