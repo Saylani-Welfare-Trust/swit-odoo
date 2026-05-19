@@ -8,6 +8,7 @@ class WelfareFieldsWizard(models.TransientModel):
     welfare_id = fields.Many2one('welfare', string='Welfare Record', required=True)
     
     # Basic Information
+    action_view_previous_disbursement = fields.Many2one('welfare', string='Previous Disbursement')
     name = fields.Char('Name')
     cnic_no = fields.Char('CNIC No.')
     father_name = fields.Char('Father Name')
