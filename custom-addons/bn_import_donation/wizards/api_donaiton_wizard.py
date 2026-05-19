@@ -1012,7 +1012,7 @@ class APIDonationWizard(models.TransientModel):
                             f"Looking for stock.location with name='{default_center_name}' and is_distribution_location=True"
                         )
                         default_center = self.env['stock.location'].search([
-                        ], limit=1)
+                        ], )
                         
                         if default_center:
                             self.create_fetch_log(
