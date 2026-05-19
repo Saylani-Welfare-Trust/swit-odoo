@@ -470,17 +470,21 @@ patch(PaymentScreen.prototype, {
             
             if (extras.is_welfare_return === true && extras.welfare_line_id) {
                 try {
+                    // Determine if it's recurring or one-time
+                    const model = extras.return_type === 'recurring' ? 'welfare.recurring.line' : 'welfare.line';
+                    
                     await this.env.services.orm.call(
-                        'welfare.line',
+                        model,
                         'action_return_to_pos',
                         [[extras.welfare_line_id]],
                         {
                             pos_order_id: currentOrder.id,
-                            welfare_number: extras.welfare_number || ''
+                            welfare_number: extras.welfare_number || '',
+                            return_type: extras.return_type || 'one_time'
                         }
                     );
                     this.env.services.notification.add(
-                        `Welfare return processed: ${extras.welfare_number}`,
+                        `${extras.return_type === 'recurring' ? 'Recurring' : 'One Time'} Welfare return processed: ${extras.welfare_number}`,
                         { type: 'success' }
                     );
                 } catch (error) {

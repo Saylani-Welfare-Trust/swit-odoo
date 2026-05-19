@@ -66,6 +66,19 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 "Please Enter a Number",
                 { type: 'info' }
             );
+            return;
+        }
+         // ========== NEW: WELFARE RETURN ==========
+        if (this.props.action_type === "wf_return") {
+            // Return the welfare number directly
+            this.props.resolve({ confirmed: true, payload: inputValue });
+            this.close();
+        } 
+        else if (this.props.action_type === "wf") {
+            // Existing logic for disbursement
+            // ... your existing code ...
+            this.props.resolve({ confirmed: true, payload: inputValue });
+            this.close();
         }
         
         // Handle different action types
@@ -102,6 +115,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processMicrofinanceRecoveryRecord(selectedOrder);
         }
     }
+    
 
     /**
      * Process Welfare record
