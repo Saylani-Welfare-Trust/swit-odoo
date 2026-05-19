@@ -493,6 +493,9 @@ patch(PaymentScreen.prototype, {
         }
 
 
+        
+
+
 
     //     // --- WELFARE ---
     //     if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
