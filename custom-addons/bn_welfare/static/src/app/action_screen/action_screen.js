@@ -123,6 +123,46 @@ patch(ActionScreen.prototype, {
                 });
                 return;
             }
+            // ========== ADD DONOR/CUSTOMER TO ORDER ==========
+            // Get the welfare record to fetch donee
+            const welfareRecord = await this.env.services.orm.searchRead(
+                'welfare',
+                [['name', '=', welfareNumber]],
+                ['donee_id'],
+                { limit: 1 }
+            );
+            
+            if (welfareRecord && welfareRecord.length > 0 && welfareRecord[0].donee_id) {
+                const donorId = welfareRecord[0].donee_id[0];
+                const donorName = welfareRecord[0].donee_id[1];
+                
+                // Get partner from POS DB or load it
+                let partner = this.pos.db.get_partner_by_id(donorId);
+                
+                if (!partner) {
+                    // Load partner from server if not in POS
+                    const partnerData = await this.env.services.orm.searchRead(
+                        'res.partner',
+                        [['id', '=', donorId]],
+                        ['id', 'name', 'phone', 'email'],
+                        { limit: 1 }
+                    );
+                    
+                    if (partnerData && partnerData.length > 0) {
+                        this.pos.db.add_partners(partnerData);
+                        partner = this.pos.db.get_partner_by_id(donorId);
+                    }
+                }
+                
+                if (partner) {
+                    // Set the customer on the order
+                    this.pos.get_order().set_partner(partner);
+                    this.env.services.notification.add(
+                        `Customer set to: ${partner.name}`,
+                        { type: 'info' }
+                    );
+                }
+            }
 
             // Add return lines to order
             for (const line of lines) {
