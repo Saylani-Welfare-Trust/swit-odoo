@@ -435,5 +435,5 @@ class WelfareFieldsWizard(models.TransientModel):
     
     def action_cancel(self):
         return {'type': 'ir.actions.act_window_close'}
-    def _view_previous_disbursement(self):
+    def view_previous_disbursement(self):
         self.welfare_id.action_view_previous_disbursement()
