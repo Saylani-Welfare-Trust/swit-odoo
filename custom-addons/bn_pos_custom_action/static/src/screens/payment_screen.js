@@ -440,42 +440,11 @@ patch(PaymentScreen.prototype, {
                 
                 for (let i = 0; i < welfareLineIds.length; i++) {
                     const line = welfareLineIds[i];
-                    
-                    // ✅ Check current state before disbursing
-                    const lineData = await this.env.services.orm.call(
+                    await this.env.services.orm.call(
                         'welfare.line',
-                        'read',
-                        [[line.id], ['state', 'payment_type']]
+                        'action_disbursed',
+                        [[line.id]]
                     );
-                    
-                    if (lineData && lineData.length > 0) {
-                        const currentState = lineData[0].state;
-                        const paymentType = lineData[0].payment_type;
-                        
-                        // ✅ Skip if already collected or returned
-                        if (currentState === 'collected') {
-                            this.env.services.notification.add(
-                                `Line for ${wfData.record_number} is already collected. Cannot disburse again.`,
-                                { type: 'warning' }
-                            );
-                            continue;
-                        }
-                        
-                        if (currentState === 'return') {
-                            this.env.services.notification.add(
-                                `Line for ${wfData.record_number} has been returned. Cannot disburse.`,
-                                { type: 'warning' }
-                            );
-                            continue;
-                        }
-                        
-                        // Only process if not already collected
-                        await this.env.services.orm.call(
-                            'welfare.line',
-                            'action_disbursed',
-                            [[line.id]]
-                        );
-                    }
                 }
                 
                 currentOrder.set_source_document(wfData.record_number);
@@ -485,15 +454,42 @@ patch(PaymentScreen.prototype, {
                 );
             } catch (error) {
                 console.error("Welfare Error:", error);
-                this.env.services.notification.add(
-                    "Note: Welfare status not updated, but order will proceed",
-                    { type: 'warning' }
-                );
             }
         }
-
-
         
+        // ========== WELFARE RETURN ==========
+        const orderLines = currentOrder.get_orderlines();
+        
+        for (let i = 0; i < orderLines.length; i++) {
+            const line = orderLines[i];
+            const extras = line.get_extras ? line.get_extras() : {};
+            
+            if (extras.is_welfare_return === true && extras.welfare_line_id) {
+                try {
+                    await this.env.services.orm.call(
+                        'welfare.line',
+                        'action_return_to_pos',
+                        [[extras.welfare_line_id]],
+                        {
+                            pos_order_id: currentOrder.id,
+                            welfare_number: extras.welfare_number || ''
+                        }
+                    );
+                    this.env.services.notification.add(
+                        `Welfare return processed: ${extras.welfare_number}`,
+                        { type: 'success' }
+                    );
+                } catch (error) {
+                    console.error("Welfare Return Error:", error);
+                    throw error;
+                }
+            }
+        }
+        
+        // Continue with normal POS flow
+        return super.validateOrder(isForceValidate);
+    },
+});
 
 
 
