@@ -460,22 +460,44 @@ class WelfareLine(models.Model):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
         if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
             self.collection_point = 'branch'
+    def can_disburse(self):
+        """Check if line can be disbursed (not already collected/returned/disbursed)"""
+        return self.state not in ['collected', 'return', 'disbursed']
+
+    def can_return(self):
+        """Check if line can be returned"""
+        return self.payment_type == 'assigned_officer' and self.state == 'collected'            
        
     def action_disbursed(self):
-        # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
+        """
+        Mark as disbursed or collected based on payment type
+        PREVENT re-processing already collected or returned lines
+        """
+        # ✅ PREVENT re-disbursing already collected lines
+        if self.state == 'collected':
+            _logger.warning(f"Line {self.id} is already collected. Cannot disburse again.")
+            return False
+        
+        # ✅ PREVENT re-disbursing returned lines
+        if self.state == 'return':
+            _logger.warning(f"Line {self.id} has been returned. Cannot disburse again.")
+            return False
+        
+        # ✅ PREVENT re-disbursing already disbursed lines
+        if self.state == 'disbursed':
+            _logger.warning(f"Line {self.id} is already disbursed. Cannot disburse again.")
+            return False
+        
+        # Mark as disbursed or collected based on payment type
         self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
+        
         if getattr(self, 'advance_donation_line_id', False):
             self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
-        # # For Cash + Bank, check if bill is paid
-        # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
-        # if cash_category and self.disbursement_category_id.id == cash_category.id:
-        #     if self.collection_point == 'bank' and self.bill_id:
-        #         # Bill payment is handled through account.move payment
-        #         # This method will be called after payment is registered
-        #         pass
         
         if self.welfare_id:
             self.welfare_id._auto_disburse_if_all_lines_delivered()
+        
+        return True
                             
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
@@ -546,7 +568,6 @@ class WelfareLine(models.Model):
         """
         Return collected amount to POS for Assigned Officer (Marfat) payments
         Money comes BACK to the company (Donee returns it)
-        Called from POS or welfare line form
         """
         self.ensure_one()
         
@@ -560,8 +581,8 @@ class WelfareLine(models.Model):
         if self.state != 'collected':
             raise ValidationError(_(
                 "Return is only allowed for lines in 'Collected' state. "
-                "Current state: %s" % self.state
-            ))
+                "Current state: %s. Only 'Collected' lines can be returned."
+            ) % self.state)
         
         if self.state == 'return':
             raise ValidationError(_("This line has already been returned."))
@@ -570,18 +591,17 @@ class WelfareLine(models.Model):
             raise ValidationError(_("No donee associated with this welfare line."))
         
         try:
-            # 1. Create a journal entry for money coming IN to company
+            # Create journal entry for money coming IN to company
             return_receipt = self._create_return_receipt()
             
-            # 2. Update line state to 'return'
+            # Update line state to 'return'
             self.write({
                 'state': 'return',
                 'return_date': fields.Datetime.now(),
-                # 'return_receipt_id': return_receipt.id if return_receipt else False,
                 'returned_by': self.env.user.id,
             })
             
-            # 3. Post a message on the welfare record
+            # Post message
             self.welfare_id.message_post(body=f"""
                 <b>💰 Welfare Line Returned (Money Received Back)</b><br/>
                 <b>Product:</b> {self.product_id.name}<br/>
@@ -596,9 +616,7 @@ class WelfareLine(models.Model):
             
         except Exception as e:
             _logger.error(f"Error returning welfare line {self.id}: {str(e)}")
-            raise ValidationError(_(
-                "Failed to process return: %s" % str(e)
-            ))
+            raise ValidationError(_("Failed to process return: %s" % str(e)))
 
     def _create_return_receipt(self):
         """
@@ -681,26 +699,26 @@ class WelfareLine(models.Model):
             _logger.warning(f"No original POS order found for donee {self.welfare_id.donee_id.name}")
             return None
         
-        # Create return order (without welfare_line_id field if it doesn't exist)
+        # Create return order with POSITIVE amount (money coming IN)
         return_order_vals = {
             'partner_id': self.welfare_id.donee_id.id,
-            'amount_total': -self.total_amount,
-            'amount_paid': -self.total_amount,
-            'amount_return': self.total_amount,
+            'amount_total': self.total_amount,  # ✅ POSITIVE (not negative)
+            'amount_paid': self.total_amount,   # ✅ POSITIVE
+            'amount_return': 0,                 # ✅ No return amount needed
             'state': 'paid',
             'is_return': True,
             'original_order_id': original_pos_order.id,
             'lines': [(0, 0, {
                 'product_id': self.product_id.id,
-                'qty': -self.quantity,
+                'qty': self.quantity,           # ✅ POSITIVE (not negative)
                 'price_unit': self.total_amount / self.quantity if self.quantity else self.total_amount,
-                'price_subtotal': -self.total_amount,
-                'price_subtotal_incl': -self.total_amount,
+                'price_subtotal': self.total_amount,      # ✅ POSITIVE
+                'price_subtotal_incl': self.total_amount, # ✅ POSITIVE
             })],
         }
         
         pos_return = self.env['pos.order'].create(return_order_vals)
         
-        _logger.info(f"Created POS return order {pos_return.name}")
+        _logger.info(f"Created POS return order {pos_return.name} for amount {self.total_amount}")
         
         return pos_return
