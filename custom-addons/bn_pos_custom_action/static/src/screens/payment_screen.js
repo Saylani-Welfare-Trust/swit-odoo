@@ -432,7 +432,7 @@ patch(PaymentScreen.prototype, {
                     }
                 }
         }
-        // ========== WELFARE DISBURSEMENT ==========
+     // ========== WELFARE DISBURSEMENT (Only when order comes from welfare) ==========
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
             try {
                 const wfData = currentOrder.extra_data.welfare;
@@ -454,10 +454,16 @@ patch(PaymentScreen.prototype, {
                 );
             } catch (error) {
                 console.error("Welfare Error:", error);
+                this.env.services.notification.add(
+                    "Note: Welfare status not updated, but order will proceed",
+                    { type: 'warning' }
+                );
             }
         }
         
-        // ========== WELFARE RETURN ==========
+        // ========== WELFARE RETURN (Only when order has return flag) ==========
+        // Check if any order line is a welfare return
+        let hasWelfareReturn = false;
         const orderLines = currentOrder.get_orderlines();
         
         for (let i = 0; i < orderLines.length; i++) {
@@ -465,6 +471,7 @@ patch(PaymentScreen.prototype, {
             const extras = line.get_extras ? line.get_extras() : {};
             
             if (extras.is_welfare_return === true && extras.welfare_line_id) {
+                hasWelfareReturn = true;
                 try {
                     await this.env.services.orm.call(
                         'welfare.line',
@@ -481,6 +488,10 @@ patch(PaymentScreen.prototype, {
                     );
                 } catch (error) {
                     console.error("Welfare Return Error:", error);
+                    this.env.services.notification.add(
+                        `Return failed: ${error.message}`,
+                        { type: 'danger' }
+                    );
                     throw error;
                 }
             }
@@ -489,7 +500,10 @@ patch(PaymentScreen.prototype, {
         // Continue with normal POS flow
         return super.validateOrder(isForceValidate);
     },
-});
+
+
+
+
 
 
 
