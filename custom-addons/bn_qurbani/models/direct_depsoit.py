@@ -83,9 +83,7 @@ class DirectDeposit(models.Model):
 
         qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
 
-        raise UserError(qurbani_details.get('id'))
-
-        self.qurbani_order_id = qurbani_details.get('id')
+        dd.qurbani_order_id = qurbani_details.get('id')
 
         return {
             "status": "success",
