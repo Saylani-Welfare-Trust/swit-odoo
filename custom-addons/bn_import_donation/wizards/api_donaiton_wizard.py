@@ -956,7 +956,7 @@ class APIDonationWizard(models.TransientModel):
                 if city_name:
                     # Use exact match (=) not ilike to avoid false positives
                     city = self.env['stock.location'].search([
-                        ('name', '=', city_name),
+                        ('name', 'ilike', city_name),
                         ('usage', '=', 'internal')
                     ], limit=1)
                     self.create_fetch_log(
@@ -1002,7 +1002,7 @@ class APIDonationWizard(models.TransientModel):
                         # -----------------------------------------------------------------
                         # Default stock location search – IMPROVED with exact match and logging
                         # -----------------------------------------------------------------
-                        default_center_name = "SDC/Karachi/Online/Website"
+                        default_center_name = "SDC/Karachi/Online / Website"
                         self.create_fetch_log(
                             history.id,
                             f"Searching for Default Stock Location",
