@@ -954,22 +954,34 @@ class Welfare(models.Model):
             record.state = 'hod_approve'
     
     def action_move_to_member(self):
-        """Member Approval - No limit check here"""
+        """Member Approval - Check HOD limit first"""
         for record in self:
             # Check if amount exceeds HOD limit
             within_limit = record._check_amount_within_hod_limit()
             
             if not within_limit:
-                # Amount exceeds HOD limit, add warning/note
-                record.message_post(body="""
-                    <b>⚠️ Amount Limit Notice</b><br/>
-                    Request amount ({}) exceeds HOD limit. 
-                    This request will require Member Approval instead of HOD Approval.
-                """.format(record.loan_request_amount))
+                # Get HOD limit amount for error message
+                hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
+                limit_amount = float('inf')
+                if hod_group:
+                    limit = self.env['welfare.approval.limit'].search([
+                        ('group_id', '=', hod_group.id),
+                        ('active', '=', True)
+                    ], limit=1)
+                    limit_amount = limit.max_amount_limit if limit else float('inf')
+                
+                raise ValidationError("""
+                    Amount ({}) exceeds your HOD approval limit ({}). 
+                    This request cannot be approved by HOD.
+                """.format(
+                    record.loan_request_amount,
+                    limit_amount
+                ))
+            
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             
-            # No limit check - just move to member approval
+            # Move to member approval
             record.state = 'mem_approve'
     
     def action_approve(self):
@@ -1209,39 +1221,5 @@ class Welfare(models.Model):
                     return False
         
         return True  # Within HOD limit
-    
-    def get_required_approval_level(self):
-        """Determine required approval level based on limit"""
-        self.ensure_one()
-        
-        if self._check_amount_within_hod_limit():
-            return 'hod'  # Within limit - HOD can approve
-        else:
-            return 'member'  # Exceeds limit - Member must approve  
-    
-    def can_user_approve_hod(self):
-        """Check if current user can approve as HOD"""
-        self.ensure_one()
-        
-        # Check if user has HOD group
-        hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
-        if not hod_group or self.env.user not in hod_group.users:
-            return False, "User is not in HOD group"
-        
-        # Check if request is within HOD limit
-        if not self._check_amount_within_hod_limit():
-            return False, "Request exceeds HOD limit. Only Member can approve."
-        
-        return True, "HOD can approve"
-    
-    def can_user_approve_member(self):
-        """Check if current user can approve as Member"""
-        self.ensure_one()
-        
-        # Check if user has Member group
-        member_group = self.env.ref('bn_welfare.group_welfare_member', raise_if_not_found=False)
-        if not member_group or self.env.user not in member_group.users:
-            return False, "User is not in Member group"
-        
-        # Member can always approve (no limit check for member)
-        return True, "Member can approve"
+
+
