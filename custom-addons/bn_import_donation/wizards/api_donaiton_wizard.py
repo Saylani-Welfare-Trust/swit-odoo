@@ -1007,11 +1007,11 @@ class APIDonationWizard(models.TransientModel):
                             history.id,
                             f"Searching for Default Stock Location",
                             "Qurbani",
-                            f"Looking for stock.location with name='{default_center_name}' and usage='internal'"
+                            f"Looking for stock.location with name='{default_center_name}' and is_distribution_location=True"
                         )
                         default_center = self.env['stock.location'].search([
                             ('name', '=', default_center_name),
-                            ('usage', '=', 'internal')
+                            ('is_distribution_location', '=', True),
                         ], limit=1)
                         
                         if default_center:
