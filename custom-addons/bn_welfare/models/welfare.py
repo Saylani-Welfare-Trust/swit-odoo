@@ -190,10 +190,22 @@ class Welfare(models.Model):
     # Request Details
     # loan_request_amount = fields.Float('Loan Request Amount')
 
+    # loan_request_amount = fields.Float(
+    #     'Loan Request Amount',
+    #     required=True
+    # )
+
     loan_request_amount = fields.Float(
-        'Loan Request Amount',
-        required=True
+        string='Loan Request Amount',
+        required=True,
+        default=0.0
     )
+
+    @api.constrains('loan_request_amount')
+    def _check_loan_request_amount(self):
+        for rec in self:
+            if rec.loan_request_amount <= 0:
+                raise ValidationError("Loan Request Amount must be greater than 0.")
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
