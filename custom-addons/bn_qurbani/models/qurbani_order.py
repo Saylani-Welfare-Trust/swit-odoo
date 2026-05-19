@@ -397,7 +397,7 @@ class QurbaniOrder(models.Model):
                         # Uncomment these fields for stricter matching (recommended):
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        ('distribution_location_id', '=', line.distribution_id.id),
+                        # ('distribution_location_id', '=', line.distribution_id.id),
                     ]
                     if 'cow' in product_name:
                         qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
