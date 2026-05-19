@@ -296,22 +296,6 @@ class QurbaniOrder(models.Model):
                 if not city_id and demand.slaughter_location_id.location_id:
                     city_id = demand.slaughter_location_id.location_id.id
                 
-                # ------------------------------------------------------------
-                # Safe distribution_location_id: only if city AND branch exist
-                # ------------------------------------------------------------
-                distribution_location_id = False
-                if city_id and line_data['branch']:
-                    
-                    distribution_location_id = self.env['web.qurbani.distribution.center'].search(
-                        [('name', '=', api_line.distribution_id.complete_name)], limit=1
-                    ).distribution_center_id.id if api_line.distribution_id else False
-
-                else:
-                    self.env['fetch.qurbani.log'].create({
-                        'name': f"Distribution location skipped",
-                        'status': 'Info',
-                        'reason': f"No city or branch provided. city_id={city_id}, branch='{line_data['branch']}'"
-                    })
                 
                 vals = {
                     'product_id': line_data['product_id'],
@@ -321,7 +305,7 @@ class QurbaniOrder(models.Model):
                     'hijri_id': demand.hijri_id.id,
                     'city_id': city_id,
                     # 'branch': line_data['branch'],
-                    'distribution_id': distribution_location_id,   # will be False if missing
+                    'distribution_id': api_line.distribution_id.id if api_line.distribution_id else False,   # will be False if missing
                     'slaughter_id': demand.slaughter_location_id.id,
                     'hissa_name': line_data['hissa_name'],
                     'start_time': demand.start_time,
