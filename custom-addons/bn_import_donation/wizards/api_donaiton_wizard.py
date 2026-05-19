@@ -1012,7 +1012,6 @@ class APIDonationWizard(models.TransientModel):
                             f"Looking for stock.location with name='{default_center_name}' and is_distribution_location=True"
                         )
                         default_center = self.env['stock.location'].search([
-                            ('is_distribution_location', '=', True)
                         ], limit=1)
                         
                         if default_center:
@@ -1022,7 +1021,7 @@ class APIDonationWizard(models.TransientModel):
                                 "Qurbani",
                                 f"Found: {default_center})"
                             )
-                            raise ValidationError(str(default_center.name))
+                            raise ValidationError(str(default_center.read()))
                             # Create new distribution center mapping
                             distribution_rec = self.env['web.qurbani.distribution.center'].create({
                                 'name': distribution_name,
@@ -1036,7 +1035,7 @@ class APIDonationWizard(models.TransientModel):
                                 f"New web.qurbani.distribution.center: ID {distribution_rec.id}, Name '{distribution_rec.name}', Mapped to stock.location ID {distribution_id}"
                             )
                         else:
-                            raise ValidationError(f"Default stock location with name '{default_center_name}' not found. Cannot create distribution center for '{distribution_name}'. Please ensure the location exists and is marked as a distribution location.")
+                            # raise ValidationError(f"Default stock location with name '{default_center_name}' not found. Cannot create distribution center for '{distribution_name}'. Please ensure the location exists and is marked as a distribution location.")
                             # Log all stock locations with similar names for debugging
                             similar_locations = self.env['stock.location'].search([
                                 ('name', 'ilike', 'SDC/Karachi')
