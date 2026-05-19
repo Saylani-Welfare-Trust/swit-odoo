@@ -887,6 +887,7 @@ class APIDonationWizard(models.TransientModel):
         else:
             donor_id = all_data['default_partner_id']
         
+        default_center = False
         # Prepare donation items
         items = info.get('items') or []
         orm_items = []
@@ -1002,6 +1003,7 @@ class APIDonationWizard(models.TransientModel):
                         # -----------------------------------------------------------------
                         # Default stock location search – IMPROVED with exact match and logging
                         # -----------------------------------------------------------------
+                        
                         default_center_name = "SDC/Karachi/Online / Website"
                         self.create_fetch_log(
                             history.id,
@@ -1010,8 +1012,7 @@ class APIDonationWizard(models.TransientModel):
                             f"Looking for stock.location with name='{default_center_name}' and is_distribution_location=True"
                         )
                         default_center = self.env['stock.location'].search([
-                            ('name', '=', default_center_name),
-                            ('is_distribution_location', '=', True),
+                            ('name', 'ilike', default_center_name)
                         ], limit=1)
                         
                         if default_center:
