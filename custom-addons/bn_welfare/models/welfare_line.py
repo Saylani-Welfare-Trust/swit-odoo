@@ -570,26 +570,18 @@ class WelfareLine(models.Model):
             raise ValidationError(_("No donee associated with this welfare line."))
         
         try:
-            # 1. Create a payment receipt (money coming IN to company)
+            # 1. Create a journal entry for money coming IN to company
             return_receipt = self._create_return_receipt()
             
-            # 2. Create POS return order (optional - skip if error)
-            pos_return_order = None
-            try:
-                pos_return_order = self._create_pos_return_order()
-            except Exception as e:
-                _logger.warning(f"Could not create POS return order: {e}")
-            
-            # 3. Update line state to 'return'
+            # 2. Update line state to 'return'
             self.write({
                 'state': 'return',
                 'return_date': fields.Datetime.now(),
                 'return_receipt_id': return_receipt.id if return_receipt else False,
-                'pos_return_order_id': pos_return_order.id if pos_return_order else False,
                 'returned_by': self.env.user.id,
             })
             
-            # 4. Post a message on the welfare record
+            # 3. Post a message on the welfare record
             self.welfare_id.message_post(body=f"""
                 <b>💰 Welfare Line Returned (Money Received Back)</b><br/>
                 <b>Product:</b> {self.product_id.name}<br/>
@@ -605,43 +597,69 @@ class WelfareLine(models.Model):
         except Exception as e:
             _logger.error(f"Error returning welfare line {self.id}: {str(e)}")
             raise ValidationError(_(
-                "Failed to process return: %s\n\n"
-                "Please check the logs and try again."
-            ) % str(e))
+                "Failed to process return: %s" % str(e)
+            ))
 
     def _create_return_receipt(self):
         """
-        Create a payment receipt for money returned from Donee
+        Create a journal entry for money returned from Donee
         This INCREASES company cash (money coming IN)
         """
-        # Find cash or bank journal
-        journal = self.env['account.journal'].search([
-            ('type', 'in', ['cash', 'bank']),
+        # Find cash or bank account
+        cash_account = self.env['account.account'].search([
+            ('account_type', 'in', ['asset_cash', 'asset_bank']),
             ('company_id', '=', self.company_id.id)
         ], limit=1)
         
-        if not journal:
-            raise ValidationError(_("No cash/bank journal found to process return."))
+        if not cash_account:
+            raise ValidationError(_("No cash/bank account found to process return."))
         
-        # Create inbound payment (money coming IN to company)
-        payment_vals = {
-            'payment_type': 'inbound',  # KEY: inbound = money coming IN
-            'partner_type': 'customer',
-            'partner_id': self.welfare_id.donee_id.id,
-            'amount': self.total_amount,
-            'currency_id': self.currency_id.id,
-            'payment_date': fields.Date.today(),
+        # Find expense/income account for the product
+        expense_account = self.product_id.property_account_expense_id or \
+                        self.product_id.categ_id.property_account_expense_categ_id
+        
+        if not expense_account:
+            # Fallback to a default expense account
+            expense_account = self.env['account.account'].search([
+                ('account_type', '=', 'expense'),
+                ('company_id', '=', self.company_id.id)
+            ], limit=1)
+        
+        # Create journal entry (money IN)
+        journal = self.env['account.journal'].search([
+            ('type', 'in', ['cash', 'bank', 'general']),
+            ('company_id', '=', self.company_id.id)
+        ], limit=1)
+        
+        move_vals = {
+            'move_type': 'entry',
             'journal_id': journal.id,
+            'date': fields.Date.today(),
             'ref': f"WELFARE-RETURN-{self.welfare_id.name}",
-            'name': f"Return of Welfare {self.welfare_id.name} - Line {self.id}",
+            'line_ids': [
+                (0, 0, {
+                    'name': f'Return from {self.welfare_id.donee_id.name}',
+                    'account_id': cash_account.id,
+                    'debit': self.total_amount,  # Money IN - Cash increases
+                    'credit': 0,
+                    'partner_id': self.welfare_id.donee_id.id,
+                }),
+                (0, 0, {
+                    'name': f'Welfare Return - {self.product_id.name}',
+                    'account_id': expense_account.id,
+                    'debit': 0,
+                    'credit': self.total_amount,  # Reduce expense/record return
+                    'partner_id': self.welfare_id.donee_id.id,
+                }),
+            ]
         }
         
-        payment = self.env['account.payment'].create(payment_vals)
-        payment.action_post()
+        move = self.env['account.move'].create(move_vals)
+        move.action_post()
         
-        _logger.info(f"Created return receipt {payment.id} for amount {self.total_amount}")
+        _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")
         
-        return payment
+        return move
 
     def _create_pos_return_order(self):
         """
