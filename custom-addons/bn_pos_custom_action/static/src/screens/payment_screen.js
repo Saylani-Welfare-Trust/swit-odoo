@@ -461,44 +461,27 @@ patch(PaymentScreen.prototype, {
             }
         }
 
-        // ========== WELFARE RETURN ==========
+        // ========== TEST: Just log a message ==========
+        console.log("===== WELFARE RETURN SECTION REACHED =====");
         const orderLines = currentOrder.get_orderlines();
+        console.log("Order lines count:", orderLines.length);
 
         for (let i = 0; i < orderLines.length; i++) {
             const line = orderLines[i];
             const extras = line.get_extras ? line.get_extras() : {};
+            console.log("Line extras:", extras);
             
             if (extras.is_welfare_return === true && extras.welfare_line_id) {
-                try {
-                    await this.env.services.orm.call(
-                        'welfare.line',
-                        'action_return_to_pos',
-                        [[extras.welfare_line_id]],
-                        {
-                            pos_order_id: currentOrder.id,
-                            welfare_number: extras.welfare_number || ''
-                        }
-                    );
-                    this.env.services.notification.add(
-                        `Welfare return processed: ${extras.welfare_number}`,
-                        { type: 'success' }
-                    );
-                } catch (error) {
-                    console.error("Welfare Return Error:", error);
-                    this.env.services.notification.add(
-                        `Return failed: ${error.message}`,
-                        { type: 'danger' }
-                    );
-                    throw error;
-                }
+                console.log("Found welfare return line!");
+                this.env.services.notification.add(
+                    `TEST: Found return line for ${extras.welfare_number}`,
+                    { type: 'info' }
+                );
             }
         }
 
         // Continue with normal POS flow
         return super.validateOrder(isForceValidate);
-
-
-
 
     //     // --- WELFARE ---
     //     if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
