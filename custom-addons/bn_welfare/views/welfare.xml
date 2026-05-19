@@ -559,7 +559,9 @@
                         <page name="request_details" string="Request Details" invisible="not is_individual">
                             <group>
                                 <group name="request_details_col_1">
-                                    <field name="loan_request_amount" />
+                                    <field name="loan_request_amount" 
+                                    required="1"
+                                    />
                                     <field name="security_offered" />
                                 </group>
                                 <group name="request_details_col_2">
