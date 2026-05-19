@@ -8,7 +8,7 @@
                 <sheet>
                     <div class="oe_title">
                         <h1>Welfare Application Details - Full Page Editor</h1>
-                        <button string="View Most Recent Disbursement" name="_view_previous_disbursement" type="object" 
+                        <button string="View Most Recent Disbursement" name="view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
                             invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
                     </div>
