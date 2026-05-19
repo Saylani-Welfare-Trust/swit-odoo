@@ -432,7 +432,8 @@ patch(PaymentScreen.prototype, {
                     }
                 }
         }
-        // --- WELFARE ---
+
+        // --- WELFARE DISBURSEMENT ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
             try {
                 const wfData = currentOrder.extra_data.welfare;
@@ -491,10 +492,132 @@ patch(PaymentScreen.prototype, {
                 );
             }
         }
-        
+
+        // --- NEW: WELFARE RETURN FUNCTIONALITY ---
+        // Check if any order line is a welfare return (negative quantity with welfare return flag)
+        if (currentOrder && currentOrder.orderLines) {
+            let welfareReturnLines = [];
+            
+            // Find welfare return lines in the order
+            for (const line of currentOrder.orderLines) {
+                const extras = line.get_extras ? line.get_extras() : {};
+                const quantity = line.get_quantity ? line.get_quantity() : line.quantity;
+                
+                // Check if this line is marked as welfare return
+                if (extras.is_welfare_return && quantity < 0) {
+                    welfareReturnLines.push({
+                        line: line,
+                        welfareNumber: extras.welfare_number,
+                        welfareLineId: extras.welfare_line_id,
+                        quantity: Math.abs(quantity),
+                        amount: Math.abs(line.get_price ? line.get_price() * quantity : line.price * quantity)
+                    });
+                }
+            }
+            
+            // Process welfare returns if found
+            if (welfareReturnLines.length > 0) {
+                try {
+                    for (const returnLine of welfareReturnLines) {
+                        if (returnLine.welfareLineId) {
+                            // Call the return method on welfare.line
+                            await this.env.services.orm.call(
+                                'welfare.line',
+                                'action_return_to_pos',
+                                [[returnLine.welfareLineId]],
+                                {
+                                    pos_order_id: currentOrder.id,
+                                    welfare_number: returnLine.welfareNumber
+                                }
+                            );
+                            
+                            this.env.services.notification.add(
+                                `Welfare ${returnLine.welfareNumber} return processed. Amount: ${returnLine.amount}`,
+                                { type: 'success' }
+                            );
+                        }
+                    }
+                } catch (error) {
+                    console.error("❌ [Welfare Return] Error:", error);
+                    this.env.services.notification.add(
+                        `Welfare return failed: ${error.message || 'Unknown error'}`,
+                        { type: 'danger' }
+                    );
+                    // Re-throw to prevent order validation if return fails
+                    throw error;
+                }
+            }
+        }
+
         // Continue with normal POS flow
         super.validateOrder(isForceValidate);
-    },
+
+
+
+
+    //     // --- WELFARE ---
+    //     if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+    //         try {
+    //             const wfData = currentOrder.extra_data.welfare;
+    //             const welfareId = wfData.welfare_id;
+    //             const isRecurring = wfData.is_recurring;
+
+    //             if (welfareId) {
+    //                 if (!isRecurring) {
+    //                     // One-time disbursement: Update welfare.state to 'disbursed'
+    //                     const welfareLineIds = wfData.welfare_line_ids || [];
+    //                     if (welfareLineIds.length > 0) {
+    //                         for (const line of welfareLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]]
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} one-time disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 } else {
+    //                     // Recurring disbursement: Update recurring lines to 'disbursed'
+    //                     const recurringLineIds = wfData.recurring_line_ids || [];
+                        
+    //                     if (recurringLineIds.length > 0) {
+    //                         for (const line of recurringLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.recurring.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]]
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} recurring disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("❌ [Welfare] Error updating state:", error);
+    //             this.env.services.notification.add(
+    //                 "Note: Welfare status not updated, but order will proceed",
+    //                 { type: 'warning' }
+    //             );
+    //         }
+    //     }
+        
+    //     // Continue with normal POS flow
+    //     super.validateOrder(isForceValidate);
+    // },
 
     /**
      * Process equipment lines and add products to POS order
