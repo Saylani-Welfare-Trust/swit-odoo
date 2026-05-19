@@ -7,6 +7,8 @@ class DonationHomeService(models.Model):
 
     qurbani_order_id = fields.Many2one('qurbani.order', string='Qurbani Order')
 
+    favor = fields.Char('Favor')
+
 
     def action_cancel(self):
         for line in self.qurbani_order_id.qurbani_order_line_ids:
@@ -43,6 +45,7 @@ class DonationHomeService(models.Model):
         # -------------------------
         dhs = self.env['donation.home.service'].create({
             'donor_id': data['donor_id'],
+            'favor': data['favor'],
             'address': data['address'],
             'service_charges': data['service_charges'],
             'donation_home_service_line_ids': product_lines,

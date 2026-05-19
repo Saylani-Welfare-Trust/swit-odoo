@@ -7,6 +7,8 @@ class DirectDeposit(models.Model):
 
     qurbani_order_id = fields.Many2one('qurbani.order', string="Qurbani Order")
 
+    favor = fields.Char('Favor')
+
 
     def action_not_clear(self):
         for line in self.qurbani_order_id.qurbani_order_line_ids:
@@ -26,6 +28,7 @@ class DirectDeposit(models.Model):
 
     @api.model
     def create_dd_record(self, data):
+        favor = data.get('favor')
         address = data.get('address')
         bank_id = data.get('bank_id')
         service_charges = data.get('service_charges')
@@ -49,6 +52,7 @@ class DirectDeposit(models.Model):
         # -------------------------
         dd = self.create({
             'donor_id': data['donor_id'],
+            'favor': favor,
             'bank_id': bank_id,
             'user_id': user_id,
             'address': address,

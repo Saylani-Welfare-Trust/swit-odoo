@@ -104,6 +104,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         if (this.action_type === 'dhs') {
             const payload ={
                 'donor_id': this.donor_id,
+                'favor': this.favor,
                 'address': this.state.address,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
@@ -347,6 +348,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
+                'favor': this.favor,
                 'bank_id': this.state.selected_bank_id,
                 'transaction_ref': this.state.transaction_ref,
                 'service_charges': this.state.service_charges,
