@@ -577,7 +577,7 @@ class WelfareLine(models.Model):
             self.write({
                 'state': 'return',
                 'return_date': fields.Datetime.now(),
-                'return_receipt_id': return_receipt.id if return_receipt else False,
+                # 'return_receipt_id': return_receipt.id if return_receipt else False,
                 'returned_by': self.env.user.id,
             })
             
