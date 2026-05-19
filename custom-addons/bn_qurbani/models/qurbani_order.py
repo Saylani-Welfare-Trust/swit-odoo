@@ -390,28 +390,23 @@ class QurbaniOrder(models.Model):
                         'reason': f"Distribution ID: {line.distribution_id.id}"
                     })
 
-                    # --- Build search domain (commented restrictive fields can be uncommented later) ---
+                    # --- Search for an UNUSED distribution record ---
                     search_domain = [
-                        # Uncomment these lines when you want stricter matching:
-                        # ('day_id', '=', line.day_id.id),
-                        # ('hijri_id', '=', line.hijri_id.id),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
-                        # ('distribution_location_id', '=', line.distribution_id.id),
-                        # ('qurbani_order_no', '=', False),
+                        ('qurbani_order_no', '=', False),   # CRITICAL: only unused records
+                        # Uncomment these fields for stricter matching (recommended):
+                        ('day_id', '=', line.day_id.id),
+                        ('hijri_id', '=', line.hijri_id.id),
+                        ('distribution_location_id', '=', line.distribution_id.id),
                     ]
-                    # If you uncomment the above, also uncomment the corresponding lines in the search below.
-
                     if 'cow' in product_name:
-                        # Search for an unused cow distribution record
                         qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
                         if qurbani_cow_distribution:
-                            # Mark it as used
                             qurbani_cow_distribution.write({
                                 'qurbani_order_no': line.qurbani_order_id.name,
                                 'qurbani_order_line_no': line.name,
                                 'hissa_name': line.hissa_name,
                                 'product_id': line.product_id.id,
-                                # Optionally set start/end times from line if needed:
                                 'start_time': line.start_time,
                                 'end_time': line.end_time,
                                 'distribution_location_id': line.distribution_id.id,
@@ -433,10 +428,11 @@ class QurbaniOrder(models.Model):
                                 'status': 'Error',
                                 'reason': f"No unused cow distribution matching domain {search_domain}. "
                                         f"Total unused distributions for this slaughter location: {len(all_unused)}. "
-                                        f"Distribution ID on API line: {line.distribution_id.id}. "
-                                        f"Consider uncommenting more restrictive fields if needed."
+                                        f"Distribution ID from API line: {line.distribution_id.id}. "
+                                        f"Consider creating more distribution records."
                             })
                     elif 'goat' in product_name:
+                        # Similar fix for goat distribution
                         qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search(search_domain, limit=1)
                         if qurbani_goat_distribution:
                             qurbani_goat_distribution.write({
@@ -466,6 +462,7 @@ class QurbaniOrder(models.Model):
                         'status': 'Info',
                         'reason': "No distribution_id on this line. Only slaughter linking performed."
                     })
+
 
             return {
                 "status": "success",
