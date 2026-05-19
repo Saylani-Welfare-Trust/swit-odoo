@@ -188,7 +188,12 @@ class Welfare(models.Model):
     driving_license = fields.Selection(selection=general_selection, string="Driving License")
 
     # Request Details
-    loan_request_amount = fields.Float('Loan Request Amount')
+    # loan_request_amount = fields.Float('Loan Request Amount')
+
+    loan_request_amount = fields.Float(
+        'Loan Request Amount',
+        required=True
+    )
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
