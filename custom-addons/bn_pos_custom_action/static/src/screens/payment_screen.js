@@ -545,7 +545,7 @@ patch(PaymentScreen.prototype, {
         
     //     // Continue with normal POS flow
     //     super.validateOrder(isForceValidate);
-    // },
+    },
 
     /**
      * Process equipment lines and add products to POS order
