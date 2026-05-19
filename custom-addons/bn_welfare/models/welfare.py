@@ -956,6 +956,16 @@ class Welfare(models.Model):
     def action_move_to_member(self):
         """Member Approval - No limit check here"""
         for record in self:
+            # Check if amount exceeds HOD limit
+            within_limit = record._check_amount_within_hod_limit()
+            
+            if not within_limit:
+                # Amount exceeds HOD limit, add warning/note
+                record.message_post(body="""
+                    <b>⚠️ Amount Limit Notice</b><br/>
+                    Request amount ({}) exceeds HOD limit. 
+                    This request will require Member Approval instead of HOD Approval.
+                """.format(record.loan_request_amount))
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             
@@ -1048,16 +1058,7 @@ class Welfare(models.Model):
     def action_committee_approval(self):
         """Committee Approval - Check limits here"""
         for record in self:
-            # Check if amount exceeds HOD limit
-            within_limit = record._check_amount_within_hod_limit()
-            
-            if not within_limit:
-                # Amount exceeds HOD limit, add warning/note
-                record.message_post(body="""
-                    <b>⚠️ Amount Limit Notice</b><br/>
-                    Request amount ({}) exceeds HOD limit. 
-                    This request will require Member Approval instead of HOD Approval.
-                """.format(record.loan_request_amount))
+
             
             # Your existing committee approval validations
             if not record.committee_remarks:
