@@ -361,7 +361,7 @@ class QurbaniOrder(models.Model):
                 'donor_id': donor_id or False,
                 'currency_id': currency.id,
                 'remarks': donation_record.get('remarks', ''),
-                'total_amount': float(donation_record.get('total_amount', 0.0)),
+                'amount': float(donation_record.get('total_amount', 0.0)),
                 'qurbani_order_line_ids': product_lines,
                 'pos_qurbani_order': False,
                 'api_response_id': donation_record.get('import_id', ''),
