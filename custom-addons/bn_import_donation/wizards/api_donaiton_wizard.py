@@ -1063,7 +1063,7 @@ class APIDonationWizard(models.TransientModel):
                         else:
                             # Try to create a new one
                             default_center = self.env['stock.location'].search([
-                                ('name', '=', 'SDC/Karachi/Online / Website')
+                                ('name', 'ilike', 'SDC/Karachi/Online / Website')
                             ], limit=1)
                             if default_center:
                                 distribution_rec = self.env['web.qurbani.distribution.center'].create({
