@@ -111,7 +111,7 @@ class QurbaniOrder(models.Model):
             # else:
             #     raise ValidationError(f"Product {product.name} not identified as cow/goat")
 
-            slaughter_location = self.env['stock.location'].search([], limit=1, order='id desc',)
+            slaughter_location = self.env['web.qurbani.slaughter.center'].search([], limit=1, order='id desc',)
             if not slaughter_location:
                 raise ValidationError("Slaughter location 'SDC/Karachi/Online Head Office' not found")
 
@@ -124,7 +124,7 @@ class QurbaniOrder(models.Model):
             demand_domain = [
                 ('day_id', '=', day_id),
                 ('hijri_id', '=', hijri_id),
-                ('slaughter_location_id', '=', slaughter_location.id),
+                ('slaughter_location_id', '=', slaughter_location.slaughter_center_id.id),
                 ('remaining_hissa', '>', 0),
                 # ('inventory_product_id', '=', product.id)  # ensure product is set on demand
             ]
@@ -287,6 +287,7 @@ class QurbaniOrder(models.Model):
                 })
 
             # Build order lines – same as before (unchanged)
+            # Build order lines – with safe handling of missing city/branch
             product_lines = []
             for line_data in order_lines_data:
                 demand = line_data['demand']
@@ -294,9 +295,37 @@ class QurbaniOrder(models.Model):
                 city_id = api_line.city_id.id if api_line.city_id else False
                 if not city_id and demand.slaughter_location_id.location_id:
                     city_id = demand.slaughter_location_id.location_id.id
-                distribution_location_id = self.env['stock.location'].search(
-                    [('complete_name', 'ilike', str(line_data['city_id'].name + '/' + line_data['branch']))], limit=1
-                ).id
+                
+                # ------------------------------------------------------------
+                # Safe distribution_location_id: only if city AND branch exist
+                # ------------------------------------------------------------
+                distribution_location_id = False
+                if city_id and line_data['branch']:
+                    # city_id is an integer, we need the name from the record
+                    city_record = self.env['stock.location'].browse(city_id)
+                    if city_record.exists():
+                        location_name = f"{city_record.name}/{line_data['branch']}"
+                        distribution_location_id = self.env['stock.location'].search(
+                            [('complete_name', 'ilike', location_name)], limit=1
+                        ).id
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"Distribution location search",
+                            'status': 'Info',
+                            'reason': f"City: {city_record.name}, Branch: {line_data['branch']} → Found ID: {distribution_location_id}"
+                        })
+                    else:
+                        self.env['fetch.qurbani.log'].create({
+                            'name': f"City missing or invalid",
+                            'status': 'Warning',
+                            'reason': f"city_id {city_id} does not exist. Skipping distribution location."
+                        })
+                else:
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"Distribution location skipped",
+                        'status': 'Info',
+                        'reason': f"No city or branch provided. city_id={city_id}, branch='{line_data['branch']}'"
+                    })
+                
                 vals = {
                     'product_id': line_data['product_id'],
                     'quantity': line_data['quantity'],
@@ -305,7 +334,7 @@ class QurbaniOrder(models.Model):
                     'hijri_id': demand.hijri_id.id,
                     'city_id': city_id,
                     'branch': line_data['branch'],
-                    'distribution_id': distribution_location_id,
+                    'distribution_id': distribution_location_id,   # will be False if missing
                     'slaughter_id': demand.slaughter_location_id.id,
                     'hissa_name': line_data['hissa_name'],
                     'start_time': demand.start_time,
@@ -314,7 +343,6 @@ class QurbaniOrder(models.Model):
                     'slaughter_end_time': convert_to_24hr(demand.end_time),
                 }
                 product_lines.append((0, 0, vals))
-
             # Donor and currency
             donor_id = donation_record.get('donor_id')
             if isinstance(donor_id, tuple):
