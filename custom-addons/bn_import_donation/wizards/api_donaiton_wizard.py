@@ -938,193 +938,138 @@ class APIDonationWizard(models.TransientModel):
                     'donation_no': it.get('donationNo', 0),
                     'is_priced_item': it.get('isPricedItem', False),
                 })
-            else:   # qurbani == True
+            else:
+                # Normal distribution case (fulfillment != 'donate')
+                city_name = donor.get('qurbaniCity', '')
+                branch = it.get('qurbaniBranch', '')
                 self.create_fetch_log(
                     history.id,
-                    f"Qurbani Processing - Start",
+                    f"Distribution Data from API",
                     "Qurbani",
-                    f"Donation ID: {info.get('_id')}, Item: {it}"
+                    f"City from donor: '{city_name}', Branch from item: '{branch}'"
                 )
 
                 # -----------------------------------------------------------------
-                # 1. Determine fulfillment type
-                # -----------------------------------------------------------------
-                fulfillment = it.get('qurbaniFulfillment', '')
-                self.create_fetch_log(
-                    history.id,
-                    f"Qurbani Fulfillment Check",
-                    "Qurbani",
-                    f"Fulfillment value: '{fulfillment}'"
-                )
-
-                # -----------------------------------------------------------------
-                # 2. Product resolution (same for all)
-                # -----------------------------------------------------------------
-                product = False
-                product_key = (
-                    f"{info.get('donationType', '')}"
-                    f"{item_name}"
-                    f"{types_name}"
-                ).strip().lower()
-                config = all_data['gateway_product_lines'].get(product_key)
-                if config:
-                    product = self.env['product.product'].browse(config['product_id'])
-                    self.create_fetch_log(
-                        history.id,
-                        f"Product Resolved",
-                        "Qurbani",
-                        f"Product Key: {product_key} → Product ID: {product.id if product else None}"
-                    )
-                else:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Product NOT Resolved",
-                        "Error",
-                        f"Product Key: {product_key} not found in gateway_product_lines"
-                    )
-
-                # -----------------------------------------------------------------
-                # 3. Hijri / Day / Quantity / Amount (common)
-                # -----------------------------------------------------------------
-                hijri = self.env['hijri'].search([], order="id desc", limit=1)
-                day_name = it.get('day', '')
-                day = self.env['qurbani.day'].search([('web_qurbani_day', '=', day_name)], limit=1)
-                quantity = int(it.get('qty', 1) or 1)
-                amount = float(it.get('price', 0) or 0)
-                share_names = it.get('share_names', [donor.get('name', '')])
-                if not share_names:
-                    share_names = [donor.get('name', '')]
-
-                self.create_fetch_log(
-                    history.id,
-                    f"Qurbani Base Data",
-                    "Qurbani",
-                    f"Hijri ID: {hijri.id if hijri else None}, Day: {day_name} → ID {day.id if day else None}, Qty: {quantity}, Amount: {amount}, Shares: {share_names}"
-                )
-
-                # -----------------------------------------------------------------
-                # 4. City / Branch / Distribution Center (ONLY if fulfillment != 'donate')
+                # City lookup with detailed logging
                 # -----------------------------------------------------------------
                 city = False
-                branch = ''
-                distribution_id = False
-
-                if fulfillment == 'donate':
+                if city_name:
+                    # Use exact match (=) not ilike to avoid false positives
+                    city = self.env['stock.location'].search([
+                        ('name', '=', city_name),
+                        ('usage', '=', 'internal')
+                    ], limit=1)
                     self.create_fetch_log(
                         history.id,
-                        f"Skipping Distribution Data",
+                        f"City Lookup Result",
                         "Qurbani",
-                        f"Fulfillment = 'donate' → city, branch, distribution center will be left empty (NULL)."
+                        f"Searching stock.location with name='{city_name}', usage='internal' → Found: {city.name if city else 'NOT FOUND'} (ID: {city.id if city else 'None'})"
                     )
                 else:
-                    # Normal distribution case
-                    city_name = donor.get('qurbaniCity', '')
-                    branch = it.get('qurbaniBranch', '')
                     self.create_fetch_log(
                         history.id,
-                        f"Distribution Data from API",
-                        "Qurbani",
-                        f"City from donor: '{city_name}', Branch from item: '{branch}'"
+                        f"City Missing",
+                        "Warning",
+                        f"qurbaniCity is empty – cannot determine distribution location."
                     )
 
-                    if city_name:
-                        city = self.env['stock.location'].search([
-                            ('name', 'ilike', city_name),
-                            ('usage', '=', 'internal')
-                        ], limit=1)
+                # -----------------------------------------------------------------
+                # Distribution center lookup/creation
+                # -----------------------------------------------------------------
+                distribution_id = False
+                if city or branch:
+                    distribution_name = f"{city.name if city else ''}/{branch}"
+                    self.create_fetch_log(
+                        history.id,
+                        f"Distribution Center Name",
+                        "Qurbani",
+                        f"Computed name: '{distribution_name}'"
+                    )
+
+                    # Try to find existing mapping
+                    distribution_rec = self.env['web.qurbani.distribution.center'].search([
+                        ('name', '=', distribution_name)
+                    ], limit=1)
+                    if distribution_rec:
+                        distribution_id = distribution_rec.distribution_center_id.id
                         self.create_fetch_log(
                             history.id,
-                            f"City Lookup Result",
+                            f"Distribution Center Found",
                             "Qurbani",
-                            f"City '{city_name}' → Location ID: {city.id if city else 'NOT FOUND'}"
+                            f"Existing record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
                         )
                     else:
+                        # -----------------------------------------------------------------
+                        # Default stock location search – IMPROVED with exact match and logging
+                        # -----------------------------------------------------------------
+                        default_center_name = "SDC/Karachi/Online / Website"
                         self.create_fetch_log(
                             history.id,
-                            f"City Missing",
-                            "Warning",
-                            f"qurbaniCity is empty – distribution center cannot be created."
+                            f"Searching for Default Stock Location",
+                            "Qurbani",
+                            f"Looking for stock.location with name='{default_center_name}' and usage='internal'"
                         )
-
-                    # Build distribution name and try to find/create distribution center
-                    distribution_name = f"{city.name if city else ''}/{branch}"
-                    if city or branch:
-                        distribution_rec = self.env['web.qurbani.distribution.center'].search([
-                            ('name', '=', distribution_name)
+                        default_center = self.env['stock.location'].search([
+                            ('name', '=', default_center_name),
+                            ('usage', '=', 'internal')
                         ], limit=1)
-                        if distribution_rec:
+                        
+                        if default_center:
+                            self.create_fetch_log(
+                                history.id,
+                                f"Default Stock Location Found",
+                                "Qurbani",
+                                f"Found: {default_center.name} (ID {default_center.id})"
+                            )
+                            # Create new distribution center mapping
+                            distribution_rec = self.env['web.qurbani.distribution.center'].create({
+                                'name': distribution_name,
+                                'distribution_center_id': default_center.id,
+                            })
                             distribution_id = distribution_rec.distribution_center_id.id
                             self.create_fetch_log(
                                 history.id,
-                                f"Distribution Center Found",
+                                f"Distribution Center CREATED",
                                 "Qurbani",
-                                f"Existing record: {distribution_rec.name} → Center ID: {distribution_id}"
+                                f"New web.qurbani.distribution.center: ID {distribution_rec.id}, Name '{distribution_rec.name}', Mapped to stock.location ID {distribution_id}"
                             )
                         else:
-                            # Try to create a new one
-                            default_center = self.env['stock.location'].search([
-                                ('name', 'ilike', 'SDC/Karachi/Online / Website')
+                            # Log all stock locations with similar names for debugging
+                            similar_locations = self.env['stock.location'].search([
+                                ('name', 'ilike', 'SDC/Karachi')
+                            ])
+                            similar_names = [loc.name for loc in similar_locations]
+                            self.create_fetch_log(
+                                history.id,
+                                f"Default Stock Location NOT FOUND",
+                                "Error",
+                                f"Could not find stock.location with exact name '{default_center_name}'. "
+                                f"Similar locations found: {similar_names if similar_names else 'None'}. "
+                                f"Please verify the location exists in Odoo."
+                            )
+                            # Optionally, you could fallback to the first internal location
+                            fallback_center = self.env['stock.location'].search([
+                                ('usage', '=', 'internal')
                             ], limit=1)
-                            if default_center:
+                            if fallback_center:
+                                self.create_fetch_log(
+                                    history.id,
+                                    f"Using Fallback Stock Location",
+                                    "Warning",
+                                    f"Falling back to first internal location: {fallback_center.name} (ID {fallback_center.id})"
+                                )
                                 distribution_rec = self.env['web.qurbani.distribution.center'].create({
                                     'name': distribution_name,
-                                    'distribution_center_id': default_center.id,
+                                    'distribution_center_id': fallback_center.id,
                                 })
                                 distribution_id = distribution_rec.distribution_center_id.id
-                                self.create_fetch_log(
-                                    history.id,
-                                    f"Distribution Center CREATED",
-                                    "Qurbani",
-                                    f"New record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
-                                )
-                            else:
-                                self.create_fetch_log(
-                                    history.id,
-                                    f"Cannot Create Distribution Center",
-                                    "Error",
-                                    "Default stock.location 'SDC/Karachi/Online / Website' not found."
-                                )
-                    else:
-                        self.create_fetch_log(
-                            history.id,
-                            f"Distribution Center Skipped",
-                            "Qurbani",
-                            "Both city and branch are empty – no distribution center created."
-                        )
-
-                # -----------------------------------------------------------------
-                # 5. Create qurbani order lines
-                # -----------------------------------------------------------------
-                for idx in range(quantity):
-                    share_name = share_names[idx % len(share_names)]
-                    hissa_name = f"{idx + 1}. {share_name}" if quantity > 1 else share_name
-
-                    line_vals = {
-                        'product_id': product.id if product else False,
-                        'quantity': 1,
-                        'amount': amount,
-                        'day_id': day.id if day else False,
-                        'hijri_id': hijri.id if hijri else False,
-                        'city_id': city.id if city else False,
-                        'hissa_name': hissa_name,
-                        'distribution_id': distribution_id,
-                        'branch': branch,
-                    }
-                    order_lines.append([0, 0, line_vals])
-
+                else:
                     self.create_fetch_log(
                         history.id,
-                        f"Qurbani Line Created",
+                        f"Distribution Center Skipped",
                         "Qurbani",
-                        f"Line {idx+1}/{quantity}: {line_vals}"
-                    )
-
-                self.create_fetch_log(
-                    history.id,
-                    f"Qurbani Processing - End",
-                    "Qurbani",
-                    f"Total lines generated: {len(order_lines)} for donation {info.get('_id')}"
-                )
+                        "Both city and branch are empty – no distribution center created."
+                    )            
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         # raise ValidationError(str(info))
         # Build donation values
