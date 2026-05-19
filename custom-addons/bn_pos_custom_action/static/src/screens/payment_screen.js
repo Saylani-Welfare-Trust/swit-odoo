@@ -651,4 +651,56 @@ patch(PaymentScreen.prototype, {
         
         return equipmentLines;
     },
+        // ========== ADD RETURN LINES TO ORDER ==========
+    async addWelfareReturn() {
+        const welfareNumber = prompt("Enter Welfare Form Number:");
+        if (!welfareNumber) return;
+        
+        try {
+            const lines = await this.env.services.orm.call(
+                'welfare.line',
+                'search_read',
+                [[
+                    ['welfare_id.name', '=', welfareNumber],
+                    ['payment_type', '=', 'assigned_officer'],
+                    ['state', '=', 'collected']
+                ]],
+                { fields: ['id', 'product_id', 'total_amount', 'quantity'] }
+            );
+            
+            if (lines.length === 0) {
+                this.env.services.notification.add(
+                    `No eligible collected Marfat lines found for ${welfareNumber}`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+            
+            for (const line of lines) {
+                const product = this.env.pos.db.product_by_id(line.product_id[0]);
+                if (product) {
+                    this.currentOrder.add_product(product, {
+                        quantity: line.quantity,  // POSITIVE quantity
+                        price: line.total_amount / line.quantity,
+                        extras: {
+                            is_welfare_return: true,
+                            welfare_number: welfareNumber,
+                            welfare_line_id: line.id
+                        }
+                    });
+                }
+            }
+            
+            this.env.services.notification.add(
+                `Added ${lines.length} return line(s) for ${welfareNumber}. Total: ${lines.reduce((sum, l) => sum + l.total_amount, 0)}`,
+                { type: 'success' }
+            );
+        } catch (error) {
+            console.error("Error adding return:", error);
+            this.env.services.notification.add(
+                `Error: ${error.message}`,
+                { type: 'danger' }
+            );
+        }
+    },
 });
