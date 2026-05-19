@@ -301,24 +301,11 @@ class QurbaniOrder(models.Model):
                 # ------------------------------------------------------------
                 distribution_location_id = False
                 if city_id and line_data['branch']:
-                    # city_id is an integer, we need the name from the record
-                    city_record = self.env['stock.location'].browse(city_id)
-                    if city_record.exists():
-                        location_name = f"{city_record.name}/{line_data['branch']}"
-                        distribution_location_id = self.env['stock.location'].search(
-                            [('complete_name', 'ilike', location_name)], limit=1
-                        ).id
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"Distribution location search",
-                            'status': 'Info',
-                            'reason': f"City: {city_record.name}, Branch: {line_data['branch']} → Found ID: {distribution_location_id}"
-                        })
-                    else:
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"City missing or invalid",
-                            'status': 'Warning',
-                            'reason': f"city_id {city_id} does not exist. Skipping distribution location."
-                        })
+                    
+                    distribution_location_id = self.env['web.qurbani.distribution.center'].search(
+                        [('name', '=', api_line.distribution_id.complete_name)], limit=1
+                    ).distribution_center_id.id if api_line.distribution_id else False
+
                 else:
                     self.env['fetch.qurbani.log'].create({
                         'name': f"Distribution location skipped",
