@@ -333,7 +333,7 @@ class QurbaniOrder(models.Model):
                     'day_id': demand.day_id.id,
                     'hijri_id': demand.hijri_id.id,
                     'city_id': city_id,
-                    'branch': line_data['branch'],
+                    # 'branch': line_data['branch'],
                     'distribution_id': distribution_location_id,   # will be False if missing
                     'slaughter_id': demand.slaughter_location_id.id,
                     'hissa_name': line_data['hissa_name'],
