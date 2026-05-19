@@ -1229,52 +1229,54 @@ class Welfare(models.Model):
 
     def action_return_to_pos(self):
         """
-        Delegate return action to all eligible welfare lines
+        Return all collected Assigned Officer (Marfat) lines for this welfare
+        This method is called from the welfare form view button
         """
         self.ensure_one()
         
-        # Get all eligible lines (collected + assigned_officer)
+        # Find all eligible lines
         eligible_lines = self.welfare_line_ids.filtered(
             lambda l: l.payment_type == 'assigned_officer' and l.state == 'collected'
         )
         
         if not eligible_lines:
             raise ValidationError(_(
-                "No eligible lines found for return.\n\n"
-                "Only welfare lines with:\n"
-                "- Payment Type: 'Assigned Officer (Marfat)'\n"
-                "- State: 'Collected'\n"
-                "can be returned."
+                "No eligible lines found to return.\n\n"
+                "Requirements:\n"
+                "• Payment Type: Assigned Officer (Marfat)\n"
+                "• Current State: Collected"
             ))
         
-        # Process return for each eligible line
-        results = []
+        # Process returns
+        success_count = 0
+        total_amount = 0
         errors = []
         
         for line in eligible_lines:
             try:
                 line.action_return_to_pos()
-                results.append(f"✓ {line.product_id.name}: {line.total_amount}")
+                success_count += 1
+                total_amount += line.total_amount
             except Exception as e:
-                errors.append(f"✗ {line.product_id.name}: {str(e)}")
+                errors.append(f"{line.product_id.name}: {str(e)}")
         
         # Show results
-        message = ""
-        if results:
-            message += "Successfully returned:\n" + "\n".join(results)
         if errors:
-            message += "\n\nErrors:\n" + "\n".join(errors)
+            error_message = "\n".join(errors)
+            raise ValidationError(_(
+                "Partial return completed.\n\n"
+                "Successfully returned: %s line(s) totaling %s\n\n"
+                "Errors:\n%s"
+            ) % (success_count, total_amount, error_message))
         
-        if not results and not errors:
-            message = "No lines were processed."
-        
+        # Show success notification
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Return Results'),
-                'message': message,
-                'type': 'success' if results and not errors else 'warning',
-                'sticky': True,
+                'title': _('Return Successful'),
+                'message': _('Successfully returned %s line(s) totaling %s') % (success_count, total_amount),
+                'type': 'success',
+                'sticky': False,
             }
         }
