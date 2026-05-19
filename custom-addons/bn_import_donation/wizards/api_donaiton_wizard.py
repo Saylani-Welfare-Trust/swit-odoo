@@ -1205,8 +1205,7 @@ class APIDonationWizard(models.TransientModel):
             'fetch_history_id': history.id,
             'qurbani': True if info.get('qurbani') == True else False,
         }
-        if donation_vals.get('qurbani') == True :
-            raise ValidationError(str(donation_vals))
+
         # Set donor_id - either from cache, from new partner, or default
         if donor_id:
             donation_vals['donor_id'] = donor_id
