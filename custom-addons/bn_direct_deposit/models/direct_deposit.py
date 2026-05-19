@@ -135,10 +135,6 @@ class DirectDeposit(models.Model):
         dd.calculate_amount()
         dd.set_remarks()
 
-        qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
-
-        qurbani_order_id = qurbani_details.get('id')
-
         return {
             "status": "success",
             "id": dd.id
@@ -268,19 +264,6 @@ class DirectDeposit(models.Model):
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
     def action_not_clear(self):
-        for line in self.qurbani_order_id.qurbani_order_line_ids:
-            distribution_schedule = self.env['distribution.schedule'].search([('day_id', '=', line.day_id.id), ('hijri_id', '=', line.hijri_id.id), ('pos_product_ids', 'in', [line.product_id.id]), ('start_time', '=', line.start_time), ('end_time', '=', line.end_time), ('location_id', '=', line.distribution_id.id)])
-
-            if distribution_schedule:
-                slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].search([('day_id', '=', line.day_id.id), ('hijri_id', '=', line.hijri_id.id), ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id), ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time), ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)])
-
-                if slaughter_slot_demand:
-                    slaughter_slot_demand.booked_hissa -= line.quantity
-                    slaughter_slot_demand.current_hissa -= line.quantity
-                    slaughter_slot_demand.remaining_hissa += line.quantity
-            
-            line.unlink()
-
         self.state = 'not_clear'
 
     def action_transfer_to_dhs(self):
