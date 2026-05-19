@@ -126,7 +126,7 @@ patch(ActionScreen.prototype, {
 
             // Add return lines to order
             for (const line of lines) {
-                const product = this.pos.db.product_by_id(line.product_id[0]);
+                const product = this.pos.db.get_product_by_id(line.product_id[0]);
                 if (product) {
                     this.pos.get_order().add_product(product, {
                         quantity: line.quantity,
