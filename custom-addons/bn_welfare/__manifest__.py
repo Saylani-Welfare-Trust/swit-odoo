@@ -25,6 +25,7 @@
         'reports/report_welfare_collection_document.xml',
         'wizards/check_marfat_shift.xml',
         'views/welfare_limit_view.xml',
+        'wizards/wizard_view.xml',
     ],
     'auto_install': False,
     'application': True,
