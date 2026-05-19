@@ -435,11 +435,11 @@ class QurbaniOrder(models.Model):
                     if 'cow' in product_name:
                         # Cow distribution search (only if distribution_id exists)
                         search_domain = [
-                            ('day_id', '=', line.day_id.id),
-                            ('hijri_id', '=', line.hijri_id.id),
+                            # ('day_id', '=', line.day_id.id),
+                            # ('hijri_id', '=', line.hijri_id.id),
                             ('slaughter_location_id', '=', line.slaughter_id.id),
-                            ('distribution_location_id', '=', line.distribution_id.id),
-                            ('qurbani_order_no', '=', False),
+                            # ('distribution_location_id', '=', line.distribution_id.id),
+                            # ('qurbani_order_no', '=', False),
                         ]
                         qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
                         
