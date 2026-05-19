@@ -70,21 +70,21 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
         // ========== WELFARE RETURN ==========
         if (this.props.action_type === "wf_return") {
-            // Return the welfare number directly (use this.state.record_number, not inputValue)
+            // Return the welfare number and close the popup
             this.props.resolve({ confirmed: true, payload: this.state.record_number });
-            this.close();
+            this.cancel();  // Use cancel() instead of close()
             return;
         } 
         
         // ========== WELFARE DISBURSEMENT ==========
         else if (this.props.action_type === "wf") {
-            // Existing logic for disbursement
             selectedOrder.set_receive_voucher(true);
             await this.processWelfareRecord(selectedOrder);
             this.props.resolve({ confirmed: true, payload: this.state.record_number });
-            this.close();
+            this.cancel();  // Use cancel() instead of close()
             return;
         }
+        
         
         // Handle different action types
         if (this.action_type === 'qb') {
