@@ -1238,13 +1238,13 @@ class Welfare(models.Model):
         self.ensure_one()
         
         # Validation checks
-        if self.payment_type != 'assigned_officer':
+        if self.welfare_line_ids.payment_type != 'assigned_officer':
             raise ValidationError(_(
                 "Return is only allowed for 'Assigned Officer (Marfat)' payment type. "
                 "Current payment type: %s"
             ) % self.get_payment_type_display())
         
-        if self.state != 'collected':
+        if self.welfare_line_ids.state != 'collected':
             raise ValidationError(_(
                 "Return is only allowed for lines in 'Collected' state. "
                 "Current state: %s"
