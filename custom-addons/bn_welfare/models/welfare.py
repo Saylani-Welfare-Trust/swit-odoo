@@ -1227,3 +1227,54 @@ class Welfare(models.Model):
 
 
 
+    def action_return_to_pos(self):
+        """
+        Delegate return action to all eligible welfare lines
+        """
+        self.ensure_one()
+        
+        # Get all eligible lines (collected + assigned_officer)
+        eligible_lines = self.welfare_line_ids.filtered(
+            lambda l: l.payment_type == 'assigned_officer' and l.state == 'collected'
+        )
+        
+        if not eligible_lines:
+            raise ValidationError(_(
+                "No eligible lines found for return.\n\n"
+                "Only welfare lines with:\n"
+                "- Payment Type: 'Assigned Officer (Marfat)'\n"
+                "- State: 'Collected'\n"
+                "can be returned."
+            ))
+        
+        # Process return for each eligible line
+        results = []
+        errors = []
+        
+        for line in eligible_lines:
+            try:
+                line.action_return_to_pos()
+                results.append(f"✓ {line.product_id.name}: {line.total_amount}")
+            except Exception as e:
+                errors.append(f"✗ {line.product_id.name}: {str(e)}")
+        
+        # Show results
+        message = ""
+        if results:
+            message += "Successfully returned:\n" + "\n".join(results)
+        if errors:
+            message += "\n\nErrors:\n" + "\n".join(errors)
+        
+        if not results and not errors:
+            message = "No lines were processed."
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Return Results'),
+                'message': message,
+                'type': 'success' if results and not errors else 'warning',
+                'sticky': True,
+            }
+        }
