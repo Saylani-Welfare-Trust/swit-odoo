@@ -432,7 +432,7 @@ patch(PaymentScreen.prototype, {
                     }
                 }
         }
-        // --- WELFARE DISBURSEMENT ---
+        // --- WELFARE ---
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
             try {
                 const wfData = currentOrder.extra_data.welfare;
@@ -441,9 +441,11 @@ patch(PaymentScreen.prototype, {
 
                 if (welfareId) {
                     if (!isRecurring) {
+                        // One-time disbursement: Update welfare.state to 'disbursed'
                         const welfareLineIds = wfData.welfare_line_ids || [];
                         if (welfareLineIds.length > 0) {
                             for (const line of welfareLineIds) {
+                                // Call the server-side action_disbursed method if needed
                                 await this.env.services.orm.call(
                                     'welfare.line',
                                     'action_disbursed',
@@ -451,15 +453,20 @@ patch(PaymentScreen.prototype, {
                                 );
                             }
                         }
+
                         currentOrder.set_source_document(wfData.record_number);
+
                         this.env.services.notification.add(
                             `Welfare ${wfData.record_number} one-time disbursement completed`,
                             { type: 'success' }
                         );
                     } else {
+                        // Recurring disbursement: Update recurring lines to 'disbursed'
                         const recurringLineIds = wfData.recurring_line_ids || [];
+                        
                         if (recurringLineIds.length > 0) {
                             for (const line of recurringLineIds) {
+                                // Call the server-side action_disbursed method if needed
                                 await this.env.services.orm.call(
                                     'welfare.recurring.line',
                                     'action_disbursed',
@@ -467,7 +474,9 @@ patch(PaymentScreen.prototype, {
                                 );
                             }
                         }
+
                         currentOrder.set_source_document(wfData.record_number);
+
                         this.env.services.notification.add(
                             `Welfare ${wfData.record_number} recurring disbursement completed`,
                             { type: 'success' }
@@ -482,69 +491,10 @@ patch(PaymentScreen.prototype, {
                 );
             }
         }
-    //     // --- WELFARE ---
-    //     if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
-    //         try {
-    //             const wfData = currentOrder.extra_data.welfare;
-    //             const welfareId = wfData.welfare_id;
-    //             const isRecurring = wfData.is_recurring;
-
-    //             if (welfareId) {
-    //                 if (!isRecurring) {
-    //                     // One-time disbursement: Update welfare.state to 'disbursed'
-    //                     const welfareLineIds = wfData.welfare_line_ids || [];
-    //                     if (welfareLineIds.length > 0) {
-    //                         for (const line of welfareLineIds) {
-    //                             // Call the server-side action_disbursed method if needed
-    //                             await this.env.services.orm.call(
-    //                                 'welfare.line',
-    //                                 'action_disbursed',
-    //                                 [[line.id]] 
-    //                             );
-    //                         }
-    //                     }
-
-    //                     currentOrder.set_source_document(wfData.record_number);
-
-    //                     this.env.services.notification.add(
-    //                         `Welfare ${wfData.record_number} one-time disbursement completed`,
-    //                         { type: 'success' }
-    //                     );
-    //                 } else {
-    //                     // Recurring disbursement: Update recurring lines to 'disbursed'
-    //                     const recurringLineIds = wfData.recurring_line_ids || [];
-                        
-    //                     if (recurringLineIds.length > 0) {
-    //                         for (const line of recurringLineIds) {
-    //                             // Call the server-side action_disbursed method if needed
-    //                             await this.env.services.orm.call(
-    //                                 'welfare.recurring.line',
-    //                                 'action_disbursed',
-    //                                 [[line.id]]
-    //                             );
-    //                         }
-    //                     }
-
-    //                     currentOrder.set_source_document(wfData.record_number);
-
-    //                     this.env.services.notification.add(
-    //                         `Welfare ${wfData.record_number} recurring disbursement completed`,
-    //                         { type: 'success' }
-    //                     );
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error("❌ [Welfare] Error updating state:", error);
-    //             this.env.services.notification.add(
-    //                 "Note: Welfare status not updated, but order will proceed",
-    //                 { type: 'warning' }
-    //             );
-    //         }
-    //     }
         
-    //     // Continue with normal POS flow
-    //     super.validateOrder(isForceValidate);
-    // },
+        // Continue with normal POS flow
+        super.validateOrder(isForceValidate);
+    },
 
     /**
      * Process equipment lines and add products to POS order
