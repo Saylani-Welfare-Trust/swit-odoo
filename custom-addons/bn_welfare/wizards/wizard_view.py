@@ -8,7 +8,6 @@ class WelfareFieldsWizard(models.TransientModel):
     welfare_id = fields.Many2one('welfare', string='Welfare Record', required=True)
     
     # Basic Information
-    action_view_previous_disbursement = fields.Many2one('welfare', string='Previous Disbursement')
     name = fields.Char('Name')
     cnic_no = fields.Char('CNIC No.')
     father_name = fields.Char('Father Name')
@@ -436,3 +435,5 @@ class WelfareFieldsWizard(models.TransientModel):
     
     def action_cancel(self):
         return {'type': 'ir.actions.act_window_close'}
+    def _view_previous_disbursement(self):
+        self.welfare_id.action_view_previous_disbursement()
