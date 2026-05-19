@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 class DirectDeposit(models.Model):
     _inherit = 'direct.deposit'
@@ -81,6 +82,8 @@ class DirectDeposit(models.Model):
         dd.set_remarks()
 
         qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+        raise UserError(qurbani_details)
 
         self.qurbani_order_id = qurbani_details.get('id')
 
