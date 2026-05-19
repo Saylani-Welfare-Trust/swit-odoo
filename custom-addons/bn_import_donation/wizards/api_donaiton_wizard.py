@@ -1002,7 +1002,7 @@ class APIDonationWizard(models.TransientModel):
                         # -----------------------------------------------------------------
                         # Default stock location search – IMPROVED with exact match and logging
                         # -----------------------------------------------------------------
-                        default_center_name = "SDC/Karachi/Online / Website"
+                        default_center_name = "SDC/Karachi/Online/Website"
                         self.create_fetch_log(
                             history.id,
                             f"Searching for Default Stock Location",
