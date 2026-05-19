@@ -26,6 +26,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.bank_id = this.props.bank_id;
         this.donor_name = this.props.donor_name;
         this.orderLines = this.props.orderLines;
+        this.favor = this.props.favor;
         this.action_type = this.props.action_type;
         
         this.title = this.props.title || "Provisional Order Details";
