@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ state_selection = [
     ('disbursed', 'Disbursed'),
     ('pending', 'Pending'),
     ('collected', 'Collected'),
+    ('return', 'Returned'),  
 ]
 
 recurring_duration_selection = [
@@ -538,3 +540,200 @@ class WelfareLine(models.Model):
             'type': 'ir.actions.client',
             'tag': 'reload',
         }        
+    
+
+
+    # Add this method to WelfareLine class
+    def action_return_to_pos(self):
+        """
+        Return collected amount to POS for Assigned Officer (Marfat) payments
+        Only allowed for lines with:
+        - payment_type = 'assigned_officer'
+        - state = 'collected'
+        """
+        self.ensure_one()
+        
+        # Validation checks
+        if self.payment_type != 'assigned_officer':
+            raise ValidationError(_(
+                "Return is only allowed for 'Assigned Officer (Marfat)' payment type. "
+                "Current payment type: %s" % self.get_payment_type_display()
+            ))
+        
+        if self.state != 'collected':
+            raise ValidationError(_(
+                "Return is only allowed for lines in 'Collected' state. "
+                "Current state: %s" % self.get_state_display()
+            ))
+        
+        if not self.welfare_id.donee_id:
+            raise ValidationError(_("No donee associated with this welfare line."))
+        
+        try:
+            # 1. Create a credit note / return bill in accounting
+            return_bill = self._create_return_bill()
+            
+            # 2. Create POS return order (if POS integration exists)
+            pos_return_order = self._create_pos_return_order()
+            
+            # 3. Update line state to 'return'
+            self.write({
+                'state': 'return',
+                'return_date': fields.Datetime.now(),
+                'return_bill_id': return_bill.id if return_bill else False,
+                'pos_return_order_id': pos_return_order.id if pos_return_order else False,
+                'returned_by': self.env.user.id,
+            })
+            
+            # 4. Post a message on the welfare record
+            self.welfare_id.message_post(body=f"""
+                <b>🔄 Welfare Line Returned</b><br/>
+                <b>Product:</b> {self.product_id.name}<br/>
+                <b>Amount:</b> {self.total_amount} {self.currency_id.symbol}<br/>
+                <b>Return Date:</b> {fields.Datetime.now()}<br/>
+                <b>Payment Type:</b> Assigned Officer (Marfat)<br/>
+                <b>Previous State:</b> Collected → <b>Returned</b>
+            """)
+            
+            return True
+            
+        except Exception as e:
+            _logger.error(f"Error returning welfare line {self.id}: {str(e)}")
+            raise ValidationError(_(
+                "Failed to process return: %s\n\n"
+                "Please check the logs and try again."
+            ) % str(e))
+
+    def _create_return_bill(self):
+        """
+        Create a debit note (return bill) to reverse the original disbursement
+        """
+        if not self.bill_id:
+            # If no original bill exists, create a return voucher
+            return self._create_return_voucher()
+        
+        # Create a debit note for the original bill
+        debit_note_vals = {
+            'move_type': 'in_refund',  # Supplier credit note
+            'partner_id': self.welfare_id.donee_id.id,
+            'invoice_date': fields.Date.today(),
+            'date': fields.Date.today(),
+            'ref': f"RETURN-{self.welfare_id.name}-{self.id}",
+            'welfare_line_id': self.id,
+            'invoice_line_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'name': f"Return: {self.product_id.name} - Welfare {self.welfare_id.name}",
+                'quantity': self.quantity,
+                'price_unit': -self.total_amount / self.quantity if self.quantity else -self.total_amount,
+                'account_id': self.product_id.property_account_expense_id.id or False,
+            })],
+        }
+        
+        debit_note = self.env['account.move'].create(debit_note_vals)
+        debit_note.action_post()
+        
+        return debit_note
+
+    def _create_return_voucher(self):
+        """
+        Create a manual return voucher if no original bill exists
+        """
+        journal = self.env['account.journal'].search([
+            ('type', 'in', ['cash', 'bank']),
+            ('company_id', '=', self.company_id.id)
+        ], limit=1)
+        
+        if not journal:
+            raise ValidationError(_("No cash/bank journal found to process return."))
+        
+        move_vals = {
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': fields.Date.today(),
+            'ref': f"WELFARE-RETURN-{self.welfare_id.name}",
+            'line_ids': [
+                (0, 0, {
+                    'name': f"Return: {self.product_id.name}",
+                    'account_id': self.product_id.property_account_expense_id.id,
+                    'credit': self.total_amount,
+                    'partner_id': self.welfare_id.donee_id.id,
+                }),
+                (0, 0, {
+                    'name': f"Return payment to {self.welfare_id.donee_id.name}",
+                    'account_id': journal.default_account_id.id,
+                    'debit': self.total_amount,
+                    'partner_id': self.welfare_id.donee_id.id,
+                }),
+            ]
+        }
+        
+        return_move = self.env['account.move'].create(move_vals)
+        return_move.action_post()
+        
+        return return_move
+
+    def _create_pos_return_order(self):
+        """
+        Create a POS return order if POS integration exists
+        This reverses the original POS order that disbursed the amount
+        """
+        # Check if POS module is installed
+        if 'pos.order' in self.env:
+            # Look for original POS order linked to this welfare
+            original_pos_order = self.env['pos.order'].search([
+                ('welfare_line_id', '=', self.id),
+                ('state', '=', 'paid')
+            ], limit=1)
+            
+            if original_pos_order:
+                # Create return order
+                return_order_vals = {
+                    'partner_id': self.welfare_id.donee_id.id,
+                    'amount_total': -self.total_amount,
+                    'amount_paid': -self.total_amount,
+                    'amount_return': self.total_amount,
+                    'state': 'paid',
+                    'is_return': True,
+                    'original_order_id': original_pos_order.id,
+                    'welfare_line_id': self.id,
+                    'lines': [(0, 0, {
+                        'product_id': self.product_id.id,
+                        'qty': -self.quantity,
+                        'price_unit': self.total_amount / self.quantity if self.quantity else self.total_amount,
+                        'price_subtotal': -self.total_amount,
+                        'price_subtotal_incl': -self.total_amount,
+                    })],
+                }
+                return self.env['pos.order'].create(return_order_vals)
+        
+        return None
+
+    # Optional: Add a method to return all collected lines for a welfare
+    def action_return_all_collected_lines(self):
+        """Return all collected Marfat lines for this welfare"""
+        self.ensure_one()
+        
+        eligible_lines = self.welfare_line_ids.filtered(
+            lambda l: l.payment_type == 'assigned_officer' and l.state == 'collected'
+        )
+        
+        if not eligible_lines:
+            raise ValidationError(_("No eligible collected Marfat lines found to return."))
+        
+        results = []
+        for line in eligible_lines:
+            try:
+                line.action_return_to_pos()
+                results.append(f"Line {line.id}: {line.total_amount}")
+            except Exception as e:
+                raise ValidationError(_("Failed to return line %s: %s") % (line.id, str(e)))
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Return Complete'),
+                'message': _('Successfully returned %s lines') % len(results),
+                'type': 'success',
+            }
+        }
