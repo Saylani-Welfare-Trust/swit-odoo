@@ -110,16 +110,16 @@ class DistributionSchedule(models.Model):
             # ==================================================
             city = "Unknown City"
 
-            if slaughter.city_location_id:
-                city = slaughter.city_location_id.name.split('/')[-1]
+            if slaughter.city_location_id and slaughter.city_location_id.name:
+                city = slaughter.city_location_id.name.strip()
 
             # ==================================================
             # LOCATION
             # ==================================================
             location = (
-                rec.location_id.name.split('/')[-1]
-                if rec.location_id else
-                "Unknown Location"
+                rec.location_id.name.strip()
+                if rec.location_id and rec.location_id.name
+                else "Unknown Location"
             )
 
             city_map.setdefault(city, {})
@@ -133,7 +133,8 @@ class DistributionSchedule(models.Model):
 
             slaughter_location_id = (
                 rec.slaughter_location_id.id
-                if rec.slaughter_location_id else False
+                if rec.slaughter_location_id
+                else False
             )
 
             # ==================================================
@@ -174,16 +175,19 @@ class DistributionSchedule(models.Model):
 
                 "product": (
                     rec.inventory_product_id.name
-                    if rec.inventory_product_id else ""
+                    if rec.inventory_product_id
+                    else ""
                 ),
 
                 "slaughter_location_id": slaughter_location_id,
+
                 "slaughter_start_time": slaughter_start,
                 "slaughter_end_time": slaughter_end,
 
                 "distribution_location_id": (
                     rec.location_id.id
-                    if rec.location_id else None
+                    if rec.location_id
+                    else None
                 ),
 
                 "distribution_start_time": rec.start_time,
