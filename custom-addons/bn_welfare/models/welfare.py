@@ -964,36 +964,37 @@ class Welfare(models.Model):
             record.state = 'hod_approve'
     
     def action_move_to_member(self):
-        """Member Approval - Check HOD limit first"""
         for record in self:
-            # Check if amount exceeds HOD limit
-            within_limit = record._check_amount_within_hod_limit()
+            # Check if current user is HOD
+            current_user = self.env.user
+            is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
             
-            if not within_limit:
-                # Get HOD limit amount for error message
-                hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
-                limit_amount = float('inf')
-                if hod_group:
-                    limit = self.env['welfare.approval.limit'].search([
-                        ('group_id', '=', hod_group.id),
-                        ('active', '=', True)
-                    ], limit=1)
-                    limit_amount = limit.max_amount_limit if limit else float('inf')
-                
-                raise ValidationError("""
-                    Amount ({}) exceeds your HOD approval limit ({}). 
-                    This request cannot be approved by HOD.
-                """.format(
-                    record.loan_request_amount,
-                    limit_amount
-                ))
+            # Only check HOD limit if current user IS actually HOD
+            if is_hod:
+                within_limit = record._check_amount_within_hod_limit()
+                if not within_limit:
+                    hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
+                    limit_amount = float('inf')
+                    if hod_group:
+                        limit = self.env['welfare.approval.limit'].search([
+                            ('group_id', '=', hod_group.id),
+                            ('active', '=', True)
+                        ], limit=1)
+                        limit_amount = limit.max_amount_limit if limit else float('inf')
+                    
+                    raise ValidationError("""
+                        Amount ({}) exceeds your HOD approval limit ({}). 
+                        This request cannot be approved by HOD.
+                    """.format(
+                        record.loan_request_amount,
+                        limit_amount
+                    ))
             
+            # Member validation (always runs)
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             
-            # Move to member approval
             record.state = 'mem_approve'
-    
     def action_approve(self):
         """Final approval logic"""
         for record in self:
