@@ -1002,12 +1002,15 @@ class APIDonationWizard(models.TransientModel):
                     # Use exact match first, then ilike as fallback
                     city = self.env['stock.location'].search([
                         ('name', '=', city_name),
-                        ('usage', '=', 'internal')
+                        ('usage', '=', 'internal'),
+                        ('location_option_id.name', '=', 'City')  # Assuming there's a location option to identify cities
                     ], limit=1)
                     if not city:
                         city = self.env['stock.location'].search([
                             ('name', 'ilike', city_name),
-                            ('usage', '=', 'internal')
+                            ('usage', '=', 'internal'),
+                            ('location_option_id.name', '=', 'City')  # Assuming there's a location option to identify cities
+
                         ], limit=1)
                     self.create_fetch_log(
                         history.id,
