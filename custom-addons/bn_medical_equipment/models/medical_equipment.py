@@ -139,41 +139,41 @@ class MedicalEquipment(models.Model):
         string='Reference Items',
         readonly=True
     )
-    @api.onchange('actual_deposit_percentage')
-    def _onchange_actual_deposit_percentage(self):
-        if self.actual_deposit_percentage:
-            if self.medical_equipment_reference_id:
-                # Force exactly 0% when medical equipment exists
-                if self.actual_deposit_percentage != 0:
-                    self.actual_deposit_percentage = 0.0
-                    return {
-                        'warning': {
-                            'title': 'Value Changed',
-                            'message': 'Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected.'
-                        }
-                    }
-            else:
-                # Without medical equipment: force 1-100
-                if self.actual_deposit_percentage < 1:
-                    self.actual_deposit_percentage = 1.0
-                elif self.actual_deposit_percentage > 100:
-                    self.actual_deposit_percentage = 100.0
+    # @api.onchange('actual_deposit_percentage')
+    # def _onchange_actual_deposit_percentage(self):
+    #     if self.actual_deposit_percentage:
+    #         if self.medical_equipment_reference_id:
+    #             # Force exactly 0% when medical equipment exists
+    #             if self.actual_deposit_percentage != 0:
+    #                 self.actual_deposit_percentage = 0.0
+    #                 return {
+    #                     'warning': {
+    #                         'title': 'Value Changed',
+    #                         'message': 'Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected.'
+    #                     }
+    #                 }
+    #         else:
+    #             # Without medical equipment: force 1-100
+    #             if self.actual_deposit_percentage < 1:
+    #                 self.actual_deposit_percentage = 1.0
+    #             elif self.actual_deposit_percentage > 100:
+    #                 self.actual_deposit_percentage = 100.0
 
-    @api.constrains('actual_deposit_percentage', 'medical_equipment_reference_id')
-    def _check_deposit_percentage(self):
-        for record in self:
-            if record.medical_equipment_reference_id:
-                # With medical equipment: exactly 0%
-                if record.actual_deposit_percentage != 0:
-                    raise ValidationError(
-                        "Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected!"
-                    )
-            else:
-                # Without medical equipment: only 1-100
-                if record.actual_deposit_percentage < 1 or record.actual_deposit_percentage > 100:
-                    raise ValidationError(
-                        "Actual Deposit Percentage must be between 1 and 100% when no Medical Equipment Reference is selected!"
-                    )
+    # @api.constrains('actual_deposit_percentage', 'medical_equipment_reference_id')
+    # def _check_deposit_percentage(self):
+    #     for record in self:
+    #         if record.medical_equipment_reference_id:
+    #             # With medical equipment: exactly 0%
+    #             if record.actual_deposit_percentage != 0:
+    #                 raise ValidationError(
+    #                     "Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected!"
+    #                 )
+    #         else:
+    #             # Without medical equipment: only 1-100
+    #             if record.actual_deposit_percentage < 1 or record.actual_deposit_percentage > 100:
+    #                 raise ValidationError(
+    #                     "Actual Deposit Percentage must be between 1 and 100% when no Medical Equipment Reference is selected!"
+    #                 )
     @api.depends('medical_equipment_reference_id')
     def _compute_reference_lines(self):
         for record in self:
