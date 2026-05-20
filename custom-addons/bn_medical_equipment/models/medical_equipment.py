@@ -64,7 +64,11 @@ class MedicalEquipment(models.Model):
     last_sync_date = fields.Datetime('Last Sync Date')
     name = fields.Char('Name', default="New")
     country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
-    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True, size=10)
+    mobile = fields.Char(
+        related='donee_id.mobile', string="Mobile No.", 
+        store=True, size=10, readonly=False,
+        inverse='_inverse_mobile'
+    )    
     city = fields.Char(related='donee_id.city', string="City", store=True)
     street = fields.Char(related='donee_id.street', string="Street", store=True, readonly=False)
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
@@ -141,6 +145,11 @@ class MedicalEquipment(models.Model):
     )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
 
+    def _inverse_mobile(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.mobile = rec.mobile
+                
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
         for record in self:
