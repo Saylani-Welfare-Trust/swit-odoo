@@ -64,7 +64,7 @@ class DistributionSchedule(models.Model):
             return {}
 
         # ==================================================
-        # 5. PRELOAD ALL SLOT DEMANDS (🔥 OPTIMIZED)
+        # 5. PRELOAD ALL SLOT DEMANDS
         # ==================================================
         demand_domain = [
             ('hijri_id', '=', last_hijri.id),
@@ -210,11 +210,12 @@ class DistributionSchedule(models.Model):
 
                 for slot in slots:
 
-                    day_id = slot.get("day_id") or 0
+                    day_id = slot.get("day_id")
 
-                    if day_id not in day_map:
-                        day_map[day_id] = []
+                    if not day_id:
+                        continue
 
+                    day_map.setdefault(day_id, [])
                     day_map[day_id].append(slot)
 
                 final_slots = []
@@ -222,27 +223,42 @@ class DistributionSchedule(models.Model):
                 # ==================================================
                 # APPLY LIMIT
                 # ==================================================
-                for day_slots in day_map.values():
+                for day_id, day_slots in day_map.items():
 
-                    if not day_slots:
+                    # ==================================================
+                    # VALID SLOTS ONLY
+                    # ==================================================
+                    valid_slots = [
+                        s for s in day_slots
+                        if (s.get("remaining_hissa") or 0) > 0
+                    ]
+
+                    if not valid_slots:
                         continue
 
-                    # sort once
-                    day_slots.sort(
+                    # ==================================================
+                    # SORT BY TIME
+                    # ==================================================
+                    valid_slots = sorted(
+                        valid_slots,
                         key=lambda x: x.get("start_time") or 0
                     )
 
+                    # ==================================================
+                    # APPLY LIMIT
+                    # ==================================================
                     if limit_type == "two":
-                        # ✅ FIRST 2
-                        final_slots.extend(day_slots[:2])
+                        # FIRST 2
+                        final_slots.extend(valid_slots[:2])
                     else:
-                        # ✅ LAST 1
-                        final_slots.append(day_slots[-1])
+                        # LAST 1
+                        final_slots.append(valid_slots[-1])
 
                 # ==================================================
                 # FINAL SORT
                 # ==================================================
-                final_slots.sort(
+                final_slots = sorted(
+                    final_slots,
                     key=lambda x: (
                         x.get("day_id") or 0,
                         x.get("start_time") or 0
