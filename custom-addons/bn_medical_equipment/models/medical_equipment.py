@@ -139,36 +139,17 @@ class MedicalEquipment(models.Model):
         string='Reference Items',
         readonly=True
     )
+    employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
 
-    # Computed field for available employees
-    available_employee_ids = fields.Many2many(
-        'hr.employee',
-        compute='_compute_available_employee_ids',
-        store=False
-    )
-    
-    @api.depends('donee_id', 'employee_category_id', 'case_type')
-    def _compute_available_employee_ids(self):
+    @api.depends('employee_category_id', 'donee_id')
+    def _compute_employee_domain(self):
         for record in self:
-            if not record.donee_id or not record.employee_category_id:
-                record.available_employee_ids = False
-                continue
-            
-            donee_area_ids = set(record.donee_id.area.ids)
-            
-            # Find employees matching the exact area set
-            all_employees = self.env['hr.employee'].search([
-                ('category_ids', 'in', record.employee_category_id.id)
-            ])
-            
-            matching_employees = self.env['hr.employee']
-            for employee in all_employees:
-                employee_area_ids = set(employee.area.ids)
-                # Check if areas match (either exactly or have at least one common)
-                if donee_area_ids and employee_area_ids & donee_area_ids:  # Intersection exists
-                    matching_employees |= employee
-            
-            record.available_employee_ids = matching_employees.ids 
+            if record.employee_category_id:
+                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
+            else:
+                record.employee_domain = "[]"
+    
+
     @api.onchange('actual_deposit_percentage')
     def _onchange_actual_deposit_percentage(self):
         if self.actual_deposit_percentage:
