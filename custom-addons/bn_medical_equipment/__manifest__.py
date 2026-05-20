@@ -10,6 +10,7 @@
         'bn_pos_custom_action',
         'stock',
         'product',
+        'bn_donation_box'
     ],
     'data': [
         'security/group.xml',
