@@ -195,6 +195,15 @@ class Welfare(models.Model):
     #     'Loan Request Amount',
     #     required=True
     # )
+    employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
+
+    @api.depends('employee_category_id', 'donee_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            if record.employee_category_id:
+                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
+            else:
+                record.employee_domain = "[]"
 
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
