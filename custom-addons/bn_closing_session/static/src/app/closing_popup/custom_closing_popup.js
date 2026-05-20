@@ -144,8 +144,10 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         const pm = this._getPaymentMethod(paymentId);
         const { amount, ref, bank } = this.state.newLines[paymentId][type];
         const numAmount = parseFloat(amount);
+        const isBankInvalid = !bank || bank === "0";
+        const isAmountInvalid = isNaN(numAmount);
 
-        if (this.shouldShowSlipInput(pm) && (!ref || isNaN(numAmount))) {
+        if (this.shouldShowSlipInput(pm) && (!ref || isAmountInvalid || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Input"),
                 body: _t("Amount and Reference are required."),
