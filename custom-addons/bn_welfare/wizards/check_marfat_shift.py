@@ -97,9 +97,7 @@ class CheckMarfatShift(models.TransientModel):
         for rec in self:
             rec.assigned_officer_id = False
 
-            if rec.employee_category_id_officer and current_employee:
-
-                if rec.employee_category_id_officer.id in current_employee.category_ids.ids:
+            if current_employee:
                     rec.assigned_officer_id = current_employee.id
 
     @api.depends('assigned_officer_id')
