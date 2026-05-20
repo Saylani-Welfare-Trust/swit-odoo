@@ -35,7 +35,6 @@
 
                     <!-- POS Order Section (shown when pos_qurbani_order = True) -->
                     <group>
-                        <h2>POS Order Information</h2>
                         <group>
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <label for="mobile"/>
