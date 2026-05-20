@@ -74,6 +74,7 @@
                             <field name="portal_application_id" invisible="1"/>
                             <field name="is_actual_deposit_editable" invisible="1"/> 
                             <field name="approval_button_check" invisible="1"/>
+                            <field name="available_employee_ids" invisible="1"/>
                             <field name="employee_category_id" invisible="1" />
                             <field name="actual_deposit_percentage" readonly="state == 'closed' or not is_actual_deposit_editable"/>
                             <field name="medical_equipment_reference_id" options="{'no_create': True, 'no_open': True}"/>
