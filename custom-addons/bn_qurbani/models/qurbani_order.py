@@ -312,8 +312,8 @@ class QurbaniOrder(models.Model):
                     slaughter_records = self.env['qurbani.cow.slaughter'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        ('start_time', '=', line.slaughter_start_time),
-                        ('end_time', '=', line.slaughter_end_time),
+                        # ('start_time', '=', line.slaughter_start_time),
+                        # ('end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                     ], order='id asc')
                     qurbani_cow_slaughter = False
