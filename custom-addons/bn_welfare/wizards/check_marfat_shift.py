@@ -71,8 +71,8 @@ class CheckMarfatShift(models.TransientModel):
     assigned_officer_id = fields.Many2one(
         'hr.employee',
         string="Assigned Officer (Marfat)",
-        domain="[('category_ids', 'in', [employee_category_id_officer])]",
-        required=True
+        compute='_compute_assigned_officers',
+        store=True
     )
 
     # Display fields for the results
@@ -82,6 +82,25 @@ class CheckMarfatShift(models.TransientModel):
         readonly=True,
         compute='_compute_disbursement_lines'
     )
+    
+    @api.depends('employee_category_id_officer')
+    def _compute_assigned_officers(self):
+        """
+        Assign only the currently logged-in employee
+        if that employee belongs to the selected category.
+        """
+
+        current_employee = self.env['hr.employee'].search([
+            ('user_id', '=', self.env.user.id)
+        ], limit=1)
+
+        for rec in self:
+            rec.assigned_officer_id = False
+
+            if rec.employee_category_id_officer and current_employee:
+
+                if rec.employee_category_id_officer.id in current_employee.category_ids.ids:
+                    rec.assigned_officer_id = current_employee.id
 
     @api.depends('assigned_officer_id')
     def _compute_disbursement_lines(self):
