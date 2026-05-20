@@ -1049,73 +1049,13 @@ class APIDonationWizard(models.TransientModel):
                             f"Existing record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
                         )
                     else:
-                        # Default stock location (fixed search without non‑standard field)
-                        default_center_name = "SDC/Karachi/Online / Website"
                         self.create_fetch_log(
                             history.id,
-                            f"Searching for Default Stock Location",
+                            f"Distribution not Found",
                             "Qurbani",
-                            f"Looking for stock.location with name='{default_center_name}'"
+                            f"No existing distribution center found with name '{distribution_name}', please create it first "
                         )
-                        # Search by exact name, no extra boolean field
-                        default_center = self.env['stock.location'].search([
-                            ('name', '=', default_center_name)
-                        ], limit=1)
-                        # If not found, try complete_name (some views use hierarchical name)
-                        if not default_center:
-                            default_center = self.env['stock.location'].search([
-                                ('complete_name', '=', default_center_name)
-                            ], limit=1)
                         
-                        if default_center:
-                            self.create_fetch_log(
-                                history.id,
-                                f"Default Stock Location Found",
-                                "Qurbani",
-                                f"Found: {default_center.name} (ID {default_center.id})"
-                            )
-                            # Create new distribution center mapping
-                            distribution_rec = self.env['web.qurbani.distribution.center'].create({
-                                'name': distribution_name,
-                                'distribution_center_id': default_center.id,
-                            })
-                            distribution_id = distribution_rec.distribution_center_id.id
-                            self.create_fetch_log(
-                                history.id,
-                                f"Distribution Center CREATED",
-                                "Qurbani",
-                                f"New web.qurbani.distribution.center: ID {distribution_rec.id}, Name '{distribution_rec.name}', Mapped to stock.location ID {distribution_id}"
-                            )
-                        else:
-                            # Log all stock locations with similar names for debugging
-                            similar_locations = self.env['stock.location'].search([
-                                ('name', 'ilike', 'SDC/Karachi')
-                            ])
-                            similar_names = [loc.name for loc in similar_locations]
-                            self.create_fetch_log(
-                                history.id,
-                                f"Default Stock Location NOT FOUND",
-                                "Error",
-                                f"Could not find stock.location with exact name '{default_center_name}'. "
-                                f"Similar locations found: {similar_names if similar_names else 'None'}. "
-                                f"Please verify the location exists in Odoo."
-                            )
-                            # Fallback to first internal location
-                            fallback_center = self.env['stock.location'].search([
-                                ('usage', '=', 'internal')
-                            ], limit=1)
-                            if fallback_center:
-                                self.create_fetch_log(
-                                    history.id,
-                                    f"Using Fallback Stock Location",
-                                    "Warning",
-                                    f"Falling back to first internal location: {fallback_center.name} (ID {fallback_center.id})"
-                                )
-                                distribution_rec = self.env['web.qurbani.distribution.center'].create({
-                                    'name': distribution_name,
-                                    'distribution_center_id': fallback_center.id,
-                                })
-                                distribution_id = distribution_rec.distribution_center_id.id
                 else:
                     self.create_fetch_log(
                         history.id,
