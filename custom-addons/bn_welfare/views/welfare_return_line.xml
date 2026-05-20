@@ -19,4 +19,21 @@
         </field>
     </record>
 
+    <!-- Action for Check Marfat Shift -->
+    <record id="action_welfare_return_line" model="ir.actions.act_window">
+        <field name="name">Welfare Return Line Tree View</field>
+        <field name="res_model">welfare.return.line</field>
+        <field name="view_mode">tree</field>
+        <field name="target">current</field>
+    </record>
+    <!-- Menu Item for Check Marfat Shift -->
+    <menuitem
+        id="menu_welfare_return_line"
+        name="Welfare Return Line Tree View"
+        action="action_welfare_return_line"
+        parent="welfare_menu"
+        groups="bn_welfare.welfare_group"
+        sequence="25"/>
+
+
 </odoo>
