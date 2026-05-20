@@ -150,7 +150,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (this.shouldShowSlipInput(pm) && (!ref || isAmountInvalid || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Input"),
-                body: _t("Amount and Reference are required."),
+                body: _t("Bank, Slip No. and Amount are required."),
             });
             return;
         }
