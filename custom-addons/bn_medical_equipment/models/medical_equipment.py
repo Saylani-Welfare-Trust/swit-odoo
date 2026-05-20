@@ -139,6 +139,30 @@ class MedicalEquipment(models.Model):
         string='Reference Items',
         readonly=True
     )
+
+    # Computed field for available employees
+    available_employee_ids = fields.Many2many(
+        'hr.employee',
+        compute='_compute_available_employee_ids',
+        store=False
+    )
+    
+    @api.depends('donee_id', 'employee_category_id', 'case_type')
+    def _compute_available_employee_ids(self):
+        for record in self:
+            if not record.donee_id or not record.employee_category_id:
+                record.available_employee_ids = False
+                continue
+            
+            # Search employees with:
+            # 1. Has the required category
+            # 2. Employee's area matches donee's area
+            employees = self.env['hr.employee'].search([
+                ('category_ids', 'in', record.employee_category_id.id),
+                ('area', '=', record.donee_id.area)  # Match area
+            ])
+            
+            record.available_employee_ids = employees.ids    
     @api.onchange('actual_deposit_percentage')
     def _onchange_actual_deposit_percentage(self):
         if self.actual_deposit_percentage:
