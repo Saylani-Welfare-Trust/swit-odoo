@@ -22,6 +22,7 @@
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',
+        'views/welfare_return_line.xml',
         'reports/report_welfare_collection_document.xml',
         'wizards/check_marfat_shift.xml',
         'views/welfare_limit_view.xml',

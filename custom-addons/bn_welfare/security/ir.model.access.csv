@@ -13,3 +13,4 @@ access_welfare_fields_wizard_user,access_welfare_fields_wizard_user,model_welfar
 access_welfare_line_disbursement_popup,welfare.line.disbursement.popup,bn_welfare.model_welfare_line_disbursement_popup,base.group_user,1,0,1,0
 access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift,,1,1,1,1
 access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,,1,1,1,1
+access_welfare_return_line,welfare.return.line,bn_welfare.model_welfare_return_line,,1,1,1,1
