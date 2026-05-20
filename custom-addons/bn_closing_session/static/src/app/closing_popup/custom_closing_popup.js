@@ -144,11 +144,13 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         const pm = this._getPaymentMethod(paymentId);
         const { amount, ref, bank } = this.state.newLines[paymentId][type];
         const numAmount = parseFloat(amount);
+        const isBankInvalid = !bank || bank === "0";
+        const isAmountInvalid = isNaN(numAmount);
 
-        if (this.shouldShowSlipInput(pm) && (!ref || isNaN(numAmount))) {
+        if (this.shouldShowSlipInput(pm) && (!ref || isAmountInvalid || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Input"),
-                body: _t("Amount and Reference are required."),
+                body: _t("Bank, Slip No. and Amount are required."),
             });
             return;
         }
@@ -196,6 +198,60 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async confirm() {
+        for (const pm of (this.props.other_payment_methods || [])) {
+
+            if (pm.type !== "bank") {
+                continue;
+            }
+
+            const difference = this.getDifference(pm.id);
+
+            // ONLY VALIDATE IF DIFFERENCE IS NOT ZERO
+            if (difference !== 0) {
+
+                const lines = this.state.lines[pm.id] || {};
+
+                const allLines = [
+                    ...(lines.restricted || []),
+                    ...(lines.unrestricted || []),
+                    ...(lines.neutral || []),
+                ];
+
+                // NO LINE ADDED
+                if (!allLines.length) {
+
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t(
+                            `Payment method "${pm.name}" has a difference. Please add at least one slip line.`
+                        ),
+                    });
+
+                    return;
+                }
+
+                // BANK NOT SELECTED
+                const invalidBank = allLines.some(
+                    (line) =>
+                        !line.bank ||
+                        line.bank === "0" ||
+                        line.bank === 0
+                );
+
+                if (invalidBank) {
+
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t(
+                            `Please select a bank for all slip lines of "${pm.name}".`
+                        ),
+                    });
+
+                    return;
+                }
+            }
+        }
+
         await this.closeSession();
     }
 

@@ -29,6 +29,7 @@ patch(ActionScreen.prototype, {
         const order = this.pos.get_order();
         const donor = order.partner ? order.partner : null;
         const orderLines = order.get_orderlines();
+        const favor = order.favor;
 
         if (!donor) {
             return this.popup.add(ErrorPopup, {
@@ -53,6 +54,7 @@ patch(ActionScreen.prototype, {
             bank_id: bankList,
             donor_name: donor.name,
             donor_address: donor.address,
+            favor: favor,
             orderLines: orderLines,
             amount: amount,
             action_type: "dd"

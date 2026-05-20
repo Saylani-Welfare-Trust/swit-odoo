@@ -12,6 +12,7 @@
         'bn_pos_payment_method',
         'bn_res_company',
         'bn_pos_order',
+        'bn_direct_deposit',
     ],
     'data': [
         'data/server_action.xml',
@@ -54,6 +55,10 @@
         'reports/qurbani_goat_slaughter_report.xml',
         'reports/qurbani_cow_distribution_report.xml',
         'reports/qurbani_goat_distribution_report.xml',
+        'reports/donation_home_service_report.xml',
+        'reports/direct_deposit_provisional_report.xml',
+        'reports/direct_deposit_duplicate_report.xml',
+        'reports/direct_deposit_dn_report.xml',
         
     ],
     'auto_install': False,
