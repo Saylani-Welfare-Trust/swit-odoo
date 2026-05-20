@@ -147,22 +147,28 @@ class MedicalEquipment(models.Model):
         store=False
     )
     
-    @api.depends('donee_id', 'employee_category_id',)
+    @api.depends('donee_id', 'employee_category_id', 'case_type')
     def _compute_available_employee_ids(self):
         for record in self:
             if not record.donee_id or not record.employee_category_id:
                 record.available_employee_ids = False
                 continue
             
-            # Search employees with:
-            # 1. Has the required category
-            # 2. Employee's area matches donee's area
-            employees = self.env['hr.employee'].search([
-                ('category_ids', 'in', record.employee_category_id.id),
-                ('area', '=', record.donee_id.area)  # Match area
+            donee_area_ids = set(record.donee_id.area.ids)
+            
+            # Find employees matching the exact area set
+            all_employees = self.env['hr.employee'].search([
+                ('category_ids', 'in', record.employee_category_id.id)
             ])
             
-            record.available_employee_ids = employees.ids    
+            matching_employees = self.env['hr.employee']
+            for employee in all_employees:
+                employee_area_ids = set(employee.area.ids)
+                # Check if areas match (either exactly or have at least one common)
+                if donee_area_ids and employee_area_ids & donee_area_ids:  # Intersection exists
+                    matching_employees |= employee
+            
+            record.available_employee_ids = matching_employees.ids 
     @api.onchange('actual_deposit_percentage')
     def _onchange_actual_deposit_percentage(self):
         if self.actual_deposit_percentage:
