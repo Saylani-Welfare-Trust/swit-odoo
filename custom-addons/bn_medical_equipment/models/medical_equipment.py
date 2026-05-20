@@ -147,7 +147,7 @@ class MedicalEquipment(models.Model):
         store=False
     )
     
-    @api.depends('donee_id', 'employee_category_id', 'case_type')
+    @api.depends('donee_id', 'employee_category_id',)
     def _compute_available_employee_ids(self):
         for record in self:
             if not record.donee_id or not record.employee_category_id:
