@@ -63,15 +63,31 @@ class MedicalEquipment(models.Model):
     sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
     last_sync_date = fields.Datetime('Last Sync Date')
     name = fields.Char('Name', default="New")
-    country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
+    country_code_id = fields.Many2one(
+        related='donee_id.country_code_id', string="Country Code", 
+        store=True, readonly=False,
+        inverse='_inverse_country_code_id'
+    )
     mobile = fields.Char(
         related='donee_id.mobile', string="Mobile No.", 
         store=True, size=10, readonly=False,
         inverse='_inverse_mobile'
     )    
-    city = fields.Char(related='donee_id.city', string="City", store=True)
-    street = fields.Char(related='donee_id.street', string="Street", store=True, readonly=False)
-    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
+    city = fields.Char(
+        related='donee_id.city', string="City", 
+        store=True, readonly=False,
+        inverse='_inverse_city'
+    )
+    street = fields.Char(
+        related='donee_id.street', string="Street", 
+        store=True, readonly=False,
+        inverse='_inverse_street'
+    )
+    cnic_no = fields.Char(
+        related='donee_id.cnic_no', string="CNIC No.", 
+        store=True, size=15, readonly=False,
+        inverse='_inverse_cnic_no'
+    )
     application_location_link = fields.Char(string="Applicant Location Link", store=True)
     portal_review_notes = fields.Text('Review Notes')
     is_actual_deposit_editable = fields.Boolean(
@@ -92,11 +108,18 @@ class MedicalEquipment(models.Model):
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
 
 
-    date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
-
+    date_of_birth = fields.Date(
+        related='donee_id.date_of_birth', string="Date of Birth", 
+        store=True, readonly=False,
+        inverse='_inverse_date_of_birth'
+    )
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
-    gender = fields.Selection(related='donee_id.gender', string="Gender", store=True)
+    gender = fields.Selection(
+        related='donee_id.gender', string="Gender", 
+        store=True, readonly=False,
+        inverse='_inverse_gender'
+    )  
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     # Actual deposit percentage - determines case type automatically
@@ -149,7 +172,35 @@ class MedicalEquipment(models.Model):
         for rec in self:
             if rec.donee_id:
                 rec.donee_id.mobile = rec.mobile
-                
+    def _inverse_city(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.city = rec.city
+
+    def _inverse_street(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.street = rec.street
+
+    def _inverse_cnic_no(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.cnic_no = rec.cnic_no
+
+    def _inverse_gender(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.gender = rec.gender
+
+    def _inverse_date_of_birth(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.date_of_birth = rec.date_of_birth
+
+    def _inverse_country_code_id(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.country_code_id = rec.country_code_id.id
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
         for record in self:
