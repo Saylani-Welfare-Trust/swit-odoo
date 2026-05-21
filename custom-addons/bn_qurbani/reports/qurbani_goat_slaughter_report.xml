@@ -36,6 +36,18 @@
         </t>
     </template>
 
+    <record id="qurbani_goat_slaughter_paperformat" model="report.paperformat">
+        <field name="name">A4 - Qurbani Goat Slaughter</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="qurbani_goat_slaughter_report" model="ir.actions.report">
         <field name="name">Qurbani Goat Slaughter</field>
         <field name="model">qurbani.goat.slaughter</field>
@@ -44,6 +56,7 @@
         <field name="report_file">bn_qurbani.qurbani_goat_slaughter_report_template</field>
         <field name="binding_model_id" ref="bn_qurbani.model_qurbani_goat_slaughter"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="qurbani_goat_slaughter_paperformat"/>
     </record>
 
 </odoo>
