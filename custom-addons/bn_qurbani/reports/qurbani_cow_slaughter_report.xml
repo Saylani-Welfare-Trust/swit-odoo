@@ -6,65 +6,88 @@
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
 
-                <t t-foreach="docs" t-as="o">
+                <!-- TOTAL DOCS -->
+                <t t-set="total_docs" t-value="len(docs)"/>
 
-                    <!-- ALL LINES -->
-                    <t t-set="lines" t-value="o.qurbani_cow_slaughter_line"/>
-                    <t t-set="total" t-value="len(lines)"/>
+                <!-- LOOP IN GROUPS OF 5 DOCS -->
+                <t t-foreach="range(0, total_docs, 5)" t-as="i">
 
-                    <!-- PAGE LOOP -->
-                    <t t-foreach="range(0, total, 5)" t-as="i">
+                    <div class="page">
 
-                        <div class="page">
+                        <!-- TAKE 5 DOCS -->
+                        <t t-set="chunk_docs" t-value="docs[i:i+5]"/>
 
-                            <!-- HEADER -->
-                            <h2>
-                                <span t-esc="o.name"/>
-                            </h2>
+                        <!-- LOOP DOCS INSIDE PAGE -->
+                        <t t-foreach="chunk_docs" t-as="o">
 
-                            <table class="table table-bordered">
+                            <div style="margin-bottom: 30px;">
 
-                                <thead>
-                                    <tr>
-                                        <th>SO No.</th>
-                                        <th>Hissa Name</th>
-                                        <th>QO No.</th>
-                                    </tr>
-                                </thead>
+                                <h2>
+                                    <span t-esc="o.name"/>
+                                </h2>
 
-                                <tbody>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span>Location</span> -
+                                        <span t-esc="o.slaughter_location_id.name"/>
+                                    </div>
+                                </div>
 
-                                    <!-- SLICE 5 RECORDS -->
-                                    <t t-set="chunk" t-value="lines[i:i+5]"/>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span>Start Time</span>
+                                        <span t-esc="o.start_time" widget="float_time"/>
+                                    </div>
 
-                                    <t t-foreach="chunk" t-as="line">
+                                    <div class="col-6">
+                                        <span>End Time</span>
+                                        <span t-esc="o.end_time" widget="float_time"/>
+                                    </div>
+                                </div>
 
+                                <table class="table table-bordered">
+
+                                    <thead>
                                         <tr>
-
-                                            <!-- ✅ FIXED CONTINUOUS NUMBERING -->
-                                            <td>
-                                                <span t-esc="lines.index(line) + 1"/>
-                                            </td>
-
-                                            <td>
-                                                <span t-esc="line.hissa_name"/>
-                                            </td>
-
-                                            <td>
-                                                <span t-esc="line.qurbani_order_no"/>
-                                            </td>
-
+                                            <th>SO No.</th>
+                                            <th>Hissa Name</th>
+                                            <th>QO No.</th>
                                         </tr>
+                                    </thead>
 
-                                    </t>
+                                    <tbody>
 
-                                </tbody>
+                                        <t t-set="count" t-value="1"/>
 
-                            </table>
+                                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
 
-                        </div>
+                                            <tr>
+                                                <td>
+                                                    <span t-esc="count"/>
+                                                </td>
 
-                    </t>
+                                                <td>
+                                                    <span t-esc="line.hissa_name"/>
+                                                </td>
+
+                                                <td>
+                                                    <span t-esc="line.qurbani_order_no"/>
+                                                </td>
+                                            </tr>
+
+                                            <t t-set="count" t-value="count + 1"/>
+
+                                        </t>
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </t>
+
+                    </div>
 
                 </t>
 
