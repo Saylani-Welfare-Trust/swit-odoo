@@ -363,7 +363,7 @@ class QurbaniOrder(models.Model):
                     raise ValidationError(
                         f"No available goat slaughter slot for Order {line.qurbani_order_id.name}, "
                         f"Line {line.name} — day={line.day_id.id}, hijri={line.hijri_id.id}, "
-                        f"location={line.slaughter_id.id}"
+                        f"location={line.slaughter_id.name}"
                     )
                 qurbani_goat_slaughter.write({
                     'qurbani_order_no': line.qurbani_order_id.name,
