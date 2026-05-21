@@ -6,7 +6,7 @@
             <t t-call="web.external_layout">
                 <h2>Saylani International And Welfare Trust</h2>
                 <h3>Cow Slaughter Schedule Report</h3>
-                
+
                 <t t-foreach="docs" t-as="o">
                     <div class="page">
 
@@ -42,7 +42,7 @@
         <field name="name">A4 - Qurbani Goat Slaughter</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">40</field>
+        <field name="margin_top">20</field>
         <field name="margin_bottom">20</field>
         <field name="margin_left">4</field>
         <field name="margin_right">4</field>
