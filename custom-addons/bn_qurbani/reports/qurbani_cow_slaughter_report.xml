@@ -38,13 +38,15 @@
 
                 <t t-foreach="docs" t-as="o">
 
-                    <!-- APPLY PAGE BREAK AFTER EVERY 5 RECORDS -->
+                     <!-- APPLY PAGE BREAK AFTER EVERY 5 RECORDS -->
                     <div class="page"
-                        t-att-style="'page-break-after: always;' if (count - 1) % 5 == 0 and count != 1 else ''">
+                        t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
 
-                        <!-- HEADER NOW APPEARS AT PAGE START -->
-                        <h2>Saylani Welfare and International Trust</h2>
-                        <h3>Cow Slaughter Schedule Report</h3>
+                        <t t-if="(count - 1) % 5 == 0">
+                            <!-- HEADER ONLY ON PAGE START -->
+                            <h2>Saylani Welfare and International Trust</h2>
+                            <h3>Cow Slaughter Schedule Report</h3>
+                        </t>
 
                         <br/>
 
