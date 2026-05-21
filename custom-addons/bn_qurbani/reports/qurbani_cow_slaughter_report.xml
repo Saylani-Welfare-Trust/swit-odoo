@@ -3,105 +3,75 @@
 
     <template id="bn_qurbani.qurbani_cow_slaughter_report_template">
         <t t-call="web.html_container">
-
             <style>
                 .page {
-                    page-break-after: always;
-                    padding: 10px;
-                    font-size: 11px;
+                    padding: 0px !important;
+                    margin: 0px !important;
                 }
 
-                .cow-box {
-                    width: 48%;
-                    display: inline-block;
-                    vertical-align: top;
-                    border: 1px solid #000;
-                    padding: 6px;
-                    margin-bottom: 10px;
+                table {
+                    margin: 0px !important;
+                    padding: 0px !important;
+                    border-spacing: 0 !important;
                 }
 
-                .cow-row {
-                    width: 100%;
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 10px;
+                td, th {
+                    padding: 2px !important;
+                }
+
+                .row {
+                    margin: 0px !important;
+                    padding: 0px !important;
+                }
+
+                .col-3 {
+                    padding: 0px !important;
                 }
             </style>
 
             <t t-call="web.external_layout">
-
-                <!-- PAGE LOOP (5 records per page) -->
-                <t t-set="total" t-value="len(docs)"/>
-
-                <t t-foreach="range(0, total, 5)" t-as="i">
-
+                <t t-foreach="docs" t-as="o">
                     <div class="page">
+                        
+                        <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                            <div class="col-3">
+                                <span t-esc="o.name"/>
+                            </div>
+                            <div class="col-3">
+                                <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.name"/></spna>
+                            </div>
+                            <div class="col-3">
+                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
+                            </div>
+                            <div class="col-3">
+                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
+                            </div>
+                        </div>
 
-                        <!-- Slice 5 cows -->
-                        <t t-set="page_docs" t-value="docs[i:i+5]"/>
+                        <table class="table table-bordered" style="font-size: 11px; margin: 0; padding: 0;">
+                            <thead>
+                                <tr>
+                                    <th>SO No.</th>
+                                    <th>Hissa Name</th>
+                                    <th>QO No.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="count" t-value="1"/>
+                                <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line" t-key="line.id">
+                                    <tr>
+                                        <td><t t-esc="count"/></td>
+                                        <td><t t-esc="line.hissa_name"/></td>
+                                        <td><t t-esc="line.qurbani_order_no"/></td>
+                                    </tr>
 
-                        <!-- ROW 1 (Cow 1 & 2) -->
-                        <t t-if="len(page_docs) > 0">
-                            <div class="cow-row">
 
-                                <div class="cow-box">
-                                    <strong t-esc="page_docs[0].name"/>
-                                    <div>Location: <t t-esc="page_docs[0].slaughter_location_id.name"/></div>
-                                    <div>Start: <t t-esc="page_docs[0].start_time" widget="float_time"/></div>
-                                    <div>End: <t t-esc="page_docs[0].end_time" widget="float_time"/></div>
-                                </div>
-
-                                <t t-if="len(page_docs) > 1">
-                                    <div class="cow-box">
-                                        <strong t-esc="page_docs[1].name"/>
-                                        <div>Location: <t t-esc="page_docs[1].slaughter_location_id.name"/></div>
-                                        <div>Start: <t t-esc="page_docs[1].start_time" widget="float_time"/></div>
-                                        <div>End: <t t-esc="page_docs[1].end_time" widget="float_time"/></div>
-                                    </div>
+                                    <t t-set="count" t-value="count+1"/>
                                 </t>
-
-                            </div>
-                        </t>
-
-                        <!-- ROW 2 (Cow 3 & 4) -->
-                        <t t-if="len(page_docs) > 2">
-                            <div class="cow-row">
-
-                                <div class="cow-box">
-                                    <strong t-esc="page_docs[2].name"/>
-                                    <div>Location: <t t-esc="page_docs[2].slaughter_location_id.name"/></div>
-                                    <div>Start: <t t-esc="page_docs[2].start_time" widget="float_time"/></div>
-                                    <div>End: <t t-esc="page_docs[2].end_time" widget="float_time"/></div>
-                                </div>
-
-                                <t t-if="len(page_docs) > 3">
-                                    <div class="cow-box">
-                                        <strong t-esc="page_docs[3].name"/>
-                                        <div>Location: <t t-esc="page_docs[3].slaughter_location_id.name"/></div>
-                                        <div>Start: <t t-esc="page_docs[3].start_time" widget="float_time"/></div>
-                                        <div>End: <t t-esc="page_docs[3].end_time" widget="float_time"/></div>
-                                    </div>
-                                </t>
-
-                            </div>
-                        </t>
-
-                        <!-- ROW 3 (Cow 5 only) -->
-                        <t t-if="len(page_docs) > 4">
-                            <div class="cow-row">
-                                <div class="cow-box" style="width: 100%;">
-                                    <strong t-esc="page_docs[4].name"/>
-                                    <div>Location: <t t-esc="page_docs[4].slaughter_location_id.name"/></div>
-                                    <div>Start: <t t-esc="page_docs[4].start_time" widget="float_time"/></div>
-                                    <div>End: <t t-esc="page_docs[4].end_time" widget="float_time"/></div>
-                                </div>
-                            </div>
-                        </t>
-
+                            </tbody>
+                        </table>
                     </div>
-
                 </t>
-
             </t>
         </t>
     </template>
