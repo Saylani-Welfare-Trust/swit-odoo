@@ -996,7 +996,7 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 city_name = it.get('qurbaniCity', '')
                 branch_name = it.get('qurbaniBranch', '')
-                qurbani_fullfilment = it.get('qurbaniFullfilment', '')
+                qurbani_fullfilment = it.get('qurbaniFulfillment', '')
                 self.create_fetch_log(
                     history.id,
                     f"Distribution Data from API",
