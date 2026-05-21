@@ -451,7 +451,6 @@ class APIDonationWizard(models.TransientModel):
             # STOCK PROCESSING
             # -----------------------------
             items = info.get('items') or []
-
             for it in items:
 
                 item_name = ''
@@ -944,8 +943,13 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 1. Product resolution (from your upper code)
                 # -------------------------------------------------------------
+                self.create_fetch_log(
+                    history.id,
+                    f"Distribution Data from API",
+                    "Qurbani",
+                    f"Qurbani json {info}"
+                )
                 
-                raise ValidationError(f"Qurbani item not found in API data: {info}")
                 product = False
                 product_key = (
                     f"{info.get('donationType', '')}"
@@ -990,7 +994,7 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 3. City lookup (from lower code, improved)
                 # -------------------------------------------------------------
-                city_name = donor.get('qurbaniCity', '')
+                city_name = it.get('qurbaniCity', '')
                 branch_name = it.get('qurbaniBranch', '')
                 self.create_fetch_log(
                     history.id,
