@@ -70,11 +70,11 @@ class QurbaniOrder(models.Model):
         Create Qurbani Order from api.donation using slaughter‑slot logic.
         donation_name: optional, for better logging
         """
-        # ---------- Helper: get day from name ----------
-        def _get_day_from_name(day_name):
-            if not day_name:
-                return self.env['qurbani.day']
-            return self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
+        # # ---------- Helper: get day from name ----------
+        # def _get_day_from_name(day_name):
+        #     if not day_name:
+        #         return self.env['qurbani.day']
+        #     return self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
 
         # ---------- Helper: get latest hijri (same as POS method) ----------
         def _get_latest_hijri():
@@ -88,61 +88,146 @@ class QurbaniOrder(models.Model):
             except:
                 return time_str
 
-        def _get_demand(line, default_day, default_hijri, default_product):
+        def _get_demand(line,  default_hijri, default_product):
             product = line.product_id or default_product
-            if not product:
-                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
-            # Get distribution center from line
-            distribution_id = line.distribution_id.id if line.distribution_id else False
+            if not product:
+                raise ValidationError(
+                    f"Line {line.id if line else '?'} has no product_id"
+                )
+
+            # =========================================================
+            # DAY MAPPING
+            # =========================================================
+            day = False
+
+            if getattr(line, 'day', False):
+                day = self.env['qurbani.day'].search([
+                    ('web_qurbani_day', 'ilike', line.day)
+                ], limit=1)
+
+            if not day:
+                raise ValidationError(
+                    f"Unable to map qurbani day '{line.day}'"
+                )
+
+            # =========================================================
+            # HIJRI
+            # =========================================================
+            hijri =  default_hijri
+
+            if not hijri:
+                raise ValidationError(
+                    f"No hijri found for line {line.id}"
+                )
+
+            # =========================================================
+            # CITY MAPPING
+            # =========================================================
+            city = False
+
+            if getattr(line, 'city', False):
+
+                city = self.env['qurbani.city'].search([
+                    ('name', '=', line.city)
+                ], limit=1)
+
+                # fallback
+                if not city:
+                    city = self.env['qurbani.city'].search([
+                        ('name', 'ilike', line.city)
+                    ], limit=1)
+
+            # =========================================================
+            # DISTRIBUTION CENTER MAPPING
+            # =========================================================
+            distribution_id = False
+
+            branch = line.branch or ''
+
+            if city or branch:
+
+                distribution_name = (
+                    f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
+                )
+
+                distribution_rec = self.env[
+                    'web.qurbani.distribution.center'
+                ].search([
+                    ('name', '=', distribution_name)
+                ], limit=1)
+
+                if distribution_rec:
+                    distribution_id = distribution_rec.distribution_center_id.id
+
+                else:
+                    raise ValidationError(
+                        f"Distribution center not found for "
+                        f"'{distribution_name}'"
+                    )
 
             if not distribution_id:
                 raise ValidationError(
-                    f"Line {line.id if line else '?'} has no distribution_id"
+                    f"Unable to determine distribution center "
+                    f"for city='{line.city}' branch='{branch}'"
                 )
 
-            # Find matching slaughter center config
-            slaughter_center = self.env['web.qurbani.slaughter.center'].search([
-                ('distribution_center_id', 'in', [distribution_id])
-            ], limit=1)
+            # =========================================================
+            # SLAUGHTER CENTER
+            # =========================================================
+            if distribution_id:
+
+                slaughter_center = self.env[
+                    'web.qurbani.slaughter.center'
+                ].search([
+                    ('distribution_center_id', 'in', [distribution_id])
+                ], limit=1)
+
+            else:
+                # fallback record where name is False/empty
+                slaughter_center = self.env[
+                    'web.qurbani.slaughter.center'
+                ].search([
+                    ('name', '=', False)
+                ], limit=1)
 
             if not slaughter_center:
                 raise ValidationError(
-                    f"No web.qurbani.slaughter.center found for distribution center ID {distribution_id}"
+                    f"No slaughter center mapping found "
+                    f"for distribution center ID {distribution_id}"
                 )
 
             if not slaughter_center.slaughter_center_id:
                 raise ValidationError(
-                    f"Slaughter center record found but slaughter_center_id is empty"
+                    f"Slaughter center record exists but "
+                    f"slaughter_center_id is empty"
                 )
 
-            slaughter_location_id = slaughter_center.slaughter_center_id.id
-
-            day_id = line.day_id.id if line.day_id else (
-                default_day.id if default_day else False
+            slaughter_location_id = (
+                slaughter_center.slaughter_center_id.id
             )
 
-            hijri_id = line.hijri_id.id if line.hijri_id else (
-                default_hijri.id if default_hijri else False
-            )
-
-            if not day_id or not hijri_id:
-                raise ValidationError(
-                    f"Cannot determine day/hijri for line {line.id}. "
-                    f"day={day_id}, hijri={hijri_id}"
-                )
-
+            # =========================================================
+            # DEMAND LOOKUP
+            # =========================================================
             demand_domain = [
-                ('day_id', '=', day_id),
-                ('hijri_id', '=', hijri_id),
+                ('day_id', '=', day.id),
+                ('hijri_id', '=', hijri.id),
                 ('slaughter_location_id', '=', slaughter_location_id),
                 ('remaining_hissa', '>', 0),
             ]
+            if 'cow' in product.name.lower():
+                demand_domain.append(
+                    ('inventory_product_id.name', 'ilike', 'cow')
+                )
 
-            # Optional product filter
-            # demand_domain.append(('inventory_product_id', '=', product.id))
-
-            demand = self.env['qurbani.slaughter.slot.demand'].search(
+            elif 'goat' in product.name.lower():
+                demand_domain.append(
+                    ('inventory_product_id.name', 'ilike', 'goat')
+                )
+            demand = self.env[
+                'qurbani.slaughter.slot.demand'
+            ].search(
                 demand_domain,
                 limit=1
             )
@@ -150,13 +235,22 @@ class QurbaniOrder(models.Model):
             if not demand:
                 raise ValidationError(
                     f"No available demand slot for "
-                    f"day {day_id}, hijri {hijri_id}, "
-                    f"product {product.name}, "
-                    f"slaughter location {slaughter_center.slaughter_center_id.display_name}"
+                    f"day={day.name}, "
+                    f"hijri={hijri.name if hasattr(hijri, 'name') else hijri.id}, "
+                    f"city={line.city}, "
+                    f"branch={branch}, "
+                    f"product={product.display_name}"
                 )
 
-            return demand
-
+            return {
+                'demand': demand,
+                'day': day,
+                'hijri': hijri,
+                'city': city,
+                'distribution_id': distribution_id,
+                'slaughter_location_id': slaughter_location_id,
+            }        
+        
         # ---------- Main logic ----------
         try:
             donation_lines = donation_record.get('qurbani_order_line_ids', [])
@@ -165,7 +259,7 @@ class QurbaniOrder(models.Model):
             elif not donation_lines:
                 donation_lines = []
 
-            default_day = _get_day_from_name(donation_record.get('qurbani_day'))
+            # default_day = _get_day_from_name(donation_record.get('qurbani_day'))
             default_hijri = _get_latest_hijri()
             default_product = False
 
@@ -179,7 +273,13 @@ class QurbaniOrder(models.Model):
                     continue
 
                 try:
-                    demand = _get_demand(api_line, default_day, default_hijri, default_product)
+                    mapping_data = _get_demand(
+                        api_line,
+                        default_hijri,
+                        default_product
+                    )
+
+                    demand = mapping_data['demand']                
                 except ValidationError as e:
                     error_msg = str(e)
                     line_errors.append(f"Line {api_line.id} (product: {api_line.product_id.name if api_line.product_id else '?'}) - {error_msg}")
@@ -194,14 +294,21 @@ class QurbaniOrder(models.Model):
 
                 order_lines_data.append({
                     'api_line': api_line,
-                    'demand': demand,
+
+                    # mapped records
+                    'demand': mapping_data['demand'],
+                    'day': mapping_data['day'],
+                    'hijri': mapping_data['hijri'],
+                    'city': mapping_data['city'],
+                    'distribution_id': mapping_data['distribution_id'],
+                    'slaughter_location_id': mapping_data['slaughter_location_id'],
+
+                    # line data
                     'quantity': qty,
                     'product_id': api_line.product_id.id,
                     'amount': api_line.amount or 0.0,
                     'hissa_name': api_line.hissa_name or '',
                     'branch': api_line.branch or '',
-                    'city_id': api_line.city_id.id if api_line.city_id else False,
-                    'distribution_id': api_line.distribution_id.id if api_line.distribution_id else False,
                 })
 
             if not order_lines_data:
@@ -276,25 +383,38 @@ class QurbaniOrder(models.Model):
             product_lines = []
             for line_data in order_lines_data:
                 demand = line_data['demand']
-                api_line = line_data['api_line']
-                city_id = api_line.city_id.id if api_line.city_id else False
-                if not city_id and demand.slaughter_location_id.location_id:
-                    city_id = demand.slaughter_location_id.location_id.id
-
                 vals = {
                     'product_id': line_data['product_id'],
                     'quantity': line_data['quantity'],
                     'amount': line_data['amount'],
-                    'day_id': demand.day_id.id,
-                    'hijri_id': demand.hijri_id.id,
-                    'city_id': city_id,
-                    'distribution_id': line_data['distribution_id'],  # may be False
-                    'slaughter_id': demand.slaughter_location_id.id,
+
+                    # MAPPED DATA
+                    'day_id': line_data['day'].id,
+                    'hijri_id': line_data['hijri'].id,
+
+                    'city_id': (
+                        line_data['city'].id
+                        if line_data['city']
+                        else False
+                    ),
+
+                    'distribution_id': line_data['distribution_id'],
+
+                    'slaughter_id': line_data['slaughter_location_id'],
+
+                    # other
                     'hissa_name': line_data['hissa_name'],
+
                     'start_time': demand.start_time,
                     'end_time': demand.end_time,
-                    'slaughter_start_time': convert_to_24hr(demand.start_time),
-                    'slaughter_end_time': convert_to_24hr(demand.end_time),
+
+                    'slaughter_start_time': convert_to_24hr(
+                        demand.start_time
+                    ),
+
+                    'slaughter_end_time': convert_to_24hr(
+                        demand.end_time
+                    ),
                 }
                 product_lines.append((0, 0, vals))
 
@@ -349,8 +469,8 @@ class QurbaniOrder(models.Model):
                     slaughter_records = self.env['qurbani.cow.slaughter'].search([
                         ('day_id', '=', line.day_id.id),
                         ('hijri_id', '=', line.hijri_id.id),
-                        # ('start_time', '=', line.slaughter_start_time),
-                        # ('end_time', '=', line.slaughter_end_time),
+                        ('start_time', '=', line.slaughter_start_time),
+                        ('end_time', '=', line.slaughter_end_time),
                         ('slaughter_location_id', '=', line.slaughter_id.id),
                     ], order='id asc')
                     qurbani_cow_slaughter = False

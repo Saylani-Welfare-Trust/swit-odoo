@@ -976,20 +976,20 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 2. Hijri, quantity, amount, day (from upper code)
                 # -------------------------------------------------------------
-                hijri = self.env['hijri'].search([], order="id desc", limit=1)
+                # hijri = self.env['hijri'].search([], order="id desc", limit=1)
                 quantity = int(it.get('qty', 1) or 1)
                 amount = float(it.get('price', 0) or 0)
 
                 day_name = it.get('day', '')
-                day = self.env['qurbani.day'].search([
-                    ('web_qurbani_day', '=', day_name)
-                ], limit=1)
+                # day = self.env['qurbani.day'].search([
+                #     ('web_qurbani_day', '=', day_name)
+                # ], limit=1)
 
                 # -------------------------------------------------------------
                 # 3. City lookup (from lower code, improved)
                 # -------------------------------------------------------------
                 city_name = donor.get('qurbaniCity', '')
-                branch = it.get('qurbaniBranch', '')
+                branch_name = it.get('qurbaniBranch', '')
                 self.create_fetch_log(
                     history.id,
                     f"Distribution Data from API",
@@ -997,66 +997,66 @@ class APIDonationWizard(models.TransientModel):
                     f"City from donor: '{city_name}', Branch from item: '{branch}'"
                 )
 
-                city = False
-                if city_name:
-                    # Use exact match first, then ilike as fallback
-                    city = self.env['qurbani.city'].search([
-                        ('name', '=', city_name),
-                    ], limit=1)
-                    self.create_fetch_log(
-                        history.id,
-                        f"City Lookup Result",
-                        "Qurbani",
-                        f"Searching qurbani.city with name='{city_name}', usage='internal' → Found: {city.name if city else 'NOT FOUND'} (ID: {city.id if city else 'None'})"
-                    )
-                else:
-                    self.create_fetch_log(
-                        history.id,
-                        f"City Missing",
-                        "Warning",
-                        f"qurbaniCity is empty – cannot determine distribution location."
-                    )
+                # city = False
+                # if city_name:
+                #     # Use exact match first, then ilike as fallback
+                #     city = self.env['qurbani.city'].search([
+                #         ('name', '=', city_name),
+                #     ], limit=1)
+                #     self.create_fetch_log(
+                #         history.id,
+                #         f"City Lookup Result",
+                #         "Qurbani",
+                #         f"Searching qurbani.city with name='{city_name}', usage='internal' → Found: {city.name if city else 'NOT FOUND'} (ID: {city.id if city else 'None'})"
+                #     )
+                # else:
+                #     self.create_fetch_log(
+                #         history.id,
+                #         f"City Missing",
+                #         "Warning",
+                #         f"qurbaniCity is empty – cannot determine distribution location."
+                #     )
 
                 # -------------------------------------------------------------
                 # 4. Distribution center lookup/creation (from lower code)
                 # -------------------------------------------------------------
                 distribution_id = False
-                if city or branch:
-                    distribution_name = f"{city.city_id.complete_name if city else ''}/{branch}"
-                    self.create_fetch_log(
-                        history.id,
-                        f"Distribution Center Name",
-                        "Qurbani",
-                        f"Computed name: '{distribution_name}'"
-                    )
+                # if city or branch:
+                #     distribution_name = f"{city.city_id.complete_name if city else ''}/{branch}"
+                #     self.create_fetch_log(
+                #         history.id,
+                #         f"Distribution Center Name",
+                #         "Qurbani",
+                #         f"Computed name: '{distribution_name}'"
+                #     )
 
-                    # Try to find existing mapping
-                    distribution_rec = self.env['web.qurbani.distribution.center'].search([
-                        ('name', '=', distribution_name)
-                    ], limit=1)
-                    if distribution_rec:
-                        distribution_id = distribution_rec.distribution_center_id.id
-                        self.create_fetch_log(
-                            history.id,
-                            f"Distribution Center Found",
-                            "Qurbani",
-                            f"Existing record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
-                        )
-                    else:
-                        self.create_fetch_log(
-                            history.id,
-                            f"Distribution not Found",
-                            "Qurbani",
-                            f"No existing distribution center found with name '{distribution_name}', please create it first "
-                        )
+                #     # Try to find existing mapping
+                #     distribution_rec = self.env['web.qurbani.distribution.center'].search([
+                #         ('name', '=', distribution_name)
+                #     ], limit=1)
+                #     if distribution_rec:
+                #         distribution_id = distribution_rec.distribution_center_id.id
+                #         self.create_fetch_log(
+                #             history.id,
+                #             f"Distribution Center Found",
+                #             "Qurbani",
+                #             f"Existing record: {distribution_rec.name} (ID {distribution_rec.id}) → Center ID: {distribution_id}"
+                #         )
+                #     else:
+                #         self.create_fetch_log(
+                #             history.id,
+                #             f"Distribution not Found",
+                #             "Qurbani",
+                #             f"No existing distribution center found with name '{distribution_name}', please create it first "
+                #         )
                         
-                else:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Distribution Center Skipped",
-                        "Qurbani",
-                        "Both city and branch are empty – no distribution center created."
-                    )
+                # else:
+                #     self.create_fetch_log(
+                #         history.id,
+                #         f"Distribution Center Skipped",
+                #         "Qurbani",
+                #         "Both city and branch are empty – no distribution center created."
+                #     )
 
                 # -------------------------------------------------------------
                 # 5. Share names (from upper code)
@@ -1079,12 +1079,12 @@ class APIDonationWizard(models.TransientModel):
                         'product_id': product.id if product else False,
                         'quantity': 1,
                         'amount': amount,
-                        'day_id': day.id if day else False,
-                        'hijri_id': hijri.id if hijri else False,
-                        'city_id': city.city_id.id if city else False,
+                        'day': day_name if day_name else False,
+                        # 'hijri_id': hijri.id if hijri else False,
+                        'city': city_name if city_name else False,
                         'hissa_name': hissa_name,
-                        'distribution_id': distribution_id,
-                        'branch': branch,
+                        # 'distribution_id': distribution_id,
+                        'branch': branch_name if branch_name else False,
                     }
                     order_lines.append([0, 0, line_vals])
                     self.create_fetch_log(

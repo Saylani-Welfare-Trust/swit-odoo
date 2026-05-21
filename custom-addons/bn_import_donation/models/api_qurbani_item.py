@@ -12,11 +12,13 @@ class ApiQurbaniOrderLine(models.Model):
 
     qurbani_order_id = fields.Many2one('api.donation', string="Qurbani Order")
     product_id = fields.Many2one('product.product', string="Product")
-    city_id = fields.Many2one('stock.location', string="City")
+    # city_id = fields.Many2one('stock.location', string="City")
+    city = fields.Char(string="City Name")
     branch = fields.Char('Branch')
-    distribution_id = fields.Many2one('stock.location', string="Distribution")
-    day_id = fields.Many2one('qurbani.day', string="Day")
-    hijri_id = fields.Many2one('hijri', string="Hijri")
+    # distribution_id = fields.Many2one('stock.location', string="Distribution")
+    # day_id = fields.Many2one('qurbani.day', string="Day")
+    day = fields.Char( string="Day")
+    # hijri_id = fields.Many2one('hijri', string="Hijri")
 
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')
