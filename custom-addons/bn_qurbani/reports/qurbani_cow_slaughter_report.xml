@@ -8,11 +8,11 @@
 
                 <t t-foreach="docs" t-as="o">
 
-                    <!-- Get all lines -->
+                    <!-- ALL LINES -->
                     <t t-set="lines" t-value="o.qurbani_cow_slaughter_line"/>
                     <t t-set="total" t-value="len(lines)"/>
 
-                    <!-- Loop pages (5 records per page) -->
+                    <!-- PAGE LOOP -->
                     <t t-foreach="range(0, total, 5)" t-as="i">
 
                         <div class="page">
@@ -22,26 +22,6 @@
                                 <span t-esc="o.name"/>
                             </h2>
 
-                            <div class="row">
-                                <div class="col-6">
-                                    <span>Location</span> -
-                                    <span t-esc="o.slaughter_location_id.name"/>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6">
-                                    <span>Start Time</span>
-                                    <span t-esc="o.start_time" widget="float_time"/>
-                                </div>
-
-                                <div class="col-6">
-                                    <span>End Time</span>
-                                    <span t-esc="o.end_time" widget="float_time"/>
-                                </div>
-                            </div>
-
-                            <!-- TABLE -->
                             <table class="table table-bordered">
 
                                 <thead>
@@ -54,15 +34,16 @@
 
                                 <tbody>
 
-                                    <!-- Take 5 records per page -->
+                                    <!-- SLICE 5 RECORDS -->
                                     <t t-set="chunk" t-value="lines[i:i+5]"/>
-                                    <t t-set="count" t-value="i + 1"/>
 
                                     <t t-foreach="chunk" t-as="line">
 
                                         <tr>
+
+                                            <!-- ✅ FIXED CONTINUOUS NUMBERING -->
                                             <td>
-                                                <span t-esc="count"/>
+                                                <span t-esc="lines.index(line) + 1"/>
                                             </td>
 
                                             <td>
@@ -72,9 +53,8 @@
                                             <td>
                                                 <span t-esc="line.qurbani_order_no"/>
                                             </td>
-                                        </tr>
 
-                                        <t t-set="count" t-value="count + 1"/>
+                                        </tr>
 
                                     </t>
 
