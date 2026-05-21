@@ -49,7 +49,7 @@
 
                             <div>
 
-                                <div class="row" style="font-size: 10px; margin: 0; padding: 0;">
+                                <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
 
                                     <div class="col-3" style="padding: 0;">
                                         <strong><span t-esc="o.name"/></strong>
