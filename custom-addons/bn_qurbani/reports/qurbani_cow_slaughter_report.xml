@@ -36,7 +36,7 @@
                 <!-- COUNTER -->
                 <t t-set="count" t-value="1"/>
 
-                <h2>Saylani Welfare and Internationl Trust</h2>
+                <h2>Saylani Welfare and International Trust</h2>
                 <h3>Cow Slaughter Schedule Report</h3>
 
                 <t t-foreach="docs" t-as="o">
@@ -44,6 +44,11 @@
                     <!-- APPLY PAGE BREAK AFTER EVERY 5 RECORDS -->
                     <div class="page"
                         t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
+
+                        <t t-if="count % 5 == 0">
+                            <h2>Saylani Welfare and International Trust</h2>
+                            <h3>Cow Slaughter Schedule Report</h3>
+                        </t>
 
                         <br/>
 
