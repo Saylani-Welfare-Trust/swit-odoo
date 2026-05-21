@@ -107,7 +107,7 @@ class QurbaniOrder(models.Model):
             # DISTRIBUTION CENTER MAPPING
             distribution_id = False
             branch = line.branch or False
-            if city or branch:
+            if city and branch:
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
