@@ -6,7 +6,8 @@ class QurbaniDistributionCenter(models.Model):
 
 
     name = fields.Char('Name')  
-    slaughter_center_id = fields.Many2one('stock.location', string="Slaughter Center")
+    slaughter_center_id = fields.Many2one('stock.location', string="Slaughter Center" )
+    distribution_center_id = fields.Many2many('stock.location', string="Distribution Center")
     
     
 

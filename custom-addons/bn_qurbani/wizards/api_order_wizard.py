@@ -30,27 +30,15 @@ class APIDonationWizard(models.TransientModel):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
-        self.create_fetch_log(f"Start action_fetch_qurbani", 'API Fetch', 'Starting fetch Qurbani donations from donation inflows')
-        
-        # Build search domain
         domain = [('qurbani', '=', True)]
-        
-        # Handle date range filtering (created_at is a Datetime field)
         if self.start_date:
-            # Convert date to datetime at start of day
-            start_datetime = f"{self.start_date} 00:00:00"
-            domain.append(('created_at', '>=', start_datetime))
-        
+            domain.append(('created_at', '>=', f"{self.start_date} 00:00:00"))
         if self.end_date:
-            # Convert date to datetime at end of day
-            end_datetime = f"{self.end_date} 23:59:59"
-            domain.append(('created_at', '<=', end_datetime))
-        
-        # Fetch ALL matching donations (remove limit=1)
+            domain.append(('created_at', '<=', f"{self.end_date} 23:59:59"))
+
         donations_info = self.env['api.donation'].search(domain)
-        
+
         if not donations_info:
-            self.create_fetch_log(f"No qurbani donations found for the given date range", 'Info', 'Search returned no results')
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -61,71 +49,50 @@ class APIDonationWizard(models.TransientModel):
                     'sticky': False,
                 }
             }
-        
-        self.create_fetch_log(f"Found {len(donations_info)} qurbani donations to process", 'API Fetch', f"Processing {len(donations_info)} donations")
-        
-        created_count = 0
-        failed_count = 0
-        results = []
-        
-        for info in donations_info:
-            try:
-                # Convert Odoo record to dictionary
-                donation_dict = info.read()[0]
-                
-                # Create qurbani order from donation
-                result = self.env['qurbani.order'].create_web_qurbani_order(donation_dict)
-                
-                if result.get('status') == 'success':
+
+        # ── Single savepoint: ALL donations succeed or ALL roll back ──────────
+        try:
+            with self.env.cr.savepoint():
+                created_count = 0
+
+                for info in donations_info:
+                    donation_dict = info.read()[0]
+                    # Any ValidationError raised inside bubbles up immediately,
+                    # triggering savepoint rollback for every record processed so far.
+                    result = self.env['qurbani.order'].create_web_qurbani_order(
+                        donation_dict, donation_name=info.name
+                    )
                     created_count += 1
-                    self.create_fetch_log(
-                        f"✓ SUCCESS - Qurbani Order {result.get('name')} | Donation: {info.name} (ID: {info.id})",
-                        'Success',
-                        f"Qurbani Order ID: {result.get('qurbani_order_id')}"
-                    )
-                    results.append(result)
-                else:
-                    failed_count += 1
-                    error_msg = result.get('message', 'Unknown error')
-                    
-                    # Create log with unique identifier
-                    unique_id = f"[ID-{info.id}] {info.name}"
-                    
-                    self.create_fetch_log(
-                        f"✗ FAILED - {unique_id}",
-                        'Error',
-                        f"Error: {error_msg}"
-                    )
-                    
-            except Exception as e:
-                failed_count += 1
-                
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                
-                # Create the log entry with unique identifier in the name
-                self.create_fetch_log(
-                    f"✗ FAILED [{timestamp}] - {unique_id}",
-                    'Error',
-                    str(e)
-                )
-        # Return summary notification
-        summary_msg = f"Processed {len(donations_info)} donations: {created_count} succeeded, {failed_count} failed"
-        self.create_fetch_log(f"End action_fetch_qurbani", 'API Fetch', summary_msg)
-        
-        if failed_count > 0:
-            self.create_fetch_log(
-                f"SUMMARY: {created_count} successful | {failed_count} FAILED",
-                'Summary',
-                f"Check detailed logs for failed records. Failed donations have unique IDs for easy identification."
-            )
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Processing Complete',
-                'message': summary_msg,
-                'type': 'success' if failed_count == 0 else 'warning',
-                'sticky': False,
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"✓ SUCCESS - Qurbani Order {result.get('name')} | Donation: {info.name} (ID: {info.id})",
+                        'status': 'Success',
+                        'reason': f"Qurbani Order ID: {result.get('qurbani_order_id')}"
+                    })
+
+            # Only reached if ALL succeeded
+            summary_msg = f"All {created_count} donations processed successfully."
+            self.env['fetch.qurbani.log'].create({
+                'name': "SUMMARY: All donations processed",
+                'status': 'Summary',
+                'reason': summary_msg
+            })
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Processing Complete',
+                    'message': summary_msg,
+                    'type': 'success',
+                    'sticky': False,
+                }
             }
-        }
+
+        except ValidationError as e:
+            # Savepoint already rolled back everything — just re-raise so
+            # Odoo shows the error dialog to the user. Nothing was committed.
+            raise
+        except Exception as e:
+            _logger.error("Unexpected error during qurbani fetch", exc_info=True)
+            raise ValidationError(
+                f"Unexpected error during processing — all changes have been rolled back.\n\n{str(e)}"
+            )
