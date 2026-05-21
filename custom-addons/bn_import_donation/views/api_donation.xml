@@ -151,6 +151,7 @@
                                     <field name="branch" readonly="1" /> 
                                     <!-- <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" /> -->
                                     <field name="city" readonly="1" />
+                                    <field name="qurbani_fullfilment" readonly="1" />
                                     <!-- <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" /> -->
                                 </tree>
                             </field>

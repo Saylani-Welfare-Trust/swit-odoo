@@ -20,6 +20,7 @@ class ApiQurbaniOrderLine(models.Model):
     day = fields.Char( string="Day")
     # hijri_id = fields.Many2one('hijri', string="Hijri")
 
+    qurbani_fullfilment = fields.Char('Qurbani Fullfilment')
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')
 

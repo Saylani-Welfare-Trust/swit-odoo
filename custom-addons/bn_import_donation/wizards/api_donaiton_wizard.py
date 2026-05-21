@@ -996,6 +996,7 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 city_name = it.get('qurbaniCity', '')
                 branch_name = it.get('qurbaniBranch', '')
+                qurbani_fullfilment = it.get('qurbaniFullfilment', '')
                 self.create_fetch_log(
                     history.id,
                     f"Distribution Data from API",
@@ -1091,6 +1092,7 @@ class APIDonationWizard(models.TransientModel):
                         'hissa_name': hissa_name,
                         # 'distribution_id': distribution_id,
                         'branch': branch_name if branch_name else False,
+                        'qurbani_fullfilment': qurbani_fullfilment if qurbani_fullfilment else False,
                     }
                     order_lines.append([0, 0, line_vals])
                     self.create_fetch_log(

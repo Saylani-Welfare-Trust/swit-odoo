@@ -107,7 +107,10 @@ class QurbaniOrder(models.Model):
             # DISTRIBUTION CENTER MAPPING
             distribution_id = False
             branch = line.branch or False
-            if city and branch:
+            qurbani_fullfilment = line.qurbani_fullfilment 
+            if qurbani_fullfilment == "meat" :
+                if  not city: raise ValidationError(f"City is required for meat qurbani fulfillment create city '{line.city}' and try again.")
+                if not branch: raise ValidationError(f"Branch is required for meat qurbani fulfillment, provide branch in line and try again.")
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
