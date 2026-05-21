@@ -10,28 +10,71 @@
                 <t t-foreach="docs" t-as="o">
                     <div class="page">
 
+                       <br/>
+
+                        <!-- HEADER -->
                         <div class="row">
-                            <div class="col-4">
-                                <span t-esc="o.name"/>
+                            <div class="col-2">
+                                <strong><span t-esc="o.name"/></strong>
                             </div>
-                            <div class="col-4">
-                                <span>Hissa Name</span> <spna><t t-esc="o.hissa_name"/></spna>
+
+                            <div class="col-6">
+                                <strong>
+                                    <span>Location</span> -
+                                    <span t-esc="o.slaughter_location_id.name"/>
+                                </strong>
                             </div>
-                            <div class="col-4">
-                                <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
+
+                            <div class="col-2">
+                                <strong>
+                                    <span>Start Time</span>
+                                    <span t-esc="o.start_time" widget="float_time"/>
+                                </strong>
+                            </div>
+
+                            <div class="col-2">
+                                <strong>
+                                    <span>End Time</span>
+                                    <span t-esc="o.end_time" widget="float_time"/>
+                                </strong>
                             </div>
                         </div>
+
+                        <br/>
+                        
                         <div class="row">
-                            <div class="col-4">
-                                <span>Location</span> <spna><t t-esc="o.slaughter_location_id.name"/></spna>
+                            <div class="col-2">
+                                <strong>SO No.</strong>
                             </div>
-                            <div class="col-4">
-                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
+
+                            <div class="col-6">
+                                <strong>Hissa Name</strong>
                             </div>
+
                             <div class="col-4">
-                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
+                                <strong>QO No.</strong>
                             </div>
                         </div>
+                        
+                        <t t-set="line_count" t-value="1"/>
+
+                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
+                            <div class="row">
+                                <div class="col-2">
+                                    <t t-esc="line_count"/>
+                                </div>
+
+                                <div class="col-6">
+                                    <t t-esc="line.hissa_name"/>
+                                </div>
+
+                                <div class="col-4">
+                                    <t t-esc="line.qurbani_order_no"/>
+                                </div>
+                            </div>
+                            <t t-set="line_count" t-value="line_count + 1"/>
+                        </t>
+                      
                     </div>
                 </t>
             </t>
