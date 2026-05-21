@@ -44,21 +44,21 @@
 
                         <!-- HEADER -->
                         <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
-                            <div class="col-3">
+                            <div class="col-2">
                                 <span t-esc="o.name"/>
                             </div>
 
-                            <div class="col-3">
+                            <div class="col-6">
                                 <span>Location</span> -
                                 <span t-esc="o.slaughter_location_id.name"/>
                             </div>
 
-                            <div class="col-3">
+                            <div class="col-2">
                                 <span>Start Time</span>
                                 <span t-esc="o.start_time" widget="float_time"/>
                             </div>
 
-                            <div class="col-3">
+                            <div class="col-2">
                                 <span>End Time</span>
                                 <span t-esc="o.end_time" widget="float_time"/>
                             </div>
