@@ -1003,7 +1003,13 @@ class APIDonationWizard(models.TransientModel):
                     "Qurbani",
                     f"City from donor: '{city_name}', Branch from item: '{branch_name}'"
                 )
-
+                if qurbani_fullfilment:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani Fullfilment Info",
+                        "Qurbani",
+                        f"Qurbani json {info}"
+                    )
                 # city = False
                 # if city_name:
                 #     # Use exact match first, then ilike as fallback
