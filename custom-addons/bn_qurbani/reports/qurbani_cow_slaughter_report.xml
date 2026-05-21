@@ -42,6 +42,9 @@
                     <div class="page"
                         t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
 
+                        <h2>Saylani International And Welfare Trust</h2>
+                        <h3>Cow Slaughter Schedule Report</h3>
+
                         <!-- HEADER -->
                         <div class="row">
                             <div class="col-2">
@@ -69,6 +72,8 @@
                                 </strong>
                             </div>
                         </div>
+
+                        <br/>
                         
                         <div class="row">
                             <div class="col-2">
@@ -87,7 +92,7 @@
                         <t t-set="line_count" t-value="1"/>
 
                         <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
-                            <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                            <div class="row">
                                 <div class="col-2">
                                     <t t-esc="line_count"/>
                                 </div>
