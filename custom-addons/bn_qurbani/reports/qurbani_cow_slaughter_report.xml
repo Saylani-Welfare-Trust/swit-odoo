@@ -69,31 +69,40 @@
                                 </strong>
                             </div>
                         </div>
+                        
+                        <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                            <div class="col-2">
+                                <strong>SO No.</strong>
+                            </div>
 
-                        <!-- TABLE -->
-                        <table class="table table-bordered" style="font-size: 11px; margin: 0; padding: 0;">
-                            <thead>
-                                <tr>
-                                    <th>SO No.</th>
-                                    <th>Hissa Name</th>
-                                    <th>QO No.</th>
-                                </tr>
-                            </thead>
+                            <div class="col-6">
+                                <strong>Hissa Name</strong>
+                            </div>
 
-                            <tbody>
-                                <t t-set="line_count" t-value="1"/>
+                            <div class="col-4">
+                                <strong>QO No.</strong>
+                            </div>
+                        </div>
+                        
+                        <t t-set="line_count" t-value="1"/>
 
-                                <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
-                                    <tr>
-                                        <td><t t-esc="line_count"/></td>
-                                        <td><t t-esc="line.hissa_name"/></td>
-                                        <td><t t-esc="line.qurbani_order_no"/></td>
-                                    </tr>
-                                    <t t-set="line_count" t-value="line_count + 1"/>
-                                </t>
-                            </tbody>
-                        </table>
+                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
+                            <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                                <div class="col-2">
+                                    <t t-esc="line_count"/>
+                                </div>
 
+                                <div class="col-6">
+                                    <t t-esc="line.hissa_name"/>
+                                </div>
+
+                                <div class="col-4">
+                                    <t t-esc="line.qurbani_order_no"/>
+                                </div>
+                            </div>
+                            <t t-set="line_count" t-value="line_count + 1"/>
+                        </t>
+                        
                     </div>
 
                     <!-- INCREMENT MAIN COUNTER -->
