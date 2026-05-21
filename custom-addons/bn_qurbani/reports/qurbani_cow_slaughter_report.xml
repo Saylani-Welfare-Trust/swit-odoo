@@ -3,10 +3,12 @@
 
     <template id="bn_qurbani.qurbani_cow_slaughter_report_template">
         <t t-call="web.html_container">
+
             <style>
                 .page {
                     padding: 0px !important;
                     margin: 0px !important;
+                    page-break-after: always;
                 }
 
                 table {
@@ -30,48 +32,74 @@
             </style>
 
             <t t-call="web.external_layout">
-                <t t-foreach="docs" t-as="o">
+
+                <!-- TOTAL -->
+                <t t-set="total" t-value="len(docs)"/>
+
+                <!-- PAGE LOOP (5 records per page) -->
+                <t t-foreach="range(0, total, 5)" t-as="i">
+
                     <div class="page">
-                        
-                        <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
-                            <div class="col-3">
-                                <span t-esc="o.name"/>
-                            </div>
-                            <div class="col-3">
-                                <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.name"/></spna>
-                            </div>
-                            <div class="col-3">
-                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
-                            </div>
-                            <div class="col-3">
-                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
-                            </div>
-                        </div>
 
-                        <table class="table table-bordered" style="font-size: 11px; margin: 0; padding: 0;">
-                            <thead>
-                                <tr>
-                                    <th>SO No.</th>
-                                    <th>Hissa Name</th>
-                                    <th>QO No.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-set="count" t-value="1"/>
-                                <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line" t-key="line.id">
-                                    <tr>
-                                        <td><t t-esc="count"/></td>
-                                        <td><t t-esc="line.hissa_name"/></td>
-                                        <td><t t-esc="line.qurbani_order_no"/></td>
-                                    </tr>
+                        <!-- SLICE 5 RECORDS -->
+                        <t t-set="page_docs" t-value="docs[i:i+5]"/>
 
+                        <!-- LOOP ONLY 5 RECORDS -->
+                        <t t-foreach="page_docs" t-as="o">
 
-                                    <t t-set="count" t-value="count+1"/>
-                                </t>
-                            </tbody>
-                        </table>
+                            <div style="margin-bottom: 12px; border-bottom: 1px solid #000; padding-bottom: 10px;">
+
+                                <div class="row" style="font-size: 11px;">
+                                    <div class="col-3">
+                                        <span t-esc="o.name"/>
+                                    </div>
+
+                                    <div class="col-3">
+                                        <span>Location</span> -
+                                        <span t-esc="o.slaughter_location_id.name"/>
+                                    </div>
+
+                                    <div class="col-3">
+                                        <span>Start Time</span>
+                                        <span t-esc="o.start_time" widget="float_time"/>
+                                    </div>
+
+                                    <div class="col-3">
+                                        <span>End Time</span>
+                                        <span t-esc="o.end_time" widget="float_time"/>
+                                    </div>
+                                </div>
+
+                                <table class="table table-bordered" style="font-size: 11px;">
+                                    <thead>
+                                        <tr>
+                                            <th>SO No.</th>
+                                            <th>Hissa Name</th>
+                                            <th>QO No.</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
+                                            <tr>
+                                                <td><t t-esc="count"/></td>
+                                                <td><t t-esc="line.hissa_name"/></td>
+                                                <td><t t-esc="line.qurbani_order_no"/></td>
+                                            </tr>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
+                                    </tbody>
+                                </table>
+
+                            </div>
+
+                        </t>
+
                     </div>
+
                 </t>
+
             </t>
         </t>
     </template>
