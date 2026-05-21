@@ -332,8 +332,8 @@ class QurbaniOrder(models.Model):
                 if not qurbani_cow_slaughter:
                     raise ValidationError(
                         f"No available cow slaughter slot for Order {line.qurbani_order_id.name}, "
-                        f"Line {line.name} — day={line.day_id.id}, hijri={line.hijri_id.id}, "
-                        f"location={line.slaughter_id.id}, "
+                        f"Line {line.name} — day={line.day_id.name}, hijri={line.hijri_id.name}, "
+                        f"location={line.slaughter_id.slaughter_center_id.name}, "
                         f"times {line.slaughter_start_time}-{line.slaughter_end_time}"
                     )
                 qurbani_cow_slaughter.write({
