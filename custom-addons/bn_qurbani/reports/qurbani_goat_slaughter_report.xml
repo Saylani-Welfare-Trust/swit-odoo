@@ -12,9 +12,7 @@
                             <div class="col-6">
                                 <span>Location</span> <spna><t t-esc="o.slaughter_location_id.name"/></spna>
                             </div>
-                            <div class="col-6">
-                                <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
-                            </div>
+                            <div class="col-6"/>
                         </div>
                         <div class="row">
                             <div class="col-6">
@@ -26,17 +24,11 @@
                         </div>
                         <div class="row">
                             <div class="col-6">
-                                <span>QOL No.</span> <spna><t t-esc="o.qurbani_order_line_no"/></spna>
-                            </div>
-                            <div class="col-6">
-                                <span>Product</span> <spna><t t-esc="o.product_id.name"/></spna>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
                                 <span>Hissa Name</span> <spna><t t-esc="o.hissa_name"/></spna>
                             </div>
-                            <div class="col-6"/>
+                            <div class="col-6">
+                                <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
+                            </div>
                         </div>
                     </div>
                 </t>

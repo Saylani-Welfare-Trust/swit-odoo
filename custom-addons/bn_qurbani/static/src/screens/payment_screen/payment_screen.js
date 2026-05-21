@@ -58,7 +58,7 @@ patch(PaymentScreen.prototype, {
         }
 
         // Continue with normal POS flow
-        return super.validateOrder(isForceValidate);
+        return super.validateOrder(isForceValidacreate_qurbani_recordte);
     },
 
     prepareOrderLines(orderLines) {
