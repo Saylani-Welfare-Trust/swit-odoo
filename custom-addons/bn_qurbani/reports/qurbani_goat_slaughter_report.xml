@@ -4,7 +4,7 @@
     <template id="bn_qurbani.qurbani_goat_slaughter_report_template">
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
-                <h2>Saylani International And Welfare Trust</h2>
+                <h2>Saylani Welfare and Internationl Trust</h2>
                 <h3>Goat Slaughter Schedule Report</h3>
 
                 <t t-foreach="docs" t-as="o">
