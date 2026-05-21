@@ -67,16 +67,10 @@ class QurbaniOrder(models.Model):
     
     def create_web_qurbani_order(self, donation_record, donation_name=None):
         """
-        Create Qurbani Order from api.donation using slaughter‑slot logic.
-        donation_name: optional, for better logging
+        Create Qurbani Order from api.donation using slaughter-slot logic.
+        Raises ValidationError on ANY failure — caller must handle rollback.
         """
-        # # ---------- Helper: get day from name ----------
-        # def _get_day_from_name(day_name):
-        #     if not day_name:
-        #         return self.env['qurbani.day']
-        #     return self.env['qurbani.day'].search([('name', '=', day_name)], limit=1)
 
-        # ---------- Helper: get latest hijri (same as POS method) ----------
         def _get_latest_hijri():
             return self.env['hijri'].search([], order='id desc', limit=1)
 
@@ -88,128 +82,65 @@ class QurbaniOrder(models.Model):
             except:
                 return time_str
 
-        def _get_demand(line,  default_hijri, default_product):
+        def _get_demand(line, default_hijri, default_product):
             product = line.product_id or default_product
-
             if not product:
-                raise ValidationError(
-                    f"Line {line.id if line else '?'} has no product_id"
-                )
+                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
-            # =========================================================
             # DAY MAPPING
-            # =========================================================
             day = False
-
             if getattr(line, 'day', False):
-                day = self.env['qurbani.day'].search([
-                    ('web_qurbani_day', 'ilike', line.day)
-                ], limit=1)
-
+                day = self.env['qurbani.day'].search([('web_qurbani_day', 'ilike', line.day)], limit=1)
             if not day:
-                raise ValidationError(
-                    f"Unable to map qurbani day '{line.day}'"
-                )
+                raise ValidationError(f"Unable to map qurbani day '{line.day}'")
 
-            # =========================================================
             # HIJRI
-            # =========================================================
-            hijri =  default_hijri
-
+            hijri = default_hijri
             if not hijri:
-                raise ValidationError(
-                    f"No hijri found for line {line.id}"
-                )
+                raise ValidationError(f"No hijri found for line {line.id}")
 
-            # =========================================================
             # CITY MAPPING
-            # =========================================================
             city = False
-
             if getattr(line, 'city', False):
-
-                city = self.env['qurbani.city'].search([
-                    ('name', '=', line.city)
-                ], limit=1)
-
-                # fallback
+                city = self.env['qurbani.city'].search([('name', '=', line.city)], limit=1)
                 if not city:
-                    city = self.env['qurbani.city'].search([
-                        ('name', 'ilike', line.city)
-                    ], limit=1)
+                    city = self.env['qurbani.city'].search([('name', 'ilike', line.city)], limit=1)
 
-            # =========================================================
             # DISTRIBUTION CENTER MAPPING
-            # =========================================================
             distribution_id = False
-
             branch = line.branch or ''
-
             if city or branch:
-
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
-
-                distribution_rec = self.env[
-                    'web.qurbani.distribution.center'
-                ].search([
-                    ('name', '=', distribution_name)
-                ], limit=1)
-
+                distribution_rec = self.env['web.qurbani.distribution.center'].search(
+                    [('name', '=', distribution_name)], limit=1
+                )
                 if distribution_rec:
                     distribution_id = distribution_rec.distribution_center_id.id
-
                 else:
-                    raise ValidationError(
-                        f"Distribution center not found for "
-                        f"'{distribution_name}'"
-                    )
+                    raise ValidationError(f"Distribution center not found for '{distribution_name}'")
 
             if not distribution_id:
                 raise ValidationError(
-                    f"Unable to determine distribution center "
-                    f"for city='{line.city}' branch='{branch}'"
+                    f"Unable to determine distribution center for city='{line.city}' branch='{branch}'"
                 )
 
-            # =========================================================
             # SLAUGHTER CENTER
-            # =========================================================
-            if distribution_id:
-
-                slaughter_center = self.env[
-                    'web.qurbani.slaughter.center'
-                ].search([
-                    ('distribution_center_id', 'in', [distribution_id])
-                ], limit=1)
-
-            else:
-                # fallback record where name is False/empty
-                slaughter_center = self.env[
-                    'web.qurbani.slaughter.center'
-                ].search([
-                    ('name', '=', False)
-                ], limit=1)
-
+            slaughter_center = self.env['web.qurbani.slaughter.center'].search(
+                [('distribution_center_id', 'in', [distribution_id])], limit=1
+            )
             if not slaughter_center:
                 raise ValidationError(
-                    f"No slaughter center mapping found "
-                    f"for distribution center ID {distribution_id}"
+                    f"No slaughter center mapping found for distribution center ID {distribution_id}"
                 )
-
             if not slaughter_center.slaughter_center_id:
                 raise ValidationError(
-                    f"Slaughter center record exists but "
-                    f"slaughter_center_id is empty"
+                    f"Slaughter center record exists but slaughter_center_id is empty"
                 )
+            slaughter_location_id = slaughter_center.slaughter_center_id.id
 
-            slaughter_location_id = (
-                slaughter_center.slaughter_center_id.id
-            )
-
-            # =========================================================
             # DEMAND LOOKUP
-            # =========================================================
             demand_domain = [
                 ('day_id', '=', day.id),
                 ('hijri_id', '=', hijri.id),
@@ -217,29 +148,17 @@ class QurbaniOrder(models.Model):
                 ('remaining_hissa', '>', 0),
             ]
             if 'cow' in product.name.lower():
-                demand_domain.append(
-                    ('inventory_product_id.name', 'ilike', 'cow')
-                )
-
+                demand_domain.append(('inventory_product_id.name', 'ilike', 'cow'))
             elif 'goat' in product.name.lower():
-                demand_domain.append(
-                    ('inventory_product_id.name', 'ilike', 'goat')
-                )
-            demand = self.env[
-                'qurbani.slaughter.slot.demand'
-            ].search(
-                demand_domain,
-                limit=1
-            )
+                demand_domain.append(('inventory_product_id.name', 'ilike', 'goat'))
 
+            demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
             if not demand:
                 raise ValidationError(
                     f"No available demand slot for "
                     f"day={day.name}, "
                     f"hijri={hijri.name if hasattr(hijri, 'name') else hijri.id}, "
-                    f"city={line.city}, "
-                    f"branch={branch}, "
-                    f"product={product.display_name}"
+                    f"city={line.city}, branch={branch}, product={product.display_name}"
                 )
 
             return {
@@ -249,409 +168,267 @@ class QurbaniOrder(models.Model):
                 'city': city,
                 'distribution_id': distribution_id,
                 'slaughter_location_id': slaughter_location_id,
-            }        
-        
-        # ---------- Main logic ----------
-        try:
-            donation_lines = donation_record.get('qurbani_order_line_ids', [])
-            if isinstance(donation_lines, list) and donation_lines and isinstance(donation_lines[0], int):
-                donation_lines = self.env['api.qurbani.order.line'].browse(donation_lines).exists()
-            elif not donation_lines:
-                donation_lines = []
-
-            # default_day = _get_day_from_name(donation_record.get('qurbani_day'))
-            default_hijri = _get_latest_hijri()
-            default_product = False
-
-            schedule_usage = {}
-            order_lines_data = []
-            line_errors = []
-
-            for api_line in donation_lines:
-                if not api_line.exists():
-                    line_errors.append(f"Line ID {api_line.id} does not exist")
-                    continue
-
-                try:
-                    mapping_data = _get_demand(
-                        api_line,
-                        default_hijri,
-                        default_product
-                    )
-
-                    demand = mapping_data['demand']                
-                except ValidationError as e:
-                    error_msg = str(e)
-                    line_errors.append(f"Line {api_line.id} (product: {api_line.product_id.name if api_line.product_id else '?'}) - {error_msg}")
-                    _logger.warning(f"Line {api_line.id} error: {error_msg}")
-                    continue
-
-                qty = int(api_line.quantity or 1)
-
-                if demand.id not in schedule_usage:
-                    schedule_usage[demand.id] = {'demand': demand, 'qty': 0}
-                schedule_usage[demand.id]['qty'] += qty
-
-                order_lines_data.append({
-                    'api_line': api_line,
-
-                    # mapped records
-                    'demand': mapping_data['demand'],
-                    'day': mapping_data['day'],
-                    'hijri': mapping_data['hijri'],
-                    'city': mapping_data['city'],
-                    'distribution_id': mapping_data['distribution_id'],
-                    'slaughter_location_id': mapping_data['slaughter_location_id'],
-
-                    # line data
-                    'quantity': qty,
-                    'product_id': api_line.product_id.id,
-                    'amount': api_line.amount or 0.0,
-                    'hissa_name': api_line.hissa_name or '',
-                    'branch': api_line.branch or '',
-                })
-
-            if not order_lines_data:
-                error_summary = "; ".join(line_errors) if line_errors else "No donation lines found or all lines invalid"
-                donor_name = donation_name or donation_record.get('name', 'Unknown')
-                donation_id = donation_record.get('id', 'Unknown')
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                try:
-                    donation_json = json.dumps(donation_record, indent=2, default=str)
-                except:
-                    donation_json = str(donation_record)
-                detailed_reason = f"""
-                    ================== NO VALID ORDER LINES ==================
-                    Timestamp: {timestamp}
-                    Donation Name: {donor_name}
-                    Donation ID: {donation_id}
-                    Error Summary: {error_summary}
-                    COMPLETE DONATION RECORD: {donation_json}
-                    ========================================================"""
-                self.env['fetch.qurbani.log'].create({
-                    'name': f"✗ NO VALID LINES [{timestamp}] - [ID-{donation_id}] {donor_name}",
-                    'status': 'Error',
-                    'reason': detailed_reason
-                })
-                return {"status": "error", "message": f"No valid qurbani lines found: {error_summary}"}
-
-            # Validate and update demand slots
-            for usage in schedule_usage.values():
-                demand = usage['demand']
-                requested = usage['qty']
-                available = demand.remaining_hissa
-                if requested > available:
-                    donor_name = donation_name or donation_record.get('name', 'Unknown')
-                    donation_id = donation_record.get('id', 'Unknown')
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    try:
-                        donation_json = json.dumps(donation_record, indent=2, default=str)
-                    except:
-                        donation_json = str(donation_record)
-                    detailed_reason = f"""
-                        ================== NOT ENOUGH HISSA ==================
-                        Timestamp: {timestamp}
-                        Donation Name: {donor_name}
-                        Donation ID: {donation_id}
-                        Demand ID: {demand.id}
-                        Need {requested} hissa, only {available} available
-                        COMPLETE DONATION RECORD: {donation_json}
-                        ===================================================="""
-                    self.env['fetch.qurbani.log'].create({
-                        'name': f"✗ NOT ENOUGH HISSA [{timestamp}] - [ID-{donation_id}] {donor_name}",
-                        'status': 'Error',
-                        'reason': detailed_reason
-                    })
-                    return {"status": "error", "message": f"Not enough hissa for demand {demand.id}. Available: {available}, Requested: {requested}"}
-
-            for usage in schedule_usage.values():
-                demand = usage['demand']
-                incoming_hissa = usage['qty']
-                product_name = (demand.inventory_product_id.name or '').lower()
-                divisor = 7 if 'cow' in product_name else 1
-                total_hissa = (demand.current_hissa or 0) + incoming_hissa
-                completed_animals = int(total_hissa // divisor)
-                remaining_hissa = total_hissa % divisor
-                new_remaining_demand = max((demand.remaining_demand or 0) - completed_animals, 0)
-                demand.write({
-                    'current_hissa': remaining_hissa,
-                    'booked_hissa': (demand.booked_hissa or 0) + incoming_hissa,
-                    'remaining_demand': new_remaining_demand,
-                })
-
-            # Build order lines
-            product_lines = []
-            for line_data in order_lines_data:
-                demand = line_data['demand']
-                vals = {
-                    'product_id': line_data['product_id'],
-                    'quantity': line_data['quantity'],
-                    'amount': line_data['amount'],
-
-                    # MAPPED DATA
-                    'day_id': line_data['day'].id,
-                    'hijri_id': line_data['hijri'].id,
-
-                    'city_id': (
-                        line_data['city'].id
-                        if line_data['city']
-                        else False
-                    ),
-
-                    'distribution_id': line_data['distribution_id'],
-
-                    'slaughter_id': line_data['slaughter_location_id'],
-
-                    # other
-                    'hissa_name': line_data['hissa_name'],
-
-                    'start_time': demand.start_time,
-                    'end_time': demand.end_time,
-
-                    'slaughter_start_time': convert_to_24hr(
-                        demand.start_time
-                    ),
-
-                    'slaughter_end_time': convert_to_24hr(
-                        demand.end_time
-                    ),
-                }
-                product_lines.append((0, 0, vals))
-
-            # Donor and currency
-            donor_id = donation_record.get('donor_id')
-            if isinstance(donor_id, tuple):
-                donor_id = donor_id[0]
-            if donor_id and isinstance(donor_id, int):
-                donor = self.env['res.partner'].browse(donor_id).exists()
-                if not donor:
-                    donor_id = False
-
-            currency_name = donation_record.get('currency', 'USD')
-            currency = self.env['res.currency'].search([('name', '=', currency_name)], limit=1)
-            if not currency:
-                currency = self.env.company.currency_id
-
-            qurbani_order = self.create({
-                'donor_id': donor_id or False,
-                'currency_id': currency.id,
-                'remarks': donation_record.get('remarks', ''),
-                'amount': float(donation_record.get('total_amount', 0.0)),
-                'qurbani_order_line_ids': product_lines,
-                'pos_qurbani_order': False,
-                'api_response_id': donation_record.get('import_id', ''),
-                'donation_type': donation_record.get('donation_type', ''),
-                'donation_from': donation_record.get('donation_from', ''),
-                'dn_number': donation_record.get('dn_number', ''),
-                'bank_charges': float(donation_record.get('bank_charges', 0.0)),
-                'transaction_id': donation_record.get('transaction_id', ''),
-                'api_currency': donation_record.get('currency', ''),
-                'api_created_at': donation_record.get('created_at'),
-                'api_updated_at': donation_record.get('updated_at'),
-                'donor_phone': donation_record.get('phone', ''),
-                'donor_email': donation_record.get('email', ''),
-                'donor_cnic': donation_record.get('cnic', ''),
-                'donor_country': donation_record.get('country', ''),
-                'donor_ip_address': donation_record.get('ip_address', ''),
-                'subscription_news': bool(donation_record.get('subscription_for_news', False)),
-                'subscription_whatsapp': bool(donation_record.get('subscription_for_whatsapp', False)),
-                'subscription_sms': bool(donation_record.get('subscription_for_sms', False)),
-            })
-
-            # -----------------------------------------------------------------
-            # Link Slaughter and Distribution for each line
-            # -----------------------------------------------------------------
-            for line in qurbani_order.qurbani_order_line_ids:
-                product_name = (line.product_id.name or "").lower()
-
-                # ---------- SLAUGHTER LINKING (always) ----------
-                if 'cow' in product_name:
-                    slaughter_records = self.env['qurbani.cow.slaughter'].search([
-                        ('day_id', '=', line.day_id.id),
-                        ('hijri_id', '=', line.hijri_id.id),
-                        ('start_time', '=', line.slaughter_start_time),
-                        ('end_time', '=', line.slaughter_end_time),
-                        ('slaughter_location_id', '=', line.slaughter_id.id),
-                    ], order='id asc')
-                    qurbani_cow_slaughter = False
-                    for rec in slaughter_records:
-                        if len(rec.qurbani_cow_slaughter_line) < 7:
-                            qurbani_cow_slaughter = rec
-                            break
-                    if qurbani_cow_slaughter:
-                        qurbani_cow_slaughter.write({
-                            'qurbani_cow_slaughter_line': [(0, 0, {
-                                'qurbani_order_no': line.qurbani_order_id.name,
-                                'qurbani_order_line_no': line.name,
-                                'hissa_name': line.hissa_name,
-                                'product_id': line.product_id.id,
-                            })]
-                        })
-                        qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"✓ COW SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
-                            'status': 'Success',
-                            'reason': f"Slaughter slot ID {qurbani_cow_slaughter.id} (now has {qurbani_cow_slaughter.slot_full}/7 lines)"
-                        })
-                    else:
-                        # Detailed logging for failure
-                        available_slots = self.env['qurbani.cow.slaughter'].search([
-                            ('day_id', '=', line.day_id.id),
-                            ('hijri_id', '=', line.hijri_id.id),
-                            ('slaughter_location_id', '=', line.slaughter_id.id),
-                        ])
-                        slot_info = []
-                        for s in available_slots:
-                            slot_info.append(f"ID {s.id}: {len(s.qurbani_cow_slaughter_line)}/7 lines, times {s.start_time}-{s.end_time}")
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"⚠ COW SLAUGHTER NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
-                            'status': 'Warning',
-                            'reason': f"No available cow slaughter slot matching criteria. "
-                                    f"day={line.day_id.id}, hijri={line.hijri_id.id}, location={line.slaughter_id.id}, "
-                                    f"slaughter_start={line.slaughter_start_time}, slaughter_end={line.slaughter_end_time}. "
-                                    f"Existing slots: {', '.join(slot_info) if slot_info else 'None'}"
-                        })
-                elif 'goat' in product_name:
-                    qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
-                        ('day_id', '=', line.day_id.id),
-                        ('hijri_id', '=', line.hijri_id.id),
-                        ('start_time', '=', line.slaughter_start_time),
-                        ('end_time', '=', line.slaughter_end_time),
-                        ('slaughter_location_id', '=', line.slaughter_id.id),
-                        ('qurbani_order_no', '=', False),
-                    ], limit=1)
-                    if qurbani_goat_slaughter:
-                        qurbani_goat_slaughter.write({
-                            'qurbani_order_no': line.qurbani_order_id.name,
-                            'qurbani_order_line_no': line.name,
-                            'hissa_name': line.hissa_name,
-                            'product_id': line.product_id.id,
-                        })
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"✓ GOAT SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
-                            'status': 'Success',
-                            'reason': f"Slaughter slot ID {qurbani_goat_slaughter.id}"
-                        })
-                    else:
-                        self.env['fetch.qurbani.log'].create({
-                            'name': f"⚠ GOAT SLAUGHTER NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
-                            'status': 'Warning',
-                            'reason': f"No available goat slaughter slot for day {line.day_id.id}, hijri {line.hijri_id.id}, location {line.slaughter_id.id}"
-                        })
-
-                # ---------- DISTRIBUTION LINKING (only if distribution_id exists) ----------
-                if line.distribution_id:
-                    self.env['fetch.qurbani.log'].create({
-                        'name': f"Distribution ID present - Order {line.qurbani_order_id.name}, Line {line.name}",
-                        'status': 'Info',
-                        'reason': f"Distribution ID: {line.distribution_id.id}"
-                    })
-
-                    # --- Search for an UNUSED distribution record ---
-                    search_domain = [
-                        ('slaughter_location_id', '=', line.slaughter_id.id),
-                        ('qurbani_order_no', '=', False),   # CRITICAL: only unused records
-                        # Uncomment these fields for stricter matching (recommended):
-                        ('day_id', '=', line.day_id.id),
-                        ('hijri_id', '=', line.hijri_id.id),
-                        # ('distribution_location_id', '=', line.distribution_id.id),
-                    ]
-                    if 'cow' in product_name:
-                        qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
-                        if qurbani_cow_distribution:
-                            qurbani_cow_distribution.write({
-                                'qurbani_order_no': line.qurbani_order_id.name,
-                                'qurbani_order_line_no': line.name,
-                                'hissa_name': line.hissa_name,
-                                'product_id': line.product_id.id,
-                                'start_time': line.start_time,
-                                'end_time': line.end_time,
-                                'distribution_location_id': line.distribution_id.id,
-                                'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
-                            })
-                            self.env['fetch.qurbani.log'].create({
-                                'name': f"✓ COW DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
-                                'status': 'Success',
-                                'reason': f"Distribution record ID {qurbani_cow_distribution.id} (was unused)"
-                            })
-                        else:
-                            # Log failure with details
-                            all_unused = self.env['qurbani.cow.distribution'].search([
-                                ('slaughter_location_id', '=', line.slaughter_id.id),
-                                ('qurbani_order_no', '=', False)
-                            ])
-                            self.env['fetch.qurbani.log'].create({
-                                'name': f"✗ COW DISTRIBUTION NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
-                                'status': 'Error',
-                                'reason': f"No unused cow distribution matching domain {search_domain}. "
-                                        f"Total unused distributions for this slaughter location: {len(all_unused)}. "
-                                        f"Distribution ID from API line: {line.distribution_id.id}. "
-                                        f"Consider creating more distribution records."
-                            })
-                    elif 'goat' in product_name:
-                        # Similar fix for goat distribution
-                        qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search(search_domain, limit=1)
-                        if qurbani_goat_distribution:
-                            qurbani_goat_distribution.write({
-                                'qurbani_order_no': line.qurbani_order_id.name,
-                                'qurbani_order_line_no': line.name,
-                                'hissa_name': line.hissa_name,
-                                'product_id': line.product_id.id,
-                                'start_time': line.start_time,
-                                'end_time': line.end_time,
-                                'distribution_location_id': line.distribution_id.id,
-                                'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
-                            })
-                            self.env['fetch.qurbani.log'].create({
-                                'name': f"✓ GOAT DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
-                                'status': 'Success',
-                                'reason': f"Distribution record ID {qurbani_goat_distribution.id}"
-                            })
-                        else:
-                            self.env['fetch.qurbani.log'].create({
-                                'name': f"✗ GOAT DISTRIBUTION NOT FOUND - Order {line.qurbani_order_id.name}, Line {line.name}",
-                                'status': 'Error',
-                                'reason': f"No unused goat distribution matching domain {search_domain}"
-                            })
-                else:
-                    self.env['fetch.qurbani.log'].create({
-                        'name': f"Distribution SKIPPED - Order {line.qurbani_order_id.name}, Line {line.name}",
-                        'status': 'Info',
-                        'reason': "No distribution_id on this line. Only slaughter linking performed."
-                    })
-
-
-            return {
-                "status": "success",
-                "qurbani_order_id": qurbani_order.id,
-                "name": qurbani_order.name,
-                "message": "Web Qurbani Order created with slaughter integration"
             }
 
-        except Exception as e:
-            try:
-                donation_json = json.dumps(donation_record, indent=2, default=str)
-            except:
-                donation_json = str(donation_record)
-            donor_name = donation_name or donation_record.get('name', 'Unknown')
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            donation_id = donation_record.get('id', 'Unknown')
-            error_log_message = f"✗ FAILED [{timestamp}] - [ID-{donation_id}] {donor_name}"
-            error_log_reason = f"""
-                ================== DONATION PROCESSING FAILED ==================
-                Timestamp: {timestamp}
-                Donation Name: {donor_name}
-                Donation ID: {donation_id}
-                ERROR MESSAGE: {str(e)}
-                COMPLETE DONATION RECORD OBJECT: {donation_json}
-                ================================================================"""
-            self.env['fetch.qurbani.log'].create({
-                'name': error_log_message,
-                'status': 'Error',
-                'reason': error_log_reason
+        # ── Main logic ──────────────────────────────────────────────────────────
+        donation_lines = donation_record.get('qurbani_order_line_ids', [])
+        if isinstance(donation_lines, list) and donation_lines and isinstance(donation_lines[0], int):
+            donation_lines = self.env['api.qurbani.order.line'].browse(donation_lines).exists()
+        elif not donation_lines:
+            donation_lines = []
+
+        default_hijri = _get_latest_hijri()
+        schedule_usage = {}
+        order_lines_data = []
+
+        for api_line in donation_lines:
+            if not api_line.exists():
+                raise ValidationError(f"Line ID {api_line.id} does not exist")
+
+            mapping_data = _get_demand(api_line, default_hijri, False)
+            demand = mapping_data['demand']
+            qty = int(api_line.quantity or 1)
+
+            if demand.id not in schedule_usage:
+                schedule_usage[demand.id] = {'demand': demand, 'qty': 0}
+            schedule_usage[demand.id]['qty'] += qty
+
+            order_lines_data.append({
+                'api_line': api_line,
+                'demand': demand,
+                'day': mapping_data['day'],
+                'hijri': mapping_data['hijri'],
+                'city': mapping_data['city'],
+                'distribution_id': mapping_data['distribution_id'],
+                'slaughter_location_id': mapping_data['slaughter_location_id'],
+                'quantity': qty,
+                'product_id': api_line.product_id.id,
+                'amount': api_line.amount or 0.0,
+                'hissa_name': api_line.hissa_name or '',
+                'branch': api_line.branch or '',
             })
-            _logger.error(f"Error creating web qurbani order for {donor_name} (ID: {donation_id}): {str(e)}", exc_info=True)
-            return {"status": "error", "message": str(e)}
+
+        if not order_lines_data:
+            raise ValidationError("No valid qurbani lines found in this donation record.")
+
+        # Validate hissa availability BEFORE writing anything
+        for usage in schedule_usage.values():
+            demand = usage['demand']
+            requested = usage['qty']
+            available = demand.remaining_hissa
+            if requested > available:
+                raise ValidationError(
+                    f"Not enough hissa for demand slot ID {demand.id}. "
+                    f"Available: {available}, Requested: {requested}"
+                )
+
+        # All checks passed — now write demand slots
+        for usage in schedule_usage.values():
+            demand = usage['demand']
+            incoming_hissa = usage['qty']
+            product_name = (demand.inventory_product_id.name or '').lower()
+            divisor = 7 if 'cow' in product_name else 1
+            total_hissa = (demand.current_hissa or 0) + incoming_hissa
+            completed_animals = int(total_hissa // divisor)
+            remaining_hissa = total_hissa % divisor
+            new_remaining_demand = max((demand.remaining_demand or 0) - completed_animals, 0)
+            demand.write({
+                'current_hissa': remaining_hissa,
+                'booked_hissa': (demand.booked_hissa or 0) + incoming_hissa,
+                'remaining_demand': new_remaining_demand,
+            })
+
+        # Build order lines
+        product_lines = []
+        for line_data in order_lines_data:
+            demand = line_data['demand']
+            vals = {
+                'product_id': line_data['product_id'],
+                'quantity': line_data['quantity'],
+                'amount': line_data['amount'],
+                'day_id': line_data['day'].id,
+                'hijri_id': line_data['hijri'].id,
+                'city_id': line_data['city'].id if line_data['city'] else False,
+                'distribution_id': line_data['distribution_id'],
+                'slaughter_id': line_data['slaughter_location_id'],
+                'hissa_name': line_data['hissa_name'],
+                'start_time': demand.start_time,
+                'end_time': demand.end_time,
+                'slaughter_start_time': convert_to_24hr(demand.start_time),
+                'slaughter_end_time': convert_to_24hr(demand.end_time),
+            }
+            product_lines.append((0, 0, vals))
+
+        # Donor and currency
+        donor_id = donation_record.get('donor_id')
+        if isinstance(donor_id, tuple):
+            donor_id = donor_id[0]
+        if donor_id and isinstance(donor_id, int):
+            donor = self.env['res.partner'].browse(donor_id).exists()
+            if not donor:
+                donor_id = False
+
+        currency_name = donation_record.get('currency', 'USD')
+        currency = self.env['res.currency'].search([('name', '=', currency_name)], limit=1)
+        if not currency:
+            currency = self.env.company.currency_id
+
+        qurbani_order = self.create({
+            'donor_id': donor_id or False,
+            'currency_id': currency.id,
+            'remarks': donation_record.get('remarks', ''),
+            'amount': float(donation_record.get('total_amount', 0.0)),
+            'qurbani_order_line_ids': product_lines,
+            'pos_qurbani_order': False,
+            'api_response_id': donation_record.get('import_id', ''),
+            'donation_type': donation_record.get('donation_type', ''),
+            'donation_from': donation_record.get('donation_from', ''),
+            'dn_number': donation_record.get('dn_number', ''),
+            'bank_charges': float(donation_record.get('bank_charges', 0.0)),
+            'transaction_id': donation_record.get('transaction_id', ''),
+            'api_currency': donation_record.get('currency', ''),
+            'api_created_at': donation_record.get('created_at'),
+            'api_updated_at': donation_record.get('updated_at'),
+            'donor_phone': donation_record.get('phone', ''),
+            'donor_email': donation_record.get('email', ''),
+            'donor_cnic': donation_record.get('cnic', ''),
+            'donor_country': donation_record.get('country', ''),
+            'donor_ip_address': donation_record.get('ip_address', ''),
+            'subscription_news': bool(donation_record.get('subscription_for_news', False)),
+            'subscription_whatsapp': bool(donation_record.get('subscription_for_whatsapp', False)),
+            'subscription_sms': bool(donation_record.get('subscription_for_sms', False)),
+        })
+
+        # Link Slaughter and Distribution
+        for line in qurbani_order.qurbani_order_line_ids:
+            product_name = (line.product_id.name or "").lower()
+
+            # SLAUGHTER LINKING
+            if 'cow' in product_name:
+                slaughter_records = self.env['qurbani.cow.slaughter'].search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('start_time', '=', line.slaughter_start_time),
+                    ('end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                ], order='id asc')
+                qurbani_cow_slaughter = False
+                for rec in slaughter_records:
+                    if len(rec.qurbani_cow_slaughter_line) < 7:
+                        qurbani_cow_slaughter = rec
+                        break
+                if not qurbani_cow_slaughter:
+                    raise ValidationError(
+                        f"No available cow slaughter slot for Order {line.qurbani_order_id.name}, "
+                        f"Line {line.name} — day={line.day_id.id}, hijri={line.hijri_id.id}, "
+                        f"location={line.slaughter_id.id}, "
+                        f"times {line.slaughter_start_time}-{line.slaughter_end_time}"
+                    )
+                qurbani_cow_slaughter.write({
+                    'qurbani_cow_slaughter_line': [(0, 0, {
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                    })]
+                })
+                qurbani_cow_slaughter.slot_full = len(qurbani_cow_slaughter.qurbani_cow_slaughter_line)
+                self.env['fetch.qurbani.log'].create({
+                    'name': f"✓ COW SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                    'status': 'Success',
+                    'reason': f"Slaughter slot ID {qurbani_cow_slaughter.id} (now has {qurbani_cow_slaughter.slot_full}/7 lines)"
+                })
+
+            elif 'goat' in product_name:
+                qurbani_goat_slaughter = self.env['qurbani.goat.slaughter'].search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('start_time', '=', line.slaughter_start_time),
+                    ('end_time', '=', line.slaughter_end_time),
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                    ('qurbani_order_no', '=', False),
+                ], limit=1)
+                if not qurbani_goat_slaughter:
+                    raise ValidationError(
+                        f"No available goat slaughter slot for Order {line.qurbani_order_id.name}, "
+                        f"Line {line.name} — day={line.day_id.id}, hijri={line.hijri_id.id}, "
+                        f"location={line.slaughter_id.id}"
+                    )
+                qurbani_goat_slaughter.write({
+                    'qurbani_order_no': line.qurbani_order_id.name,
+                    'qurbani_order_line_no': line.name,
+                    'hissa_name': line.hissa_name,
+                    'product_id': line.product_id.id,
+                })
+                self.env['fetch.qurbani.log'].create({
+                    'name': f"✓ GOAT SLAUGHTER LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                    'status': 'Success',
+                    'reason': f"Slaughter slot ID {qurbani_goat_slaughter.id}"
+                })
+
+            # DISTRIBUTION LINKING
+            if line.distribution_id:
+                search_domain = [
+                    ('slaughter_location_id', '=', line.slaughter_id.id),
+                    ('qurbani_order_no', '=', False),
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                ]
+                if 'cow' in product_name:
+                    qurbani_cow_distribution = self.env['qurbani.cow.distribution'].search(search_domain, limit=1)
+                    if not qurbani_cow_distribution:
+                        raise ValidationError(
+                            f"No unused cow distribution record for Order {line.qurbani_order_id.name}, "
+                            f"Line {line.name} — slaughter_location={line.slaughter_id.id}, "
+                            f"day={line.day_id.id}, hijri={line.hijri_id.id}"
+                        )
+                    qurbani_cow_distribution.write({
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                        'start_time': line.start_time,
+                        'end_time': line.end_time,
+                        'distribution_location_id': line.distribution_id.id,
+                        'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
+                    })
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"✓ COW DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                        'status': 'Success',
+                        'reason': f"Distribution record ID {qurbani_cow_distribution.id}"
+                    })
+
+                elif 'goat' in product_name:
+                    qurbani_goat_distribution = self.env['qurbani.goat.distribution'].search(search_domain, limit=1)
+                    if not qurbani_goat_distribution:
+                        raise ValidationError(
+                            f"No unused goat distribution record for Order {line.qurbani_order_id.name}, "
+                            f"Line {line.name} — slaughter_location={line.slaughter_id.id}, "
+                            f"day={line.day_id.id}, hijri={line.hijri_id.id}"
+                        )
+                    qurbani_goat_distribution.write({
+                        'qurbani_order_no': line.qurbani_order_id.name,
+                        'qurbani_order_line_no': line.name,
+                        'hissa_name': line.hissa_name,
+                        'product_id': line.product_id.id,
+                        'start_time': line.start_time,
+                        'end_time': line.end_time,
+                        'distribution_location_id': line.distribution_id.id,
+                        'state': 'not_applicable' if 'no' in line.product_id.name.lower() else 'pending',
+                    })
+                    self.env['fetch.qurbani.log'].create({
+                        'name': f"✓ GOAT DISTRIBUTION LINKED - Order {line.qurbani_order_id.name}, Line {line.name}",
+                        'status': 'Success',
+                        'reason': f"Distribution record ID {qurbani_goat_distribution.id}"
+                    })
+
+        return {
+            "status": "success",
+            "qurbani_order_id": qurbani_order.id,
+            "name": qurbani_order.name,
+            "message": "Web Qurbani Order created with slaughter integration"
+        }
+    
     @staticmethod
     def _parse_iso_datetime(iso_string):
         """Parse ISO 8601 datetime string to Odoo datetime format"""
