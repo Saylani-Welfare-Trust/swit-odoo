@@ -994,7 +994,7 @@ class APIDonationWizard(models.TransientModel):
                     history.id,
                     f"Distribution Data from API",
                     "Qurbani",
-                    f"City from donor: '{city_name}', Branch from item: '{branch}'"
+                    f"City from donor: '{city_name}', Branch from item: '{branch_name}'"
                 )
 
                 # city = False
