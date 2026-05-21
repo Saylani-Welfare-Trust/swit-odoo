@@ -2,13 +2,13 @@
 <odoo>
 
     <template id="bn_qurbani.qurbani_cow_slaughter_report_template">
-
         <t t-call="web.html_container">
 
             <style>
                 .page {
                     padding: 0px !important;
                     margin: 0px !important;
+                    page-break-inside: avoid;
                 }
 
                 table {
@@ -33,101 +33,95 @@
 
             <t t-call="web.external_layout">
 
-                <!-- TOTAL DOCS -->
-                <t t-set="total_docs" t-value="len(docs)"/>
+                <!-- COUNTER -->
+                <t t-set="count" t-value="1"/>
 
-                <!-- LOOP IN GROUPS OF 5 DOCS -->
-                <t t-foreach="range(0, total_docs, 5)" t-as="i">
+                <t t-foreach="docs" t-as="o">
 
-                    <div class="page">
+                     <!-- APPLY PAGE BREAK AFTER EVERY 5 RECORDS -->
+                    <div class="page"
+                        t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
 
-                        <!-- TAKE 5 DOCS -->
-                        <t t-set="chunk_docs" t-value="docs[i:i+5]"/>
-
-                        <!-- LOOP DOCS INSIDE PAGE -->
-                        <t t-foreach="chunk_docs" t-as="o">
-
-                            <div>
-
-                                <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
-
-                                    <div class="col-3" style="padding: 0;">
-                                        <strong><span t-esc="o.name"/></strong>
-                                    </div>
-
-                                    <div class="col-3" style="padding: 0;">
-                                        <strong>
-                                            <span>Location</span> -
-                                            <span t-esc="o.slaughter_location_id.name"/>
-                                        </strong>
-                                    </div>
-
-                                    <div class="col-3" style="padding: 0;">
-                                        <strong>
-                                            <span>Start Time</span>
-                                            <span t-esc="o.start_time" widget="float_time"/>
-                                        </strong>
-                                    </div>
-
-                                    <div class="col-3" style="padding: 0;">
-                                        <strong>
-                                            <span>End Time</span>
-                                            <span t-esc="o.end_time" widget="float_time"/>
-                                        </strong>
-                                    </div>
-
-                                </div>
-
-                                <table class="table table-bordered"
-                                    style="font-size: 10px; margin: 0; padding: 0;">
-
-                                    <thead>
-                                        <tr>
-                                            <th>SO No.</th>
-                                            <th>Hissa Name</th>
-                                            <th>QO No.</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-
-                                        <t t-set="count" t-value="1"/>
-
-                                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
-
-                                            <tr>
-                                                <td>
-                                                    <span t-esc="count"/>
-                                                </td>
-
-                                                <td>
-                                                    <span t-esc="line.hissa_name"/>
-                                                </td>
-
-                                                <td>
-                                                    <span t-esc="line.qurbani_order_no"/>
-                                                </td>
-                                            </tr>
-
-                                            <t t-set="count" t-value="count + 1"/>
-
-                                        </t>
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
+                        <t t-if="(count - 1) % 5 == 0">
+                            <!-- HEADER ONLY ON PAGE START -->
+                            <h2>Saylani Welfare and International Trust</h2>
+                            <h3>Cow Slaughter Schedule Report</h3>
                         </t>
 
+                        <br/>
+
+                        <!-- HEADER -->
+                        <div class="row">
+                            <div class="col-2">
+                                <strong><span t-esc="o.name"/></strong>
+                            </div>
+
+                            <div class="col-6">
+                                <strong>
+                                    <span>Location</span> -
+                                    <span t-esc="o.slaughter_location_id.name"/>
+                                </strong>
+                            </div>
+
+                            <div class="col-2">
+                                <strong>
+                                    <span>Start Time</span>
+                                    <span t-esc="o.start_time" widget="float_time"/>
+                                </strong>
+                            </div>
+
+                            <div class="col-2">
+                                <strong>
+                                    <span>End Time</span>
+                                    <span t-esc="o.end_time" widget="float_time"/>
+                                </strong>
+                            </div>
+                        </div>
+
+                        <br/>
+                        
+                        <div class="row">
+                            <div class="col-2">
+                                <strong>SO No.</strong>
+                            </div>
+
+                            <div class="col-6">
+                                <strong>Hissa Name</strong>
+                            </div>
+
+                            <div class="col-4">
+                                <strong>QO No.</strong>
+                            </div>
+                        </div>
+                        
+                        <t t-set="line_count" t-value="1"/>
+
+                        <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
+                            <div class="row">
+                                <div class="col-2">
+                                    <t t-esc="line_count"/>
+                                </div>
+
+                                <div class="col-6">
+                                    <t t-esc="line.hissa_name"/>
+                                </div>
+
+                                <div class="col-4">
+                                    <t t-esc="line.qurbani_order_no"/>
+                                </div>
+                            </div>
+                            <t t-set="line_count" t-value="line_count + 1"/>
+                        </t>
+                        
                     </div>
+
+                    <!-- INCREMENT MAIN COUNTER -->
+                    <t t-set="count" t-value="count + 1"/>
 
                 </t>
 
             </t>
         </t>
-
     </template>
 
     <record id="qurbani_cow_slaughter_paperformat" model="report.paperformat">
@@ -135,10 +129,10 @@
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
         <field name="margin_top">0</field>
-        <field name="margin_bottom">5</field>
+        <field name="margin_bottom">0</field>
         <field name="margin_left">4</field>
         <field name="margin_right">4</field>
-        <field name="header_spacing">0</field>
+        <field name="header_spacing">9</field>
         <field name="dpi">90</field>
     </record>
 
