@@ -147,6 +147,7 @@
                                     <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
                                     <field name="quantity" readonly="1" />
                                     <field name="amount" readonly="1" />
+                                    <field name="branch" readonly="1" /> 
                                     <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                                     <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                                 </tree>

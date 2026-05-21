@@ -1000,23 +1000,14 @@ class APIDonationWizard(models.TransientModel):
                 city = False
                 if city_name:
                     # Use exact match first, then ilike as fallback
-                    city = self.env['stock.location'].search([
+                    city = self.env['qurbani.city'].search([
                         ('name', '=', city_name),
-                        ('usage', '=', 'internal'),
-                        ('location_option_id.name', '=', 'City')  # Assuming there's a location option to identify cities
                     ], limit=1)
-                    if not city:
-                        city = self.env['stock.location'].search([
-                            ('name', 'ilike', city_name),
-                            ('usage', '=', 'internal'),
-                            ('location_option_id.name', '=', 'City')  # Assuming there's a location option to identify cities
-
-                        ], limit=1)
                     self.create_fetch_log(
                         history.id,
                         f"City Lookup Result",
                         "Qurbani",
-                        f"Searching stock.location with name='{city_name}', usage='internal' → Found: {city.name if city else 'NOT FOUND'} (ID: {city.id if city else 'None'})"
+                        f"Searching qurbani.city with name='{city_name}', usage='internal' → Found: {city.name if city else 'NOT FOUND'} (ID: {city.id if city else 'None'})"
                     )
                 else:
                     self.create_fetch_log(
@@ -1031,7 +1022,7 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 distribution_id = False
                 if city or branch:
-                    distribution_name = f"{city.name if city else ''}/{branch}"
+                    distribution_name = f"{city.city_id.complete_name if city else ''}/{branch}"
                     self.create_fetch_log(
                         history.id,
                         f"Distribution Center Name",
@@ -1090,7 +1081,7 @@ class APIDonationWizard(models.TransientModel):
                         'amount': amount,
                         'day_id': day.id if day else False,
                         'hijri_id': hijri.id if hijri else False,
-                        'city_id': city.id if city else False,
+                        'city_id': city.city_id.id if city else False,
                         'hissa_name': hissa_name,
                         'distribution_id': distribution_id,
                         'branch': branch,
