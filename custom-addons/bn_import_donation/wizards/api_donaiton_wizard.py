@@ -944,6 +944,8 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 1. Product resolution (from your upper code)
                 # -------------------------------------------------------------
+                
+                raise ValidationError(f"Qurbani item not found in API data: {info}")
                 product = False
                 product_key = (
                     f"{info.get('donationType', '')}"
