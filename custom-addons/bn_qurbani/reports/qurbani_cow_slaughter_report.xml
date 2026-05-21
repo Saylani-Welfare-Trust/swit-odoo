@@ -8,11 +8,12 @@
 
                 <t t-foreach="docs" t-as="o">
 
-                    <!-- TOTAL LINES -->
+                    <!-- ALL LINES -->
                     <t t-set="lines" t-value="o.qurbani_cow_slaughter_line"/>
+                    <t t-set="total" t-value="len(lines)"/>
 
-                    <!-- LOOP PAGE WISE -->
-                    <t t-foreach="range(0, len(lines), 5)" t-as="i">
+                    <!-- PAGE LOOP (5 per page) -->
+                    <t t-foreach="range(0, total, 5)" t-as="i">
 
                         <div class="page">
 
@@ -30,7 +31,6 @@
                                 </div>
 
                                 <div class="col-6"/>
-
                             </div>
 
                             <div class="row mb-3">
@@ -52,21 +52,24 @@
 
                                 <thead>
                                     <tr>
-                                        <th style="width:20%;">SO No.</th>
-                                        <th style="width:40%;">Hissa Name</th>
-                                        <th style="width:40%;">QO No.</th>
+                                        <th>SO No.</th>
+                                        <th>Hissa Name</th>
+                                        <th>QO No.</th>
                                     </tr>
                                 </thead>
 
                                 <tbody>
 
-                                    <!-- ONLY 5 RECORDS -->
-                                    <t t-foreach="lines[i:i+5]" t-as="line">
+                                    <!-- SLICE 5 RECORDS -->
+                                    <t t-set="chunk" t-value="lines[i:i+5]"/>
+                                    <t t-set="row_no" t-value="i + 1"/>
+
+                                    <t t-foreach="chunk" t-as="line">
 
                                         <tr>
 
                                             <td>
-                                                <span t-esc="i + lines[i:i+5].index(line) + 1"/>
+                                                <span t-esc="row_no"/>
                                             </td>
 
                                             <td>
@@ -78,6 +81,8 @@
                                             </td>
 
                                         </tr>
+
+                                        <t t-set="row_no" t-value="row_no + 1"/>
 
                                     </t>
 
