@@ -9,16 +9,13 @@
                         <h2><span t-esc="o.name"/></h2>
 
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-4">
                                 <span>Location</span> <spna><t t-esc="o.slaughter_location_id.name"/></spna>
                             </div>
-                            <div class="col-6"/>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
+                            <div class="col-4">
                                 <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
                             </div>
-                            <div class="col-6">
+                            <div class="col-4">
                                 <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
                             </div>
                         </div>
