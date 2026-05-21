@@ -107,7 +107,7 @@ class QurbaniOrder(models.Model):
             # DISTRIBUTION CENTER MAPPING
             distribution_id = False
             branch = line.branch or False
-            if city and branch:
+            if city or branch:
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
@@ -118,24 +118,20 @@ class QurbaniOrder(models.Model):
                     distribution_id = distribution_rec.distribution_center_id.id
                 else:
                     raise ValidationError(f"Distribution center not found for '{distribution_name}'")
-
-            # if not distribution_id:
-            #     raise ValidationError(
-            #         f"Unable to determine distribution center for city='{line.city}' branch='{branch}'"
-            #     )
-            if distribution_id:
-                # SLAUGHTER CENTER
-                slaughter_center = self.env['web.qurbani.slaughter.center'].search(
-                    [('distribution_center_id', 'in', [distribution_id])], limit=1
-                )
-                if not slaughter_center:
-                    raise ValidationError(
-                        f"No slaughter center mapping found for distribution center ID {distribution_id.name}"
+                
+                if distribution_id:
+                    # SLAUGHTER CENTER
+                    slaughter_center = self.env['web.qurbani.slaughter.center'].search(
+                        [('distribution_center_id', 'in', [distribution_id])], limit=1
                     )
-                if not slaughter_center.slaughter_center_id:
-                    raise ValidationError(
-                        f"Slaughter center record exists but slaughter_center_id is empty"
-                    )
+                    if not slaughter_center:
+                        raise ValidationError(
+                            f"No slaughter center mapping found for distribution center ID {distribution_id.name}"
+                        )
+                    if not slaughter_center.slaughter_center_id:
+                        raise ValidationError(
+                            f"Slaughter center record exists but slaughter_center_id is empty"
+                        )
             else: 
                 # SLAUGHTER CENTER
                 slaughter_center = self.env['web.qurbani.slaughter.center'].search(
