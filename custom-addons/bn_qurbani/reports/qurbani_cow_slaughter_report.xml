@@ -8,10 +8,7 @@
                 .page {
                     padding: 0px !important;
                     margin: 0px !important;
-                }
-
-                .break-page {
-                    page-break-after: always;
+                    page-break-inside: avoid;
                 }
 
                 table {
@@ -36,12 +33,16 @@
 
             <t t-call="web.external_layout">
 
+                <!-- COUNTER -->
                 <t t-set="count" t-value="1"/>
 
                 <t t-foreach="docs" t-as="o">
 
-                    <div class="page">
+                    <!-- APPLY PAGE BREAK AFTER EVERY 5 RECORDS -->
+                    <div class="page"
+                        t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
 
+                        <!-- HEADER -->
                         <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
                             <div class="col-3">
                                 <span t-esc="o.name"/>
@@ -63,6 +64,7 @@
                             </div>
                         </div>
 
+                        <!-- TABLE -->
                         <table class="table table-bordered" style="font-size: 11px; margin: 0; padding: 0;">
                             <thead>
                                 <tr>
@@ -76,31 +78,20 @@
                                 <t t-set="line_count" t-value="1"/>
 
                                 <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line">
-
                                     <tr>
                                         <td><t t-esc="line_count"/></td>
                                         <td><t t-esc="line.hissa_name"/></td>
                                         <td><t t-esc="line.qurbani_order_no"/></td>
                                     </tr>
-
                                     <t t-set="line_count" t-value="line_count + 1"/>
-
                                 </t>
                             </tbody>
                         </table>
 
                     </div>
 
-                    <!-- PAGE BREAK AFTER 5 RECORDS -->
-                    <t t-if="count % 5 == 0">
-                        <div class="break-page"></div>
-                    </t>
-
-                    <!-- RESET AFTER 5 -->
+                    <!-- INCREMENT MAIN COUNTER -->
                     <t t-set="count" t-value="count + 1"/>
-                    <t t-if="count > 5">
-                        <t t-set="count" t-value="1"/>
-                    </t>
 
                 </t>
 
