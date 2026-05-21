@@ -21,7 +21,7 @@
                         <t t-foreach="chunk_docs" t-as="o">
 
                             <div>
-                                <div class="row">
+                                <div class="row" style="font-size: 10px;">
                                     <div class="col-3">
                                         <span t-esc="o.name"/>
                                     </div>
