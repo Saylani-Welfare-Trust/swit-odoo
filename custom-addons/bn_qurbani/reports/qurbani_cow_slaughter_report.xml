@@ -1,54 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="bn_qurbani.qurbani_cow_slaughter_report_template">
+    <template id="qurbani_cow_slaughter_report_template">
+
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
+
                 <t t-foreach="docs" t-as="o">
+
+                    <!-- ========================================= -->
+                    <!-- VARIABLES -->
+                    <!-- ========================================= -->
+                    <t t-set="count" t-value="0"/>
+
+                    <!-- ========================================= -->
+                    <!-- FIRST PAGE -->
+                    <!-- ========================================= -->
                     <div class="page">
-                        <h2><span t-esc="o.name"/></h2>
 
-                        <div class="row">
+                        <!-- HEADER -->
+                        <h2>
+                            <span t-esc="o.name"/>
+                        </h2>
+
+                        <!-- DETAILS -->
+                        <div class="row mb-2">
+
                             <div class="col-6">
-                                <span>Location</span> - <spna><t t-esc="o.slaughter_location_id.name"/></spna>
+                                <strong>Location :</strong>
+                                <span t-esc="o.slaughter_location_id.name"/>
                             </div>
-                            <div class="col-6"/>
-                        </div>
-                        <div class="row">
+
                             <div class="col-6">
-                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
                             </div>
-                            <div class="col-6">
-                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
-                            </div>
+
                         </div>
 
+                        <div class="row mb-3">
+
+                            <div class="col-6">
+                                <strong>Start Time :</strong>
+                                <span t-esc="o.start_time" widget="float_time"/>
+                            </div>
+
+                            <div class="col-6">
+                                <strong>End Time :</strong>
+                                <span t-esc="o.end_time" widget="float_time"/>
+                            </div>
+
+                        </div>
+
+                        <!-- TABLE -->
                         <table class="table table-bordered">
+
                             <thead>
+
                                 <tr>
-                                    <th>SO No.</th>
-                                    <th>Hissa Name</th>
-                                    <th>QO No.</th>
+                                    <th style="width: 20%;">SO No.</th>
+                                    <th style="width: 40%;">Hissa Name</th>
+                                    <th style="width: 40%;">QO No.</th>
                                 </tr>
+
                             </thead>
+
                             <tbody>
-                                <t t-set="count" t-value="1"/>
-                                <t t-foreach="o.qurbani_cow_slaughter_line" t-as="line" t-key="line.id">
+
+                                <!-- ================================= -->
+                                <!-- LOOP -->
+                                <!-- ================================= -->
+                                <t t-foreach="o.qurbani_cow_slaughter_line"
+                                   t-as="line"
+                                   t-key="line.id">
+
+                                    <!-- ================================= -->
+                                    <!-- NEW PAGE AFTER EVERY 5 RECORDS -->
+                                    <!-- ================================= -->
+                                    <t t-if="count != 0 and count % 5 == 0">
+
+                                        </tbody>
+                                        </table>
+
+                                        </div>
+
+                                        <!-- NEW PAGE -->
+                                        <div class="page">
+
+                                            <!-- HEADER -->
+                                            <h2>
+                                                <span t-esc="o.name"/>
+                                            </h2>
+
+                                            <!-- DETAILS -->
+                                            <div class="row mb-2">
+
+                                                <div class="col-6">
+                                                    <strong>Location :</strong>
+                                                    <span t-esc="o.slaughter_location_id.name"/>
+                                                </div>
+
+                                                <div class="col-6">
+                                                </div>
+
+                                            </div>
+
+                                            <div class="row mb-3">
+
+                                                <div class="col-6">
+                                                    <strong>Start Time :</strong>
+                                                    <span t-esc="o.start_time" widget="float_time"/>
+                                                </div>
+
+                                                <div class="col-6">
+                                                    <strong>End Time :</strong>
+                                                    <span t-esc="o.end_time" widget="float_time"/>
+                                                </div>
+
+                                            </div>
+
+                                            <!-- TABLE -->
+                                            <table class="table table-bordered">
+
+                                                <thead>
+
+                                                    <tr>
+                                                        <th style="width: 20%;">SO No.</th>
+                                                        <th style="width: 40%;">Hissa Name</th>
+                                                        <th style="width: 40%;">QO No.</th>
+                                                    </tr>
+
+                                                </thead>
+
+                                                <tbody>
+
+                                    </t>
+
+                                    <!-- ================================= -->
+                                    <!-- ROW -->
+                                    <!-- ================================= -->
                                     <tr>
-                                        <td><t t-esc="count"/></td>
-                                        <td><t t-esc="line.hissa_name"/></td>
-                                        <td><t t-esc="line.qurbani_order_no"/></td>
+
+                                        <td>
+                                            <span t-esc="count + 1"/>
+                                        </td>
+
+                                        <td>
+                                            <span t-esc="line.hissa_name"/>
+                                        </td>
+
+                                        <td>
+                                            <span t-esc="line.qurbani_order_no"/>
+                                        </td>
+
                                     </tr>
 
+                                    <!-- COUNTER -->
+                                    <t t-set="count" t-value="count + 1"/>
 
-                                    <t t-set="count" t-value="count+1"/>
                                 </t>
+
                             </tbody>
+
                         </table>
+
                     </div>
+
                 </t>
+
             </t>
         </t>
+
     </template>
 
     <record id="qurbani_cow_slaughter_report" model="ir.actions.report">
