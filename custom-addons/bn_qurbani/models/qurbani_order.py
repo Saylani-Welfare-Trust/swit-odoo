@@ -130,7 +130,7 @@ class QurbaniOrder(models.Model):
                 )
                 if not slaughter_center:
                     raise ValidationError(
-                        f"No slaughter center mapping found for distribution center ID {distribution_id}"
+                        f"No slaughter center mapping found for distribution center ID {distribution_id.name}"
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
