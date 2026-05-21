@@ -8,6 +8,7 @@
             <tree editable="bottom" string="Web Qurbani Slaughter Center">
                 <field name="name"/>
                 <field name="slaughter_center_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="distribution_center_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" widget="many2many_tags"/>
             </tree>
         </field>
     </record>

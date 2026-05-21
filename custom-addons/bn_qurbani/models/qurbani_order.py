@@ -88,23 +88,49 @@ class QurbaniOrder(models.Model):
             except:
                 return time_str
 
-        # ---------- Helper: get demand for a donation line ----------
         def _get_demand(line, default_day, default_hijri, default_product):
             product = line.product_id or default_product
             if not product:
                 raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
 
-            # Get slaughter center (web model)
-            slaughter_center = self.env['web.qurbani.slaughter.center'].search([], limit=1, order='id desc')
+            # Get distribution center from line
+            distribution_id = line.distribution_id.id if line.distribution_id else False
+
+            if not distribution_id:
+                raise ValidationError(
+                    f"Line {line.id if line else '?'} has no distribution_id"
+                )
+
+            # Find matching slaughter center config
+            slaughter_center = self.env['web.qurbani.slaughter.center'].search([
+                ('distribution_center_id', 'in', [distribution_id])
+            ], limit=1)
+
             if not slaughter_center:
-                raise ValidationError("No web.qurbani.slaughter.center found")
+                raise ValidationError(
+                    f"No web.qurbani.slaughter.center found for distribution center ID {distribution_id}"
+                )
+
+            if not slaughter_center.slaughter_center_id:
+                raise ValidationError(
+                    f"Slaughter center record found but slaughter_center_id is empty"
+                )
+
             slaughter_location_id = slaughter_center.slaughter_center_id.id
 
-            day_id = line.day_id.id if line.day_id else (default_day.id if default_day else False)
-            hijri_id = line.hijri_id.id if line.hijri_id else (default_hijri.id if default_hijri else False)
+            day_id = line.day_id.id if line.day_id else (
+                default_day.id if default_day else False
+            )
+
+            hijri_id = line.hijri_id.id if line.hijri_id else (
+                default_hijri.id if default_hijri else False
+            )
 
             if not day_id or not hijri_id:
-                raise ValidationError(f"Cannot determine day/hijri for line {line.id}. day={day_id}, hijri={hijri_id}")
+                raise ValidationError(
+                    f"Cannot determine day/hijri for line {line.id}. "
+                    f"day={day_id}, hijri={hijri_id}"
+                )
 
             demand_domain = [
                 ('day_id', '=', day_id),
@@ -112,12 +138,23 @@ class QurbaniOrder(models.Model):
                 ('slaughter_location_id', '=', slaughter_location_id),
                 ('remaining_hissa', '>', 0),
             ]
-            # You can uncomment the product filter later if needed:
+
+            # Optional product filter
             # demand_domain.append(('inventory_product_id', '=', product.id))
 
-            demand = self.env['qurbani.slaughter.slot.demand'].search(demand_domain, limit=1)
+            demand = self.env['qurbani.slaughter.slot.demand'].search(
+                demand_domain,
+                limit=1
+            )
+
             if not demand:
-                raise ValidationError(f"No available demand slot for day {day_id}, hijri {hijri_id}, product {product.name}")
+                raise ValidationError(
+                    f"No available demand slot for "
+                    f"day {day_id}, hijri {hijri_id}, "
+                    f"product {product.name}, "
+                    f"slaughter location {slaughter_center.slaughter_center_id.display_name}"
+                )
+
             return demand
 
         # ---------- Main logic ----------
