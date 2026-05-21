@@ -43,7 +43,7 @@
                         t-att-style="'page-break-after: always;' if count % 5 == 0 else ''">
 
                         <!-- HEADER -->
-                        <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                        <div class="row">
                             <div class="col-2">
                                 <strong><span t-esc="o.name"/></strong>
                             </div>
@@ -70,7 +70,7 @@
                             </div>
                         </div>
                         
-                        <div class="row" style="font-size: 11px; margin: 0; padding: 0;">
+                        <div class="row">
                             <div class="col-2">
                                 <strong>SO No.</strong>
                             </div>
@@ -118,11 +118,11 @@
         <field name="name">A4 - Qurbani Cow Slaughter</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">0</field>
-        <field name="margin_bottom">0</field>
+        <field name="margin_top">40</field>
+        <field name="margin_bottom">20</field>
         <field name="margin_left">4</field>
         <field name="margin_right">4</field>
-        <field name="header_spacing">0</field>
+        <field name="header_spacing">9</field>
         <field name="dpi">90</field>
     </record>
 
