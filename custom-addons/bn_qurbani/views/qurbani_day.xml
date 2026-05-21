@@ -8,6 +8,7 @@
             <tree create="0" delete="0" editable="bottom">
                 <field name="name" readonly="1" />
                 <field name="web_qurbani_day" />
+                <field name="date" />
             </tree>
         </field>
     </record>
