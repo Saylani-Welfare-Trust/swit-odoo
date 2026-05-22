@@ -16,7 +16,7 @@ collection_point_selection = [
     ('branch', 'Branch'),
 ]
 
-payment_type_selection = [
+payment_types_selection = [
     ('self', 'Self'),
     ('assigned_officer', 'Assigned Officer (Marfat)'),
 ]
@@ -44,7 +44,7 @@ class WelfareRecurringLine(models.Model):
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
-    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", store=True)
+    payment_types = fields.Selection(selection=payment_types_selection, string="Payment Type", store=True)
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
 
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
@@ -150,7 +150,7 @@ class WelfareRecurringLine(models.Model):
 
     def action_disbursed(self):
         # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
-        self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
+        self.state = 'collected' if self.payment_types == 'assigned_officer' else 'disbursed'
         if getattr(self, 'advance_donation_line_id', False):
             self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid

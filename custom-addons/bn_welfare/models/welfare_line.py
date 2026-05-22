@@ -14,7 +14,7 @@ order_type_selection = [
     ('both', 'Both'),
 ]
 
-payment_type_selection = [
+payment_types_selection = [
     ('self', 'Self'),
     ('assigned_officer', 'Assigned Officer (Marfat)'),
 ]
@@ -62,7 +62,7 @@ class WelfareLine(models.Model):
     )
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
-    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type")
+    payment_types = fields.Selection(selection=payment_types_selection, string="Payment Type")
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
@@ -466,7 +466,7 @@ class WelfareLine(models.Model):
 
     def can_return(self):
         """Check if line can be returned"""
-        return self.payment_type == 'assigned_officer' and self.state == 'collected'            
+        return self.payment_types == 'assigned_officer' and self.state == 'collected'            
        
     def action_disbursed(self):
         """
@@ -489,7 +489,7 @@ class WelfareLine(models.Model):
             return False
         
         # Mark as disbursed or collected based on payment type
-        self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
+        self.state = 'collected' if self.payment_types == 'assigned_officer' else 'disbursed'
         
         if getattr(self, 'advance_donation_line_id', False):
             self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
@@ -572,10 +572,10 @@ class WelfareLine(models.Model):
         self.ensure_one()
         
         # Validation checks
-        if self.payment_type != 'assigned_officer':
+        if self.payment_types != 'assigned_officer':
             raise ValidationError(_(
                 "Return is only allowed for 'Assigned Officer (Marfat)' payment type. "
-                "Current payment type: %s" % self.payment_type
+                "Current payment type: %s" % self.payment_types
             ))
         
         if self.state != 'collected':

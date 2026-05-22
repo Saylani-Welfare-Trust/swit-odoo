@@ -666,7 +666,7 @@ patch(PaymentScreen.prototype, {
                 'search_read',
                 [[
                     ['welfare_id.name', '=', welfareNumber],
-                    ['payment_type', '=', 'assigned_officer'],
+                    ['payment_types', '=', 'assigned_officer'],
                     ['state', '=', 'collected']
                 ]],
                 { fields: ['id', 'product_id', 'total_amount', 'quantity'] }

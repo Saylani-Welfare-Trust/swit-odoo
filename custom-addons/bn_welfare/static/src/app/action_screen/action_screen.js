@@ -109,7 +109,7 @@ patch(ActionScreen.prototype, {
                 'search_read',
                 [[
                     ['welfare_id.name', '=', welfareNumber],
-                    ['payment_type', '=', 'assigned_officer'],
+                    ['payment_types', '=', 'assigned_officer'],
                     ['state', '=', 'collected'],
                     ['welfare_id.order_type', '=', 'one_time']
                 ]],
@@ -211,7 +211,7 @@ patch(ActionScreen.prototype, {
                 'search_read',
                 [[
                     ['welfare_id.name', '=', welfareNumber],
-                    ['payment_type', '=', 'assigned_officer'],
+                    ['payment_types', '=', 'assigned_officer'],
                     ['state', '=', 'collected'],
                     ['welfare_id.order_type', '=', 'recurring']
                 ]],
