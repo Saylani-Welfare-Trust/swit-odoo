@@ -44,7 +44,7 @@ class WelfareRecurringLine(models.Model):
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
-    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
+    payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", store=True)
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
 
     collection_date = fields.Date('Collection Date', default=fields.Date.today())
