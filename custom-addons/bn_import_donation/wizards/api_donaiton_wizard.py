@@ -477,7 +477,7 @@ class APIDonationWizard(models.TransientModel):
             conv_rate = 1.0
 
         total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
-        total_local = total_amount * conv_rate   # Correct: foreign * rate = company currency
+        total_local = total_amount * conv_rate
 
         donor = info.get('donor_details') or {}
         donor_id = None
@@ -489,7 +489,6 @@ class APIDonationWizard(models.TransientModel):
             country_id = all_data['country_by_code'].get(country_code)
 
             if mobile and country_id:
-                # Check cache
                 for cached_key, cached_id in all_data['partner_cache'].items():
                     if cached_key[0] == mobile and cached_key[1] == country_id:
                         donor_id = cached_id
@@ -533,7 +532,7 @@ class APIDonationWizard(models.TransientModel):
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
-                # Qurbani processing (simplified for this fix – keep your original logic but ensure product resolution)
+                # Qurbani processing with safe share_names handling
                 product_key = (
                     f"{info.get('donationType', '')}"
                     f"{item_name}"
@@ -547,7 +546,16 @@ class APIDonationWizard(models.TransientModel):
                 city_name = it.get('qurbaniCity', '')
                 branch_name = it.get('qurbaniBranch', '')
                 qurbani_fullfilment = it.get('qurbaniFulfillment', '')
-                share_names = it.get('share_names', [donor.get('name', '')])
+
+                # SAFE share_names handling – fix for ZeroDivisionError
+                share_names = it.get('share_names')
+                if not share_names:  # None or empty list
+                    share_names = [donor.get('name', 'Anonymous')]
+                elif isinstance(share_names, str):
+                    share_names = [share_names]
+                elif not isinstance(share_names, list):
+                    share_names = [donor.get('name', 'Anonymous')]
+
                 for idx in range(quantity):
                     share_name = share_names[idx % len(share_names)]
                     hissa_name = f"{idx + 1}. {share_name}" if quantity > 1 else share_name
