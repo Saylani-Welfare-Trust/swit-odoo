@@ -737,13 +737,13 @@ class APIDonationWizard(models.TransientModel):
                     'name': 'Donation Import - Debit',
                 }))
             else:
-                # Foreign currency line: amount_currency must be positive
+                # Foreign currency debit line: amount_currency must be positive
                 lines.append((0, 0, {
                     'account_id': account_id,
                     'debit': debit_amount,
                     'credit': 0.0,
                     'currency_id': currency_id,
-                    'amount_currency': abs(vals['amount_currency']),
+                    'amount_currency': abs(vals['amount_currency']),  # positive
                     'name': 'Donation Import - Debit',
                 }))
 
@@ -761,12 +761,13 @@ class APIDonationWizard(models.TransientModel):
                     'name': 'Donation Import - Credit',
                 }))
             else:
+                # Foreign currency credit line: amount_currency must be NEGATIVE
                 lines.append((0, 0, {
                     'account_id': account_id,
                     'debit': 0.0,
                     'credit': credit_amount,
                     'currency_id': currency_id,
-                    'amount_currency': abs(vals['amount_currency']),
+                    'amount_currency': -abs(vals['amount_currency']),  # negative
                     'name': 'Donation Import - Credit',
                 }))
 
