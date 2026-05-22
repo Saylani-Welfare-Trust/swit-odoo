@@ -1246,7 +1246,7 @@ class Welfare(models.Model):
         
         # Find all eligible lines
         eligible_lines = self.welfare_line_ids.filtered(
-            lambda l: l.payment_types == 'assigned_officer' and l.state == 'collected'
+            lambda l: l.payment_type == 'assigned_officer' and l.state == 'collected'
         )
         
         if not eligible_lines:

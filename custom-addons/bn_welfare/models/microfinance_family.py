@@ -60,7 +60,7 @@ class MicrofinanceFamily(models.Model):
             <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
             <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
             <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-            <field name="payment_types" />
+            <field name="payment_type" />
             <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
             <field name="collection_point" />
             <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
