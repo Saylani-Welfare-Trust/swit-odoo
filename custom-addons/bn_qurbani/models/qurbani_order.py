@@ -140,6 +140,7 @@ class QurbaniOrder(models.Model):
                 slaughter_center = self.env['web.qurbani.slaughter.center'].search(
                     [('name', '=', False)], limit=1
                 )
+                
                 if not slaughter_center:
                     raise ValidationError(
                         f"No slaughter center mapping found "
@@ -148,6 +149,12 @@ class QurbaniOrder(models.Model):
                     raise ValidationError(
                         f"Slaughter center record exists but slaughter_center_id is empty"
                     )
+                    
+                distribution_id = self.env.company.web_no_meat_distribution_location_id.id 
+                if not distribution_id:
+                    raise ValidationError(
+                        f"Company {self.env.company.name} has no Web No-Meat Distribution Location set. Please set it and try again."
+                    )                   
                 
             slaughter_location_id = slaughter_center.slaughter_center_id.id
 
