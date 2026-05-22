@@ -55,6 +55,7 @@ class WelfareRecurringLine(models.Model):
     
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     
+    
     def write(self, vals):
         return super().write(vals)
     
