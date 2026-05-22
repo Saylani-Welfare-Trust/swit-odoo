@@ -3,6 +3,12 @@ from odoo.exceptions import ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
+
+pay_Check_selection = [
+    ('self', 'Self'),
+    ('assigned_officer', 'Assigned Officer (Marfat)'),
+]
+
 collection_point_selection = [
     ('bank', 'Bank'),
     ('branch', 'Branch'),
@@ -62,6 +68,7 @@ class WelfareLine(models.Model):
     )
     # order_type field moved to main welfare model
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point" )
+    pay_choice = fields.Selection(selection=pay_Check_selection, string="Payment Type")
     payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self')
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
@@ -121,7 +128,7 @@ class WelfareLine(models.Model):
 
     manual_total = fields.Boolean(default=False)
 
-    
+
     def action_set_pending(self):
         """
         Create a new welfare record with only the pending disbursement line.
