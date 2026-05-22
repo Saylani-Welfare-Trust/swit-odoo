@@ -110,7 +110,7 @@ patch(ActionScreen.prototype, {
                 [[
                     ['welfare_id.name', '=', welfareNumber],
                     ['payment_type', '=', 'assigned_officer'],
-                    ['state', '=', 'collected'],
+                    ['state', '=', 'pending'],
                     ['welfare_id.order_type', '=', 'one_time']
                 ]],
                 { fields: ['id', 'product_id', 'total_amount', 'quantity', 'welfare_id'] }
@@ -212,7 +212,7 @@ patch(ActionScreen.prototype, {
                 [[
                     ['welfare_id.name', '=', welfareNumber],
                     ['payment_type', '=', 'assigned_officer'],
-                    ['state', '=', 'collected'],
+                    ['state', '=', 'pending'],
                     ['welfare_id.order_type', '=', 'recurring']
                 ]],
                 { fields: ['id', 'product_id', 'total_amount', 'quantity', 'welfare_id'] }
