@@ -216,6 +216,8 @@ class APIDonationWizard(models.TransientModel):
 
                 self.create_fetch_log(history.id, f"End _fetch_donations_from_api", 'API Fetch', f"Completed fetching donations from API. Total donations fetched: {len(data.get('donationsInfo') or [])}")
 
+                raise ValidationError(str(data.get('donationsInfo')))
+
                 return data.get('donationsInfo') or []
 
         except requests.exceptions.RequestException as e:
