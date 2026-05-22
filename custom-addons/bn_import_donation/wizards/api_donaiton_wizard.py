@@ -59,7 +59,7 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
 
-        raise ValidationError(str(donations_info))
+        # raise ValidationError(str(donations_info))
         if not donations_info:
             self.create_fetch_log(
                 history.id,
