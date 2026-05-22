@@ -667,14 +667,14 @@ patch(PaymentScreen.prototype, {
                 [[
                     ['welfare_id.name', '=', welfareNumber],
                     ['payment_type', '=', 'assigned_officer'],
-                    ['state', '=', 'collected']
+                    ['state', '=', 'pending']
                 ]],
                 { fields: ['id', 'product_id', 'total_amount', 'quantity'] }
             );
             
             if (lines.length === 0) {
                 this.env.services.notification.add(
-                    `No eligible collected Marfat lines found for ${welfareNumber}`,
+                    `No eligible pending Marfat lines found for ${welfareNumber}`,
                     { type: 'warning' }
                 );
                 return;

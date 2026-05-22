@@ -221,7 +221,7 @@ patch(ActionScreen.prototype, {
             if (lines.length === 0) {
                 await this.popup.add(SelectionPopup, {
                     title: _t("No Eligible Lines"),
-                    list: [{ id: "ok", label: _t(`No collected recurring Marfat lines found for ${welfareNumber}`), item: "ok" }],
+                    list: [{ id: "ok", label: _t(`No Pending recurring Marfat lines found for ${welfareNumber}`), item: "ok" }],
                 });
                 return;
             }
