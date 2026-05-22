@@ -61,8 +61,8 @@ class WelfareLine(models.Model):
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
     )
     # order_type field moved to main welfare model
-    collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
-    payment_types = fields.Selection(selection=payment_types_selection, string="Payment Type")
+    # collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point", store=True )
+    # payment_types = fields.Selection(selection=payment_types_selection, string="Payment Type")
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
     recurring_duration = fields.Selection(selection=recurring_duration_selection, string="Recurring Duration")
     state = fields.Selection(selection=state_selection, string="State", default='draft')
