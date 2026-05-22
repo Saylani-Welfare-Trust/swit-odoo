@@ -22,7 +22,7 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     product_id = fields.Many2one('product.product', related='line_id.product_id', readonly=True)
     quantity = fields.Float(related='line_id.quantity', readonly=True)
     total_amount = fields.Float(related='line_id.total_amount', readonly=True)
-    collection_point = fields.Selection(related='line_id.collection_point', readonly=True)
+    # collection_point = fields.Selection(related='line_id.collection_point', readonly=True)
     collection_date = fields.Date(related='line_id.collection_date', readonly=True)
     assigned_officer_id = fields.Many2one('hr.employee', related='line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='line_id.state', readonly=True)

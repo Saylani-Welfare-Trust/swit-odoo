@@ -31,7 +31,7 @@
                                     <field name="welfare_id" string="Welfare Record"/>
                                     <field name="disbursement_category_id" string="Disbursement Category"/>
                                     <field name="product_id" string="Product"/>
-                                    <field name="collection_point" string="Collection Point"/>
+                                    <!-- <field name="collection_point" string="Collection Point"/> -->
                                     <field name="collection_date" string="Collection Date"/>
                                     <field name="quantity" string="Quantity"/>
                                     <field name="total_amount" string="Total Amount"/>
@@ -77,7 +77,7 @@
                         <field name="product_id" readonly="1"/>
                         <field name="quantity" readonly="1"/>
                         <field name="total_amount" readonly="1"/>
-                        <field name="collection_point" readonly="1"/>
+                        <!-- <field name="collection_point" readonly="1"/> -->
                         <field name="collection_date" readonly="1"/>
                         <field name="assigned_officer_id" readonly="1"/>
                         <field name="state" readonly="1"/>
