@@ -580,10 +580,10 @@ class WelfareLine(models.Model):
                 "Current payment type: %s" % self.payment_type
             ))
         
-        if self.state != 'collected':
+        if self.state != 'pending':
             raise ValidationError(_(
-                "Return is only allowed for lines in 'Collected' state. "
-                "Current state: %s. Only 'Collected' lines can be returned."
+                "Return is only allowed for lines in 'Pending' state. "
+                "Current state: %s. Only 'Pending' lines can be returned."
             ) % self.state)
         
         if self.state == 'return':
