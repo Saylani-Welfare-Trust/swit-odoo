@@ -183,7 +183,7 @@ class QurbaniOrder(models.Model):
                 'demand': demand,
                 'day': day,
                 'hijri': hijri,
-                'city': city.city_id.id,
+                'city': city.city_id if city and city.city_id else False,
                 'distribution_id': distribution_id,
                 'slaughter_location_id': slaughter_location_id,
             }
