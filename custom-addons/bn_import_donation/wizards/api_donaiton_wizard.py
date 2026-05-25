@@ -59,7 +59,7 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
 
-        # raise ValidationError(str(donations_info))
+        raise ValidationError(str(donations_info))
         if not donations_info:
             self.create_fetch_log(
                 history.id,
@@ -68,8 +68,6 @@ class APIDonationWizard(models.TransientModel):
                 'No donations returned from API'
             )
             return True
-
-
         # =========================================================
         # COUNT NORMAL VS QURBANI RECORDS
         # =========================================================
@@ -393,7 +391,7 @@ class APIDonationWizard(models.TransientModel):
         StockMove = self.env['stock.move']
 
         stock_accumulator = defaultdict(float)
-        raise ValidationError(str(all_data['gateway_product_lines']))
+        # raise ValidationError(str(all_data['gateway_product_lines']))
         # -----------------------------
         # DEBUG / TESTING COUNTERS
         # -----------------------------
