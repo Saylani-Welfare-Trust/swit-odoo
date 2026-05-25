@@ -769,14 +769,14 @@ class APIDonationWizard(models.TransientModel):
         total_debit = 0.0
         total_credit = 0.0
 
-        # =====================================================
-        # DEBIT
-        # =====================================================
+        company_currency = journal.company_id.currency_id
 
+        # =====================================================
+        # DEBIT LINES
+        # =====================================================
         for account_id, amount in debit_accumulator.items():
 
-            amount = round(amount, 2)
-
+            amount = round(float(amount), 2)
             if not amount:
                 continue
 
@@ -784,19 +784,23 @@ class APIDonationWizard(models.TransientModel):
 
             lines.append((0, 0, {
                 'account_id': account_id,
-                'amount_currency': amount,
                 'name': 'Donation Import Debit',
-                'currency_id': self.env.company.currency_id.id,
+
+                # IMPORTANT: proper accounting fields
+                'debit': amount,
+                'credit': 0.0,
+
+                # Multi-currency safe
+                'amount_currency': amount,
+                'currency_id': company_currency.id,
             }))
 
         # =====================================================
-        # CREDIT
+        # CREDIT LINES
         # =====================================================
-
         for account_id, amount in credit_accumulator.items():
 
-            amount = round(amount, 2)
-
+            amount = round(float(amount), 2)
             if not amount:
                 continue
 
@@ -804,57 +808,50 @@ class APIDonationWizard(models.TransientModel):
 
             lines.append((0, 0, {
                 'account_id': account_id,
-                'amount_currency': -amount,
                 'name': 'Donation Import Credit',
-                'currency_id': self.env.company.currency_id.id,
+
+                'debit': 0.0,
+                'credit': amount,
+
+                'amount_currency': -amount,
+                'currency_id': company_currency.id,
             }))
 
+        # =====================================================
+        # EMPTY CHECK
+        # =====================================================
         if not lines:
-
             logs.append({
                 'name': 'No journal lines generated',
                 'status': 'warning',
             })
-
             return False
 
         # =====================================================
-        # BALANCE FIX
+        # BALANCING
         # =====================================================
-
-        diff = round(
-            total_debit - total_credit,
-            2
-        )
+        diff = round(total_debit - total_credit, 2)
 
         if diff != 0:
 
             if not journal.default_account_id:
-                raise ValidationError(
-                    _("Journal missing default account.")
-                )
+                raise ValidationError(_("Journal missing default account."))
 
-            if diff > 0:
+            lines.append((0, 0, {
+                'account_id': journal.default_account_id.id,
+                'name': 'Rounding Adjustment',
 
-                lines.append((0, 0, {
-                    'account_id': journal.default_account_id.id,
-                    'amount_currency': -abs(diff),
-                    'name': 'Rounding Adjustment',
-                    'currency_id': self.env.company.currency_id.id,
-                }))
+                'debit': 0.0 if diff > 0 else abs(diff),
+                'credit': abs(diff) if diff > 0 else 0.0,
 
-            else:
+                'amount_currency': -diff,
+                'currency_id': company_currency.id,
+            }))
 
-                lines.append((0, 0, {
-                    'account_id': journal.default_account_id.id,
-                    'amount_currency': abs(diff),
-                    'name': 'Rounding Adjustment',
-                    'currency_id': self.env.company.currency_id.id,
-                }))
-
-        move = self.env[
-            'account.move'
-        ].create({
+        # =====================================================
+        # CREATE MOVE
+        # =====================================================
+        move = self.env['account.move'].create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'date': fields.Date.today(),
@@ -863,20 +860,16 @@ class APIDonationWizard(models.TransientModel):
         })
 
         try:
-
             move.action_post()
 
         except Exception as e:
-
             logs.append({
                 'name': 'Journal posting failed',
                 'status': 'error',
                 'reason': str(e),
             })
 
-            _logger.exception(
-                "Journal Posting Failed"
-            )
+            _logger.exception("Journal Posting Failed")
 
             raise ValidationError(
                 _("Journal posting failed: %s") % str(e)
