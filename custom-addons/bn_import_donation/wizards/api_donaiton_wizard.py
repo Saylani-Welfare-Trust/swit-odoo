@@ -786,6 +786,7 @@ class APIDonationWizard(models.TransientModel):
                 'account_id': account_id,
                 'amount_currency': amount,
                 'name': 'Donation Import Debit',
+                'currency_id': self.env.company.currency_id.id,
             }))
 
         # =====================================================
@@ -805,6 +806,7 @@ class APIDonationWizard(models.TransientModel):
                 'account_id': account_id,
                 'amount_currency': -amount,
                 'name': 'Donation Import Credit',
+                'currency_id': self.env.company.currency_id.id,
             }))
 
         if not lines:
@@ -838,6 +840,7 @@ class APIDonationWizard(models.TransientModel):
                     'account_id': journal.default_account_id.id,
                     'amount_currency': -abs(diff),
                     'name': 'Rounding Adjustment',
+                    'currency_id': self.env.company.currency_id.id,
                 }))
 
             else:
@@ -846,6 +849,7 @@ class APIDonationWizard(models.TransientModel):
                     'account_id': journal.default_account_id.id,
                     'amount_currency': abs(diff),
                     'name': 'Rounding Adjustment',
+                    'currency_id': self.env.company.currency_id.id,
                 }))
 
         move = self.env[
