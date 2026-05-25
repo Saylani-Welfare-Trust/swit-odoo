@@ -566,6 +566,8 @@ class WelfareLine(models.Model):
         }        
     
 
+
+
     def action_return_to_pos(self, pos_order_id=None, welfare_number=None, return_type='one_time', return_amount=None):
         """
         Return collected amount to POS for Assigned Officer (Marfat) payments
