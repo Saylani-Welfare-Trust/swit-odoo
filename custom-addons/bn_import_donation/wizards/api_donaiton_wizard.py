@@ -836,8 +836,7 @@ class APIDonationWizard(models.TransientModel):
 
                 lines.append((0, 0, {
                     'account_id': journal.default_account_id.id,
-                    'debit': 0.0,
-                    'credit': abs(diff),
+                    'amount_currency': -abs(diff),
                     'name': 'Rounding Adjustment',
                 }))
 
@@ -845,8 +844,7 @@ class APIDonationWizard(models.TransientModel):
 
                 lines.append((0, 0, {
                     'account_id': journal.default_account_id.id,
-                    'debit': abs(diff),
-                    'credit': 0.0,
+                    'amount_currency': abs(diff),
                     'name': 'Rounding Adjustment',
                 }))
 
