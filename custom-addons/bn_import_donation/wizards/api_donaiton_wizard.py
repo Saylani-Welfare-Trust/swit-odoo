@@ -30,10 +30,8 @@ class APIDonationWizard(models.TransientModel):
             'reason': reason
         })
 
-    # ---------------------- Public entry point ----------------------
     def action_fetch_donation(self):
         self.ensure_one()
-
 
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
@@ -59,7 +57,6 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
 
-        # raise ValidationError(str(donations_info))
         if not donations_info:
             self.create_fetch_log(
                 history.id,
@@ -68,110 +65,95 @@ class APIDonationWizard(models.TransientModel):
                 'No donations returned from API'
             )
             return True
+
         # =========================================================
-        # COUNT NORMAL VS QURBANI RECORDS
+        # CHECK CURRENCIES IN RAW DATA
         # =========================================================
-
-        total_records = len(donations_info)
-
-        qurbani_records = [
-            rec for rec in donations_info
-            if rec.get('qurbani') is True
-        ]
-
-        normal_records = [
-            rec for rec in donations_info
-            if rec.get('qurbani') is not True
-        ]
-
-        qurbani_count = len(qurbani_records)
-        normal_count = len(normal_records)
-
-        # Log summary
-        self.create_fetch_log(
-            history.id,
-            "Donation Type Summary",
-            "Summary",
-            f"""
-                ==============================
-                API DONATION FETCH SUMMARY
-                ==============================
-
-                Total Records Fetched: {total_records}
-
-                Qurbani Records: {qurbani_count}
-
-                Normal Donation Records: {normal_count}
-
-                ==============================
-            """
-        )
-
-        # Optional detailed log for qurbani records
-        if qurbani_records:
-            qurbani_ids = [
-                str(r.get('_id'))
-                for r in qurbani_records
-            ]
-
-            self.create_fetch_log(
-                history.id,
-                "Qurbani Records Found",
-                "Qurbani",
-                f"""
-                    Total Qurbani Records: {qurbani_count}
-
-                    Import IDs:
-                    {', '.join(qurbani_ids)}
-                """
-            )
-        else:
-            self.create_fetch_log(
-                history.id,
-                "No Qurbani Records Found",
-                "Qurbani",
-                "API returned zero qurbani=True records"
-            )
-
-        # Prepare bulk data
-        journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
-        company_currency = company.currency_id
         
-        # Pre-fetch all required data in bulk
-        all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
-        raise ValidationError(str(all_data))
-        # Process donations in optimized way
-        result = self._process_donations_bulk(
-            donations_info, journal, gateway_config, company_currency, all_data, history
-        )
+        # Extract all unique currencies from the raw data
+        unique_currencies = set()
+        currency_details = []
         
-        
-        if result.get('new_donations') and journal and result.get('accumulators'):
-            # raise ValidationError(str(result['accumulators'])+ " "+str(journal) + " "+str(company_currency))
-            move = self._create_grouped_journal_move(
-                journal, 
-                result['accumulators']['debit'],
-                result['accumulators']['credit'], 
-                company_currency,
-                history
-            ) 
-            # raise ValidationError(str(move))
-            history.write({
-                'journal_entry_id': move.id,
-                'picking_id': result['picking_id'] if result.get('picking_id') else False,
+        for idx, info in enumerate(donations_info):
+            currency = info.get('currency', 'NOT_SPECIFIED')
+            unique_currencies.add(currency)
+            currency_details.append({
+                'index': idx,
+                'import_id': info.get('_id', 'NO_ID'),
+                'currency': currency,
+                'total_amount': info.get('total_amount', 0),
+                'donor_name': info.get('donor_details', {}).get('name', 'NO_NAME')
             })
-
-            # Bulk update fetch history
-            if result['new_donations']:
-                self.env['api.donation'].browse(result['new_donations']).write({
-                    'fetch_history_id': history.id
-                })
-
-        self.create_fetch_log(history.id, f"Donation fetch and processing completed successfully.", 'Completed', 'All operations completed successfully')
-
-        return True
-
+        
+        # Create validation error with currency information
+        error_message = f"""
+        ========================================
+        CURRENCY ANALYSIS FROM API DATA
+        ========================================
+        
+        Total Records: {len(donations_info)}
+        
+        Unique Currencies Found: {len(unique_currencies)}
+        
+        Currencies List: {', '.join(sorted(unique_currencies))}
+        
+        ========================================
+        DETAILED BREAKDOWN BY CURRENCY:
+        ========================================
+        """
+        
+        # Group by currency
+        from collections import defaultdict
+        currency_groups = defaultdict(list)
+        
+        for detail in currency_details:
+            currency_groups[detail['currency']].append(detail)
+        
+        for currency, records in currency_groups.items():
+            error_message += f"""
+            
+        Currency: {currency}
+            Count: {len(records)}
+            Total Amount Sum: {sum(r['total_amount'] for r in records)}
+            Sample Records:
+            """
+            for record in records[:3]:  # Show first 3 records per currency
+                error_message += f"""
+                - ID: {record['import_id']}, Amount: {record['total_amount']}, Donor: {record['donor_name']}
+                """
+            if len(records) > 3:
+                error_message += f"        ... and {len(records) - 3} more records\n"
+        
+        error_message += """
+        
+        ========================================
+        RAW FIRST RECORD (SAMPLE):
+        ========================================
+        """
+        
+        if donations_info:
+            error_message += pformat(donations_info[0], indent=2, width=120)
+        
+        error_message += """
+        
+        ========================================
+        ALL CURRENCY FIELDS IN FIRST 5 RECORDS:
+        ========================================
+        """
+        
+        for idx in range(min(5, len(donations_info))):
+            error_message += f"""
+        Record {idx + 1}:
+            _id: {donations_info[idx].get('_id')}
+            currency: {donations_info[idx].get('currency')}
+            total_amount: {donations_info[idx].get('total_amount')}
+            bank_charges: {donations_info[idx].get('bank_charges')}
+            status: {donations_info[idx].get('status')}
+            qurbani: {donations_info[idx].get('qurbani')}
+            """
+        
+        # Raise single validation error with all currency information
+        raise ValidationError(error_message)
     # ---------------------- Bulk API Operations ----------------------
     def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host, history):
         self.create_fetch_log(history.id, f"Start _fetch_donations_from_api", 'API Fetch', 'Starting to fetch donations from API with optimized session handling')
