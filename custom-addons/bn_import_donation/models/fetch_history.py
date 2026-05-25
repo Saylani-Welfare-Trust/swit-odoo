@@ -15,11 +15,6 @@ class FetchHistory(models.Model):
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    state = fields.Selection([
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-    ], default='in_progress')
-
 
     def show_stock_picking(self):
         return {

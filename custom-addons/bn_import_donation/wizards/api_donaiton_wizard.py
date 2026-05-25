@@ -59,7 +59,6 @@ class APIDonationWizard(models.TransientModel):
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
         company = self.env.company
-
         if not (company.url and company.client_id and company.client_secret):
             raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
 
@@ -69,93 +68,75 @@ class APIDonationWizard(models.TransientModel):
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-        # ============================================
-        # GET LAST HISTORY OR CREATE NEW
-        # ============================================
+        history = self.env['fetch.history'].create({
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+        })
 
-        history = self.env['fetch.history'].search(
-            [
-                ('start_date', '=', self.start_date),
-                ('end_date', '=', self.end_date),
-                ('state', '!=', 'completed')
-            ],
-            limit=1,
-            order='id desc'
-        )
+        self.create_fetch_log(history.id, "Initiating donation fetch.", 'Initiated', 'Started')
 
-        if not history:
-            history = self.env['fetch.history'].create({
-                'start_date': self.start_date,
-                'end_date': self.end_date,
-                'page': 1,
-                'per_page': 100,
-                'state': 'in_progress',
-            })
-
-        self.create_fetch_log(
-            history.id,
-            "Initiating donation fetch.",
-            'Initiated',
-            f"Starting from page {history.page}"
-        )
-
-        # ============================================
-        # FETCH ONLY ONE PAGE PER RUN
-        # ============================================
-
+        # =========================================================
+        # PAGINATION LOGIC (ADDED)
+        # =========================================================
         page = history.page or 1
-        per_page = history.per_page or 100
+        per_page = history.per_page or 50
+        donations_info = []
 
-        payload = {
-            "status": "success",
-            "page": page,
-            "perPage": per_page,
-        }
+        while True:
 
-        if self.start_date:
-            payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
+            payload = {
+                "status": "success",
+                "page": page,
+                "perPage": per_page,
+            }
 
-        if self.end_date:
-            payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+            if self.start_date:
+                payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
 
-        self.create_fetch_log(
-            history.id,
-            f"Fetching page {page}",
-            "Pagination",
-            str(payload)
-        )
-
-        donations_info = self._fetch_donations_from_api(
-            auth_url,
-            donate_url,
-            company,
-            base_url,
-            origin_host,
-            history,
-            override_payload=payload
-        )
-
-        # ============================================
-        # NO MORE RECORDS
-        # ============================================
-
-        if not donations_info:
-            history.write({
-                'state': 'completed'
-            })
+            if self.end_date:
+                payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
             self.create_fetch_log(
                 history.id,
-                "No more donations found",
-                'Completed',
-                'Pagination completed'
+                f"Fetching page {page}",
+                "Pagination",
+                str(payload)
             )
 
+            page_data = self._fetch_donations_from_api(
+                auth_url,
+                donate_url,
+                company,
+                base_url,
+                origin_host,
+                history,
+                override_payload=payload
+            )
+
+            if not page_data:
+                break
+
+            donations_info.extend(page_data)
+
+            history.write({'page': page + 1})
+
+            if len(page_data) < per_page:
+                break
+
+            page += 1
+
+        if not donations_info:
+            self.create_fetch_log(
+                history.id,
+                "No donations found",
+                'No Data',
+                'Empty response'
+            )
             return True
 
-        # ============================================
-        # YOUR EXISTING PROCESSING
-        # ============================================
+        # =========================================================
+        # KEEP YOUR ORIGINAL LOGIC BELOW (UNCHANGED)
+        # =========================================================
 
         total_records = len(donations_info)
 
@@ -170,20 +151,10 @@ class APIDonationWizard(models.TransientModel):
         )
 
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-
-        gateway_config = self.env['gateway.config'].search(
-            [('name', '=', 'Web API')],
-            limit=1
-        )
-
+        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         company_currency = company.currency_id
 
-        all_data = self._prefetch_all_data(
-            donations_info,
-            gateway_config,
-            company_currency,
-            history
-        )
+        all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
 
         result = self._process_donations_bulk(
             donations_info,
@@ -212,19 +183,11 @@ class APIDonationWizard(models.TransientModel):
                 'fetch_history_id': history.id
             })
 
-        # ============================================
-        # MOVE TO NEXT PAGE
-        # ============================================
-
-        history.write({
-            'page': page + 1
-        })
-
         self.create_fetch_log(
             history.id,
-            "Page completed successfully",
+            "Completed successfully",
             'Completed',
-            f"Processed page {page}. Next page will be {page + 1}"
+            'Done'
         )
 
         return True
