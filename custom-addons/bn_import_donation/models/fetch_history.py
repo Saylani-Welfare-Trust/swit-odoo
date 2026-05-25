@@ -20,7 +20,7 @@ class FetchHistory(models.Model):
         ('completed', 'Completed'),
     ], default='in_progress')
 
-    last_import_id = fields.Char('Last Import ID')
+    is_running = fields.Boolean('Is Running', default=False)
 
 
     def show_stock_picking(self):

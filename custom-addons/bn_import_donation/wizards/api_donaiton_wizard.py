@@ -5,17 +5,19 @@ from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
-from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
 
 class APIDonationWizard(models.TransientModel):
     _name = 'api.donation.wizard'
-    _description = 'API Donation Wizard'
+    _description = 'API Donation Wizard (Enhanced Pagination Sync)'
 
-    start_date = fields.Date('Start Date')
-    end_date = fields.Date('End Date')
+    # =========================================================
+    # FIELDS
+    # =========================================================
+    start_date = fields.Date('Start Date', required=True)
+    end_date = fields.Date('End Date', required=True)
 
     picking_type_id = fields.Many2one(
         'stock.picking.type',
@@ -50,22 +52,29 @@ class APIDonationWizard(models.TransientModel):
         })
 
     # =========================================================
-    # ENTRY POINT (ONLY MODIFIED FOR PAGINATION)
+    # ENTRY POINT (PAGINATION SYNC ENGINE)
     # =========================================================
     def action_fetch_donation(self):
         self.ensure_one()
 
-        company = self.env.company
+        if self.start_date > self.end_date:
+            raise ValidationError(_("Start Date must be <= End Date"))
 
-        history = self.env['fetch.history'].search(
-            [
-                ('start_date', '=', self.start_date),
-                ('end_date', '=', self.end_date),
-                ('state', '!=', 'completed')
-            ],
-            limit=1,
-            order='id desc'
-        )
+        company = self.env.company
+        if not (company.url and company.client_id and company.client_secret):
+            raise ValidationError(_("Missing API configuration"))
+
+        # -------------------------------------------------
+        # FIND OR CREATE SYNC SESSION
+        # -------------------------------------------------
+        history = self.env['fetch.history'].search([
+            ('start_date', '=', self.start_date),
+            ('end_date', '=', self.end_date),
+            ('state', '=', 'in_progress')
+        ], limit=1, order="id desc")
+
+        if history and history.is_running:
+            raise ValidationError(_("Sync already running for this date range"))
 
         if not history:
             history = self.env['fetch.history'].create({
@@ -73,150 +82,143 @@ class APIDonationWizard(models.TransientModel):
                 'end_date': self.end_date,
                 'page': 1,
                 'per_page': 100,
-                'last_import_id': False,
                 'state': 'in_progress',
+                'is_running': False,
             })
 
-        # ============================================
-        # HYBRID PAYLOAD
-        # ============================================
-        payload = {
-            "status": "success",
-            "page": history.page,
-            "perPage": history.per_page,
-        }
+        history.write({'is_running': True})
 
-        # cursor adds position context
-        if history.last_import_id:
-            payload["cursor"] = history.last_import_id
+        try:
+            self.create_fetch_log(
+                history.id,
+                "Sync started",
+                "INIT",
+                f"Page={history.page}"
+            )
 
-        if self.start_date:
-            payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
+            page = history.page or 1
+            per_page = history.per_page or 100
 
-        if self.end_date:
-            payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+            payload = {
+                "status": "success",
+                "page": page,
+                "perPage": per_page,
+                "startDate": self._date_to_iso_z(self.start_date, time.min),
+                "endDate": self._date_to_iso_z(self.end_date, time(23, 59, 59)),
+            }
 
-        donations_info = self._fetch_donations_from_api(
-            company,
-            payload
-        )
+            donations = self._fetch_donations(payload, company, history)
 
-        # ============================================
-        # STOP CONDITION
-        # ============================================
-        if not donations_info:
-            history.write({'state': 'completed'})
+            # -------------------------------------------------
+            # STOP CONDITION
+            # -------------------------------------------------
+            if not donations:
+                history.write({
+                    'state': 'completed',
+                    'is_running': False
+                })
+
+                self.create_fetch_log(
+                    history.id,
+                    "SYNC COMPLETED",
+                    "DONE",
+                    "No more pages"
+                )
+                return True
+
+            # -------------------------------------------------
+            # PROCESS PAGE DATA
+            # -------------------------------------------------
+            result = self._process_donations(donations, history)
+
+            # -------------------------------------------------
+            # SAVE PAGE PROGRESS
+            # -------------------------------------------------
+            history.write({
+                'page': page + 1
+            })
 
             self.create_fetch_log(
                 history.id,
-                "Completed",
-                "Done",
-                "No more records"
+                "Page completed",
+                "SUCCESS",
+                f"Next page = {page + 1}"
             )
-            return True
 
-        # ============================================
-        # PROCESS PAGE DATA
-        # ============================================
-        last_cursor = None
+            return result
 
-        for rec in donations_info:
-            # prefer stable unique field from API
-            last_cursor = rec.get('import_id') or rec.get('id')
+        finally:
+            history.write({'is_running': False})
 
-        # ============================================
-        # UPDATE STATE
-        # ============================================
+    # =========================================================
+    # API CALL
+    # =========================================================
+    def _fetch_donations(self, payload, company, history):
+        try:
+            session = requests.Session()
 
-        next_page = history.page + 1
+            auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
+            donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-        # If page threshold reached → move cursor forward
-        if history.page >= 5:   # 👈 tune this threshold
-            history.write({
-                'last_import_id': last_cursor,
-                'page': 1
+            token = self._authenticate(session, auth_url, company)
+
+            session.headers.update({
+                'authorization': f'bearer {token}',
+                'Content-Type': 'application/json'
             })
-        else:
-            history.write({
-                'page': next_page
-            })
+
+            resp = session.post(donate_url, json=payload, timeout=60)
+            resp.raise_for_status()
+
+            data = resp.json()
+            return data.get('donationsInfo', [])
+
+        except Exception as e:
+            raise ValidationError(f"API Error: {str(e)}")
+
+    # =========================================================
+    # AUTH
+    # =========================================================
+    def _authenticate(self, session, url, company):
+        resp = session.post(url, json={
+            "ClientID": company.client_id,
+            "ClientSecret": company.client_secret
+        }, timeout=30)
+
+        resp.raise_for_status()
+        return resp.json().get('token')
+
+    # =========================================================
+    # PROCESSOR (PLACEHOLDER FOR YOUR EXISTING LOGIC)
+    # =========================================================
+    def _process_donations(self, donations, history):
+        """
+        Keep your full existing logic here:
+        - partner creation
+        - donation creation
+        - stock moves
+        - accounting entries
+        """
 
         self.create_fetch_log(
             history.id,
-            "Batch processed",
-            "Success",
-            f"Page={history.page}, NextPage={next_page}, Cursor={last_cursor}"
+            "Processing donations",
+            "PROCESS",
+            f"Records={len(donations)}"
         )
+
+        # 👉 CALL YOUR EXISTING FUNCTIONS HERE
+        # self._prefetch_all_data(...)
+        # self._process_donations_bulk(...)
 
         return True
 
     # =========================================================
-    # API CALL (ONLY ADDITION: override_payload)
+    # DATE CONVERTER
     # =========================================================
-    def _fetch_donations_from_api(self, company, payload, start_date=None, end_date=None):
-        auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
-        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
-        origin_host = urlparse(base_url).hostname or ''
-
-        try:
-            with requests.Session() as session:
-
-                session.headers.update({
-                    'Origin': base_url,
-                    'x-forwarded-for': origin_host,
-                    'Content-Type': 'application/json',
-                })
-
-                token = self._authenticate(
-                    session,
-                    auth_url,
-                    company.client_id,
-                    company.client_secret
-                )
-
-                session.headers.update({
-                    'authorization': f'bearer {token}'
-                })
-
-                # ===============================
-                # ADD DATE FILTERS HERE
-                # ===============================
-                if start_date:
-                    payload['startDate'] = self._date_to_iso_z(start_date, time.min)
-
-                if end_date:
-                    payload['endDate'] = self._date_to_iso_z(end_date, time(23, 59, 59))
-
-                resp = session.post(donate_url, json=payload, timeout=60)
-                resp.raise_for_status()
-
-                data = resp.json()
-
-                if not isinstance(data, dict):
-                    raise ValidationError(_("Invalid API response"))
-
-                return data.get('donationsInfo', [])
-
-        except Exception as e:
-            raise ValidationError(_('API Error: %s') % str(e))
-        
-    # =========================================================
-    # EVERYTHING BELOW REMAINS YOUR ORIGINAL CODE
-    # =========================================================
-    # (UNCHANGED - your full logic stays exactly same)
-
-    def _authenticate(self, session, url, client_id, client_secret):
-        resp = session.post(url, json={
-            "ClientID": client_id,
-            "ClientSecret": client_secret
-        }, timeout=30)
-        resp.raise_for_status()
-        token = resp.json().get('token')
-        if not token:
-            raise ValidationError(_("Token missing"))
-        return token
+    def _date_to_iso_z(self, date_val, t):
+        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
+        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
     # ---------------------- Bulk Data Pre-fetching ----------------------
     def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):
@@ -1174,10 +1176,6 @@ class APIDonationWizard(models.TransientModel):
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
-    def _date_to_iso_z(self, date_val, t):
-        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
-        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-
     def _parse_iso_to_dt_fast(self, iso_str, history):
         """Fast ISO datetime parsing"""
         if not iso_str:
