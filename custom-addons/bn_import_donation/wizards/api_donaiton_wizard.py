@@ -393,7 +393,7 @@ class APIDonationWizard(models.TransientModel):
         StockMove = self.env['stock.move']
 
         stock_accumulator = defaultdict(float)
-
+        raise ValidationError(str(all_data['gateway_product_lines']))
         # -----------------------------
         # DEBUG / TESTING COUNTERS
         # -----------------------------
