@@ -103,14 +103,19 @@ patch(ActionScreen.prototype, {
 
     async processOneTimeReturn(welfareNumber) {
         try {
-            const hasLoadedReturn = this.pos.get_order().get_orderlines().some((line) => {
+            const order = this.pos.get_order();
+            const hasLoadedReturn = (
+                order.extra_data &&
+                order.extra_data.welfare_return &&
+                order.extra_data.welfare_return.status === 'pending'
+            ) || order.get_orderlines().some((line) => {
                 const extras = line.get_extras ? line.get_extras() : {};
                 return extras.is_welfare_return === true && extras.welfare_number === welfareNumber;
             });
 
             if (hasLoadedReturn) {
                 this.env.services.notification.add(
-                    `A return for ${welfareNumber} is already loaded on this order.`,
+                    `A welfare return is already loaded on this order.`,
                     { type: 'warning' }
                 );
                 return;
@@ -177,11 +182,25 @@ patch(ActionScreen.prototype, {
                 }
             }
 
+            if (!order.extra_data) {
+                order.extra_data = {};
+            }
+            order.extra_data.welfare_return = {
+                record_number: welfareNumber,
+                return_type: 'one_time',
+                status: 'pending',
+                line_model: 'welfare.line',
+                line_ids: lines.map((line) => ({
+                    id: line.id,
+                    amount: line.total_amount || 0,
+                })),
+            };
+
             // Add return lines to order
             for (const line of lines) {
                 const product = this.pos.db.get_product_by_id(line.product_id[0]);
                 if (product) {
-                    this.pos.get_order().add_product(product, {
+                    order.add_product(product, {
                         quantity: line.quantity,
                         price: line.total_amount / line.quantity,
                         extras: {
@@ -218,14 +237,19 @@ patch(ActionScreen.prototype, {
 
     async processRecurringReturn(welfareNumber) {
         try {
-            const hasLoadedReturn = this.pos.get_order().get_orderlines().some((line) => {
+            const order = this.pos.get_order();
+            const hasLoadedReturn = (
+                order.extra_data &&
+                order.extra_data.welfare_return &&
+                order.extra_data.welfare_return.status === 'pending'
+            ) || order.get_orderlines().some((line) => {
                 const extras = line.get_extras ? line.get_extras() : {};
                 return extras.is_welfare_return === true && extras.welfare_number === welfareNumber;
             });
 
             if (hasLoadedReturn) {
                 this.env.services.notification.add(
-                    `A return for ${welfareNumber} is already loaded on this order.`,
+                    `A welfare return is already loaded on this order.`,
                     { type: 'warning' }
                 );
                 return;
@@ -252,11 +276,25 @@ patch(ActionScreen.prototype, {
                 return;
             }
 
+            if (!order.extra_data) {
+                order.extra_data = {};
+            }
+            order.extra_data.welfare_return = {
+                record_number: welfareNumber,
+                return_type: 'recurring',
+                status: 'pending',
+                line_model: 'welfare.recurring.line',
+                line_ids: lines.map((line) => ({
+                    id: line.id,
+                    amount: line.amount || 0,
+                })),
+            };
+
             // Add recurring return lines to order
             for (const line of lines) {
                 const product = this.pos.db.get_product_by_id(line.product_id[0]);
                 if (product) {
-                    this.pos.get_order().add_product(product, {
+                    order.add_product(product, {
                         quantity: line.quantity,
                         price: line.amount / line.quantity,
                         extras: {
