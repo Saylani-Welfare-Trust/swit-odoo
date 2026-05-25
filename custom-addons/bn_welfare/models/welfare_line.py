@@ -566,19 +566,12 @@ class WelfareLine(models.Model):
         }        
     
 
-    def action_return_to_pos(self, pos_order_id=None, welfare_number=None, return_type='one_time', return_amount=None):
+    def action_return_to_pos(self):
         """
         Return collected amount to POS for Assigned Officer (Marfat) payments
-        
-        :param pos_order_id: ID of the POS order creating this return
-        :param welfare_number: Welfare record number for reference
-        :param return_type: 'one_time' or 'recurring'
-        :param return_amount: Amount being returned (if different from total_amount)
+        Money comes BACK to the company (Donee returns it)
         """
         self.ensure_one()
-        
-        # Use return_amount if provided, otherwise use total_amount
-        actual_return_amount = return_amount if return_amount is not None else self.total_amount
         
         # Validation checks
         if self.payment_type != 'assigned_officer':
@@ -587,65 +580,39 @@ class WelfareLine(models.Model):
                 "Current payment type: %s" % self.payment_type
             ))
         
-        # For POS returns, we might want to accept different states
-        if self.state not in ['pending', 'collected']:
+        if self.state != 'pending':
             raise ValidationError(_(
-                "Return is only allowed for lines in 'Pending' or 'Collected' state. "
-                "Current state: %s" % self.state
-            ))
+                "Return is only allowed for lines in 'Pending' state. "
+                "Current state: %s. Only 'Pending' lines can be returned."
+            ) % self.state)
+        
+        if self.state == 'return':
+            raise ValidationError(_("This line has already been returned."))
         
         if not self.welfare_id.donee_id:
             raise ValidationError(_("No donee associated with this welfare line."))
         
         try:
             # Create journal entry for money coming IN to company
-            return_receipt = self._create_return_receipt(actual_return_amount)
+            return_receipt = self._create_return_receipt()
             
-            # Store POS return reference if provided
-            pos_return_ref = ''
-            if pos_order_id:
-                pos_return_ref = f"POS Return Order ID: {pos_order_id}"
-                if welfare_number:
-                    pos_return_ref += f" | Welfare: {welfare_number}"
-            
-            # Reset states: line to draft, welfare to approve
+            # Update line state to 'return'
             self.write({
-                'state': 'draft',  # Reset to draft
+                'state': 'return',
                 'return_date': fields.Datetime.now(),
                 'returned_by': self.env.user.id,
-                'pos_return_order_id': pos_order_id,  # Link to POS return order
-                'return_reason': f'Returned from POS. {pos_return_ref}',  # Optional: add reason
             })
             
-            # Update parent welfare record state to 'hod_approve' (or 'approve')
-            if self.welfare_id:
-                # Check what states are available in welfare model
-                # Common states: draft, approve, hod_approve, committee_approve, etc.
-                target_state = 'hod_approve'  # Change this to match your welfare model
-                
-                # If you want to check if the state exists before writing
-                if target_state in dict(self.welfare_id._fields['state'].selection):
-                    self.welfare_id.write({'state': target_state})
-                else:
-                    # Fallback to first available approval state
-                    _logger.warning(f"State '{target_state}' not found in welfare model. Keeping current state: {self.welfare_id.state}")
-            
             # Post message
-            message_body = f"""
-                <b>🔄 Welfare Line Returned from POS</b><br/>
+            self.welfare_id.message_post(body=f"""
+                <b>💰 Welfare Line Returned (Money Received Back)</b><br/>
                 <b>Product:</b> {self.product_id.name}<br/>
-                <b>Amount Returned:</b> {actual_return_amount} {self.currency_id.symbol}<br/>
+                <b>Amount Returned:</b> {self.total_amount} {self.currency_id.symbol}<br/>
                 <b>Return Date:</b> {fields.Datetime.now()}<br/>
                 <b>Payment Type:</b> Assigned Officer (Marfat)<br/>
                 <b>Returned By:</b> {self.env.user.name}<br/>
-                <b>POS Reference:</b> {pos_return_ref}<br/>
-                <b>New Status:</b> <br/>
-                - Welfare Line: <span style="color: orange;">Draft</span> (can be re-processed)<br/>
-                - Welfare Record: <span style="color: green;">Approve</span> (ready for re-approval)
-            """
-            self.welfare_id.message_post(body=message_body)
-            
-            _logger.info(f"Welfare line {self.id} returned from POS. Line state: draft, Welfare state: approve")
+                <b>Status:</b> Money returned from Donee → Company cash increased
+            """)
             
             return True
             
@@ -653,15 +620,11 @@ class WelfareLine(models.Model):
             _logger.error(f"Error returning welfare line {self.id}: {str(e)}")
             raise ValidationError(_("Failed to process return: %s" % str(e)))
 
-    def _create_return_receipt(self, amount=None):
+    def _create_return_receipt(self):
         """
         Create a journal entry for money returned from Donee
         This INCREASES company cash (money coming IN)
-        
-        :param amount: Amount to return (defaults to total_amount)
         """
-        actual_amount = amount if amount is not None else self.total_amount
-        
         # Find cash or bank account
         cash_account = self.env['account.account'].search([
             ('account_type', 'in', ['asset_cash', 'asset_bank']),
@@ -695,17 +658,17 @@ class WelfareLine(models.Model):
             'ref': f"WELFARE-RETURN-{self.welfare_id.name}",
             'line_ids': [
                 (0, 0, {
-                    'name': f'POS Return from {self.welfare_id.donee_id.name}',
+                    'name': f'Return from {self.welfare_id.donee_id.name}',
                     'account_id': cash_account.id,
-                    'debit': actual_amount,  # Money IN - Cash increases
+                    'debit': self.total_amount,  # Money IN - Cash increases
                     'credit': 0,
                     'partner_id': self.welfare_id.donee_id.id,
                 }),
                 (0, 0, {
-                    'name': f'Welfare Return from POS - {self.product_id.name}',
+                    'name': f'Welfare Return - {self.product_id.name}',
                     'account_id': expense_account.id,
                     'debit': 0,
-                    'credit': actual_amount,  # Reduce expense/record return
+                    'credit': self.total_amount,  # Reduce expense/record return
                     'partner_id': self.welfare_id.donee_id.id,
                 }),
             ]
@@ -714,7 +677,7 @@ class WelfareLine(models.Model):
         move = self.env['account.move'].create(move_vals)
         move.action_post()
         
-        _logger.info(f"Created return journal entry {move.name} for amount {actual_amount}")
+        _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")
         
         return move
 
