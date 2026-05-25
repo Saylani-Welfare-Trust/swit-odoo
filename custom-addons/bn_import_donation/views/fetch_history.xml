@@ -11,6 +11,7 @@
 
                 <field name="page" />
                 <field name="per_page" />
+                <field name="last_import_id" />
                 <field name="state" widget="badge" decoration-info="state == 'in_progress'" decoration-success="state == 'completed'" />
                 
                 <field name="journal_entry_id" column_invisible="1" />

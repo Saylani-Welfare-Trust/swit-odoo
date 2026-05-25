@@ -20,6 +20,8 @@ class FetchHistory(models.Model):
         ('completed', 'Completed'),
     ], default='in_progress')
 
+    last_import_id = fields.Char('Last Import ID')
+
 
     def show_stock_picking(self):
         return {
