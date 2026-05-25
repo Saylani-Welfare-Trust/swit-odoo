@@ -875,7 +875,7 @@ class APIDonationWizard(models.TransientModel):
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
-        total_local = total_amount * conv_rate
+        total_local = total_amount / conv_rate
         
         # Prepare donor info
         donor = info.get('donor_details') or {}
