@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 class APIDonationWizard(models.TransientModel):
     _name = 'api.donation.wizard'
-    _description = 'API Donation Wizard (refactored)'
+    _description = 'API Donation Wizard (Cursor Pagination)'
 
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
@@ -50,18 +50,15 @@ class APIDonationWizard(models.TransientModel):
         })
 
     # =========================================================
-    # ENTRY POINT (ONLY MODIFIED FOR PAGINATION)
+    # ENTRY POINT (CURSOR PAGINATION ONLY)
     # =========================================================
     def action_fetch_donation(self):
         self.ensure_one()
 
-        if self.start_date and self.end_date and self.start_date > self.end_date:
-            raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
-
         company = self.env.company
 
         if not (company.url and company.client_id and company.client_secret):
-            raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
+            raise ValidationError(_("Missing API credentials"))
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         origin_host = urlparse(base_url).hostname or ''
@@ -69,10 +66,9 @@ class APIDonationWizard(models.TransientModel):
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-        # ============================================
-        # GET LAST HISTORY OR CREATE NEW
-        # ============================================
-
+        # =========================================================
+        # HISTORY
+        # =========================================================
         history = self.env['fetch.history'].search(
             [
                 ('start_date', '=', self.start_date),
@@ -87,30 +83,22 @@ class APIDonationWizard(models.TransientModel):
             history = self.env['fetch.history'].create({
                 'start_date': self.start_date,
                 'end_date': self.end_date,
-                'page': 1,
-                'per_page': 100,
                 'state': 'in_progress',
+                'last_import_id': False,
             })
 
-        self.create_fetch_log(
-            history.id,
-            "Initiating donation fetch.",
-            'Initiated',
-            f"Starting from page {history.page}"
-        )
+        self.create_fetch_log(history.id, "Fetch started (cursor mode)", 'Initiated', "")
 
-        # ============================================
-        # FETCH ONLY ONE PAGE PER RUN
-        # ============================================
-
-        page = history.page or 1
-        per_page = history.per_page or 100
-
+        # =========================================================
+        # CURSOR PAYLOAD (100 RECORDS)
+        # =========================================================
         payload = {
             "status": "success",
-            "page": page,
-            "perPage": per_page,
+            "limit": 100,
         }
+
+        if history.last_import_id:
+            payload["lastId"] = history.last_import_id
 
         if self.start_date:
             payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
@@ -118,64 +106,32 @@ class APIDonationWizard(models.TransientModel):
         if self.end_date:
             payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
-        self.create_fetch_log(
-            history.id,
-            f"Fetching page {page}",
-            "Pagination",
-            str(payload)
-        )
-
         donations_info = self._fetch_donations_from_api(
             auth_url,
             donate_url,
             company,
             base_url,
             origin_host,
-            history,
-            override_payload=payload
+            payload
         )
 
-        # ============================================
-        # NO MORE RECORDS
-        # ============================================
-
+        # =========================================================
+        # STOP CONDITION
+        # =========================================================
         if not donations_info:
-            history.write({
-                'state': 'completed'
-            })
-
-            self.create_fetch_log(
-                history.id,
-                "No more donations found",
-                'Completed',
-                'Pagination completed'
-            )
-
+            history.write({'state': 'completed'})
             return True
 
-        # ============================================
-        # YOUR EXISTING PROCESSING
-        # ============================================
+        # =========================================================
+        # UPDATE CURSOR
+        # =========================================================
+        history.last_import_id = donations_info[-1].get("_id")
 
-        total_records = len(donations_info)
-
-        qurbani_records = [r for r in donations_info if r.get('qurbani') is True]
-        normal_records = [r for r in donations_info if r.get('qurbani') is not True]
-
-        self.create_fetch_log(
-            history.id,
-            "Donation Summary",
-            "Summary",
-            f"Total={total_records}, Qurbani={len(qurbani_records)}, Normal={len(normal_records)}"
-        )
-
+        # =========================================================
+        # PROCESS DATA
+        # =========================================================
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-
-        gateway_config = self.env['gateway.config'].search(
-            [('name', '=', 'Web API')],
-            limit=1
-        )
-
+        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         company_currency = company.currency_id
 
         all_data = self._prefetch_all_data(
@@ -205,38 +161,15 @@ class APIDonationWizard(models.TransientModel):
 
             history.write({
                 'journal_entry_id': move.id,
-                'picking_id': result.get('picking_id') or False,
+                'picking_id': result.get('picking_id')
             })
-
-            self.env['api.donation'].browse(result['new_donations']).write({
-                'fetch_history_id': history.id
-            })
-
-        # ============================================
-        # MOVE TO NEXT PAGE
-        # ============================================
-
-        history.write({
-            'page': page + 1
-        })
-
-        self.create_fetch_log(
-            history.id,
-            "Page completed successfully",
-            'Completed',
-            f"Processed page {page}. Next page will be {page + 1}"
-        )
 
         return True
 
     # =========================================================
-    # API CALL (ONLY ADDITION: override_payload)
+    # API CALL
     # =========================================================
-    def _fetch_donations_from_api(
-        self, auth_url, donate_url, company,
-        base_url, origin_host, history,
-        override_payload=None
-    ):
+    def _fetch_donations_from_api(self, auth_url, donate_url, company, base_url, origin_host, payload):
         try:
             with requests.Session() as session:
 
@@ -246,59 +179,50 @@ class APIDonationWizard(models.TransientModel):
                     'Content-Type': 'application/json',
                 })
 
-                token = self._authenticate(
-                    session,
-                    auth_url,
-                    company.client_id,
-                    company.client_secret
-                )
+                token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
 
-                session.headers.update({
-                    'authorization': f'bearer {token}'
-                })
-
-                # =================================================
-                # PAGINATION SUPPORT (ADDED ONLY HERE)
-                # =================================================
-                if override_payload:
-                    payload = override_payload
-                else:
-                    payload = {"status": "success"}
-
-                    if self.start_date:
-                        payload['startDate'] = self._date_to_iso_z(self.start_date, time.min)
-
-                    if self.end_date:
-                        payload['endDate'] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+                session.headers.update({'authorization': f'bearer {token}'})
 
                 resp = session.post(donate_url, json=payload, timeout=60)
                 resp.raise_for_status()
 
                 data = resp.json()
 
-                if not isinstance(data, dict) or 'donationsInfo' not in data:
-                    raise ValidationError(_("Invalid Donations Info"))
+                if 'donationsInfo' not in data:
+                    raise ValidationError(_("Invalid API Response"))
 
                 return data.get('donationsInfo') or []
 
         except Exception as e:
-            raise ValidationError(_('API Error: %s') % str(e))
+            raise ValidationError(str(e))
 
     # =========================================================
-    # EVERYTHING BELOW REMAINS YOUR ORIGINAL CODE
+    # AUTH
     # =========================================================
-    # (UNCHANGED - your full logic stays exactly same)
-
     def _authenticate(self, session, url, client_id, client_secret):
         resp = session.post(url, json={
             "ClientID": client_id,
             "ClientSecret": client_secret
         }, timeout=30)
         resp.raise_for_status()
-        token = resp.json().get('token')
-        if not token:
-            raise ValidationError(_("Token missing"))
-        return token
+        return resp.json().get('token')
+
+    # =========================================================
+    # DATE HELPERS
+    # =========================================================
+    def _date_to_iso_z(self, date_val, t):
+        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
+        return dt.isoformat().replace('+00:00', 'Z')
+
+    def _parse_iso_to_dt_fast(self, iso_str, history):
+        if not iso_str:
+            return None
+        try:
+            if 'Z' in iso_str:
+                return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
+            return datetime.fromisoformat(iso_str)
+        except Exception:
+            return None
 
     # ---------------------- Bulk Data Pre-fetching ----------------------
     def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):
@@ -1254,44 +1178,6 @@ class APIDonationWizard(models.TransientModel):
             })
         # raise ValidationError(str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
-
-    # ---------------------- Optimized Helper Methods ----------------------
-    def _date_to_iso_z(self, date_val, t):
-        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
-        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-
-    def _parse_iso_to_dt_fast(self, iso_str, history):
-        """Fast ISO datetime parsing"""
-        if not iso_str:
-            self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}")
-
-            return None
-        try:
-            # Most common format first
-            if 'T' in iso_str:
-                # Handle ISO format with Z or timezone
-                if 'Z' in iso_str:
-                    return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
-                elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
-                    return datetime.fromisoformat(iso_str).replace(tzinfo=None)
-                else:
-                    return datetime.fromisoformat(iso_str)
-            else:
-                # Try common date formats
-                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
-                    try:
-                        return datetime.strptime(iso_str, fmt)
-                    except ValueError:
-                        self.create_fetch_log(history.id, f"Failed to parse datetime '{iso_str}' with format '{fmt}'")
-
-                        continue
-                # Fallback to naive parsing
-                return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
-        except Exception:
-            self.create_fetch_log(history.id, f"Failed to parse datetime: {iso_str}")
-
-            _logger.debug('Failed to parse datetime: %s', iso_str)
-            return None
 
     # ---------------------- Journal Entry Creation ----------------------
     def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
