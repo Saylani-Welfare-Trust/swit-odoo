@@ -25,17 +25,18 @@ class PosMakePayment(models.TransientModel):
             qurbani_order_line = self.env['qurbani.order.line'].search([('qurbani_order_id.name', '=', order.source_document), ('product_id', '=', line.product_id.id), ('hissa_name', '=', line.customer_note)])
 
             if qurbani_order_line:
-                distribution_schedule = self.env['distribution.schedule'].search([('day_id', '=', qurbani_order_line.day_id.id), ('hijri_id', '=', qurbani_order_line.hijri_id.id), ('pos_product_ids', 'in', [qurbani_order_line.product_id.id]), ('start_time', '=', qurbani_order_line.start_time), ('end_time', '=', qurbani_order_line.end_time), ('location_id', '=', qurbani_order_line.distribution_id.id)])
+                for l in qurbani_order_line:
+                    distribution_schedule = self.env['distribution.schedule'].search([('day_id', '=', l.day_id.id), ('hijri_id', '=', l.hijri_id.id), ('pos_product_ids', 'in', [l.product_id.id]), ('start_time', '=', l.start_time), ('end_time', '=', l.end_time), ('location_id', '=', l.distribution_id.id)])
 
-                if distribution_schedule:
-                    slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].search([('day_id', '=', qurbani_order_line.day_id.id), ('hijri_id', '=', qurbani_order_line.hijri_id.id), ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id), ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time), ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)])
+                    if distribution_schedule:
+                        slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].search([('day_id', '=', l.day_id.id), ('hijri_id', '=', l.hijri_id.id), ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id), ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time), ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)])
 
-                    if slaughter_slot_demand:
-                        slaughter_slot_demand.booked_hissa -= qurbani_order_line.quantity
-                        slaughter_slot_demand.current_hissa -= qurbani_order_line.quantity
-                        slaughter_slot_demand.remaining_hissa += qurbani_order_line.quantity
-                
-                qurbani_order_line.unlink()
+                        if slaughter_slot_demand:
+                            slaughter_slot_demand.booked_hissa -= l.quantity
+                            slaughter_slot_demand.current_hissa -= l.quantity
+                            slaughter_slot_demand.remaining_hissa += l.quantity
+                    
+                    l.unlink()
 
 
         currency = order.currency_id
