@@ -11,7 +11,7 @@ class FetchHistory(models.Model):
     end_date = fields.Date('End Date')
 
     page = fields.Integer(default=1)
-    per_page = fields.Integer(default=100)
+    per_page = fields.Integer(default=50)
     cursor_index = fields.Integer(default=0)
 
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
