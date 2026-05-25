@@ -548,7 +548,7 @@ patch(PaymentScreen.prototype, {
                         throw error;
                     }
                 }
-            }
+            }   
             
             // If no welfare return lines found, skip
             if (!hasWelfareReturn) {
