@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 class APIDonationWizard(models.TransientModel):
     _name = 'api.donation.wizard'
-    _description = 'API Donation Wizard (refactored)'
+    _description = 'API Donation Wizard'
 
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
