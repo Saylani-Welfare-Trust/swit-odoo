@@ -20,8 +20,6 @@ class FetchHistory(models.Model):
         ('completed', 'Completed'),
     ], default='in_progress')
 
-    is_running = fields.Boolean('Is Running', default=False)
-
 
     def show_stock_picking(self):
         return {
