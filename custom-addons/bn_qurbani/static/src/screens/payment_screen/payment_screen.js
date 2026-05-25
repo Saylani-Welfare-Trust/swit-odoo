@@ -17,7 +17,6 @@ patch(PaymentScreen.prototype, {
         // ✅ Check Order Lines
         // -------------------------
         for (let line of currentOrder.get_orderlines()) {
-
             const product = line.product;
 
             const isQurbaniLivestock =
