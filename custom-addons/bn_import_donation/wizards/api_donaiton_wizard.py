@@ -55,56 +55,35 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_donation(self):
         self.ensure_one()
 
+        QUEUE_SIZE = 100
+
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
         company = self.env.company
 
-        if not (company.url and company.client_id and company.client_secret):
-            raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
-        origin_host = urlparse(base_url).hostname or ''
-
-        auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
-        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
-
-        # ============================================
-        # GET LAST HISTORY OR CREATE NEW
-        # ============================================
-
-        history = self.env['fetch.history'].search(
-            [
-                ('start_date', '=', self.start_date),
-                ('end_date', '=', self.end_date),
-                ('state', '!=', 'completed')
-            ],
-            limit=1,
-            order='id desc'
-        )
+        history = self.env['fetch.history'].search([
+            ('start_date', '=', self.start_date),
+            ('end_date', '=', self.end_date),
+            ('state', '=', 'in_progress')
+        ], limit=1)
 
         if not history:
             history = self.env['fetch.history'].create({
                 'start_date': self.start_date,
                 'end_date': self.end_date,
                 'page': 1,
+                'cursor_index': 0,
                 'per_page': 100,
                 'state': 'in_progress',
             })
 
-        self.create_fetch_log(
-            history.id,
-            "Initiating donation fetch.",
-            'Initiated',
-            f"Starting from page {history.page}"
-        )
+        page = history.page
+        cursor = history.cursor_index
+        per_page = history.per_page
 
-        # ============================================
-        # FETCH ONLY ONE PAGE PER RUN
-        # ============================================
-
-        page = history.page or 1
-        per_page = history.per_page or 100
+        auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
+        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
         payload = {
             "status": "success",
@@ -118,114 +97,86 @@ class APIDonationWizard(models.TransientModel):
         if self.end_date:
             payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
-        self.create_fetch_log(
-            history.id,
-            f"Fetching page {page}",
-            "Pagination",
-            str(payload)
-        )
-
         donations_info = self._fetch_donations_from_api(
             auth_url,
             donate_url,
             company,
-            base_url,
-            origin_host,
+            self.env['ir.config_parameter'].sudo().get_param('web.base.url'),
+            '',
             history,
             override_payload=payload
         )
 
-        # ============================================
-        # NO MORE RECORDS
-        # ============================================
-
         if not donations_info:
-            history.write({
-                'state': 'completed'
-            })
-
-            self.create_fetch_log(
-                history.id,
-                "No more donations found",
-                'Completed',
-                'Pagination completed'
-            )
-
+            history.write({'state': 'completed'})
             return True
 
-        # ============================================
-        # YOUR EXISTING PROCESSING
-        # ============================================
+        # ======================================================
+        # 🔥 QUEUE LOGIC (THIS IS THE CORE FIX)
+        # ======================================================
 
-        total_records = len(donations_info)
+        start = cursor
+        end = cursor + QUEUE_SIZE
 
-        qurbani_records = [r for r in donations_info if r.get('qurbani') is True]
-        normal_records = [r for r in donations_info if r.get('qurbani') is not True]
+        batch_records = donations_info[start:end]
 
-        self.create_fetch_log(
-            history.id,
-            "Donation Summary",
-            "Summary",
-            f"Total={total_records}, Qurbani={len(qurbani_records)}, Normal={len(normal_records)}"
-        )
+        # If nothing left in current page
+        if not batch_records:
+            if len(donations_info) >= per_page:
+                history.write({
+                    'page': page + 1,
+                    'cursor_index': 0
+                })
+            else:
+                history.write({
+                    'state': 'completed'
+                })
+            return True
+
+        # ======================================================
+        # PROCESS ONLY 100 RECORDS
+        # ======================================================
 
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-
-        gateway_config = self.env['gateway.config'].search(
-            [('name', '=', 'Web API')],
-            limit=1
-        )
-
-        company_currency = company.currency_id
+        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
 
         all_data = self._prefetch_all_data(
-            donations_info,
+            batch_records,
             gateway_config,
-            company_currency,
+            company.currency_id,
             history
         )
 
         result = self._process_donations_bulk(
-            donations_info,
+            batch_records,
             journal,
             gateway_config,
-            company_currency,
+            company.currency_id,
             all_data,
             history
         )
 
-        if result.get('new_donations') and journal and result.get('accumulators'):
-            move = self._create_grouped_journal_move(
-                journal,
-                result['accumulators']['debit'],
-                result['accumulators']['credit'],
-                company_currency,
-                history
-            )
+        # ======================================================
+        # UPDATE QUEUE STATE
+        # ======================================================
 
+        new_cursor = end
+
+        if new_cursor < len(donations_info):
             history.write({
-                'journal_entry_id': move.id,
-                'picking_id': result.get('picking_id') or False,
+                'cursor_index': new_cursor
             })
-
-            self.env['api.donation'].browse(result['new_donations']).write({
-                'fetch_history_id': history.id
-            })
-
-        # ============================================
-        # MOVE TO NEXT PAGE
-        # ============================================
-
-        history.write({
-            'page': page + 1
-        })
-
-        self.create_fetch_log(
-            history.id,
-            "Page completed successfully",
-            'Completed',
-            f"Processed page {page}. Next page will be {page + 1}"
-        )
+        else:
+            # move to next page
+            if len(donations_info) >= per_page:
+                history.write({
+                    'page': page + 1,
+                    'cursor_index': 0
+                })
+            else:
+                history.write({
+                    'state': 'completed'
+                })
 
         return True
 

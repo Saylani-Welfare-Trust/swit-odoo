@@ -11,6 +11,7 @@ class FetchHistory(models.Model):
 
     page = fields.Integer(default=1)
     per_page = fields.Integer(default=100)
+    cursor_index = fields.Integer(default=0)
 
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
