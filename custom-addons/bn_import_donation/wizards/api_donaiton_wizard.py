@@ -39,41 +39,35 @@ class APIDonationWizard(models.TransientModel):
     )
 
     # =========================================================
-    # BULK LOGGER
+    # LOGGER
     # =========================================================
 
     def log_batch(self, history, logs):
-
         if not logs:
             return
 
-        vals_list = []
-
-        for log in logs:
-            vals_list.append({
+        self.env['fetch.log'].sudo().create([
+            {
                 'fetch_history_id': history.id,
                 'name': (log.get('name') or '')[:500],
                 'status': log.get('status', 'info'),
                 'reason': (log.get('reason') or '')[:3000],
-            })
-
-        self.env['fetch.log'].sudo().create(vals_list)
+            }
+            for log in logs
+        ])
 
     # =========================================================
     # MAIN ENTRY
     # =========================================================
 
     def action_fetch_donation(self):
-
         self.ensure_one()
 
         logs = []
 
         if self.start_date and self.end_date:
             if self.start_date > self.end_date:
-                raise ValidationError(
-                    _("Start Date must be earlier than End Date.")
-                )
+                raise ValidationError(_("Start Date must be earlier than End Date."))
 
         company = self.env.company
 
@@ -86,14 +80,9 @@ class APIDonationWizard(models.TransientModel):
         })
 
         try:
-
             logs.append({'name': 'Donation import started', 'status': 'info'})
 
-            payload = {
-                "status": "success",
-                "page": 1,
-                "perPage": 100,
-            }
+            payload = {"status": "success", "page": 1, "perPage": 100}
 
             if self.start_date:
                 payload['startDate'] = self._date_to_iso_z(self.start_date, time.min)
@@ -101,7 +90,7 @@ class APIDonationWizard(models.TransientModel):
             if self.end_date:
                 payload['endDate'] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
-            donations = self._fetch_donations_from_api(company, payload, logs)
+            donations = self._fetch_donations_from_api(company, payload)
 
             if not donations:
                 history.write({'state': 'completed'})
@@ -116,10 +105,10 @@ class APIDonationWizard(models.TransientModel):
             if not gateway_config:
                 raise ValidationError(_("Gateway config not found."))
 
-            all_data = self._prefetch_all_data(donations, gateway_config, company, logs)
+            all_data = self._prefetch_all_data(donations, gateway_config)
 
             result = self._process_donations_bulk(
-                donations, journal, gateway_config, company, all_data, history, logs
+                donations, gateway_config, company, all_data, history, logs
             )
 
             move = self._create_grouped_journal_move(
@@ -144,55 +133,46 @@ class APIDonationWizard(models.TransientModel):
 
         except Exception as e:
             history.write({'state': 'completed'})
+            logs.append({'name': 'Failed', 'status': 'error', 'reason': str(e)})
             self.log_batch(history, logs)
             _logger.exception("Donation Import Failed")
             raise ValidationError(str(e))
 
     # =========================================================
-    # FETCH API
+    # API
     # =========================================================
 
-    def _fetch_donations_from_api(self, company, payload, logs):
-
+    def _fetch_donations_from_api(self, company, payload):
         session = requests.Session()
 
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-        auth_response = session.post(
-            auth_url,
-            json={"ClientID": company.client_id, "ClientSecret": company.client_secret},
-            timeout=(30, 120)
-        )
+        auth = session.post(auth_url, json={
+            "ClientID": company.client_id,
+            "ClientSecret": company.client_secret
+        }, timeout=(30, 120))
 
-        token = auth_response.json().get('token')
+        token = auth.json().get('token')
         if not token:
-            raise ValidationError(_("Authentication token missing"))
+            raise ValidationError(_("Auth failed"))
 
         session.headers.update({'authorization': f'bearer {token}'})
 
-        response = session.post(donate_url, json=payload, timeout=(30, 300))
-        response.raise_for_status()
+        res = session.post(donate_url, json=payload, timeout=(30, 300))
+        res.raise_for_status()
 
-        return response.json().get('donationsInfo', [])
+        return res.json().get('donationsInfo', [])
 
     # =========================================================
     # PREFETCH
     # =========================================================
 
-    def _prefetch_all_data(self, donations, gateway_config, company, logs):
+    def _prefetch_all_data(self, donations, gateway_config):
 
-        currencies = set()
-        import_ids = set()
-        mobiles = set()
-
-        for d in donations:
-            if d.get('currency'):
-                currencies.add(d['currency'])
-            if d.get('_id'):
-                import_ids.add(d['_id'])
-            if d.get('donor_details', {}).get('phone'):
-                mobiles.add(d['donor_details']['phone'][-10:])
+        currencies = {d.get('currency') for d in donations if d.get('currency')}
+        import_ids = {d.get('_id') for d in donations if d.get('_id')}
+        mobiles = {d.get('donor_details', {}).get('phone', '')[-10:] for d in donations}
 
         currency_map = {
             c.name.lower(): c
@@ -202,37 +182,32 @@ class APIDonationWizard(models.TransientModel):
         existing_import_ids = set(
             x['import_id']
             for x in self.env['api.donation'].search_read(
-                [('import_id', 'in', list(import_ids))],
-                ['import_id']
+                [('import_id', 'in', list(import_ids))], ['import_id']
             )
         )
 
         partner_map = {
             p['mobile']: p['id']
             for p in self.env['res.partner'].search_read(
-                [('mobile', 'in', list(mobiles))],
-                ['mobile']
+                [('mobile', 'in', list(mobiles))], ['mobile']
             )
         }
 
         gateway_currency_lines = {
             line.currency_id.name.lower(): line.account_id.id
             for line in gateway_config.gateway_config_currency_ids
-            if line.currency_id and line.account_id
         }
 
-        gateway_product_lines = {}
-
-        for line in gateway_config.gateway_config_line_ids:
-            key = (line.name or '').strip().lower()
-            account_id = (
-                line.product_id.property_account_income_id.id
-                or line.product_id.categ_id.property_account_income_categ_id.id
-            )
-            gateway_product_lines[key] = {
+        gateway_product_lines = {
+            (line.name or '').strip().lower(): {
                 'product_id': line.product_id.id,
-                'account_id': account_id,
+                'account_id': (
+                    line.product_id.property_account_income_id.id
+                    or line.product_id.categ_id.property_account_income_categ_id.id
+                )
             }
+            for line in gateway_config.gateway_config_line_ids
+        }
 
         return {
             'currency_map': currency_map,
@@ -243,147 +218,130 @@ class APIDonationWizard(models.TransientModel):
         }
 
     # =========================================================
-    # PROCESS DONATIONS
+    # PROCESS
     # =========================================================
 
-    def _process_donations_bulk(self, donations, journal, gateway_config, company, all_data, history, logs):
+    def _process_donations_bulk(self, donations, gateway_config, company, all_data, history, logs):
 
         donations_vals = []
-        debit_accumulator = defaultdict(float)
-        credit_accumulator = defaultdict(float)
-        stock_accumulator = defaultdict(float)
+        debit = defaultdict(float)
+        credit = defaultdict(float)
         partner_cache = all_data['partner_map']
-        partner_create_vals = []
+        partner_create = []
 
-        for donation in donations:
+        for d in donations:
 
-            if donation.get('_id') in all_data['existing_import_ids']:
+            if d.get('_id') in all_data['existing_import_ids']:
                 continue
 
-            if donation.get('status') != 'success':
+            if d.get('status') != 'success':
                 continue
 
-            donor = donation.get('donor_details') or {}
+            donor = d.get('donor_details') or {}
             mobile = donor.get('phone', '')[-10:]
-            partner_id = partner_cache.get(mobile)
 
-            if not partner_id and mobile:
-                partner_create_vals.append({
+            if mobile and not partner_cache.get(mobile):
+                partner_create.append({
                     'name': donor.get('name'),
                     'mobile': mobile,
-                    'email': donor.get('email'),
+                    'email': donor.get('email')
                 })
-
-            currency_name = (donation.get('currency') or '').lower()
-
-            donation_vals = {
-                'import_id': donation.get('_id'),
-                'name': donor.get('name'),
-                'phone': donor.get('phone'),
-                'email': donor.get('email'),
-                'currency': currency_name,
-                'total_amount': float(donation.get('total_amount', 0)),
-                'fetch_history_id': history.id,
-            }
-
-            if partner_id:
-                donation_vals['donor_id'] = partner_id
 
             donation_items = []
 
-            for item in donation.get('items', []):
+            for item in d.get('items', []):
 
-                item_name = ''
+                name = ''
                 if isinstance(item.get('item'), dict):
-                    item_name = item['item'].get('en', {}).get('name', '')
+                    name = item['item'].get('en', {}).get('name', '')
 
                 donation_items.append((0, 0, {
-                    'item': item_name,
+                    'item': name,
                     'qty': item.get('qty'),
                     'price': item.get('price'),
                     'total': item.get('total'),
                 }))
 
-                product_key = item_name.strip().lower()
-                config = all_data['gateway_product_lines'].get(product_key)
+                key = name.strip().lower()
+                config = all_data['gateway_product_lines'].get(key)
                 if not config:
                     continue
 
                 total = float(item.get('total') or 0)
 
-                debit_account = all_data['gateway_currency_lines'].get(currency_name)
-                credit_account = config.get('account_id')
+                debit_acc = all_data['gateway_currency_lines'].get((d.get('currency') or '').lower())
+                credit_acc = config['account_id']
 
-                if debit_account:
-                    debit_accumulator[debit_account] += total
-                if credit_account:
-                    credit_accumulator[credit_account] += total
+                if debit_acc:
+                    debit[debit_acc] += total
+                if credit_acc:
+                    credit[credit_acc] += total
 
-            donation_vals['donation_item_ids'] = donation_items
-            donations_vals.append(donation_vals)
+            donations_vals.append({
+                'import_id': d.get('_id'),
+                'name': donor.get('name'),
+                'phone': donor.get('phone'),
+                'email': donor.get('email'),
+                'donation_item_ids': donation_items,
+                'fetch_history_id': history.id,
+            })
 
-        created_donations = self.env['api.donation'].create(donations_vals)
+        self.env['res.partner'].create(partner_create)
+
+        created = self.env['api.donation'].create(donations_vals)
 
         return {
-            'created_donations': created_donations.ids,
-            'debit_accumulator': debit_accumulator,
-            'credit_accumulator': credit_accumulator,
-            'picking_id': False,
+            'created_donations': created.ids,
+            'debit_accumulator': debit,
+            'credit_accumulator': credit,
+            'picking_id': False
         }
 
     # =========================================================
-    # JOURNAL ENTRY (CHANGED ONLY HERE)
+    # JOURNAL (FIXED)
     # =========================================================
 
-    def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, logs):
+    def _create_grouped_journal_move(self, journal, debit, credit, currency, logs):
 
         lines = []
 
-        for account_id, amount in debit_accumulator.items():
-            if not amount:
-                continue
-
+        for acc, amt in debit.items():
             lines.append((0, 0, {
-                'account_id': account_id,
-                'amount_currency': abs(amount),
-                'currency_id': company_currency.id,
-                'name': 'Donation Import Debit',
+                'account_id': acc,
+                'debit': amt,
+                'credit': 0.0,
+                'currency_id': currency.id,
+                'amount_currency': amt,
+                'name': 'Donation Debit'
             }))
 
-        for account_id, amount in credit_accumulator.items():
-            if not amount:
-                continue
-
+        for acc, amt in credit.items():
             lines.append((0, 0, {
-                'account_id': account_id,
-                'amount_currency': -abs(amount),
-                'currency_id': company_currency.id,
-                'name': 'Donation Import Credit',
+                'account_id': acc,
+                'debit': 0.0,
+                'credit': amt,
+                'currency_id': currency.id,
+                'amount_currency': -amt,
+                'name': 'Donation Credit'
             }))
 
         if not lines:
             return False
 
         move = self.env['account.move'].create({
-            'move_type': 'entry',
             'journal_id': journal.id,
-            'date': fields.Date.today(),
-            'ref': f'Donation Import {fields.Date.today()}',
+            'move_type': 'entry',
             'line_ids': lines,
         })
 
-        try:
-            move.action_post()
-        except Exception as e:
-            _logger.exception("Journal Posting Failed")
-            raise ValidationError(_("Journal posting failed: %s") % str(e))
-
+        move.action_post()
         return move
 
     # =========================================================
-    # HELPERS
+    # HELPER
     # =========================================================
 
     def _date_to_iso_z(self, date_val, t):
-        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
-        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        return datetime.combine(date_val, t).replace(
+            tzinfo=timezone.utc
+        ).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
