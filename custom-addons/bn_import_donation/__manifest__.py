@@ -9,7 +9,6 @@
         'bn_profile_management',
         'bn_master_setup',
         'product',
-        'queue_job'
     ],
     'data': [
         'data/sequence.xml',
