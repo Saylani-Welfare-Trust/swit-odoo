@@ -153,7 +153,7 @@ class APIDonationWizard(models.TransientModel):
     # =========================================================
     # API CALL (ONLY ADDITION: override_payload)
     # =========================================================
-    def _fetch_donations_from_api(self, company, payload):
+    def _fetch_donations_from_api(self, company, payload, start_date=None, end_date=None):
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
@@ -179,6 +179,15 @@ class APIDonationWizard(models.TransientModel):
                 session.headers.update({
                     'authorization': f'bearer {token}'
                 })
+
+                # ===============================
+                # ADD DATE FILTERS HERE
+                # ===============================
+                if start_date:
+                    payload['startDate'] = self._date_to_iso_z(start_date, time.min)
+
+                if end_date:
+                    payload['endDate'] = self._date_to_iso_z(end_date, time(23, 59, 59))
 
                 resp = session.post(donate_url, json=payload, timeout=60)
                 resp.raise_for_status()
