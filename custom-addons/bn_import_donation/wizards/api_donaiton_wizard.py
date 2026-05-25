@@ -59,7 +59,7 @@ class APIDonationWizard(models.TransientModel):
         # Get donations from API
         donations_info = self._fetch_donations_from_api(auth_url, donate_url, company, base_url, origin_host, history)
 
-        raise ValidationError(str(donations_info))
+        # raise ValidationError(str(donations_info))
         if not donations_info:
             self.create_fetch_log(
                 history.id,
@@ -140,7 +140,7 @@ class APIDonationWizard(models.TransientModel):
         
         # Pre-fetch all required data in bulk
         all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
-        
+        raise ValidationError(str(all_data))
         # Process donations in optimized way
         result = self._process_donations_bulk(
             donations_info, journal, gateway_config, company_currency, all_data, history
