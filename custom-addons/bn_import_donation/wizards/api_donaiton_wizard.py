@@ -192,9 +192,9 @@ class APIDonationWizard(models.TransientModel):
                 # Prepare payload
                 payload = {'status': 'success'}
                 if self.start_date:
-                    payload['startDate'] = self._date_to_iso_z(self.start_date)
+                    payload['startDate'] = self._date_to_iso_z(self.start_date, time.min)
                 if self.end_date:
-                    payload['endDate'] = self._date_to_iso_z(self.end_date)
+                    payload['endDate'] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
                 # Fetch donations
                 resp = session.post(donate_url, json=payload, timeout=60)
@@ -214,7 +214,7 @@ class APIDonationWizard(models.TransientModel):
 
                 self.create_fetch_log(history.id, f"End _fetch_donations_from_api", 'API Fetch', f"Completed fetching donations from API. Total donations fetched: {len(data.get('donationsInfo') or [])}")
 
-                raise ValidationError(str(data.get('donationsInfo')))
+                # raise ValidationError(str(data.get('donationsInfo')))
 
                 return data.get('donationsInfo') or []
 
@@ -1255,11 +1255,10 @@ class APIDonationWizard(models.TransientModel):
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
-    def _date_to_iso_z(self, date_val):
-        """Convert date to ISO Z format"""
+    def _date_to_iso_z(self, date_val, t):
         if not date_val:
             return None
-        dt = datetime.combine(date_val, time.min).replace(tzinfo=timezone.utc)
+        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
         return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
     def _parse_iso_to_dt_fast(self, iso_str, history):
