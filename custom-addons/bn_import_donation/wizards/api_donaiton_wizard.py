@@ -784,8 +784,7 @@ class APIDonationWizard(models.TransientModel):
 
             lines.append((0, 0, {
                 'account_id': account_id,
-                'debit': amount,
-                'credit': 0.0,
+                'amount_currency': amount,
                 'name': 'Donation Import Debit',
             }))
 
@@ -804,8 +803,7 @@ class APIDonationWizard(models.TransientModel):
 
             lines.append((0, 0, {
                 'account_id': account_id,
-                'debit': 0.0,
-                'credit': amount,
+                'amount_currency': -amount,
                 'name': 'Donation Import Credit',
             }))
 
