@@ -7,7 +7,6 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
-
         const currentOrder = this.currentOrder;
 
         let hasQurbaniProduct = false;
@@ -43,7 +42,6 @@ patch(PaymentScreen.prototype, {
         // ❌ Block mixed order
         // ------------------------------------------------
         if (hasQurbaniProduct && hasOtherCategoryProduct) {
-
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Order"),
                 body: _t(
@@ -58,7 +56,6 @@ patch(PaymentScreen.prototype, {
         // ✅ Create Qurbani Record
         // ------------------------------------------------
         if (hasQurbaniProduct) {
-
             const donor_id = currentOrder.partner.id;
 
             const orderLines = currentOrder.get_orderlines();
