@@ -320,15 +320,47 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (!selectedOrder.extra_data) {
             selectedOrder.extra_data = {};
         }
-        
+            
         selectedOrder.extra_data.welfare = {
             record_number: record.name,
             welfare_state: record.state,
+            state : 'draft',
             welfare_id: record.id,
             is_recurring: isRecurring,
             welfare_line_ids: welfareLineIds,
             recurring_line_ids: recurringLineIds,
             scan_timestamp: new Date().toISOString(),
+            
+            // New fields for return and payment handling
+            is_welfare_order: true,           // Marks this as a welfare order
+            order_type: isRecurring ? 'recurring_welfare' : 'one_time_welfare',  // Type of welfare order
+            disbursement_status: 'pending',   // pending, completed, failed
+            return_status: 'none',            // none, pending, completed, failed
+            payment_status: 'pending',        // pending, completed, partially_completed, failed
+            
+            // For tracking returns related to this welfare order
+            return_order_ids: [],             // Store IDs of return orders
+            original_disbursement_date: new Date().toISOString(),
+            
+            // For payment tracking
+            total_disbursed_amount: 0,        // Total amount disbursed
+            total_returned_amount: 0,         // Total amount returned
+            net_amount: 0,                    // Net amount (disbursed - returned)
+            
+            // Line item tracking
+            disbursed_line_ids: welfareLineIds.map(line => ({
+                id: line.id,
+                amount: line.amount || 0,
+                disbursed_at: new Date().toISOString(),
+                status: 'disbursed'
+            })),
+            
+            recurring_details: isRecurring ? {
+                recurring_id: record.id,
+                recurring_line_ids: recurringLineIds,
+                current_cycle: record.current_cycle || 1,
+                next_cycle_date: record.next_cycle_date || null
+            } : null
         };
     }
 
