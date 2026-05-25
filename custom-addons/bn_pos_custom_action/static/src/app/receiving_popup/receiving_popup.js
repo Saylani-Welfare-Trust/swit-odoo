@@ -130,6 +130,15 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             // wf_request_type: 'one_time' or 'recurring'
             const isRecurring = this.wf_request_type === 'recurring';
 
+            if (
+                selectedOrder.extra_data &&
+                selectedOrder.extra_data.welfare &&
+                selectedOrder.extra_data.welfare.disbursement_status === "pending"
+            ) {
+                this.notification.add("A welfare payment is already loaded on this order.", { type: "warning" });
+                return;
+            }
+
             const record = await this.orm.searchRead(
                 'welfare',
                 [['name', '=', this.state.record_number]],
@@ -202,6 +211,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         ['id', 'in', welfareRecord.welfare_line_ids],
                         ['disbursement_category_id.name', '=', 'Cash'],
                         ['collection_point', '=', 'branch'],
+                        ['state', '=', 'draft'],
                     ],
                     ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id'],
                     {}
@@ -213,8 +223,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    return month - 1 === currentMonth && year === currentYear && l.state === 'draft';
                 });
                 if (!dueThisMonth.length) {
                     this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
@@ -250,7 +259,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     'welfare.recurring.line',
                     [
                         ['welfare_id', '=', welfareRecord.id],
-                        ['state', '!=', 'disbursed'],
+                        ['state', '=', 'draft'],
                         ['disbursement_category_id.name', '=', 'Cash'],
                         ['collection_point', '=', 'branch'],
                     ],
@@ -260,8 +269,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 const dueThisMonth = recurringLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    return month - 1 === currentMonth && year === currentYear && l.state === 'draft';
                 });
                 if (!dueThisMonth.length) {
                     this.notification.add("No recurring welfare lines due this month", { type: 'warning' });

@@ -439,12 +439,15 @@ patch(PaymentScreen.prototype, {
             // Only process if it's a welfare order and not already completed
             if (welfareData.is_welfare_order === true && welfareData.disbursement_status !== 'completed') {
                 try {
-                    const welfareLineIds = welfareData.welfare_line_ids || [];
+                    const welfareLineIds = welfareData.is_recurring
+                        ? (welfareData.recurring_line_ids || [])
+                        : (welfareData.welfare_line_ids || []);
+                    const lineModel = welfareData.is_recurring ? 'welfare.recurring.line' : 'welfare.line';
                     
                     for (let i = 0; i < welfareLineIds.length; i++) {
                         const line = welfareLineIds[i];
                         await this.env.services.orm.call(
-                            'welfare.line',
+                            lineModel,
                             'action_disbursed',
                             [[line.id]]
                         );
@@ -469,17 +472,22 @@ patch(PaymentScreen.prototype, {
                 } catch (error) {
                     console.error("Welfare Error:", error);
                     welfareData.disbursement_status = 'failed';
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Welfare Payment Blocked"),
+                        body: _t(error.message || "This welfare payment could not be processed."),
+                    });
                     this.env.services.notification.add(
-                        "Note: Welfare status not updated, but order will proceed",
-                        { type: 'warning' }
+                        "Welfare payment was not processed.",
+                        { type: 'danger' }
                     );
+                    return;
                 }
             }
         }
 
         // ========== WELFARE RETURN ==========
-        // Check if it's a return order AND has welfare return lines
-        if (currentOrder && (currentOrder.is_return_order || currentOrder.original_order_id)) {
+        // Check if the order has welfare return lines.
+        if (currentOrder) {
             const orderLines = currentOrder.get_orderlines();
             let hasWelfareReturn = false;
             
@@ -545,7 +553,11 @@ patch(PaymentScreen.prototype, {
                             `Return failed: ${error.message}`,
                             { type: 'danger' }
                         );
-                        throw error;
+                        await this.popup.add(ErrorPopup, {
+                            title: _t("Welfare Return Blocked"),
+                            body: _t(error.message || "This welfare return could not be processed."),
+                        });
+                        return;
                     }
                 }
             }

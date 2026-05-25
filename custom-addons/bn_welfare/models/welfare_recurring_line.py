@@ -1,5 +1,5 @@
-from odoo import models, fields,api
-# from odoo.exceptions import UserError
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -7,6 +7,7 @@ _logger = logging.getLogger(__name__)
 state_selection = [
     ('draft', 'Draft'),
     ('delivered', 'Delivery Created'),
+    ('pending', 'Pending'),
     ('collected', 'Collected'),
     ('disbursed', 'Disbursed'),
 ]
@@ -149,9 +150,16 @@ class WelfareRecurringLine(models.Model):
 
     def action_disbursed(self):
         # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
-        self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
-        if getattr(self, 'advance_donation_line_id', False):
-            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
+        for line in self:
+            if line.state not in ['draft', 'delivered']:
+                raise ValidationError(_(
+                    "This recurring welfare line cannot be paid again. "
+                    "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
+                ) % line.state)
+
+            line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
+            if getattr(line, 'advance_donation_line_id', False):
+                line.advance_donation_line_id.write({'disbursed_amount': line.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
         # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         # if cash_category and self.disbursement_category_id.id == cash_category.id:
@@ -160,8 +168,8 @@ class WelfareRecurringLine(models.Model):
         #         # This method will be called after payment is registered
         #         pass
         
-        if self.welfare_id:
-            self.welfare_id._auto_disburse_if_all_lines_delivered()
+            if line.welfare_id:
+                line.welfare_id._auto_disburse_if_all_lines_delivered()
     
     @api.depends('welfare_id')
     def _compute_name(self):
@@ -247,3 +255,30 @@ class WelfareRecurringLine(models.Model):
                 StockMoveLine.create(move_line_vals)
                 picking.action_assign()
                 self.state = 'delivered'
+
+    def action_return_to_pos(self, **kwargs):
+        self.ensure_one()
+
+        if self.payment_type != 'assigned_officer':
+            raise ValidationError(_(
+                "Return is only allowed for 'Assigned Officer (Marfat)' payment type. "
+                "Current payment type: %s"
+            ) % self.payment_type)
+
+        if self.state != 'pending':
+            raise ValidationError(_(
+                "Return is only allowed for recurring lines in 'Pending' state. "
+                "Current state: %s. Only 'Pending' lines can be returned."
+            ) % self.state)
+
+        if not self.welfare_id.donee_id:
+            raise ValidationError(_("No donee associated with this recurring welfare line."))
+
+        self.write({'state': 'draft'})
+        self.welfare_id.write({'state': 'approve'})
+        self.welfare_id.message_post(body=_(
+            "Recurring welfare line returned from POS. Product: %s, Amount: %s. "
+            "Welfare state changed to Approved and line state changed to Draft."
+        ) % (self.product_id.name, self.amount))
+
+        return True

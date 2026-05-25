@@ -468,36 +468,28 @@ class WelfareLine(models.Model):
 
     def can_return(self):
         """Check if line can be returned"""
-        return self.payment_type == 'assigned_officer' and self.state == 'collected'            
+        return self.payment_type == 'assigned_officer' and self.state == 'pending'            
        
     def action_disbursed(self):
         """
         Mark as disbursed or collected based on payment type
         PREVENT re-processing already collected or returned lines
         """
-        # ✅ PREVENT re-disbursing already collected lines
-        if self.state == 'collected':
-            _logger.warning(f"Line {self.id} is already collected. Cannot disburse again.")
-            return False
+        for line in self:
+            if line.state not in ['draft', 'delivered']:
+                raise ValidationError(_(
+                    "This welfare line cannot be paid again. "
+                    "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
+                ) % line.state)
         
-        # ✅ PREVENT re-disbursing returned lines
-        if self.state == 'return':
-            _logger.warning(f"Line {self.id} has been returned. Cannot disburse again.")
-            return False
-        
-        # ✅ PREVENT re-disbursing already disbursed lines
-        if self.state == 'disbursed':
-            _logger.warning(f"Line {self.id} is already disbursed. Cannot disburse again.")
-            return False
-        
-        # Mark as disbursed or collected based on payment type
-        self.state = 'collected' if self.payment_type == 'assigned_officer' else 'disbursed'
-        
-        if getattr(self, 'advance_donation_line_id', False):
-            self.advance_donation_line_id.write({'disbursed_amount': self.advance_donation_amount})
-        
-        if self.welfare_id:
-            self.welfare_id._auto_disburse_if_all_lines_delivered()
+            # Mark as disbursed or collected based on payment type
+            line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
+            
+            if getattr(line, 'advance_donation_line_id', False):
+                line.advance_donation_line_id.write({'disbursed_amount': line.advance_donation_amount})
+            
+            if line.welfare_id:
+                line.welfare_id._auto_disburse_if_all_lines_delivered()
         
         return True
                             
@@ -566,7 +558,7 @@ class WelfareLine(models.Model):
         }        
     
 
-    def action_return_to_pos(self):
+    def action_return_to_pos(self, **kwargs):
         """
         Return collected amount to POS for Assigned Officer (Marfat) payments
         Money comes BACK to the company (Donee returns it)
@@ -586,9 +578,6 @@ class WelfareLine(models.Model):
                 "Current state: %s. Only 'Pending' lines can be returned."
             ) % self.state)
         
-        if self.state == 'return':
-            raise ValidationError(_("This line has already been returned."))
-        
         if not self.welfare_id.donee_id:
             raise ValidationError(_("No donee associated with this welfare line."))
         
@@ -596,12 +585,15 @@ class WelfareLine(models.Model):
             # Create journal entry for money coming IN to company
             return_receipt = self._create_return_receipt()
             
-            # Update line state to 'return'
+            # Reset the line so the welfare can be approved and paid again.
             self.write({
-                'state': 'return',
+                'state': 'draft',
                 'return_date': fields.Datetime.now(),
+                'return_bill_id': return_receipt.id,
                 'returned_by': self.env.user.id,
             })
+
+            self.welfare_id.write({'state': 'approve'})
             
             # Post message
             self.welfare_id.message_post(body=f"""

@@ -1254,7 +1254,7 @@ class Welfare(models.Model):
                 "No eligible lines found to return.\n\n"
                 "Requirements:\n"
                 "• Payment Type: Assigned Officer (Marfat)\n"
-                "• Current State: Collected"
+                "• Current State: Pending"
             ))
         
         # Process returns

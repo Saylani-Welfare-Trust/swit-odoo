@@ -103,6 +103,19 @@ patch(ActionScreen.prototype, {
 
     async processOneTimeReturn(welfareNumber) {
         try {
+            const hasLoadedReturn = this.pos.get_order().get_orderlines().some((line) => {
+                const extras = line.get_extras ? line.get_extras() : {};
+                return extras.is_welfare_return === true && extras.welfare_number === welfareNumber;
+            });
+
+            if (hasLoadedReturn) {
+                this.env.services.notification.add(
+                    `A return for ${welfareNumber} is already loaded on this order.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+
             // Search for eligible one-time welfare lines
             const lines = await this.env.services.orm.call(
                 'welfare.line',
@@ -119,7 +132,7 @@ patch(ActionScreen.prototype, {
             if (lines.length === 0) {
                 await this.popup.add(SelectionPopup, {
                     title: _t("No Eligible Lines"),
-                    list: [{ id: "ok", label: _t(`No collected Marfat lines found for ${welfareNumber}`), item: "ok" }],
+                    list: [{ id: "ok", label: _t(`No pending Marfat lines found for ${welfareNumber}`), item: "ok" }],
                 });
                 return;
             }
@@ -205,6 +218,19 @@ patch(ActionScreen.prototype, {
 
     async processRecurringReturn(welfareNumber) {
         try {
+            const hasLoadedReturn = this.pos.get_order().get_orderlines().some((line) => {
+                const extras = line.get_extras ? line.get_extras() : {};
+                return extras.is_welfare_return === true && extras.welfare_number === welfareNumber;
+            });
+
+            if (hasLoadedReturn) {
+                this.env.services.notification.add(
+                    `A return for ${welfareNumber} is already loaded on this order.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+
             // Search for eligible recurring welfare lines
             const lines = await this.env.services.orm.call(
                 'welfare.recurring.line',
@@ -215,7 +241,7 @@ patch(ActionScreen.prototype, {
                     ['state', '=', 'pending'],
                     ['welfare_id.order_type', '=', 'recurring']
                 ]],
-                { fields: ['id', 'product_id', 'total_amount', 'quantity', 'welfare_id'] }
+                { fields: ['id', 'product_id', 'amount', 'quantity', 'welfare_id'] }
             );
 
             if (lines.length === 0) {
@@ -228,11 +254,11 @@ patch(ActionScreen.prototype, {
 
             // Add recurring return lines to order
             for (const line of lines) {
-                const product = this.pos.db.product_by_id(line.product_id[0]);
+                const product = this.pos.db.get_product_by_id(line.product_id[0]);
                 if (product) {
                     this.pos.get_order().add_product(product, {
                         quantity: line.quantity,
-                        price: line.total_amount / line.quantity,
+                        price: line.amount / line.quantity,
                         extras: {
                             is_welfare_return: true,
                             welfare_number: welfareNumber,
@@ -244,7 +270,7 @@ patch(ActionScreen.prototype, {
                 }
             }
 
-            const totalAmount = lines.reduce((sum, l) => sum + l.total_amount, 0);
+            const totalAmount = lines.reduce((sum, l) => sum + l.amount, 0);
             
             await this.popup.add(SelectionPopup, {
                 title: _t("Recurring Return Lines Added"),
