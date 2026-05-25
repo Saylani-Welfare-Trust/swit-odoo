@@ -87,7 +87,7 @@ class APIDonationWizard(models.TransientModel):
         existing = self.env['fetch.history'].search([
             ('start_date', '=', self.start_date),
             ('end_date',   '=', self.end_date),
-            ('state',      '!=', 'done'),
+            ('state', '!=', 'completed'),
         ], order='id desc', limit=1)
 
         if existing:
@@ -103,7 +103,7 @@ class APIDonationWizard(models.TransientModel):
                 'end_date':   self.end_date,
                 'page':       1,
                 'per_page':   self.PER_PAGE,
-                'state':      'running',
+                'state':      'in_progress',
             })
             start_page = 1
             self._buf_log("Donation fetch queued.", 'Initiated', 'Background job dispatched')
@@ -878,7 +878,7 @@ class FetchHistory(models.Model):
     Extend fetch.history with the per-page background job method.
 
     Required new fields on fetch.history (add to your model):
-        state    = fields.Selection([('running','Running'),('done','Done')], default='running')
+        state    = fields.Selection([('in_progress','In Progress'),('completed','Completed')], default='in_progress')
         page     = fields.Integer(default=1)
         per_page = fields.Integer(default=100)
     """
@@ -930,7 +930,7 @@ class FetchHistory(models.Model):
 
         if not page_data:
             # Nothing came back — we're done
-            history.write({'state': 'done'})
+            history.write({'state': 'completed'})
             wizard._buf_log("All pages fetched — history marked done.", 'Completed', '')
             wizard._flush_logs(history_id)
             return
@@ -970,7 +970,7 @@ class FetchHistory(models.Model):
 
         if len(page_data) < PER_PAGE:
             # Last page — mark done
-            history.write({'state': 'done'})
+            history.write({'state': 'completed'})
             wizard._buf_log("Last page processed — history marked done.", 'Completed', '')
             wizard._flush_logs(history_id)
         else:
