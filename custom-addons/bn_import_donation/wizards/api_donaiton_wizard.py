@@ -153,29 +153,69 @@ class APIDonationWizard(models.TransientModel):
     # API
     # =========================================================
     def _fetch_api(self, auth_url, donate_url, company, base_url, origin_host, payload):
-
         session = requests.Session()
+
+        # DO NOT send fake forwarded headers unless required
         session.headers.update({
-            'Origin': base_url,
-            'x-forwarded-for': origin_host,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "Odoo-API-Client"
         })
 
         token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
-        session.headers.update({'authorization': f'bearer {token}'})
 
-        resp = session.post(donate_url, json=payload, timeout=60)
-        resp.raise_for_status()
+        session.headers.update({
+            "Authorization": f"Bearer {token}"
+        })
 
-        return resp.json().get('donationsInfo', [])
+        try:
+            resp = session.post(donate_url, json=payload, timeout=60)
+
+            _logger.info("DONATION STATUS: %s", resp.status_code)
+            _logger.info("DONATION RESPONSE: %s", resp.text)
+
+            # THIS IS WHERE YOUR 401 WAS HAPPENING
+            if resp.status_code == 401:
+                raise ValidationError(_("Unauthorized (401): Token rejected by API"))
+
+            resp.raise_for_status()
+
+            return resp.json().get('donationsInfo', [])
+
+        except requests.exceptions.RequestException as e:
+            _logger.exception("Donation API failed")
+            raise ValidationError(_("Donation API Failed: %s") % str(e))
 
     def _authenticate(self, session, url, cid, secret):
-        r = session.post(url, json={
-            "ClientID": cid,
-            "ClientSecret": secret
-        }, timeout=30)
-        r.raise_for_status()
-        return r.json().get('token')
+        try:
+            payload = {
+                "ClientID": cid,
+                "ClientSecret": secret
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+
+            response = session.post(url, json=payload, headers=headers, timeout=30)
+
+            # IMPORTANT: log raw response for debugging
+            _logger.info("AUTH STATUS: %s", response.status_code)
+            _logger.info("AUTH RESPONSE: %s", response.text)
+
+            response.raise_for_status()
+
+            token = response.json().get('token')
+
+            if not token:
+                raise ValidationError(_("Authentication succeeded but token missing in response"))
+
+            return token
+
+        except requests.exceptions.RequestException as e:
+            _logger.exception("Authentication failed")
+            raise ValidationError(_("Auth Failed: %s") % str(e))
 
     # =========================================================
     # PROCESS (FULL QURBANI + STOCK + JOURNAL SAFE)
