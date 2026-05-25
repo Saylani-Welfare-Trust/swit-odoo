@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class FetchHistory(models.Model):
     _name = 'fetch.history'
+    _inherit = ['queue.job']
     _description = "Fetch History"
 
 
