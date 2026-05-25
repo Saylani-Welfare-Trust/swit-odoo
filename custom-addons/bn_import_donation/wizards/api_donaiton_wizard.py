@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
-from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ class APIDonationWizard(models.TransientModel):
     _description = 'API Donation Wizard (refactored)'
 
     start_date = fields.Date('Start Date')
-    end_date = fields.Date('End Date')
+    end_date   = fields.Date('End Date')
 
     picking_type_id = fields.Many2one(
         'stock.picking.type',
@@ -25,65 +24,56 @@ class APIDonationWizard(models.TransientModel):
             raise_if_not_found=False
         ).id
     )
-
     source_location_id = fields.Many2one(
         related='picking_type_id.default_location_src_id',
-        string="Source Location",
-        store=True
+        string="Source Location", store=True
     )
-
     destination_location_id = fields.Many2one(
         related='picking_type_id.default_location_dest_id',
-        string="Destination Location",
-        store=True
+        string="Destination Location", store=True
     )
 
+    PER_PAGE = 100
+
     # =========================================================
-    # LOG HELPER  — buffers logs and flushes in one ORM call
+    # LOG HELPERS  — buffer → single bulk INSERT per checkpoint
     # =========================================================
-    # Each wizard call carries a small in-memory buffer.
-    # Call _flush_logs(history_id) at checkpoints (end of page,
-    # end of method, etc.) to write them all at once.
+    # self.env is a plain Python object; object.__setattr__ bypasses
+    # Odoo's field-only __setattr__ guard on the recordset itself.
 
     @property
     def _log_buffer(self):
-        """
-        Store the buffer on self.env (a plain Python Environment object),
-        not on the recordset (which blocks unknown attrs) and not in
-        self.env.context (which is a frozendict).
-        """
         if not hasattr(self.env, '_fetch_log_buffer'):
             object.__setattr__(self.env, '_fetch_log_buffer', [])
         return self.env._fetch_log_buffer
 
-    def _buf_log(self, message, status, reason=''):
-        """Append to the in-memory log buffer (no DB hit)."""
-        self._log_buffer.append({
-            'name':   message,
-            'status': status,
-            'reason': reason,
-        })
+    def _buf_log(self, message, status='', reason=''):
+        self._log_buffer.append({'name': message, 'status': status, 'reason': reason})
 
     def _flush_logs(self, history_id):
-        """Write all buffered logs in a single ORM create call, then clear."""
         buf = self._log_buffer
         if not buf:
             return
-        for entry in buf:
-            entry['fetch_history_id'] = history_id
+        for e in buf:
+            e['fetch_history_id'] = history_id
         self.env['fetch.log'].create(buf)
-        buf.clear()   # clear in-place; the same list stays on self.env
+        buf.clear()
 
-    # Kept for backward-compat; now just buffers unless flush=True
     def create_fetch_log(self, history_id, message, status='', reason='', flush=False):
+        """Backward-compat wrapper — buffers unless flush=True."""
         self._buf_log(message, status, reason)
         if flush:
             self._flush_logs(history_id)
 
     # =========================================================
-    # ENTRY POINT
+    # ENTRY POINT  — returns immediately; work runs in background
     # =========================================================
     def action_fetch_donation(self):
+        """
+        Validate inputs, create/resume a fetch.history, then enqueue
+        a queue_job for the first (or next) page and return immediately.
+        The browser never blocks.
+        """
         self.ensure_one()
 
         if self.start_date and self.end_date and self.start_date > self.end_date:
@@ -93,30 +83,18 @@ class APIDonationWizard(models.TransientModel):
         if not (company.url and company.client_id and company.client_secret):
             raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
 
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
-        origin_host = urlparse(base_url).hostname or ''
-
-        auth_url  = f"{company.url.rstrip('/')}/api/odoo/auth"
-        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
-
-        # ---------------------------------------------------------
-        # FIX 1: Resume pagination from an existing fetch_history
-        # for the same date range instead of always creating a new
-        # one and resetting page to 1.
-        # ---------------------------------------------------------
-        PER_PAGE = 100   # FIX 2: 100 records per page
-
-        existing_history = self.env['fetch.history'].search([
+        # Resume an incomplete history for the same date range, or start fresh
+        existing = self.env['fetch.history'].search([
             ('start_date', '=', self.start_date),
             ('end_date',   '=', self.end_date),
-            ('state',      '!=', 'done'),          # not yet completed
+            ('state',      '!=', 'done'),
         ], order='id desc', limit=1)
 
-        if existing_history:
-            history = existing_history
-            page = history.page or 1
+        if existing:
+            history    = existing
+            start_page = history.page or 1
             self._buf_log(
-                f"Resuming existing fetch history ID={history.id} from page {page}",
+                f"Resuming history ID={history.id} from page {start_page}",
                 'Resumed', 'Found existing incomplete history'
             )
         else:
@@ -124,98 +102,43 @@ class APIDonationWizard(models.TransientModel):
                 'start_date': self.start_date,
                 'end_date':   self.end_date,
                 'page':       1,
-                'per_page':   PER_PAGE,
+                'per_page':   self.PER_PAGE,
+                'state':      'running',
             })
-            page = 1
-            self._buf_log("Initiating donation fetch.", 'Initiated', 'Started')
+            start_page = 1
+            self._buf_log("Donation fetch queued.", 'Initiated', 'Background job dispatched')
 
         self._flush_logs(history.id)
 
-        # =========================================================
-        # PAGINATION LOOP
-        # =========================================================
-        donations_info = []
-
-        while True:
-            payload = {
-                "status":  "success",
-                "page":    page,
-                "perPage": PER_PAGE,
-            }
-            if self.start_date:
-                payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
-            if self.end_date:
-                payload["endDate"]   = self._date_to_iso_z(self.end_date, time(23, 59, 59))
-
-            self._buf_log(f"Fetching page {page}", "Pagination", str(payload))
-            self._flush_logs(history.id)   # flush before network call
-
-            page_data = self._fetch_donations_from_api(
-                auth_url, donate_url, company,
-                base_url, origin_host, history,
-                override_payload=payload
-            )
-
-            if not page_data:
-                break
-
-            donations_info.extend(page_data)
-
-            # Persist the next page number so a resume picks up correctly
-            history.write({'page': page + 1})
-            page += 1
-
-            if len(page_data) < PER_PAGE:
-                break   # last page
-
-        if not donations_info:
-            self._buf_log("No donations found", 'No Data', 'Empty response')
-            self._flush_logs(history.id)
-            return True
-
-        # =========================================================
-        # ORIGINAL PROCESSING LOGIC (unchanged in structure)
-        # =========================================================
-        total_records   = len(donations_info)
-        qurbani_records = [r for r in donations_info if r.get('qurbani') is True]
-        normal_records  = [r for r in donations_info if r.get('qurbani') is not True]
-
-        self._buf_log(
-            "Donation Summary", "Summary",
-            f"Total={total_records}, Qurbani={len(qurbani_records)}, Normal={len(normal_records)}"
-        )
-        self._flush_logs(history.id)
-
-        journal          = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        gateway_config   = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
-        company_currency = company.currency_id
-
-        all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
-
-        result = self._process_donations_bulk(
-            donations_info, journal, gateway_config,
-            company_currency, all_data, history
+        # Enqueue page job — each job chains the next page itself
+        self.env['fetch.history'].sudo().with_delay(
+            description=f"Donation import – history {history.id} page {start_page}",
+            max_retries=3,
+            channel='root.donation_import',
+        )._run_donation_page_job(
+            history_id              = history.id,
+            page                    = start_page,
+            start_date              = str(self.start_date)              if self.start_date              else None,
+            end_date                = str(self.end_date)                if self.end_date                else None,
+            picking_type_id         = self.picking_type_id.id           if self.picking_type_id         else False,
+            source_location_id      = self.source_location_id.id        if self.source_location_id      else False,
+            destination_location_id = self.destination_location_id.id   if self.destination_location_id else False,
         )
 
-        if result.get('new_donations') and journal and result.get('accumulators'):
-            move = self._create_grouped_journal_move(
-                journal,
-                result['accumulators']['debit'],
-                result['accumulators']['credit'],
-                company_currency, history
-            )
-            history.write({
-                'journal_entry_id': move.id,
-                'picking_id': result.get('picking_id') or False,
-                'state': 'done',    # mark completed so next run starts fresh
-            })
-            self.env['api.donation'].browse(result['new_donations']).write({
-                'fetch_history_id': history.id
-            })
-
-        self._buf_log("Completed successfully", 'Completed', 'Done')
-        self._flush_logs(history.id)
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag':  'display_notification',
+            'params': {
+                'title':   _('Import Started'),
+                'message': _(
+                    'Donation import is running in the background '
+                    '(History ID: %s, starting page %s). '
+                    'Refresh the Fetch History list to track progress.'
+                ) % (history.id, start_page),
+                'type':    'success',
+                'sticky': False,
+            },
+        }
 
     # =========================================================
     # API CALL
@@ -228,9 +151,9 @@ class APIDonationWizard(models.TransientModel):
         try:
             with requests.Session() as session:
                 session.headers.update({
-                    'Origin': base_url,
+                    'Origin':          base_url,
                     'x-forwarded-for': origin_host,
-                    'Content-Type': 'application/json',
+                    'Content-Type':    'application/json',
                 })
                 token = self._authenticate(
                     session, auth_url,
@@ -264,7 +187,7 @@ class APIDonationWizard(models.TransientModel):
     # =========================================================
     def _authenticate(self, session, url, client_id, client_secret):
         resp = session.post(url, json={
-            "ClientID": client_id,
+            "ClientID":     client_id,
             "ClientSecret": client_secret
         }, timeout=30)
         resp.raise_for_status()
@@ -300,7 +223,7 @@ class APIDonationWizard(models.TransientModel):
 
         self._buf_log(
             f"Unique Currencies: {unique_currencies}, Country Codes: {unique_country_codes}, "
-            f"Mobiles: {unique_mobiles}, Import IDs: {unique_import_ids}",
+            f"Mobiles count: {len(unique_mobiles)}, Import IDs count: {len(unique_import_ids)}",
             'Prefetching', 'Extracted unique values'
         )
 
@@ -315,10 +238,8 @@ class APIDonationWizard(models.TransientModel):
             else:
                 conversion_rates[currency.name.lower()] = 1.0
 
-        self._buf_log(f"Conversion Rates: {conversion_rates}", 'Prefetching', 'Fetched conversion rates')
-
-        countries        = self.env['res.country'].search([('code', 'in', list(unique_country_codes))])
-        country_by_code  = {c.code: c.id for c in countries}
+        countries       = self.env['res.country'].search([('code', 'in', list(unique_country_codes))])
+        country_by_code = {c.code: c.id for c in countries}
 
         existing_import_ids = set()
         if unique_import_ids:
@@ -326,9 +247,6 @@ class APIDonationWizard(models.TransientModel):
                 [('import_id', 'in', list(unique_import_ids))], ['import_id']
             )
             existing_import_ids = {r['import_id'] for r in existing_records}
-
-        self._buf_log(f"Existing Import IDs: {existing_import_ids}", 'Prefetching',
-                      'Fetched existing import IDs')
 
         partner_cache = {}
         if unique_mobiles:
@@ -340,29 +258,23 @@ class APIDonationWizard(models.TransientModel):
             )
             for partner in existing_partners:
                 if donor_category and donor_category.id in (partner.get('category_id') or []):
-                    country_code_id = partner.get('country_code_id')
-                    country_code_id = country_code_id[0] if country_code_id else False
-                    key = (partner.get('mobile'), country_code_id)
-                    partner_cache[key] = partner['id']
-
-        self._buf_log(f"Partner Cache: {partner_cache}", 'Prefetching', 'Fetched partner cache')
+                    cc_id = partner.get('country_code_id')
+                    cc_id = cc_id[0] if cc_id else False
+                    partner_cache[(partner.get('mobile'), cc_id)] = partner['id']
 
         gateway_currency_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_currency_ids:
-                currency_name = (line.currency_id.name or '').strip().lower()
-                if currency_name:
-                    gateway_currency_lines[currency_name] = line.account_id.id
-
-        self._buf_log(f"Gateway Currency Lines: {gateway_currency_lines}", 'Prefetching',
-                      'Fetched gateway currency lines')
+                cn = (line.currency_id.name or '').strip().lower()
+                if cn:
+                    gateway_currency_lines[cn] = line.account_id.id
 
         gateway_product_lines = {}
         if gateway_config:
             for line in gateway_config.gateway_config_line_ids:
-                product_name = (line.name or '').strip().lower()
-                if product_name:
-                    gateway_product_lines[product_name] = {
+                pn = (line.name or '').strip().lower()
+                if pn:
+                    gateway_product_lines[pn] = {
                         'account_id': line.product_id.property_account_income_id.id,
                         'product_id': line.product_id.id,
                     }
@@ -374,40 +286,38 @@ class APIDonationWizard(models.TransientModel):
         default_partner     = self.env['res.partner'].search(
             [('primary_registration_id', '=', '2025-9999998-9')], limit=1
         )
-        default_partner_id  = default_partner.id if default_partner else False
 
         self._buf_log("End _prefetch_all_data", 'Prefetching', 'Completed prefetching')
-        self._flush_logs(history.id)   # flush after prefetch phase
+        self._flush_logs(history.id)
 
         return {
-            'currency_by_name':      currency_by_name,
-            'conversion_rates':      conversion_rates,
-            'country_by_code':       country_by_code,
-            'existing_import_ids':   existing_import_ids,
-            'partner_cache':         partner_cache,
+            'currency_by_name':       currency_by_name,
+            'conversion_rates':       conversion_rates,
+            'country_by_code':        country_by_code,
+            'existing_import_ids':    existing_import_ids,
+            'partner_cache':          partner_cache,
             'gateway_currency_lines': gateway_currency_lines,
-            'gateway_product_lines': gateway_product_lines,
+            'gateway_product_lines':  gateway_product_lines,
             'donor_category_ids': [
-                donor_category.id    if donor_category    else False,
-                individual_category.id if individual_category else False
+                donor_category.id      if donor_category      else False,
+                individual_category.id if individual_category else False,
             ],
-            'default_partner_id': default_partner_id,
+            'default_partner_id': default_partner.id if default_partner else False,
         }
 
     # =========================================================
     # BULK PROCESSING
     # =========================================================
     def _process_donations_bulk(self, donations_info, journal, gateway_config,
-                                company_currency, all_data, history):
-        self._buf_log("Start _process_donations_bulk", "Processing",
-                      "Starting bulk donation processing")
+                                company_currency, all_data, history,
+                                picking_type_id=False, source_location_id=False,
+                                destination_location_id=False):
+        self._buf_log("Start _process_donations_bulk", "Processing", "Starting bulk processing")
 
-        new_donation_ids    = []
-        debit_accumulator   = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
-        credit_accumulator  = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0})
-        StockPicking        = self.env['stock.picking']
-        StockMove           = self.env['stock.move']
-        stock_accumulator   = defaultdict(float)
+        new_donation_ids   = []
+        debit_accumulator  = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
+        credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0})
+        stock_accumulator  = defaultdict(float)
 
         total_records = skipped_records = processed_records = 0
         total_partner_requests = duplicate_partner_requests = 0
@@ -424,16 +334,13 @@ class APIDonationWizard(models.TransientModel):
             if not import_id or import_id in all_data['existing_import_ids']:
                 skipped_records += 1
                 self._buf_log(
-                    f"Skipping donation import_id={import_id}",
-                    'Skipped',
-                    f"Already exists or missing import_id"
+                    f"Skipping import_id={import_id}", 'Skipped', 'Already exists or missing'
                 )
                 continue
 
             processed_records += 1
             donation_vals = self._prepare_donation_vals_fast(
-                info, all_data, info_idx,
-                partner_to_create, partner_mapping, history
+                info, all_data, info_idx, partner_to_create, partner_mapping, history
             )
             if donation_vals:
                 donations_to_create.append(donation_vals)
@@ -443,13 +350,12 @@ class APIDonationWizard(models.TransientModel):
                         debit_accumulator, credit_accumulator, history
                     )
 
-            # Stock accumulation
             for it in (info.get('items') or []):
                 item_data = it.get('item', {})
                 item_name = ''
                 if isinstance(item_data, dict) and 'en' in item_data:
                     item_name = item_data['en'].get('name', '')
-                normalized = (item_name or '').strip().lower()
+                normalized   = (item_name or '').strip().lower()
                 product_line = gateway_config.gateway_config_line_ids.filtered(
                     lambda l: (l.name or '').strip().lower() == normalized
                 )
@@ -457,18 +363,11 @@ class APIDonationWizard(models.TransientModel):
                 if product and product.detailed_type == 'product':
                     stock_accumulator[product.id] += float(it.get('qty') or 1.0)
 
-        # Flush per-donation log buffer before expensive partner ops
         self._flush_logs(history.id)
 
-        # ---------------------------------------------------------
-        # PARTNER DEDUPLICATION
-        # ---------------------------------------------------------
-        self._buf_log(f"Partner requests before dedup: {len(partner_to_create)}", 'Debug',
-                      'Total partner requests collected')
+        # ---- Partner deduplication ----
         total_partner_requests = len(partner_to_create)
-
-        seen             = set()
-        unique_partners  = []
+        seen, unique_partners = set(), []
         for vals in partner_to_create:
             key = (vals.get('mobile'), vals.get('country_code_id'))
             if key not in seen:
@@ -476,18 +375,12 @@ class APIDonationWizard(models.TransientModel):
                 unique_partners.append(vals)
             else:
                 duplicate_partner_requests += 1
-
         partner_to_create[:] = unique_partners
-        self._buf_log(
-            f"Duplicate partner requests removed: {duplicate_partner_requests}",
-            'Debug', 'After dedup'
-        )
 
-        # ---------------------------------------------------------
-        # CHECK EXISTING PARTNERS  (single bulk search, not per-partner)
-        # ---------------------------------------------------------
-        existing_emails   = {v['email']  for v in partner_to_create if v.get('email')}
-        existing_mobiles  = {v['mobile'] for v in partner_to_create if v.get('mobile')}
+        # ---- Bulk check existing partners ----
+        existing_emails  = {v['email']  for v in partner_to_create if v.get('email')}
+        existing_mobiles = {v['mobile'] for v in partner_to_create if v.get('mobile')}
+        existing_email_set = existing_mobile_set = set()
 
         if existing_emails or existing_mobiles:
             domain = []
@@ -497,178 +390,120 @@ class APIDonationWizard(models.TransientModel):
                 if domain:
                     domain = ['|'] + domain
                 domain += [('mobile', 'in', list(existing_mobiles))]
-
-            found_partners = self.env['res.partner'].search_read(
-                domain, ['email', 'mobile']
-            )
-            existing_email_set  = {p['email']  for p in found_partners if p.get('email')}
-            existing_mobile_set = {p['mobile'] for p in found_partners if p.get('mobile')}
-        else:
-            existing_email_set  = set()
-            existing_mobile_set = set()
+            found = self.env['res.partner'].search_read(domain, ['email', 'mobile'])
+            existing_email_set  = {p['email']  for p in found if p.get('email')}
+            existing_mobile_set = {p['mobile'] for p in found if p.get('mobile')}
 
         partners_to_create_final = []
         for vals in partner_to_create:
             if (vals.get('email')  in existing_email_set or
                     vals.get('mobile') in existing_mobile_set):
                 already_existing_partners += 1
-                self._buf_log(
-                    f"Partner already exists: mobile={vals.get('mobile')}",
-                    'Debug', 'Existing partner found'
-                )
                 continue
             if not vals.get('name'):
-                self._buf_log(
-                    f"Skipping partner with missing name",
-                    'Warning', f"Data: {vals}"
-                )
+                self._buf_log(f"Skipping partner — missing name", 'Warning', str(vals))
                 continue
             if not vals.get('mobile') and not vals.get('email'):
-                self._buf_log(
-                    f"Skipping partner {vals.get('name')} — no contact info",
-                    'Warning', f"Data: {vals}"
-                )
+                self._buf_log(f"Skipping partner — no contact info", 'Warning', str(vals))
                 continue
             partners_to_create_final.append(vals)
 
         self._buf_log(
-            f"Partners existing={already_existing_partners}, to create={len(partners_to_create_final)}",
-            'Debug', 'Partner check done'
+            f"Partners existing={already_existing_partners} to_create={len(partners_to_create_final)}",
+            'Debug', ''
         )
         self._flush_logs(history.id)
 
-        # ---------------------------------------------------------
-        # ACTUAL PARTNER CREATE
-        # ---------------------------------------------------------
+        # ---- Create partners ----
         created_partners = self.env['res.partner']
         if partners_to_create_final:
             try:
-                self._buf_log(
-                    f"Creating {len(partners_to_create_final)} partners",
-                    'Processing', str(partners_to_create_final)
-                )
                 created_partners = self.env['res.partner'].create(partners_to_create_final)
                 actually_created_partners = len(created_partners)
                 self._buf_log(
-                    f"Successfully created {actually_created_partners} partners",
+                    f"Created {actually_created_partners} partners",
                     'Success', f"IDs: {created_partners.ids}"
                 )
-                for idx, partner_vals in enumerate(partners_to_create_final):
-                    partner_key = (partner_vals.get('mobile'), partner_vals.get('country_code_id'))
+                for idx, pv in enumerate(partners_to_create_final):
                     if idx < len(created_partners):
-                        partner_mapping[partner_key] = created_partners[idx].id
-
-                self._buf_log(
-                    f"Partner mapping: {len(partner_mapping)} entries",
-                    'Success', str(partner_mapping)
-                )
+                        partner_mapping[(pv.get('mobile'), pv.get('country_code_id'))] = \
+                            created_partners[idx].id
                 try:
                     created_partners.action_register()
-                    self._buf_log(
-                        f"Registered {actually_created_partners} partners",
-                        'Success', ''
-                    )
-                except Exception as register_error:
-                    self._buf_log(
-                        f"Partner registration warning",
-                        'Warning', str(register_error)
-                    )
-                    _logger.warning(f"Partner registration error: {register_error}")
-
-            except Exception as create_error:
-                actually_created_partners = 0
-                self._buf_log(
-                    "FAILED to create partners",
-                    'Error',
-                    f"Error: {create_error}\nData: {partners_to_create_final}"
-                )
+                except Exception as reg_err:
+                    self._buf_log("Partner registration warning", 'Warning', str(reg_err))
+                    _logger.warning(f"Partner registration error: {reg_err}")
+            except Exception as create_err:
+                self._buf_log("FAILED to create partners", 'Error',
+                              f"{create_err}\n{partners_to_create_final}")
                 self._flush_logs(history.id)
-                _logger.exception(f"Partner creation failed: {create_error}")
-                raise ValidationError(f"Failed to create partners: {create_error}")
+                _logger.exception(f"Partner creation failed: {create_err}")
+                raise ValidationError(f"Failed to create partners: {create_err}")
         else:
             self._buf_log("No new partners to create", 'Info', '')
 
         self._flush_logs(history.id)
 
-        # ---------------------------------------------------------
-        # DEBUG SUMMARY
-        # ---------------------------------------------------------
         debug_summary = (
             f"TOTAL={total_records} SKIPPED={skipped_records} PROCESSED={processed_records} | "
-            f"PARTNER REQUESTS={total_partner_requests} DUPES={duplicate_partner_requests} "
+            f"PARTNER_REQ={total_partner_requests} DUPES={duplicate_partner_requests} "
             f"EXISTING={already_existing_partners} CREATED={actually_created_partners}"
         )
         _logger.warning(debug_summary)
-        self._buf_log(debug_summary, 'Debug Summary', 'Final summary')
+        self._buf_log(debug_summary, 'Debug Summary', '')
 
-        # ---------------------------------------------------------
-        # LINK DONATIONS → PARTNERS
-        # ---------------------------------------------------------
-        donations_with_partner = donations_without_partner = 0
+        # ---- Link donations to partners ----
         for donation_val in donations_to_create:
             if 'partner_key' in donation_val:
-                partner_id = partner_mapping.get(donation_val['partner_key'])
-                if partner_id:
-                    donation_val['donor_id'] = partner_id
-                    donations_with_partner += 1
+                pid = partner_mapping.get(donation_val['partner_key'])
+                if pid:
+                    donation_val['donor_id'] = pid
                 else:
                     self._buf_log(
-                        f"Donation could not be linked to partner",
-                        'Warning',
+                        "Donation could not be linked to partner", 'Warning',
                         f"Key {donation_val['partner_key']} not in mapping"
                     )
-                    donations_without_partner += 1
                 del donation_val['partner_key']
-            else:
-                if donation_val.get('donor_id'):
-                    donations_with_partner += 1
-                else:
-                    donations_without_partner += 1
 
-        self._buf_log(
-            f"Donation-Partner link: with={donations_with_partner} without={donations_without_partner}",
-            'Success', f"Total to create: {len(donations_to_create)}"
-        )
-
-        # ---------------------------------------------------------
-        # CREATE DONATIONS
-        # ---------------------------------------------------------
+        # ---- Create donations ----
         if donations_to_create:
             new_donations    = self.env['api.donation'].create(donations_to_create)
             new_donation_ids = new_donations.ids
 
-        # ---------------------------------------------------------
-        # STOCK PICKING
-        # ---------------------------------------------------------
+        # ---- Stock picking ----
         picking = False
         if stock_accumulator:
-            picking_type = self.picking_type_id
-            if not picking_type:
+            pt = self.env['stock.picking.type'].browse(picking_type_id) if picking_type_id \
+                else self.picking_type_id
+            if not pt:
                 raise ValidationError(_("Stock Picking Type is missing."))
 
-            picking = StockPicking.create({
-                'picking_type_id':    picking_type.id,
-                'location_id':        self.source_location_id.id,
-                'location_dest_id':   self.destination_location_id.id,
-                'origin':             f"API Donation {fields.Date.today()}",
+            src  = source_location_id      or (self.source_location_id.id      if self.source_location_id      else False)
+            dest = destination_location_id or (self.destination_location_id.id if self.destination_location_id else False)
+
+            picking = self.env['stock.picking'].create({
+                'picking_type_id':  pt.id,
+                'location_id':      src,
+                'location_dest_id': dest,
+                'origin':           f"API Donation {fields.Date.today()}",
             })
             for product_id, qty in stock_accumulator.items():
                 product = self.env['product.product'].browse(product_id)
-                StockMove.create({
+                self.env['stock.move'].create({
                     'name':             product.display_name,
                     'product_id':       product.id,
                     'product_uom_qty':  qty,
                     'quantity':         qty,
                     'product_uom':      product.uom_id.id,
                     'picking_id':       picking.id,
-                    'location_id':      self.source_location_id.id,
-                    'location_dest_id': self.destination_location_id.id,
+                    'location_id':      src,
+                    'location_dest_id': dest,
                 })
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
 
-        self._buf_log("End _process_donations_bulk", 'Processing', 'Completed bulk processing')
+        self._buf_log("End _process_donations_bulk", 'Processing', 'Completed')
         self._flush_logs(history.id)
 
         return {
@@ -677,7 +512,7 @@ class APIDonationWizard(models.TransientModel):
                 'debit':  dict(debit_accumulator),
                 'credit': dict(credit_accumulator),
             },
-            'picking_id': picking.id if picking else False
+            'picking_id': picking.id if picking else False,
         }
 
     # =========================================================
@@ -700,15 +535,14 @@ class APIDonationWizard(models.TransientModel):
 
         if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
             self._buf_log(
-                f"Currency {currency_name} not found, using company currency",
-                'Error', ''
+                f"Currency {currency_name} not found, using company currency", 'Error', ''
             )
             currency_name = self.env.company.currency_id.name.lower()
             conv_rate     = 1.0
 
         total_amount = (float(info.get('total_amount', 0) or 0)
                         - float(info.get('bank_charges', 0) or 0))
-        total_local  = total_amount / conv_rate
+        total_local  = total_amount / conv_rate if conv_rate else total_amount
 
         donor       = info.get('donor_details') or {}
         donor_id    = None
@@ -726,20 +560,19 @@ class APIDonationWizard(models.TransientModel):
                         break
 
             if not donor_id:
-                partner_vals = {
+                partner_to_create.append({
                     'name':            donor.get('name', ''),
                     'mobile':          mobile,
                     'email':           donor.get('email', ''),
                     'country_code_id': country_id,
                     'category_id':     [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                }
-                partner_to_create.append(partner_vals)
+                })
                 partner_key = (mobile, country_id)
         else:
             donor_id = all_data['default_partner_id']
 
-        items     = info.get('items') or []
-        orm_items = []
+        items = info.get('items') or []
+        orm_items   = []
         order_lines = []
 
         for it in items:
@@ -756,32 +589,27 @@ class APIDonationWizard(models.TransientModel):
 
             if info.get('qurbani') is not True:
                 orm_items.append({
-                    'donation_type': it.get('donationType', ''),
-                    'total':         float(it.get('total', 0) or 0),
-                    'price':         it.get('price', 0),
-                    'price_id':      it.get('price_id', 0),
-                    'qty':           it.get('qty', 0),
-                    'type':          types_name,
-                    'item':          item_name,
-                    'donation_no':   it.get('donationNo', 0),
+                    'donation_type':  it.get('donationType', ''),
+                    'total':          float(it.get('total', 0) or 0),
+                    'price':          it.get('price', 0),
+                    'price_id':       it.get('price_id', 0),
+                    'qty':            it.get('qty', 0),
+                    'type':           types_name,
+                    'item':           item_name,
+                    'donation_no':    it.get('donationNo', 0),
                     'is_priced_item': it.get('isPricedItem', False),
                 })
             else:
-                product     = False
                 product_key = (
-                    f"{info.get('donationType', '')}"
-                    f"{item_name}"
-                    f"{types_name}"
+                    f"{info.get('donationType', '')}{item_name}{types_name}"
                 ).strip().lower()
+                config  = all_data['gateway_product_lines'].get(product_key)
+                product = self.env['product.product'].browse(config['product_id']) if config else False
 
-                config = all_data['gateway_product_lines'].get(product_key)
-                if config:
-                    product = self.env['product.product'].browse(config['product_id'])
                 if not product:
                     self._buf_log(
                         f"Qurbani product not found idx={info_idx}",
-                        'Error',
-                        f"Key={product_key} Gateway lines={all_data['gateway_product_lines']}"
+                        'Error', f"Key={product_key}"
                     )
 
                 quantity    = int(it.get('qty', 1) or 1)
@@ -797,10 +625,8 @@ class APIDonationWizard(models.TransientModel):
 
                 for idx in range(quantity):
                     share_name = share_names[idx % len(share_names)]
-                    hissa_name = (
-                        f"{idx + 1}. {share_name}" if quantity > 1 else share_name
-                    )
-                    line_vals = {
+                    hissa_name = f"{idx + 1}. {share_name}" if quantity > 1 else share_name
+                    order_lines.append([0, 0, {
                         'product_id':          product.id if product else False,
                         'quantity':            1,
                         'amount':              amount,
@@ -809,51 +635,50 @@ class APIDonationWizard(models.TransientModel):
                         'hissa_name':          hissa_name,
                         'branch':              branch_name or False,
                         'qurbani_fullfilment': qurbani_ff  or False,
-                    }
-                    order_lines.append([0, 0, line_vals])
+                    }])
 
         donation_vals = {
-            'import_id':                    info.get('_id', ''),
-            'remarks':                      info.get('remarks', ''),
-            'total_amount':                 total_amount,
-            'total_amount_local':           total_local,
-            'donor':                        info.get('donor', ''),
-            'donation_type':                info.get('donation_type', ''),
-            'donation_from':                info.get('donation_from', ''),
-            'dn_number':                    info.get('DN_Number', ''),
-            'subscription_interval':        info.get('subscriptionInterval', ''),
-            'is_recurring':                 info.get('isRecurring', False),
-            'response_code':                info.get('response_code', ''),
-            'response_description':         info.get('response_description', ''),
-            'currency':                     currency_name,
-            'referer':                      info.get('referer', ''),
-            'website':                      info.get('website', ''),
-            'account_source':               info.get('account_source', ''),
-            'conversion_rate':              conv_rate,
-            'bank_charges':                 info.get('bank_charges', 0),
-            'bank_charges_in_text':         info.get('bank_charges_in_text', ''),
-            'blinq_notification_number':    info.get('blinq_notification_number', ''),
-            'created_at':                   created_dt,
-            'updated_at':                   updated_dt,
-            'donation_id':                  info.get('donation_id', ''),
-            'invoice_id':                   info.get('invoice_id', ''),
-            'transaction_id':               info.get('transaction_id', ''),
-            'name':                         donor.get('name', ''),
-            'phone':                        donor.get('phone', ''),
-            'email':                        donor.get('email', ''),
-            'cnic':                         donor.get('cnic', ''),
-            'country':                      donor.get('country', ''),
-            'ip_address':                   donor.get('ipAddress', ''),
-            'subscription_for_news':        donor.get('subscriptionForNews', False),
-            'subscription_for_whatsapp':    donor.get('subscriptionForWhatsapp', False),
-            'subscription_for_sms':         donor.get('subscriptionForSms', False),
-            'qurbani_country':              donor.get('qurbaniCountry', ''),
-            'qurbani_city':                 donor.get('qurbaniCity', ''),
-            'qurbani_day':                  donor.get('qurbaniDay', ''),
-            'donation_item_ids':            [(0, 0, it) for it in orm_items],
-            'qurbani_order_line_ids':       order_lines,
-            'fetch_history_id':             history.id,
-            'qurbani':                      info.get('qurbani') is True,
+            'import_id':                 info.get('_id', ''),
+            'remarks':                   info.get('remarks', ''),
+            'total_amount':              total_amount,
+            'total_amount_local':        total_local,
+            'donor':                     info.get('donor', ''),
+            'donation_type':             info.get('donation_type', ''),
+            'donation_from':             info.get('donation_from', ''),
+            'dn_number':                 info.get('DN_Number', ''),
+            'subscription_interval':     info.get('subscriptionInterval', ''),
+            'is_recurring':              info.get('isRecurring', False),
+            'response_code':             info.get('response_code', ''),
+            'response_description':      info.get('response_description', ''),
+            'currency':                  currency_name,
+            'referer':                   info.get('referer', ''),
+            'website':                   info.get('website', ''),
+            'account_source':            info.get('account_source', ''),
+            'conversion_rate':           conv_rate,
+            'bank_charges':              info.get('bank_charges', 0),
+            'bank_charges_in_text':      info.get('bank_charges_in_text', ''),
+            'blinq_notification_number': info.get('blinq_notification_number', ''),
+            'created_at':                created_dt,
+            'updated_at':                updated_dt,
+            'donation_id':               info.get('donation_id', ''),
+            'invoice_id':                info.get('invoice_id', ''),
+            'transaction_id':            info.get('transaction_id', ''),
+            'name':                      donor.get('name', ''),
+            'phone':                     donor.get('phone', ''),
+            'email':                     donor.get('email', ''),
+            'cnic':                      donor.get('cnic', ''),
+            'country':                   donor.get('country', ''),
+            'ip_address':                donor.get('ipAddress', ''),
+            'subscription_for_news':     donor.get('subscriptionForNews', False),
+            'subscription_for_whatsapp': donor.get('subscriptionForWhatsapp', False),
+            'subscription_for_sms':      donor.get('subscriptionForSms', False),
+            'qurbani_country':           donor.get('qurbaniCountry', ''),
+            'qurbani_city':              donor.get('qurbaniCity', ''),
+            'qurbani_day':               donor.get('qurbaniDay', ''),
+            'donation_item_ids':         [(0, 0, it) for it in orm_items],
+            'qurbani_order_line_ids':    order_lines,
+            'fetch_history_id':          history.id,
+            'qurbani':                   info.get('qurbani') is True,
         }
 
         if donor_id:
@@ -870,20 +695,13 @@ class APIDonationWizard(models.TransientModel):
     # =========================================================
     def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency,
                                         debit_accumulator, credit_accumulator, history):
-        currency_name = donation_vals.get('currency', '')
-        currency_rec  = all_data['currency_by_name'].get(currency_name.lower())
-        if not currency_rec:
-            self._buf_log(
-                f"Currency {currency_name} not found, skipping journal accumulation",
-                'Error', ''
-            )
-            return
-
+        currency_name    = donation_vals.get('currency', '')
+        currency_rec     = all_data['currency_by_name'].get(currency_name.lower())
         debit_account_id = all_data['gateway_currency_lines'].get(currency_name.lower())
-        if not debit_account_id:
+
+        if not currency_rec or not debit_account_id:
             self._buf_log(
-                f"Debit account not found for currency {currency_name}",
-                'Error', ''
+                f"Missing currency or debit account for {currency_name}", 'Error', ''
             )
             return
 
@@ -899,33 +717,27 @@ class APIDonationWizard(models.TransientModel):
 
             config = all_data['gateway_product_lines'].get(product_name)
             if not config:
-                self._buf_log(
-                    f"Product config not found: {product_name}",
-                    'Error', ''
-                )
+                self._buf_log(f"Product config not found: {product_name}", 'Error', '')
                 continue
 
             credit_account_id = config['account_id']
             if not credit_account_id:
                 continue
 
-            item_total      = float(item.get('total', 0))
-            conv_rate       = float(donation_vals.get('conversion_rate', 1.0))
+            item_total = float(item.get('total', 0))
+            conv_rate  = float(donation_vals.get('conversion_rate', 1.0))
 
             if is_foreign:
                 item_total = currency_rec.round(item_total)
-
-            item_total_base = company_currency.round(item_total / conv_rate)
+            item_total_base = company_currency.round(item_total / conv_rate if conv_rate else item_total)
             currency_id     = currency_rec.id
 
-            debit_key = (debit_account_id, currency_id)
-            d = debit_accumulator[debit_key]
+            d = debit_accumulator[(debit_account_id, currency_id)]
             d['debit_base'] += item_total_base
             if is_foreign:
                 d['amount_currency'] += item_total
 
-            credit_key = (credit_account_id, currency_id)
-            c = credit_accumulator[credit_key]
+            c = credit_accumulator[(credit_account_id, currency_id)]
             c['credit_base'] += item_total_base
             if is_foreign:
                 c['amount_currency'] -= item_total
@@ -937,7 +749,7 @@ class APIDonationWizard(models.TransientModel):
         dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
         return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
-    def _parse_iso_to_dt_fast(self, iso_str, history):
+    def _parse_iso_to_dt_fast(self, iso_str, history=None):
         if not iso_str:
             return None
         try:
@@ -969,7 +781,7 @@ class APIDonationWizard(models.TransientModel):
                                      credit_accumulator, company_currency, history):
         self._buf_log("Start _create_grouped_journal_move", 'Journal Entry Creation', '')
 
-        lines              = []
+        lines               = []
         company_currency_id = company_currency.id
 
         for (account_id, currency_id), vals in debit_accumulator.items():
@@ -979,8 +791,8 @@ class APIDonationWizard(models.TransientModel):
             line = {'account_id': account_id, 'debit': debit_amount,
                     'credit': 0.0, 'name': 'Donation Import - Debit'}
             if currency_id != company_currency_id:
-                line['currency_id']      = currency_id
-                line['amount_currency']  = company_currency.round(vals['amount_currency'])
+                line['currency_id']     = currency_id
+                line['amount_currency'] = company_currency.round(vals['amount_currency'])
             lines.append((0, 0, line))
 
         for (account_id, currency_id), vals in credit_accumulator.items():
@@ -990,8 +802,8 @@ class APIDonationWizard(models.TransientModel):
             line = {'account_id': account_id, 'debit': 0.0,
                     'credit': credit_amount, 'name': 'Donation Import - Credit'}
             if currency_id != company_currency_id:
-                line['currency_id']      = currency_id
-                line['amount_currency']  = company_currency.round(vals['amount_currency'])
+                line['currency_id']     = currency_id
+                line['amount_currency'] = company_currency.round(vals['amount_currency'])
             lines.append((0, 0, line))
 
         if not lines:
@@ -1006,14 +818,12 @@ class APIDonationWizard(models.TransientModel):
         if not company_currency.is_zero(diff):
             diff_account = self._get_rounding_difference_account(journal, history)
             if diff_account:
-                if diff > 0:
-                    lines.append((0, 0, {'account_id': diff_account.id,
-                                         'debit': 0.0, 'credit': abs(diff),
-                                         'name': 'Rounding Adjustment'}))
-                else:
-                    lines.append((0, 0, {'account_id': diff_account.id,
-                                         'debit': abs(diff), 'credit': 0.0,
-                                         'name': 'Rounding Adjustment'}))
+                lines.append((0, 0, {
+                    'account_id': diff_account.id,
+                    'debit':  0.0       if diff > 0 else abs(diff),
+                    'credit': abs(diff) if diff > 0 else 0.0,
+                    'name':   'Rounding Adjustment',
+                }))
 
         move = self.env['account.move'].sudo().create({
             'move_type':  'entry',
@@ -1033,31 +843,151 @@ class APIDonationWizard(models.TransientModel):
     def _get_rounding_difference_account(self, journal, history):
         if journal.default_account_id:
             return journal.default_account_id
-
         company = self.env.company
         if company.difference_account_prefix:
-            diff_account = self.env['account.account'].search([
+            acc = self.env['account.account'].search([
                 ('code', 'like', f"{company.difference_account_prefix}%"),
                 ('company_id', '=', company.id)
             ], limit=1)
-            if diff_account:
-                return diff_account
-
-        diff_account = self.env['account.account'].search([
+            if acc:
+                return acc
+        acc = self.env['account.account'].search([
             ('account_type', 'in', ['expense', 'income']),
             ('name', 'ilike', 'rounding'),
             ('company_id', '=', company.id)
         ], limit=1)
-
-        if not diff_account:
-            diff_account = self.env['account.account'].search([
+        if not acc:
+            acc = self.env['account.account'].search([
                 ('account_type', '=', 'expense'),
                 ('company_id', '=', company.id)
             ], limit=1)
-            if not diff_account:
-                self._buf_log(
-                    f"No rounding account found for journal {journal.name}",
-                    'Error', ''
-                )
+        if not acc:
+            self._buf_log(
+                f"No rounding account found for journal {journal.name}", 'Error', ''
+            )
+        return acc
 
-        return diff_account
+
+# =================================================================
+# FETCH HISTORY MODEL EXTENSION
+# Add this mixin/extension to your fetch.history model, OR paste
+# the _run_donation_page_job method directly into that model.
+# =================================================================
+class FetchHistory(models.Model):
+    """
+    Extend fetch.history with the per-page background job method.
+
+    Required new fields on fetch.history (add to your model):
+        state    = fields.Selection([('running','Running'),('done','Done')], default='running')
+        page     = fields.Integer(default=1)
+        per_page = fields.Integer(default=100)
+    """
+    _inherit = 'fetch.history'
+
+    def _run_donation_page_job(
+        self, history_id, page,
+        start_date=None, end_date=None,
+        picking_type_id=False, source_location_id=False,
+        destination_location_id=False,
+    ):
+        """
+        Queued job: fetch + process ONE page of donations.
+        If more pages remain, enqueue the next page automatically.
+
+        All heavy ORM work (partner creation, donations, journal entry)
+        happens here — completely outside the HTTP request cycle.
+        """
+        from datetime import date as date_cls
+        PER_PAGE = 100
+
+        history  = self.browse(history_id)
+        company  = self.env.company
+        wizard   = self.env['api.donation.wizard'].new({})   # transient, no DB row needed
+
+        base_url    = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
+        origin_host = urlparse(base_url).hostname or ''
+        auth_url    = f"{company.url.rstrip('/')}/api/odoo/auth"
+        donate_url  = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
+
+        # Parse dates back from strings (queue_job serialises args as JSON)
+        start = date_cls.fromisoformat(start_date) if start_date else None
+        end   = date_cls.fromisoformat(end_date)   if end_date   else None
+
+        payload = {"status": "success", "page": page, "perPage": PER_PAGE}
+        if start:
+            payload["startDate"] = wizard._date_to_iso_z(start, time.min)
+        if end:
+            payload["endDate"] = wizard._date_to_iso_z(end, time(23, 59, 59))
+
+        wizard._buf_log(f"Job: fetching page {page}", "Pagination", str(payload))
+        wizard._flush_logs(history_id)
+
+        page_data = wizard._fetch_donations_from_api(
+            auth_url, donate_url, company,
+            base_url, origin_host, history,
+            override_payload=payload
+        )
+
+        if not page_data:
+            # Nothing came back — we're done
+            history.write({'state': 'done'})
+            wizard._buf_log("All pages fetched — history marked done.", 'Completed', '')
+            wizard._flush_logs(history_id)
+            return
+
+        # ---- Process this page ----
+        journal          = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
+        gateway_config   = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
+        company_currency = company.currency_id
+
+        all_data = wizard._prefetch_all_data(page_data, gateway_config, company_currency, history)
+
+        result = wizard._process_donations_bulk(
+            page_data, journal, gateway_config, company_currency, all_data, history,
+            picking_type_id=picking_type_id,
+            source_location_id=source_location_id,
+            destination_location_id=destination_location_id,
+        )
+
+        if result.get('new_donations') and journal and result.get('accumulators'):
+            move = wizard._create_grouped_journal_move(
+                journal,
+                result['accumulators']['debit'],
+                result['accumulators']['credit'],
+                company_currency, history
+            )
+            history.write({
+                'journal_entry_id': move.id,
+                'picking_id':       result.get('picking_id') or False,
+            })
+            self.env['api.donation'].browse(result['new_donations']).write({
+                'fetch_history_id': history_id
+            })
+
+        # Persist next page number
+        next_page = page + 1
+        history.write({'page': next_page})
+
+        if len(page_data) < PER_PAGE:
+            # Last page — mark done
+            history.write({'state': 'done'})
+            wizard._buf_log("Last page processed — history marked done.", 'Completed', '')
+            wizard._flush_logs(history_id)
+        else:
+            # Enqueue next page
+            wizard._buf_log(f"Enqueueing next page {next_page}", 'Pagination', '')
+            wizard._flush_logs(history_id)
+
+            self.sudo().with_delay(
+                description=f"Donation import – history {history_id} page {next_page}",
+                max_retries=3,
+                channel='root.donation_import',
+            )._run_donation_page_job(
+                history_id              = history_id,
+                page                    = next_page,
+                start_date              = start_date,
+                end_date                = end_date,
+                picking_type_id         = picking_type_id,
+                source_location_id      = source_location_id,
+                destination_location_id = destination_location_id,
+            )
