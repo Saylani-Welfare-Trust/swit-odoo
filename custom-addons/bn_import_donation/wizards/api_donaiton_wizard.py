@@ -28,11 +28,13 @@ class APIDonationWizard(models.TransientModel):
 
     source_location_id = fields.Many2one(
         related='picking_type_id.default_location_src_id',
+        string="Source Location",
         store=True
     )
 
     destination_location_id = fields.Many2one(
         related='picking_type_id.default_location_dest_id',
+        string="Destination Location",
         store=True
     )
 
