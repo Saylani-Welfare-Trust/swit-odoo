@@ -181,7 +181,9 @@ class APIDonationWizard(models.TransientModel):
 
                 token = self._authenticate(session, auth_url, company.client_id, company.client_secret)
 
-                session.headers.update({'authorization': f'bearer {token}'})
+                session.headers.update({
+                    'Authorization': f'Bearer {token}'
+                })
 
                 resp = session.post(donate_url, json=payload, timeout=60)
                 resp.raise_for_status()
