@@ -45,24 +45,34 @@ class APIDonationWizard(models.TransientModel):
     # Call _flush_logs(history_id) at checkpoints (end of page,
     # end of method, etc.) to write them all at once.
 
+    @property
+    def _log_buffer(self):
+        """
+        Store the buffer on self.env (a plain Python Environment object),
+        not on the recordset (which blocks unknown attrs) and not in
+        self.env.context (which is a frozendict).
+        """
+        if not hasattr(self.env, '_fetch_log_buffer'):
+            object.__setattr__(self.env, '_fetch_log_buffer', [])
+        return self.env._fetch_log_buffer
+
     def _buf_log(self, message, status, reason=''):
         """Append to the in-memory log buffer (no DB hit)."""
-        if not hasattr(self, '_log_buffer'):
-            self._log_buffer = []
         self._log_buffer.append({
-            'name': message,
+            'name':   message,
             'status': status,
             'reason': reason,
         })
 
     def _flush_logs(self, history_id):
-        """Write all buffered logs in a single ORM create call."""
-        if not getattr(self, '_log_buffer', None):
+        """Write all buffered logs in a single ORM create call, then clear."""
+        buf = self._log_buffer
+        if not buf:
             return
-        for entry in self._log_buffer:
+        for entry in buf:
             entry['fetch_history_id'] = history_id
-        self.env['fetch.log'].create(self._log_buffer)
-        self._log_buffer = []
+        self.env['fetch.log'].create(buf)
+        buf.clear()   # clear in-place; the same list stays on self.env
 
     # Kept for backward-compat; now just buffers unless flush=True
     def create_fetch_log(self, history_id, message, status='', reason='', flush=False):
