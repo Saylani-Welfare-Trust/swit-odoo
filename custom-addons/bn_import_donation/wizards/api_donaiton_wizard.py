@@ -1,18 +1,20 @@
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError
 from datetime import datetime, time, timezone
-from urllib.parse import urlparse
+from collections import defaultdict
 import requests
 import logging
-from collections import defaultdict
-from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
 
 class APIDonationWizard(models.TransientModel):
     _name = 'api.donation.wizard'
-    _description = 'API Donation Wizard (refactored)'
+    _description = 'API Donation Wizard'
+
+    # =========================================================
+    # FIELDS
+    # =========================================================
 
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
@@ -28,1370 +30,613 @@ class APIDonationWizard(models.TransientModel):
 
     source_location_id = fields.Many2one(
         related='picking_type_id.default_location_src_id',
-        string="Source Location",
         store=True
     )
 
     destination_location_id = fields.Many2one(
         related='picking_type_id.default_location_dest_id',
-        string="Destination Location",
         store=True
     )
 
     # =========================================================
-    # LOG HELPER
+    # SAFE LOGGER
     # =========================================================
-    def create_fetch_log(self, history_id, message, status, reason):
-        self.env['fetch.log'].create({
-            'fetch_history_id': history_id,
-            'name': message,
-            'status': status,
-            'reason': reason
-        })
+
+    def log_batch(self, history, logs):
+        """
+        FAST BULK LOGGER
+        """
+        if not logs:
+            return
+
+        vals_list = []
+
+        for log in logs:
+            vals_list.append({
+                'fetch_history_id': history.id,
+                'name': (log.get('name') or '')[:500],
+                'status': log.get('status', 'info'),
+                'reason': (log.get('reason') or '')[:2000],
+            })
+
+        self.env['fetch.log'].sudo().create(vals_list)
 
     # =========================================================
-    # ENTRY POINT (ONLY MODIFIED FOR PAGINATION)
+    # ENTRY POINT
     # =========================================================
+
     def action_fetch_donation(self):
         self.ensure_one()
 
         QUEUE_SIZE = 100
+        logs = []
 
-        if self.start_date and self.end_date and self.start_date > self.end_date:
-            raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
+        if self.start_date and self.end_date:
+            if self.start_date > self.end_date:
+                raise ValidationError(_("Start Date must be earlier than End Date."))
 
         company = self.env.company
 
-        history = self.env['fetch.history'].search([
-            ('start_date', '=', self.start_date),
-            ('end_date', '=', self.end_date),
-            ('state', '=', 'in_progress')
-        ], limit=1)
+        history = self.env['fetch.history'].create({
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+            'page': 1,
+            'per_page': QUEUE_SIZE,
+            'state': 'in_progress',
+        })
 
-        if not history:
-            history = self.env['fetch.history'].create({
-                'start_date': self.start_date,
-                'end_date': self.end_date,
-                'page': 1,
-                'cursor_index': 0,
-                'per_page': 100,
-                'state': 'in_progress',
-            })
-
-        page = history.page
-        cursor = history.cursor_index
-        per_page = history.per_page
-
-        auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
-        donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
+        logs.append({
+            'name': 'Donation import started',
+            'status': 'info',
+        })
 
         payload = {
             "status": "success",
-            "page": page,
-            "perPage": per_page,
+            "page": 1,
+            "perPage": QUEUE_SIZE,
         }
 
         if self.start_date:
-            payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
+            payload['startDate'] = self._date_to_iso_z(
+                self.start_date,
+                time.min
+            )
 
         if self.end_date:
-            payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+            payload['endDate'] = self._date_to_iso_z(
+                self.end_date,
+                time(23, 59, 59)
+            )
 
-        donations_info = self._fetch_donations_from_api(
-            auth_url,
-            donate_url,
+        donations = self._fetch_donations_from_api(
             company,
-            self.env['ir.config_parameter'].sudo().get_param('web.base.url'),
-            '',
-            history,
-            override_payload=payload
+            payload
         )
 
-        if not donations_info:
+        if not donations:
             history.write({'state': 'completed'})
+
+            logs.append({
+                'name': 'No donations returned from API',
+                'status': 'warning',
+            })
+
+            self.log_batch(history, logs)
             return True
 
-        # ======================================================
-        # 🔥 QUEUE LOGIC (THIS IS THE CORE FIX)
-        # ======================================================
+        logs.append({
+            'name': f'Total donations fetched: {len(donations)}',
+            'status': 'info',
+        })
 
-        start = cursor
-        end = cursor + QUEUE_SIZE
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'bank')
+        ], limit=1)
 
-        batch_records = donations_info[start:end]
+        if not journal:
+            raise ValidationError(_("No Bank Journal found."))
 
-        # If nothing left in current page
-        if not batch_records:
-            if len(donations_info) >= per_page:
-                history.write({
-                    'page': page + 1,
-                    'cursor_index': 0
-                })
-            else:
-                history.write({
-                    'state': 'completed'
-                })
-            return True
-
-        # ======================================================
-        # PROCESS ONLY 100 RECORDS
-        # ======================================================
-
-        journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
+        gateway_config = self.env['gateway.config'].search([
+            ('name', '=', 'Web API')
+        ], limit=1)
 
         all_data = self._prefetch_all_data(
-            batch_records,
+            donations,
             gateway_config,
-            company.currency_id,
-            history
+            company
         )
 
         result = self._process_donations_bulk(
-            batch_records,
+            donations,
             journal,
             gateway_config,
-            company.currency_id,
+            company,
             all_data,
-            history
+            history,
+            logs
         )
 
-        # ======================================================
-        # UPDATE QUEUE STATE
-        # ======================================================
+        # =====================================================
+        # CREATE JOURNAL ENTRY
+        # =====================================================
 
-        new_cursor = end
+        move = self._create_grouped_journal_move(
+            journal,
+            result['debit_accumulator'],
+            result['credit_accumulator'],
+            company.currency_id,
+        )
 
-        if new_cursor < len(donations_info):
+        if move:
             history.write({
-                'cursor_index': new_cursor
+                'journal_entry_id': move.id
             })
-        else:
-            # move to next page
-            if len(donations_info) >= per_page:
-                history.write({
-                    'page': page + 1,
-                    'cursor_index': 0
-                })
-            else:
-                history.write({
-                    'state': 'completed'
-                })
+
+        # =====================================================
+        # STOCK PICKING
+        # =====================================================
+
+        if result.get('picking_id'):
+            history.write({
+                'picking_id': result['picking_id']
+            })
+
+        history.write({
+            'state': 'completed'
+        })
+
+        logs.append({
+            'name': 'Donation import completed successfully',
+            'status': 'success',
+        })
+
+        self.log_batch(history, logs)
 
         return True
 
     # =========================================================
-    # API CALL (ONLY ADDITION: override_payload)
+    # FETCH API
     # =========================================================
-    def _fetch_donations_from_api(
-        self, auth_url, donate_url, company,
-        base_url, origin_host, history,
-        override_payload=None
-    ):
+
+    def _fetch_donations_from_api(self, company, payload):
+
         try:
-            with requests.Session() as session:
 
-                session.headers.update({
-                    'Origin': base_url,
-                    'x-forwarded-for': origin_host,
-                    'Content-Type': 'application/json',
-                })
+            session = requests.Session()
 
-                token = self._authenticate(
-                    session,
-                    auth_url,
-                    company.client_id,
-                    company.client_secret
-                )
+            auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
+            donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-                session.headers.update({
-                    'authorization': f'bearer {token}'
-                })
+            auth_response = session.post(
+                auth_url,
+                json={
+                    "ClientID": company.client_id,
+                    "ClientSecret": company.client_secret
+                },
+                timeout=30
+            )
 
-                # =================================================
-                # PAGINATION SUPPORT (ADDED ONLY HERE)
-                # =================================================
-                if override_payload:
-                    payload = override_payload
-                else:
-                    payload = {"status": "success"}
+            auth_response.raise_for_status()
 
-                    if self.start_date:
-                        payload['startDate'] = self._date_to_iso_z(self.start_date, time.min)
+            token = auth_response.json().get('token')
 
-                    if self.end_date:
-                        payload['endDate'] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+            if not token:
+                raise ValidationError(_("Authentication token missing"))
 
-                resp = session.post(donate_url, json=payload, timeout=60)
-                resp.raise_for_status()
+            session.headers.update({
+                'authorization': f'bearer {token}'
+            })
 
-                data = resp.json()
+            response = session.post(
+                donate_url,
+                json=payload,
+                timeout=120
+            )
 
-                if not isinstance(data, dict) or 'donationsInfo' not in data:
-                    raise ValidationError(_("Invalid Donations Info"))
+            response.raise_for_status()
 
-                return data.get('donationsInfo') or []
+            data = response.json()
+
+            return data.get('donationsInfo', [])
 
         except Exception as e:
-            raise ValidationError(_('API Error: %s') % str(e))
+            raise ValidationError(_("API Error: %s") % str(e))
 
     # =========================================================
-    # EVERYTHING BELOW REMAINS YOUR ORIGINAL CODE
+    # PREFETCH
     # =========================================================
-    # (UNCHANGED - your full logic stays exactly same)
 
-    def _authenticate(self, session, url, client_id, client_secret):
-        resp = session.post(url, json={
-            "ClientID": client_id,
-            "ClientSecret": client_secret
-        }, timeout=30)
-        resp.raise_for_status()
-        token = resp.json().get('token')
-        if not token:
-            raise ValidationError(_("Token missing"))
-        return token
+    def _prefetch_all_data(self, donations, gateway_config, company):
 
-    # ---------------------- Bulk Data Pre-fetching ----------------------
-    def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _prefetch_all_data", 'Prefetching', 'Starting to prefetch all required data for processing')
+        currencies = set()
+        import_ids = set()
+        mobiles = set()
 
-        """Prefetch all required data in bulk to minimize database queries"""
-        # Extract all unique values for bulk queries
-        unique_currencies = set()
-        unique_import_ids = set()
-        unique_country_codes = set()
-        unique_mobiles = set()
-        
-        for info in donations_info:
-            if info.get('_id'):
-                unique_import_ids.add(info.get('_id'))
-            if info.get('currency'):
-                unique_currencies.add(info.get('currency'))
-            
-            donor = info.get('donor_details') or {}
-            if donor.get('country'):
-                unique_country_codes.add(donor.get('country'))
+        for donation in donations:
+
+            if donation.get('currency'):
+                currencies.add(donation.get('currency'))
+
+            if donation.get('_id'):
+                import_ids.add(donation.get('_id'))
+
+            donor = donation.get('donor_details') or {}
+
             if donor.get('phone'):
-                mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-                if mobile:
-                    unique_mobiles.add(mobile)
+                mobiles.add(donor.get('phone')[-10:])
 
-        self.create_fetch_log(history.id, f"Unique Currencies: {unique_currencies}, Unique Country Codes: {unique_country_codes}, Unique Mobiles: {unique_mobiles}, Unique Import IDs: {unique_import_ids}", 'Prefetching', 'Extracted unique values for bulk data fetching')
+        currency_records = self.env['res.currency'].search([
+            ('name', 'in', list(currencies))
+        ])
 
-        # Bulk fetch currencies
-        currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
-        currency_by_name = {c.name.lower(): c for c in currencies}
+        currency_map = {
+            c.name.lower(): c
+            for c in currency_records
+        }
 
-        # Bulk fetch conversion rates
-        conversion_rates = {}
-        for currency in currencies:
-            if currency.rate_ids:
-                latest_rate = currency.rate_ids.sorted('name', reverse=True)[0]
-                conversion_rates[currency.name.lower()] = float(latest_rate.company_rate or 1.0)
-            else:
-                conversion_rates[currency.name.lower()] = 1.0
+        existing_imports = self.env['api.donation'].search_read(
+            [('import_id', 'in', list(import_ids))],
+            ['import_id']
+        )
 
-        self.create_fetch_log(history.id, f"Conversion Rates: {conversion_rates}", 'Prefetching', 'Fetched conversion rates for currencies')
-        
-        # Bulk fetch countries
-        countries = self.env['res.country'].search([('code', 'in', list(unique_country_codes))])
-        country_by_code = {c.code: c.id for c in countries}
-        
-        # Bulk fetch existing donations to avoid duplicates
-        existing_import_ids = set()
-        if unique_import_ids:
-            existing_records = self.env['api.donation'].search_read(
-                [('import_id', 'in', list(unique_import_ids))], 
-                ['import_id']
-            )
-            existing_import_ids = {r['import_id'] for r in existing_records}
-        
-        self.create_fetch_log(history.id, f"Existing Import IDs: {existing_import_ids}", 'Prefetching', 'Fetched existing import IDs to avoid duplicates')
+        existing_import_ids = {
+            x['import_id']
+            for x in existing_imports
+        }
 
-        # Bulk fetch existing partners - SIMPLER AND SAFER APPROACH
-        partner_cache = {}
-        if unique_mobiles:
-            # Get donor category
-            donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
-            
-            # Search partners by mobile number
-            existing_partners = self.env['res.partner'].search_read(
-                [('mobile', 'in', list(unique_mobiles))],
-                ['id', 'mobile', 'country_code_id', 'category_id']
-            )
-            
-            # Filter to only include donors and cache them
-            for partner in existing_partners:
-                if donor_category and donor_category.id in (partner.get('category_id') or []):
-                    country_code_id = partner.get('country_code_id')
-                    country_code_id = country_code_id[0] if country_code_id else False
-                    key = (partner.get('mobile'), country_code_id)
-                    partner_cache[key] = partner['id']
-        
-        self.create_fetch_log(history.id, f"Partner Cache: {partner_cache}", 'Prefetching', 'Fetched partner cache for existing donors')
+        existing_partners = self.env['res.partner'].search_read(
+            [('mobile', 'in', list(mobiles))],
+            ['mobile']
+        )
 
-        # Pre-fetch gateway config data
+        partner_map = {}
+
+        for p in existing_partners:
+            partner_map[p['mobile']] = p['id']
+
         gateway_currency_lines = {}
+
         if gateway_config:
             for line in gateway_config.gateway_config_currency_ids:
 
-                currency_name = (line.currency_id.name or '').strip().lower()
-
-                if not currency_name:
-                    continue
-
-                gateway_currency_lines[currency_name] = line.account_id.id
-        self.create_fetch_log(history.id, f"Gateway Currency Lines: {gateway_currency_lines}", 'Prefetching', 'Fetched gateway currency lines')
+                if line.currency_id and line.account_id:
+                    gateway_currency_lines[
+                        line.currency_id.name.lower()
+                    ] = line.account_id.id
 
         gateway_product_lines = {}
+
         if gateway_config:
             for line in gateway_config.gateway_config_line_ids:
 
-                product_name = (line.name or '').strip().lower()
+                key = (line.name or '').strip().lower()
 
-                if not product_name:
-                    continue
-
-                gateway_product_lines[product_name] = {
-                    'account_id': line.product_id.property_account_income_id.id,
+                gateway_product_lines[key] = {
                     'product_id': line.product_id.id,
+                    'account_id': line.product_id.property_account_income_id.id
                 }
-        # Get donor category IDs
-        donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
-        individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
-        
-        # Default partner for missing donors
-        default_partner = self.env['res.partner'].search(
-            [('primary_registration_id', '=', '2025-9999998-9')], 
-            limit=1
-        )
-        default_partner_id = default_partner.id if default_partner else False
-        
-        self.create_fetch_log(history.id, f"End _prefetch_all_data", 'Prefetching', 'Completed prefetching all required data for processing')
 
         return {
-            'currency_by_name': currency_by_name,
-            'conversion_rates': conversion_rates,
-            'country_by_code': country_by_code,
+            'currency_map': currency_map,
             'existing_import_ids': existing_import_ids,
-            'partner_cache': partner_cache,
+            'partner_map': partner_map,
             'gateway_currency_lines': gateway_currency_lines,
             'gateway_product_lines': gateway_product_lines,
-            'donor_category_ids': [
-                donor_category.id if donor_category else False,
-                individual_category.id if individual_category else False
-            ],
-            'default_partner_id': default_partner_id,
         }
 
-    # ---------------------- Bulk Processing ----------------------
-    # ---------------------- TESTING / DEBUG COUNTERS ----------------------
+    # =========================================================
+    # PROCESS DONATIONS
+    # =========================================================
 
-    def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data, history):
-        self.create_fetch_log(
-            history.id,
-            f"Start _process_donations_bulk",
-            "Processing",
-            "Starting to process donations in bulk with optimized operations"
-        )
+    def _process_donations_bulk(
+        self,
+        donations,
+        journal,
+        gateway_config,
+        company,
+        all_data,
+        history,
+        logs
+    ):
 
-        new_donation_ids = []
-        debit_accumulator = defaultdict(lambda: {'debit_base': 0.0, 'amount_currency': 0.0})
-        credit_accumulator = defaultdict(lambda: {'credit_base': 0.0, 'amount_currency': 0.0})
+        donations_vals = []
 
-        StockPicking = self.env['stock.picking']
-        StockMove = self.env['stock.move']
+        debit_accumulator = defaultdict(float)
+        credit_accumulator = defaultdict(float)
 
         stock_accumulator = defaultdict(float)
-        # raise ValidationError(str(all_data['gateway_product_lines']))
-        # -----------------------------
-        # DEBUG / TESTING COUNTERS
-        # -----------------------------
-        total_records = 0
-        skipped_records = 0
-        processed_records = 0
 
-        total_partner_requests = 0
-        duplicate_partner_requests = 0
-        already_existing_partners = 0
-        actually_created_partners = 0
+        partner_create_vals = []
 
-        donations_to_create = []
-        partner_to_create = []
-        partner_mapping = {}
+        partner_cache = all_data['partner_map']
 
-        for info_idx, info in enumerate(donations_info):
+        for donation in donations:
 
-            total_records += 1
-
-            import_id = info.get('_id')
-
-            if not import_id or import_id in all_data['existing_import_ids']:
-                skipped_records += 1
-
-                self.create_fetch_log(
-                    history.id,
-                    f"Skipping donation with import_id {import_id} (already exists or missing)",
-                    'Skipped',
-                    f"Donation with import_id {import_id} is skipped because it already exists or is missing"
-                )
+            if donation.get('_id') in all_data['existing_import_ids']:
                 continue
 
-            processed_records += 1
+            if donation.get('status') != 'success':
+                continue
 
-            donation_vals = self._prepare_donation_vals_fast(
-                info,
-                all_data,
-                info_idx,
-                partner_to_create,
-                partner_mapping,
-                history
+            donor = donation.get('donor_details') or {}
+
+            mobile = donor.get('phone', '')[-10:]
+
+            partner_id = partner_cache.get(mobile)
+
+            # =================================================
+            # CREATE PARTNER LATER
+            # =================================================
+
+            if not partner_id and mobile:
+
+                partner_create_vals.append({
+                    'name': donor.get('name'),
+                    'mobile': mobile,
+                    'email': donor.get('email'),
+                })
+
+            currency_name = (donation.get('currency') or '').lower()
+
+            total_amount = float(
+                donation.get('total_amount', 0)
+            ) - float(
+                donation.get('bank_charges', 0)
             )
 
-            if donation_vals:
-                donations_to_create.append(donation_vals)
+            donation_vals = {
+                'import_id': donation.get('_id'),
+                'name': donor.get('name'),
+                'phone': donor.get('phone'),
+                'email': donor.get('email'),
+                'currency': currency_name,
+                'total_amount': total_amount,
+                'fetch_history_id': history.id,
+            }
 
-                if gateway_config and journal:
-                    self._accumulate_donation_lines_fast(
-                        donation_vals,
-                        all_data,
-                        company_currency,
-                        debit_accumulator,
-                        credit_accumulator,
-                        history
-                    )
+            if partner_id:
+                donation_vals['donor_id'] = partner_id
 
-            # -----------------------------
-            # STOCK PROCESSING
-            # -----------------------------
-            items = info.get('items') or []
-            for it in items:
+            # =================================================
+            # DONATION ITEMS
+            # =================================================
+
+            donation_items = []
+
+            for item in donation.get('items', []):
 
                 item_name = ''
-                item_data = it.get('item', {})
 
-                if isinstance(item_data, dict) and 'en' in item_data:
-                    item_name = item_data.get('en', {}).get('name', '')
+                if isinstance(item.get('item'), dict):
+                    item_name = item.get('item', {}).get('en', {}).get('name', '')
 
-                normalized_item_name = (item_name or '').strip().lower()
+                donation_items.append((0, 0, {
+                    'item': item_name,
+                    'qty': item.get('qty'),
+                    'price': item.get('price'),
+                    'total': item.get('total'),
+                }))
 
-                product_line = gateway_config.gateway_config_line_ids.filtered(
-                    lambda l: (l.name or '').strip().lower() == normalized_item_name
-                )
+                # =============================================
+                # STOCK
+                # =============================================
 
-                product = product_line.product_id if product_line else False
+                key = item_name.strip().lower()
 
-                if product and product.detailed_type == 'product':
-                    qty = float(it.get('qty') or 1.0)
-                    stock_accumulator[product.id] += qty
+                config = all_data['gateway_product_lines'].get(key)
 
-        # ==========================================================
-        # PARTNER DEBUGGING SECTION
-        # ==========================================================
+                if config:
 
-        self.create_fetch_log(
-            history.id,
-            f"Partner requests before deduplication: {len(partner_to_create)}",
-            'Debug',
-            'Total partner requests collected'
-        )
-
-        total_partner_requests = len(partner_to_create)
-
-        # -----------------------------
-        # REMOVE DUPLICATES
-        # -----------------------------
-        seen = set()
-        unique_partners = []
-
-        for vals in partner_to_create:
-
-            key = (
-                vals.get('mobile'),
-                vals.get('country_code_id')
-            )
-
-            if key not in seen:
-                seen.add(key)
-                unique_partners.append(vals)
-            else:
-                duplicate_partner_requests += 1
-
-        self.create_fetch_log(
-            history.id,
-            f"Duplicate partner requests removed: {duplicate_partner_requests}",
-            'Debug',
-            'Duplicate partner requests based on mobile + country'
-        )
-
-        partner_to_create[:] = unique_partners
-
-        self.create_fetch_log(
-            history.id,
-            f"Unique partners after deduplication: {len(partner_to_create)}",
-            'Debug',
-            'Unique partner records remaining'
-        )
-
-        # -----------------------------
-        # CHECK EXISTING PARTNERS
-        # -----------------------------
-        partners_to_create_final = []
-
-        for vals in partner_to_create:
-
-            existing_partner = self.env['res.partner'].search([
-                '|',
-                ('email', '=', vals.get('email')),
-                ('mobile', '=', vals.get('mobile')),
-            ], limit=1)
-
-            if not existing_partner:
-                # Validate partner data before adding to create list
-                if not vals.get('name'):
-                    self.create_fetch_log(
-                        history.id,
-                        f"⚠ Skipping partner with missing name",
-                        'Warning',
-                        f"Partner data missing name field: {vals}"
+                    product = self.env['product.product'].browse(
+                        config['product_id']
                     )
-                    _logger.warning(f"Skipping partner with missing name: {vals}")
-                    continue
-                    
-                if not vals.get('mobile') and not vals.get('email'):
-                    self.create_fetch_log(
-                        history.id,
-                        f"⚠ Skipping partner {vals.get('name')} with missing mobile and email",
-                        'Warning',
-                        f"Partner must have at least mobile or email: {vals}"
-                    )
-                    _logger.warning(f"Skipping partner with no contact: {vals}")
-                    continue
-                
-                partners_to_create_final.append(vals)
-            else:
-                already_existing_partners += 1
 
-                self.create_fetch_log(
-                    history.id,
-                    f"Partner already exists: {existing_partner.name}",
-                    'Debug',
-                    f"Existing partner found for mobile={vals.get('mobile')}, email={vals.get('email')}"
-                )
-
-        self.create_fetch_log(
-            history.id,
-            f"Partners already existing in DB: {already_existing_partners}",
-            'Debug',
-            'Existing partners count'
-        )
-
-        self.create_fetch_log(
-            history.id,
-            f"Partners remaining to create: {len(partners_to_create_final)}",
-            'Debug',
-            'Final partner creation count'
-        )
-
-        # -----------------------------
-        # ACTUAL CREATE
-        # -----------------------------
-        created_partners = self.env['res.partner']
-
-        if partners_to_create_final:
-            try:
-                self.create_fetch_log(
-                    history.id,
-                    f"Attempting to create {len(partners_to_create_final)} partners",
-                    'Processing',
-                    f"Partner data: {partners_to_create_final}"
-                )
-                
-                created_partners = self.env['res.partner'].create(partners_to_create_final)
-                
-                actually_created_partners = len(created_partners)
-                
-                self.create_fetch_log(
-                    history.id,
-                    f"✓ Successfully created {actually_created_partners} partners",
-                    'Success',
-                    f"Partners successfully created. IDs: {created_partners.ids}"
-                )
-                
-                # ====================================================
-                # POPULATE PARTNER MAPPING
-                # ====================================================
-                # Map created partners by (mobile, country_code_id) for donations lookup
-                for idx, partner_vals in enumerate(partners_to_create_final):
-                    partner_key = (partner_vals.get('mobile'), partner_vals.get('country_code_id'))
-                    if idx < len(created_partners):
-                        partner_mapping[partner_key] = created_partners[idx].id
-                        self.create_fetch_log(
-                            history.id,
-                            f"Mapped partner key {partner_key} to partner ID {created_partners[idx].id}",
-                            'Debug',
-                            f"Partner mapping for mobile={partner_vals.get('mobile')}, country={partner_vals.get('country_code_id')}"
+                    if product.detailed_type == 'product':
+                        stock_accumulator[product.id] += float(
+                            item.get('qty') or 1
                         )
-                
-                self.create_fetch_log(
-                    history.id,
-                    f"Partner mapping completed: {len(partner_mapping)} mappings created",
-                    'Success',
-                    f"Mappings: {partner_mapping}"
-                )
-                
-                # Try to register partners
-                try:
-                    created_partners.action_register()
-                    self.create_fetch_log(
-                        history.id,
-                        f"✓ Successfully registered {actually_created_partners} partners",
-                        'Success',
-                        f"Partners successfully registered"
-                    )
-                except Exception as register_error:
-                    self.create_fetch_log(
-                        history.id,
-                        f"⚠ Warning: Partners created but registration failed",
-                        'Warning',
-                        f"Partners were created but action_register failed: {str(register_error)}"
-                    )
-                    _logger.warning(f"Partner registration error: {str(register_error)}")
-                    
-            except Exception as create_error:
-                actually_created_partners = 0
-                self.create_fetch_log(
-                    history.id,
-                    f"✗ FAILED to create partners",
-                    'Error',
-                    f"""
-                        ================== PARTNER CREATION FAILED ==================
-                        Total Partners Attempted: {len(partners_to_create_final)}
 
-                        ERROR MESSAGE:
-                        {str(create_error)}
+                    # =========================================
+                    # ACCOUNTING
+                    # =========================================
 
-                        PARTNER DATA ATTEMPTED:
-                        {partners_to_create_final}
+                    account_id = config['account_id']
 
-                        STACK TRACE:
-                        {_logger.exception("Full exception trace:")}
-                        ============================================================
-                    """
-                )
-                _logger.exception(f"Partner creation failed: {str(create_error)}")
-                raise ValidationError(f"Failed to create partners: {str(create_error)}")
-        else:
-            self.create_fetch_log(
-                history.id,
-                "No partners to create",
-                'Info',
-                'No new partners needed creation'
+                    debit_account = all_data[
+                        'gateway_currency_lines'
+                    ].get(currency_name)
+
+                    total = float(item.get('total') or 0)
+
+                    if debit_account:
+                        debit_accumulator[debit_account] += total
+
+                    if account_id:
+                        credit_accumulator[account_id] += total
+
+            donation_vals['donation_item_ids'] = donation_items
+
+            donations_vals.append(donation_vals)
+
+        # =====================================================
+        # BULK CREATE PARTNERS
+        # =====================================================
+
+        if partner_create_vals:
+
+            created_partners = self.env['res.partner'].create(
+                partner_create_vals
             )
 
-        # ==========================================================
-        # FINAL DEBUG SUMMARY
-        # ==========================================================
+            for partner in created_partners:
+                partner_cache[partner.mobile] = partner.id
 
-        debug_summary = f"""
-            ===========================
-            DONATION IMPORT SUMMARY
-            ===========================
+        # =====================================================
+        # ASSIGN PARTNERS
+        # =====================================================
 
-            TOTAL API RECORDS: {total_records}
+        for vals in donations_vals:
 
-            SKIPPED RECORDS: {skipped_records}
+            if not vals.get('donor_id'):
 
-            PROCESSED RECORDS: {processed_records}
+                mobile = vals.get('phone', '')[-10:]
 
-            ---------------------------
-            PARTNER SUMMARY
-            ---------------------------
+                vals['donor_id'] = partner_cache.get(mobile)
 
-            TOTAL PARTNER REQUESTS: {total_partner_requests}
+        # =====================================================
+        # CREATE DONATIONS
+        # =====================================================
 
-            DUPLICATE PARTNER REQUESTS: {duplicate_partner_requests}
-
-            ALREADY EXISTING PARTNERS: {already_existing_partners}
-
-            FINAL PARTNERS TO CREATE: {len(partners_to_create_final)}
-
-            ACTUALLY CREATED PARTNERS: {actually_created_partners}
-            
-            PARTNER CREATION STATUS: {'✓ SUCCESS' if actually_created_partners == len(partners_to_create_final) else '✗ PARTIAL/FAILED' if actually_created_partners > 0 else '✗ FAILED'}
-
-            ===========================
-            """
-
-        _logger.warning(debug_summary)
-
-        self.create_fetch_log(
-            history.id,
-            debug_summary,
-            'Debug Summary',
-            'Final testing/debugging summary with partner creation validation'
+        created_donations = self.env['api.donation'].create(
+            donations_vals
         )
 
-        # ==========================================================
-        # UPDATE DONATION VALUES
-        # ==========================================================
-
-        donations_with_partner = 0
-        donations_without_partner = 0
-        
-        for donation_val in donations_to_create:
-            if 'partner_key' in donation_val:
-                partner_id = partner_mapping.get(donation_val['partner_key'])
-                if partner_id:
-                    donation_val['donor_id'] = partner_id
-                    donations_with_partner += 1
-                else:
-                    # Partner not found in mapping
-                    partner_key = donation_val['partner_key']
-                    self.create_fetch_log(
-                        history.id,
-                        f"⚠ Donation could not be linked to partner",
-                        'Warning',
-                        f"Partner key {partner_key} not found in mapping for donor {donation_val.get('name', 'Unknown')}"
-                    )
-                    donations_without_partner += 1
-                del donation_val['partner_key']
-            else:
-                # No partner_key means donor_id was already set (from cache or default)
-                if donation_val.get('donor_id'):
-                    donations_with_partner += 1
-                else:
-                    donations_without_partner += 1
-        
-        self.create_fetch_log(
-            history.id,
-            f"Donation-Partner Linking Results",
-            'Success',
-            f"""
-                Donations with Partner ID: {donations_with_partner}
-                Donations without Partner ID: {donations_without_partner}
-                Total Donations to Create: {len(donations_to_create)}
-                            """
-            )
-
-        # -----------------------------
-        # CREATE DONATIONS
-        # -----------------------------
-        if donations_to_create:
-            new_donations = self.env['api.donation'].create(donations_to_create)
-            new_donation_ids = new_donations.ids
-
-        # -----------------------------
+        # =====================================================
         # STOCK PICKING
-        # -----------------------------
+        # =====================================================
+
         picking = False
 
         if stock_accumulator:
 
-            picking_type = self.picking_type_id
-
-            if not picking_type:
-                raise ValidationError(_("Stock Picking Type is missing."))
-
-            picking = StockPicking.create({
-                'picking_type_id': picking_type.id,
+            picking = self.env['stock.picking'].create({
+                'picking_type_id': self.picking_type_id.id,
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.destination_location_id.id,
-                'origin': f"API Donation {fields.Date.today()}",
+                'origin': 'Donation Import',
             })
+
+            moves = []
 
             for product_id, qty in stock_accumulator.items():
 
-                product = self.env['product.product'].browse(product_id)
+                product = self.env['product.product'].browse(
+                    product_id
+                )
 
-                StockMove.create({
+                moves.append((0, 0, {
                     'name': product.display_name,
                     'product_id': product.id,
                     'product_uom_qty': qty,
-                    'quantity': qty,
                     'product_uom': product.uom_id.id,
-                    'picking_id': picking.id,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.destination_location_id.id,
-                })
+                }))
+
+            picking.write({
+                'move_ids_without_package': moves
+            })
 
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
 
-        self.create_fetch_log(
-            history.id,
-            f"End _process_donations_bulk",
-            'Processing',
-            'Completed processing donations in bulk with optimized operations'
-        )
+        logs.append({
+            'name': f'Total Donations Created: {len(created_donations)}',
+            'status': 'success',
+        })
 
         return {
-            'new_donations': new_donation_ids,
-            'accumulators': {
-                'debit': dict(debit_accumulator),
-                'credit': dict(credit_accumulator)
-            },
-            'picking_id': picking.id if picking else False
-        }
-        
-    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
-        self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
-
-        """Prepare donation values with optimized lookups"""
-        if info.get('status') != 'success':
-            self.create_fetch_log(history.id, f"Skipping donation {info} at index {info_idx} due to unsuccessful status", 'Skipped', f"Donation at index {info_idx} is skipped because its status is not successful")
-
-            return None
-        
-        # Parse dates
-        created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
-        updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
-        
-        # Get currency and conversion rate - ensure we have a valid currency
-        currency_name = info.get('currency', '') or ''
-        conv_rate = all_data['conversion_rates'].get(currency_name.lower(), 1.0)
-        
-        # Validate currency exists
-        if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found in system, using company currency", 'Error', f"Currency {currency_name} not found in system, using company currency")
-
-            _logger.warning(f"Currency {currency_name} not found in system, using company currency")
-            # Use company currency as fallback
-            currency_name = self.env.company.currency_id.name.lower()
-            conv_rate = 1.0
-        
-        # Calculate amounts
-        total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
-        total_local = total_amount / conv_rate
-        
-        # Prepare donor info
-        donor = info.get('donor_details') or {}
-        donor_id = None
-        partner_key = None
-        
-        if donor.get('name', ''):
-            mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-            country_code = donor.get('country', '')
-            country_id = all_data['country_by_code'].get(country_code)
-            
-            # Check cache first - simpler approach
-            if mobile and country_id:
-                
-                # Try to find by mobile number in cache
-                for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
-                        donor_id = cached_id
-                        break
-            
-            if not donor_id:
-                # Create new partner
-                partner_vals = {
-                    'name': donor.get('name', ''),
-                    'mobile': mobile,
-                    'email': donor.get('email', ''),
-                    'country_code_id': country_id,
-                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                }
-                
-                partner_to_create.append(partner_vals)
-                # Use (mobile, country_id) tuple as key for mapping later
-                partner_key = (mobile, country_id)
-        else:
-            donor_id = all_data['default_partner_id']
-        
-        default_center = False
-        # Prepare donation items
-        items = info.get('items') or []
-        orm_items = []
-        order_lines = []
-        for it in items:
-            types_name = ''
-            item_name = ''
-            
-            # Fast extraction of type and item names
-            type_data = it.get('type', {})
-            if isinstance(type_data, dict) and 'en' in type_data:
-                types_name = type_data.get('en', {}).get('name', '')
-            
-            item_data = it.get('item', {})
-            if isinstance(item_data, dict) and 'en' in item_data:
-                item_name = item_data.get('en', {}).get('name', '')
-            self.create_fetch_log(
-                    history.id,
-                    f"Qurbani Processing Started",
-                    "Qurbani",
-                    f"""
-                    =====================================
-                    STARTING QURBANI PROCESSING
-                    =====================================
-
-                    Donation Import ID: {info.get('_id')}
-                    Donation Index: {info_idx}
-                    Record Type: {info.get('qurbani')}
-
-                    RAW ITEM:
-                    {it}
-
-                    DONOR:
-                    {donor}
-
-                    =====================================
-                    """
-                )
-            
-            if info.get('qurbani') != True:
-                orm_items.append({
-                    'donation_type': it.get('donationType', ''),
-                    'total': float(it.get('total', 0) or 0),
-                    'price': it.get('price', 0),
-                    'price_id': it.get('price_id', 0),
-                    'qty': it.get('qty', 0),
-                    'type': types_name,
-                    'item': item_name,
-                    'donation_no': it.get('donationNo', 0),
-                    'is_priced_item': it.get('isPricedItem', False),
-                })
-            
-            else:   # qurbani == True
-                # -------------------------------------------------------------
-                # 1. Product resolution (from your upper code)
-                # -------------------------------------------------------------
-                self.create_fetch_log(
-                    history.id,
-                    f"Distribution Data from API",
-                    "Qurbani",
-                    f"Qurbani json {info}"
-                )
-                
-                product = False
-                product_key = (
-                    f"{info.get('donationType', '')}"
-                    f"{item_name}"
-                    f"{types_name}"
-                ).strip().lower()
-
-                config = all_data['gateway_product_lines'].get(product_key)
-                if config:
-                    product = self.env['product.product'].browse(config['product_id'])
-                    self.create_fetch_log(
-                        history.id,
-                        f"Processing Qurbani item at index {info_idx}",
-                        'Processing',
-                        (
-                            f"Product Key: {product_key}\n"
-                            f"Gateway Product: {config}\n"
-                            f"Gateway Product ID: {config.get('product_id') if config else 'No Config'}\n"
-                            f"Product Found: {product.display_name if product else 'No Product'}"
-                        )
-                    )
-                if not product:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Qurbani product not found at index {info_idx}",
-                        'Error',
-                        f"Product Qurbani Web not found. Gateway Product Lines: {all_data['gateway_product_lines']} Product Key: {product_key}"
-                    )
-
-                # -------------------------------------------------------------
-                # 2. Hijri, quantity, amount, day (from upper code)
-                # -------------------------------------------------------------
-                # hijri = self.env['hijri'].search([], order="id desc", limit=1)
-                quantity = int(it.get('qty', 1) or 1)
-                amount = float(it.get('price', 0) or 0)
-
-                day_name = it.get('day', '')
-                # day = self.env['qurbani.day'].search([
-                #     ('web_qurbani_day', '=', day_name)
-                # ], limit=1)
-
-                # -------------------------------------------------------------
-                # 3. City lookup (from lower code, improved)
-                # -------------------------------------------------------------
-                city_name = it.get('qurbaniCity', '')
-                branch_name = it.get('qurbaniBranch', '')
-                qurbani_fullfilment = it.get('qurbaniFulfillment', '')
-                self.create_fetch_log(
-                    history.id,
-                    f"Distribution Data from API",
-                    "Qurbani",
-                    f"City from donor: '{city_name}', Branch from item: '{branch_name}'"
-                )
-                if qurbani_fullfilment:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Qurbani Fullfilment Info",
-                        "Qurbani",
-                        f"Qurbani json {info}"
-                    )
-
-                # -------------------------------------------------------------
-                # 5. Share names (from upper code)
-                # -------------------------------------------------------------
-                share_names = it.get('share_names', [donor.get('name', '')])
-                if not share_names:
-                    share_names = [donor.get('name', '')]
-
-                # -------------------------------------------------------------
-                # 6. Create qurbani order lines (from upper code)
-                # -------------------------------------------------------------
-                for idx in range(quantity):
-                    share_name = share_names[idx % len(share_names)]
-                    hissa_name = (
-                        f"{idx + 1}. {share_name}"
-                        if quantity > 1 else share_name
-                    )
-
-                    line_vals = {
-                        'product_id': product.id if product else False,
-                        'quantity': 1,
-                        'amount': amount,
-                        'day': day_name if day_name else False,
-                        # 'hijri_id': hijri.id if hijri else False,
-                        'city': city_name if city_name else False,
-                        'hissa_name': hissa_name,
-                        # 'distribution_id': distribution_id,
-                        'branch': branch_name if branch_name else False,
-                        'qurbani_fullfilment': qurbani_fullfilment if qurbani_fullfilment else False,
-                    }
-                    order_lines.append([0, 0, line_vals])
-                    self.create_fetch_log(
-                        history.id,
-                        f"Qurbani Order Line Created",
-                        "Qurbani",
-                        f"Line {idx+1}/{quantity}: {line_vals}"
-                    )
-        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
-
-        # Build donation values
-        donation_vals = {
-            'import_id': info.get('_id', ''),
-            'remarks': info.get('remarks', ''),
-            'total_amount': total_amount,
-            'total_amount_local': total_local,
-            'donor': info.get('donor', ''),
-            'donation_type': info.get('donation_type', ''),
-            'donation_from': info.get('donation_from', ''),
-            'dn_number': info.get('DN_Number', ''),
-            'subscription_interval': info.get('subscriptionInterval', ''),
-            'is_recurring': info.get('isRecurring', False),
-            'response_code': info.get('response_code', ''),
-            'response_description': info.get('response_description', ''),
-            'currency': currency_name,
-            'referer': info.get('referer', ''),
-            'website': info.get('website', ''),
-            'account_source': info.get('account_source', ''),
-            'conversion_rate': conv_rate,
-            'bank_charges': info.get('bank_charges', 0),
-            'bank_charges_in_text': info.get('bank_charges_in_text', ''),
-            'blinq_notification_number': info.get('blinq_notification_number', ''),
-            'created_at': created_dt,
-            'updated_at': updated_dt,
-            'donation_id': info.get('donation_id', ''),
-            'invoice_id': info.get('invoice_id', ''),
-            'transaction_id': info.get('transaction_id', ''),
-            'name': donor.get('name', ''),
-            'phone': donor.get('phone', ''),
-            'email': donor.get('email', ''),
-            'cnic': donor.get('cnic', ''),
-            'country': donor.get('country', ''),
-            'ip_address': donor.get('ipAddress', ''),
-            'subscription_for_news': donor.get('subscriptionForNews', False),
-            'subscription_for_whatsapp': donor.get('subscriptionForWhatsapp', False),
-            'subscription_for_sms': donor.get('subscriptionForSms', False),
-            'qurbani_country': donor.get('qurbaniCountry', ''),
-            'qurbani_city': donor.get('qurbaniCity', ''),
-            'qurbani_day': donor.get('qurbaniDay', ''),
-            'donation_item_ids': [(0, 0, it) for it in orm_items],
-            'qurbani_order_line_ids': order_lines,
-            'fetch_history_id': history.id,
-            'qurbani': True if info.get('qurbani') == True else False,
+            'created_donations': created_donations.ids,
+            'debit_accumulator': debit_accumulator,
+            'credit_accumulator': credit_accumulator,
+            'picking_id': picking.id if picking else False,
         }
 
-        # Set donor_id - either from cache, from new partner, or default
-        if donor_id:
-            donation_vals['donor_id'] = donor_id
-        elif partner_key is not None:
-            donation_vals['partner_key'] = partner_key
-        else:
-            donation_vals['donor_id'] = all_data['default_partner_id']
+    # =========================================================
+    # JOURNAL ENTRY
+    # =========================================================
 
-        self.create_fetch_log(history.id, f"End _prepare_donation_vals_fast", 'Processing', f"Completed preparation of donation values for index {info_idx}")
-        
-        return donation_vals
-
-    def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency, 
-                                        debit_accumulator, credit_accumulator, history):
-        self.create_fetch_log(history.id, f"Start _accumulate_donation_lines_fast", 'Processing', f"Starting to accumulate journal lines for donation with import_id {donation_vals.get('import_id', '')} using optimized lookups")
-
-        """Accumulate journal lines with optimized lookups"""
-        currency_name = donation_vals.get('currency', '')
-        currency_rec = all_data['currency_by_name'].get(currency_name.lower())
-        if not currency_rec:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found for donation, skipping journal line accumulation", 'Error', f"Currency {currency_name} not found for donation, skipping journal line accumulation")
-
-            _logger.warning(f"Currency {currency_name} not found for donation")
-            return
-        
-        # Get debit account from cache
-        debit_account_id = all_data['gateway_currency_lines'].get(currency_name.lower())
-        if not debit_account_id:
-            self.create_fetch_log(history.id, f"Debit account not found for currency {currency_name}, skipping journal line accumulation", 'Error', f"Debit account not found for currency {currency_name}, skipping journal line accumulation")
-
-            _logger.warning(f"Debit account not found for currency {currency_name}")
-            return
-        
-        is_foreign = currency_rec != company_currency
-        
-        # raise ValidationError(str(donation_vals.get('donation_item_ids', [])))
-        missing_account_products = []
-        # Process items
-        for it in donation_vals.get('donation_item_ids', []):
-            item = it[2]  # (0, 0, values) format
-            product_name = (
-                f"{item.get('donation_type', '')}"
-                f"{item.get('item', '')}"
-                f"{item.get('type', '')}"
-            ).strip().lower()
-
-            config = all_data['gateway_product_lines'].get(product_name)
-            if not config:
-                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
-
-                _logger.warning(f"Product config not found for {product_name}")
-                continue
-            
-            credit_account_id = config['account_id']
-            if not credit_account_id:
-                missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id'
-            })
-            
-            item_total = float(item.get('total', 0))
-            conv_rate = float(donation_vals.get('conversion_rate', 1.0))
-            
-            # Apply rounding at the item level
-            if is_foreign:
-                # Round foreign amount to currency precision
-                item_total = currency_rec.round(item_total)
-            
-            item_total_base = item_total / conv_rate
-            # Round base amount to company currency precision
-            item_total_base = company_currency.round(item_total_base)
-            
-            # Ensure we have a currency ID
-            currency_id = currency_rec.id if currency_rec else company_currency.id
-            
-            # Accumulate debit
-            debit_key = (debit_account_id, currency_id)
-            d = debit_accumulator[debit_key]
-            d['debit_base'] += item_total_base
-            if is_foreign:
-                d['amount_currency'] += item_total
-            
-            # Accumulate credit
-            credit_key = (credit_account_id, currency_id)
-            c = credit_accumulator[credit_key]
-            c['credit_base'] += item_total_base
-            if is_foreign:
-                c['amount_currency'] -= item_total
-            missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id',
-                'credit': c,
-            })
-        # raise ValidationError(str(missing_account_products))
-        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
-
-    # ---------------------- Optimized Helper Methods ----------------------
-    def _date_to_iso_z(self, date_val, t):
-        dt = datetime.combine(date_val, t).replace(tzinfo=timezone.utc)
-        return dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-
-    def _parse_iso_to_dt_fast(self, iso_str, history):
-        """Fast ISO datetime parsing"""
-        if not iso_str:
-            self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}")
-
-            return None
-        try:
-            # Most common format first
-            if 'T' in iso_str:
-                # Handle ISO format with Z or timezone
-                if 'Z' in iso_str:
-                    return datetime.fromisoformat(iso_str.replace('Z', '+00:00')).replace(tzinfo=None)
-                elif '+' in iso_str or '-' in iso_str[10:]:  # Has timezone offset
-                    return datetime.fromisoformat(iso_str).replace(tzinfo=None)
-                else:
-                    return datetime.fromisoformat(iso_str)
-            else:
-                # Try common date formats
-                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']:
-                    try:
-                        return datetime.strptime(iso_str, fmt)
-                    except ValueError:
-                        self.create_fetch_log(history.id, f"Failed to parse datetime '{iso_str}' with format '{fmt}'")
-
-                        continue
-                # Fallback to naive parsing
-                return datetime.strptime(iso_str.split('.')[0], '%Y-%m-%d %H:%M:%S')
-        except Exception:
-            self.create_fetch_log(history.id, f"Failed to parse datetime: {iso_str}")
-
-            _logger.debug('Failed to parse datetime: %s', iso_str)
-            return None
-
-    # ---------------------- Journal Entry Creation ----------------------
-    def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _create_grouped_journal_move", 'Journal Entry Creation', 'Starting to create grouped journal entry with accumulated lines')
-
-        """Create journal entry safely (currency constraint compliant)"""
+    def _create_grouped_journal_move(
+        self,
+        journal,
+        debit_accumulator,
+        credit_accumulator,
+        company_currency
+    ):
 
         lines = []
-        company_currency_id = company_currency.id
-        # raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator))
 
-        # -----------------------------
-        # Debit lines
-        # -----------------------------
-        for (account_id, currency_id), vals in debit_accumulator.items():
-            debit_amount = company_currency.round(vals['debit_base'])
-            if not debit_amount:
-                self.create_fetch_log(history.id, f"Skipping debit line for account {account_id} and currency {currency_id} due to zero amount after rounding", 'Skipped', f"Debit line for account {account_id} and currency {currency_id} is skipped because the amount is zero after rounding")
+        # =====================================================
+        # DEBIT
+        # =====================================================
 
-                continue
+        for account_id, amount in debit_accumulator.items():
 
-            # Company currency line
-            if currency_id == company_currency_id:
-                lines.append((0, 0, {
-                    'account_id': account_id,
-                    'debit': debit_amount,
-                    'credit': 0.0,
-                    'name': 'Donation Import - Debit',
-                }))
-            # Foreign currency line
-            else:
-                lines.append((0, 0, {
-                    'account_id': account_id,
-                    'debit': debit_amount,
-                    'credit': 0.0,
-                    'currency_id': currency_id,
-                    'amount_currency': company_currency.round(vals['amount_currency']),
-                    'name': 'Donation Import - Debit',
-                }))
+            lines.append((0, 0, {
+                'account_id': account_id,
+                'debit': amount,
+                'credit': 0.0,
+                'name': 'Donation Import Debit',
+            }))
 
-        # -----------------------------
-        # Credit lines
-        # -----------------------------
-        for (account_id, currency_id), vals in credit_accumulator.items():
-            credit_amount = company_currency.round(vals['credit_base'])
-            if not credit_amount:
-                continue
+        # =====================================================
+        # CREDIT
+        # =====================================================
 
-            # Company currency line
-            if currency_id == company_currency_id:
-                lines.append((0, 0, {
-                    'account_id': account_id,
-                    'debit': 0.0,
-                    'credit': credit_amount,
-                    'name': 'Donation Import - Credit',
-                }))
-            # Foreign currency line
-            else:
-                lines.append((0, 0, {
-                    'account_id': account_id,
-                    'debit': 0.0,
-                    'credit': credit_amount,
-                    'currency_id': currency_id,
-                    'amount_currency': company_currency.round(vals['amount_currency']),  # already negative
-                    'name': 'Donation Import - Credit',
-                }))
+        for account_id, amount in credit_accumulator.items():
+
+            lines.append((0, 0, {
+                'account_id': account_id,
+                'debit': 0.0,
+                'credit': amount,
+                'name': 'Donation Import Credit',
+            }))
 
         if not lines:
-            self.create_fetch_log(history.id, "No journal lines to create.", 'Error', "No journal lines to create.")
-            # raise ValidationError(_("No journal lines to create."))
+            return False
 
-        # -----------------------------
-        # Balance check before create
-        # -----------------------------
-        total_debit = sum(l[2]['debit'] for l in lines)
-        total_credit = sum(l[2]['credit'] for l in lines)
-        diff = company_currency.round(total_debit - total_credit)
+        total_debit = sum(x[2]['debit'] for x in lines)
+        total_credit = sum(x[2]['credit'] for x in lines)
 
-        if not company_currency.is_zero(diff):
-            diff_account = self._get_rounding_difference_account(journal, history)
+        diff = round(total_debit - total_credit, 2)
 
-            if diff > 0 and diff_account:
-                # Need credit
+        if diff != 0:
+
+            rounding_account = journal.default_account_id
+
+            if not rounding_account:
+                raise ValidationError(_("Journal missing default account"))
+
+            if diff > 0:
+
                 lines.append((0, 0, {
-                    'account_id': diff_account.id,
+                    'account_id': rounding_account.id,
                     'debit': 0.0,
                     'credit': abs(diff),
                     'name': 'Rounding Adjustment',
                 }))
-            elif diff_account:
-                # Need debit
+
+            else:
+
                 lines.append((0, 0, {
-                    'account_id': diff_account.id,
+                    'account_id': rounding_account.id,
                     'debit': abs(diff),
                     'credit': 0.0,
                     'name': 'Rounding Adjustment',
                 }))
 
-        # -----------------------------
-        # Create & Post Move
-        # -----------------------------
-        # raise ValidationError(str(lines))
-        move = self.env['account.move'].sudo().create({
+        move = self.env['account.move'].create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'date': fields.Date.today(),
-            'ref': f"Donation Import {fields.Date.today()}",
+            'ref': 'Donation Import',
             'line_ids': lines,
         })
 
-        self.create_fetch_log(history.id, f"End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
-        # move.action_post()
+        move.action_post()
+
         return move
 
-    def _get_rounding_difference_account(self, journal, history):
-        self.create_fetch_log(history.id, f"Start _get_rounding_difference_account", 'Journal Entry Creation', 'Attempting to find rounding difference account with proper fallbacks')
+    # =========================================================
+    # HELPERS
+    # =========================================================
 
-        """Get rounding difference account with proper fallbacks"""
-        # First try journal's default account
-        if journal.default_account_id:
-            return journal.default_account_id
-        
-        # Try company's difference account
-        company = self.env.company
-        if company.difference_account_prefix:
-            diff_account = self.env['account.account'].search([
-                ('code', 'like', f"{company.difference_account_prefix}%"),
-                ('company_id', '=', company.id)
-            ], limit=1)
-            if diff_account:
-                return diff_account
-        
-        # Try expense rounding account
-        diff_account = self.env['account.account'].search([
-            ('account_type', 'in', ['expense', 'income']),
-            ('name', 'ilike', 'rounding'),
-            ('company_id', '=', company.id)
-        ], limit=1)
-        
-        if not diff_account:
-            # Last resort: get any expense account
-            diff_account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', company.id)
-            ], limit=1)
-            
-            if not diff_account:
-                self.create_fetch_log(history.id,  f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.", 'Error', f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.")
-        
-        self.create_fetch_log(history.id, f"End _get_rounding_difference_account", 'Journal Entry Creation', 'Completed search for rounding difference account')
+    def _date_to_iso_z(self, date_val, t):
+        dt = datetime.combine(date_val, t).replace(
+            tzinfo=timezone.utc
+        )
 
-        return diff_account
+        return dt.isoformat(
+            timespec='milliseconds'
+        ).replace('+00:00', 'Z')
