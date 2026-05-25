@@ -750,7 +750,7 @@ class APIDonationWizard(models.TransientModel):
             'credit_accumulator': credit_accumulator,
             'picking_id': picking.id if picking else False,
         }
-
+    
     # =========================================================
     # JOURNAL ENTRY
     # =========================================================
@@ -760,84 +760,98 @@ class APIDonationWizard(models.TransientModel):
         journal,
         debit_accumulator,
         credit_accumulator,
-        company_currency,
-        logs
+        company_currency
     ):
 
         lines = []
-
-        total_debit = 0.0
-        total_credit = 0.0
 
         # =====================================================
         # DEBIT
         # =====================================================
 
-        for account_id, amount in debit_accumulator.items():
+        for key, vals in debit_accumulator.items():
 
-            amount = round(amount, 2)
+            account_id = vals['account_id']
+            amount = vals['balance']
+            currency_id = vals.get('currency_id')
+            amount_currency = vals.get('amount_currency', 0.0)
 
-            if not amount:
-                continue
-
-            total_debit += amount
-
-            lines.append((0, 0, {
+            line_vals = {
                 'account_id': account_id,
-                'debit': amount,
-                'credit': 0.0,
+                'debit': amount if amount > 0 else 0.0,
+                'credit': abs(amount) if amount < 0 else 0.0,
                 'name': 'Donation Import Debit',
-            }))
+            }
+
+            # ============================================
+            # FOREIGN CURRENCY SUPPORT
+            # ============================================
+
+            if currency_id and currency_id != company_currency.id:
+                line_vals.update({
+                    'currency_id': currency_id,
+                    'amount_currency': amount_currency,
+                })
+
+            lines.append((0, 0, line_vals))
 
         # =====================================================
         # CREDIT
         # =====================================================
 
-        for account_id, amount in credit_accumulator.items():
+        for key, vals in credit_accumulator.items():
 
-            amount = round(amount, 2)
+            account_id = vals['account_id']
+            amount = vals['balance']
+            currency_id = vals.get('currency_id')
+            amount_currency = vals.get('amount_currency', 0.0)
 
-            if not amount:
-                continue
-
-            total_credit += amount
-
-            lines.append((0, 0, {
+            line_vals = {
                 'account_id': account_id,
-                'debit': 0.0,
-                'credit': amount,
+                'debit': amount if amount > 0 else 0.0,
+                'credit': abs(amount) if amount < 0 else 0.0,
                 'name': 'Donation Import Credit',
-            }))
+            }
+
+            # ============================================
+            # FOREIGN CURRENCY SUPPORT
+            # ============================================
+
+            if currency_id and currency_id != company_currency.id:
+                line_vals.update({
+                    'currency_id': currency_id,
+                    'amount_currency': amount_currency,
+                })
+
+            lines.append((0, 0, line_vals))
+
+        # =====================================================
+        # EMPTY CHECK
+        # =====================================================
 
         if not lines:
-
-            logs.append({
-                'name': 'No journal lines generated',
-                'status': 'warning',
-            })
-
             return False
 
         # =====================================================
-        # BALANCE FIX
+        # BALANCE CHECK
         # =====================================================
 
-        diff = round(
-            total_debit - total_credit,
-            2
-        )
+        total_debit = sum(x[2]['debit'] for x in lines)
+        total_credit = sum(x[2]['credit'] for x in lines)
+
+        diff = round(total_debit - total_credit, 2)
 
         if diff != 0:
 
-            if not journal.default_account_id:
-                raise ValidationError(
-                    _("Journal missing default account.")
-                )
+            rounding_account = journal.default_account_id
+
+            if not rounding_account:
+                raise ValidationError(_("Journal missing default account"))
 
             if diff > 0:
 
                 lines.append((0, 0, {
-                    'account_id': journal.default_account_id.id,
+                    'account_id': rounding_account.id,
                     'debit': 0.0,
                     'credit': abs(diff),
                     'name': 'Rounding Adjustment',
@@ -846,41 +860,25 @@ class APIDonationWizard(models.TransientModel):
             else:
 
                 lines.append((0, 0, {
-                    'account_id': journal.default_account_id.id,
+                    'account_id': rounding_account.id,
                     'debit': abs(diff),
                     'credit': 0.0,
                     'name': 'Rounding Adjustment',
                 }))
 
-        move = self.env[
-            'account.move'
-        ].create({
+        # =====================================================
+        # CREATE MOVE
+        # =====================================================
+
+        move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'date': fields.Date.today(),
-            'ref': f'Donation Import {fields.Date.today()}',
+            'ref': 'Donation Import',
             'line_ids': lines,
         })
 
-        try:
-
-            move.action_post()
-
-        except Exception as e:
-
-            logs.append({
-                'name': 'Journal posting failed',
-                'status': 'error',
-                'reason': str(e),
-            })
-
-            _logger.exception(
-                "Journal Posting Failed"
-            )
-
-            raise ValidationError(
-                _("Journal posting failed: %s") % str(e)
-            )
+        move.action_post()
 
         return move
 
