@@ -29,7 +29,7 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
-        raise ValidationError(str(data))
+        # raise ValidationError(str(data))
 
         # -------------------------
         # 1. Prepare Line Items
@@ -48,7 +48,7 @@ class DonationHomeService(models.Model):
         # -------------------------
         dhs = self.env['donation.home.service'].create({
             'donor_id': data['donor_id'],
-            'favor': data['favor'],
+            'favor': data.get('favor'),
             'address': data['address'],
             'service_charges': data['service_charges'],
             'donation_home_service_line_ids': product_lines,
