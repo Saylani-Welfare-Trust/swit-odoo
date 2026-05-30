@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class DonationHomeService(models.Model):
@@ -28,6 +29,8 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
+        raise ValidationError(str(data))
+
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------
