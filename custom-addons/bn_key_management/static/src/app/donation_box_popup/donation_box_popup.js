@@ -104,13 +104,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
                 return;
             }
 
-            const lineProduct = {
-                ...product,
-                display_name: `${product.display_name || product.name} (Box: ${collection.box_no})`,
-            };
-
             if (current_order) {
-                current_order.add_product(lineProduct, {
+                current_order.add_product(product, {
                     quantity: 1,
                     price_extra: collection.amount,
                     description: `Box No.: ${collection.box_no}`,
