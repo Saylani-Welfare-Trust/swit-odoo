@@ -88,6 +88,8 @@ class ForeignCurrency(models.Model):
         session = self.env['pos.session'].search([('state', '=', 'opened')], limit=1)
         if not session:
             session = self.env['pos.session'].search([], limit=1)
+        if not session:
+            raise UserError('No POS session available to create a POS order.')
 
         product = self.env['product.product'].search([('sale_ok', '=', True)], limit=1)
         if not product:
@@ -100,7 +102,8 @@ class ForeignCurrency(models.Model):
 
         order_vals = {
             'name': pos_name,
-            'user_id': session.user_id.id if session else self.env.uid,
+            'session_id': session.id,
+            'user_id': session.user_id.id or self.env.uid,
             'state': 'draft',
             'amount_total': selected_amount,
             'amount_tax': 0.0,
@@ -115,9 +118,6 @@ class ForeignCurrency(models.Model):
                 'price_subtotal_incl': selected_amount,
             })],
         }
-
-        if session:
-            order_vals['session_id'] = session.id
 
         if 'pos_order_seq' in self.env['pos.order']._fields:
             order_vals['pos_order_seq'] = pos_name
