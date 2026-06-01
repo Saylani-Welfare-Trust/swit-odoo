@@ -46,12 +46,13 @@ class AnalyticDistributionModel(models.Model):
         res = {}
         fnames = set(self._get_fields_to_check())
 
-        raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
+        # raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
     
         for rec in self.search(domain):
             try:
                 score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
                 
+                raise ValidationError(str(score))
 
                 if score > best_score:
                     res = rec.analytic_distribution
