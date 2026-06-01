@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree create="0" delete="0" editable="bottom">
                 <header>
-                    <button name="action_create_pos_record" type="object" string="Create POS Record" class="oe_highlight"/>
+                    <button name="action_create_donation_box_request" type="object" string="Create Donation Box Request" class="oe_highlight"/>
                 </header>
                 <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="rider_log" />
