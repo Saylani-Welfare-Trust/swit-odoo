@@ -77,7 +77,7 @@ class AnalyticDistributionModel(models.Model):
                       ):
             return 1
         
-        raise 0
+        return 0
     
     @api.onchange('analytic_account_id')
     def _onchange_analytic_account_id(self):
