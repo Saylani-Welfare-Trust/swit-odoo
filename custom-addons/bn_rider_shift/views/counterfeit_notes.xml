@@ -13,7 +13,7 @@
                 <field name="lot_id" string="Box No." />
                 <field name="submission_time" />
                 <field name="amount" />
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'paid'" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'payment_received'" decoration-success="state == 'paid'" />
             </tree>
         </field>
     </record>

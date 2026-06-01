@@ -54,7 +54,7 @@ class CounterfeitNotesWizard(models.TransientModel):
             'remarks': 'CFB',
         })
 
-        notes.write({'state': 'paid'})
+        notes.write({'state': 'payment_received'})
 
         return {
             'type': 'ir.actions.client',

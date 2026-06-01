@@ -16,7 +16,7 @@ class CounterFietNotes(models.Model):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
-    state = fields.Selection([('draft', 'Draft'), ('paid', 'Paid')], string='State', default='draft')
+    state = fields.Selection([('draft', 'Draft'), ('payment_received', 'Payment Received'), ('paid', 'Paid')], string='State', default='draft')
 
     def action_open_counterfeit_wizard(self):
         if not self:
