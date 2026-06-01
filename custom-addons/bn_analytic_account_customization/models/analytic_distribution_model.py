@@ -34,7 +34,7 @@ class AnalyticDistributionModel(models.Model):
         # Now safe to modify
         vals['analytic_account_id'] = self.env.user.employee_id.analytic_account_id.id
 
-        raise ValidationError(str(vals))
+        # raise ValidationError(str(vals))
 
         """ Returns the distribution model that has the most fields that corresponds to the vals given
             This method should be called to prefill analytic distribution field on several models """
@@ -50,6 +50,8 @@ class AnalyticDistributionModel(models.Model):
             try:
                 score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
                 
+                raise ValidationError(str(score))
+
                 if score > best_score:
                     res = rec.analytic_distribution
                     best_score = score
