@@ -16,10 +16,15 @@ class CounterFietNotes(models.Model):
     submission_time = fields.Date('Submission Date')
 
     amount = fields.Float('Amount')
+    state = fields.Selection([('draft', 'Draft'), ('paid', 'Paid')], string='State', default='draft')
 
     def action_open_counterfeit_wizard(self):
         if not self:
             raise UserError('Please select counterfeit note records before opening the wizard.')
+
+        invalid_notes = self.filtered(lambda note: note.state != 'draft')
+        if invalid_notes:
+            raise UserError('Only counterfeit notes in draft state can be selected.')
 
         if any(not note.lot_id for note in self):
             raise UserError('Selected counterfeit notes must have a box assigned.')

@@ -25,6 +25,10 @@ class CounterfeitNotesWizard(models.TransientModel):
         if not notes:
             raise UserError('Please select counterfeit note records before creating CFB.')
 
+        invalid_notes = notes.filtered(lambda note: note.state != 'draft')
+        if invalid_notes:
+            raise UserError('Only counterfeit notes in draft state can be used.')
+
         if any(not note.lot_id for note in notes):
             raise UserError('Selected counterfeit notes must have a box assigned.')
 
@@ -49,6 +53,8 @@ class CounterfeitNotesWizard(models.TransientModel):
             'counterfeit_notes': self.total_amount,
             'remarks': 'CFB',
         })
+
+        notes.write({'state': 'paid'})
 
         return {
             'type': 'ir.actions.client',
