@@ -43,7 +43,7 @@ class CounterfeitNotesWizard(models.TransientModel):
         self.env['rider.collection'].create({
             'rider_id': counterfeit_rider.id,
             'date': fields.Date.today(),
-            'donation_box_registration_installation_id': box.id,
+            'donation_box_registration_installation_id': box.id if box else False,
             'state': 'donation_submit',
             'amount': self.actual_amount,
             'counterfeit_notes': self.total_amount,
