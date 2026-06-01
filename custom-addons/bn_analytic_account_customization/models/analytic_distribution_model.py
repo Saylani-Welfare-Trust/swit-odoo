@@ -46,13 +46,12 @@ class AnalyticDistributionModel(models.Model):
         res = {}
         fnames = set(self._get_fields_to_check())
 
-        raise ValidationError(str(fnames)+" "+str(vals))
+        # raise ValidationError(str(fnames)+" "+str(vals))
         # raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
     
         for rec in self.search(domain):
             try:
                 score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
-                
 
                 if score > best_score:
                     res = rec.analytic_distribution
@@ -62,7 +61,7 @@ class AnalyticDistributionModel(models.Model):
         return res
     
     def _check_score(self, key, value):
-        raise ValidationError(str(key)+" "+str(value))
+        # raise ValidationError(str(key)+" "+str(value))
 
         self.ensure_one()
 
@@ -78,7 +77,7 @@ class AnalyticDistributionModel(models.Model):
                       ):
             return 1
         
-        raise NonMatchingDistribution
+        raise 0
     
     @api.onchange('analytic_account_id')
     def _onchange_analytic_account_id(self):
