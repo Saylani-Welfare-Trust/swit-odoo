@@ -70,7 +70,6 @@ class ForeignCurrency(models.Model):
             'user_id': session.user_id.id or self.env.uid,
             'amount_total': selected_amount,
             'amount_tax': 0.0,
-            'amount_total_incl': selected_amount,
             'amount_paid': selected_amount,
             'amount_return': 0.0,
             'state': 'paid',
