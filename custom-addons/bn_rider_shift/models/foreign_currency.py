@@ -42,19 +42,38 @@ class ForeignCurrency(models.Model):
         if 'pos.order' not in self.env:
             raise UserError('POS module is not available in this database.')
 
+        invalid_lines = self.filtered(lambda rec: rec.state != 'converted')
+        if invalid_lines:
+            raise UserError('Only converted foreign currency lines can be used. Please select only converted lines.')
+
         selected_amount = sum(self.mapped('exchanged_amount'))
         if not selected_amount:
-            raise UserError('Please select foreign currency lines with a non-zero exchanged amount.')
+            raise UserError('Please select converted foreign currency lines with a non-zero exchanged amount.')
+
+        session = self.env['pos.session'].search([('state', '=', 'opened')], limit=1)
+        if not session:
+            session = self.env['pos.session'].search([], limit=1)
+        if not session:
+            raise UserError('No POS session available to create a POS order.')
+
+        product = self.env['product.product'].search([('sale_ok', '=', True)], limit=1)
+        if not product:
+            product = self.env['product.product'].search([], limit=1)
+        if not product:
+            raise UserError('No product found to create POS order lines.')
 
         current_time = fields.Datetime.context_timestamp(self, fields.Datetime.now())
         pos_name = f"FCB-{current_time.strftime('%Y%m%d%H%M%S')}"
         order_vals = {
             'name': pos_name,
+            'session_id': session.id,
+            'user_id': session.user_id.id or self.env.uid,
             'amount_total': selected_amount,
             'amount_paid': selected_amount,
             'amount_return': 0.0,
             'state': 'paid',
             'lines': [(0, 0, {
+                'product_id': product.id,
                 'name': f'Foreign currency total for {len(self)} line(s)',
                 'qty': 1,
                 'price_unit': selected_amount,
