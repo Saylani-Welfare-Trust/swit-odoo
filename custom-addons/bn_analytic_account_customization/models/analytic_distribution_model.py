@@ -1,10 +1,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-# from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingDistribution
+from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingDistribution
 
-
-class NonMatchingDistribution(Exception):
-    pass
 
 class AnalyticDistributionModel(models.Model):
     _name = 'account.analytic.distribution.model'
@@ -52,33 +49,47 @@ class AnalyticDistributionModel(models.Model):
         # raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
     
         for rec in self.search(domain):
-            score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
-            
-            raise ValidationError(str(score))
+            try:
+                score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
+                
 
-            if score > best_score:
-                res = rec.analytic_distribution
-                best_score = score
-            # try:
-            # except NonMatchingDistribution:
-            #     continue
+                if score > best_score:
+                    res = rec.analytic_distribution
+                    best_score = score
+            except NonMatchingDistribution:
+                continue
         return res
     
     def _check_score(self, key, value):
         self.ensure_one()
 
         if key == 'company_id':
-            # if not self.company_id or value == self.company_id.id:
-            if not self.company_id or value in [self.company_id.id]:
+            if not self.company_id or value == self.company_id.id:
                 return 1 if self.company_id else 0.5
             raise NonMatchingDistribution
+        
         if not self[key]:
             return 0
-        if value and ((self[key].id in value) if isinstance(value, (list, tuple))
-                      else (value.startswith(self[key])) if key.endswith('_prefix')
-                      else (value == self[key].id) if key != 'product_id' else  (value in self[key].ids)
-                      ):
-            return 1
+        
+        # Handle different field types
+        if key == 'product_id':
+            # For Many2many field
+            if value:
+                # Convert value to list if it's a single integer
+                product_ids = [value] if isinstance(value, int) else value
+                
+                # Check if any of the product IDs match
+                if any(pid in self.product_id.ids for pid in product_ids):
+                    return 1
+        elif key.endswith('_prefix'):
+            # For prefix fields
+            if value and value.startswith(self[key]):
+                return 1
+        else:
+            # For regular Many2one fields
+            if value and ((self[key].id in value) if isinstance(value, (list, tuple))
+                        else (value == self[key].id)):
+                return 1
         
         raise NonMatchingDistribution
     
