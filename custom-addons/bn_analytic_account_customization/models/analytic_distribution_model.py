@@ -1,7 +1,10 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingDistribution
+# from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingDistribution
 
+
+class NonMatchingDistribution(Exception):
+    pass
 
 class AnalyticDistributionModel(models.Model):
     _name = 'account.analytic.distribution.model'
