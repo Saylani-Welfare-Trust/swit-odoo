@@ -26,6 +26,7 @@ class ForeignCurrency(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot")
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
+    attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
 
 
     def action_convert_amount(self):
