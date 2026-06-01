@@ -70,3 +70,7 @@ class ForeignCurrency(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_create_pos_record(self):
+        """Compatibility wrapper for legacy POS button calls."""
+        return self.action_create_donation_box_request()
