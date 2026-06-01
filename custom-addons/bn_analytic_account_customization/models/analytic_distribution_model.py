@@ -46,7 +46,7 @@ class AnalyticDistributionModel(models.Model):
         res = {}
         fnames = set(self._get_fields_to_check())
 
-        raise ValidationError(str(domain))
+        raise ValidationError(str(domain)+" "+str(self))
     
         for rec in self.search(domain):
             try:
