@@ -58,6 +58,7 @@ class AnalyticDistributionModel(models.Model):
                     res = rec.analytic_distribution
                     best_score = score
             except NonMatchingDistribution:
+                raise ValidationError(str(score))
                 continue
         return res
     
