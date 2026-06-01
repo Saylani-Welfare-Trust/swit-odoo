@@ -27,13 +27,14 @@ class CounterfeitNotesWizard(models.TransientModel):
 
         if any(not note.lot_id for note in notes):
             raise UserError('Selected counterfeit notes must have a box assigned.')
-        if len(notes.mapped('lot_id')) != 1:
-            raise UserError('Selected counterfeit notes must belong to the same box.')
 
-        lot = notes[0].lot_id
-        box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
-        if not box:
-            raise UserError('Could not find a donation box registration for the selected box.')
+        lot_ids = notes.mapped('lot_id').ids
+        box = False
+        if len(set(lot_ids)) == 1:
+            lot = notes[0].lot_id
+            box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
+            if not box:
+                raise UserError('Could not find a donation box registration for the selected box.')
 
         counterfeit_rider = self.env['hr.employee'].search([('name', '=', 'Counterfeit')], limit=1)
         if not counterfeit_rider:

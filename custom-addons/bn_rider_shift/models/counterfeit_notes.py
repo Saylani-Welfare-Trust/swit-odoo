@@ -23,11 +23,10 @@ class CounterFietNotes(models.Model):
 
         if any(not note.lot_id for note in self):
             raise UserError('Selected counterfeit notes must have a box assigned.')
-        if len(self.mapped('lot_id')) != 1:
-            raise UserError('Selected counterfeit notes must belong to the same box.')
 
         total_amount = sum(self.mapped('amount'))
-        lot = self[0].lot_id
+        lot_ids = self.mapped('lot_id').ids
+        default_lot_id = self[0].lot_id.id if len(set(lot_ids)) == 1 else False
 
         return {
             'name': 'Create CFB',
@@ -39,6 +38,6 @@ class CounterFietNotes(models.Model):
                 'default_note_ids': [(6, 0, self.ids)],
                 'default_total_amount': total_amount,
                 'default_actual_amount': total_amount,
-                'default_lot_id': lot.id,
+                'default_lot_id': default_lot_id,
             }
         }
