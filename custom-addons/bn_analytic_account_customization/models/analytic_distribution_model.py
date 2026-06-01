@@ -49,17 +49,16 @@ class AnalyticDistributionModel(models.Model):
         # raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
     
         for rec in self.search(domain):
-            try:
-                score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
-                
-                raise ValidationError(str(score))
+            score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
+            
+            raise ValidationError(str(score))
 
-                if score > best_score:
-                    res = rec.analytic_distribution
-                    best_score = score
-            except NonMatchingDistribution:
-                raise ValidationError(str(score))
-                continue
+            if score > best_score:
+                res = rec.analytic_distribution
+                best_score = score
+            # try:
+            # except NonMatchingDistribution:
+            #     continue
         return res
     
     def _check_score(self, key, value):
