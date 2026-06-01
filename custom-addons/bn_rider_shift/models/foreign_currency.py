@@ -77,7 +77,7 @@ class ForeignCurrency(models.Model):
             'rider_id': fc_rider.id,
             'date': fields.Date.today(),
             'donation_box_registration_installation_id': box.id,
-            'state': 'donation_not_collected',
+            'state': 'donation_submit',
             'amount': selected_amount,
             'remarks': fcb_name,  # Store FCB name in remarks
         })
