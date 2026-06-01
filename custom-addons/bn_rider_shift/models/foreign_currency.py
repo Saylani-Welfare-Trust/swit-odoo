@@ -50,6 +50,41 @@ class ForeignCurrency(models.Model):
         if not selected_amount:
             raise UserError('Please select converted foreign currency lines with a non-zero exchanged amount.')
 
+        if any(not rec.rider_id for rec in self):
+            raise UserError('Selected foreign currency lines must have a rider assigned.')
+        rider_ids = self.mapped('rider_id')
+        if len(rider_ids) != 1:
+            raise UserError('Selected foreign currency lines must belong to the same rider.')
+
+        if any(not rec.lot_id for rec in self):
+            raise UserError('Selected foreign currency lines must have a box assigned.')
+        lot_ids = self.mapped('lot_id')
+        if len(lot_ids) != 1:
+            raise UserError('Selected foreign currency lines must belong to the same box.')
+
+        rider = rider_ids[0]
+        lot = lot_ids[0]
+
+        box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
+        if not box:
+            raise UserError('Could not find a donation box registration for the selected box.')
+
+        rider_collection = self.env['rider.collection'].search([
+            ('rider_id', '=', rider.id),
+            ('donation_box_registration_installation_id', '=', box.id),
+            ('date', '=', fields.Date.today()),
+        ], limit=1)
+        if rider_collection:
+            rider_collection.amount += selected_amount
+        else:
+            rider_collection = self.env['rider.collection'].create({
+                'rider_id': rider.id,
+                'date': fields.Date.today(),
+                'donation_box_registration_installation_id': box.id,
+                'state': 'donation_not_collected',
+                'amount': selected_amount,
+            })
+
         session = self.env['pos.session'].search([('state', '=', 'opened')], limit=1)
         if not session:
             session = self.env['pos.session'].search([], limit=1)
@@ -76,13 +111,18 @@ class ForeignCurrency(models.Model):
             'amount_return': 0.0,
             'lines': [(0, 0, {
                 'product_id': product.id,
-                'name': f'FCB-{current_time.strftime("%Y%m%d%H%M%S")} total',
+                'name': f'{pos_name} total',
                 'qty': 1,
                 'price_unit': selected_amount,
                 'price_subtotal': selected_amount,
                 'price_subtotal_incl': selected_amount,
             })],
         }
+
+        if 'pos_order_seq' in self.env['pos.order']._fields:
+            order_vals['pos_order_seq'] = pos_name
+        if 'source_document' in self.env['pos.order']._fields:
+            order_vals['source_document'] = pos_name
         pos_order = self.env['pos.order'].create(order_vals)
 
         return {
