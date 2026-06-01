@@ -68,7 +68,8 @@ class AnalyticDistributionModel(models.Model):
         self.ensure_one()
 
         if key == 'company_id':
-            if not self.company_id or value == self.company_id.id:
+            # if not self.company_id or value == self.company_id.id:
+            if not self.company_id or value in [self.company_id.id]:
                 return 1 if self.company_id else 0.5
             raise NonMatchingDistribution
         if not self[key]:
