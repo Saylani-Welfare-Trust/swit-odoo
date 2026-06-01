@@ -107,7 +107,19 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             if (current_order) {
                 current_order.add_product(product, {
                     quantity: 1,
-                    price_extra: collection.amount
+                    price_extra: collection.amount,
+                    description: `Box No.: ${collection.box_no}`,
+                    extras: {
+                        donation_box: {
+                            lot_id: collection.lot_id,
+                            box_no: collection.box_no,
+                            shop_name: collection.shop_name,
+                            contact_person: collection.contact_person,
+                            contact_number: collection.contact_number,
+                            box_location: collection.box_location,
+                            date: collection.date,
+                        },
+                    },
                 });
             }
 
