@@ -58,10 +58,6 @@ class ForeignCurrency(models.Model):
             'name': donation_box_name,
         })
 
-        donation_box_request.message_post(
-            body=f'Total selected foreign currency amount: {selected_amount}',
-        )
-
         return {
             'name': 'Donation Box Request',
             'type': 'ir.actions.act_window',
