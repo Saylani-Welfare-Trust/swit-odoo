@@ -24,7 +24,7 @@ class RiderCollection(models.Model):
     _name = 'rider.collection'
     _description = "Rider Collection"
     _rec_name = "shop_name"
-    
+
     counterfeit_note_ids = fields.Many2many(
         'counterfeit.notes',
         'rider_collection_counterfeit_rel',
@@ -60,6 +60,15 @@ class RiderCollection(models.Model):
 
     remarks = fields.Text('Remarks')
 
+
+    
+    def action_mark_cfb_paid(self):
+        """Mark all linked counterfeit notes as paid"""
+        for collection in self:
+            if collection.remarks == 'CFB' and collection.counterfeit_note_ids:
+                collection.counterfeit_note_ids.write({'state': 'payment_received'})
+                collection.state = 'paid'
+        return True
 
     @api.model
     def get_rider_collection(self):
