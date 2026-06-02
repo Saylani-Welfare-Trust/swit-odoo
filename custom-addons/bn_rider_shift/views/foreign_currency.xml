@@ -18,11 +18,21 @@
                 <field name="exchanged_amount" string="PKR Amount"  readonly="1"/>
                 <field name="rider_id" readonly="1" />
                 <field name="lot_id" string="Box No." readonly="1" />
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'converted'" decoration-danger="state == 'reject'" readonly="1" />
+                <field name="state" widget="badge"
+                   decoration-success="state == 'paid'"
+                   decoration-info="state == 'payment_received'"
+                   decoration-primary="state == 'converted'"
+                   decoration-warning="state == 'draft'"
+                   decoration-danger="state == 'reject'" readonly="1"/>
                 <field name="attachment_ids" widget="many2many_binary" readonly="0"/>
 
                 <button string="Convert" name="action_convert_amount" type="object" class="oe_highlight" invisible="state  in ['converted','reject']"/>
                 <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state not in ['draft']"/>
+                <button name="action_create_pos_record" 
+                    type="object" 
+                    string="Create POS Order" 
+                    class="btn-success"
+                    states="converted"/>
             </tree>
         </field>
     </record>

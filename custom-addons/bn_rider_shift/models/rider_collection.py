@@ -60,7 +60,11 @@ class RiderCollection(models.Model):
 
     remarks = fields.Text('Remarks')
 
-
+    is_fcb = fields.Boolean('Is FCB', compute='_compute_is_fcb')
+    
+    def _compute_is_fcb(self):
+        for record in self:
+            record.is_fcb = record.remarks == 'FCB'
     
     def action_mark_cfb_paid(self):
         """Mark all linked counterfeit notes as paid"""

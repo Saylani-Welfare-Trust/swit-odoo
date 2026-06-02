@@ -113,20 +113,14 @@ class KeyIssuance(models.Model):
                 "body": f"Collection record not found for {data.get('box_no', 'unknown box')}",
             }
         
-        # ========== HANDLE CFB COLLECTIONS ==========
+        # ========== HANDLE CFB COLLECTIONS (Counterfeit) ==========
         if collection.remarks == 'CFB':
-            # Mark collection as paid
             collection.write({'state': 'paid'})
             
-            # Update linked counterfeit notes to PAID (not payment_received)
             if collection.counterfeit_note_ids:
-                # Set state to 'paid' directly
                 collection.counterfeit_note_ids.write({'state': 'paid'})
-                
-                # # Log for debugging
-                # _logger.info(f"Updated {len(collection.counterfeit_note_ids)} counterfeit notes to 'paid' state")
+                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} CFB notes to 'paid'")
             
-            # Find or create Counterfeit donor
             counterfeit_donor = self.env['res.partner'].search([
                 ('name', 'ilike', 'Counterfeit')
             ], limit=1)
@@ -138,15 +132,48 @@ class KeyIssuance(models.Model):
                     'customer_rank': 1,
                 })
             
-            # Return success with counterfeit donor ID
             return {
                 "status": "success",
                 "donor_id": counterfeit_donor.id,
                 "is_cfb": True,
             }
-        # ========== END CFB HANDLING ==========
         
-        # Rest of your existing code...
+        # ========== HANDLE FCB COLLECTIONS (Foreign Currency) ==========
+        if collection.remarks == 'FCB':
+            # Mark collection as paid
+            collection.write({'state': 'paid'})
+            
+            # Update foreign currency lines from PAYMENT_RECEIVED to PAID state
+            if collection.foreign_currency_line_ids:
+                # Only update lines that are in 'payment_received' state
+                lines_to_update = collection.foreign_currency_line_ids.filtered(
+                    lambda line: line.state == 'payment_received'
+                )
+                if lines_to_update:
+                    lines_to_update.write({'state': 'paid'})
+                    _logger.info(f"Updated {len(lines_to_update)} FCB lines from 'payment_received' to 'paid' state")
+                else:
+                    _logger.warning(f"No FCB lines in 'payment_received' state found for collection {collection.id}")
+            
+            # Find or create FCB Donor
+            fcb_donor = self.env['res.partner'].search([
+                ('name', 'ilike', 'Foreign Currency Donor')
+            ], limit=1)
+            
+            if not fcb_donor:
+                fcb_donor = self.env['res.partner'].create({
+                    'name': 'Foreign Currency Donor',
+                    'is_company': False,
+                    'customer_rank': 1,
+                })
+            
+            return {
+                "status": "success",
+                "donor_id": fcb_donor.id,
+                "is_fcb": True,
+            }
+        
+        # ========== NORMAL COLLECTIONS ==========
         if collection.state != 'donation_submit':
             return {
                 "status": "error",
