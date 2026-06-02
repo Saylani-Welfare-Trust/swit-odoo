@@ -557,12 +557,14 @@ class Welfare(models.Model):
 
     @api.model
     def create(self, vals):
-        # Debug
         seq = self.env['ir.sequence'].next_by_code('welfare_sequence')
-        print(f"SEQUENCE RESULT: {seq}")
+        
+        # Show error notification if sequence not found
+        if not seq:
+            raise UserError(_("Sequence 'welfare_sequence' not found! Please check Technical > Sequences"))
         
         if vals.get('name', 'New') == 'New':
-            vals['name'] = seq or _('New')
+            vals['name'] = seq
         
         return super().create(vals)
     
