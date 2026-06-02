@@ -17,34 +17,46 @@ class CounterfeitNotesWizard(models.TransientModel):
     total_amount = fields.Float('Total Amount', readonly=True)
     actual_amount = fields.Float('Actual Amount', required=True)
     lot_id = fields.Many2one('stock.lot', string='Box No.', readonly=True)
+    note_type = fields.Selection([
+        ('cfb', 'Counterfeit Banknotes (CFB)'),
+        ('fcb', 'Foreign Currency Banknotes (FCB)')
+    ], string='Note Type', readonly=True)
+
     def action_submit_cfb(self):
         notes = self.note_ids
         if not notes:
             notes = self.env['counterfeit.notes'].browse(self.env.context.get('active_ids', []))
 
         if not notes:
-            raise UserError('Please select counterfeit note records before creating CFB.')
+            raise UserError('Please select counterfeit note records before creating CFB/FCB.')
 
         invalid_notes = notes.filtered(lambda note: note.state != 'draft')
         if invalid_notes:
-            raise UserError('Only counterfeit notes in draft state can be used.')
+            raise UserError('Only notes in draft state can be used.')
 
         if any(not note.lot_id for note in notes):
-            raise UserError('Selected counterfeit notes must have a box assigned.')
+            raise UserError('Selected notes must have a box assigned.')
 
-        counterfeit_rider = self.env['hr.employee'].search([('name', '=', 'Counterfeit')], limit=1)
+        # Determine rider name based on note type
+        if self.note_type == 'fcb':
+            rider_name = 'FCB Collection'
+        else:
+            rider_name = 'Counterfeit'
+
+        counterfeit_rider = self.env['hr.employee'].search([('name', '=', rider_name)], limit=1)
         if not counterfeit_rider:
-            counterfeit_rider = self.env['hr.employee'].create({'name': 'Counterfeit'})
+            counterfeit_rider = self.env['hr.employee'].create({'name': rider_name})
 
-        # Create collection with links to counterfeit notes
+        # Create collection with links to notes
         collection = self.env['rider.collection'].create({
             'rider_id': counterfeit_rider.id,
             'date': fields.Date.today(),
             'state': 'donation_submit',
             'amount': self.actual_amount,
             'counterfeit_notes': self.total_amount,
-            'remarks': 'CFB',
+            'remarks': self.note_type.upper(),  # 'CFB' or 'FCB'
             'counterfeit_note_ids': [(6, 0, notes.ids)],
+            'note_type': self.note_type,
         })
 
         # Get all unique boxes/lots from selected notes
@@ -66,7 +78,7 @@ class CounterfeitNotesWizard(models.TransientModel):
                 ], limit=1)
                 
                 if not key:
-                    raise UserError(f'No key found for donation box {box.id}')
+                    _logger.warning(f'No key found for donation box {box.id}')
                     continue
 
             key_issuance_vals = {
@@ -77,6 +89,7 @@ class CounterfeitNotesWizard(models.TransientModel):
                 'state': 'donation_receive',
                 'action_type': 'manual',
                 'donation_amount': self.actual_amount,
+                'note_type': self.note_type,  # Store note type in key issuance
             }
             
             if 'rider_collection_id' in self.env['key.issuance']._fields:
@@ -84,15 +97,15 @@ class CounterfeitNotesWizard(models.TransientModel):
             
             self.env['key.issuance'].create(key_issuance_vals)
 
-        # IMPORTANT: Do NOT change note state here
-        # Notes will be updated to 'paid' when POS collects payment
-        
+        # Don't change note state here - wait for POS payment
+
+        message_type = 'FCB' if self.note_type == 'fcb' else 'CFB'
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': 'CFB Created',
-                'message': f'CFB collection created. Please collect payment of {self.actual_amount} from POS to complete the process.',
+                'title': f'{message_type} Created',
+                'message': f'{message_type} collection created. Please collect payment from POS.',
                 'type': 'success',
                 'sticky': False,
             }
