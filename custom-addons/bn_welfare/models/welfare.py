@@ -557,7 +557,7 @@ class Welfare(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
+        if vals.get('name', 'NEW') == 'NEW':  # Changed from _('NEW')
             vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
         
         return super().create(vals)
