@@ -557,16 +557,12 @@ class Welfare(models.Model):
 
     @api.model
     def create(self, vals):
-        if not vals.get('name') or vals.get('name') == 'New':
-            try:
-                seq = self.env['ir.sequence'].next_by_code('welfare_sequence')
-                if seq:
-                    vals['name'] = seq
-                else:
-                    vals['name'] = _('New')
-            except Exception as e:
-                _logger.warning(f"Failed to get sequence: {e}")
-                vals['name'] = _('New')
+        # Debug
+        seq = self.env['ir.sequence'].next_by_code('welfare_sequence')
+        print(f"SEQUENCE RESULT: {seq}")
+        
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = seq or _('New')
         
         return super().create(vals)
     
