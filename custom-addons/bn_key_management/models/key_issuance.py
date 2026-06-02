@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
 
+_logger = logging.getLogger(__name__)
 
 key_selection = [
     ('draft', 'Draft'),
@@ -144,19 +146,24 @@ class KeyIssuance(models.Model):
             # Mark collection as paid
             collection.write({'state': 'paid'})
             
-            # Find foreign currency lines linked to this collection
+            # Find foreign currency lines linked to this collection using the rider_collection_id field
             foreign_currency_lines = self.env['foreign.currency'].search([
                 ('rider_collection_id', '=', collection.id)
             ])
             
             # Update foreign currency lines from PAYMENT_RECEIVED to PAID state
             if foreign_currency_lines:
+                # Only update lines that are in 'payment_received' state
                 lines_to_update = foreign_currency_lines.filtered(
                     lambda line: line.state == 'payment_received'
                 )
                 if lines_to_update:
                     lines_to_update.write({'state': 'paid'})
                     _logger.info(f"Updated {len(lines_to_update)} FCB lines from 'payment_received' to 'paid' state")
+                else:
+                    _logger.warning(f"No FCB lines in 'payment_received' state found for collection {collection.id}")
+            else:
+                _logger.warning(f"No foreign currency lines found for collection {collection.id}")
             
             # Find or create FCB Donor
             fcb_donor = self.env['res.partner'].search([
@@ -175,6 +182,7 @@ class KeyIssuance(models.Model):
                 "donor_id": fcb_donor.id,
                 "is_fcb": True,
             }
+        
         # ========== NORMAL COLLECTIONS ==========
         if collection.state != 'donation_submit':
             return {

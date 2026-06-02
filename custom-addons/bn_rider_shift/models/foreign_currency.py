@@ -30,7 +30,7 @@ class ForeignCurrency(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
-
+    rider_collection_id = fields.Many2one('rider.collection', string='Rider Collection', ondelete='set null')
 
     def action_convert_amount(self):
         self.exchanged_amount = self.amount * self.conversion_rate
@@ -79,8 +79,10 @@ class ForeignCurrency(models.Model):
             'state': 'donation_submit',
             'amount': selected_amount,
             'remarks': 'FCB',  # Use 'FCB' as remarks to identify in POS
-            'foreign_currency_line_ids': [(6, 0, self.ids)],  # Link to foreign currency lines
         })
+
+        # Link the foreign currency lines to this collection
+        self.write({'rider_collection_id': rider_collection.id})
 
         # Create key issuance for this box
         key = self.env['key'].search([
@@ -94,7 +96,7 @@ class ForeignCurrency(models.Model):
             ], limit=1)
 
         if key:
-            key_issuance = self.env['key.issuance'].create({
+            key_issuance_vals = {
                 'rider_id': fc_rider.id,
                 'key_id': key.id,
                 'issue_date': fields.Date.today(),
@@ -102,12 +104,13 @@ class ForeignCurrency(models.Model):
                 'state': 'donation_receive',
                 'action_type': 'manual',
                 'donation_amount': selected_amount,
-                'is_fcb': True,  # Flag for FCB
-            })
+            }
             
-            # Link key issuance to collection if field exists
+            # Add rider_collection_id if the field exists
             if 'rider_collection_id' in self.env['key.issuance']._fields:
-                key_issuance.rider_collection_id = rider_collection.id
+                key_issuance_vals['rider_collection_id'] = rider_collection.id
+            
+            self.env['key.issuance'].create(key_issuance_vals)
 
         # CHANGE STATE TO PAYMENT_RECEIVED
         self.write({'state': 'payment_received'})
@@ -122,7 +125,6 @@ class ForeignCurrency(models.Model):
                 'sticky': False,
             }
         }
-
     def action_create_donation_box_request(self):
         """Compatibility wrapper for legacy donation-box button calls."""
         return self.action_create_pos_record()
