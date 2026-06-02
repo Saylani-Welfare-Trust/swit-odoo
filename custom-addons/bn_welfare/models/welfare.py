@@ -555,15 +555,15 @@ class Welfare(models.Model):
 
 
 
-
     @api.model
     def create(self, vals):
-        # This will definitely show a popup if the function runs
-        raise UserError(_("Create method is triggering! Values: %s") % vals)
-        
-        # Your original code would go here
-        if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
+        if not vals.get('name') or vals.get('name') == 'New':
+            # Use sudo() to bypass company restrictions
+            seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
+            if seq:
+                vals['name'] = seq
+            else:
+                vals['name'] = _('New')
         
         return super().create(vals)
     
