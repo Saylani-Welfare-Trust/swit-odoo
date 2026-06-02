@@ -24,7 +24,14 @@ class RiderCollection(models.Model):
     _name = 'rider.collection'
     _description = "Rider Collection"
     _rec_name = "shop_name"
-
+    
+    counterfeit_note_ids = fields.Many2many(
+        'counterfeit.notes',
+        'rider_collection_counterfeit_rel',
+        'collection_id',
+        'note_id',
+        string='Counterfeit Notes'
+    )
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")

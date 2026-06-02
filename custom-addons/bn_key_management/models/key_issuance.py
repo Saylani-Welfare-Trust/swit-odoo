@@ -98,7 +98,6 @@ class KeyIssuance(models.Model):
                 "body": "Please specify Key and Collection Amount",
             }
 
-        # Get collection record by ID for reliable lookup
         collection_id = data.get('collection_id')
         if not collection_id:
             return {
@@ -111,9 +110,39 @@ class KeyIssuance(models.Model):
         if not collection.exists():
             return {
                 "status": "error",
-                "body": f"Collection record not found for {data['box_no']}",
+                "body": f"Collection record not found for {data.get('box_no', 'unknown box')}",
             }
         
+        # ========== HANDLE CFB COLLECTIONS ==========
+        if collection.remarks == 'CFB':
+            # Mark collection as paid
+            collection.state = 'paid'
+            
+            # Update linked counterfeit notes to payment_received
+            if collection.counterfeit_note_ids:
+                collection.counterfeit_note_ids.write({'state': 'payment_received'})
+            
+            # Find or create Counterfeit donor
+            counterfeit_donor = self.env['res.partner'].search([
+                ('name', 'ilike', 'Counterfeit')
+            ], limit=1)
+            
+            if not counterfeit_donor:
+                counterfeit_donor = self.env['res.partner'].create({
+                    'name': 'Counterfeit Donor',
+                    'is_company': False,
+                    'customer_rank': 1,
+                })
+            
+            # Return success with counterfeit donor ID
+            return {
+                "status": "success",
+                "donor_id": counterfeit_donor.id,
+                "is_cfb": True,
+            }
+        # ========== END CFB HANDLING ==========
+        
+        # Normal collection validation (existing code)
         if collection.state != 'donation_submit':
             return {
                 "status": "error",
@@ -128,7 +157,11 @@ class KeyIssuance(models.Model):
 
         key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
         if not key_obj:
-            key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
+            key_obj = self.sudo().search([
+                ('key_id.lot_id', '=', data['lot_id']),
+                ('issue_date', '=', data['date']),
+                ('state', 'in', ['issued', 'overdue'])
+            ], limit=1)
 
         if not key_obj:
             return {
@@ -147,7 +180,6 @@ class KeyIssuance(models.Model):
         if not data['check_validation']:
             key_obj.donation_amount = data['amount']
             key_obj.action_donation_receive()
-
             collection.state = 'paid'
 
             return {
@@ -159,7 +191,6 @@ class KeyIssuance(models.Model):
             "id": key_obj.id,
             "donor_id": box.donor_id.id
         }
-    
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
