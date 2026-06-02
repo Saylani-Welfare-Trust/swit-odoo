@@ -118,10 +118,13 @@ class KeyIssuance(models.Model):
             # Mark collection as paid
             collection.write({'state': 'paid'})
             
-            # Update linked notes to PAID state
+            # Update linked counterfeit notes to PAID (not payment_received)
             if collection.counterfeit_note_ids:
+                # Set state to 'paid' directly
                 collection.counterfeit_note_ids.write({'state': 'paid'})
-                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} CFB notes to 'paid' state")
+                
+                # # Log for debugging
+                # _logger.info(f"Updated {len(collection.counterfeit_note_ids)} counterfeit notes to 'paid' state")
             
             # Find or create Counterfeit donor
             counterfeit_donor = self.env['res.partner'].search([
@@ -135,42 +138,15 @@ class KeyIssuance(models.Model):
                     'customer_rank': 1,
                 })
             
+            # Return success with counterfeit donor ID
             return {
                 "status": "success",
                 "donor_id": counterfeit_donor.id,
                 "is_cfb": True,
             }
+        # ========== END CFB HANDLING ==========
         
-        # ========== HANDLE FCB COLLECTIONS (Foreign Currency) ==========
-        if collection.remarks == 'FCB':
-            # Mark collection as paid
-            collection.write({'state': 'paid'})
-            
-            # Update linked notes to PAYMENT_COLLECTED state (new state)
-            if collection.counterfeit_note_ids:
-                collection.counterfeit_note_ids.write({'state': 'payment_collected'})
-                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} FCB notes to 'payment_collected' state")
-            
-            # Find or create FCB donor
-            fcb_donor = self.env['res.partner'].search([
-                ('name', 'ilike', 'FCB Donor')
-            ], limit=1)
-            
-            if not fcb_donor:
-                fcb_donor = self.env['res.partner'].create({
-                    'name': 'FCB Donor',
-                    'is_company': False,
-                    'customer_rank': 1,
-                })
-            
-            return {
-                "status": "success",
-                "donor_id": fcb_donor.id,
-                "is_fcb": True,
-            }
-        # ========== END CFB/FCB HANDLING ==========
-        
-        # Normal collection validation (existing code)
+        # Rest of your existing code...
         if collection.state != 'donation_submit':
             return {
                 "status": "error",

@@ -32,10 +32,6 @@ class RiderCollection(models.Model):
         'note_id',
         string='Counterfeit Notes'
     )
-    note_type = fields.Selection([
-        ('cfb', 'Counterfeit Banknotes (CFB)'),
-        ('fcb', 'Foreign Currency Banknotes (FCB)')
-    ], string='Note Type')
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
@@ -65,7 +61,7 @@ class RiderCollection(models.Model):
     remarks = fields.Text('Remarks')
 
 
-
+    
     def action_mark_cfb_paid(self):
         """Mark all linked counterfeit notes as paid"""
         for collection in self:
