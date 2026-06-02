@@ -1012,32 +1012,6 @@ class Welfare(models.Model):
         # Print report
         return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
     
-    # def action_move_to_hod(self):
-
-    #     if not self.hod_remarks:
-    #         raise ValidationError('Please enter HOD Remarks!')
-        
-    #     self.state = 'hod_approve'
-    
-    # def action_move_to_member(self):
-    #     if not self.member_remarks:
-    #         raise ValidationError('Please enter Member Remarks!')
-        
-    #     self.state = 'mem_approve'
-    
-    # def action_approve(self):
-    #     if self.order_type == 'recurring':
-    #         for line in self.welfare_line_ids:
-    #             if self.env['welfare.recurring.line'].search_count([
-    #                 ('donee_id', '=', self.donee_id.id),
-    #                 ('disbursement_category_id', '=', line.disbursement_category_id.id),
-    #                 ('state', '=', 'draft')
-    #             ]):
-    #                 pass
-    #     self.state = 'approve'
-
-    #     # Trigger the welfare collection report for printing/giving to the person
-    #     return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
 
     def action_reject(self):
         if not self.rejection_remarks:
@@ -1106,32 +1080,7 @@ class Welfare(models.Model):
             # Set state to committee_approval
             record.state = 'committee_approval'
         
-    # def action_committee_approval(self):
-    #     for record in self:
 
-    #         # Remarks check
-    #         if not record.committee_remarks:
-    #             raise ValidationError(_('Please enter Committee Remarks before approval.'))
-
-    #         # Document validation
-    #         missing_fields = []
-
-    #         if not record.application_form:
-    #             missing_fields.append("Application Form")
-    #         if not record.electricity_bill_file:
-    #             missing_fields.append("Electricity Bill")
-    #         if not record.gas_bill_file:
-    #             missing_fields.append("Gas Bill")
-    #         if not record.family_cnic:
-    #             missing_fields.append("Family CNIC")
-
-    #         if missing_fields:
-    #             raise ValidationError(_(
-    #                 "Please upload the following documents before approval:\n- %s"
-    #             ) % ("\n- ".join(missing_fields)))
-
-    #         # If everything is valid
-    #         record.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))

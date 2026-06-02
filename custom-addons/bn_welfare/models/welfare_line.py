@@ -405,14 +405,18 @@ class WelfareLine(models.Model):
                 rec.total_amount = amount - rec.advance_donation_amount if (rec.advance_donation_amount > 0) else amount
 
     def write(self, vals):
+        # Track which orders need checking BEFORE the write
+        orders_to_check = self.env['welfare']
+        if 'state' in vals and vals['state'] == 'disbursed':
+            orders_to_check = self.mapped('welfare_id')
+        
         # Track manual amount overrides
         if 'total_amount' in vals:
             vals['manual_total'] = True
         
-        # Preserve manually set total_amount when not in vals but flag is True
-        if self.manual_total and 'total_amount' not in vals:
-            vals['total_amount'] = self.total_amount - self.advance_donation_amount if (self.advance_donation_amount > 0) else self.total_amount
-    
+        # Handle manual_total for multiple records correctly
+        # This part is problematic - better to handle in compute or skip
+        # The compute method already handles manual_total correctly
         
         # Handle in_kind category auto-selection
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
@@ -420,7 +424,16 @@ class WelfareLine(models.Model):
             if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
                 vals['collection_point'] = 'branch'
         
-        return super().write(vals)
+        # Call super to actually save to database
+        result = super().write(vals)
+        
+        # After successful write, check if orders should be disbursed
+        if 'state' in vals and vals['state'] == 'disbursed':
+            for order in orders_to_check:
+                if order and hasattr(order, '_auto_disburse_if_all_lines_delivered'):
+                    order._auto_disburse_if_all_lines_delivered()
+        
+        return result
             
     # @api.depends('total_amount', 'advance_donation_amount')
     # def _compute_net_amount(self):
