@@ -31,87 +31,84 @@ class CounterfeitNotesWizard(models.TransientModel):
         if any(not note.lot_id for note in notes):
             raise UserError('Selected counterfeit notes must have a box assigned.')
 
-        lot_ids = notes.mapped('lot_id').ids
-        box = False
-        if len(set(lot_ids)) == 1:
-            lot = notes[0].lot_id
-            box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
-            if not box:
-                raise UserError('Could not find a donation box registration for the selected box.')
-        else:
-            raise UserError('All selected counterfeit notes must belong to the same box/lot.')
+        # Don't require all notes to be from same box - allow multiple boxes
+        # Just get all unique lots/boxes from the selected notes
+        unique_lots = notes.mapped('lot_id')
+        unique_boxes = self.env['donation.box.registration.installation'].search([
+            ('lot_id', 'in', unique_lots.ids)
+        ])
+        
+        if not unique_boxes:
+            raise UserError('Could not find donation box registrations for the selected boxes.')
 
         counterfeit_rider = self.env['hr.employee'].search([('name', '=', 'Counterfeit')], limit=1)
         if not counterfeit_rider:
             counterfeit_rider = self.env['hr.employee'].create({'name': 'Counterfeit'})
 
-        # Create the collection first
+        # Create ONE collection for all counterfeit notes (consolidated)
+        # Note: We're not linking to a specific donation_box_registration_installation_id
+        # since notes come from multiple boxes
         collection = self.env['rider.collection'].create({
             'rider_id': counterfeit_rider.id,
             'date': fields.Date.today(),
-            'donation_box_registration_installation_id': box.id,
+            'donation_box_registration_installation_id': False,  # No single box since multiple boxes
             'state': 'donation_submit',
             'amount': self.actual_amount,
             'counterfeit_notes': self.total_amount,
-            'remarks': 'CFB',
+            'remarks': 'CFB - Multiple Boxes',
         })
 
-        # Find key for this box - ONLY if box exists (which it does at this point)
-        key = self.env['key'].search([
-            ('donation_box_registration_installation_id', '=', box.id),
-            ('state', 'in', ['available', 'issued'])
-        ], limit=1)
-        
-        if not key:
-            # Try to find any key associated with this box without state restriction
+        # Create key issuance records for EACH box separately
+        key_issuance_ids = []
+        for box in unique_boxes:
+            # Find key for this box
             key = self.env['key'].search([
-                ('donation_box_registration_installation_id', '=', box.id)
+                ('donation_box_registration_installation_id', '=', box.id),
+                ('state', 'in', ['available', 'issued'])
             ], limit=1)
             
             if not key:
-                # Instead of raising error, log warning but continue
-                _logger.warning(f'No key found for donation box {box.id}. CFB collection created without key issuance.')
-                notes.write({'state': 'payment_received'})
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'CFB Created',
-                        'message': f'CFB has been created with actual amount {self.actual_amount}. Note: No key found for this box.',
-                        'type': 'warning',
-                        'sticky': False,
-                    }
-                }
+                key = self.env['key'].search([
+                    ('donation_box_registration_installation_id', '=', box.id)
+                ], limit=1)
+                
+                if not key:
+                    _logger.warning(f'No key found for donation box {box.id}. Skipping key issuance for this box.')
+                    continue
 
-        # Create key issuance record
-        key_issuance_vals = {
-            'rider_id': counterfeit_rider.id,
-            'key_id': key.id,
-            'issue_date': fields.Date.today(),
-            'issued_on': fields.Datetime.now(),
-            'state': 'donation_receive',
-            'action_type': 'manual',
-            'donation_amount': self.actual_amount,
-        }
-        
-        # Add rider_collection_id if the field exists
-        if 'rider_collection_id' in self.env['key.issuance']._fields:
-            key_issuance_vals['rider_collection_id'] = collection.id
-        
-        key_issuance = self.env['key.issuance'].create(key_issuance_vals)
+            # Create key issuance record for this box
+            key_issuance_vals = {
+                'rider_id': counterfeit_rider.id,
+                'key_id': key.id,
+                'issue_date': fields.Date.today(),
+                'issued_on': fields.Datetime.now(),
+                'state': 'donation_receive',
+                'action_type': 'manual',
+                'donation_amount': self.actual_amount / len(unique_boxes) if len(unique_boxes) > 1 else self.actual_amount,  # Split amount across boxes or use full amount
+            }
+            
+            # Add rider_collection_id if the field exists
+            if 'rider_collection_id' in self.env['key.issuance']._fields:
+                key_issuance_vals['rider_collection_id'] = collection.id
+            
+            key_issuance = self.env['key.issuance'].create(key_issuance_vals)
+            key_issuance_ids.append(key_issuance.id)
 
-        # Update collection with key issuance reference if the field exists
-        if hasattr(collection, 'key_issuance_id'):
-            collection.key_issuance_id = key_issuance.id
-
+        # Mark all counterfeit notes as payment_received
         notes.write({'state': 'payment_received'})
+
+        # Prepare success message
+        message = f'CFB has been created with actual amount {self.actual_amount}. '
+        message += f'Processed {len(notes)} counterfeit notes from {len(unique_boxes)} box(es).'
+        if key_issuance_ids:
+            message += f' Created {len(key_issuance_ids)} key issuance record(s).'
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': 'CFB Created',
-                'message': f'CFB has been created with actual amount {self.actual_amount}. Collection and Key Issuance records have been linked.',
+                'message': message,
                 'type': 'success',
                 'sticky': False,
             }
