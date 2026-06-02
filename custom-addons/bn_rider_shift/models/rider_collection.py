@@ -59,6 +59,13 @@ class RiderCollection(models.Model):
     counterfeit_notes = fields.Float('Counterfeit Notes')
 
     remarks = fields.Text('Remarks')
+    foreign_currency_line_ids = fields.Many2many(
+        'foreign.currency',
+        'rider_collection_foreign_currency_rel',
+        'collection_id',
+        'foreign_currency_id',
+        string='Foreign Currency Lines'
+    )
 
     is_fcb = fields.Boolean('Is FCB', compute='_compute_is_fcb')
     
