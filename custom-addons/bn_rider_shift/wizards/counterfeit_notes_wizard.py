@@ -1,5 +1,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
+import logging
 
 
 class CounterfeitNotesWizard(models.TransientModel):
@@ -65,7 +66,7 @@ class CounterfeitNotesWizard(models.TransientModel):
                 ], limit=1)
                 
                 if not key:
-                    _logger.warning(f'No key found for donation box {box.id}')
+                    raise UserError(f'No key found for donation box {box.id}')
                     continue
 
             key_issuance_vals = {
