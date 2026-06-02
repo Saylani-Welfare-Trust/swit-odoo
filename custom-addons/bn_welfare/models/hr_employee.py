@@ -9,5 +9,5 @@ class HrEmployee(models.Model):
 
 class HREmployeePublic(models.Model):
     _inherit = 'hr.employee.public'
-    area = fields.Many2many(related='employee_id.area', compute_sudo=True, string="Area", store=True)
+    # area = fields.Many2many(related='employee_id.area', compute_sudo=True, string="Area", store=True)
     is_welfare_marfat = fields.Boolean(related='employee_id.is_welfare_marfat', compute_sudo=True, string="Is Welfare Disbursement Officer (Marfat)", store=True)
