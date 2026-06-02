@@ -43,7 +43,7 @@ class CounterfeitNotesWizard(models.TransientModel):
             'amount': self.actual_amount,
             'counterfeit_notes': self.total_amount,
             'remarks': 'CFB',
-            'counterfeit_note_ids': [(6, 0, notes.ids)],  # Link to counterfeit notes
+            'counterfeit_note_ids': [(6, 0, notes.ids)],
         })
 
         # Get all unique boxes/lots from selected notes
@@ -73,7 +73,7 @@ class CounterfeitNotesWizard(models.TransientModel):
                 'key_id': key.id,
                 'issue_date': fields.Date.today(),
                 'issued_on': fields.Datetime.now(),
-                'state': 'donation_receive',  # Set to donation_receive directly for CFB
+                'state': 'donation_receive',
                 'action_type': 'manual',
                 'donation_amount': self.actual_amount,
             }
@@ -84,8 +84,8 @@ class CounterfeitNotesWizard(models.TransientModel):
             self.env['key.issuance'].create(key_issuance_vals)
 
         # IMPORTANT: Do NOT change note state here
-        # Notes will be updated when POS collects payment
-
+        # Notes will be updated to 'paid' when POS collects payment
+        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

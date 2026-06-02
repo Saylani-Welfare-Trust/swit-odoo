@@ -116,11 +116,15 @@ class KeyIssuance(models.Model):
         # ========== HANDLE CFB COLLECTIONS ==========
         if collection.remarks == 'CFB':
             # Mark collection as paid
-            collection.state = 'paid'
+            collection.write({'state': 'paid'})
             
-            # Update linked counterfeit notes to payment_received
+            # Update linked counterfeit notes to PAID (not payment_received)
             if collection.counterfeit_note_ids:
-                collection.counterfeit_note_ids.write({'state': 'payment_received'})
+                # Set state to 'paid' directly
+                collection.counterfeit_note_ids.write({'state': 'paid'})
+                
+                # Log for debugging
+                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} counterfeit notes to 'paid' state")
             
             # Find or create Counterfeit donor
             counterfeit_donor = self.env['res.partner'].search([
@@ -142,7 +146,7 @@ class KeyIssuance(models.Model):
             }
         # ========== END CFB HANDLING ==========
         
-        # Normal collection validation (existing code)
+        # Rest of your existing code...
         if collection.state != 'donation_submit':
             return {
                 "status": "error",
