@@ -38,6 +38,8 @@ class CounterfeitNotesWizard(models.TransientModel):
             box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
             if not box:
                 raise UserError('Could not find a donation box registration for the selected box.')
+        else:
+            raise UserError('All selected counterfeit notes must belong to the same box/lot.')
 
         counterfeit_rider = self.env['hr.employee'].search([('name', '=', 'Counterfeit')], limit=1)
         if not counterfeit_rider:
@@ -47,36 +49,58 @@ class CounterfeitNotesWizard(models.TransientModel):
         collection = self.env['rider.collection'].create({
             'rider_id': counterfeit_rider.id,
             'date': fields.Date.today(),
-            'donation_box_registration_installation_id': box.id if box else False,
-            'state': 'donation_submit',  # Keep this state
+            'donation_box_registration_installation_id': box.id,
+            'state': 'donation_submit',
             'amount': self.actual_amount,
             'counterfeit_notes': self.total_amount,
             'remarks': 'CFB',
         })
 
-        # CRITICAL: Create a key issuance record linked to this collection
-        # Find or create appropriate key for this box
+        # Find key for this box - ONLY if box exists (which it does at this point)
         key = self.env['key'].search([
             ('donation_box_registration_installation_id', '=', box.id),
             ('state', 'in', ['available', 'issued'])
         ], limit=1)
         
         if not key:
-            raise UserError(f'No key found for box {box.name if hasattr(box, "name") else box.id}')
+            # Try to find any key associated with this box without state restriction
+            key = self.env['key'].search([
+                ('donation_box_registration_installation_id', '=', box.id)
+            ], limit=1)
+            
+            if not key:
+                # Instead of raising error, log warning but continue
+                _logger.warning(f'No key found for donation box {box.id}. CFB collection created without key issuance.')
+                notes.write({'state': 'payment_received'})
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'CFB Created',
+                        'message': f'CFB has been created with actual amount {self.actual_amount}. Note: No key found for this box.',
+                        'type': 'warning',
+                        'sticky': False,
+                    }
+                }
 
         # Create key issuance record
-        key_issuance = self.env['key.issuance'].create({
+        key_issuance_vals = {
             'rider_id': counterfeit_rider.id,
             'key_id': key.id,
             'issue_date': fields.Date.today(),
             'issued_on': fields.Datetime.now(),
-            'state': 'donation_receive',  # Set to donation_receive state directly for CFB
+            'state': 'donation_receive',
             'action_type': 'manual',
             'donation_amount': self.actual_amount,
-            'rider_collection_id': collection.id,  # If this field exists in key_issuance
-        })
+        }
+        
+        # Add rider_collection_id if the field exists
+        if 'rider_collection_id' in self.env['key.issuance']._fields:
+            key_issuance_vals['rider_collection_id'] = collection.id
+        
+        key_issuance = self.env['key.issuance'].create(key_issuance_vals)
 
-        # Update collection with key issuance reference if needed
+        # Update collection with key issuance reference if the field exists
         if hasattr(collection, 'key_issuance_id'):
             collection.key_issuance_id = key_issuance.id
 
