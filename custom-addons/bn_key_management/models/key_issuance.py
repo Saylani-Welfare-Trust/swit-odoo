@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -92,145 +93,97 @@ class KeyIssuance(models.Model):
     def action_overdue(self):
         for record in self:
             record.state = 'overdue'
+    def action_create_pos_record(self):
+        """Create a donation box (FCB) from selected foreign currency lines."""
+        _logger.info(f"Starting FCB creation for lines: {self.ids}")
+        
+        # Validate selected lines
+        invalid_lines = self.filtered(lambda rec: rec.state != 'converted')
+        if invalid_lines:
+            raise UserError('Only converted foreign currency lines can be used. Please select only converted lines.')
 
-    @api.model
-    def set_donation_amount(self, data):
-        if not data:
-            return {
-                "status": "error",
-                "body": "Please specify Key and Collection Amount",
-            }
+        selected_amount = sum(self.mapped('exchanged_amount'))
+        if not selected_amount:
+            raise UserError('Please select converted foreign currency lines with a non-zero exchanged amount.')
 
-        collection_id = data.get('collection_id')
-        if not collection_id:
-            return {
-                "status": "error",
-                "body": "Collection ID is required",
-            }
+        if any(not rec.lot_id for rec in self):
+            raise UserError('Selected foreign currency lines must have a box assigned.')
         
-        collection = self.env['rider.collection'].browse(collection_id)
-        
-        if not collection.exists():
-            return {
-                "status": "error",
-                "body": f"Collection record not found for {data.get('box_no', 'unknown box')}",
-            }
-        
-        # ========== HANDLE CFB COLLECTIONS (Counterfeit) ==========
-        if collection.remarks == 'CFB':
-            collection.write({'state': 'paid'})
-            
-            if collection.counterfeit_note_ids:
-                collection.counterfeit_note_ids.write({'state': 'paid'})
-                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} CFB notes to 'paid'")
-            
-            counterfeit_donor = self.env['res.partner'].search([
-                ('name', 'ilike', 'Counterfeit')
-            ], limit=1)
-            
-            if not counterfeit_donor:
-                counterfeit_donor = self.env['res.partner'].create({
-                    'name': 'Counterfeit Donor',
-                    'is_company': False,
-                    'customer_rank': 1,
-                })
-            
-            return {
-                "status": "success",
-                "donor_id": counterfeit_donor.id,
-                "is_cfb": True,
-            }
-        
-        # ========== HANDLE FCB COLLECTIONS (Foreign Currency) ==========
-        if collection.remarks == 'FCB':
-            # Mark collection as paid
-            collection.write({'state': 'paid'})
-            
-            # Find foreign currency lines linked to this collection using the rider_collection_id field
-            foreign_currency_lines = self.env['foreign.currency'].search([
-                ('rider_collection_id', '=', collection.id)
-            ])
-            
-            # Update foreign currency lines from PAYMENT_RECEIVED to PAID state
-            if foreign_currency_lines:
-                # Only update lines that are in 'payment_received' state
-                lines_to_update = foreign_currency_lines.filtered(
-                    lambda line: line.state == 'payment_received'
-                )
-                if lines_to_update:
-                    lines_to_update.write({'state': 'paid'})
-                    _logger.info(f"Updated {len(lines_to_update)} FCB lines from 'payment_received' to 'paid' state")
-                else:
-                    _logger.warning(f"No FCB lines in 'payment_received' state found for collection {collection.id}")
-            else:
-                _logger.warning(f"No foreign currency lines found for collection {collection.id}")
-            
-            # Find or create FCB Donor
-            fcb_donor = self.env['res.partner'].search([
-                ('name', 'ilike', 'Foreign Currency Donor')
-            ], limit=1)
-            
-            if not fcb_donor:
-                fcb_donor = self.env['res.partner'].create({
-                    'name': 'Foreign Currency Donor',
-                    'is_company': False,
-                    'customer_rank': 1,
-                })
-            
-            return {
-                "status": "success",
-                "donor_id": fcb_donor.id,
-                "is_fcb": True,
-            }
-        
-        # ========== NORMAL COLLECTIONS ==========
-        if collection.state != 'donation_submit':
-            return {
-                "status": "error",
-                "body": f"Please first submit your Collection against {data['box_no']}",
-            }
-        
-        if collection.amount != float(data['amount']):
-            return {
-                "status": "error",
-                "body": f"Please enter the correct amount collected against {data['box_no']}",
-            }
+        lot_ids = self.mapped('lot_id')
+        if len(lot_ids) != 1:
+            raise UserError('Selected foreign currency lines must belong to the same box.')
 
-        key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
-        if not key_obj:
-            key_obj = self.sudo().search([
-                ('key_id.lot_id', '=', data['lot_id']),
-                ('issue_date', '=', data['date']),
-                ('state', 'in', ['issued', 'overdue'])
-            ], limit=1)
+        lot = lot_ids[0]
 
-        if not key_obj:
-            return {
-                "status": "error",
-                "body": "Invalid Donation Box",
-            }
+        # Find or create "Foreign Currency" rider
+        fc_rider = self.env['hr.employee'].search([('name', '=', 'Foreign Currency')], limit=1)
+        if not fc_rider:
+            fc_rider = self.env['hr.employee'].create({
+                'name': 'Foreign Currency',
+            })
 
-        box = self.env['donation.box.registration.installation'].search([
-            ('lot_id', '=', data['lot_id']),
-            ('shop_name', '=', data['shop_name']),
-            ('contact_person', '=', data['contact_person']),
-            ('contact_no', '=', data['contact_number']),
-            ('location', '=', data['box_location']),
+        # Find the donation box registration for this lot
+        box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
+        if not box:
+            raise UserError('Could not find a donation box registration for the selected box.')
+
+        # Create rider collection with FCB remarks
+        rider_collection = self.env['rider.collection'].create({
+            'rider_id': fc_rider.id,
+            'date': fields.Date.today(),
+            'donation_box_registration_installation_id': box.id,
+            'state': 'donation_submit',
+            'amount': selected_amount,
+            'remarks': 'FCB',
+        })
+        
+        _logger.info(f"Created rider collection: {rider_collection.id} with remarks 'FCB'")
+
+        # Link the foreign currency lines to this collection
+        self.write({'rider_collection_id': rider_collection.id})
+        _logger.info(f"Linked foreign currency lines {self.ids} to collection {rider_collection.id}")
+
+        # Create key issuance for this box
+        key = self.env['key'].search([
+            ('donation_box_registration_installation_id', '=', box.id),
+            ('state', 'in', ['available', 'issued'])
         ], limit=1)
+        
+        if not key:
+            key = self.env['key'].search([
+                ('donation_box_registration_installation_id', '=', box.id)
+            ], limit=1)
 
-        if not data['check_validation']:
-            key_obj.donation_amount = data['amount']
-            key_obj.action_donation_receive()
-            collection.state = 'paid'
-
-            return {
-                "status": "success"
+        if key:
+            key_issuance_vals = {
+                'rider_id': fc_rider.id,
+                'key_id': key.id,
+                'issue_date': fields.Date.today(),
+                'issued_on': fields.Datetime.now(),
+                'state': 'donation_receive',
+                'action_type': 'manual',
+                'donation_amount': selected_amount,
             }
+            
+            if 'rider_collection_id' in self.env['key.issuance']._fields:
+                key_issuance_vals['rider_collection_id'] = rider_collection.id
+            
+            key_issuance = self.env['key.issuance'].create(key_issuance_vals)
+            _logger.info(f"Created key issuance: {key_issuance.id}")
+
+        # CHANGE STATE TO PAYMENT_RECEIVED
+        self.write({'state': 'payment_received'})
+        _logger.info(f"Updated foreign currency lines {self.ids} to state 'payment_received'")
 
         return {
-            "status": "success",
-            "id": key_obj.id,
-            "donor_id": box.donor_id.id
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'FCB Created',
+                'message': f'FCB collection created with amount {selected_amount}. Please collect payment from POS.',
+                'type': 'success',
+                'sticky': False,
+            }
         }
     @api.model
     def create(self, vals):
