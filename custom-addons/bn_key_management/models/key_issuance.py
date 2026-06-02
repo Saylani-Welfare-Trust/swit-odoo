@@ -123,8 +123,8 @@ class KeyIssuance(models.Model):
                 # Set state to 'paid' directly
                 collection.counterfeit_note_ids.write({'state': 'paid'})
                 
-                # Log for debugging
-                _logger.info(f"Updated {len(collection.counterfeit_note_ids)} counterfeit notes to 'paid' state")
+                # # Log for debugging
+                # _logger.info(f"Updated {len(collection.counterfeit_note_ids)} counterfeit notes to 'paid' state")
             
             # Find or create Counterfeit donor
             counterfeit_donor = self.env['res.partner'].search([
