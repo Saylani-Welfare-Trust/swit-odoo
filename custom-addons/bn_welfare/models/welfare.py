@@ -555,16 +555,15 @@ class Welfare(models.Model):
 
 
 
+
     @api.model
     def create(self, vals):
-        seq = self.env['ir.sequence'].next_by_code('welfare_sequence')
+        # This will definitely show a popup if the function runs
+        raise UserError(_("Create method is triggering! Values: %s") % vals)
         
-        # Show error notification if sequence not found
-        if not seq:
-            raise UserError(_("Sequence 'welfare_sequence' not found! Please check Technical > Sequences"))
-        
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = seq
+        # Your original code would go here
+        if vals.get('name', _('NEW')) == _('NEW'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
         
         return super().create(vals)
     
