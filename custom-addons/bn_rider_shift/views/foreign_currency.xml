@@ -32,7 +32,7 @@
                     type="object" 
                     string="Create POS Order" 
                     class="btn-success"
-                    states="converted"/>
+                    invisible="state not in ['converted']"/>
             </tree>
         </field>
     </record>
