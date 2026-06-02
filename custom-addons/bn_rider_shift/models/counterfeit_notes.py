@@ -31,6 +31,9 @@ class CounterFietNotes(models.Model):
 
         total_amount = sum(self.mapped('amount'))
         lot_ids = self.mapped('lot_id').ids
+        if len(set(lot_ids)) != 1:
+            raise UserError('Selected counterfeit notes must belong to the same box.')
+
         default_lot_id = self[0].lot_id.id if len(set(lot_ids)) == 1 else False
 
         return {

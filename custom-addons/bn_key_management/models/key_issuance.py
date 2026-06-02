@@ -126,27 +126,35 @@ class KeyIssuance(models.Model):
                 "body": f"Please enter the correct amount collected against {data['box_no']}",
             }
 
-        key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
-        if not key_obj:
-            key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
-
-        if not key_obj:
+        box = collection.donation_box_registration_installation_id
+        if not box:
             return {
                 "status": "error",
                 "body": "Invalid Donation Box",
             }
 
-        box = self.env['donation.box.registration.installation'].search([
-            ('lot_id', '=', data['lot_id']),
-            ('shop_name', '=', data['shop_name']),
-            ('contact_person', '=', data['contact_person']),
-            ('contact_no', '=', data['contact_number']),
-            ('location', '=', data['box_location']),
-        ], limit=1)
+        key_obj = self.browse()
+        if 'rider_collection_id' in self._fields:
+            key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
+        if not key_obj:
+            key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
+
+        is_adjustment_collection = (
+            collection.remarks == 'CFB'
+            or (collection.remarks or '').startswith('FCB-')
+            or collection.rider_id.name in ['Counterfeit', 'Foreign Currency']
+        )
+
+        if not key_obj and not is_adjustment_collection:
+            return {
+                "status": "error",
+                "body": "Invalid Donation Box",
+            }
 
         if not data['check_validation']:
-            key_obj.donation_amount = data['amount']
-            key_obj.action_donation_receive()
+            if key_obj:
+                key_obj.donation_amount = data['amount']
+                key_obj.action_donation_receive()
 
             collection.state = 'paid'
 
