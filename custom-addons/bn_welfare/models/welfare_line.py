@@ -121,6 +121,9 @@ class WelfareLine(models.Model):
 
     manual_total = fields.Boolean(default=False)
 
+
+
+
     def action_set_pending(self, create_return_line=True):
         """
         Create a new welfare record with only the pending disbursement line.
