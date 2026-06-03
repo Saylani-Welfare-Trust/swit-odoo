@@ -139,7 +139,7 @@ class WelfareLine(models.Model):
                 welfare = record.welfare_id
 
                 new_welfare_vals = {
-                    'name': welfare.name,
+                    'name': '/',
                     'donee_id': welfare.donee_id.id if welfare.donee_id else False,
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
@@ -225,7 +225,7 @@ class WelfareLine(models.Model):
                 })
 
                 # Set original line to pending
-                record.state = 'pending'
+                record.state = 'return'
 
                 # Create return line only if not already handled by caller
                 if create_return_line:
