@@ -121,33 +121,30 @@ class WelfareLine(models.Model):
 
     manual_total = fields.Boolean(default=False)
 
-    
-    def action_set_pending(self):
+    def action_set_pending(self, create_return_line=True):
         """
         Create a new welfare record with only the pending disbursement line.
         Copy all available data from the original welfare record to the new one.
         Both the original line and the new line are set to 'pending' state.
-        The new welfare record's state will also be set to 'pending'.
+        Also creates a return line record.
         """
         action = {
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
             'target': 'current',
         }
-        
+
         for record in self:
             if record.welfare_id:
-                # Get the original welfare
                 welfare = record.welfare_id
-                
-                # Create new welfare record based on the current welfare with all available fields
+
                 new_welfare_vals = {
                     'name': welfare.name,
                     'donee_id': welfare.donee_id.id if welfare.donee_id else False,
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
                     'date': welfare.date if welfare.date else fields.Date.today(),
-                    'state': 'hod_approve',  
+                    'state': 'hod_approve',
                     'order_type': welfare.order_type if welfare.order_type else False,
                     'institution_category': welfare.institution_category if welfare.institution_category else False,
                     'subcategory': welfare.subcategory if welfare.subcategory else False,
@@ -217,23 +214,27 @@ class WelfareLine(models.Model):
                     'total_children': welfare.total_children if welfare.total_children else 0,
                     'boys_count': welfare.boys_count if welfare.boys_count else 0,
                 }
-                
+
                 # Create the new welfare record
                 new_welfare = self.env['welfare'].create(new_welfare_vals)
-                
+
                 # Copy ONLY this disbursement line to the new welfare with pending state
                 record.copy(default={
                     'welfare_id': new_welfare.id,
                     'state': 'pending',
                 })
-                
-                # Set the original disbursement line to pending state as well
+
+                # Set original line to pending
                 record.state = 'pending'
-                
+
+                # Create return line only if not already handled by caller
+                if create_return_line:
+                    record._create_return_line()
+
                 # Return action to open the new welfare record
                 action['res_model'] = 'welfare'
                 action['res_id'] = new_welfare.id
-        
+
         return action
 
     def action_mark_pending(self):

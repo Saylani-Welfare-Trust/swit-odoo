@@ -28,7 +28,6 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     state = fields.Selection(related='line_id.state', readonly=True)
 
     def action_mark_pending(self):
-
         # Create return line
         self.env['welfare.return.line'].create({
             'welfare_line_id': self.line_id.id,
@@ -41,16 +40,14 @@ class WelfareLineDisbursementPopup(models.TransientModel):
             'state': 'pending',
         })
 
-        # Update original line
-        self.line_id.write({
-            'state': 'pending'
-        })
+        # Create new welfare + copy all form data + copy line
+        # Pass create_return_line=False to avoid creating return line twice
+        self.line_id.action_set_pending(create_return_line=False)
 
         return {
             'type': 'ir.actions.client',
             'tag': 'reload'
         }
-
     def action_disbursed(self):
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.line_id.write({'state': 'disbursed'})
