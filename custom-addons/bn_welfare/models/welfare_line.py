@@ -139,7 +139,7 @@ class WelfareLine(models.Model):
                 welfare = record.welfare_id
 
                 new_welfare_vals = {
-                    'name': '/',
+                    'name': 'welfare.new' ,  # Placeholder, will be set by sequence on create
                     'donee_id': welfare.donee_id.id if welfare.donee_id else False,
                     'employee_id': welfare.employee_id.id if welfare.employee_id else False,
                     'is_individual': welfare.is_individual,
