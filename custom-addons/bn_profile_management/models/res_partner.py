@@ -132,13 +132,18 @@ class ResPartner(models.Model):
             # (overrides the welfare exclusion)
             rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
 
-    @api.depends('name', 'category_id')
+    @api.depends('category_id')
     def _set_donee_required_fields(self):
         for rec in self:
             rec.donee_required_fields = False
+            rec.area_required = False
 
             if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
                 rec.donee_required_fields = True
+
+            category_names = rec.category_id.mapped('name')
+            if 'Welfare' in category_names or 'Medical' in category_names:
+                rec.area_required = True
     
     @api.depends('name', 'category_id')
     def _set_is_donor(self):
