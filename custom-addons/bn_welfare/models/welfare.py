@@ -676,7 +676,7 @@ class Welfare(models.Model):
 
 
 
-    
+
     def _iter_portal_document_values(self, value):
         if isinstance(value, str):
             cleaned_value = value.strip()
@@ -1182,6 +1182,8 @@ class Welfare(models.Model):
                         'disbursement_application_type_id': line.disbursement_application_type_id.id,
                         'quantity': line.quantity,
                         'collection_point': line.collection_point,
+                        'payment_type': line.payment_type,
+                        'assigned_officer_id': line.assigned_officer_id.id,
                         'amount': line.total_amount,
                         # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
                     }
