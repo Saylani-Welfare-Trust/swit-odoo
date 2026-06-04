@@ -136,14 +136,13 @@ class ResPartner(models.Model):
     def _set_donee_required_fields(self):
         for rec in self:
             rec.donee_required_fields = False
-            rec.area_required = False
+            category_names = rec.category_id.mapped('name')
 
-            if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
+            if 'Donee' in category_names and 'Individual' in category_names:
                 rec.donee_required_fields = True
 
-            category_names = rec.category_id.mapped('name')
             if 'Welfare' in category_names or 'Medical' in category_names:
-                rec.area_required = True
+                rec.donee_required_fields = True
     
     @api.depends('name', 'category_id')
     def _set_is_donor(self):
