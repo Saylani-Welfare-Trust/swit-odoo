@@ -53,7 +53,12 @@ class WelfareLine(models.Model):
     returned_by = fields.Many2one('res.users', string='Returned By', default=lambda self: self.env.user)
 
 
-    product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
+    product_domain = fields.Many2many(
+        'product.product',
+        string='Product Domain',
+        compute='_compute_product_domain',
+        store=True,
+    )
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     employee_category_id_officer = fields.Many2one(
         'hr.employee.category', 
@@ -444,15 +449,34 @@ class WelfareLine(models.Model):
     #         else:
     #             rec.net_amount = rec.total_amount
         
-    @api.depends('disbursement_application_type_id')
+    @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
-            rec.product_domain = ""
+            product_category = rec.disbursement_application_type_id.product_category_id
+            if not product_category:
+                rec.product_domain = [(5, 0, 0)]
+                continue
 
-            category_id = rec.disbursement_application_type_id.product_category_id.id
-            
-            if category_id:
-                rec.product_domain = str([('categ_id', '=', category_id), ('is_welfare', '=', True)])
+            products = self.env['product.product'].search([
+                ('categ_id', 'child_of', product_category.id),
+                ('is_welfare', '=', True),
+            ])
+            rec.product_domain = [(6, 0, products.ids)]
+
+    @api.onchange('disbursement_application_type_id')
+    def _onchange_disbursement_application_type_id(self):
+        product_category = self.disbursement_application_type_id.product_category_id
+        if not product_category:
+            self.product_id = False
+            return
+
+        if self.product_id:
+            allowed_products = self.env['product.product'].search([
+                ('categ_id', 'child_of', product_category.id),
+                ('is_welfare', '=', True),
+            ])
+            if self.product_id not in allowed_products:
+                self.product_id = False
     
     @api.depends('disbursement_application_type_id')
     def _compute_analytic_account_domain(self):
