@@ -91,15 +91,15 @@
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
                             <field name="application_form_name" invisible="1"/>
-                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="1"/>
+                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
                             <field name="frc_name" invisible="1"/>
-                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="1"/>
+                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="0"/>
                             <field name="electricity_bill_name" invisible="1"/>
-                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" required="1"/>
+                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" required="0"/>
                             <field name="gas_bill_name" invisible="1"/>
-                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" required="1"/>
+                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" required="0"/>
                             <field name="family_cnic_name" invisible="1"/>
-                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
+                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="0"/>
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
@@ -134,7 +134,7 @@
                                     <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
 
                                     <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" />
+                                    <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
     
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
