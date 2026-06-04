@@ -674,6 +674,8 @@ class Welfare(models.Model):
 
         return None
 
+
+
     
     def _iter_portal_document_values(self, value):
         if isinstance(value, str):
