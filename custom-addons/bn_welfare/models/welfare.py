@@ -3,9 +3,11 @@ from odoo.exceptions import ValidationError, UserError
 
 import requests
 
+import base64
 import logging
 from dateutil.relativedelta import relativedelta
 import json
+from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
@@ -645,49 +647,179 @@ class Welfare(models.Model):
             _logger.info(f"Donee not found in portal: {str(e)}")
             return None
 
+    def _get_portal_document_value(self, payload, portal_fields):
+        """Find a document value anywhere in a nested portal payload."""
+        if not payload:
+            return None
+
+        field_names = set(portal_fields)
+        stack = [payload]
+        while stack:
+            value = stack.pop()
+            if isinstance(value, dict):
+                for field_name in field_names:
+                    field_value = value.get(field_name)
+                    if field_value:
+                        return field_value
+
+                document_key = value.get('field') or value.get('key') or value.get('name')
+                if document_key in field_names:
+                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
+                        if value.get(url_key):
+                            return value.get(url_key)
+
+                stack.extend(value.values())
+            elif isinstance(value, list):
+                stack.extend(value)
+
+        return None
+
+    def _iter_portal_document_values(self, value):
+        if isinstance(value, str):
+            cleaned_value = value.strip()
+            if cleaned_value:
+                yield cleaned_value
+        elif isinstance(value, list):
+            for item in value:
+                yield from self._iter_portal_document_values(item)
+        elif isinstance(value, dict):
+            for key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data', 'base64'):
+                if value.get(key):
+                    yield from self._iter_portal_document_values(value.get(key))
+
+    def _portal_document_filename(self, portal_field, value):
+        if isinstance(value, str) and value.startswith('http'):
+            filename = urlparse(value).path.rsplit('/', 1)[-1]
+            if filename:
+                return filename
+        return f"{portal_field}.jpg"
+
+    def _download_portal_document(self, portal_field, document_value):
+        """Return a base64 string and filename for portal document payloads."""
+        for value in self._iter_portal_document_values(document_value):
+            try:
+                if value.startswith('data:') and ',' in value:
+                    return value.split(',', 1)[1], self._portal_document_filename(portal_field, value)
+
+                if value.startswith('http'):
+                    response = requests.get(value, timeout=10)
+                    if response.status_code == 200:
+                        return base64.b64encode(response.content).decode('utf-8'), self._portal_document_filename(portal_field, value)
+                    _logger.warning(
+                        f"Failed to download {portal_field}: HTTP {response.status_code}"
+                    )
+                    continue
+
+                # Some portal payloads already contain plain base64 without a data URL prefix.
+                base64.b64decode(value, validate=True)
+                return value, self._portal_document_filename(portal_field, value)
+            except Exception as e:
+                _logger.error(
+                    f"Error processing {portal_field} document value {value}: {str(e)}"
+                )
+
+        return None, None
+
     def action_check_portal_status(self):
         """Check current status in portal"""
         self.ensure_one()
-        
-        # try:
-            # Check if donee exists
+
+        # Check if donee exists
         donee_data = self._check_donee_exists_in_portal()
-        # _logger.info(f"Donee data: {donee_data}")
 
-        # raise exceptions.ValidationError(donee_data)
-
-            
         if donee_data:
-                message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-
+            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
             donee_in_portal = self._create_donee_in_portal()
+
         # Check for applications
         application = self._search_portal_applications()
-        # _logger.info(f"Applications found: {application}")    
+
         app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
+
         all_media = []
         all_remarks = []
+
+        # Portal field → Odoo Binary field mapping
+        document_field_map = {
+            'applicationFormImage': ('application_form', 'application_form_name'),
+            'frcImage':             ('frc', 'frc_name'),
+            'electricityBillImage': ('electricity_bill_file', 'electricity_bill_name'),
+            'gasBillImage':         ('gas_bill_file', 'gas_bill_name'),
+            'familyCnicImage':      ('family_cnic', 'family_cnic_name'),
+        }
+
+        document_aliases = {
+            'applicationFormImage': ('applicationFormImage', 'applicationForm', 'application_form_image'),
+            'frcImage': ('frcImage', 'frc', 'frc_image'),
+            'electricityBillImage': ('electricityBillImage', 'electricityBill', 'electricity_bill_image'),
+            'gasBillImage': ('gasBillImage', 'gasBill', 'gas_bill_image'),
+            'familyCnicImage': ('familyCnicImage', 'familyCnic', 'family_cnic_image'),
+        }
+
+        document_vals = {}
+        document_sources = [application]
+
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
-                media = report.get('media') if isinstance(report, dict) else None
-                remarks = report.get('remarks') if isinstance(report, dict) else None
+                if not isinstance(report, dict):
+                    continue
+
+                # Handle media links
+                media = report.get('media')
+                remarks = report.get('remarks')
+
                 if media:
                     for url in media:
                         all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
+
                 if remarks:
                     all_remarks.append(remarks)
-        # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
-        if app_state == 'inquiry_complete': # type: ignore
-            self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
-            self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
-            self.write({"state":"inquiry"})
+
+                document_sources.append(report)
+
+        # Download document images and convert to binary. The portal may send these
+        # on the application itself, inside form/documents, or inside inquiryReports.
+        for portal_field, (odoo_field, filename_field) in document_field_map.items():
+            if odoo_field in document_vals:
+                continue
+
+            for source in document_sources:
+                image_value = self._get_portal_document_value(
+                    source, document_aliases.get(portal_field, (portal_field,))
+                )
+                if not image_value:
+                    continue
+
+                binary_value, filename = self._download_portal_document(portal_field, image_value)
+                if binary_value:
+                    document_vals[odoo_field] = binary_value
+                    document_vals[filename_field] = filename
+                    _logger.info(
+                        f"Downloaded {portal_field} to {odoo_field} from portal payload"
+                    )
+                    break
+
+        if app_state == 'inquiry_complete':
+            # Single write with all fields including documents
+            write_vals = {
+                'inquiry_media': '<br/>'.join(all_media) if all_media else '',
+                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
+                'state': 'inquiry',
+            }
+
+            # Add downloaded document binaries
+            write_vals.update(document_vals)
+
+            self.write(write_vals)
+
             result = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state} "
             message += f" | 📋 {result['message']} "
         else:
-            message += f" | 📋 No applications found"     # type: ignore
+            message += f" | 📋 No applications found"  # type: ignore
+
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _find_matching_application(self, applications):
