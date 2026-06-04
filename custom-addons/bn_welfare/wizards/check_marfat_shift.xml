@@ -145,6 +145,7 @@
                 </sheet>
                 <footer>
                     <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
+                    <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary"/>
                     <button string="Close" class="btn-link" special="cancel"/>
                 </footer>
             </form>

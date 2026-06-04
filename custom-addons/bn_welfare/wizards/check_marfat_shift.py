@@ -82,7 +82,23 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     state = fields.Selection(related='recurring_line_id.state', readonly=True)
 
     def action_disbursed(self):
-        self.recurring_line_id.action_disbursed()
+        self.welfare_id._auto_disburse_if_all_lines_delivered()
+        self.recurring_line_id.write({'state': 'disbursed'})
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    def action_mark_pending(self):
+        self.env['welfare.return.line'].create({
+            'recurring_line_id': self.recurring_line_id.id,
+            'welfare_id': self.recurring_line_id.welfare_id.id,
+            'donee_id': self.recurring_line_id.welfare_id.donee_id.id,
+            'product_id': self.recurring_line_id.product_id.id,
+            'quantity': self.recurring_line_id.quantity,
+            'total_amount': self.recurring_line_id.amount,
+            'return_date': fields.Date.today(),
+            'state': 'pending',
+        })
+
+        self.recurring_line_id.write({'state': 'pending'})
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
 

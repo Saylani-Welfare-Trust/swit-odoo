@@ -6,6 +6,7 @@ class WelfareReturnLine(models.Model):
     _description = 'Welfare Return Line'
 
     welfare_line_id = fields.Many2one('welfare.line')
+    recurring_line_id = fields.Many2one('welfare.recurring.line')
     welfare_id = fields.Many2one('welfare')
     donee_id = fields.Many2one('res.partner')
 
