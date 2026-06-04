@@ -276,6 +276,42 @@ patch(ActionScreen.prototype, {
                 return;
             }
 
+            // ========== ADD DONOR/CUSTOMER TO ORDER ==========
+            const welfareRecord = await this.env.services.orm.searchRead(
+                'welfare',
+                [['name', '=', welfareNumber]],
+                ['donee_id'],
+                { limit: 1 }
+            );
+
+            if (welfareRecord && welfareRecord.length > 0 && welfareRecord[0].donee_id) {
+                const donorId = welfareRecord[0].donee_id[0];
+
+                let partner = this.pos.db.get_partner_by_id(donorId);
+
+                if (!partner) {
+                    const partnerData = await this.env.services.orm.searchRead(
+                        'res.partner',
+                        [['id', '=', donorId]],
+                        ['id', 'name', 'phone', 'email'],
+                        { limit: 1 }
+                    );
+
+                    if (partnerData && partnerData.length > 0) {
+                        this.pos.db.add_partners(partnerData);
+                        partner = this.pos.db.get_partner_by_id(donorId);
+                    }
+                }
+
+                if (partner) {
+                    this.pos.get_order().set_partner(partner);
+                    this.env.services.notification.add(
+                        `Customer set to: ${partner.name}`,
+                        { type: 'info' }
+                    );
+                }
+            }
+
             if (!order.extra_data) {
                 order.extra_data = {};
             }
