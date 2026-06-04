@@ -148,6 +148,22 @@ class WelfareRecurringLine(models.Model):
         
         return bill
 
+    def open_recurring_disbursement_popup(self):
+        self.ensure_one()
+        popup = self.env['welfare.recurring.line.disbursement.popup'].create({
+            'recurring_line_id': self.id,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Recurring Disbursement Details',
+            'res_model': 'welfare.recurring.line.disbursement.popup',
+            'res_id': popup.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_welfare.view_welfare_recurring_line_disbursement_popup_form').id,
+            'target': 'new',
+            'context': {'form_view_initial_mode': 'view'},
+        }
+
     def action_disbursed(self):
         # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
         for line in self:

@@ -55,6 +55,37 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
 
+class WelfareRecurringLineDisbursementPopup(models.TransientModel):
+    _name = 'welfare.recurring.line.disbursement.popup'
+    _description = 'Welfare Recurring Line Disbursement Popup'
+
+    recurring_line_id = fields.Many2one('welfare.recurring.line', string='Recurring Line', required=True)
+    welfare_id = fields.Many2one('welfare', related='recurring_line_id.welfare_id', readonly=True)
+    donee_id = fields.Many2one('res.partner', related='recurring_line_id.welfare_id.donee_id', readonly=True)
+    donee_cnic_no = fields.Char(string='CNIC', related='recurring_line_id.welfare_id.donee_id.cnic_no', readonly=True)
+    donee_mobile = fields.Char(string='Mobile', related='recurring_line_id.welfare_id.donee_id.mobile', readonly=True)
+    donee_street = fields.Char(string='Street', related='recurring_line_id.welfare_id.donee_id.street', readonly=True)
+    donee_street2 = fields.Char(string='Street 2', related='recurring_line_id.welfare_id.donee_id.street2', readonly=True)
+    donee_city = fields.Char(string='City', related='recurring_line_id.welfare_id.donee_id.city', readonly=True)
+    donee_state_id = fields.Many2one('res.country.state', string='State', related='recurring_line_id.welfare_id.donee_id.state_id', readonly=True)
+    donee_country_id = fields.Many2one('res.country', string='Country', related='recurring_line_id.welfare_id.donee_id.country_id', readonly=True)
+
+    disbursement_category_id = fields.Many2one('disbursement.category', related='recurring_line_id.disbursement_category_id', readonly=True)
+    disbursement_application_type_id = fields.Many2one('disbursement.application.type', related='recurring_line_id.disbursement_application_type_id', readonly=True)
+    product_id = fields.Many2one('product.product', related='recurring_line_id.product_id', readonly=True)
+    currency_id = fields.Many2one('res.currency', related='recurring_line_id.currency_id', readonly=True)
+    quantity = fields.Float(related='recurring_line_id.quantity', readonly=True)
+    amount = fields.Monetary(related='recurring_line_id.amount', readonly=True, currency_field='currency_id')
+    collection_point = fields.Selection(related='recurring_line_id.collection_point', readonly=True)
+    collection_date = fields.Date(related='recurring_line_id.collection_date', readonly=True)
+    assigned_officer_id = fields.Many2one('hr.employee', related='recurring_line_id.assigned_officer_id', readonly=True)
+    state = fields.Selection(related='recurring_line_id.state', readonly=True)
+
+    def action_disbursed(self):
+        self.recurring_line_id.action_disbursed()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+
 class CheckMarfatShift(models.TransientModel):
     _name = 'check.marfat.shift'
     _description = 'Check Assigned Officer (Marfat) Shift Disbursements'

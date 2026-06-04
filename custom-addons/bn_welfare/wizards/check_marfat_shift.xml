@@ -57,6 +57,7 @@
                                     <field name="collection_date" string="Collection Date"/>
                                     <field name="quantity" string="Quantity"/>
                                     <field name="amount" string="Amount"/>
+                                    <button name="open_recurring_disbursement_popup" string="Details" type="object" class="btn-secondary"/>
                                     <field name="state"
                                             widget="selection"
                                             options="{'always_reload': True}"
@@ -106,6 +107,44 @@
                 <footer>
                     <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
                     <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary"/>
+                    <button string="Close" class="btn-link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_welfare_recurring_line_disbursement_popup_form" model="ir.ui.view">
+        <field name="name">welfare.recurring.line.disbursement.popup.form</field>
+        <field name="model">welfare.recurring.line.disbursement.popup</field>
+        <field name="arch" type="xml">
+            <form string="Recurring Disbursement Details" create="false" edit="false">
+                <sheet>
+                    <group string="Donee Information">
+                        <field name="recurring_line_id" invisible="1"/>
+                        <field name="donee_id" readonly="1"/>
+                        <field name="donee_cnic_no" readonly="1"/>
+                        <field name="donee_mobile" readonly="1"/>
+                        <field name="donee_street" readonly="1"/>
+                        <field name="donee_street2" readonly="1"/>
+                        <field name="donee_city" readonly="1"/>
+                        <field name="donee_state_id" readonly="1"/>
+                        <field name="donee_country_id" readonly="1"/>
+                    </group>
+                    <group string="Recurring Disbursement Information">
+                        <field name="disbursement_category_id" readonly="1"/>
+                        <field name="disbursement_application_type_id" readonly="1"/>
+                        <field name="product_id" readonly="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="quantity" readonly="1"/>
+                        <field name="amount" readonly="1"/>
+                        <field name="collection_point" readonly="1"/>
+                        <field name="collection_date" readonly="1"/>
+                        <field name="assigned_officer_id" readonly="1"/>
+                        <field name="state" readonly="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
                     <button string="Close" class="btn-link" special="cancel"/>
                 </footer>
             </form>
