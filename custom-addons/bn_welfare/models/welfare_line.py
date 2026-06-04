@@ -449,6 +449,8 @@ class WelfareLine(models.Model):
     #         else:
     #             rec.net_amount = rec.total_amount
         
+
+        
     @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
