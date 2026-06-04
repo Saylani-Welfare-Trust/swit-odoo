@@ -79,6 +79,13 @@ class CheckMarfatShift(models.TransientModel):
         readonly=True,
         compute='_compute_disbursement_lines'
     )
+
+    recurring_line_ids = fields.Many2many(
+        'welfare.recurring.line',
+        string="Recurring Lines",
+        readonly=True,
+        compute='_compute_recurring_lines'
+    )
     
     @api.depends('employee_category_id_officer')
     def _compute_assigned_officers(self):
@@ -116,6 +123,24 @@ class CheckMarfatShift(models.TransientModel):
             else:
                 rec.disbursement_line_ids = False
 
+    @api.depends('assigned_officer_id')
+    def _compute_recurring_lines(self):
+        """
+        Fetch all recurring lines for the selected assigned officer with today's collection date.
+        """
+        for rec in self:
+            if rec.assigned_officer_id:
+                today = fields.Date.today()
+                recurring_lines = self.env['welfare.recurring.line'].search([
+                    ('assigned_officer_id', '=', rec.assigned_officer_id.id),
+                    ('collection_date', '=', today),
+                    ('state', 'not in', ['disbursed'])
+                ])
+
+                rec.recurring_line_ids = recurring_lines
+            else:
+                rec.recurring_line_ids = False
+
     def action_check_shift(self):
         """
         Check shift button action - triggers recomputation of disbursement lines
@@ -125,6 +150,7 @@ class CheckMarfatShift(models.TransientModel):
 
         # Trigger recompute of disbursement_line_ids
         self._compute_disbursement_lines()
+        self._compute_recurring_lines()
 
         # Return action to refresh the view
         return {

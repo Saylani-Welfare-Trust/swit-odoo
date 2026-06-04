@@ -47,6 +47,26 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Recurring Lines">
+                            <field name="recurring_line_ids" readonly="1" nolabel="1" mode="tree">
+                                <tree>
+                                    <field name="welfare_id" string="Welfare Record"/>
+                                    <field name="disbursement_category_id" string="Disbursement Category"/>
+                                    <field name="product_id" string="Product"/>
+                                    <field name="collection_point" string="Collection Point"/>
+                                    <field name="collection_date" string="Collection Date"/>
+                                    <field name="quantity" string="Quantity"/>
+                                    <field name="amount" string="Amount"/>
+                                    <field name="state"
+                                            widget="selection"
+                                            options="{'always_reload': True}"
+                                            decoration-warning="state == 'draft'"
+                                            decoration-success="state == 'collected'"
+                                            decoration-info="state in ['submitted', 'approved']"
+                                            decoration-danger="state == 'rejected'"/>
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
   
                 </sheet>
