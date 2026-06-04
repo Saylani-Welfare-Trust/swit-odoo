@@ -61,7 +61,7 @@
     
     <menuitem id="menu_welfare_approval_limits" 
               name="Approval Limits" 
-              parent="bn_master_setup.master_setup_menu"
+              parent="bn_master_setup.welfare_menu"
               action="action_welfare_approval_limit"
               sequence="10"/>
 
