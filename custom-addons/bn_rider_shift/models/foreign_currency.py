@@ -60,8 +60,9 @@ class ForeignCurrency(models.Model):
             [('name', 'ilike', 'Foreign Currency')], limit=1
         )
         if not fc_box:
-            raise UserError('Could not find a "Foreign Currency" donation box registration. Please create one first.')
-
+            fc_box = self.env['donation.box.registration.installation'].create({
+                'name': 'Foreign Currency',
+            })
         # Create a single rider collection for all selected lines
         rider_collection = self.env['rider.collection'].create({
             'rider_id': fc_rider.id,
