@@ -39,10 +39,11 @@ class WelfareLineDisbursementPopup(models.TransientModel):
             'return_date': fields.Date.today(),
             'state': 'pending',
         })
+        self.line_id.write({'state': 'pending'})
 
         # Create new welfare + copy all form data + copy line
         # Pass create_return_line=False to avoid creating return line twice
-        self.line_id.action_set_pending(create_return_line=False)
+        # self.line_id.action_set_pending(create_return_line=False)
 
         return {
             'type': 'ir.actions.client',

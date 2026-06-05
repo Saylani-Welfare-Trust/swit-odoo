@@ -1097,8 +1097,8 @@ class Welfare(models.Model):
     def action_move_to_hod(self):
         """HOD Approval - No limit check here"""
         for record in self:
-            if not record.hod_remarks:
-                raise ValidationError('Please enter HOD Remarks!')
+            if not record.committee_remarks:
+                raise ValidationError('Please enter Committee Remarks!')
             
             # No limit check - just move to HOD approval
             record.state = 'hod_approve'
@@ -1131,12 +1131,14 @@ class Welfare(models.Model):
                     ))
             
             # Member validation (always runs)
-            if not record.member_remarks:
-                raise ValidationError('Please enter Member Remarks!')
+            if not record.hod_remarks:
+                raise ValidationError('Please enter HOD Remarks!')
             
             record.state = 'mem_approve'
     def action_approve(self):
         """Final approval logic"""
+        if not record.mem_remarks:
+                raise ValidationError('Please enter Member Remarks!')
         for record in self:
             if record.order_type == 'recurring':
                 for line in record.welfare_line_ids:
@@ -1200,8 +1202,8 @@ class Welfare(models.Model):
 
             
             # Your existing committee approval validations
-            if not record.committee_remarks:
-                raise ValidationError(_('Please enter Committee Remarks before approval.'))
+            # if not record.committee_remarks:
+            #     raise ValidationError(_('Plea   e enter Committee Remarks before approval.'))
             
             # Document validation
             missing_fields = []

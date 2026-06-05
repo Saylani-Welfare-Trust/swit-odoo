@@ -601,7 +601,7 @@ class WelfareLine(models.Model):
             
             # Reset the line so the welfare can be approved and paid again.
             self.write({
-                'state': 'draft',
+                'state': 'return',
                 'return_date': fields.Datetime.now(),
                 'return_bill_id': return_receipt.id,
                 'returned_by': self.env.user.id,
