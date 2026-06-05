@@ -543,7 +543,7 @@ patch(PaymentScreen.prototype, {
                         'action_return_to_pos',
                         [[returnLine.id]],
                         {
-                            pos_order_id: currentOrder.id,
+                            pos_order_id: currentOrder.server_id,
                             welfare_number: returnLine.welfareNumber,
                             return_type: returnLine.returnType
                         }
