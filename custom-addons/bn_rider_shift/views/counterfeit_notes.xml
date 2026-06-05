@@ -6,10 +6,14 @@
         <field name="model">counterfeit.notes</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_counterfeit_wizard" type="object" string="Create CFB" class="oe_highlight"/>
+                </header>
                 <field name="rider_name" string="Rider" />
                 <field name="lot_id" string="Box No." />
                 <field name="submission_time" />
                 <field name="amount" />
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'payment_received'" decoration-success="state == 'paid'" />
             </tree>
         </field>
     </record>

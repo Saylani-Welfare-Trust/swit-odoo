@@ -8,9 +8,10 @@
     'depends': [
         'bn_profile_management',
         'bn_pos_custom_action',
+        'bn_donation_box',
+        'bn_master_setup',
         'stock',
         'product',
-        'bn_donation_box'
     ],
     'data': [
         'security/group.xml',
@@ -22,6 +23,7 @@
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
         'views/medical_equipment.xml',
+        'views/medical_equipment_reference.xml',
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
         'wizards/medical_equipment_donation.xml',

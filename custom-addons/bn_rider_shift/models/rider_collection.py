@@ -25,6 +25,13 @@ class RiderCollection(models.Model):
     _description = "Rider Collection"
     _rec_name = "shop_name"
 
+    counterfeit_note_ids = fields.Many2many(
+        'counterfeit.notes',
+        'rider_collection_counterfeit_rel',
+        'collection_id',
+        'note_id',
+        string='Counterfeit Notes'
+    )
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
@@ -52,7 +59,27 @@ class RiderCollection(models.Model):
     counterfeit_notes = fields.Float('Counterfeit Notes')
 
     remarks = fields.Text('Remarks')
+    foreign_currency_line_ids = fields.Many2many(
+        'foreign.currency',
+        'rider_collection_foreign_currency_rel',
+        'collection_id',
+        'foreign_currency_id',
+        string='Foreign Currency Lines'
+    )
 
+    is_fcb = fields.Boolean('Is FCB', compute='_compute_is_fcb')
+    
+    def _compute_is_fcb(self):
+        for record in self:
+            record.is_fcb = record.remarks == 'FCB'
+    
+    def action_mark_cfb_paid(self):
+        """Mark all linked counterfeit notes as paid"""
+        for collection in self:
+            if collection.remarks == 'CFB' and collection.counterfeit_note_ids:
+                collection.counterfeit_note_ids.write({'state': 'payment_received'})
+                collection.state = 'paid'
+        return True
 
     @api.model
     def get_rider_collection(self):
@@ -71,7 +98,7 @@ class RiderCollection(models.Model):
                 'day': collection.day,
                 'date': collection.date,
                 'lot_id': collection.lot_id.id if collection.lot_id else False,
-                'box_no': collection.lot_id.name if collection.lot_id else '',
+                'box_no': collection.remarks or (collection.lot_id.name if collection.lot_id else ''),
                 'shop_name': collection.shop_name,
                 'contact_person': collection.contact_person,
                 'contact_number': collection.contact_number,

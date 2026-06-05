@@ -27,8 +27,10 @@
                                 <button name="mark_as_done" string="Mark as done" type="object" class="btn-primary" invisible="state in ['pending', 'donation_collected', 'donation_submit', 'paid']" />
                                 <button name="mark_as_pending" string="Mark as Pending" type="object" class="btn-primary" invisible="state in ['pending', 'donation_submit', 'paid']" />
                                 <button name="mark_as_submit" string="Mark as Submit" type="object" class="btn-primary" invisible="state in ['pending', 'donation_not_collected', 'donation_submit', 'paid']" />
-                                <button string="Complain Center" name="action_generate_complain" type="object" class="oe_highlight" />
+                                <button string="Complain Center" name="action_generate_complain" type="object" class="oe_highlight"  invisible="is_complain_generated == True" />
                                 <button string="Foreign Currency" name="action_change_rate" type="object" class="oe_highlight" insibile="state != 'donation_collected'" />
+                                <field name="is_complain_generated" invisible="1" />
+
 
                                 <field name="state" widget="statusbar" statusbar_visible="donation_not_collected, donation_collected, donation_submit, paid" />
                             </header>

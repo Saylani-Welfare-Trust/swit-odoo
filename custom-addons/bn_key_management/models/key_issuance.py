@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
 
+_logger = logging.getLogger(__name__)
 
 key_selection = [
     ('draft', 'Draft'),
@@ -56,7 +58,8 @@ class KeyIssuance(models.Model):
     installation_category_id = fields.Many2one(related='donation_box_registration_installation_id.installation_category_id', string="Installation Category", store=True)
 
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True)
-
+    is_fcb = fields.Boolean('Is FCB Collection', default=False)
+    is_cfb = fields.Boolean('Is CFB Collection', default=False)
 
     def action_issue(self):
         for record in self:
@@ -89,7 +92,6 @@ class KeyIssuance(models.Model):
     def action_overdue(self):
         for record in self:
             record.state = 'overdue'
-
     @api.model
     def set_donation_amount(self, data):
         if not data:
@@ -98,7 +100,6 @@ class KeyIssuance(models.Model):
                 "body": "Please specify Key and Collection Amount",
             }
 
-        # Get collection record by ID for reliable lookup
         collection_id = data.get('collection_id')
         if not collection_id:
             return {
@@ -111,9 +112,70 @@ class KeyIssuance(models.Model):
         if not collection.exists():
             return {
                 "status": "error",
-                "body": f"Collection record not found for {data['box_no']}",
+                "body": f"Collection record not found for {data.get('box_no', 'unknown box')}",
             }
         
+        # HANDLE CFB COLLECTIONS (Counterfeit)
+        if collection.remarks == 'CFB':
+            collection.write({'state': 'paid'})
+            
+            if collection.counterfeit_note_ids:
+                collection.counterfeit_note_ids.write({'state': 'paid'})
+            
+            counterfeit_donor = self.env['res.partner'].search([
+                ('name', 'ilike', 'Counterfeit')
+            ], limit=1)
+            
+            if not counterfeit_donor:
+                counterfeit_donor = self.env['res.partner'].create({
+                    'name': 'Counterfeit Donor',
+                    'is_company': False,
+                    'customer_rank': 1,
+                })
+            
+            return {
+                "status": "success",
+                "donor_id": counterfeit_donor.id,
+                "is_cfb": True,
+            }
+        
+        # HANDLE FCB COLLECTIONS (Foreign Currency)
+        if collection.remarks == 'FCB':
+            # Mark collection as paid
+            collection.write({'state': 'paid'})
+            
+            # *** THIS IS WHERE FOREIGN CURRENCY LINES ARE UPDATED TO PAID ***
+            foreign_currency_lines = self.env['foreign.currency'].search([
+                ('rider_collection_id', '=', collection.id)
+            ])
+            
+            if foreign_currency_lines:
+                # Update lines from 'payment_received' to 'paid'
+                lines_to_update = foreign_currency_lines.filtered(
+                    lambda line: line.state == 'payment_received'
+                )
+                if lines_to_update:
+                    lines_to_update.write({'state': 'paid'})
+            
+            # Find or create FCB Donor
+            fcb_donor = self.env['res.partner'].search([
+                ('name', 'ilike', 'Foreign Currency Donor')
+            ], limit=1)
+            
+            if not fcb_donor:
+                fcb_donor = self.env['res.partner'].create({
+                    'name': 'Foreign Currency Donor',
+                    'is_company': False,
+                    'customer_rank': 1,
+                })
+            
+            return {
+                "status": "success",
+                "donor_id": fcb_donor.id,
+                "is_fcb": True,
+            }
+        
+        # NORMAL COLLECTIONS (existing code)
         if collection.state != 'donation_submit':
             return {
                 "status": "error",
@@ -128,7 +190,11 @@ class KeyIssuance(models.Model):
 
         key_obj = self.sudo().search([('rider_collection_id', '=', collection_id)], limit=1)
         if not key_obj:
-            key_obj = self.sudo().search([('key_id.lot_id', '=', data['lot_id']), ('issue_date', '=', data['date'] ), ('state', 'in', ['issued', 'overdue'])], limit=1)
+            key_obj = self.sudo().search([
+                ('key_id.lot_id', '=', data['lot_id']),
+                ('issue_date', '=', data['date']),
+                ('state', 'in', ['issued', 'overdue'])
+            ], limit=1)
 
         if not key_obj:
             return {
@@ -147,7 +213,6 @@ class KeyIssuance(models.Model):
         if not data['check_validation']:
             key_obj.donation_amount = data['amount']
             key_obj.action_donation_receive()
-
             collection.state = 'paid'
 
             return {
@@ -159,7 +224,6 @@ class KeyIssuance(models.Model):
             "id": key_obj.id,
             "donor_id": box.donor_id.id
         }
-    
     @api.model
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
