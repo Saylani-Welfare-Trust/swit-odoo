@@ -1147,7 +1147,7 @@ class Welfare(models.Model):
                     ]):
                         pass
             
-            if not record.mem_remarks:
+            if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
         
