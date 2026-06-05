@@ -81,9 +81,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'inquiry'" required="state == 'inquiry'"/>
-                            <field name="hod_remarks" readonly="state != 'committee_approval'" required="state == 'committee_approval'"/>
-                            <field name="member_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
+                            <field name="committee_remarks" readonly="state != 'committee_approval  '" required="state == 'committee_approval'"/>
+                            <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
+                            <field name="member_remarks" readonly="state != 'member_approve'" required="state == 'member_approve'"/>
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 
@@ -135,6 +135,7 @@
 
                                     <field name="show_deliver_button" column_invisible="1"/>
                                     <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
+                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
     
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />

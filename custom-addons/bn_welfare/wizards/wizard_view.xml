@@ -155,17 +155,6 @@
                         <separator string="Committee Members" class="text-uppercase"/>
                         <field name="committee_members_html" nolabel="1" widget="html"/>
 
-                        <!-- Teachers Section -->
-                        <separator string="Teachers" class="text-uppercase"/>
-                        <field name="teachers_html" nolabel="1" widget="html"/>
-
-                        <!-- Masjid Details Section -->
-                        <separator string="Masjid Details" class="text-uppercase"/>
-                        <field name="masjid_html" nolabel="1" widget="html"/>
-
-                        <!-- Madrasa Details Section -->
-                        <separator string="Madrasa Details" class="text-uppercase"/>
-                        <field name="madrasa_html" nolabel="1" widget="html"/>
                         
                         <!-- Attachments Section -->
                         <separator string="Attachments" class="text-uppercase"/>

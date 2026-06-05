@@ -607,7 +607,7 @@ class WelfareLine(models.Model):
                 'returned_by': self.env.user.id,
             })
 
-            self.welfare_id.write({'state': 'approve'})
+            self.welfare_id.write({'state': 'return'})
             
             # Post message
             self.welfare_id.message_post(body=f"""
@@ -730,3 +730,18 @@ class WelfareLine(models.Model):
         _logger.info(f"Created POS return order {pos_return.name} for amount {self.total_amount}")
         
         return pos_return
+    def action_return_to_draft(self):
+        """Allow returning a line to draft state and record state to hod approve for re-processing"""
+        for line in self:
+            if line.state != 'return':
+                raise ValidationError(_(
+                    "Only lines in 'Return' state can be moved back to Draft. "
+                    "Current state: %s. Only 'Return' lines can be reset." % line.state
+                ))
+        
+        self.write({'state': 'draft'})
+        self.welfare_id.write({'state': 'hod_approve'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
