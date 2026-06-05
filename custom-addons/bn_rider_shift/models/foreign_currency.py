@@ -50,49 +50,39 @@ class ForeignCurrency(models.Model):
         if not selected_amount:
             raise UserError('Please select converted foreign currency lines with a non-zero exchanged amount.')
 
-        if any(not rec.lot_id for rec in self):
-            raise UserError('Selected foreign currency lines must have a box assigned.')
-        
-        lot_ids = self.mapped('lot_id')
-        if len(lot_ids) != 1:
-            raise UserError('Selected foreign currency lines must belong to the same box.')
-
-        lot = lot_ids[0]
-
         # Find or create "Foreign Currency" rider
         fc_rider = self.env['hr.employee'].search([('name', '=', 'Foreign Currency')], limit=1)
         if not fc_rider:
-            fc_rider = self.env['hr.employee'].create({
-                'name': 'Foreign Currency',
-            })
+            fc_rider = self.env['hr.employee'].create({'name': 'Foreign Currency'})
 
-        # Find the donation box registration for this lot
-        box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
-        if not box:
-            raise UserError('Could not find a donation box registration for the selected box.')
+        # Find or create a dedicated "Foreign Currency" box registration
+        fc_box = self.env['donation.box.registration.installation'].search(
+            [('name', 'ilike', 'Foreign Currency')], limit=1
+        )
+        if not fc_box:
+            raise UserError('Could not find a "Foreign Currency" donation box registration. Please create one first.')
 
-        # Create rider collection with FCB remarks
+        # Create a single rider collection for all selected lines
         rider_collection = self.env['rider.collection'].create({
             'rider_id': fc_rider.id,
             'date': fields.Date.today(),
-            'donation_box_registration_installation_id': box.id,
+            'donation_box_registration_installation_id': fc_box.id,
             'state': 'donation_submit',
             'amount': selected_amount,
-            'remarks': 'FCB',  # Use 'FCB' as remarks to identify in POS
+            'remarks': 'FCB',
         })
 
-        # Link the foreign currency lines to this collection
+        # Link all selected foreign currency lines to this collection
         self.write({'rider_collection_id': rider_collection.id})
 
-        # Create key issuance for this box
+        # Create key issuance for the FC box
         key = self.env['key'].search([
-            ('donation_box_registration_installation_id', '=', box.id),
+            ('donation_box_registration_installation_id', '=', fc_box.id),
             ('state', 'in', ['available', 'issued'])
         ], limit=1)
-        
         if not key:
             key = self.env['key'].search([
-                ('donation_box_registration_installation_id', '=', box.id)
+                ('donation_box_registration_installation_id', '=', fc_box.id)
             ], limit=1)
 
         if key:
@@ -105,14 +95,11 @@ class ForeignCurrency(models.Model):
                 'action_type': 'manual',
                 'donation_amount': selected_amount,
             }
-            
-            # Add rider_collection_id if the field exists
             if 'rider_collection_id' in self.env['key.issuance']._fields:
                 key_issuance_vals['rider_collection_id'] = rider_collection.id
-            
             self.env['key.issuance'].create(key_issuance_vals)
 
-        # CHANGE STATE TO PAYMENT_RECEIVED
+        # Update state for all selected lines
         self.write({'state': 'payment_received'})
 
         return {
@@ -120,7 +107,7 @@ class ForeignCurrency(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': 'FCB Created',
-                'message': f'FCB collection created with amount {selected_amount}. Please collect payment from POS.',
+                'message': f'FCB collection created with total amount {selected_amount}. Please collect payment from POS.',
                 'type': 'success',
                 'sticky': False,
             }
