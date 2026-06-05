@@ -1137,8 +1137,6 @@ class Welfare(models.Model):
             record.state = 'mem_approve'
     def action_approve(self):
         """Final approval logic"""
-        if not record.mem_remarks:
-                raise ValidationError('Please enter Member Remarks!')
         for record in self:
             if record.order_type == 'recurring':
                 for line in record.welfare_line_ids:
@@ -1149,6 +1147,8 @@ class Welfare(models.Model):
                     ]):
                         pass
             
+            if not record.mem_remarks:
+                raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
         
         # Print report
