@@ -1108,18 +1108,13 @@ class Welfare(models.Model):
             current_user = self.env.user
             is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
 
-            raise ValidationError(
-                "DEBUG:\n"
-                "Current User: %s\n"
-                "Is HOD: %s\n"
-                "User Groups: %s"
-                % (
-                    current_user.name,
-                    is_hod,
-                    current_user.groups_id.mapped('name')
-                )
-            )
-            
+            if is_hod:
+                within_limit, error_message = record._check_amount_within_hod_limit()
+                if not within_limit:
+                    raise ValidationError(error_message)
+
+            if not record.hod_remarks:
+                raise ValidationError('Please enter HOD Remarks!')
             record.state = 'mem_approve'
     def action_approve(self):
         """Final approval logic"""
@@ -1280,15 +1275,13 @@ class Welfare(models.Model):
         }
         
 
-
     def _check_amount_within_hod_limit(self):
         """Check if request amount is within HOD limit"""
         self.ensure_one()
 
-        # Get HOD group limit configuration
         hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
         if not hod_group:
-            return True, None  # No HOD group configured
+            return True, None
 
         limit = self.env['welfare.approval.limit'].search([
             ('group_id', '=', hod_group.id),
@@ -1296,9 +1289,8 @@ class Welfare(models.Model):
         ], limit=1)
 
         if not limit:
-            return True, None  # No limit configured
+            return True, None
 
-        # Check each line individually
         for line in self.welfare_line_ids:
             # Check amount limit
             if line.total_amount > limit.max_amount_limit:
@@ -1307,14 +1299,14 @@ class Welfare(models.Model):
                     "This request cannot be approved by HOD."
                 ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
 
-            # Check product limit
-            if line.product_id not in limit.allowed_product_ids:
+            # Check product limit only if allowed products are set
+            if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
                 return False, _(
                     "Product '%s' is not in the allowed products list for HOD approval. "
                     "Please contact your administrator."
                 ) % line.product_id.name
 
-        return True, None  # All lines within HOD limit
+        return True, None
 
 
     def action_return_to_pos(self):
