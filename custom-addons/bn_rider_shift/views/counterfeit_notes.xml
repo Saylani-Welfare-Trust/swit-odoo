@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
                 <header>
-                    <button name="action_open_counterfeit_wizard" type="object" string="Create CFB" class="oe_highlight"/>
+                    <button name="action_open_counterfeit_wizard" type="object" string="Create POS Order" class="oe_highlight"/>
                 </header>
                 <field name="rider_name" string="Rider" />
                 <field name="lot_id" string="Box No." />
