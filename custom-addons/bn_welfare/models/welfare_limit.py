@@ -30,6 +30,7 @@ class WelfareApprovalLimit(models.Model):
         default="[]"
     )
 
+
     active = fields.Boolean(string="Active", default=True)
 
     @api.depends('disbursement_application_type_id.product_category_id')
