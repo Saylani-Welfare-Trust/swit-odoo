@@ -451,10 +451,33 @@ class WelfareLine(models.Model):
                 rec.product_domain = "[]"
                 continue
 
+            all_welfare = self.env['product.product'].search([
+                ('product_tmpl_id.is_welfare', '=', True),
+            ])
+            
+            by_category = self.env['product.product'].search([
+                ('categ_id', 'child_of', product_category.id),
+            ])
+            
             products = self.env['product.product'].search([
                 ('categ_id', 'child_of', product_category.id),
-                ('is_welfare', '=', True),
+                ('product_tmpl_id.is_welfare', '=', True),
             ])
+
+            raise ValidationError(_(
+                "DEBUG INFO:\n"
+                "Category: %s (ID: %s)\n"
+                "All Welfare Products: %s\n"
+                "Products in Category: %s\n"
+                "Final Filtered Products: %s"
+            ) % (
+                product_category.name,
+                product_category.id,
+                all_welfare.mapped('name'),
+                by_category.mapped('name'),
+                products.mapped('name'),
+            ))
+
             rec.product_domain = str([('id', 'in', products.ids)])
     @api.depends('disbursement_application_type_id')
     def _compute_analytic_account_domain(self):
