@@ -1297,35 +1297,26 @@ class Welfare(models.Model):
     def _check_amount_within_hod_limit(self):
         """Check if request amount is within HOD limit"""
         self.ensure_one()
-        
+
         # Get HOD group limit configuration
         hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
         if not hod_group:
             return True  # No HOD group configured
-        
+
         limit = self.env['welfare.approval.limit'].search([
             ('group_id', '=', hod_group.id),
             ('active', '=', True)
         ], limit=1)
-        
+
         if not limit:
             return True  # No limit configured
-        
-        # Check amount limit
-        if self.welfare_line_ids.total_amount > limit.max_amount_limit:
-            return False  # Exceeds HOD limit
-        
-        # Check product limit
-        if limit.allowed_product_master_ids:
-            for line in self.welfare_line_ids:
-                product_master = self.env['product.master'].search([
-                    ('product_id', '=', line.product_id.id)
-                ], limit=1)
-                if product_master and product_master not in limit.allowed_product_master_ids:
-                    return False
-        
-        return True  # Within HOD limit
 
+        # Check each line individually
+        for line in self.welfare_line_ids:
+            if line.total_amount > limit.max_amount_limit:
+                return False  # This line exceeds HOD limit
+
+        return True  # All lines within HOD limit
 
 
 
