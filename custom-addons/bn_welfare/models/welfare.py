@@ -1105,34 +1105,20 @@ class Welfare(models.Model):
     
     def action_move_to_member(self):
         for record in self:
-            # Check if current user is HOD
             current_user = self.env.user
             is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
-            
-            # Only check HOD limit if current user IS actually HOD
-            if is_hod:
-                within_limit = record._check_amount_within_hod_limit()
-                if not within_limit:
-                    hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
-                    limit_amount = float('inf')
-                    if hod_group:
-                        limit = self.env['welfare.approval.limit'].search([
-                            ('group_id', '=', hod_group.id),
-                            ('active', '=', True)
-                        ], limit=1)
-                        limit_amount = limit.max_amount_limit if limit else float('inf')
-                    
-                    raise ValidationError("""
-                        Amount ({}) exceeds your HOD approval limit ({}). 
-                        This request cannot be approved by HOD.
-                    """.format(
-                        self.welfare_line_ids.total_amount,
-                        limit_amount
-                    ))
-            
-            # Member validation (always runs)
-            if not record.hod_remarks:
-                raise ValidationError('Please enter HOD Remarks!')
+
+            raise ValidationError(
+                "DEBUG:\n"
+                "Current User: %s\n"
+                "Is HOD: %s\n"
+                "User Groups: %s"
+                % (
+                    current_user.name,
+                    is_hod,
+                    current_user.groups_id.mapped('name')
+                )
+            )
             
             record.state = 'mem_approve'
     def action_approve(self):
@@ -1302,7 +1288,7 @@ class Welfare(models.Model):
         # Get HOD group limit configuration
         hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
         if not hod_group:
-            raise ValidationError("DEBUG: No HOD group found")
+            return True, None  # No HOD group configured
 
         limit = self.env['welfare.approval.limit'].search([
             ('group_id', '=', hod_group.id),
@@ -1310,30 +1296,27 @@ class Welfare(models.Model):
         ], limit=1)
 
         if not limit:
-            raise ValidationError("DEBUG: No limit record found for HOD group ID: %s" % hod_group.id)
+            return True, None  # No limit configured
 
-        raise ValidationError(_(
-            "DEBUG INFO:\n"
-            "HOD Group: %s (ID: %s)\n"
-            "Limit Found: %s\n"
-            "Max Amount Limit: %s\n"
-            "Allowed Products: %s\n"
-            "Lines:\n%s"
-        ) % (
-            hod_group.name,
-            hod_group.id,
-            limit.id,
-            limit.max_amount_limit,
-            limit.allowed_product_ids.mapped('name'),
-            '\n'.join([
-                "  - %s | Amount: %s | In Allowed: %s" % (
-                    line.product_id.name,
-                    line.total_amount,
-                    line.product_id in limit.allowed_product_ids
-                )
-                for line in self.welfare_line_ids
-            ])
-        ))
+        # Check each line individually
+        for line in self.welfare_line_ids:
+            # Check amount limit
+            if line.total_amount > limit.max_amount_limit:
+                return False, _(
+                    "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
+                    "This request cannot be approved by HOD."
+                ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
+
+            # Check product limit
+            if line.product_id not in limit.allowed_product_ids:
+                return False, _(
+                    "Product '%s' is not in the allowed products list for HOD approval. "
+                    "Please contact your administrator."
+                ) % line.product_id.name
+
+        return True, None  # All lines within HOD limit
+
+
     def action_return_to_pos(self):
         """
         Return all collected Assigned Officer (Marfat) lines for this welfare
