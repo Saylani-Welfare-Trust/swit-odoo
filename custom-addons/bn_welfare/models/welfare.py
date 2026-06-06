@@ -1322,7 +1322,7 @@ class Welfare(models.Model):
                 ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
 
             # Check product limit
-            if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
+            if line.product_id not in limit.allowed_product_ids:
                 return False, _(
                     "Product '%s' is not in the allowed products list for HOD approval. "
                     "Please contact your administrator."
