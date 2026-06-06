@@ -1126,7 +1126,7 @@ class Welfare(models.Model):
                         Amount ({}) exceeds your HOD approval limit ({}). 
                         This request cannot be approved by HOD.
                     """.format(
-                        record.loan_request_amount,
+                        self.welfare_line_ids.total_amount,
                         limit_amount
                     ))
             
