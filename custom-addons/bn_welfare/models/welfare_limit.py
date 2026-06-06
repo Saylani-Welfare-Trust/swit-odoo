@@ -35,13 +35,7 @@ class WelfareApprovalLimit(models.Model):
     @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
-            product_category = rec.disbursement_application_type_id.product_category_id
-            if not product_category:
-                rec.product_domain = "[]"
-                continue
-
             products = self.env['product.product'].search([
-                ('categ_id', 'child_of', product_category.id),
                 ('product_tmpl_id.is_welfare', '=', True),
             ])
             rec.product_domain = str([('id', 'in', products.ids)])
