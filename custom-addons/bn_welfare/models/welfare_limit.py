@@ -13,30 +13,16 @@ class WelfareApprovalLimit(models.Model):
     # Limit settings
     max_amount_limit = fields.Monetary(string="Maximum Approval Amount", required=True)
     currency_id = fields.Many2one(
-        'res.currency', 
+        'res.currency',
         'Currency',
         default=lambda self: self.env.company.currency_id
     )
-    disbursement_application_type_id = fields.Many2one(
-        'disbursement.application.type', 
-        string="Disbursement Application Type"
-    )
 
-    # Product domain filter
-    product_domain = fields.Char(
-        string="Product Domain",
-        compute='_compute_product_domain',
-        store=True,
-        default="[]"
+    # Product list where is_welfare = True
+    allowed_product_ids = fields.Many2many(
+        'product.product',
+        string="Allowed Products",
+        domain="[('product_tmpl_id.is_welfare', '=', True)]"
     )
-
 
     active = fields.Boolean(string="Active", default=True)
-
-    @api.depends('disbursement_application_type_id.product_category_id')
-    def _compute_product_domain(self):
-        for rec in self:
-            products = self.env['product.product'].search([
-                ('product_tmpl_id.is_welfare', '=', True),
-            ])
-            rec.product_domain = str([('id', 'in', products.ids)])
