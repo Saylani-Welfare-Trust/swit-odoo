@@ -444,16 +444,19 @@ class WelfareLine(models.Model):
     #         else:
     #             rec.net_amount = rec.total_amount
         
-    @api.depends('disbursement_application_type_id')
+    @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
-            rec.product_domain = ""
+            product_category = rec.disbursement_application_type_id.product_category_id
+            if not product_category:
+                rec.product_domain = [(5, 0, 0)]
+                continue
 
-            category_id = rec.disbursement_application_type_id.product_category_id.id
-            
-            if category_id:
-                rec.product_domain = str([('categ_id', '=', category_id), ('is_welfare', '=', True)])
-    
+            products = self.env['product.product'].search([
+                # ('categ_id', 'child_of', product_category.id),
+                ('is_welfare', '=', True),
+            ])
+            rec.product_domain = [(6, 0, products.ids)]
     @api.depends('disbursement_application_type_id')
     def _compute_analytic_account_domain(self):
         for rec in self:

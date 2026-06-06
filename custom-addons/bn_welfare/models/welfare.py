@@ -1312,7 +1312,7 @@ class Welfare(models.Model):
             return True  # No limit configured
         
         # Check amount limit
-        if self.loan_request_amount > limit.max_amount_limit:
+        if self.welfare_line_ids.total_amount > limit.max_amount_limit:
             return False  # Exceeds HOD limit
         
         # Check product limit
