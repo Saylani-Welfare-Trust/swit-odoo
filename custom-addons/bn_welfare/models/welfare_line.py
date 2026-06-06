@@ -458,8 +458,8 @@ class WelfareLine(models.Model):
             # ])
             # rec.product_domain = str([('id', 'in', products.ids)])
 
-            products = self.env['product.template'].search([
-                ('is_welfare', '=', True),
+            products = self.env['product.product'].search([
+                ('product_template_id.is_welfare', '=', True),
             ])
             rec.product_domain = str([('id', 'in', products.ids)])
     @api.depends('disbursement_application_type_id')
