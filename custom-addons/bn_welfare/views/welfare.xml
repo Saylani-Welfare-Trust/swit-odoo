@@ -194,18 +194,14 @@
                                 </group>
                             </group>
                         </page>
-                        <!-- <page name="attached_documents" string="Attached Documents">
+                        <page name="attached_documents" string="Attached Documents">
                             <field name="document_ids" nolabel="1"
                                 readonly="state not in ['draft', 'inquiry', 'committee_approval']">
                                 <tree create="false" delete="false" default_order="id desc">
-                                    <field name="document_type" string="Type">
-                                        <tree>
-                                            <field name="document_type" widget="badge"
-                                                decoration-info="document_type in ['application_form']"
-                                                decoration-success="document_type in ['frc', 'family_cnic']"
-                                                decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
-                                        </tree>
-                                    </field>
+                                        <field name="document_type" widget="badge"
+                                            decoration-info="document_type in ['application_form']"
+                                            decoration-success="document_type in ['frc', 'family_cnic']"
+                                            decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
                                     
                                     <field name="name" string="Document Name" 
                                         attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
@@ -235,7 +231,7 @@
                                             title="Download Document"/>
                                 </tree>
                             </field>
-                        </page> -->
+                        </page>
                         
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
                         <page name="committee_members_page" string="Committee Members" invisible="is_individual">
