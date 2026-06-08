@@ -81,9 +81,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'committee_approval  '" required="state == 'committee_approval'"/>
+                            <field name="committee_remarks" readonly="state != 'committee_approval'" required="state == 'committee_approval'"/>
                             <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
-                            <field name="member_remarks" readonly="state != 'member_approve'" required="state == 'member_approve'"/>
+                            <field name="member_remarks" readonly="state != 'mem_approve'" required="state == 'mem_approve'"/>
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 
