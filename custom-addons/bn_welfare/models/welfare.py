@@ -1234,11 +1234,11 @@ class Welfare(models.Model):
                 within_limit, error_message = record._check_amount_within_hod_limit()
                 if not within_limit:
                     # raise ValidationError(error_message)
-                    record.state = 'mem_approve'
+                    record.state = 'approve'
 
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
-            record.state = 'approve'
+            record.state = 'mem_approve'
     def action_approve(self):
         """Final approval logic"""
         for record in self:
