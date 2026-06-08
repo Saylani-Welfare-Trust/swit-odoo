@@ -202,6 +202,59 @@
                             </group>
                         </page>
                         
+                        <!-- Add this tab for multiple documents -->
+                        <page string="Documents">
+                            <group string="Application Forms">
+                                <field name="application_form_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="file_data" widget="binary" filename="name"/>
+                                        <field name="description"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            
+                            <group string="FRC Documents">
+                                <field name="frc_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="file_data" widget="binary" filename="name"/>
+                                        <field name="description"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            
+                            <group string="Electricity Bills">
+                                <field name="electricity_bill_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="file_data" widget="binary" filename="name"/>
+                                        <field name="description"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            
+                            <group string="Gas Bills">
+                                <field name="gas_bill_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="file_data" widget="binary" filename="name"/>
+                                        <field name="description"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            
+                            <group string="Family CNICs">
+                                <field name="family_cnic_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="file_data" widget="binary" filename="name"/>
+                                        <field name="description"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                    
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
                         <page name="committee_members_page" string="Committee Members" invisible="is_individual">
                             <field name="committee_member_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
