@@ -173,7 +173,7 @@
                             </field>
                         </page>
                         <page name="recurring_line" string="Recurring Details" invisible="state not in ['recurring','return']">
-                            <field name="welfare_recurring_line_ids" readonly="1">
+                            <field name="welfare_recurring_line_ids" readonly="state not in ['return']" >
                                 <tree>
                                     <field name="employee_category_id_officer" column_invisible="1" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
