@@ -91,7 +91,7 @@ class ReportXlsxAbstract(models.AbstractModel):
             ids = self.env.context.get("active_ids", [])
         return self.env[self.env.context.get("active_model")].browse(ids)
 
-    def _report_xlsx_1_currency_format(self, currency):
+    def _report_xlsx_currency_format(self, currency):
         """Get the format to be used in cells (symbol included).
         Used in account_financial_report addon"""
         s_before = currency.symbol if currency.position == "before" else ""

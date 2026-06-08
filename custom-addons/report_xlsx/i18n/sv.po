@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* report_xlsx_1
+# 	* report_xlsx
 #
 msgid ""
 msgstr ""
@@ -16,33 +16,33 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.17\n"
 
-#. module: report_xlsx_1
-#: model:ir.model,name:report_xlsx_1.model_report_report_xlsx_1_abstract
+#. module: report_xlsx
+#: model:ir.model,name:report_xlsx.model_report_report_xlsx_abstract
 msgid "Abstract XLSX Report"
 msgstr "Abstrakt XLSX-rapport"
 
-#. module: report_xlsx_1
-#: model:ir.model,name:report_xlsx_1.model_report_report_xlsx_1_partner_xlsx
+#. module: report_xlsx
+#: model:ir.model,name:report_xlsx.model_report_report_xlsx_partner_xlsx
 msgid "Partner XLSX Report"
 msgstr "Partner XLSX-rapport"
 
-#. module: report_xlsx_1
-#: model:ir.actions.report,name:report_xlsx_1.partner_xlsx
+#. module: report_xlsx
+#: model:ir.actions.report,name:report_xlsx.partner_xlsx
 msgid "Print to XLSX"
 msgstr "Skriv ut till XLSX"
 
-#. module: report_xlsx_1
-#: model:ir.model,name:report_xlsx_1.model_ir_actions_report
+#. module: report_xlsx
+#: model:ir.model,name:report_xlsx.model_ir_actions_report
 msgid "Report Action"
 msgstr "Rapportåtgärd"
 
-#. module: report_xlsx_1
-#: model:ir.model.fields,field_description:report_xlsx_1.field_ir_actions_report__report_type
+#. module: report_xlsx
+#: model:ir.model.fields,field_description:report_xlsx.field_ir_actions_report__report_type
 msgid "Report Type"
 msgstr "Rapporttyp"
 
-#. module: report_xlsx_1
-#: model:ir.model.fields,help:report_xlsx_1.field_ir_actions_report__report_type
+#. module: report_xlsx
+#: model:ir.model.fields,help:report_xlsx.field_ir_actions_report__report_type
 msgid ""
 "The type of the report that will be rendered, each one having its own "
 "rendering method. HTML means the report will be opened directly in your "
@@ -53,8 +53,8 @@ msgstr ""
 "renderingsmetod. HTML innebär att rapporten öppnas direkt i webbläsaren, PDF "
 "betyder att rapporten renderas med Wkhtmltopdf och laddas ner av användaren."
 
-#. module: report_xlsx_1
-#: model:ir.model.fields.selection,name:report_xlsx_1.selection__ir_actions_report__report_type__xlsx
+#. module: report_xlsx
+#: model:ir.model.fields.selection,name:report_xlsx.selection__ir_actions_report__report_type__xlsx
 msgid "XLSX"
 msgstr "XLSX"
 
