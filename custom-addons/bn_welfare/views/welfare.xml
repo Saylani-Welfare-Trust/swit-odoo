@@ -194,7 +194,7 @@
                                 </group>
                             </group>
                         </page>
-                        <page name="attached_documents" string="Attached Documents">
+                        <!-- <page name="attached_documents" string="Attached Documents">
                             <field name="document_ids" nolabel="1"
                                 readonly="state not in ['draft', 'inquiry', 'committee_approval']">
                                 <tree create="false" delete="false" default_order="id desc">
@@ -235,7 +235,7 @@
                                             title="Download Document"/>
                                 </tree>
                             </field>
-                        </page>
+                        </page> -->
                         
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
                         <page name="committee_members_page" string="Committee Members" invisible="is_individual">
