@@ -112,6 +112,31 @@ class Welfare(models.Model):
     
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
+    # New Html fields for portal documents
+    application_form_media = fields.Html(
+        string="Application Form Media",
+        sanitize=False,
+    )
+
+    frc_media = fields.Html(
+        string="FRC Media",
+        sanitize=False,
+    )
+
+    electricity_bill_media = fields.Html(
+        string="Electricity Bill Media",
+        sanitize=False,
+    )
+
+    gas_bill_media = fields.Html(
+        string="Gas Bill Media",
+        sanitize=False,
+    )
+
+    family_cnic_media = fields.Html(
+        string="Family CNIC Media",
+        sanitize=False,
+    )
     document_ids = fields.One2many(
     'welfare.document', 'welfare_id', string='Documents'
 )
@@ -212,15 +237,9 @@ class Welfare(models.Model):
 
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
-        required=True,
         default=0.0
     )
 
-    @api.constrains('loan_request_amount')
-    def _check_loan_request_amount(self):
-        for rec in self:
-            if rec.loan_request_amount <= 0:
-                raise ValidationError("Loan Request Amount must be greater than 0.")
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
@@ -736,20 +755,29 @@ class Welfare(models.Model):
         else:
             self._create_donee_in_portal()
 
-        application   = self._search_portal_applications()
-        app_state     = application.get('status') if application else None
+        application = self._search_portal_applications()
+        app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
 
-        all_media   = []
+        all_media = []
         all_remarks = []
 
         # portal key → document_type selection value
         document_field_map = {
             'applicationFormImages': 'application_form',
-            'frcImages':             'frc',
+            'frcImages': 'frc',
             'electricityBillImages': 'electricity_bill',
-            'gasBillImages':         'gas_bill',
-            'familyCnicImages':      'family_cnic',
+            'gasBillImages': 'gas_bill',
+            'familyCnicImages': 'family_cnic',
+        }
+
+        # Map portal fields to their Html media fields
+        portal_to_html_field = {
+            'applicationFormImages': 'application_form_media',
+            'frcImages': 'frc_media',
+            'electricityBillImages': 'electricity_bill_media',
+            'gasBillImages': 'gas_bill_media',
+            'familyCnicImages': 'family_cnic_media',
         }
 
         # All known aliases per portal key (new plural + legacy singular)
@@ -776,12 +804,15 @@ class Welfare(models.Model):
         }
 
         document_sources = [application]
+        
+        # Dictionary to store HTML content for each document type
+        html_media_content = {field: [] for field in portal_to_html_field.values()}
 
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
                 if not isinstance(report, dict):
                     continue
-                media   = report.get('media')
+                media = report.get('media')
                 remarks = report.get('remarks')
                 if media:
                     for url in media:
@@ -791,15 +822,47 @@ class Welfare(models.Model):
                 document_sources.append(report)
 
         if app_state == 'inquiry_complete':
-            # Write basic fields first
-            self.write({
-                'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
+            # Collect HTML links for each document type (similar to inquiry_media)
+            for portal_field, html_field in portal_to_html_field.items():
+                raw_values = []
+                for source in document_sources:
+                    if not isinstance(source, dict):
+                        continue
+                    for alias in document_aliases.get(portal_field, (portal_field,)):
+                        candidate = source.get(alias)
+                        if candidate is None:
+                            continue
+                        if isinstance(candidate, list):
+                            raw_values.extend(candidate)
+                        else:
+                            raw_values.append(candidate)
+                
+                # Convert URLs to HTML links
+                for idx, raw in enumerate(raw_values):
+                    if raw and isinstance(raw, str) and (raw.startswith('http') or raw.startswith('/web/content')):
+                        # Add label for better identification
+                        label = f"{portal_field.replace('Images', '')} {idx + 1}"
+                        html_media_content[html_field].append(
+                            f'<a href="{raw}" target="_blank">{label}</a>'
+                        )
+            
+            # Prepare write values
+            write_vals = {
+                'inquiry_media': '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
-                'state':               'inquiry',
-            })
-
+                'state': 'inquiry',
+            }
+            
+            # Add all Html media fields
+            for html_field, links in html_media_content.items():
+                if links:
+                    write_vals[html_field] = '<br/>'.join(links)
+            
+            self.write(write_vals)
+            
+            # Your existing attachment creation code continues here...
             IrAttachment = self.env['ir.attachment']
-            WelfareDoc   = self.env['welfare.document']
+            WelfareDoc = self.env['welfare.document']
 
             for portal_field, doc_type in document_field_map.items():
                 # Collect all raw values from all sources
@@ -821,7 +884,7 @@ class Welfare(models.Model):
 
                 # Delete existing docs + attachments of this type before re-syncing
                 existing_docs = WelfareDoc.search([
-                    ('welfare_id',    '=', self.id),
+                    ('welfare_id', '=', self.id),
                     ('document_type', '=', doc_type),
                 ])
                 existing_docs.mapped('attachment_id').unlink()
@@ -839,27 +902,27 @@ class Welfare(models.Model):
                         continue
 
                     # Detect mimetype from filename
-                    ext      = (filename or '').rsplit('.', 1)[-1].lower()
+                    ext = (filename or '').rsplit('.', 1)[-1].lower()
                     mimetype = {
-                        'jpg':  'image/jpeg',
+                        'jpg': 'image/jpeg',
                         'jpeg': 'image/jpeg',
-                        'png':  'image/png',
-                        'gif':  'image/gif',
-                        'pdf':  'application/pdf',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'pdf': 'application/pdf',
                         'webp': 'image/webp',
                     }.get(ext, 'application/octet-stream')
 
                     attachment = IrAttachment.create({
-                        'name':      filename or f'{doc_type}.jpg',
-                        'type':      'binary',
-                        'datas':     binary_value,
+                        'name': filename or f'{doc_type}.jpg',
+                        'type': 'binary',
+                        'datas': binary_value,
                         'res_model': 'welfare',
-                        'res_id':    self.id,
-                        'mimetype':  mimetype,
+                        'res_id': self.id,
+                        'mimetype': mimetype,
                     })
 
                     WelfareDoc.create({
-                        'welfare_id':    self.id,
+                        'welfare_id': self.id,
                         'document_type': doc_type,
                         'attachment_id': attachment.id,
                     })
@@ -869,7 +932,7 @@ class Welfare(models.Model):
                         doc_type, filename, self.id,
                     )
 
-            result  = self._handle_existing_application(application)
+            result = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state}"
             message += f" | 📋 {result['message']}"
 
@@ -1160,15 +1223,17 @@ class Welfare(models.Model):
         for record in self:
             current_user = self.env.user
             is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
-
-            if is_hod:
-                within_limit, error_message = record._check_amount_within_hod_limit()
-                if not within_limit:
-                    raise ValidationError(error_message)
-
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
-            record.state = 'mem_approve'
+
+            if is_hod:
+                within_limit = record._check_amount_within_hod_limit()
+                # raise UserError(str(within_limit))
+                if within_limit == False:
+                    record.state = 'mem_approve'  # Move back to committee approval
+                    # raise ValidationError(error_message)
+                else:
+                    record.state = 'approve'
     def action_approve(self):
         """Final approval logic"""
         for record in self:
@@ -1342,17 +1407,22 @@ class Welfare(models.Model):
         for line in self.welfare_line_ids:
             # Check amount limit
             if line.total_amount > limit.max_amount_limit:
-                return False, _(
-                    "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
-                    "This request cannot be approved by HOD."
-                ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
+                # self.state = 'mem_approve'
+                return False
+                # , _(
+                #     "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
+                #     "This request cannot be approved by HOD."
+                # ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
-                return False, _(
-                    "Product '%s' is not in the allowed products list for HOD approval. "
-                    "Please contact your administrator."
-                ) % line.product_id.name
+                # self.state = 'mem_approve'
+
+                return False
+                # , _(
+                #     "Product '%s' is not in the allowed products list for HOD approval. "
+                #     "Please contact your administrator."
+                # ) % line.product_id.name
 
         return True, None
 

@@ -7,7 +7,7 @@ A python class :
 
     class PartnerXlsx(models.AbstractModel):
         _name = 'report.module_name.report_name'
-        _inherit = 'report.report_xlsx_1.abstract'
+        _inherit = 'report.report_xlsx.abstract'
 
         def generate_xlsx_report(self, workbook, data, partners):
             for obj in partners:
