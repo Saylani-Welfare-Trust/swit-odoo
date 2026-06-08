@@ -194,10 +194,10 @@
                                 </group>
                             </group>
                         </page>
+                        <page name="attached_documents" string="Attached Documents">
                             <field name="document_ids" nolabel="1"
                                 readonly="state not in ['draft', 'inquiry', 'committee_approval']">
                                 <tree create="false" delete="false" default_order="id desc">
-                                    <!-- Better document type display with icons -->
                                     <field name="document_type" string="Type">
                                         <tree>
                                             <field name="document_type" widget="badge"
@@ -211,19 +211,15 @@
                                         attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
                                     
                                     <field name="mimetype" string="Type" optional="hide"/>
-                                    
                                     <field name="file_size" string="Size" optional="hide"/>
-                                    
                                     <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
                                     
-                                    <!-- View Button for images -->
                                     <button name="action_view_document" type="object"
                                             string="View" icon="fa-eye"
                                             class="btn-link text-info"
                                             title="View Document"
                                             invisible="mimetype not like 'image%'"/>
                                     
-                                    <!-- Delete Button -->
                                     <button name="action_delete" type="object"
                                             icon="fa-trash"
                                             class="btn-link text-danger"
@@ -231,7 +227,6 @@
                                             attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
                                             title="Delete Document"/>
                                     
-                                    <!-- Download Button (for all documents) -->
                                     <button string="Download"
                                             type="url"
                                             name="url"
