@@ -122,10 +122,10 @@ Best Odoo Dashboard Apps
 
 	'assets': {'web.assets_backend': ['ks_dn_advance/static/src/css/ks_tv_dashboard.css',
 									  'ks_dn_advance/static/lib/css/owl.carousel.min.css',
-									  # 'ks_dn_advance/static/src/js/ks_dn_kpi_preview.js',
+									  'ks_dn_advance/static/src/js/ks_dn_kpi_preview.js',
 									  'ks_dn_advance/static/src/js/ks_labels.js',
 									  'ks_dn_advance/static/src/js/ks_ylabels.js',
-									  # 'ks_dn_advance/static/src/js/ks_dashboard_ninja_tv_graph_preview.js',
+									  'ks_dn_advance/static/src/js/ks_dashboard_ninja_tv_graph_preview.js',
 									  'ks_dn_advance/static/src/js/ks_dashboard_ninja_tv_list_preview.js',
 									  'ks_dn_advance/static/src/js/ks_advance_dashboard.js',
 									  'ks_dn_advance/static/lib/js/owl.carousel.min.js',
@@ -134,7 +134,7 @@ Best Odoo Dashboard Apps
 									  'ks_dn_advance/static/src/js/carousel.js',
 									  'ks_dn_advance/static/src/xml/**/*'],
 			   'web.assets_frontend': ['ks_dn_advance/static/src/css/ks_tv_dashboard.css',
-									   # 'ks_dn_advance/static/src/js/ks_website_dashboard.js'
+									   'ks_dn_advance/static/src/js/ks_website_dashboard.js'
 									   ],
 			   'web.assets_qweb': ['ks_dn_advance/static/src/xml/**/*']},
 
