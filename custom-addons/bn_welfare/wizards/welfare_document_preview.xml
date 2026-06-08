@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="welfare_document_preview_form" model="ir.ui.view">
+    <record id="view_welfare_document_preview_form" model="ir.ui.view">
         <field name="name">welfare.document.preview.form</field>
         <field name="model">welfare.document.preview</field>
         <field name="arch" type="xml">
             <form>
-                <sheet>
-                    <div class="oe_title">
-                        <h1><field name="document_id" string="Document Name"/></h1>
+                <div class="modal-dialog modal-lg" style="width: 800px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Document Preview: <field name="name"/></h4>
+                        </div>
+                        <div class="modal-body">
+                            <group>
+                                <field name="image_data" widget="image" 
+                                    options="{'zoomable': true, 'size': [600, 600]}"
+                                    class="img-responsive center-block"/>
+                            </group>
+                        </div>
+                        <div class="modal-footer">
+                            <button name="action_download" type="object" 
+                                    string="Download" class="btn-primary"/>
+                            <button name="action_close" type="object" 
+                                    string="Close" class="btn-secondary" special="cancel"/>
+                        </div>
                     </div>
-                    <group>
-                        <field name="image_data" widget="image" class="oe_avatar" 
-                            options="{'zoom': true}" nolabel="1"/>
-                    </group>
-                </sheet>
-                <footer>
-                    <button string="Close" name="action_close" type="object" class="btn-primary"/>
-                </footer>
+                </div>
             </form>
         </field>
-    </record>
-
-    <record id="welfare_document_preview_action" model="ir.actions.act_window">
-        <field name="name">Document Preview</field>
-        <field name="res_model">welfare.document.preview</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="binding_model_id" ref="model_welfare_document"/>
     </record>
 </odoo>

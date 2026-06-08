@@ -28,7 +28,6 @@
         'views/welfare_limit_view.xml',
         'wizards/wizard_view.xml',
         'views/hr_employee.xml',
-        'Wizards/welfare_document_preview.xml',
     ],
     'auto_install': False,
     'application': True,
