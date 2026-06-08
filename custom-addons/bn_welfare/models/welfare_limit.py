@@ -7,6 +7,8 @@ class WelfareApprovalLimit(models.Model):
     _description = "Welfare Approval Limits"
     _rec_name = 'group_id'
 
+
+
     group_id = fields.Many2one('res.groups', string="User Group", required=True)
     group_name = fields.Char(related='group_id.name', string="Group Name", store=True)
 
