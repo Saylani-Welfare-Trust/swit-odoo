@@ -291,10 +291,10 @@ class WelfareRecurringLine(models.Model):
             raise ValidationError(_("No donee associated with this recurring welfare line."))
 
         self.write({'state': 'draft'})
-        self.welfare_id.write({'state': 'approve'})
+        self.welfare_id.write({'state': 'recurring'})
         self.welfare_id.message_post(body=_(
             "Recurring welfare line returned from POS. Product: %s, Amount: %s. "
-            "Welfare state changed to Approved and line state changed to Draft."
+            "Welfare state changed to Recurring and line state changed to Draft."
         ) % (self.product_id.name, self.amount))
 
         return True
