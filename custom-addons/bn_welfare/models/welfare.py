@@ -97,20 +97,20 @@ class Welfare(models.Model):
     
     portal_last_sync_message = fields.Text('Portal Last Sync Message')
 
-    # application_form = fields.Binary('Application Form')
+    application_form = fields.Binary('Application Form')
     application_form_name = fields.Char('Application Form Name')
 
-    # frc = fields.Binary('FRC')
+    frc = fields.Binary('FRC')
     frc_name = fields.Char('FRC Name')
     
 
-    # electricity_bill_file = fields.Binary('Electricity Bill')
+    electricity_bill_file = fields.Binary('Electricity Bill')
     electricity_bill_name = fields.Char('Electricity Bill Name')
     
-    # gas_bill_file = fields.Binary('Gas Bill')
+    gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
     
-    # family_cnic = fields.Binary('Family CNIC')
+    family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     document_ids = fields.One2many(
     'welfare.document', 'welfare_id', string='Documents'
