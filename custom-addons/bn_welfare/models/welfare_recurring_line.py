@@ -10,6 +10,8 @@ state_selection = [
     ('pending', 'Pending'),
     ('collected', 'Collected'),
     ('disbursed', 'Disbursed'),
+    ('return', 'Returned'),  
+
 ]
 
 collection_point_selection = [
@@ -271,7 +273,21 @@ class WelfareRecurringLine(models.Model):
                 StockMoveLine.create(move_line_vals)
                 picking.action_assign()
                 self.state = 'delivered'
-
+    def action_return_to_draft(self):
+        """Allow returning a line to draft state and record state to hod approve for re-processing"""
+        for line in self:
+            if line.state != 'return':
+                raise ValidationError(_(
+                    "Only lines in 'Return' state can be moved back to Draft. "
+                    "Current state: %s. Only 'Return' lines can be reset." % line.state
+                ))
+        
+        self.write({'state': 'draft'})
+        self.welfare_id.write({'state': 'recurring'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
     def action_return_to_pos(self, **kwargs):
         self.ensure_one()
 
@@ -290,8 +306,8 @@ class WelfareRecurringLine(models.Model):
         if not self.welfare_id.donee_id:
             raise ValidationError(_("No donee associated with this recurring welfare line."))
 
-        self.write({'state': 'draft'})
-        self.welfare_id.write({'state': 'recurring'})
+        self.write({'state': 'return'})
+        self.welfare_id.write({'state': 'return'})
         self.welfare_id.message_post(body=_(
             "Recurring welfare line returned from POS. Product: %s, Amount: %s. "
             "Welfare state changed to Recurring and line state changed to Draft."
