@@ -1231,7 +1231,7 @@ class Welfare(models.Model):
             is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
 
             if is_hod:
-                within_limit, error_message = record._check_amount_within_hod_limit()
+                within_limit     = record._check_amount_within_hod_limit()
                 if not within_limit:
                     record.state = 'mem_approve'  # Move back to committee approval
                     # raise ValidationError(error_message)
