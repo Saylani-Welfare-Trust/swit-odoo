@@ -213,8 +213,7 @@
                                     <button name="action_view_document" type="object"
                                             string="View" icon="fa-eye"
                                             class="btn-link text-info"
-                                            title="View Document"
-                                            invisible="mimetype not like 'image%'"/>
+                                            title="View Document"/>
                                     
                                     <button name="action_delete" type="object"
                                             icon="fa-trash"
