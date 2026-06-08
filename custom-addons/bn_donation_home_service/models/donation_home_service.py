@@ -44,6 +44,14 @@ class DonationHomeService(models.Model):
     donation_home_service_line_ids = fields.One2many('donation.home.service.line', 'donation_home_service_id', string="Donation Home Service Lines")
 
 
+    def set_remarks(self):
+        remarks = []
+        for line in self.donation_home_service_line_ids:
+            if line.remarks:
+                remarks.append(line.remarks)
+        
+        self.remarks = "-".join(remarks)
+
     @api.constrains('mobile')
     def _check_mobile_number(self):
         for rec in self:
@@ -62,6 +70,9 @@ class DonationHomeService(models.Model):
     
     def calculate_amount(self):
         self.amount = sum(line.amount * line.quantity for line in self.donation_home_service_line_ids)
+
+    def calculate_service_charges(self):
+        self.total_amount = self.amount + self.service_charges
 
     def calculate_total_amount(self):
         self.total_amount = self.amount + self.service_charges
@@ -339,6 +350,7 @@ class DonationHomeService(models.Model):
         # 5. Recalculate totals
         # -------------------------
         dhs.calculate_amount()
+        dhs.set_remarks()
         dhs.calculate_service_charges()
 
         return {

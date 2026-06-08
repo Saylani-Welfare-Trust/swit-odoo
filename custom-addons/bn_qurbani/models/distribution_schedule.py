@@ -32,85 +32,164 @@ class DistributionSchedule(models.Model):
     @api.model
     def get_distribution_details(self, product_id):
 
+        # ==================================================
+        # 1. GET HIJRI
+        # ==================================================
         last_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
         if not last_hijri:
             return {}
 
-        # 🔥 GET PRODUCT ONCE
+        # ==================================================
+        # 2. GET PRODUCT
+        # ==================================================
         product = self.env['product.product'].browse(product_id)
+
         product_name = (product.name or "").lower()
 
-        # 🔥 DECIDE SLOT LIMIT BASED ON PRODUCT
+        # ==================================================
+        # 3. LIMIT TYPE
+        # ==================================================
         limit_type = "two" if "yes" in product_name else "one"
 
+        # ==================================================
+        # 4. FETCH RECORDS
+        # ==================================================
         records = self.search([
             ('hijri_id', '=', last_hijri.id),
             ('pos_product_ids', 'in', product_id)
         ])
 
+        if not records:
+            return {}
+
+        # ==================================================
+        # 5. PRELOAD ALL SLOT DEMANDS
+        # ==================================================
+        demand_domain = [
+            ('hijri_id', '=', last_hijri.id),
+            ('inventory_product_id', 'in', records.mapped('inventory_product_id').ids),
+            ('slaughter_location_id', 'in', records.mapped('slaughter_location_id').ids),
+            ('day_id', 'in', records.mapped('day_id').ids),
+        ]
+
+        slot_demands = self.env['qurbani.slaughter.slot.demand'].search(demand_domain)
+
+        # ==================================================
+        # 6. CREATE FAST LOOKUP MAP
+        # ==================================================
+        demand_map = {}
+
+        for demand in slot_demands:
+
+            key = (
+                demand.day_id.id,
+                demand.hijri_id.id,
+                demand.slaughter_location_id.id,
+                demand.inventory_product_id.id,
+                demand.start_time,
+                demand.end_time,
+            )
+
+            demand_map[key] = demand
+
+        # ==================================================
+        # 7. BUILD RESPONSE
+        # ==================================================
         city_map = {}
 
         for rec in records:
 
-            # -----------------------------
-            # CITY
-            # -----------------------------
-            city = "Unknown City"
-            if rec.slaughter_schedule_id and rec.slaughter_schedule_id.city_location_id:
-                city = rec.slaughter_schedule_id.city_location_id.name.split('/')[-1]
+            slaughter = rec.slaughter_schedule_id
 
-            # -----------------------------
+            if not slaughter:
+                continue
+
+            # ==================================================
+            # CITY
+            # ==================================================
+            city = "Unknown City"
+
+            if slaughter.city_location_id and slaughter.city_location_id.name:
+                city = slaughter.city_location_id.name.strip()
+
+            # ==================================================
             # LOCATION
-            # -----------------------------
-            location = rec.location_id.name.split('/')[-1] if rec.location_id else "Unknown Location"
+            # ==================================================
+            location = (
+                rec.location_id.name.strip()
+                if rec.location_id and rec.location_id.name
+                else "Unknown Location"
+            )
 
             city_map.setdefault(city, {})
             city_map[city].setdefault(location, [])
 
-            slaughter = rec.slaughter_schedule_id
+            # ==================================================
+            # SLAUGHTER DATA
+            # ==================================================
+            slaughter_start = slaughter.start_time
+            slaughter_end = slaughter.end_time
 
-            slaughter_start = slaughter.start_time if slaughter else False
-            slaughter_end = slaughter.end_time if slaughter else False
-            slaughter_location_id = rec.slaughter_location_id.id if rec.slaughter_location_id else False
+            slaughter_location_id = (
+                rec.slaughter_location_id.id
+                if rec.slaughter_location_id
+                else False
+            )
 
-            # -----------------------------
-            # REMAINING HISSA
-            # -----------------------------
+            # ==================================================
+            # GET SLOT DEMAND FROM CACHE
+            # ==================================================
+            demand_key = (
+                rec.day_id.id,
+                rec.hijri_id.id,
+                rec.slaughter_location_id.id,
+                rec.inventory_product_id.id,
+                slaughter_start,
+                slaughter_end,
+            )
+
+            slot_demand = demand_map.get(demand_key)
+
             remaining = 0
-            if slaughter:
-                slot_demand = self.env['qurbani.slaughter.slot.demand'].search([
-                    ('day_id', '=', rec.day_id.id),
-                    ('hijri_id', '=', rec.hijri_id.id),
-                    ('slaughter_location_id', '=', rec.slaughter_location_id.id),
-                    ('inventory_product_id', '=', rec.inventory_product_id.id),
-                    ('start_time', '=', slaughter_start),
-                    ('end_time', '=', slaughter_end),
-                ], limit=1)
+            slot_demand_id = False
 
-                if slot_demand:
-                    remaining = slot_demand.remaining_hissa
+            if slot_demand:
+                remaining = slot_demand.remaining_hissa
+                slot_demand_id = slot_demand.id
 
-            # -----------------------------
-            # ONLY KEEP AVAILABLE SLOTS
-            # -----------------------------
+            # ==================================================
+            # SKIP EMPTY
+            # ==================================================
             if remaining <= 0:
                 continue
 
-            # -----------------------------
+            # ==================================================
             # APPEND SLOT
-            # -----------------------------
+            # ==================================================
             city_map[city][location].append({
                 "id": rec.id,
+
                 "day": rec.day_id.name if rec.day_id else "",
                 "day_id": rec.day_id.id if rec.day_id else None,
 
-                "product": rec.inventory_product_id.name if rec.inventory_product_id else "",
+                "product": (
+                    rec.inventory_product_id.name
+                    if rec.inventory_product_id
+                    else ""
+                ),
 
                 "slaughter_location_id": slaughter_location_id,
+
                 "slaughter_start_time": slaughter_start,
                 "slaughter_end_time": slaughter_end,
 
-                "distribution_location_id": rec.location_id.id if rec.location_id else None,
+                "distribution_location_id": (
+                    rec.location_id.id
+                    if rec.location_id
+                    else None
+                ),
+
                 "distribution_start_time": rec.start_time,
                 "distribution_end_time": rec.end_time,
 
@@ -118,48 +197,77 @@ class DistributionSchedule(models.Model):
                 "end_time": rec.end_time,
 
                 "remaining_hissa": remaining,
+                "slot_demand_id": slot_demand_id,
             })
 
         # ==================================================
-        # 🔥 APPLY LIMIT PER DAY (FIXED LOGIC)
+        # 8. APPLY LIMIT PER DAY
         # ==================================================
-        for city in city_map:
-            for location in city_map[city]:
+        for city, locations in city_map.items():
 
-                slots = city_map[city][location]
+            for location, slots in locations.items():
 
-                # -----------------------------
+                # ==================================================
                 # GROUP BY DAY
-                # -----------------------------
+                # ==================================================
                 day_map = {}
+
                 for slot in slots:
-                    day_id = slot.get("day_id") or 0
-                    day_map.setdefault(day_id, []).append(slot)
+
+                    day_id = slot.get("day_id")
+
+                    if not day_id:
+                        continue
+
+                    day_map.setdefault(day_id, [])
+                    day_map[day_id].append(slot)
 
                 final_slots = []
 
-                # -----------------------------
-                # APPLY LIMIT PER DAY
-                # -----------------------------
+                # ==================================================
+                # APPLY LIMIT
+                # ==================================================
                 for day_id, day_slots in day_map.items():
 
-                    # sort by time
-                    day_slots.sort(key=lambda x: x.get("start_time") or 0)
+                    # ==================================================
+                    # VALID SLOTS ONLY
+                    # ==================================================
+                    valid_slots = [
+                        s for s in day_slots
+                        if (s.get("remaining_hissa") or 0) > 0
+                    ]
 
-                    if not day_slots:
+                    if not valid_slots:
                         continue
 
-                    if limit_type == "two":
-                        # ✅ YES → first 2 slots per day
-                        final_slots.extend(day_slots[:2])
-                    else:
-                        # ✅ NO → last 1 slot per day
-                        final_slots.append(day_slots[-1])
+                    # ==================================================
+                    # SORT BY TIME
+                    # ==================================================
+                    valid_slots = sorted(
+                        valid_slots,
+                        key=lambda x: x.get("start_time") or 0
+                    )
 
-                # -----------------------------
-                # FINAL SORT (OPTIONAL)
-                # -----------------------------
-                final_slots.sort(key=lambda x: (x.get("day_id") or 0, x.get("start_time") or 0))
+                    # ==================================================
+                    # APPLY LIMIT
+                    # ==================================================
+                    if limit_type == "two":
+                        # FIRST 2
+                        final_slots.extend(valid_slots[:2])
+                    else:
+                        # LAST 1
+                        final_slots.append(valid_slots[-1])
+
+                # ==================================================
+                # FINAL SORT
+                # ==================================================
+                final_slots = sorted(
+                    final_slots,
+                    key=lambda x: (
+                        x.get("day_id") or 0,
+                        x.get("start_time") or 0
+                    )
+                )
 
                 city_map[city][location] = final_slots
 

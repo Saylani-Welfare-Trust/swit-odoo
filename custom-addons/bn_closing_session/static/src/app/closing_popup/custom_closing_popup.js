@@ -35,10 +35,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
-        this.action = useService("action");      // ✅ for reports
+        this.action = useService("action");
         this.hardwareProxy = useService("hardware_proxy");
 
-        // State initialization
         this.state = useState({
             notes: "",
             payments: {},
@@ -47,13 +46,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             ...this._getInitialState(),
         });
 
-        // Helper to get payment method by id
         this._getPaymentMethod = (id) =>
             id === this.props.default_cash_details?.id
                 ? this.props.default_cash_details
                 : (this.props.other_payment_methods || []).find((m) => m.id === id);
 
-        // Initialize data structures for each payment method
         const initPayment = (pm) => {
             if (!pm?.id) return;
             this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
@@ -68,7 +65,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (this.props.default_cash_details) initPayment(this.props.default_cash_details);
         (this.props.other_payment_methods || []).forEach(initPayment);
 
-        // Clean up old slips on mount
         onMounted(async () => {
             try {
                 await this.orm.call("pos.session.slip", "delete_session_slips_for_session", [this.pos.pos_session.id]);
@@ -77,13 +73,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             }
         });
 
-        // Bind methods
         this.handleAddLine = this.handleAddLine.bind(this);
         this.handleRemoveLine = this.handleRemoveLine.bind(this);
         this.confirm = useAsyncLockedMethod(this.confirm.bind(this));
     }
 
-    // ----- Initial state -----
     _getInitialState() {
         const s = { payments: {} };
         if (this.props.default_cash_details) {
@@ -95,7 +89,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return s;
     }
 
-    // ----- Difference calculations -----
     getDifference(paymentId) {
         const pm = this._getPaymentMethod(paymentId);
         const counted = parseFloat(this.state.payments[paymentId]?.counted || 0);
@@ -131,7 +124,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return sum(lines.restricted) + sum(lines.unrestricted) + sum(lines.neutral);
     }
 
-    // ----- UI helpers -----
     shouldShowSlipInput(pm) {
         return pm && !(pm.skip_amount_input === true || pm.skip_amount_input === "true");
     }
@@ -148,16 +140,17 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return this.env.utils.formatCurrency(Number.isFinite(num) ? num : 0);
     }
 
-    // ----- Add / Remove slip lines -----
     async handleAddLine(paymentId, type = "restricted") {
         const pm = this._getPaymentMethod(paymentId);
         const { amount, ref, bank } = this.state.newLines[paymentId][type];
         const numAmount = parseFloat(amount);
+        const isBankInvalid = !bank || bank === "0";
+        const isAmountInvalid = isNaN(numAmount);
 
-        if (this.shouldShowSlipInput(pm) && (!ref || isNaN(numAmount))) {
+        if (this.shouldShowSlipInput(pm) && (!ref || isAmountInvalid || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Input"),
-                body: _t("Amount and Reference are required."),
+                body: _t("Bank, Slip No. and Amount are required."),
             });
             return;
         }
@@ -196,7 +189,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         }
     }
 
-    // ----- Closing actions -----
     canConfirm() {
         return Object.values(this.state.payments).every((v) => this.env.utils.isValidFloat(v.counted));
     }
@@ -206,6 +198,60 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async confirm() {
+        for (const pm of (this.props.other_payment_methods || [])) {
+
+            if (pm.type !== "bank") {
+                continue;
+            }
+
+            const difference = this.getDifference(pm.id);
+
+            // ONLY VALIDATE IF DIFFERENCE IS NOT ZERO
+            if (difference !== 0) {
+
+                const lines = this.state.lines[pm.id] || {};
+
+                const allLines = [
+                    ...(lines.restricted || []),
+                    ...(lines.unrestricted || []),
+                    ...(lines.neutral || []),
+                ];
+
+                // NO LINE ADDED
+                if (!allLines.length) {
+
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t(
+                            `Payment method "${pm.name}" has a difference. Please add at least one slip line.`
+                        ),
+                    });
+
+                    return;
+                }
+
+                // BANK NOT SELECTED
+                const invalidBank = allLines.some(
+                    (line) =>
+                        !line.bank ||
+                        line.bank === "0" ||
+                        line.bank === 0
+                );
+
+                if (invalidBank) {
+
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t(
+                            `Please select a bank for all slip lines of "${pm.name}".`
+                        ),
+                    });
+
+                    return;
+                }
+            }
+        }
+
         await this.closeSession();
     }
 
@@ -213,7 +259,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         const ok = await this.pos.push_orders_with_closing_popup();
         if (!ok) return;
 
-        // Prepare bank differences for each bank payment method
         const bankDiffPairs = (this.props.other_payment_methods || [])
             .filter((p) => p.type === "bank")
             .map((p) => [p.id, this.getDifference(p.id)]);
@@ -249,6 +294,6 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             data: { session_id: session.id, config_id: session.config_id.id },
             context: { active_ids: [session.id] },
         };
-        this.action.doAction(action);   // ✅ use action service, not report
+        this.action.doAction(action);
     }
 }

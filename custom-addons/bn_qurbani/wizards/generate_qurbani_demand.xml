@@ -35,16 +35,16 @@
     </record>
 
     <menuitem
-        id="qurbani_coniguration_menu"
-        name="Configuration"
-        parent="bn_qurbani.menu_qurbani_root"
-        sequence="10"/>
+        id="qurbani_generate_menu"
+        name="Generate Qurbani"
+        parent="bn_qurbani.qurbani_menu"
+        sequence="0"/>
 
     <menuitem
         id="generate_qurbani_demand_menu"
-        name="Generate Qurbani Demand"
+        name="Demand"
         action="generate_qurbani_demand_action"
-        parent="qurbani_coniguration_menu"
-        sequence="0"/>
+        parent="qurbani_generate_menu"
+        sequence="1"/>
 
 </odoo>

@@ -95,7 +95,6 @@
             </xpath>
 
             <xpath expr="//field[@name='mobile']" position="replace">
-                <label for="mobile"/>
                 <div style="display: flex;">
                     <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
                     <field style="width: 70% !important;" name="mobile" nolabel="1" />
@@ -140,6 +139,11 @@
             </xpath>
             <xpath expr="//field[@name='vat']" position="attributes">
                 <attribute name="invisible">category_id.name == 'Donee'</attribute>
+            </xpath>
+
+            <!-- Make image field not required for donors -->
+            <xpath expr="//field[@name='image_1920']" position="attributes">
+                <attribute name="required">category_id.name != 'Donor'</attribute>
             </xpath>
         </field>
     </record>

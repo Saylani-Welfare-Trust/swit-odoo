@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="bn_qurbani.direct_deposit_receipt_template_dn" inherit_id="bn_direct_deposit.direct_deposit_receipt_template_dn">
+        <xpath expr="//div[@name='donor_name']" position="after">
+            <div name="favor"><strong>Donor Name:</strong> <t t-esc="o.favor or '-'"/></div>
+        </xpath>
+    </template>
+
+</odoo>

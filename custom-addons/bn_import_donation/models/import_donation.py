@@ -17,14 +17,15 @@ state_selection = [
 class ImportDonation(models.Model):
     _name = 'import.donation'
     _description = "Import Donation"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    name = fields.Char('File Name')
+    name = fields.Char('File Name', tracking=True)
 
-    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config")
-    journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
-    picking_id = fields.Many2one('stock.picking', string="Picking")
-    
+    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config", tracking=True)
+    journal_entry_id = fields.Many2one('account.move', string="Journal Entry", tracking=True)
+    picking_id = fields.Many2one('stock.picking', string="Picking", tracking=True)
+
     def _default_picking_type(self):
         picking_type = self.env.ref(
             'bn_import_donation.online_donation_stock_picking_type',
@@ -39,9 +40,9 @@ class ImportDonation(models.Model):
     )
     source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
     destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
-    state = fields.Selection(selection=state_selection, string="State", default='draft')
+    state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
 
-    file_name = fields.Char('File Name')
+    file_name = fields.Char('File Name', tracking=True)
     import_file = fields.Binary('Import File')
 
     invalid_import_donation_ids = fields.One2many('invalid.import.donation', 'import_donation_id', string="Invalid Import Donations")
@@ -88,6 +89,10 @@ class ImportDonation(models.Model):
         ValidDonation = self.env['valid.import.donation']
         InvalidDonation = self.env['invalid.import.donation']
 
+        # Buffer for valid and invalid records to minimize database hits
+        valid_vals_list = []
+        invalid_vals_list = []
+
         # Header mapping
         header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
         header_map = {name: pos for name, pos in header_list}
@@ -131,7 +136,7 @@ class ImportDonation(models.Model):
                 # ===== Student (Donee) Imports =====
                 if is_student_import:
                     if self.env['donation'].search_count([('transaction_id', '=', transaction_id), ('is_fee', '=', True)]):
-                        InvalidDonation.create({
+                        invalid_vals_list.append({
                             'import_donation_id': self.id,
                             'transaction_id': transaction_id,
                             'donor_student_name': name,
@@ -153,7 +158,7 @@ class ImportDonation(models.Model):
                     ], limit=1)
 
                     if not course_id:
-                        InvalidDonation.create({
+                        invalid_vals_list.append({
                             'import_donation_id': self.id,
                             'transaction_id': transaction_id,
                             'donor_student_name': name,
@@ -186,7 +191,7 @@ class ImportDonation(models.Model):
                         partner.action_register()
 
                     if not name:
-                        InvalidDonation.create({
+                        invalid_vals_list.append({
                             'import_donation_id': self.id,
                             'transaction_id': transaction_id,
                             'donor_student_name': name,
@@ -201,17 +206,17 @@ class ImportDonation(models.Model):
                         })
                         continue
 
-                    ValidDonation.create({
+                    valid_vals_list.append({
                         'import_donation_id': self.id,
                         'transaction_id': transaction_id,
                         'donor_student_name': name,
                         'mobile': mobile,
                         'cnic_no': cnic,
                         'email': email,
-                        'product': course,  # ✅ course explicitly used here
+                        'product': course,
                         'date': date,
-                        'is_student': True,
                         'amount': amount,
+                        'is_student': True,
                     })
 
                 # ===== Donor Imports =====
@@ -220,7 +225,7 @@ class ImportDonation(models.Model):
                         continue
 
                     if self.env['donation'].search_count([('transaction_id', '=', transaction_id)]):
-                        InvalidDonation.create({
+                        invalid_vals_list.append({
                             'import_donation_id': self.id,
                             'transaction_id': transaction_id,
                             'donor_student_name': name,
@@ -232,14 +237,14 @@ class ImportDonation(models.Model):
                             'amount': amount,
                             'reference': reference,
                             'reason': 'A Transaction with same ID already exists in the System.',
-                        })
+                        })  
                         continue
 
                     config_line = self.gateway_config_id.gateway_config_line_ids.filtered(lambda x: x.name == product)
                     product_id = config_line.mapped('product_id')
 
                     if not product_id:
-                        InvalidDonation.create({
+                        invalid_vals_list.append({
                             'import_donation_id': self.id,
                             'transaction_id': transaction_id,
                             'donor_student_name': name,
@@ -269,7 +274,7 @@ class ImportDonation(models.Model):
                         })
                         donor.action_register()
 
-                    ValidDonation.create({
+                    valid_vals_list.append({
                         'import_donation_id': self.id,
                         'transaction_id': transaction_id,
                         'donor_student_name': name,
@@ -288,6 +293,9 @@ class ImportDonation(models.Model):
                     'reason': f'Unexpected error processing row: {str(e)}'
                 })
 
+        InvalidDonation.create(invalid_vals_list)
+        ValidDonation.create(valid_vals_list)
+
         self.state = 'validated'
 
     def action_upload_excel_file(self):
@@ -298,52 +306,71 @@ class ImportDonation(models.Model):
         if not journal:
             raise ValidationError("Bank journal not found.")
 
-        default_partner = self.env['res.partner'].search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
-        credit_groups = {}
-        total_amount = 0.0
-        
+        default_partner = self.env['res.partner'].search(
+            [('primary_registration_id', '=', '2025-9999998-9')], limit=1
+        )
+
+        Donation = self.env['donation']
+        Partner = self.env['res.partner']
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
-        picking = False
+        credit_groups = {}
+        total_amount = 0.0
+
+        # =========================
+        # BULK BUFFERS
+        # =========================
+        donation_vals_list = []
         stock_move_map = {}
 
-        for line in self.valid_import_donation_ids:
-            # Resolve partner (prefer mobile match)
-            partner = self.env['res.partner'].search([('mobile', '=', line.mobile)], limit=1) or default_partner
+        picking = False
 
-            # Determine configuration line
-            config_line = self.gateway_config_id.gateway_config_line_ids.filtered(lambda c: c.name == line.product)
+        # =========================
+        # MAIN LOOP
+        # =========================
+        for line in self.valid_import_donation_ids:
+
+            # Partner (optimize later with cache if needed)
+            partner = Partner.search([('mobile', '=', line.mobile)], limit=1) or default_partner
+
+            config_line = self.gateway_config_id.gateway_config_line_ids.filtered(
+                lambda c: c.name == line.product
+            )
 
             if not config_line:
                 raise ValidationError(f"Missing configuration for: {line.product}")
 
-            product = config_line.product_id if config_line.product_id else False
+            product = config_line.product_id
             product_id = product.id if product else False
-            account_id = config_line.product_id.property_account_income_id.id
+            account_id = product.property_account_income_id.id
 
+            # =========================
+            # STUDENT (FEE)
+            # =========================
             if line.is_student:
-                # Handle Course (Fee Box)
-                course_id = self.env['product.product'].search([
+                course = self.env['product.product'].search([
                     ('name', '=', line.product),
                     ('is_course', '=', True)
                 ], limit=1)
 
-                fee_box = self.env['donation'].create({
+                donation_vals_list.append({
                     'transaction_id': line.transaction_id,
                     'donor_id': partner.id,
                     'journal_id': journal.id,
-                    'product_id': course_id.id,
+                    'product_id': course.id,
                     'date': line.date,
                     'amount': line.amount,
                     'reference': line.reference,
                     'gateway_config_id': self.gateway_config_id.id,
                     'is_fee': True
                 })
-                fee_box.action_confirm()
+
+            # =========================
+            # NORMAL DONATION
+            # =========================
             else:
-                # Handle Donation
-                donation = self.env['donation'].create({
+                donation_vals_list.append({
                     'transaction_id': line.transaction_id,
                     'donor_id': partner.id,
                     'journal_id': journal.id,
@@ -353,17 +380,17 @@ class ImportDonation(models.Model):
                     'reference': line.reference,
                     'gateway_config_id': self.gateway_config_id.id,
                 })
-                donation.action_confirm()
 
-            # ----------------------------
-            # STOCK LOGIC (ONLY PRODUCT)
-            # ----------------------------
-            if product.detailed_type == 'product':
-                stock_move_map.setdefault(product, {
+            # =========================
+            # STOCK LOGIC
+            # =========================
+            if product and product.detailed_type == 'product':
+
+                stock_move_map.setdefault(product.id, {
                     'product': product,
                     'qty': 0.0
                 })
-                stock_move_map[product]['qty'] += 1.0  # qty per line
+                stock_move_map[product.id]['qty'] += 1.0
 
                 if not picking:
                     picking = StockPicking.create({
@@ -373,17 +400,28 @@ class ImportDonation(models.Model):
                         'origin': self.name,
                     })
 
-            # Consolidate amounts by (account, analytic)
-            key = account_id
-            credit_groups[key] = credit_groups.get(key, 0.0) + line.amount
+            # =========================
+            # ACCOUNTING GROUPING
+            # =========================
+            credit_groups[account_id] = credit_groups.get(account_id, 0.0) + line.amount
             total_amount += line.amount
 
-        # ----------------------------
-        # CREATE STOCK MOVES
-        # ----------------------------
+        # =========================
+        # BULK CREATE DONATIONS
+        # =========================
+        donations = Donation.create(donation_vals_list)
+
+        # confirm all in batch
+        donations.action_confirm()
+
+        # =========================
+        # STOCK MOVES BULK CREATE
+        # =========================
         if picking:
+            stock_move_vals_list = []
+
             for data in stock_move_map.values():
-                StockMove.create({
+                stock_move_vals_list.append({
                     'name': data['product'].name,
                     'product_id': data['product'].id,
                     'product_uom_qty': data['qty'],
@@ -394,11 +432,15 @@ class ImportDonation(models.Model):
                     'location_dest_id': self.destination_location_id.id,
                 })
 
+            StockMove.create(stock_move_vals_list)
+
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
 
-        # Build journal entry lines
+        # =========================
+        # JOURNAL ENTRY
+        # =========================
         debit_line = (0, 0, {
             'account_id': self.gateway_config_id.account_id.id,
             'name': f'Total Donations Received from {self.name}',
@@ -414,7 +456,6 @@ class ImportDonation(models.Model):
             for acc_id, amt in credit_groups.items()
         ]
 
-        # Create and post journal entry
         journal_entry = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'ref': self.name,
@@ -423,7 +464,6 @@ class ImportDonation(models.Model):
             'line_ids': [debit_line] + credit_lines,
         })
 
-        # journal_entry.action_post()
         self.journal_entry_id = journal_entry.id
         self.state = 'upload'
 

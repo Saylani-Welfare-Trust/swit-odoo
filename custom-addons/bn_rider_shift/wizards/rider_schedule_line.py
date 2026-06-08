@@ -23,7 +23,7 @@ class RiderScheduleLine(models.TransientModel):
     _name = 'rider.schedule.line'
     _description = 'Rider Shift Line'
 
-
+    is_complain_generated = fields.Boolean(string="Complaint Generated", default=False)
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
 
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string="Shop Name", store=True)
@@ -111,8 +111,11 @@ class RiderScheduleLine(models.TransientModel):
             'box_status': self.box_status,
             'remarks': self.remarks,
         })
-        
-        # Mark the related rider collection as complain generated
+
+        # Hide button after complaint generation
+        self.is_complain_generated = True
+
+        # Mark related rider collection
         if self.rider_collection_id:
             self.rider_collection_id.is_complain_generated = True
 

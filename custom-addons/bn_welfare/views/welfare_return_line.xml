@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_welfare_return_line_tree" model="ir.ui.view">
+        <field name="name">welfare.return.line.tree</field>
+        <field name="model">welfare.return.line</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="welfare_id"/>
+                <field name="welfare_line_id"/>
+                <field name="donee_id"/>
+                <field name="product_id"/>
+                <field name="quantity"/>
+                <field name="total_amount"/>
+                <field name="return_date"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action for Check Marfat Shift -->
+    <record id="action_welfare_return_line" model="ir.actions.act_window">
+        <field name="name">Welfare Return Line Tree View</field>
+        <field name="res_model">welfare.return.line</field>
+        <field name="view_mode">tree</field>
+        <field name="target">current</field>
+    </record>
+    <!-- Menu Item for Check Marfat Shift -->
+    <menuitem
+        id="menu_welfare_return_line"
+        name="Welfare Return Line Tree View"
+        action="action_welfare_return_line"
+        parent="welfare_menu"
+        groups="bn_welfare.welfare_group"
+        sequence="25"/>
+
+
+</odoo>

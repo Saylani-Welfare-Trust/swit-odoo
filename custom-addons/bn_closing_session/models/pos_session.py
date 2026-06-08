@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import float_compare, float_is_zero
 from odoo import models, fields, _, api
@@ -17,7 +16,7 @@ class PosSession(models.Model):
     unrestricted_category = fields.Char(related='company_id.unrestricted_category', readonly=True)
 
     # ------------------------------------------------------------
-    # CLOSED ORDERS (only refund/paid, not done)
+    # OVERRIDE _get_closed_orders
     # ------------------------------------------------------------
     def _get_closed_orders(self):
         return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
@@ -134,29 +133,281 @@ class PosSession(models.Model):
         }
 
     # ------------------------------------------------------------
-    # FORCE CLOSE WIZARD (for mismatch or balance errors)
+    # HELPER METHODS FOR SPLIT ACCOUNTING
     # ------------------------------------------------------------
-    def _force_close_session_action(self, message):
-        """Return a wizard that forces the session to close without split accounting."""
-        wizard = self.env['pos.close.session.wizard'].create({
-            'amount_to_balance': 0,
-            'account_id': self._get_balancing_account().id,
-            'account_readonly': not self.env.user.has_group('account.group_account_readonly'),
-            'message': message or _("There is a mismatch between the split slips and the session totals.\n"
-                                    "You can force close the session using standard aggregated accounting."),
-        })
-        return {
-            'name': _("Force Close Session"),
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'pos.close.session.wizard',
-            'res_id': wizard.id,
-            'target': 'new',
-            'context': {**self.env.context, 'active_ids': self.ids, 'active_model': 'pos.session'},
-        }
+    def _get_receivable_account_type(self):
+        """Return the account_type string of the company's default POS receivable account."""
+        return self.company_id.account_default_pos_receivable_account_id.account_type
+
+    def _get_restricted_receivable_account_type(self):
+        return self.company_id.account_default_pos_restricted_receivable_account_id.account_type
+
+    def _get_neutral_receivable_account_type(self):
+        return self.company_id.account_default_pos_neutrnal_receivable_account_id.account_type
+
+    def _get_unrestricted_receivable_account_type(self):
+        return self.company_id.account_default_pos_unrestricted_receivable_account_id.account_type
+
+    def _get_restricted_receivable_account(self, payment_method):
+        return (payment_method.restricted_account_id or
+                self.company_id.account_default_pos_restricted_receivable_account_id)
+
+    def _get_neutral_receivable_account(self, payment_method):
+        return (payment_method.neutral_account_id or
+                self.company_id.account_default_pos_neutrnal_receivable_account_id)
+
+    def _get_unrestricted_receivable_account(self, payment_method):
+        return (payment_method.unrestricted_account_id or
+                self.company_id.account_default_pos_unrestricted_receivable_account_id)
+
+    def _extract_payment_method_id_from_line(self, line):
+        name = line.name or ''
+        for pm in self.payment_method_ids:
+            if pm.name in name:
+                return pm.id
+        return self.payment_method_ids.filtered(lambda p: p.type == 'bank')[:1].id
+
+    def _create_split_difference_lines(self, bank_payment_method_diffs, payment_breakdown):
+        for pm_id, diff in bank_payment_method_diffs.items():
+            if float_is_zero(diff, precision_rounding=self.currency_id.rounding):
+                continue
+            pm = self.env['pos.payment.method'].browse(pm_id)
+            account = self._get_neutral_receivable_account(pm)
+            if account:
+                self.env['account.move.line'].with_context(
+                    check_move_validity=False
+                ).create({
+                    'move_id': self.move_id.id,
+                    'name': _("Bank difference - %s", pm.name),
+                    'account_id': account.id,
+                    'debit': diff if diff > 0 else 0,
+                    'credit': -diff if diff < 0 else 0,
+                    'partner_id': False,
+                })
 
     # ------------------------------------------------------------
-    # OVERRIDES FOR CLOSING WITH SPLIT ACCOUNTING
+    # OVERRIDES TO STOP COMBINE BANK PAYMENT CREATION
+    # ------------------------------------------------------------
+    def _create_bank_payment_moves(self, data):
+        """Override to skip combined bank payment moves when context flag is set."""
+        if self.env.context.get('skip_combine_payment'):
+            MoveLine = data.get('MoveLine')
+            split_receivables_bank = data.get('split_receivables_bank', {})
+            bank_payment_method_diffs = data.get('bank_payment_method_diffs', {})
+            payment_to_receivable_lines = {}
+            payment_method_to_receivable_lines = {}
+
+            for payment, amounts in split_receivables_bank.items():
+                split_receivable_line = MoveLine.create(
+                    self._get_split_receivable_vals(payment, amounts['amount'], amounts['amount_converted'])
+                )
+                payment_receivable_line = self._create_split_account_payment(payment, amounts)
+                payment_to_receivable_lines[payment] = split_receivable_line | payment_receivable_line
+
+            for bank_payment_method in self.payment_method_ids.filtered(
+                lambda pm: pm.type == 'bank' and pm.split_transactions
+            ):
+                self._create_diff_account_move_for_split_payment_method(
+                    bank_payment_method, bank_payment_method_diffs.get(bank_payment_method.id) or 0
+                )
+
+            data['payment_to_receivable_lines'] = payment_to_receivable_lines
+            data['payment_method_to_receivable_lines'] = payment_method_to_receivable_lines
+            return data
+        else:
+            return super()._create_bank_payment_moves(data)
+
+    def _create_combine_account_payment(self, payment_method, amounts, diff_amount):
+        """Override to skip combined account payment creation when context flag is set."""
+        if self.env.context.get('skip_combine_payment'):
+            return self.env['account.move.line']
+        else:
+            return super()._create_combine_account_payment(payment_method, amounts, diff_amount)
+
+    # ------------------------------------------------------------
+    # MAIN SPLIT LOGIC (replaces standard receivable lines)
+    # ------------------------------------------------------------
+    def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
+        _logger.warning("=== _create_account_move_with_split_receivables called")
+
+        # First, let the standard method create all non‑receivable lines
+        original_data = super(
+            PosSession,
+            self.with_context(skip_combine_payment=True)
+        )._create_account_move(
+            balancing_account,
+            amount_to_balance,
+            bank_payment_method_diffs
+        )
+        if original_data is None:
+            original_data = {}
+
+        if not self.move_id:
+            raise UserError(_("No account move created for the session."))
+
+        # Expected total = sum of ALL payments (including pay_later) – matches popup
+        orders = self._get_closed_orders()
+        total_expected = 0.0
+        for order in orders:
+            for payment in order.payment_ids:
+                total_expected += payment.amount
+        _logger.warning("Total expected (all payments): %s", total_expected)
+
+        # Remove any existing receivable lines (the combined ones from the standard move)
+        receivable_account_type = self._get_receivable_account_type()
+        restricted_receivable_account_type = self._get_restricted_receivable_account_type()
+        unrestricted_receivable_account_type = self._get_neutral_receivable_account_type()
+        netural_receivable_account_type = self._get_unrestricted_receivable_account_type()
+        # ------------------------------------------------------------
+        # SAFELY NEUTRALIZE RECEIVABLE LINES (DO NOT DELETE)
+        # ------------------------------------------------------------
+        receivable_lines = self.move_id.line_ids.filtered(
+            lambda l: l.account_id.account_type in [
+                receivable_account_type,
+                restricted_receivable_account_type,
+                unrestricted_receivable_account_type,
+                netural_receivable_account_type
+            ] and l.debit > 0
+        )
+
+        if receivable_lines:
+            _logger.warning(
+                "Neutralizing %d receivable lines instead of deleting",
+                len(receivable_lines)
+            )
+            receivable_lines.with_context(check_move_validity=False).write({
+                'debit': 0.0,
+                'credit': 0.0,
+            })
+
+        if not lines:
+            raise UserError(_("Split accounting requires lines data – none provided."))
+
+        # Build split breakdown from UI
+        payment_breakdown = {}
+        total_split = 0.0
+        for pm_id, vals in lines.items():
+            pm = self.env['pos.payment.method'].browse(int(pm_id))
+            if not pm:
+                continue
+            breakdown = {}
+            for type_key in ['restricted', 'unrestricted', 'neutral']:
+                breakdown[type_key] = []
+                for entry in vals.get(type_key, []):
+                    amount = entry.get('amount', 0.0)
+                    if not float_is_zero(amount, precision_rounding=self.currency_id.rounding):
+                        breakdown[type_key].append({
+                            'amount': amount,
+                            'ref': entry.get('ref', ''),
+                            'bank_id': entry.get('bank', False) and int(entry['bank']) or False,
+                        })
+                        total_split += amount
+            payment_breakdown[int(pm_id)] = breakdown
+
+        _logger.warning("Total split amount: %s (expected: %s)", total_split, total_expected)
+
+        # Validate exact match – no rounding adjustment
+        diff = total_expected - total_split
+        if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
+            raise UserError(_(
+                "Split slips total (%.2f %s) does not match expected total (%.2f %s).\n"
+                "Difference: %.2f %s.\n\n"
+                "Please correct your entries.",
+                total_split, self.currency_id.symbol,
+                total_expected, self.currency_id.symbol,
+                abs(diff), self.currency_id.symbol
+            ))
+
+        # Create split receivable lines
+        split_line_ids = []
+        total_new_debit = 0.0
+        for pm_id, breakdown in payment_breakdown.items():
+            pm = self.env['pos.payment.method'].browse(pm_id)
+            for type_key in ['restricted', 'unrestricted', 'neutral']:
+                for entry in breakdown.get(type_key, []):
+                    amount = entry.get('amount', 0.0)
+                    if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
+                        continue
+                    ref = entry.get('ref', '')
+                    bank_id = entry.get('bank_id', False)
+                    if type_key == 'restricted':
+                        account = self._get_restricted_receivable_account(pm)
+                        label = self.company_id.restricted_category or _('Restricted')
+                    elif type_key == 'unrestricted':
+                        account = self._get_unrestricted_receivable_account(pm)
+                        label = self.company_id.unrestricted_category or _('Unrestricted')
+                    else:
+                        account = self._get_neutral_receivable_account(pm)
+                        label = _('Non Donation')
+                    if not account:
+                        raise UserError(_("No account defined for %s (%s)", pm.name, label))
+                    name = f"{self.name} - {label} {pm.name} - {ref}".strip()
+                    line = self.env['account.move.line'].with_context(
+                        check_move_validity=False
+                    ).create({
+                        'move_id': self.move_id.id,
+                        'name': name,
+                        'account_id': account.id,
+                        'debit': amount,
+                        'credit': 0.0,
+                        'partner_id': False,
+                        'bank_journal_id': bank_id,
+                    })
+                    split_line_ids.append(line.id)
+                    total_new_debit += amount
+
+        original_data['_split_receivable_lines'] = split_line_ids
+        self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
+
+        _logger.warning("Split accounting completed – created %d lines, total debit %.2f",
+                        len(split_line_ids), total_new_debit)
+        return original_data
+
+    # ------------------------------------------------------------
+    # RECONCILIATION (safe for missing keys)
+    # ------------------------------------------------------------
+    def _reconcile_account_move_lines(self, data):
+        """Defensively ensure all required keys exist before calling super."""
+        if data is None:
+            data = {}
+        required_keys = [
+            'payment_method_to_receivable_lines',
+            'split_cash_statement_lines',
+            'combine_cash_statement_lines',
+            'split_cash_receivable_lines',
+            'combine_cash_receivable_lines',
+            'stock_output_lines',
+            'payment_to_receivable_lines',
+        ]
+        for key in required_keys:
+            if key not in data or data[key] is None:
+                data[key] = {}
+
+        # Call original reconciliation
+        super()._reconcile_account_move_lines(data)
+
+        # Custom reconciliation for split receivable lines
+        split_line_ids = data.get('_split_receivable_lines', [])
+        if not split_line_ids:
+            return data
+
+        split_lines = self.env['account.move.line'].browse(split_line_ids).exists()
+        statement_lines = self.statement_line_ids
+
+        for line in split_lines:
+            pm_id = self._extract_payment_method_id_from_line(line)
+            matching = statement_lines.filtered(
+                lambda sl: sl.payment_method_id.id == pm_id and
+                float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
+            )
+            if matching:
+                (matching[0] | line).reconcile()
+            else:
+                _logger.warning("No matching statement line for %s (%s)", line.name, line.debit)
+        return data
+
+    # ------------------------------------------------------------
+    # CLOSING FLOW OVERRIDES (pass lines correctly)
     # ------------------------------------------------------------
     def _validate_session(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         bank_payment_method_diffs = bank_payment_method_diffs or {}
@@ -201,10 +452,6 @@ class PosSession(models.Model):
                         data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
                 else:
                     raise e
-            except ValidationError as e:
-                # Split mismatch → offer force close wizard
-                self.env.cr.rollback()
-                return self._force_close_session_action(str(e))
 
             if data is None:
                 data = {}
@@ -214,14 +461,13 @@ class PosSession(models.Model):
             try:
                 with self.move_id._check_balanced({'records': self.move_id.sudo()}):
                     pass
-            except UserError:
+            except UserError as e:
                 self.env.cr.rollback()
                 return self._close_session_action(balance)
 
             self.sudo()._post_statement_difference(cash_difference_before, False)
 
             if self.move_id.line_ids:
-                self.move_id.sudo().with_company(self.company_id)._post()
                 for dummy, amount_data in data.get('sales', {}).items():
                     self.env['account.move.line'].browse(amount_data['move_line_id']).sudo().with_company(self.company_id).write({
                         'price_subtotal': abs(amount_data['amount_converted']),
@@ -239,204 +485,6 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
-    def _create_account_move_with_split_receivables(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
-        """
-        Create account move with split receivable lines.
-        Expected total = sum of ALL payments (including pay_later) – FIXED.
-        """
-        _logger.warning("=== _create_account_move_with_split_receivables called")
-
-        # Standard account move creation (all non‑receivable lines)
-        original_data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
-        if original_data is None:
-            original_data = {}
-
-        if not self.move_id:
-            raise ValidationError(_("No account move created for the session."))
-
-        # ✅ FIX: Include ALL payments (remove pay_later filter)
-        orders = self._get_closed_orders()
-        total_expected = 0.0
-        for order in orders:
-            for payment in order.payment_ids:
-                total_expected += payment.amount
-        _logger.warning("Total expected (all payments): %s", total_expected)
-
-        # Remove any existing receivable lines
-        receivable_lines = self.move_id.line_ids.filtered(
-            lambda l: l.account_id.account_type == 'asset_receivable' and l.debit > 0
-        )
-        if receivable_lines:
-            original_total = sum(receivable_lines.mapped('debit'))
-            _logger.warning("Removing existing receivable lines (total: %s)", original_total)
-            receivable_lines.unlink()
-
-        # Build split totals from UI lines
-        if not lines:
-            raise ValidationError(_("Split accounting requires lines data – none provided."))
-
-        payment_breakdown = {}
-        total_split = 0.0
-        for pm_id, vals in lines.items():
-            pm = self.env['pos.payment.method'].browse(int(pm_id))
-            if not pm:
-                continue
-            breakdown = {}
-            for type_key in ['restricted', 'unrestricted', 'neutral']:
-                breakdown[type_key] = []
-                for entry in vals.get(type_key, []):
-                    amount = entry.get('amount', 0.0)
-                    if not float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                        breakdown[type_key].append({
-                            'amount': amount,
-                            'ref': entry.get('ref', ''),
-                            'bank_id': entry.get('bank', False) and int(entry['bank']) or False,
-                        })
-                        total_split += amount
-            payment_breakdown[int(pm_id)] = breakdown
-
-        _logger.warning("Total split amount: %s (expected: %s)", total_split, total_expected)
-
-        # Mismatch handling (allow small rounding error)
-        diff = total_expected - total_split
-        if not float_is_zero(diff, precision_rounding=self.currency_id.rounding):
-            _logger.warning("Split total differs by %s", diff)
-            if abs(diff) > self.currency_id.rounding * 100:
-                raise ValidationError(_(
-                    "The total amount of split slips (%.2f) does not match the expected total (%.2f). "
-                    "Difference: %.2f. Please verify your entries or force close.",
-                    total_split, total_expected, abs(diff)
-                ))
-
-        # Create split receivable lines
-        total_new_debit = 0.0
-        split_line_ids = []
-        for pm_id, breakdown in payment_breakdown.items():
-            pm = self.env['pos.payment.method'].browse(pm_id)
-            for type_key in ['restricted', 'unrestricted', 'neutral']:
-                for entry in breakdown.get(type_key, []):
-                    amount = entry.get('amount', 0.0)
-                    if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
-                        continue
-                    ref = entry.get('ref', '')
-                    bank_id = entry.get('bank_id', False)
-                    if type_key == 'restricted':
-                        account = self._get_restricted_receivable_account(pm)
-                        label = self.company_id.restricted_category or _('Restricted')
-                    elif type_key == 'unrestricted':
-                        account = self._get_unrestricted_receivable_account(pm)
-                        label = self.company_id.unrestricted_category or _('Unrestricted')
-                    else:
-                        account = self._get_neutral_receivable_account(pm)
-                        label = _('Non Donation')
-                    if not account:
-                        raise ValidationError(_(
-                            "No account defined for %s payments (type %s). Please configure an account on the payment method or company.",
-                            pm.name, label
-                        ))
-                    name = f"{self.name} - {label} {pm.name} - {ref}".strip()
-                    line = self.env['account.move.line'].create({
-                        'move_id': self.move_id.id,
-                        'name': name,
-                        'account_id': account.id,
-                        'debit': amount,
-                        'credit': 0.0,
-                        'partner_id': False,
-                        'bank_journal_id': bank_id,
-                    })
-                    split_line_ids.append(line.id)
-                    total_new_debit += amount
-
-        # Rounding adjustment
-        if not float_is_zero(total_new_debit - total_expected, precision_rounding=self.currency_id.rounding):
-            diff = total_expected - total_new_debit
-            default_neutral_account = self._get_neutral_receivable_account(self.payment_method_ids[0])
-            if not default_neutral_account:
-                raise ValidationError(_("No neutral receivable account configured."))
-            self.env['account.move.line'].create({
-                'move_id': self.move_id.id,
-                'name': _("Rounding adjustment for split slips"),
-                'account_id': default_neutral_account.id,
-                'debit': diff if diff > 0 else 0,
-                'credit': -diff if diff < 0 else 0,
-                'partner_id': False,
-            })
-            _logger.info("Added rounding adjustment of %.2f", diff)
-
-        original_data['_split_receivable_lines'] = split_line_ids
-
-        # Create bank difference lines
-        self._create_split_difference_lines(bank_payment_method_diffs or {}, payment_breakdown)
-
-        _logger.warning("Split accounting completed – created %d lines, total debit %.2f",
-                        len(split_line_ids), total_new_debit)
-        return original_data
-
-    def _create_split_difference_lines(self, bank_payment_method_diffs, payment_breakdown):
-        for pm_id, diff in bank_payment_method_diffs.items():
-            if float_is_zero(diff, precision_rounding=self.currency_id.rounding):
-                continue
-            pm = self.env['pos.payment.method'].browse(pm_id)
-            account = self._get_neutral_receivable_account(pm)
-            if not account:
-                _logger.warning("No neutral account for diff on %s – skipping", pm.name)
-                continue
-            self.env['account.move.line'].create({
-                'move_id': self.move_id.id,
-                'name': _("Bank difference - %s", pm.name),
-                'account_id': account.id,
-                'debit': diff if diff > 0 else 0,
-                'credit': -diff if diff < 0 else 0,
-                'partner_id': False,
-            })
-
-    def _reconcile_account_move_lines(self, data):
-        if data is None:
-            data = {}
-            _logger.warning("_reconcile_account_move_lines called with None data")
-
-        super()._reconcile_account_move_lines(data)
-
-        split_line_ids = data.get('_split_receivable_lines', [])
-        if split_line_ids:
-            split_lines = self.env['account.move.line'].browse(split_line_ids)
-            statement_lines = self.statement_line_ids
-            for line in split_lines:
-                matching = statement_lines.filtered(
-                    lambda sl: sl.payment_method_id.id == self._extract_payment_method_id_from_line(line) and
-                               float_compare(abs(sl.amount), line.debit, precision_rounding=self.currency_id.rounding) == 0
-                )
-                if matching:
-                    (matching[0] | line).reconcile()
-                else:
-                    _logger.warning("No statement line matches split receivable %s (%.2f)", line.name, line.debit)
-        return data
-
-    def _extract_payment_method_id_from_line(self, line):
-        name = line.name or ''
-        for pm in self.payment_method_ids:
-            if pm.name in name:
-                return pm.id
-        return self.payment_method_ids.filtered(lambda p: p.type == 'bank')[:1].id
-
-    # ------------------------------------------------------------
-    # ACCOUNT HELPERS
-    # ------------------------------------------------------------
-    def _get_restricted_receivable_account(self, payment_method):
-        return (payment_method.restricted_account_id or
-                self.company_id.account_default_pos_restricted_receivable_account_id)
-
-    def _get_neutral_receivable_account(self, payment_method):
-        return (payment_method.neutral_account_id or
-                self.company_id.account_default_pos_neutral_receivable_account_id)
-
-    def _get_unrestricted_receivable_account(self, payment_method):
-        return (payment_method.unrestricted_account_id or
-                self.company_id.account_default_pos_unrestricted_receivable_account_id)
-
-    # ------------------------------------------------------------
-    # OVERRIDES FOR CLOSING FLOW (propagate lines)
-    # ------------------------------------------------------------
     def action_pos_session_closing_control(self, balancing_account=False, amount_to_balance=0, bank_payment_method_diffs=None, lines=None):
         _logger.warning("Lines in action_pos_session_closing_control: %s", str(lines))
         bank_payment_method_diffs = bank_payment_method_diffs or {}
@@ -468,9 +516,15 @@ class PosSession(models.Model):
         check = self._cannot_close_session(bank_diffs)
         if check:
             return check
-        result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
+        try:
+            result = self.action_pos_session_closing_control(bank_payment_method_diffs=bank_diffs, lines=lines)
+        except UserError as e:
+            return {
+                'successful': False,
+                'message': e.args[0] if e.args else str(e),
+                'redirect': False
+            }
         if isinstance(result, dict):
-            # This can be a force‑close wizard
             return result
         try:
             self.message_post(body="Point of Sale Session ended")

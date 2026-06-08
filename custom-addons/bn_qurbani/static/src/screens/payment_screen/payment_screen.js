@@ -9,7 +9,8 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        let hasValidProduct = false;
+        let hasQurbaniProduct = false;
+        let hasOtherCategoryProduct = false;
 
         // -------------------------
         // ✅ Check Order Lines
@@ -22,38 +23,77 @@ patch(PaymentScreen.prototype, {
                 product.detailed_type === "product" &&
                 product.categ?.name?.toLowerCase().includes("qurbani");
 
+            // -----------------------------------
+            // Detect qurbani product
+            // -----------------------------------
             if (isQurbaniLivestock) {
-                hasValidProduct = true;
-                break;
+                hasQurbaniProduct = true;
+            }
+
+            // -----------------------------------
+            // If product is NOT qurbani livestock
+            // -----------------------------------
+            if (!isQurbaniLivestock) {
+                hasOtherCategoryProduct = true;
             }
         }
 
-        if (hasValidProduct) {
+        // ------------------------------------------------
+        // ❌ Block mixed order
+        // ------------------------------------------------
+        if (hasQurbaniProduct && hasOtherCategoryProduct) {
+            this.popup.add(ErrorPopup, {
+                title: _t("Invalid Order"),
+                body: _t(
+                    "If a Qurbani product exists in the order, then products from other categories are not allowed."
+                ),
+            });
+
+            return;
+        }
+
+        // ------------------------------------------------
+        // ✅ Create Qurbani Record
+        // ------------------------------------------------
+        if (hasQurbaniProduct) {
             const donor_id = currentOrder.partner.id;
+
             const orderLines = currentOrder.get_orderlines();
 
             const payload = {
-                'donor_id': donor_id,
-                'order_lines': this.prepareOrderLines(orderLines),
-            }
+                donor_id: donor_id,
+                order_lines: this.prepareOrderLines(orderLines),
+            };
 
-            await this.orm.call('qurbani.order', "create_qurbani_record", [payload]).then((data) => {
+            await this.orm.call(
+                'qurbani.order',
+                "create_qurbani_record",
+                [payload]
+            ).then((data) => {
+
                 if (data.status === 'error') {
+
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
                         body: data.body,
                     });
-                }
-                
-                if (data.status === 'success') {
-                    currentOrder.set_source_document(data.name)
-                    currentOrder.set_qurbani(true)
 
-                    this.notification.add(_t("Operation Successful"), {
-                        type: "info",
-                    });
+                    return;
                 }
-            })
+
+                if (data.status === 'success') {
+
+                    currentOrder.set_source_document(data.name);
+                    currentOrder.set_qurbani(true);
+
+                    this.notification.add(
+                        _t("Operation Successful"),
+                        {
+                            type: "info",
+                        }
+                    );
+                }
+            });
         }
 
         // Continue with normal POS flow
@@ -61,15 +101,12 @@ patch(PaymentScreen.prototype, {
     },
 
     prepareOrderLines(orderLines) {
-        return orderLines.map(line => (
-                {
-                    product_id: line.product.id,
-                    quantity: line.quantity,
-                    price: line.price,
-                    qurbani_schedule: line.qurbani_schedule || null,
-                    remarks: line.customerNote,
-                }
-            )
-        );
+        return orderLines.map(line => ({
+            product_id: line.product.id,
+            quantity: line.quantity,
+            price: line.price,
+            qurbani_schedule: line.qurbani_schedule || null,
+            remarks: line.customerNote,
+        }));
     }
-})
+});

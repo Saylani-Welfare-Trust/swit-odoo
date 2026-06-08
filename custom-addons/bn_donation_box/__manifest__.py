@@ -11,6 +11,7 @@
         'bn_stock_location',
         'bn_pos_custom_action',
         'bn_profile_management',
+        'bn_import_donation',
     ],
     'data': [
         'security/groups.xml',
@@ -29,7 +30,7 @@
         'views/stock_lot.xml',
         'views/res_partner.xml',
         'views/donation_product_onhand.xml',
-        'views/installation_category.xml',
+        # 'views/installation_category.xml',
         'views/res_company.xml',
         'reports/donation_box_report.xml',
     ],

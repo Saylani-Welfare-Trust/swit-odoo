@@ -66,7 +66,25 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 "Please Enter a Number",
                 { type: 'info' }
             );
+            return;
         }
+        // ========== WELFARE RETURN ==========
+        if (this.props.action_type === "wf_return") {
+            // Return the welfare number and close the popup
+            this.props.resolve({ confirmed: true, payload: this.state.record_number });
+            this.cancel();  // Use cancel() instead of close()
+            return;
+        } 
+        
+        // ========== WELFARE DISBURSEMENT ==========
+        else if (this.props.action_type === "wf") {
+            selectedOrder.set_receive_voucher(true);
+            await this.processWelfareRecord(selectedOrder);
+            this.props.resolve({ confirmed: true, payload: this.state.record_number });
+            this.cancel();  // Use cancel() instead of close()
+            return;
+        }
+        
         
         // Handle different action types
         if (this.action_type === 'qb') {
@@ -102,6 +120,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             await this.processMicrofinanceRecoveryRecord(selectedOrder);
         }
     }
+    
 
     /**
      * Process Welfare record
@@ -110,6 +129,15 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         try {
             // wf_request_type: 'one_time' or 'recurring'
             const isRecurring = this.wf_request_type === 'recurring';
+
+            if (
+                selectedOrder.extra_data &&
+                selectedOrder.extra_data.welfare &&
+                selectedOrder.extra_data.welfare.disbursement_status === "pending"
+            ) {
+                this.notification.add("A welfare payment is already loaded on this order.", { type: "warning" });
+                return;
+            }
 
             const record = await this.orm.searchRead(
                 'welfare',
@@ -183,6 +211,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         ['id', 'in', welfareRecord.welfare_line_ids],
                         ['disbursement_category_id.name', '=', 'Cash'],
                         ['collection_point', '=', 'branch'],
+                        ['state', '=', 'draft'],
                     ],
                     ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id'],
                     {}
@@ -194,8 +223,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    return month - 1 === currentMonth && year === currentYear && l.state === 'draft';
                 });
                 if (!dueThisMonth.length) {
                     this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
@@ -231,7 +259,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     'welfare.recurring.line',
                     [
                         ['welfare_id', '=', welfareRecord.id],
-                        ['state', '!=', 'disbursed'],
+                        ['state', '=', 'draft'],
                         ['disbursement_category_id.name', '=', 'Cash'],
                         ['collection_point', '=', 'branch'],
                     ],
@@ -241,8 +269,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 const dueThisMonth = recurringLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
-                    // Only include if not disbursed
-                    return month - 1 === currentMonth && year === currentYear && l.state !== 'disbursed';
+                    return month - 1 === currentMonth && year === currentYear && l.state === 'draft';
                 });
                 if (!dueThisMonth.length) {
                     this.notification.add("No recurring welfare lines due this month", { type: 'warning' });
@@ -301,15 +328,47 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         if (!selectedOrder.extra_data) {
             selectedOrder.extra_data = {};
         }
-        
+            
         selectedOrder.extra_data.welfare = {
             record_number: record.name,
             welfare_state: record.state,
+            state : 'draft',
             welfare_id: record.id,
             is_recurring: isRecurring,
             welfare_line_ids: welfareLineIds,
             recurring_line_ids: recurringLineIds,
             scan_timestamp: new Date().toISOString(),
+            
+            // New fields for return and payment handling
+            is_welfare_order: true,           // Marks this as a welfare order
+            order_type: isRecurring ? 'recurring_welfare' : 'one_time_welfare',  // Type of welfare order
+            disbursement_status: 'pending',   // pending, completed, failed
+            return_status: 'none',            // none, pending, completed, failed
+            payment_status: 'pending',        // pending, completed, partially_completed, failed
+            
+            // For tracking returns related to this welfare order
+            return_order_ids: [],             // Store IDs of return orders
+            original_disbursement_date: new Date().toISOString(),
+            
+            // For payment tracking
+            total_disbursed_amount: 0,        // Total amount disbursed
+            total_returned_amount: 0,         // Total amount returned
+            net_amount: 0,                    // Net amount (disbursed - returned)
+            
+            // Line item tracking
+            disbursed_line_ids: welfareLineIds.map(line => ({
+                id: line.id,
+                amount: line.amount || 0,
+                disbursed_at: new Date().toISOString(),
+                status: 'disbursed'
+            })),
+            
+            recurring_details: isRecurring ? {
+                recurring_id: record.id,
+                recurring_line_ids: recurringLineIds,
+                current_cycle: record.current_cycle || 1,
+                next_cycle_date: record.next_cycle_date || null
+            } : null
         };
     }
 
@@ -399,21 +458,80 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     async processQurbaniRecord(selectedOrder) {
         try {
-            const record = await this.orm.searchRead(
-                'qurbani.order',
-                [['name', '=', this.state.record_number]],
-                ['name'],
-                { limit: 1 }
-            );
-            
-            if (record && record.length > 0) {
-                this.report.doAction("bn_qurbani.qurbani_token_report", [
-                    record.id,
-                ]);
 
-                super.confirm();
+            let found = false;
+
+            // ============================================
+            // COW DISTRIBUTION
+            // ============================================
+            let cowRecords = await this.orm.searchRead(
+                'qurbani.cow.distribution',
+                [
+                    ['qurbani_order_no', '=', this.state.record_number],
+                    ['state', 'not in', ['delivered', 'not_applicable']]
+                ],
+                ['id']
+            );
+
+            if (cowRecords.length) {
+
+                found = true;
+
+                let cowIds = cowRecords.map(record => record.id);
+
+                let cowAction = await this.orm.call(
+                    'qurbani.cow.distribution',
+                    'action_print_report',
+                    [cowIds]
+                );
+
+                await this.env.services.action.doAction(cowAction);
             }
+
+            // ============================================
+            // GOAT DISTRIBUTION
+            // ============================================
+            let goatRecords = await this.orm.searchRead(
+                'qurbani.goat.distribution',
+                [
+                    ['qurbani_order_no', '=', this.state.record_number],
+                    ['state', 'not in', ['delivered', 'not_applicable']]
+                ],
+                ['id']
+            );
+
+            if (goatRecords.length) {
+
+                found = true;
+
+                let goatIds = goatRecords.map(record => record.id);
+
+                let goatAction = await this.orm.call(
+                    'qurbani.goat.distribution',
+                    'action_print_report',
+                    [goatIds]
+                );
+
+                await this.env.services.action.doAction(goatAction);
+            }
+
+            // ============================================
+            // NOTHING FOUND
+            // ============================================
+            if (!found) {
+
+                this.notification.add(
+                    "No pending distribution records found",
+                    { type: "danger" }
+                );
+
+                return;
+            }
+
+            super.confirm();
+
         } catch (error) {
+
             this.handleProcessingError(error);
         }
     }

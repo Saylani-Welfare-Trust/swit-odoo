@@ -46,9 +46,9 @@
 
     <menuitem
         id="generate_qurbani_schedule_menu"
-        name="Generate Qurbani Schedule"
+        name="Schedule"
         action="generate_qurbani_schedule_action"
-        parent="bn_qurbani.qurbani_menu"
+        parent="bn_qurbani.qurbani_generate_menu"
         sequence="0"/>
 
 </odoo>

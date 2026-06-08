@@ -37,6 +37,7 @@ status_selection = [
     ('donate', 'Donate'),
     ('waiting_for_inventory_approval', 'Waiting for Inventory Approval'),
     ('recovered', 'Recovered'),
+    ('closed', 'Closed'),
 ]
 
 case_type_selection = [
@@ -62,11 +63,31 @@ class MedicalEquipment(models.Model):
     sd_slip_id = fields.Many2one('medical.security.deposit', string="SD Slip")
     last_sync_date = fields.Datetime('Last Sync Date')
     name = fields.Char('Name', default="New")
-    country_code_id = fields.Many2one(related='donee_id.country_code_id', string="Country Code", store=True)
-    mobile = fields.Char(related='donee_id.mobile', string="Mobile No.", store=True, size=10)
-    city = fields.Char(related='donee_id.city', string="City", store=True)
-    street = fields.Char(related='donee_id.street', string="Street", store=True, readonly=False)
-    cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
+    country_code_id = fields.Many2one(
+        related='donee_id.country_code_id', string="Country Code", 
+        store=True, readonly=False,
+        inverse='_inverse_country_code_id'
+    )
+    mobile = fields.Char(
+        related='donee_id.mobile', string="Mobile No.", 
+        store=True, size=10, readonly=False,
+        inverse='_inverse_mobile'
+    )    
+    city = fields.Char(
+        related='donee_id.city', string="City", 
+        store=True, readonly=False,
+        inverse='_inverse_city'
+    )
+    street = fields.Char(
+        related='donee_id.street', string="Street", 
+        store=True, readonly=False,
+        inverse='_inverse_street'
+    )
+    cnic_no = fields.Char(
+        related='donee_id.cnic_no', string="CNIC No.", 
+        store=True, size=15, readonly=False,
+        inverse='_inverse_cnic_no'
+    )
     application_location_link = fields.Char(string="Applicant Location Link", store=True)
     portal_review_notes = fields.Text('Review Notes')
     is_actual_deposit_editable = fields.Boolean(
@@ -87,11 +108,18 @@ class MedicalEquipment(models.Model):
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
 
 
-    date_of_birth = fields.Date(related='donee_id.date_of_birth', string="Date of Birth", store=True)
-
+    date_of_birth = fields.Date(
+        related='donee_id.date_of_birth', string="Date of Birth", 
+        store=True, readonly=False,
+        inverse='_inverse_date_of_birth'
+    )
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
-    gender = fields.Selection(related='donee_id.gender', string="Gender", store=True)
+    gender = fields.Selection(
+        related='donee_id.gender', string="Gender", 
+        store=True, readonly=False,
+        inverse='_inverse_gender'
+    )  
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     # Actual deposit percentage - determines case type automatically
@@ -127,7 +155,110 @@ class MedicalEquipment(models.Model):
         string="Initial Deposit %",
         readonly=True
     )
+    medical_equipment_reference_id = fields.Many2one(
+        'medical.equipment.reference',
+        string='Medical Equipment Reference',
+        help='Reference selected from Master Setup medical equipment references.'
+    )
+    reference_line_ids = fields.One2many(
+        'medical.equipment.line',
+        compute='_compute_reference_lines',
+        string='Reference Items',
+        readonly=True
+    )
+    employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
 
+    def _inverse_mobile(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.mobile = rec.mobile
+    def _inverse_city(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.city = rec.city
+
+    def _inverse_street(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.street = rec.street
+
+    def _inverse_cnic_no(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.cnic_no = rec.cnic_no
+
+    def _inverse_gender(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.gender = rec.gender
+
+    def _inverse_date_of_birth(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.date_of_birth = rec.date_of_birth
+
+    def _inverse_country_code_id(self):
+        for rec in self:
+            if rec.donee_id:
+                rec.donee_id.country_code_id = rec.country_code_id.id
+    @api.depends('employee_category_id', 'donee_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            if record.employee_category_id:
+                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
+            else:
+                record.employee_domain = "[]"
+    
+
+    @api.onchange('actual_deposit_percentage')
+    def _onchange_actual_deposit_percentage(self):
+        if self.actual_deposit_percentage:
+            if self.medical_equipment_reference_id:
+                # Force exactly 0% when medical equipment exists
+                if self.actual_deposit_percentage != 0:
+                    self.actual_deposit_percentage = 0.0
+                    return {
+                        'warning': {
+                            'title': 'Value Changed',
+                            'message': 'Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected.'
+                        }
+                    }
+            else:
+                # Without medical equipment: force 1-100
+                if self.actual_deposit_percentage < 1:
+                    self.actual_deposit_percentage = 1.0
+                elif self.actual_deposit_percentage > 100:
+                    self.actual_deposit_percentage = 100.0
+
+    @api.constrains('actual_deposit_percentage', 'medical_equipment_reference_id')
+    def _check_deposit_percentage(self):
+        for record in self:
+            if record.medical_equipment_reference_id:
+                # With medical equipment: exactly 0%
+                if record.actual_deposit_percentage != 0:
+                    raise ValidationError(
+                        "Actual Deposit Percentage must be 0% when Medical Equipment Reference is selected!"
+                    )
+            else:
+                # Without medical equipment: only 1-100
+                if record.actual_deposit_percentage < 1 or record.actual_deposit_percentage > 100:
+                    raise ValidationError(
+                        "Actual Deposit Percentage must be between 1 and 100% when no Medical Equipment Reference is selected!"
+                    )
+    @api.depends('medical_equipment_reference_id')
+    def _compute_reference_lines(self):
+        for record in self:
+            if record.medical_equipment_reference_id:
+                # Find all medical.equipment records that use the same reference
+                referring_records = self.env['medical.equipment'].search([
+                    ('medical_equipment_reference_id', '=', record.medical_equipment_reference_id.id)
+                ])
+                # Collect all medical_equipment_line_ids from those records
+                all_lines = referring_records.mapped('medical_equipment_line_ids')
+                record.reference_line_ids = all_lines
+            else:
+                record.reference_line_ids = False
+                
     @api.depends('state', 'case_type')
     def _compute_is_actual_deposit_editable(self):
         for record in self:
@@ -153,7 +284,8 @@ class MedicalEquipment(models.Model):
                     raise ValidationError(
                         "Mobile number must contain exactly 10 digits."
                     )
-
+    def action_reject(self):
+        self.state = 'closed'
 
     @api.depends('date_of_birth')
     def _compute_age(self):
@@ -180,6 +312,10 @@ class MedicalEquipment(models.Model):
     @api.depends('actual_deposit_percentage', 'state', 'initial_deposit_percentage')
     def _compute_case_type(self):
         for record in self:
+            if record.medical_equipment_reference_id:
+                record.case_type = '50_percent'
+                continue
+
             percentage = record.actual_deposit_percentage
 
             # ✅ Draft: fully dynamic
@@ -211,6 +347,14 @@ class MedicalEquipment(models.Model):
             else:
                 record.case_type = '50_percent'
 
+    @api.onchange('medical_equipment_reference_id')
+    def _onchange_medical_equipment_reference_id(self):
+        if self.medical_equipment_reference_id:
+            self.actual_deposit_percentage = 0.0
+        else:
+            # Reset to default when medical equipment is removed
+            self.actual_deposit_percentage = 100.0            
+
     @api.onchange('date_of_birth')
     def _onchange_date_of_birth(self):
         if self.date_of_birth:
@@ -237,6 +381,10 @@ class MedicalEquipment(models.Model):
 
 
     def write(self, vals):
+        if vals.get('medical_equipment_reference_id'):
+            vals['actual_deposit_percentage'] = 0.0
+            vals.setdefault('initial_deposit_percentage', 0.0)
+
         if 'actual_deposit_percentage' in vals:
             for record in self:
                 new_value = vals.get('actual_deposit_percentage')
@@ -294,9 +442,12 @@ class MedicalEquipment(models.Model):
     def create(self, vals):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
-            
-        if 'actual_deposit_percentage' in vals:
-             vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
+
+        if vals.get('medical_equipment_reference_id'):
+            vals['actual_deposit_percentage'] = 0.0
+            vals.setdefault('initial_deposit_percentage', 0.0)
+        elif 'actual_deposit_percentage' in vals:
+            vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
 
         return super(MedicalEquipment, self).create(vals)
     
@@ -394,11 +545,7 @@ class MedicalEquipment(models.Model):
         stock_picking.action_assign()
         stock_picking.button_validate()
         
-        for product_line in self.medical_equipment_line_ids:
-            for lot in product_line.lot_ids:
-                if lot.lot_consume:
-                    raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
-                lot.lot_consume = True
+        
                 
         # Link the stock picking to your medical equipment record
         self.write({
@@ -786,6 +933,11 @@ class MedicalEquipment(models.Model):
             recovery_picking.origin = self.name
             recovery_picking.is_medical_recovery = True
             
+            for product_line in self.medical_equipment_line_ids:
+                for lot in product_line.lot_ids:
+                    if lot.lot_consume:
+                        lot.lot_consume = False
+            # Show success message and open the return picking
             # Update medical equipment record
             self.write({
                 'recovery_picking_id': recovery_picking.id,
@@ -829,8 +981,15 @@ class MedicalEquipment(models.Model):
     def action_complete(self):
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
-        self.state = 'completed'
-            
+        if self.donee_id and self.donee_id.state != 'register':
+            raise ValidationError(_('Donee must be in register state before completing the application.'))
+        else:
+            for product_line in self.medical_equipment_line_ids:
+                for lot in product_line.lot_ids:
+                    if lot.lot_consume:
+                        raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
+                    lot.lot_consume = True
+            self.state = 'completed'
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""

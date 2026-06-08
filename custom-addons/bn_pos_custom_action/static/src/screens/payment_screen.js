@@ -432,68 +432,246 @@ patch(PaymentScreen.prototype, {
                     }
                 }
         }
-        // --- WELFARE ---
+        // ========== WELFARE DISBURSEMENT ==========
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
-            try {
-                const wfData = currentOrder.extra_data.welfare;
-                const welfareId = wfData.welfare_id;
-                const isRecurring = wfData.is_recurring;
-
-                if (welfareId) {
-                    if (!isRecurring) {
-                        // One-time disbursement: Update welfare.state to 'disbursed'
-                        const welfareLineIds = wfData.welfare_line_ids || [];
-                        if (welfareLineIds.length > 0) {
-                            for (const line of welfareLineIds) {
-                                // Call the server-side action_disbursed method if needed
-                                await this.env.services.orm.call(
-                                    'welfare.line',
-                                    'action_disbursed',
-                                    [[line.id]]
-                                );
-                            }
-                        }
-
-                        currentOrder.set_source_document(wfData.record_number);
-
-                        this.env.services.notification.add(
-                            `Welfare ${wfData.record_number} one-time disbursement completed`,
-                            { type: 'success' }
+            const welfareData = currentOrder.extra_data.welfare;
+            
+            // Only process if it's a welfare order and not already completed
+            if (welfareData.is_welfare_order === true && welfareData.disbursement_status !== 'completed') {
+                try {
+                    const welfareLineIds = welfareData.is_recurring
+                        ? (welfareData.recurring_line_ids || [])
+                        : (welfareData.welfare_line_ids || []);
+                    const lineModel = welfareData.is_recurring ? 'welfare.recurring.line' : 'welfare.line';
+                    
+                    for (let i = 0; i < welfareLineIds.length; i++) {
+                        const line = welfareLineIds[i];
+                        await this.env.services.orm.call(
+                            lineModel,
+                            'action_disbursed',
+                            [[line.id]]
                         );
-                    } else {
-                        // Recurring disbursement: Update recurring lines to 'disbursed'
-                        const recurringLineIds = wfData.recurring_line_ids || [];
                         
-                        if (recurringLineIds.length > 0) {
-                            for (const line of recurringLineIds) {
-                                // Call the server-side action_disbursed method if needed
-                                await this.env.services.orm.call(
-                                    'welfare.recurring.line',
-                                    'action_disbursed',
-                                    [[line.id]]
-                                );
-                            }
+                        // Update tracking info
+                        if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i]) {
+                            welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
+                            welfareData.disbursed_line_ids[i].status = 'disbursed';
+                            welfareData.total_disbursed_amount += line.amount || 0;
                         }
-
-                        currentOrder.set_source_document(wfData.record_number);
-
-                        this.env.services.notification.add(
-                            `Welfare ${wfData.record_number} recurring disbursement completed`,
-                            { type: 'success' }
-                        );
                     }
+                    
+                    welfareData.disbursement_status = 'completed';
+                    welfareData.payment_status = 'completed';
+                    welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
+                    
+                    currentOrder.set_source_document(welfareData.record_number);
+                    this.env.services.notification.add(
+                        `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
+                        { type: 'success' }
+                    );
+                } catch (error) {
+                    console.error("Welfare Error:", error);
+                    welfareData.disbursement_status = 'failed';
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Welfare Payment Blocked"),
+                        body: _t(error.message || "This welfare payment could not be processed."),
+                    });
+                    this.env.services.notification.add(
+                        "Welfare payment was not processed.",
+                        { type: 'danger' }
+                    );
+                    return;
                 }
-            } catch (error) {
-                console.error("❌ [Welfare] Error updating state:", error);
-                this.env.services.notification.add(
-                    "Note: Welfare status not updated, but order will proceed",
-                    { type: 'warning' }
-                );
             }
         }
-        
+
+        // ========== WELFARE RETURN ==========
+        // Check if the order has welfare return lines.
+        if (currentOrder) {
+            const orderLines = currentOrder.get_orderlines();
+            let hasWelfareReturn = false;
+            const welfareReturnData = currentOrder.extra_data && currentOrder.extra_data.welfare_return;
+            const returnLines = [];
+            const seenReturnLines = new Set();
+
+            if (welfareReturnData && welfareReturnData.status !== 'completed') {
+                const model = welfareReturnData.line_model ||
+                    (welfareReturnData.return_type === 'recurring' ? 'welfare.recurring.line' : 'welfare.line');
+
+                for (const line of welfareReturnData.line_ids || []) {
+                    const key = `${model}-${line.id}`;
+                    if (!seenReturnLines.has(key)) {
+                        seenReturnLines.add(key);
+                        returnLines.push({
+                            model,
+                            id: line.id,
+                            welfareNumber: welfareReturnData.record_number || '',
+                            returnType: welfareReturnData.return_type || 'one_time',
+                        });
+                    }
+                }
+            }
+            
+            for (let i = 0; i < orderLines.length; i++) {
+                const line = orderLines[i];
+                const extras = line.get_extras ? line.get_extras() : {};
+                
+                if (extras.is_welfare_return === true && extras.welfare_line_id) {
+                    const model = extras.return_type === 'recurring' ? 'welfare.recurring.line' : 'welfare.line';
+                    const key = `${model}-${extras.welfare_line_id}`;
+
+                    if (!seenReturnLines.has(key)) {
+                        seenReturnLines.add(key);
+                        returnLines.push({
+                            model,
+                            id: extras.welfare_line_id,
+                            welfareNumber: extras.welfare_number || '',
+                            returnType: extras.return_type || 'one_time',
+                            originalWelfareOrderId: extras.original_welfare_order_id,
+                            returnAmount: extras.return_amount || 0,
+                        });
+                    }
+                }
+            }
+
+            for (const returnLine of returnLines) {
+                hasWelfareReturn = true;
+                
+                try {
+                    await this.env.services.orm.call(
+                        returnLine.model,
+                        'action_return_to_pos',
+                        [[returnLine.id]],
+                        {
+                            pos_order_id: currentOrder.server_id,
+                            welfare_number: returnLine.welfareNumber,
+                            return_type: returnLine.returnType
+                        }
+                    );
+                    
+                    // Update the original welfare order's return tracking
+                    if (returnLine.originalWelfareOrderId) {
+                        const originalOrder = await this.env.services.orm.call(
+                            'pos.order',
+                            'search_read',
+                            [[['id', '=', returnLine.originalWelfareOrderId]]]
+                        );
+                        
+                        if (originalOrder && originalOrder[0] && originalOrder[0].extra_data && originalOrder[0].extra_data.welfare) {
+                            const originalWelfare = originalOrder[0].extra_data.welfare;
+                            originalWelfare.return_status = 'completed';
+                            originalWelfare.return_order_ids.push(currentOrder.id);
+                            originalWelfare.total_returned_amount += returnLine.returnAmount || 0;
+                            originalWelfare.net_amount = originalWelfare.total_disbursed_amount - originalWelfare.total_returned_amount;
+                            
+                            // Update payment status if partially returned
+                            if (originalWelfare.total_returned_amount >= originalWelfare.total_disbursed_amount) {
+                                originalWelfare.payment_status = 'fully_returned';
+                            } else if (originalWelfare.total_returned_amount > 0) {
+                                originalWelfare.payment_status = 'partially_returned';
+                            }
+                            
+                            await this.env.services.orm.call(
+                                'pos.order',
+                                'write',
+                                [[originalOrder[0].id], { extra_data: originalOrder[0].extra_data }]
+                            );
+                        }
+                    }
+                    
+                    this.env.services.notification.add(
+                        `${returnLine.returnType === 'recurring' ? 'Recurring' : 'One Time'} Welfare return processed: ${returnLine.welfareNumber}`,
+                        { type: 'success' }
+                    );
+                } catch (error) {
+                    console.error("Welfare Return Error:", error);
+                    this.env.services.notification.add(
+                        `Return failed: ${error.message}`,
+                        { type: 'danger' }
+                    );
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Welfare Return Blocked"),
+                        body: _t(error.message || "This welfare return could not be processed."),
+                    });
+                    return;
+                }
+            }
+
+            if (welfareReturnData && hasWelfareReturn) {
+                welfareReturnData.status = 'completed';
+            }
+            
+            // If no welfare return lines found, skip
+            if (!hasWelfareReturn) {
+                console.log("Return order without welfare lines, skipping welfare return processing");
+            }
+        }
+
         // Continue with normal POS flow
-        super.validateOrder(isForceValidate);
+        return super.validateOrder(isForceValidate);
+
+    //     // --- WELFARE ---
+        // if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+    //         try {
+    //             const wfData = currentOrder.extra_data.welfare;
+    //             const welfareId = wfData.welfare_id;
+    //             const isRecurring = wfData.is_recurring;
+
+    //             if (welfareId) {
+    //                 if (!isRecurring) {
+    //                     // One-time disbursement: Update welfare.state to 'disbursed'
+    //                     const welfareLineIds = wfData.welfare_line_ids || [];
+    //                     if (welfareLineIds.length > 0) {
+    //                         for (const line of welfareLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]] 
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} one-time disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 } else {
+    //                     // Recurring disbursement: Update recurring lines to 'disbursed'
+    //                     const recurringLineIds = wfData.recurring_line_ids || [];
+                        
+    //                     if (recurringLineIds.length > 0) {
+    //                         for (const line of recurringLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.recurring.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]]
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} recurring disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("❌ [Welfare] Error updating state:", error);
+    //             this.env.services.notification.add(
+    //                 "Note: Welfare status not updated, but order will proceed",
+    //                 { type: 'warning' }
+    //             );
+    //         }
+    //     }
+        
+    //     // Continue with normal POS flow
+    //     super.validateOrder(isForceValidate);
     },
 
     /**
@@ -585,5 +763,57 @@ patch(PaymentScreen.prototype, {
         );
         
         return equipmentLines;
+    },
+        // ========== ADD RETURN LINES TO ORDER ==========
+    async addWelfareReturn() {
+        const welfareNumber = prompt("Enter Welfare Form Number:");
+        if (!welfareNumber) return;
+        
+        try {
+            const lines = await this.env.services.orm.call(
+                'welfare.line',
+                'search_read',
+                [[
+                    ['welfare_id.name', '=', welfareNumber],
+                    ['payment_type', '=', 'assigned_officer'],
+                    ['state', '=', 'pending']
+                ]],
+                { fields: ['id', 'product_id', 'total_amount', 'quantity'] }
+            );
+            
+            if (lines.length === 0) {
+                this.env.services.notification.add(
+                    `No eligible pending Marfat lines found for ${welfareNumber}`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+            
+            for (const line of lines) {
+                const product = this.env.pos.db.product_by_id(line.product_id[0]);
+                if (product) {
+                    this.currentOrder.add_product(product, {
+                        quantity: line.quantity,  // POSITIVE quantity
+                        price: line.total_amount / line.quantity,
+                        extras: {
+                            is_welfare_return: true,
+                            welfare_number: welfareNumber,
+                            welfare_line_id: line.id
+                        }
+                    });
+                }
+            }
+            
+            this.env.services.notification.add(
+                `Added ${lines.length} return line(s) for ${welfareNumber}. Total: ${lines.reduce((sum, l) => sum + l.total_amount, 0)}`,
+                { type: 'success' }
+            );
+        } catch (error) {
+            console.error("Error adding return:", error);
+            this.env.services.notification.add(
+                `Error: ${error.message}`,
+                { type: 'danger' }
+            );
+        }
     },
 });

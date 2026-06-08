@@ -7,3 +7,6 @@ class QurbaniDay(models.Model):
 
 
     name = fields.Char('Day')
+    web_qurbani_day = fields.Char('Web Qurbani Day')
+
+    date = fields.Date('Date')

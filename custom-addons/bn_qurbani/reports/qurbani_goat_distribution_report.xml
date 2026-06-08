@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="bn_qurbani.qurbani_goat_distribution_report_template">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page">
+                        <h2><span t-esc="o.name"/></h2>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <span>Location</span> <spna><t t-esc="o.distribution_location_id.name"/></spna>
+                            </div>
+                            <div class="col-6">
+                                <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
+                            </div>
+                            <div class="col-6">
+                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <span>QOL No.</span> <spna><t t-esc="o.qurbani_order_line_no"/></spna>
+                            </div>
+                            <div class="col-6">
+                                <span>Product</span> <spna><t t-esc="o.product_id.name"/></spna>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <span>Hissa Name</span> <spna><t t-esc="o.hissa_name"/></spna>
+                            </div>
+                            <div class="col-6"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="qurbani_goat_distribution_report" model="ir.actions.report">
+        <field name="name">Qurbani goat Distribution</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_qurbani.qurbani_goat_distribution_report_template</field>
+        <field name="report_file">bn_qurbani.qurbani_goat_distribution_report_template</field>
+        <field name="binding_model_id" ref="bn_qurbani.model_qurbani_goat_distribution"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

@@ -141,9 +141,7 @@ class WelfareFieldsWizard(models.TransientModel):
     guarantor_lines_html = fields.Html(string='Guarantor Information', readonly=True)
     recurring_lines_html = fields.Html(string='Recurring Welfare Lines', readonly=True)
     committee_members_html = fields.Html(string='Committee Members', readonly=True)
-    teachers_html = fields.Html(string='Teachers', readonly=True)
-    masjid_html = fields.Html(string='Masjid Details', readonly=True)
-    madrasa_html = fields.Html(string='Madrasa Details', readonly=True)
+
     
     @api.model
     def default_get(self, fields_list):
@@ -157,7 +155,7 @@ class WelfareFieldsWizard(models.TransientModel):
             for field_name in fields_list:
                 if field_name not in ['welfare_id', 'welfare_lines_html', 'education_lines_html', 
                                        'family_lines_html', 'guarantor_lines_html', 'recurring_lines_html',
-                                       'committee_members_html', 'teachers_html', 'masjid_html', 'madrasa_html']:
+                                       'committee_members_html']:
                     if hasattr(welfare, field_name):
                         res[field_name] = getattr(welfare, field_name)
             
@@ -285,56 +283,7 @@ class WelfareFieldsWizard(models.TransientModel):
             else:
                 res['committee_members_html'] = '<p>No committee members</p>'
             
-            # Teachers
-            if welfare.teacher_ids:
-                html = '<table class="table" style="width:100%; border-collapse: collapse;">'
-                html += '<thead><tr style="background-color: #f0f0f0;">'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Name</th>'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Qualification</th>'
-                html += '</tr></thead><tbody>'
-                for teacher in welfare.teacher_ids:
-                    html += '<tr>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;">{teacher.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += '</tr>'
-                html += '</tbody></table>'
-                res['teachers_html'] = html
-            else:
-                res['teachers_html'] = '<p>No teachers</p>'
             
-            # Masjid
-            if welfare.masjid_id:
-                html = '<table class="table" style="width:100%; border-collapse: collapse;">'
-                html += '<thead><tr style="background-color: #f0f0f0;">'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Name</th>'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Address</th>'
-                html += '</tr></thead><tbody>'
-                for masjid in welfare.masjid_id:
-                    html += '<tr>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;">{masjid.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += '</tr>'
-                html += '</tbody></table>'
-                res['masjid_html'] = html
-            else:
-                res['masjid_html'] = '<p>No masjid details</p>'
-            
-            # Madrasa
-            if welfare.madrasa_id:
-                html = '<table class="table" style="width:100%; border-collapse: collapse;">'
-                html += '<thead><tr style="background-color: #f0f0f0;">'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Name</th>'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Address</th>'
-                html += '</tr></thead><tbody>'
-                for madrasa in welfare.madrasa_id:
-                    html += '<tr>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;">{madrasa.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += '</tr>'
-                html += '</tbody></table>'
-                res['madrasa_html'] = html
-            else:
-                res['madrasa_html'] = '<p>No madrasa details</p>'
         
         return res
     
@@ -435,3 +384,5 @@ class WelfareFieldsWizard(models.TransientModel):
     
     def action_cancel(self):
         return {'type': 'ir.actions.act_window_close'}
+    def view_previous_disbursement(self):
+        self.welfare_id.action_view_previous_disbursement()

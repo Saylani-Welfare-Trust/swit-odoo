@@ -59,10 +59,12 @@ patch(ActionScreen.prototype, {
         if (confirmed) {
             const amount = order.get_total_with_tax();
             const orderLines = order.get_orderlines();
+            const favor = order.favor;
 
             if (selectedOption === 'provisional_order') {
                 this.popup.add(ProvisionalPopup, {
                     donor_id: donor.id,
+                    favor: favor,
                     donor_name: donor.name,
                     donor_address: donor.address,
                     orderLines: orderLines,

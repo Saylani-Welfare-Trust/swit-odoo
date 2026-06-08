@@ -27,6 +27,10 @@
             <form>
                 <header>
                     <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                            class="btn btn-sm btn-info"
+                            invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
+                    <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
@@ -36,29 +40,40 @@
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
                     <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" />
                     <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
-                    
+                    <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1'/>
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
-                </header>
+                </header>   
 
                 <sheet>
+                    <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id or state != 'draft'">
+                        <strong>Previous Record Available:</strong> This donee has previous disbursements.
+                        <!-- <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                            class="btn btn-sm btn-info"
+                            invisible="not previous_disbursement_id" /> -->
+                    </div>
                     <div class="oe_title">
                         <label for="name" string="Name"/>
                         <h1><field name="name" class="oe_inline" readonly="1" /></h1>
                     </div>
+                    
+                    <!-- Previous Disbursement Alert -->
 
                     <group>
                         <group name="welfare_col_1">
-                            <field name="employee_category_id" invisible="1" />
                             <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
+                            <field name="employee_category_id" invisible="1" />
+                            <field name="employee_category_id_officer" invisible="1" />
+                            <field name="employee_domain" invisible="1"/>
                             <field name="is_synced" readonly="1" invisible="1" />
                             <field name="is_individual" widget="boolean_toggle" invisible="1"/>
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
                                 domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
-                            <field name="employee_id" string="Inquiry Officer" domain="[('category_ids', 'in', [employee_category_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                            <field name="previous_disbursement_id" invisible="1" />
+                            <field name="employee_id" string="Inquiry Officer" domain="employee_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                             <field name="institution_category" widget="radio" invisible="is_individual"/>
                             <field name="subcategory" invisible="is_individual"/>
                             <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
@@ -66,9 +81,9 @@
                             <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
                             <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
                             <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'committee_approval'" required="state == 'committee_approval'" />
+                            <field name="committee_remarks" readonly="state != 'committee_approval  '" required="state == 'committee_approval'"/>
                             <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
-                            <field name="member_remarks" readonly="state != 'mem_approve'" required="state == 'mem_approve'" />
+                            <field name="member_remarks" readonly="state != 'member_approve'" required="state == 'member_approve'"/>
                             <field name="rejection_remarks" readonly="state == 'reject'"  />
                             <field name="show_disburse_button" invisible="1"  />
 
@@ -76,15 +91,8 @@
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
                             <field name="application_form_name" invisible="1"/>
-                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="1"/>
-                            <field name="frc_name" invisible="1"/>
-                            <field name="frc" filename="frc_name" readonly="state != 'draft'" required="1"/>
-                            <field name="electricity_bill_name" invisible="1"/>
-                            <field name="electricity_bill_file" filename="electricity_bill_name" readonly="state != 'draft'" required="1"/>
-                            <field name="gas_bill_name" invisible="1"/>
-                            <field name="gas_bill_file" filename="gas_bill_name" readonly="state != 'draft'" required="1"/>
-                            <field name="family_cnic_name" invisible="1"/>
-                            <field name="family_cnic" filename="family_cnic_name" readonly="state != 'draft'" required="1"/>
+                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
+                           
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
@@ -100,11 +108,14 @@
                                     <field name="product_domain" column_invisible="1" />
                                     <field name="analytic_account_domain" column_invisible="1" />
                                     <field name="is_collection_point_readonly" column_invisible="1" />
+                                    <field name="employee_category_id_officer" column_invisible="1" />
 
                                     <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="payment_type" />
+                                    <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
@@ -116,6 +127,9 @@
                                     <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
 
                                     <field name="show_deliver_button" column_invisible="1"/>
+                                    <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
+                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+    
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
 
@@ -125,9 +139,12 @@
                         <page name="recurring_line" string="Recurring Details" invisible="state != 'recurring'">
                             <field name="welfare_recurring_line_ids" readonly="1">
                                 <tree>
+                                    <field name="employee_category_id_officer" column_invisible="1" />
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="payment_type" />
+                                    <field name="assigned_officer_id" string="Assigned Officer(Marfat)" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                                     <field name="collection_point" />
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="collection_date" />
@@ -150,6 +167,74 @@
                                     <field name="portal_donee_id" readonly="1" />
                                 </group>
                             </group>
+                        </page>
+                        <page string="Inquiry Committee Questions">
+                            <group string="Inquiry Questions" name="inquiry_group">
+                                <group name="inquiry_col_1">
+                                    <field name="donee_house_status" 
+                                        string="Residential Status" 
+                                        placeholder="e.g., Own House, Rented House, Living with relatives"/>
+                                    <field name="num_of_children" 
+                                        string="Total Children" 
+                                        placeholder="Enter total number"/>
+                                    <field name="num_of_sons" 
+                                        string="Sons" 
+                                        placeholder="Enter number of sons"/>
+                                </group>
+                                <group name="inquiry_col_2">
+                                    <field name="num_of_daughters" 
+                                        string="Daughters" 
+                                        placeholder="Enter number of daughters"/>
+                                    <field name="children_education" 
+                                        string="Children's Education" 
+                                        placeholder="e.g., School, College, University, or Multiple"/>
+                                    <field name="donee_issues" 
+                                        string="Issues/Concerns" 
+                                        placeholder="Describe any issues or concerns related to the donee..."/>
+                                </group>
+                            </group>
+                        </page>
+                        <page name="attached_documents" string="Attached Documents">
+                            <field name="document_ids" nolabel="1"
+                                readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <tree create="false" delete="false" default_order="id desc">
+                                    <field name="document_type" string="Type">
+                                        <tree>
+                                            <field name="document_type" widget="badge"
+                                                decoration-info="document_type in ['application_form']"
+                                                decoration-success="document_type in ['frc', 'family_cnic']"
+                                                decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
+                                        </tree>
+                                    </field>
+                                    
+                                    <field name="name" string="Document Name" 
+                                        attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
+                                    
+                                    <field name="mimetype" string="Type" optional="hide"/>
+                                    <field name="file_size" string="Size" optional="hide"/>
+                                    <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
+                                    
+                                    <button name="action_view_document" type="object"
+                                            string="View" icon="fa-eye"
+                                            class="btn-link text-info"
+                                            title="View Document"
+                                            invisible="mimetype not like 'image%'"/>
+                                    
+                                    <button name="action_delete" type="object"
+                                            icon="fa-trash"
+                                            class="btn-link text-danger"
+                                            confirm="Are you sure you want to delete this document?"
+                                            attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
+                                            title="Delete Document"/>
+                                    
+                                    <button string="Download"
+                                            type="url"
+                                            name="url"
+                                            icon="fa-download"
+                                            class="btn-link text-primary"
+                                            title="Download Document"/>
+                                </tree>
+                            </field>
                         </page>
                         
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
@@ -180,8 +265,8 @@
                             </field>
                         </page>
                         
-                        <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
-                            <field name="inquiry_report_ids" readonly="1">
+                        <!-- <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
+                            <field name="inquiry_report_ids" readonly="1" mode="tree,form">
                                 <tree>
                                     <field name="create_date"/>
                                     <field name="officer_name"/>
@@ -209,7 +294,7 @@
                                     </group>
                                 </form>
                             </field>
-                        </page>
+                        </page> -->
                         
                         <page name="masjid_details_page" string="Masjid Details" invisible="is_individual or institution_category != 'masjid'">
                             <field name="masjid_id" mode="tree,form" nolabel="1">
@@ -511,7 +596,8 @@
                         <page name="request_details" string="Request Details" invisible="not is_individual">
                             <group>
                                 <group name="request_details_col_1">
-                                    <field name="loan_request_amount" />
+                                    <!-- <field name="loan_request_amount" /> -->
+                                    <field name="loan_request_amount" required="1"/>
                                     <field name="security_offered" />
                                 </group>
                                 <group name="request_details_col_2">
@@ -544,12 +630,14 @@
                             <field name="family_line_ids">
                                 <tree editable="bottom">
                                     <field name="complete_name" />
+                                    <field name="cnic_no" />
                                     <field name="age" />
                                     <field name="relation" />
                                     <field name="cnic_b_form_name" column_invisible="1"/>
                                     <field name="cnic_b_form" filename="cnic_b_form_name"/>
                                     <field name="education" />
                                     <field name="monthly_income" />
+                                    <button name="action_view_disbursement_history" string="View History" type="object" class="btn-info" />
                                 </tree>
                             </field>
                         </page>

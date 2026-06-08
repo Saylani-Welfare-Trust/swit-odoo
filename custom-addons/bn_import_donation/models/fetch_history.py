@@ -9,6 +9,9 @@ class FetchHistory(models.Model):
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
 
+    page = fields.Integer(default=1)
+    per_page = fields.Integer(default=100)
+
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
