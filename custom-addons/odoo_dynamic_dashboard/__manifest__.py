@@ -41,12 +41,12 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'odoo_dynamic_dashboard/static/lib/js/interactjs.js',
             'odoo_dynamic_dashboard/static/src/css/**/*.css',
             'odoo_dynamic_dashboard/static/src/scss/**/*.scss',
             'odoo_dynamic_dashboard/static/src/js/**/*.js',
             'odoo_dynamic_dashboard/static/src/xml/**/*.xml',
             'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
-            'odoo_dynamic_dashboard/static/lib/js/interactjs.js',
         ],
     },
     'images': ['static/description/banner.gif'],
