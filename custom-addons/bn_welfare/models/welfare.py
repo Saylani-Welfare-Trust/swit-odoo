@@ -97,21 +97,44 @@ class Welfare(models.Model):
     
     portal_last_sync_message = fields.Text('Portal Last Sync Message')
 
+        # REMOVE these:
     application_form = fields.Binary('Application Form')
     application_form_name = fields.Char('Application Form Name')
-
     frc = fields.Binary('FRC')
     frc_name = fields.Char('FRC Name')
-    
-
     electricity_bill_file = fields.Binary('Electricity Bill')
     electricity_bill_name = fields.Char('Electricity Bill Name')
-    
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
-    
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
+
+    # ADD these:
+    application_form_ids = fields.One2many(
+        'welfare.document.image', 'welfare_id',
+        string='Application Form',
+        domain=[('document_type', '=', 'application_form')]
+    )
+    frc_ids = fields.One2many(
+        'welfare.document.image', 'welfare_id',
+        string='FRC',
+        domain=[('document_type', '=', 'frc')]
+    )
+    electricity_bill_ids = fields.One2many(
+        'welfare.document.image', 'welfare_id',
+        string='Electricity Bill',
+        domain=[('document_type', '=', 'electricity_bill')]
+    )
+    gas_bill_ids = fields.One2many(
+        'welfare.document.image', 'welfare_id',
+        string='Gas Bill',
+        domain=[('document_type', '=', 'gas_bill')]
+    )
+    family_cnic_ids = fields.One2many(
+        'welfare.document.image', 'welfare_id',
+        string='Family CNIC',
+        domain=[('document_type', '=', 'family_cnic')]
+    )
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -388,76 +411,59 @@ class Welfare(models.Model):
 
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
-        """Auto-populate form data from most recent previous welfare record for existing donee"""
         if not self.donee_id:
             return
 
-        # Build domain for previous welfare records
         domain = [
             ('donee_id', '=', self.donee_id.id),
             ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
         ]
-        
-        # Exclude current record only if it is already saved (has a real integer ID)
         if self.id and isinstance(self.id, int) and self.id > 0:
             domain.append(('id', '!=', self.id))
-        
+
         previous_welfare = self.search(domain, order='date desc', limit=1)
 
         if previous_welfare:
-            # Auto-populate all fields (same as your original code)
-            self.applicant_occupation = previous_welfare.applicant_occupation
-            self.residence_ownership = previous_welfare.residence_ownership
-            self.total_children = previous_welfare.total_children
-            self.boys_count = previous_welfare.boys_count
-            self.girls_count = previous_welfare.girls_count
-            self.children_education_status = previous_welfare.children_education_status
-            self.main_issue = previous_welfare.main_issue
-            
-             # Auto-populate residence/house info
+            self.applicant_occupation       = previous_welfare.applicant_occupation
+            self.residence_ownership        = previous_welfare.residence_ownership
+            self.total_children             = previous_welfare.total_children
+            self.boys_count                 = previous_welfare.boys_count
+            self.girls_count                = previous_welfare.girls_count
+            self.children_education_status  = previous_welfare.children_education_status
+            self.main_issue                 = previous_welfare.main_issue
 
-            self.residence_type = previous_welfare.residence_type
-            self.home_phone_no = previous_welfare.home_phone_no
-            self.landlord_name = previous_welfare.landlord_name
-            self.landlord_cnic_no = previous_welfare.landlord_cnic_no
-            self.landlord_mobile = previous_welfare.landlord_mobile
-            self.rental_shared_duration = previous_welfare.rental_shared_duration
-            self.per_month_rent = previous_welfare.per_month_rent
-            self.gas_bill = previous_welfare.gas_bill
-            self.electricity_bill = previous_welfare.electricity_bill
-            self.home_other_info = previous_welfare.home_other_info
-                      
-             # Auto-populate financial info
+            self.residence_type             = previous_welfare.residence_type
+            self.home_phone_no              = previous_welfare.home_phone_no
+            self.landlord_name              = previous_welfare.landlord_name
+            self.landlord_cnic_no           = previous_welfare.landlord_cnic_no
+            self.landlord_mobile            = previous_welfare.landlord_mobile
+            self.rental_shared_duration     = previous_welfare.rental_shared_duration
+            self.per_month_rent             = previous_welfare.per_month_rent
+            self.gas_bill                   = previous_welfare.gas_bill
+            self.electricity_bill           = previous_welfare.electricity_bill
+            self.home_other_info            = previous_welfare.home_other_info
 
-            self.monthly_income = previous_welfare.monthly_income
-            self.outstanding_amount = previous_welfare.outstanding_amount
-            self.monthly_household_expense = previous_welfare.monthly_household_expense
-            self.bank_account = previous_welfare.bank_account
-            self.bank_name = previous_welfare.bank_name
-            self.account_no = previous_welfare.account_no
-            self.other_loan = previous_welfare.other_loan
-            self.institute_name = previous_welfare.institute_name
-            
-            # Auto-populate employment info
+            self.monthly_income             = previous_welfare.monthly_income
+            self.outstanding_amount         = previous_welfare.outstanding_amount
+            self.monthly_household_expense  = previous_welfare.monthly_household_expense
+            self.bank_account               = previous_welfare.bank_account
+            self.bank_name                  = previous_welfare.bank_name
+            self.account_no                 = previous_welfare.account_no
+            self.other_loan                 = previous_welfare.other_loan
+            self.institute_name             = previous_welfare.institute_name
 
-            self.designation = previous_welfare.designation
-            self.company_name = previous_welfare.company_name
-            self.company_phone = previous_welfare.company_phone
-            self.company_address = previous_welfare.company_address
-            self.service_duration = previous_welfare.service_duration
-            self.monthly_salary = previous_welfare.monthly_salary
-            # Auto-populate document fields
-            self.frc = previous_welfare.frc
-            self.application_form = previous_welfare.application_form
-            self.electricity_bill_file = previous_welfare.electricity_bill_file
-            self.gas_bill_file = previous_welfare.gas_bill_file
-            self.family_cnic = previous_welfare.family_cnic
-            
-            # Auto-populate family info
-            self.dependent_person = previous_welfare.dependent_person
-            self.household_member = previous_welfare.household_member
-            
-            # Show notification about auto-population
+            self.designation                = previous_welfare.designation
+            self.company_name               = previous_welfare.company_name
+            self.company_phone              = previous_welfare.company_phone
+            self.company_address            = previous_welfare.company_address
+            self.service_duration           = previous_welfare.service_duration
+            self.monthly_salary             = previous_welfare.monthly_salary
+
+            self.dependent_person           = previous_welfare.dependent_person
+            self.household_member           = previous_welfare.household_member
+
+            # NOTE: image One2many fields are NOT copied on onchange
+            # (too heavy; user can re-sync from portal)
 
             return {
                 'warning': {
@@ -724,37 +730,29 @@ class Welfare(models.Model):
         return None, None
 
     def action_check_portal_status(self):
-        """Check current status in portal"""
         self.ensure_one()
 
-        # Check if donee exists
         donee_data = self._check_donee_exists_in_portal()
-
         if donee_data:
             message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
-            donee_in_portal = self._create_donee_in_portal()
+            self._create_donee_in_portal()
 
-        # Check for applications
         application = self._search_portal_applications()
-
         app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
 
-        all_media = []
+        all_media   = []
         all_remarks = []
 
-        # Portal field → Odoo Binary field mapping
-        # NEW: plural portal keys map to (binary_field, filename_field)
         document_field_map = {
-            'applicationFormImages': ('application_form', 'application_form_name'),
-            'frcImages':             ('frc', 'frc_name'),
-            'electricityBillImages': ('electricity_bill_file', 'electricity_bill_name'),
-            'gasBillImages':         ('gas_bill_file', 'gas_bill_name'),
-            'familyCnicImages':      ('family_cnic', 'family_cnic_name'),
+            'applicationFormImages': 'application_form',
+            'frcImages':             'frc',
+            'electricityBillImages': 'electricity_bill',
+            'gasBillImages':         'gas_bill',
+            'familyCnicImages':      'family_cnic',
         }
 
-        # Aliases: plural new keys + legacy singular keys, all pointing to same target
         document_aliases = {
             'applicationFormImages': (
                 'applicationFormImages', 'applicationFormImage',
@@ -777,127 +775,76 @@ class Welfare(models.Model):
             ),
         }
 
-        document_vals = {}
-        # extra_attachments: { odoo_field_name: [(binary, filename), ...] }
-        extra_attachments = {}
         document_sources = [application]
 
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
                 if not isinstance(report, dict):
                     continue
-
-                media = report.get('media')
+                media   = report.get('media')
                 remarks = report.get('remarks')
-
                 if media:
                     for url in media:
                         all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
-
                 if remarks:
                     all_remarks.append(remarks)
-
                 document_sources.append(report)
 
-        # ----------------------------------------------------------------
-        # Download ALL images for each portal field.
-        # First image → binary field on the record.
-        # Additional images → ir.attachment records linked to the record.
-        # ----------------------------------------------------------------
-        for portal_field, (odoo_field, filename_field) in document_field_map.items():
-            if odoo_field in document_vals:
-                continue  # already resolved from a higher-priority source
+        if app_state == 'inquiry_complete':
+            self.write({
+                'inquiry_media':      '<br/>'.join(all_media) if all_media else '',
+                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
+                'state':              'inquiry',
+            })
 
-            for source in document_sources:
-                if not isinstance(source, dict):
-                    continue
+            WelfareDocImg = self.env['welfare.document.image']
 
-                # Collect raw values from all known aliases
+            for portal_field, doc_type in document_field_map.items():
                 raw_values = []
-                for alias in document_aliases.get(portal_field, (portal_field,)):
-                    candidate = source.get(alias)
-                    if candidate is None:
+                for source in document_sources:
+                    if not isinstance(source, dict):
                         continue
-                    # Normalise to list
-                    if isinstance(candidate, list):
-                        raw_values.extend(candidate)
-                    else:
-                        raw_values.append(candidate)
+                    for alias in document_aliases.get(portal_field, (portal_field,)):
+                        candidate = source.get(alias)
+                        if candidate is None:
+                            continue
+                        if isinstance(candidate, list):
+                            raw_values.extend(candidate)
+                        else:
+                            raw_values.append(candidate)
 
                 if not raw_values:
                     continue
 
-                # Download each non-empty value
-                downloaded = []  # list of (binary_b64, filename)
+                # Delete existing images for this doc_type before re-syncing
+                WelfareDocImg.search([
+                    ('welfare_id',     '=', self.id),
+                    ('document_type',  '=', doc_type),
+                ]).unlink()
+
                 for raw in raw_values:
-                    if not raw:          # skip empty strings / None
+                    if not raw:
                         continue
                     binary_value, filename = self._download_portal_document(
                         portal_field, raw
                     )
                     if binary_value:
-                        downloaded.append((binary_value, filename))
+                        WelfareDocImg.create({
+                            'welfare_id':    self.id,
+                            'document_type': doc_type,
+                            'image':         binary_value,
+                            'filename':      filename,
+                        })
+                        _logger.info(
+                            "Saved image for %s (%s) on welfare %s",
+                            doc_type, filename, self.id,
+                        )
 
-                if not downloaded:
-                    continue
-
-                # First image → the binary field
-                first_binary, first_filename = downloaded[0]
-                document_vals[odoo_field] = first_binary
-                document_vals[filename_field] = first_filename
-                _logger.info(
-                    "Downloaded %s (1/%d) → %s",
-                    portal_field, len(downloaded), odoo_field,
-                )
-
-                # Remaining images → attachments (stored for later creation)
-                if len(downloaded) > 1:
-                    extra_attachments[odoo_field] = downloaded[1:]
-                    _logger.info(
-                        "%d extra image(s) for %s will be saved as attachments",
-                        len(downloaded) - 1, odoo_field,
-                    )
-
-                break  # found at least one image in this source – stop searching
-
-        if app_state == 'inquiry_complete':
-            write_vals = {
-                'inquiry_media': '<br/>'.join(all_media) if all_media else '',
-                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
-                'state': 'inquiry',
-            }
-            write_vals.update(document_vals)
-            self.write(write_vals)
-
-            # Create ir.attachment records for extra images
-            IrAttachment = self.env['ir.attachment']
-            field_label_map = {
-                'application_form':    'Application Form',
-                'frc':                 'FRC',
-                'electricity_bill_file': 'Electricity Bill',
-                'gas_bill_file':       'Gas Bill',
-                'family_cnic':         'Family CNIC',
-            }
-            for odoo_field, extras in extra_attachments.items():
-                label = field_label_map.get(odoo_field, odoo_field)
-                for idx, (binary_b64, filename) in enumerate(extras, start=2):
-                    IrAttachment.create({
-                        'name': f"{label} ({idx}) - {filename}",
-                        'res_model': self._name,
-                        'res_id': self.id,
-                        'datas': binary_b64,
-                        'mimetype': 'application/octet-stream',
-                    })
-                    _logger.info(
-                        "Saved extra attachment %d for %s on welfare %s",
-                        idx, odoo_field, self.id,
-                    )
-
-            result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
-            message += f" | 📋 {result['message']} "
+            result  = self._handle_existing_application(application)
+            message = f" | 📋 application status: {app_state}"
+            message += f" | 📋 {result['message']}"
         else:
-            message += f" | 📋 No applications found"  # type: ignore
+            message += " | 📋 No applications found"
 
         return self._show_notification('Portal Status Check', message, 'info')
     
@@ -1254,31 +1201,22 @@ class Welfare(models.Model):
 
     
     def action_committee_approval(self):
-        """Committee Approval - Check limits here"""
         for record in self:
-
-            
-            # Your existing committee approval validations
-            # if not record.committee_remarks:
-            #     raise ValidationError(_('Plea   e enter Committee Remarks before approval.'))
-            
-            # Document validation
             missing_fields = []
-            if not record.application_form:
+            if not record.application_form_ids:
                 missing_fields.append("Application Form")
-            if not record.electricity_bill_file:
+            if not record.electricity_bill_ids:
                 missing_fields.append("Electricity Bill")
-            if not record.gas_bill_file:
+            if not record.gas_bill_ids:
                 missing_fields.append("Gas Bill")
-            if not record.family_cnic:
+            if not record.family_cnic_ids:
                 missing_fields.append("Family CNIC")
-            
+
             if missing_fields:
                 raise ValidationError(_(
                     "Please upload the following documents before approval:\n- %s"
                 ) % ("\n- ".join(missing_fields)))
-            
-            # Set state to committee_approval
+
             record.state = 'committee_approval'
         
 

@@ -15,3 +15,4 @@ access_welfare_recurring_line_disbursement_popup,welfare.recurring.line.disburse
 access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift,,1,1,1,1
 access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,,1,1,1,1
 access_welfare_return_line,welfare.return.line,bn_welfare.model_welfare_return_line,,1,1,1,1
+access_welfare_document_image,welfare.document.image,model_welfare_document_image,base.group_user,1,1,1,1
