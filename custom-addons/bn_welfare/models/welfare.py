@@ -727,86 +727,127 @@ class Welfare(models.Model):
         return None, None
 
     def action_check_portal_status(self):
-        """Check current status in portal"""
         self.ensure_one()
 
-        # Check if donee exists
+        # Check if donee exists in portal
         donee_data = self._check_donee_exists_in_portal()
-
         if donee_data:
             message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
-            donee_in_portal = self._create_donee_in_portal()
+            self._create_donee_in_portal()
 
-        # Check for applications
-        application = self._search_portal_applications()
-
-        app_state = application.get('status') if application else None
+        application   = self._search_portal_applications()
+        app_state     = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
 
-        all_media = []
+        all_media   = []
         all_remarks = []
 
-        # Portal field → Odoo Binary field mapping
+        # portal key → document_type selection value
         document_field_map = {
-            'applicationFormImage': ('application_form', 'application_form_name'),
-            'frcImage':             ('frc', 'frc_name'),
-            'electricityBillImage': ('electricity_bill_file', 'electricity_bill_name'),
-            'gasBillImage':         ('gas_bill_file', 'gas_bill_name'),
-            'familyCnicImage':      ('family_cnic', 'family_cnic_name'),
+            'applicationFormImages': 'application_form',
+            'frcImages':             'frc',
+            'electricityBillImages': 'electricity_bill',
+            'gasBillImages':         'gas_bill',
+            'familyCnicImages':      'family_cnic',
         }
 
+        # All known aliases per portal key (new plural + legacy singular)
         document_aliases = {
-            'applicationFormImage': ('applicationFormImage', 'applicationForm', 'application_form_image'),
-            'frcImage': ('frcImage', 'frc', 'frc_image'),
-            'electricityBillImage': ('electricityBillImage', 'electricityBill', 'electricity_bill_image'),
-            'gasBillImage': ('gasBillImage', 'gasBill', 'gas_bill_image'),
-            'familyCnicImage': ('familyCnicImage', 'familyCnic', 'family_cnic_image'),
+            'applicationFormImages': (
+                'applicationFormImages', 'applicationFormImage',
+                'applicationForm', 'application_form_image',
+            ),
+            'frcImages': (
+                'frcImages', 'frcImage', 'frc', 'frc_image',
+            ),
+            'electricityBillImages': (
+                'electricityBillImages', 'electricityBillImage',
+                'electricityBill', 'electricity_bill_image',
+            ),
+            'gasBillImages': (
+                'gasBillImages', 'gasBillImage',
+                'gasBill', 'gas_bill_image',
+            ),
+            'familyCnicImages': (
+                'familyCnicImages', 'familyCnicImage',
+                'familyCnic', 'family_cnic_image',
+            ),
         }
 
-        document_vals = {}
         document_sources = [application]
 
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
                 if not isinstance(report, dict):
                     continue
-
-                # Handle media links
-                media = report.get('media')
+                media   = report.get('media')
                 remarks = report.get('remarks')
-
                 if media:
                     for url in media:
                         all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
-
                 if remarks:
                     all_remarks.append(remarks)
-
                 document_sources.append(report)
+
+        if app_state == 'inquiry_complete':
+            # Write basic fields first
+            self.write({
+                'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
+                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
+                'state':               'inquiry',
+            })
 
             IrAttachment = self.env['ir.attachment']
             WelfareDoc   = self.env['welfare.document']
 
             for portal_field, doc_type in document_field_map.items():
-                # collect raw_values ... (same logic as before)
+                # Collect all raw values from all sources
+                raw_values = []
+                for source in document_sources:
+                    if not isinstance(source, dict):
+                        continue
+                    for alias in document_aliases.get(portal_field, (portal_field,)):
+                        candidate = source.get(alias)
+                        if candidate is None:
+                            continue
+                        if isinstance(candidate, list):
+                            raw_values.extend(candidate)
+                        else:
+                            raw_values.append(candidate)
 
-                # Delete old docs of this type
-                WelfareDoc.search([
-                    ('welfare_id', '=', self.id),
-                    ('document_type', '=', doc_type),
-                ]).mapped('attachment_id').unlink()
-                WelfareDoc.search([
-                    ('welfare_id', '=', self.id),
-                    ('document_type', '=', doc_type),
-                ]).unlink()
+                if not raw_values:
+                    continue
 
+                # Delete existing docs + attachments of this type before re-syncing
+                existing_docs = WelfareDoc.search([
+                    ('welfare_id',    '=', self.id),
+                    ('document_type', '=', doc_type),
+                ])
+                existing_docs.mapped('attachment_id').unlink()
+                existing_docs.unlink()
+
+                # Download each image and create attachment + welfare.document
                 for raw in raw_values:
                     if not raw:
                         continue
-                    binary_value, filename = self._download_portal_document(portal_field, raw)
+
+                    binary_value, filename = self._download_portal_document(
+                        portal_field, raw
+                    )
                     if not binary_value:
                         continue
+
+                    # Detect mimetype from filename
+                    ext      = (filename or '').rsplit('.', 1)[-1].lower()
+                    mimetype = {
+                        'jpg':  'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png':  'image/png',
+                        'gif':  'image/gif',
+                        'pdf':  'application/pdf',
+                        'webp': 'image/webp',
+                    }.get(ext, 'application/octet-stream')
 
                     attachment = IrAttachment.create({
                         'name':      filename or f'{doc_type}.jpg',
@@ -814,32 +855,26 @@ class Welfare(models.Model):
                         'datas':     binary_value,
                         'res_model': 'welfare',
                         'res_id':    self.id,
-                        'mimetype':  'image/jpeg',
+                        'mimetype':  mimetype,
                     })
+
                     WelfareDoc.create({
                         'welfare_id':    self.id,
                         'document_type': doc_type,
                         'attachment_id': attachment.id,
                     })
 
-        if app_state == 'inquiry_complete':
-            # Single write with all fields including documents
-            write_vals = {
-                'inquiry_media': '<br/>'.join(all_media) if all_media else '',
-                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
-                'state': 'inquiry',
-            }
+                    _logger.info(
+                        "Saved %s document '%s' on welfare %s",
+                        doc_type, filename, self.id,
+                    )
 
-            # Add downloaded document binaries
-            write_vals.update(document_vals)
+            result  = self._handle_existing_application(application)
+            message = f" | 📋 application status: {app_state}"
+            message += f" | 📋 {result['message']}"
 
-            self.write(write_vals)
-
-            result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
-            message += f" | 📋 {result['message']} "
         else:
-            message += f" | 📋 No applications found"  # type: ignore
+            message = " | 📋 No applications found"
 
         return self._show_notification('Portal Status Check', message, 'info')
     
