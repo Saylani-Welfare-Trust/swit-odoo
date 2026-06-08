@@ -58,10 +58,10 @@
                 <label class="navbar-items layout-switch"
                        style="padding-top:20px;"
                        id="edit-layout-label">
-                    <button class="navbar-items btn-search_edit btn-align-items btn btn-primary my-2 mx-2 my-sm-0"
+                    <!-- <button class="navbar-items btn-search_edit btn-align-items btn btn-primary my-2 mx-2 my-sm-0"
                             type="button"
                             id="edit_layout"
-                            t-on-click="(ev) => this.editLayout(ev)">Edit Layout</button>
+                            t-on-click="(ev) => this.editLayout(ev)">Edit Layout</button> -->
                     <button class="navbar-items btn-search_edit btn btn-primary my-2 mx-2 my-sm-0"
                             type="button"
                             id="save_layout"
