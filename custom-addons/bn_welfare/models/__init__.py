@@ -18,4 +18,3 @@ from . import welfare_madarsa
 from . import hr_employee
 from . import welfare_limit
 from . import welfare_return_lines
-from . import welfare_document_image
