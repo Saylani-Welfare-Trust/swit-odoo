@@ -183,10 +183,12 @@
                                     <field name="assigned_officer_id" string="Assigned Officer(Marfat)" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
                                     <field name="collection_point" />
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="collection_date" />
+                                    <field name="collection_date" readonly="state != 'return'" />
                                     <field name='quantity' />
                                     <field name="amount" />
                                     <field name="show_deliver_button" column_invisible="1"/>
+                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State"/>
                                 </tree>
@@ -264,6 +266,36 @@
                                             class="btn-link text-primary"
                                             title="Download Document"/>
                                 </tree>
+                            </field>
+                        </page>
+                        <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
+                            <field name="inquiry_report_ids" readonly="1" mode="tree,form">
+                                <tree>
+                                    <field name="create_date"/>
+                                    <field name="officer_name"/>
+                                    <field name="status"/>
+                                    <field name="verified" widget="boolean_button"/>
+                                    <field name="content" widget="text"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="status"/>
+                                            <field name="verified" widget="boolean_button"/>
+                                            <field name="officer_name"/>
+                                            <field name="officer_email"/>
+                                        </group>
+                                        <group>
+                                            <field name="create_date"/>
+                                            <field name="write_date"/>
+                                            <field name="external_id"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="content" widget="text"/>
+                                        <field name="images" widget="text"/>
+                                    </group>
+                                </form>
                             </field>
                         </page>
                         
@@ -598,7 +630,7 @@
                             <group>
                                 <group name="request_details_col_1">
                                     <!-- <field name="loan_request_amount" /> -->
-                                    <field name="loan_request_amount" required="1"/>
+                                    <field name="loan_request_amount"/>
                                     <field name="security_offered" />
                                 </group>
                                 <group name="request_details_col_2">
