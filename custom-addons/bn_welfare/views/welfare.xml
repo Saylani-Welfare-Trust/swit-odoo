@@ -108,7 +108,7 @@
                                             name="url"
                                             icon="fa-download"
                                             class="btn-primary"/>
-                                </trees>
+                                </tree>
                             </field>
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
