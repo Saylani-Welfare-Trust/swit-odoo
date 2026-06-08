@@ -296,7 +296,7 @@
                                     </group>
                                 </form>
                             </field>
-                        </page>
+                        </page> -->
                         
                         <!-- Institution Specific Pages (Visible only when is_individual=False) -->
                         <page name="committee_members_page" string="Committee Members" invisible="is_individual">
