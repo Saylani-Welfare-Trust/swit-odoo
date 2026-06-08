@@ -220,7 +220,6 @@
                                             icon="fa-trash"
                                             class="btn-link text-danger"
                                             confirm="Are you sure you want to delete this document?"
-                                            attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
                                             title="Delete Document"/>
                                     
                                     <button string="Download"
