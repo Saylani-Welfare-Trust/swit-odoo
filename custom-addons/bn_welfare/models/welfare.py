@@ -1229,6 +1229,8 @@ class Welfare(models.Model):
         for record in self:
             current_user = self.env.user
             is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
+            if not record.hod_remarks:
+                raise ValidationError('Please enter HOD Remarks!')
 
             if is_hod:
                 within_limit = record._check_amount_within_hod_limit()
@@ -1236,10 +1238,8 @@ class Welfare(models.Model):
                 if within_limit == False:
                     record.state = 'mem_approve'  # Move back to committee approval
                     # raise ValidationError(error_message)
-
-            if not record.hod_remarks:
-                raise ValidationError('Please enter HOD Remarks!')
-            record.state = 'approve'
+                else:
+                    record.state = 'approve'
     def action_approve(self):
         """Final approval logic"""
         for record in self:
