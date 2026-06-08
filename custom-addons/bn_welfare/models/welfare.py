@@ -745,23 +745,41 @@ class Welfare(models.Model):
         all_remarks = []
 
         # Portal field → Odoo Binary field mapping
+        # NEW: plural portal keys map to (binary_field, filename_field)
         document_field_map = {
-            'applicationFormImage': ('application_form', 'application_form_name'),
-            'frcImage':             ('frc', 'frc_name'),
-            'electricityBillImage': ('electricity_bill_file', 'electricity_bill_name'),
-            'gasBillImage':         ('gas_bill_file', 'gas_bill_name'),
-            'familyCnicImage':      ('family_cnic', 'family_cnic_name'),
+            'applicationFormImages': ('application_form', 'application_form_name'),
+            'frcImages':             ('frc', 'frc_name'),
+            'electricityBillImages': ('electricity_bill_file', 'electricity_bill_name'),
+            'gasBillImages':         ('gas_bill_file', 'gas_bill_name'),
+            'familyCnicImages':      ('family_cnic', 'family_cnic_name'),
         }
 
+        # Aliases: plural new keys + legacy singular keys, all pointing to same target
         document_aliases = {
-            'applicationFormImage': ('applicationFormImage', 'applicationForm', 'application_form_image'),
-            'frcImage': ('frcImage', 'frc', 'frc_image'),
-            'electricityBillImage': ('electricityBillImage', 'electricityBill', 'electricity_bill_image'),
-            'gasBillImage': ('gasBillImage', 'gasBill', 'gas_bill_image'),
-            'familyCnicImage': ('familyCnicImage', 'familyCnic', 'family_cnic_image'),
+            'applicationFormImages': (
+                'applicationFormImages', 'applicationFormImage',
+                'applicationForm', 'application_form_image',
+            ),
+            'frcImages': (
+                'frcImages', 'frcImage', 'frc', 'frc_image',
+            ),
+            'electricityBillImages': (
+                'electricityBillImages', 'electricityBillImage',
+                'electricityBill', 'electricity_bill_image',
+            ),
+            'gasBillImages': (
+                'gasBillImages', 'gasBillImage',
+                'gasBill', 'gas_bill_image',
+            ),
+            'familyCnicImages': (
+                'familyCnicImages', 'familyCnicImage',
+                'familyCnic', 'family_cnic_image',
+            ),
         }
 
         document_vals = {}
+        # extra_attachments: { odoo_field_name: [(binary, filename), ...] }
+        extra_attachments = {}
         document_sources = [application]
 
         if isinstance(inquiry_reports, list):
@@ -769,7 +787,6 @@ class Welfare(models.Model):
                 if not isinstance(report, dict):
                     continue
 
-                # Handle media links
                 media = report.get('media')
                 remarks = report.get('remarks')
 
@@ -782,40 +799,99 @@ class Welfare(models.Model):
 
                 document_sources.append(report)
 
-        # Download document images and convert to binary. The portal may send these
-        # on the application itself, inside form/documents, or inside inquiryReports.
+        # ----------------------------------------------------------------
+        # Download ALL images for each portal field.
+        # First image → binary field on the record.
+        # Additional images → ir.attachment records linked to the record.
+        # ----------------------------------------------------------------
         for portal_field, (odoo_field, filename_field) in document_field_map.items():
             if odoo_field in document_vals:
-                continue
+                continue  # already resolved from a higher-priority source
 
             for source in document_sources:
-                image_value = self._get_portal_document_value(
-                    source, document_aliases.get(portal_field, (portal_field,))
-                )
-                if not image_value:
+                if not isinstance(source, dict):
                     continue
 
-                binary_value, filename = self._download_portal_document(portal_field, image_value)
-                if binary_value:
-                    document_vals[odoo_field] = binary_value
-                    document_vals[filename_field] = filename
-                    _logger.info(
-                        f"Downloaded {portal_field} to {odoo_field} from portal payload"
+                # Collect raw values from all known aliases
+                raw_values = []
+                for alias in document_aliases.get(portal_field, (portal_field,)):
+                    candidate = source.get(alias)
+                    if candidate is None:
+                        continue
+                    # Normalise to list
+                    if isinstance(candidate, list):
+                        raw_values.extend(candidate)
+                    else:
+                        raw_values.append(candidate)
+
+                if not raw_values:
+                    continue
+
+                # Download each non-empty value
+                downloaded = []  # list of (binary_b64, filename)
+                for raw in raw_values:
+                    if not raw:          # skip empty strings / None
+                        continue
+                    binary_value, filename = self._download_portal_document(
+                        portal_field, raw
                     )
-                    break
+                    if binary_value:
+                        downloaded.append((binary_value, filename))
+
+                if not downloaded:
+                    continue
+
+                # First image → the binary field
+                first_binary, first_filename = downloaded[0]
+                document_vals[odoo_field] = first_binary
+                document_vals[filename_field] = first_filename
+                _logger.info(
+                    "Downloaded %s (1/%d) → %s",
+                    portal_field, len(downloaded), odoo_field,
+                )
+
+                # Remaining images → attachments (stored for later creation)
+                if len(downloaded) > 1:
+                    extra_attachments[odoo_field] = downloaded[1:]
+                    _logger.info(
+                        "%d extra image(s) for %s will be saved as attachments",
+                        len(downloaded) - 1, odoo_field,
+                    )
+
+                break  # found at least one image in this source – stop searching
 
         if app_state == 'inquiry_complete':
-            # Single write with all fields including documents
             write_vals = {
                 'inquiry_media': '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
                 'state': 'inquiry',
             }
-
-            # Add downloaded document binaries
             write_vals.update(document_vals)
-
             self.write(write_vals)
+
+            # Create ir.attachment records for extra images
+            IrAttachment = self.env['ir.attachment']
+            field_label_map = {
+                'application_form':    'Application Form',
+                'frc':                 'FRC',
+                'electricity_bill_file': 'Electricity Bill',
+                'gas_bill_file':       'Gas Bill',
+                'family_cnic':         'Family CNIC',
+            }
+            for odoo_field, extras in extra_attachments.items():
+                label = field_label_map.get(odoo_field, odoo_field)
+                for idx, (binary_b64, filename) in enumerate(extras, start=2):
+                    IrAttachment.create({
+                        'name': f"{label} ({idx}) - {filename}",
+                        'res_model': self._name,
+                        'res_id': self.id,
+                        'datas': binary_b64,
+                        'mimetype': 'application/octet-stream',
+                    })
+                    _logger.info(
+                        "Saved extra attachment %d for %s on welfare %s",
+                        idx, odoo_field, self.id,
+                    )
 
             result = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state} "
