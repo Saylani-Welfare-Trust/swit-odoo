@@ -101,35 +101,215 @@
                     </group>
 
                     <!-- Documents Section -->
-                    <div class="mt-4 mb-4">
-                        <h4 style="border-bottom: 1px solid #dee2e6; padding-bottom: 8px; margin-bottom: 16px;">
-                            Documents
-                        </h4>
-                        <field name="document_ids"
-                            nolabel="1"
-                            readonly="state not in ['draft', 'inquiry', 'committee_approval']">
-                            <tree decoration-muted="not attachment_id">
-                                <field name="document_type" string="Document Type"/>
-                                <field name="name"          string="Filename"/>
-                                <field name="mimetype"      string="Type" optional="hide"/>
-                                <field name="url"           column_invisible="1"/>
-                                <field name="attachment_id" column_invisible="1"/>
-                                <button name="action_delete"
-                                        type="object"
-                                        string="Delete"
-                                        icon="fa-trash"
-                                        class="btn btn-sm btn-danger"
-                                        confirm="Are you sure you want to delete this document?"
-                                        invisible="parent.state not in ['draft', 'inquiry', 'committee_approval']"/>
-                                <button name="url"
-                                        type="url"
-                                        string="Download"
-                                        icon="fa-download"
-                                        class="btn btn-sm btn-primary"/>
-                            </tree>
-                        </field>
+                    <div class="mt-4">
+                        <h4 class="mb-3" style="border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">Documents</h4>
+
+                        <!-- Application Form -->
+                        <div class="mb-4">
+                            <label class="o_form_label fw-bold mb-2" style="display:block;">Application Form</label>
+                            <field name="application_form_ids" nolabel="1"
+                                   readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="filename"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div style="display:inline-flex; flex-direction:column; align-items:center; width:160px; margin:6px; padding:8px; border:1px solid #dee2e6; border-radius:6px; background:#fff; vertical-align:top;">
+                                                <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image'"
+                                                   target="_blank" style="display:block;">
+                                                    <img t-att-src="'data:image/png;base64,' + record.image.raw_value"
+                                                         style="width:140px; height:120px; object-fit:contain; border-radius:4px; cursor:pointer;"/>
+                                                </a>
+                                                <div class="text-muted mt-1 text-truncate" style="font-size:11px; max-width:140px;">
+                                                    <t t-esc="record.filename.value"/>
+                                                </div>
+                                                <div class="d-flex gap-1 mt-2" style="width:100%;">
+                                                    <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image?download=true'"
+                                                       t-att-download="record.filename.value"
+                                                       class="btn btn-sm btn-outline-primary flex-fill text-center"
+                                                       style="font-size:11px; padding:2px 4px;">
+                                                        ⬇ Download
+                                                    </a>
+                                                    <button type="object" name="action_delete_self"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:11px; padding:2px 6px;"
+                                                            confirm="Delete this image?">
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </div>
+
+                        <!-- FRC -->
+                        <div class="mb-4">
+                            <label class="o_form_label fw-bold mb-2" style="display:block;">FRC</label>
+                            <field name="frc_ids" nolabel="1"
+                                   readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="filename"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div style="display:inline-flex; flex-direction:column; align-items:center; width:160px; margin:6px; padding:8px; border:1px solid #dee2e6; border-radius:6px; background:#fff; vertical-align:top;">
+                                                <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image'"
+                                                   target="_blank" style="display:block;">
+                                                    <img t-att-src="'data:image/png;base64,' + record.image.raw_value"
+                                                         style="width:140px; height:120px; object-fit:contain; border-radius:4px; cursor:pointer;"/>
+                                                </a>
+                                                <div class="text-muted mt-1 text-truncate" style="font-size:11px; max-width:140px;">
+                                                    <t t-esc="record.filename.value"/>
+                                                </div>
+                                                <div class="d-flex gap-1 mt-2" style="width:100%;">
+                                                    <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image?download=true'"
+                                                       t-att-download="record.filename.value"
+                                                       class="btn btn-sm btn-outline-primary flex-fill text-center"
+                                                       style="font-size:11px; padding:2px 4px;">
+                                                        ⬇ Download
+                                                    </a>
+                                                    <button type="object" name="action_delete_self"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:11px; padding:2px 6px;"
+                                                            confirm="Delete this image?">
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </div>
+
+                        <!-- Electricity Bill -->
+                        <div class="mb-4">
+                            <label class="o_form_label fw-bold mb-2" style="display:block;">Electricity Bill</label>
+                            <field name="electricity_bill_ids" nolabel="1"
+                                   readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="filename"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div style="display:inline-flex; flex-direction:column; align-items:center; width:160px; margin:6px; padding:8px; border:1px solid #dee2e6; border-radius:6px; background:#fff; vertical-align:top;">
+                                                <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image'"
+                                                   target="_blank" style="display:block;">
+                                                    <img t-att-src="'data:image/png;base64,' + record.image.raw_value"
+                                                         style="width:140px; height:120px; object-fit:contain; border-radius:4px; cursor:pointer;"/>
+                                                </a>
+                                                <div class="text-muted mt-1 text-truncate" style="font-size:11px; max-width:140px;">
+                                                    <t t-esc="record.filename.value"/>
+                                                </div>
+                                                <div class="d-flex gap-1 mt-2" style="width:100%;">
+                                                    <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image?download=true'"
+                                                       t-att-download="record.filename.value"
+                                                       class="btn btn-sm btn-outline-primary flex-fill text-center"
+                                                       style="font-size:11px; padding:2px 4px;">
+                                                        ⬇ Download
+                                                    </a>
+                                                    <button type="object" name="action_delete_self"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:11px; padding:2px 6px;"
+                                                            confirm="Delete this image?">
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </div>
+
+                        <!-- Gas Bill -->
+                        <div class="mb-4">
+                            <label class="o_form_label fw-bold mb-2" style="display:block;">Gas Bill</label>
+                            <field name="gas_bill_ids" nolabel="1"
+                                   readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="filename"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div style="display:inline-flex; flex-direction:column; align-items:center; width:160px; margin:6px; padding:8px; border:1px solid #dee2e6; border-radius:6px; background:#fff; vertical-align:top;">
+                                                <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image'"
+                                                   target="_blank" style="display:block;">
+                                                    <img t-att-src="'data:image/png;base64,' + record.image.raw_value"
+                                                         style="width:140px; height:120px; object-fit:contain; border-radius:4px; cursor:pointer;"/>
+                                                </a>
+                                                <div class="text-muted mt-1 text-truncate" style="font-size:11px; max-width:140px;">
+                                                    <t t-esc="record.filename.value"/>
+                                                </div>
+                                                <div class="d-flex gap-1 mt-2" style="width:100%;">
+                                                    <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image?download=true'"
+                                                       t-att-download="record.filename.value"
+                                                       class="btn btn-sm btn-outline-primary flex-fill text-center"
+                                                       style="font-size:11px; padding:2px 4px;">
+                                                        ⬇ Download
+                                                    </a>
+                                                    <button type="object" name="action_delete_self"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:11px; padding:2px 6px;"
+                                                            confirm="Delete this image?">
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </div>
+
+                        <!-- Family CNIC -->
+                        <div class="mb-4">
+                            <label class="o_form_label fw-bold mb-2" style="display:block;">Family CNIC</label>
+                            <field name="family_cnic_ids" nolabel="1"
+                                   readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                <kanban>
+                                    <field name="id"/>
+                                    <field name="image"/>
+                                    <field name="filename"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div style="display:inline-flex; flex-direction:column; align-items:center; width:160px; margin:6px; padding:8px; border:1px solid #dee2e6; border-radius:6px; background:#fff; vertical-align:top;">
+                                                <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image'"
+                                                   target="_blank" style="display:block;">
+                                                    <img t-att-src="'data:image/png;base64,' + record.image.raw_value"
+                                                         style="width:140px; height:120px; object-fit:contain; border-radius:4px; cursor:pointer;"/>
+                                                </a>
+                                                <div class="text-muted mt-1 text-truncate" style="font-size:11px; max-width:140px;">
+                                                    <t t-esc="record.filename.value"/>
+                                                </div>
+                                                <div class="d-flex gap-1 mt-2" style="width:100%;">
+                                                    <a t-att-href="'/web/image/welfare.document.image/' + record.id.raw_value + '/image?download=true'"
+                                                       t-att-download="record.filename.value"
+                                                       class="btn btn-sm btn-outline-primary flex-fill text-center"
+                                                       style="font-size:11px; padding:2px 4px;">
+                                                        ⬇ Download
+                                                    </a>
+                                                    <button type="object" name="action_delete_self"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:11px; padding:2px 6px;"
+                                                            confirm="Delete this image?">
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </div>
+
                     </div>
-                    <!-- End Documents Section -->
                     <!-- End Documents Section -->
 
                     <notebook>
