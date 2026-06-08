@@ -18,26 +18,15 @@ class WelfareDocument(models.Model):
     mimetype = fields.Char(related='attachment_id.mimetype')
     url = fields.Char(compute='_compute_url')
     
-    # NEW FIELDS FOR BETTER DISPLAY
-    image_thumbnail = fields.Binary(string='Thumbnail', compute='_compute_image_thumbnail')
+    # Computed fields for better display
     file_size = fields.Char(string='Size', compute='_compute_file_size')
-    icon_class = fields.Char(string='Icon', compute='_compute_icon_class')
+    is_image = fields.Boolean(string='Is Image', compute='_compute_is_image')
 
     def _compute_url(self):
         for rec in self:
             rec.url = f'/web/content/{rec.attachment_id.id}?download=true' if rec.attachment_id else ''
 
-    def _compute_image_thumbnail(self):
-        """Generate thumbnail for images"""
-        for rec in self:
-            if rec.attachment_id and rec.mimetype and rec.mimetype.startswith('image/'):
-                # For images, return the actual image data
-                rec.image_thumbnail = rec.attachment_id.datas
-            else:
-                rec.image_thumbnail = False
-
     def _compute_file_size(self):
-        """Calculate human-readable file size"""
         for rec in self:
             if rec.attachment_id and rec.attachment_id.file_size:
                 size = rec.attachment_id.file_size
@@ -50,36 +39,22 @@ class WelfareDocument(models.Model):
             else:
                 rec.file_size = False
 
-    def _compute_icon_class(self):
-        """Return appropriate icon class based on mimetype"""
+    def _compute_is_image(self):
         for rec in self:
-            if rec.mimetype:
-                if rec.mimetype.startswith('image/'):
-                    rec.icon_class = 'fa-file-image-o'
-                elif rec.mimetype == 'application/pdf':
-                    rec.icon_class = 'fa-file-pdf-o'
-                else:
-                    rec.icon_class = 'fa-file-o'
-            else:
-                rec.icon_class = 'fa-file-o'
+            rec.is_image = rec.mimetype and rec.mimetype.startswith('image/')
 
     def action_view_document(self):
-        """View document in a modal"""
+        """Open image in a modal dialog"""
         self.ensure_one()
-        if self.mimetype and self.mimetype.startswith('image/'):
+        if self.is_image:
+            # Use Odoo's built-in image viewer
             return {
-                'type': 'ir.actions.act_window',
-                'name': 'View Document',
-                'res_model': 'welfare.document.preview',
-                'view_mode': 'form',
+                'type': 'ir.actions.act_url',
+                'url': f'/web/image/{self.attachment_id.id}?unique={self.attachment_id.write_date}',
                 'target': 'new',
-                'res_id': self.id,
-                'context': {
-                    'default_document_id': self.id,
-                }
             }
         else:
-            # For non-images, just download
+            # Download non-image files
             return {
                 'type': 'ir.actions.act_url',
                 'url': self.url,
@@ -89,14 +64,10 @@ class WelfareDocument(models.Model):
     def action_delete(self):
         self.ensure_one()
         welfare_id = self.welfare_id.id
-        # Store the attachment ID before unlinking
         attachment = self.attachment_id
-        # First delete the document record
         self.unlink()
-        # Then delete the attachment
         if attachment:
             attachment.unlink()
-        # Return to form view with success notification
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'welfare',
