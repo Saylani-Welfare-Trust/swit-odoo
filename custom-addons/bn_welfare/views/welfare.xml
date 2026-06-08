@@ -91,7 +91,6 @@
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
                             <field name="application_form_name" invisible="1"/>
-                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
                             <field name="application_form_media" 
                                 widget="html" 
                                 readonly="1"
