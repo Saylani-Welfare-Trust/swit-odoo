@@ -237,7 +237,6 @@ class Welfare(models.Model):
 
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
-        required=True,
         default=0.0
     )
 
