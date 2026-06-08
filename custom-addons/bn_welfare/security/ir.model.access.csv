@@ -16,3 +16,4 @@ access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift
 access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,,1,1,1,1
 access_welfare_return_line,welfare.return.line,bn_welfare.model_welfare_return_line,,1,1,1,1
 access_welfare_document,welfare.document,model_welfare_document,base.group_user,1,1,1,
+access_welfare_document_preview,welfare.document.preview,model_welfare_document_preview,bn_welfare.welfare_group,1,1,1,1
