@@ -1,18 +1,11 @@
 class WelfareDocumentPreview(models.TransientModel):
     _name = 'welfare.document.preview'
     _description = 'Document Preview'
-
-    document_id = fields.Many2one('welfare.document', required=True)
-    image_data = fields.Binary(string='Image', related='document_id.attachment_id.datas')
-    name = fields.Char(related='document_id.name')
-    mimetype = fields.Char(related='document_id.mimetype')
     
-    def action_download(self):
-        return {
-            'type': 'ir.actions.act_url',
-            'url': self.document_id.url,
-            'target': 'new',
-        }
+    document_id = fields.Many2one('welfare.document', string='Document', required=True)
+    attachment_id = fields.Many2one('ir.attachment', related='document_id.attachment_id', string='Attachment')
+    image_data = fields.Binary(string='Image', related='attachment_id.datas')
     
     def action_close(self):
+        """Close the preview dialog"""
         return {'type': 'ir.actions.act_window_close'}
