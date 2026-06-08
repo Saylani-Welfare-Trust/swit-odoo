@@ -204,7 +204,7 @@
                                             decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
                                     
                                     <field name="name" string="Document Name" 
-                                        attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
+                                       column_invisible = "1"/>
                                     
                                     <field name="mimetype" string="Type" optional="hide"/>
                                     <field name="file_size" string="Size" optional="hide"/>
