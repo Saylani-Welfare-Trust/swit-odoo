@@ -1,724 +1,772 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
+    <?xml version="1.0" encoding="utf-8"?>
+    <odoo>
 
-    <record id="welfare_view_tree" model="ir.ui.view">
-        <field name="name">welfare.view.tree</field>
-        <field name="model">welfare</field>
-        <field name="arch" type="xml">
-            <tree>
-                <header>
-                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')"/>
-                </header>
-                <field name="name" />
-                <field name="donee_id" />
-                <field name="date" />
-                <field name="is_individual" column_invisible="1"/>
-                <field name="institution_category" invisible="is_individual"/>
-                <field name="subcategory" invisible="is_individual"/>
-                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['recurring_order', 'disbursed']" decoration-success="state in ['recurring_order', 'disbursed']" />
-            </tree>
-        </field>
-    </record>
+        <record id="welfare_view_tree" model="ir.ui.view">
+            <field name="name">welfare.view.tree</field>
+            <field name="model">welfare</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <header>
+                        <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')"/>
+                    </header>
+                    <field name="name" />
+                    <field name="donee_id" />
+                    <field name="date" />
+                    <field name="is_individual" column_invisible="1"/>
+                    <field name="institution_category" invisible="is_individual"/>
+                    <field name="subcategory" invisible="is_individual"/>
+                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['recurring_order', 'disbursed']" decoration-success="state in ['recurring_order', 'disbursed']" />
+                </tree>
+            </field>
+        </record>
 
-    <record id="welfare_view_form" model="ir.ui.view">
-        <field name="name">welfare.view.form</field>
-        <field name="model">welfare</field>
-        <field name="arch" type="xml">
-            <form>
-                <header>
-                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
-                            class="btn btn-sm btn-info"
-                            invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
-                    <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
-                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
-                    <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
-                    <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
-                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" />
-                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
-                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
-                    <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
-                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" />
-                    <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
-                    <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1'/>
-                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
+        <record id="welfare_view_form" model="ir.ui.view">
+            <field name="name">welfare.view.form</field>
+            <field name="model">welfare</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                        <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                                class="btn btn-sm btn-info"
+                                invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
+                        <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
+                        <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
+                        <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
+                        <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
+                        <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" />
+                        <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" />
+                        <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" />
+                        <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve'" />
+                        <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" />
+                        <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
+                        <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1'/>
+                        <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
-                </header>   
+                        <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
+                    </header>   
 
-                <sheet>
-                    <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id or state != 'draft'">
-                        <strong>Previous Record Available:</strong> This donee has previous disbursements.
-                        <!-- <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
-                            class="btn btn-sm btn-info"
-                            invisible="not previous_disbursement_id" /> -->
-                    </div>
-                    <div class="oe_title">
-                        <label for="name" string="Name"/>
-                        <h1><field name="name" class="oe_inline" readonly="1" /></h1>
-                    </div>
-                    
-                    <!-- Previous Disbursement Alert -->
+                    <sheet>
+                        <div class="alert alert-info" role="alert" invisible="not previous_disbursement_id or state != 'draft'">
+                            <strong>Previous Record Available:</strong> This donee has previous disbursements.
+                            <!-- <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
+                                class="btn btn-sm btn-info"
+                                invisible="not previous_disbursement_id" /> -->
+                        </div>
+                        <div class="oe_title">
+                            <label for="name" string="Name"/>
+                            <h1><field name="name" class="oe_inline" readonly="1" /></h1>
+                        </div>
+                        
+                        <!-- Previous Disbursement Alert -->
 
-                    <group>
-                        <group name="welfare_col_1">
-                            <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
-                            <field name="employee_category_id" invisible="1" />
-                            <field name="employee_category_id_officer" invisible="1" />
-                            <field name="employee_domain" invisible="1"/>
-                            <field name="is_synced" readonly="1" invisible="1" />
-                            <field name="is_individual" widget="boolean_toggle" invisible="1"/>
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
-                                domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
-                                ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
-                                readonly="state in ['recurring', 'disbursed']" required="1" />
-                            <field name="previous_disbursement_id" invisible="1" />
-                            <field name="employee_id" string="Inquiry Officer" domain="employee_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
-                            <field name="institution_category" widget="radio" invisible="is_individual"/>
-                            <field name="subcategory" invisible="is_individual"/>
-                            <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="cnic_expiration_date" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
-                            <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
-                            <field name="committee_remarks" readonly="state != 'committee_approval  '" required="state == 'committee_approval'"/>
-                            <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
-                            <field name="member_remarks" readonly="state != 'member_approve'" required="state == 'member_approve'"/>
-                            <field name="rejection_remarks" readonly="state == 'reject'"  />
-                            <field name="show_disburse_button" invisible="1"  />
+                        <group>
+                            <group name="welfare_col_1">
+                                <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
+                                <field name="employee_category_id" invisible="1" />
+                                <field name="employee_category_id_officer" invisible="1" />
+                                <field name="employee_domain" invisible="1"/>
+                                <field name="is_synced" readonly="1" invisible="1" />
+                                <field name="is_individual" widget="boolean_toggle" invisible="1"/>
+                                <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"
+                                    domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
+                                    ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
+                                    readonly="state in ['recurring', 'disbursed']" required="1" />
+                                <field name="previous_disbursement_id" invisible="1" />
+                                <field name="employee_id" string="Inquiry Officer" domain="employee_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                                <field name="institution_category" widget="radio" invisible="is_individual"/>
+                                <field name="subcategory" invisible="is_individual"/>
+                                <field name="cnic_no" readonly="state in ['recurring', 'disbursed']" />
+                                <field name="cnic_expiration_date" readonly="state in ['recurring', 'disbursed']" />
+                                <field name="father_name" readonly="state in ['recurring', 'disbursed']" />
+                                <field name="father_cnic_no" readonly="state in ['recurring', 'disbursed']" />
+                                <field name="portal_sync_status" options="{'horizontal': True}" widget="radio" readonly="1" invisible="not is_synced" />
+                                <field name="committee_remarks" readonly="state != 'committee_approval  '" required="state == 'committee_approval'"/>
+                                <field name="hod_remarks" readonly="state != 'hod_approve'" required="state == 'hod_approve'"/>
+                                <field name="member_remarks" readonly="state != 'member_approve'" required="state == 'member_approve'"/>
+                                <field name="rejection_remarks" readonly="state == 'reject'"  />
+                                <field name="show_disburse_button" invisible="1"  />
 
+                            </group>
+                            <group name="welfare_col_2">
+                                <field name="is_individual" invisible="1"/>
+                                <field name="application_form_name" invisible="1"/>
+                                <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
+                                <!-- <field name="document_ids" nolabel="1"
+                                    readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                    <tree create="false" delete="false" default_order="id desc">
+                                        <!-- Better document type display with icons -->
+                                        <field name="document_type" string="Type">
+                                            <tree>
+                                                <field name="document_type" widget="badge"
+                                                    decoration-info="document_type in ['application_form']"
+                                                    decoration-success="document_type in ['frc', 'family_cnic']"
+                                                    decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
+                                            </tree>
+                                        </field>
+                                        
+                                        <field name="name" string="Document Name" 
+                                            attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
+                                        
+                                        <field name="mimetype" string="Type" optional="hide"/>
+                                        
+                                        <field name="file_size" string="Size" optional="hide"/>
+                                        
+                                        <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
+                                        
+                                        <!-- View Button for images -->
+                                        <button name="action_view_document" type="object"
+                                                string="View" icon="fa-eye"
+                                                class="btn-link text-info"
+                                                title="View Document"
+                                                invisible="mimetype not like 'image%'"/>
+                                        
+                                        <!-- Delete Button -->
+                                        <button name="action_delete" type="object"
+                                                icon="fa-trash"
+                                                class="btn-link text-danger"
+                                                confirm="Are you sure you want to delete this document?"
+                                                attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
+                                                title="Delete Document"/>
+                                        
+                                        <!-- Download Button (for all documents) -->
+                                        <button string="Download"
+                                                type="url"
+                                                name="url"
+                                                icon="fa-download"
+                                                class="btn-link text-primary"
+                                                title="Download Document"/>
+                                    </tree>
+                                </field> -->
+                                
+                                <field name="old_system_id" readonly="state != 'draft'"/>
+                                <field name="portal_application_id" readonly="1" invisible="is_individual"/>
+                                <field name="portal_review_notes" readonly="1" />
+                                <field name="inquiry_media" widget="html" readonly="1"/>
+                                <field name="applicantLocationLink" readonly="0"/>
+                            </group>
                         </group>
-                        <group name="welfare_col_2">
-                            <field name="is_individual" invisible="1"/>
-                            <field name="application_form_name" invisible="1"/>
-                            <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
-                            <field name="document_ids" nolabel="1"
-                                readonly="state not in ['draft', 'inquiry', 'committee_approval']">
-                                <tree create="false" delete="false" default_order="id desc">
-                                    <!-- Better document type display with icons -->
-                                    <field name="document_type" string="Type">
-                                        <tree>
-                                            <field name="document_type" widget="badge"
-                                                decoration-info="document_type in ['application_form']"
-                                                decoration-success="document_type in ['frc', 'family_cnic']"
-                                                decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
-                                        </tree>
-                                    </field>
-                                    
-                                    <field name="name" string="Document Name" 
-                                        attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
-                                    
-                                    <field name="mimetype" string="Type" optional="hide"/>
-                                    
-                                    <field name="file_size" string="Size" optional="hide"/>
-                                    
-                                    <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
-                                    
-                                    <!-- View Button for images -->
-                                    <button name="action_view_document" type="object"
-                                            string="View" icon="fa-eye"
-                                            class="btn-link text-info"
-                                            title="View Document"
-                                            invisible="mimetype not like 'image%'"/>
-                                    
-                                    <!-- Delete Button -->
-                                    <button name="action_delete" type="object"
-                                            icon="fa-trash"
-                                            class="btn-link text-danger"
-                                            confirm="Are you sure you want to delete this document?"
-                                            attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
-                                            title="Delete Document"/>
-                                    
-                                    <!-- Download Button (for all documents) -->
-                                    <button string="Download"
-                                            type="url"
-                                            name="url"
-                                            icon="fa-download"
-                                            class="btn-link text-primary"
-                                            title="Download Document"/>
-                                </tree>
-                            </field>
+                        <notebook>
+                            <page name="welfare_line" string="Disbursement Items">
+                                <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
+                                    <tree editable="bottom">
+                                        <field name="product_domain" column_invisible="1" />
+                                        <field name="analytic_account_domain" column_invisible="1" />
+                                        <field name="is_collection_point_readonly" column_invisible="1" />
+                                        <field name="employee_category_id_officer" column_invisible="1" />
+
+                                        <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
+                                        <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="payment_type" />
+                                        <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
+                                        <field name="collection_point" readonly="is_collection_point_readonly"/>
+                                        <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
+                                        <field name="collection_date" />
+                                        <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
+                                        <field name="quantity" />   
+                                        <field name="amount" readonly="1" />
+                                        <field name="fixed_amount_check" column_invisible="1" />
+                                        <field name="total_amount" readonly="fixed_amount_check" />
+                                        <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
+
+                                        <field name="show_deliver_button" column_invisible="1"/>
+                                        <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
+                                        <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+        
+                                        <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
+                                        <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
+
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="recurring_line" string="Recurring Details" invisible="state != 'recurring'">
+                                <field name="welfare_recurring_line_ids" readonly="1">
+                                    <tree>
+                                        <field name="employee_category_id_officer" column_invisible="1" />
+                                        <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="payment_type" />
+                                        <field name="assigned_officer_id" string="Assigned Officer(Marfat)" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
+                                        <field name="collection_point" />
+                                        <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                        <field name="collection_date" />
+                                        <field name='quantity' />
+                                        <field name="amount" />
+                                        <field name="show_deliver_button" column_invisible="1"/>
+                                        <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
+                                        <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="portal_details" string="Portal Details" invisible="portal_sync_status != 'synced'">
+                                <group>
+                                    <group name="portal_details_col_1">
+                                        <field name="portal_application_id" readonly="1" />
+                                        <field name="last_sync_date" readonly="1" />
+                                        <field name="portal_last_sync_message" readonly="1" />
+                                    </group>
+                                    <group name="portal_details_col_2">
+                                        <field name="portal_donee_id" readonly="1" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="attached_documents" string="Attached Documents">
+                                <field name="document_ids" nolabel="1"
+                                    readonly="state not in ['draft', 'inquiry', 'committee_approval']">
+                                    <tree create="false" delete="false" default_order="id desc">
+                                        <!-- Better document type display with icons -->
+                                        <field name="document_type" string="Type">
+                                            <tree>
+                                                <field name="document_type" widget="badge"
+                                                    decoration-info="document_type in ['application_form']"
+                                                    decoration-success="document_type in ['frc', 'family_cnic']"
+                                                    decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
+                                            </tree>
+                                        </field>
+                                        
+                                        <field name="name" string="Document Name" 
+                                            attrs="{'column_invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"/>
+                                        
+                                        <field name="mimetype" string="Type" optional="hide"/>
+                                        
+                                        <field name="file_size" string="Size" optional="hide"/>
+                                        
+                                        <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
+                                        
+                                        <!-- View Button for images -->
+                                        <button name="action_view_document" type="object"
+                                                string="View" icon="fa-eye"
+                                                class="btn-link text-info"
+                                                title="View Document"
+                                                invisible="mimetype not like 'image%'"/>
+                                        
+                                        <!-- Delete Button -->
+                                        <button name="action_delete" type="object"
+                                                icon="fa-trash"
+                                                class="btn-link text-danger"
+                                                confirm="Are you sure you want to delete this document?"
+                                                attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}"
+                                                title="Delete Document"/>
+                                        
+                                        <!-- Download Button (for all documents) -->
+                                        <button string="Download"
+                                                type="url"
+                                                name="url"
+                                                icon="fa-download"
+                                                class="btn-link text-primary"
+                                                title="Download Document"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Inquiry Committee Questions">
+                                <group string="Inquiry Questions" name="inquiry_group">
+                                    <group name="inquiry_col_1">
+                                        <field name="donee_house_status" 
+                                            string="Residential Status" 
+                                            placeholder="e.g., Own House, Rented House, Living with relatives"/>
+                                        <field name="num_of_children" 
+                                            string="Total Children" 
+                                            placeholder="Enter total number"/>
+                                        <field name="num_of_sons" 
+                                            string="Sons" 
+                                            placeholder="Enter number of sons"/>
+                                    </group>
+                                    <group name="inquiry_col_2">
+                                        <field name="num_of_daughters" 
+                                            string="Daughters" 
+                                            placeholder="Enter number of daughters"/>
+                                        <field name="children_education" 
+                                            string="Children's Education" 
+                                            placeholder="e.g., School, College, University, or Multiple"/>
+                                        <field name="donee_issues" 
+                                            string="Issues/Concerns" 
+                                            placeholder="Describe any issues or concerns related to the donee..."/>
+                                    </group>
+                                </group>
+                            </page>
                             
-                            <field name="old_system_id" readonly="state != 'draft'"/>
-                            <field name="portal_application_id" readonly="1" invisible="is_individual"/>
-                            <field name="portal_review_notes" readonly="1" />
-                            <field name="inquiry_media" widget="html" readonly="1"/>
-                            <field name="applicantLocationLink" readonly="0"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page name="welfare_line" string="Disbursement Items">
-                            <field name="welfare_line_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']" >
-                                <tree editable="bottom">
-                                    <field name="product_domain" column_invisible="1" />
-                                    <field name="analytic_account_domain" column_invisible="1" />
-                                    <field name="is_collection_point_readonly" column_invisible="1" />
-                                    <field name="employee_category_id_officer" column_invisible="1" />
-
-                                    <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
-                                    <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="payment_type" />
-                                    <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
-                                    <field name="collection_point" readonly="is_collection_point_readonly"/>
-                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
-                                    <field name="collection_date" />
-                                    <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
-                                    <field name="quantity" />   
-                                    <field name="amount" readonly="1" />
-                                    <field name="fixed_amount_check" column_invisible="1" />
-                                    <field name="total_amount" readonly="fixed_amount_check" />
-                                    <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
-
-                                    <field name="show_deliver_button" column_invisible="1"/>
-                                    <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
-                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
-    
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
-                                    <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
-
-                                </tree>
-                            </field>
-                        </page>
-                        <page name="recurring_line" string="Recurring Details" invisible="state != 'recurring'">
-                            <field name="welfare_recurring_line_ids" readonly="1">
-                                <tree>
-                                    <field name="employee_category_id_officer" column_invisible="1" />
-                                    <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="payment_type" />
-                                    <field name="assigned_officer_id" string="Assigned Officer(Marfat)" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['recurring', 'disbursed'] or state != 'draft'" />
-                                    <field name="collection_point" />
-                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="collection_date" />
-                                    <field name='quantity' />
-                                    <field name="amount" />
-                                    <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
-                                    <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page name="portal_details" string="Portal Details" invisible="portal_sync_status != 'synced'">
-                            <group>
-                                <group name="portal_details_col_1">
-                                    <field name="portal_application_id" readonly="1" />
-                                    <field name="last_sync_date" readonly="1" />
-                                    <field name="portal_last_sync_message" readonly="1" />
-                                </group>
-                                <group name="portal_details_col_2">
-                                    <field name="portal_donee_id" readonly="1" />
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Inquiry Committee Questions">
-                            <group string="Inquiry Questions" name="inquiry_group">
-                                <group name="inquiry_col_1">
-                                    <field name="donee_house_status" 
-                                        string="Residential Status" 
-                                        placeholder="e.g., Own House, Rented House, Living with relatives"/>
-                                    <field name="num_of_children" 
-                                        string="Total Children" 
-                                        placeholder="Enter total number"/>
-                                    <field name="num_of_sons" 
-                                        string="Sons" 
-                                        placeholder="Enter number of sons"/>
-                                </group>
-                                <group name="inquiry_col_2">
-                                    <field name="num_of_daughters" 
-                                        string="Daughters" 
-                                        placeholder="Enter number of daughters"/>
-                                    <field name="children_education" 
-                                        string="Children's Education" 
-                                        placeholder="e.g., School, College, University, or Multiple"/>
-                                    <field name="donee_issues" 
-                                        string="Issues/Concerns" 
-                                        placeholder="Describe any issues or concerns related to the donee..."/>
-                                </group>
-                            </group>
-                        </page>
-                        
-                        <!-- Institution Specific Pages (Visible only when is_individual=False) -->
-                        <page name="committee_members_page" string="Committee Members" invisible="is_individual">
-                            <field name="committee_member_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
-                                <tree editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="name"/>
-                                    <field name="designation"/>
-                                    <field name="educational_qualification"/>
-                                    <field name="cnic"/>
-                                    <field name="phone"/>
-                                </tree>
-                            </field>
-                        </page>
-                        
-                        <page name="teachers_page" string="Teachers" invisible="is_individual or institution_category != 'madrasa'">
-                            <field name="teacher_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
-                                <tree editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="name"/>
-                                    <field name="designation"/>
-                                    <field name="educational_qualification"/>
-                                    <field name="other_degree_name"/>
-                                    <field name="cnic"/>
-                                    <field name="phone"/>
-                                </tree>
-                            </field>
-                        </page>
-                        
-                        <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
-                            <field name="inquiry_report_ids" readonly="1">
-                                <tree>
-                                    <field name="create_date"/>
-                                    <field name="officer_name"/>
-                                    <field name="status"/>
-                                    <field name="verified" widget="boolean_button"/>
-                                    <field name="content" widget="text"/>
-                                </tree>
-                                <form>
-                                    <group>
-                                        <group>
-                                            <field name="status"/>
-                                            <field name="verified" widget="boolean_button"/>
-                                            <field name="officer_name"/>
-                                            <field name="officer_email"/>
-                                        </group>
-                                        <group>
-                                            <field name="create_date"/>
-                                            <field name="write_date"/>
-                                            <field name="external_id"/>
-                                        </group>
-                                    </group>
-                                    <group>
+                            <!-- Institution Specific Pages (Visible only when is_individual=False) -->
+                            <page name="committee_members_page" string="Committee Members" invisible="is_individual">
+                                <field name="committee_member_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="designation"/>
+                                        <field name="educational_qualification"/>
+                                        <field name="cnic"/>
+                                        <field name="phone"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <page name="teachers_page" string="Teachers" invisible="is_individual or institution_category != 'madrasa'">
+                                <field name="teacher_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="designation"/>
+                                        <field name="educational_qualification"/>
+                                        <field name="other_degree_name"/>
+                                        <field name="cnic"/>
+                                        <field name="phone"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
+                                <field name="inquiry_report_ids" readonly="1">
+                                    <tree>
+                                        <field name="create_date"/>
+                                        <field name="officer_name"/>
+                                        <field name="status"/>
+                                        <field name="verified" widget="boolean_button"/>
                                         <field name="content" widget="text"/>
-                                        <field name="images" widget="text"/>
-                                    </group>
-                                </form>
-                            </field>
-                        </page>
-                        
-                        <page name="masjid_details_page" string="Masjid Details" invisible="is_individual or institution_category != 'masjid'">
-                            <field name="masjid_id" mode="tree,form" nolabel="1">
-                                <tree>
-                                    <field name="masjid_name"/>
-                                    <field name="city"/>
-                                    <field name="district"/>
-                                    <field name="subcategory"/>
-                                </tree>
-                                <form>
-                                    <group>
-                                        <group string="Basic Information">
-                                            <field name="masjid_name"/>
-                                            <field name="subcategory"/>
-                                            <field name="city"/>
-                                            <field name="district"/>
-                                            <field name="province"/>
-                                            <field name="address" widget="text"/>
-                                            <field name="location_link"/>
-                                            <field name="masjid_pictures" widget="text"/>
-                                        </group>
-                                        <group string="Staff Information">
-                                            <field name="total_number_of_staff"/>
-                                            <field name="total_salary_expense_for_staff"/>
-                                        </group>
-                                    </group>
-                                    
-                                    <group string="Prayers Information">
+                                    </tree>
+                                    <form>
                                         <group>
-                                            <field name="fajr" widget="boolean_button"/>
-                                            <field name="zuhr" widget="boolean_button"/>
-                                            <field name="asr" widget="boolean_button"/>
-                                            <field name="maghrib" widget="boolean_button"/>
-                                            <field name="isha" widget="boolean_button"/>
-                                            <field name="jumma" widget="boolean_button"/>
-                                        </group>
-                                        <group string="Jamat Count">
-                                            <field name="people_in_jamat_fajr"/>
-                                            <field name="people_in_jamat_zuhr"/>
-                                            <field name="people_in_jamat_asr"/>
-                                            <field name="people_in_jamat_maghrib"/>
-                                            <field name="people_in_jamat_isha"/>
-                                            <field name="people_in_jamat_jumma"/>
-                                        </group>
-                                    </group>
-                                    
-                                    <notebook invisible="subcategory != 'masjid-construction'">
-                                        <page string="Construction Details">
                                             <group>
-                                                <group string="Construction Info">
-                                                    <field name="area_of_masjid"/>
-                                                    <field name="constructed_area_of_masjid"/>
-                                                    <field name="value_amount_of_land"/>
-                                                    <field name="remaining_work" widget="text"/>
-                                                </group>
-                                                <group string="Materials">
-                                                    <field name="iron_rods"/>
-                                                    <field name="cement_sacks"/>
-                                                    <field name="labour_wage_per_sqft"/>
-                                                    <field name="explain_other_material" widget="text"/>
-                                                </group>
-                                                <group string="Pictures">
-                                                    <field name="constructed_area_pictures" widget="text"/>
-                                                    <field name="land_documents_pictures" widget="text"/>
-                                                </group>
+                                                <field name="status"/>
+                                                <field name="verified" widget="boolean_button"/>
+                                                <field name="officer_name"/>
+                                                <field name="officer_email"/>
                                             </group>
-                                        </page>
-                                    </notebook>
-                                    
-                                    <notebook invisible="subcategory != 'masjid-wages'">
-                                        <page string="Expenditure Details">
                                             <group>
-                                                <field name="monthly_fund_of_masjid"/>
-                                                <field name="func_of_masjid_from_boxes"/>
-                                                <field name="shops_within_masjid_premises" widget="boolean_button"/>
-                                                <field name="total_expenditure"/>
+                                                <field name="create_date"/>
+                                                <field name="write_date"/>
+                                                <field name="external_id"/>
                                             </group>
-                                        </page>
-                                    </notebook>
-                                    
-                                    <notebook invisible="subcategory != 'masjid-others'">
-                                        <page string="Other Help">
-                                            <field name="other_help_info" widget="text"/>
-                                        </page>
-                                    </notebook>
-                                    
-                                    <group string="Financial Information">
+                                        </group>
                                         <group>
-                                            <field name="expected_amount_from_saylani"/>
-                                            <field name="ever_received_from_saylani" widget="boolean_button"/>
-                                            <field name="amount_received_from_saylani"/>
-                                            <field name="ever_received_from_ngo" widget="boolean_button"/>
-                                            <field name="amount_received_from_ngo"/>
+                                            <field name="content" widget="text"/>
+                                            <field name="images" widget="text"/>
                                         </group>
-                                        <group string="Account Details">
-                                            <field name="account_title"/>
-                                            <field name="account_number"/>
-                                            <field name="account_type"/>
-                                            <field name="account_cnic"/>
-                                        </group>
-                                    </group>
-                                </form>
-                            </field>
-                        </page>
-                        
-                        <page name="madrasa_details_page" string="Madrasa Details" invisible="is_individual or institution_category != 'madrasa'">
-                            <field name="madrasa_id" mode="tree,form" nolabel="1">
-                                <tree>
-                                    <field name="madarsa_name"/>
-                                    <field name="city"/>
-                                    <field name="district"/>
-                                    <field name="subcategory"/>
-                                </tree>
-                                <form>
-                                    <group>
-                                        <group string="Basic Information">
-                                            <field name="madarsa_name"/>
-                                            <field name="subcategory"/>
-                                            <field name="city"/>
-                                            <field name="district"/>
-                                            <field name="province"/>
-                                            <field name="address" widget="text"/>
-                                            <field name="location_link"/>
-                                            <field name="tanzeem_ilhaaq"/>
-                                            <field name="other_tanzeem_name"/>
-                                        </group>
-                                        <group string="Staff Information">
-                                            <field name="total_teaching_staff"/>
-                                            <field name="total_salary_teaching_staff"/>
-                                            <field name="total_non_teaching_staff"/>
-                                            <field name="total_salary_non_teaching_staff"/>
-                                        </group>
-                                    </group>
-                                    
-                                    <group string="Registration">
-                                        <field name="established_since"/>
-                                        <field name="ilhaaq_no"/>
-                                        <field name="registration_number"/>
-                                        <field name="ilhaq_docs_pictures" widget="text"/>
-                                    </group>
-                                    
-                                    <group string="Students Information">
+                                    </form>
+                                </field>
+                            </page>
+                            
+                            <page name="masjid_details_page" string="Masjid Details" invisible="is_individual or institution_category != 'masjid'">
+                                <field name="masjid_id" mode="tree,form" nolabel="1">
+                                    <tree>
+                                        <field name="masjid_name"/>
+                                        <field name="city"/>
+                                        <field name="district"/>
+                                        <field name="subcategory"/>
+                                    </tree>
+                                    <form>
                                         <group>
-                                            <field name="non_resident_students"/>
-                                            <field name="resident_students"/>
-                                            <field name="resident_nazra_students"/>
-                                            <field name="non_resident_nazra_students"/>
-                                            <field name="resident_hifz_students"/>
-                                            <field name="non_resident_hifz_students"/>
+                                            <group string="Basic Information">
+                                                <field name="masjid_name"/>
+                                                <field name="subcategory"/>
+                                                <field name="city"/>
+                                                <field name="district"/>
+                                                <field name="province"/>
+                                                <field name="address" widget="text"/>
+                                                <field name="location_link"/>
+                                                <field name="masjid_pictures" widget="text"/>
+                                            </group>
+                                            <group string="Staff Information">
+                                                <field name="total_number_of_staff"/>
+                                                <field name="total_salary_expense_for_staff"/>
+                                            </group>
                                         </group>
-                                        <group string="Classes Offered">
-                                            <field name="classes_oola" widget="boolean_button"/>
-                                            <field name="classes_saania" widget="boolean_button"/>
-                                            <field name="classes_salisa" widget="boolean_button"/>
-                                            <field name="classes_rabia" widget="boolean_button"/>
-                                            <field name="classes_khameesa" widget="boolean_button"/>
-                                            <field name="classes_sadisa" widget="boolean_button"/>
-                                            <field name="classes_dora_hadees" widget="boolean_button"/>
-                                            <field name="classes_takhassus" widget="boolean_button"/>
-                                        </group>
-                                        <group string="Student Counts">
-                                            <field name="total_oola_students"/>
-                                            <field name="total_saania_students"/>
-                                            <field name="total_salisa_students"/>
-                                            <field name="total_rabia_students"/>
-                                            <field name="total_khameesa_students"/>
-                                            <field name="total_sadisa_students"/>
-                                            <field name="total_dora_hadees_students"/>
-                                            <field name="total_takhassus_students"/>
-                                        </group>
-                                    </group>
-                                    
-                                    <group string="Aims &amp; Objectives">
-                                        <field name="objective_text" widget="text"/>
-                                    </group>
-                                    
-                                    <notebook invisible="subcategory != 'madrasa-construction'">
-                                        <page string="Construction Details">
+                                        
+                                        <group string="Prayers Information">
                                             <group>
-                                                <group string="Construction Info">
-                                                    <field name="area_of_madarsa"/>
-                                                    <field name="value_amount_of_land_area"/>
-                                                    <field name="constructed_area_estimate"/>
-                                                    <field name="type_of_work"/>
-                                                </group>
-                                                <group string="Materials">
-                                                    <field name="construction_iron_rods"/>
-                                                    <field name="construction_cement_sacks"/>
-                                                    <field name="construction_labour_wage"/>
-                                                    <field name="construction_explain_other" widget="text"/>
-                                                </group>
-                                                <group string="Pictures">
-                                                    <field name="constructed_area_pictures" widget="text"/>
-                                                    <field name="land_documents_pictures" widget="text"/>
-                                                </group>
+                                                <field name="fajr" widget="boolean_button"/>
+                                                <field name="zuhr" widget="boolean_button"/>
+                                                <field name="asr" widget="boolean_button"/>
+                                                <field name="maghrib" widget="boolean_button"/>
+                                                <field name="isha" widget="boolean_button"/>
+                                                <field name="jumma" widget="boolean_button"/>
                                             </group>
-                                        </page>
-                                    </notebook>
-                                    
-                                    <notebook invisible="subcategory != 'madarsa-others'">
-                                        <page string="Other Help">
-                                            <field name="other_help_info" widget="text"/>
-                                        </page>
-                                    </notebook>
-                                    
-                                    <group string="Financial Information">
+                                            <group string="Jamat Count">
+                                                <field name="people_in_jamat_fajr"/>
+                                                <field name="people_in_jamat_zuhr"/>
+                                                <field name="people_in_jamat_asr"/>
+                                                <field name="people_in_jamat_maghrib"/>
+                                                <field name="people_in_jamat_isha"/>
+                                                <field name="people_in_jamat_jumma"/>
+                                            </group>
+                                        </group>
+                                        
+                                        <notebook invisible="subcategory != 'masjid-construction'">
+                                            <page string="Construction Details">
+                                                <group>
+                                                    <group string="Construction Info">
+                                                        <field name="area_of_masjid"/>
+                                                        <field name="constructed_area_of_masjid"/>
+                                                        <field name="value_amount_of_land"/>
+                                                        <field name="remaining_work" widget="text"/>
+                                                    </group>
+                                                    <group string="Materials">
+                                                        <field name="iron_rods"/>
+                                                        <field name="cement_sacks"/>
+                                                        <field name="labour_wage_per_sqft"/>
+                                                        <field name="explain_other_material" widget="text"/>
+                                                    </group>
+                                                    <group string="Pictures">
+                                                        <field name="constructed_area_pictures" widget="text"/>
+                                                        <field name="land_documents_pictures" widget="text"/>
+                                                    </group>
+                                                </group>
+                                            </page>
+                                        </notebook>
+                                        
+                                        <notebook invisible="subcategory != 'masjid-wages'">
+                                            <page string="Expenditure Details">
+                                                <group>
+                                                    <field name="monthly_fund_of_masjid"/>
+                                                    <field name="func_of_masjid_from_boxes"/>
+                                                    <field name="shops_within_masjid_premises" widget="boolean_button"/>
+                                                    <field name="total_expenditure"/>
+                                                </group>
+                                            </page>
+                                        </notebook>
+                                        
+                                        <notebook invisible="subcategory != 'masjid-others'">
+                                            <page string="Other Help">
+                                                <field name="other_help_info" widget="text"/>
+                                            </page>
+                                        </notebook>
+                                        
+                                        <group string="Financial Information">
+                                            <group>
+                                                <field name="expected_amount_from_saylani"/>
+                                                <field name="ever_received_from_saylani" widget="boolean_button"/>
+                                                <field name="amount_received_from_saylani"/>
+                                                <field name="ever_received_from_ngo" widget="boolean_button"/>
+                                                <field name="amount_received_from_ngo"/>
+                                            </group>
+                                            <group string="Account Details">
+                                                <field name="account_title"/>
+                                                <field name="account_number"/>
+                                                <field name="account_type"/>
+                                                <field name="account_cnic"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            
+                            <page name="madrasa_details_page" string="Madrasa Details" invisible="is_individual or institution_category != 'madrasa'">
+                                <field name="madrasa_id" mode="tree,form" nolabel="1">
+                                    <tree>
+                                        <field name="madarsa_name"/>
+                                        <field name="city"/>
+                                        <field name="district"/>
+                                        <field name="subcategory"/>
+                                    </tree>
+                                    <form>
                                         <group>
-                                            <field name="current_fund_of_madarsa"/>
-                                            <field name="monthly_fund_collection"/>
-                                            <field name="expected_amount_from_saylani"/>
-                                            <field name="ever_received_from_saylani" widget="boolean_button"/>
-                                            <field name="amount_received_from_saylani"/>
-                                            <field name="ever_received_from_ngo" widget="boolean_button"/>
-                                            <field name="amount_received_from_ngo"/>
+                                            <group string="Basic Information">
+                                                <field name="madarsa_name"/>
+                                                <field name="subcategory"/>
+                                                <field name="city"/>
+                                                <field name="district"/>
+                                                <field name="province"/>
+                                                <field name="address" widget="text"/>
+                                                <field name="location_link"/>
+                                                <field name="tanzeem_ilhaaq"/>
+                                                <field name="other_tanzeem_name"/>
+                                            </group>
+                                            <group string="Staff Information">
+                                                <field name="total_teaching_staff"/>
+                                                <field name="total_salary_teaching_staff"/>
+                                                <field name="total_non_teaching_staff"/>
+                                                <field name="total_salary_non_teaching_staff"/>
+                                            </group>
                                         </group>
-                                        <group string="Account Details">
-                                            <field name="account_title"/>
-                                            <field name="account_number"/>
-                                            <field name="account_type"/>
-                                            <field name="account_cnic"/>
+                                        
+                                        <group string="Registration">
+                                            <field name="established_since"/>
+                                            <field name="ilhaaq_no"/>
+                                            <field name="registration_number"/>
+                                            <field name="ilhaq_docs_pictures" widget="text"/>
                                         </group>
+                                        
+                                        <group string="Students Information">
+                                            <group>
+                                                <field name="non_resident_students"/>
+                                                <field name="resident_students"/>
+                                                <field name="resident_nazra_students"/>
+                                                <field name="non_resident_nazra_students"/>
+                                                <field name="resident_hifz_students"/>
+                                                <field name="non_resident_hifz_students"/>
+                                            </group>
+                                            <group string="Classes Offered">
+                                                <field name="classes_oola" widget="boolean_button"/>
+                                                <field name="classes_saania" widget="boolean_button"/>
+                                                <field name="classes_salisa" widget="boolean_button"/>
+                                                <field name="classes_rabia" widget="boolean_button"/>
+                                                <field name="classes_khameesa" widget="boolean_button"/>
+                                                <field name="classes_sadisa" widget="boolean_button"/>
+                                                <field name="classes_dora_hadees" widget="boolean_button"/>
+                                                <field name="classes_takhassus" widget="boolean_button"/>
+                                            </group>
+                                            <group string="Student Counts">
+                                                <field name="total_oola_students"/>
+                                                <field name="total_saania_students"/>
+                                                <field name="total_salisa_students"/>
+                                                <field name="total_rabia_students"/>
+                                                <field name="total_khameesa_students"/>
+                                                <field name="total_sadisa_students"/>
+                                                <field name="total_dora_hadees_students"/>
+                                                <field name="total_takhassus_students"/>
+                                            </group>
+                                        </group>
+                                        
+                                        <group string="Aims &amp; Objectives">
+                                            <field name="objective_text" widget="text"/>
+                                        </group>
+                                        
+                                        <notebook invisible="subcategory != 'madrasa-construction'">
+                                            <page string="Construction Details">
+                                                <group>
+                                                    <group string="Construction Info">
+                                                        <field name="area_of_madarsa"/>
+                                                        <field name="value_amount_of_land_area"/>
+                                                        <field name="constructed_area_estimate"/>
+                                                        <field name="type_of_work"/>
+                                                    </group>
+                                                    <group string="Materials">
+                                                        <field name="construction_iron_rods"/>
+                                                        <field name="construction_cement_sacks"/>
+                                                        <field name="construction_labour_wage"/>
+                                                        <field name="construction_explain_other" widget="text"/>
+                                                    </group>
+                                                    <group string="Pictures">
+                                                        <field name="constructed_area_pictures" widget="text"/>
+                                                        <field name="land_documents_pictures" widget="text"/>
+                                                    </group>
+                                                </group>
+                                            </page>
+                                        </notebook>
+                                        
+                                        <notebook invisible="subcategory != 'madarsa-others'">
+                                            <page string="Other Help">
+                                                <field name="other_help_info" widget="text"/>
+                                            </page>
+                                        </notebook>
+                                        
+                                        <group string="Financial Information">
+                                            <group>
+                                                <field name="current_fund_of_madarsa"/>
+                                                <field name="monthly_fund_collection"/>
+                                                <field name="expected_amount_from_saylani"/>
+                                                <field name="ever_received_from_saylani" widget="boolean_button"/>
+                                                <field name="amount_received_from_saylani"/>
+                                                <field name="ever_received_from_ngo" widget="boolean_button"/>
+                                                <field name="amount_received_from_ngo"/>
+                                            </group>
+                                            <group string="Account Details">
+                                                <field name="account_title"/>
+                                                <field name="account_number"/>
+                                                <field name="account_type"/>
+                                                <field name="account_cnic"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            
+                            <!-- Existing Individual Pages (Only show when is_individual=True) -->
+                            <page name="employee_info" string="Employee Info." invisible="not is_individual">
+                                <group>
+                                    <group name="employee_info_col_1">
+                                        <field name="company_name" />
+                                        <field name="company_phone" />
+                                        <field name="company_address" />
                                     </group>
-                                </form>
-                            </field>
-                        </page>
-                        
-                        <!-- Existing Individual Pages (Only show when is_individual=True) -->
-                        <page name="employee_info" string="Employee Info." invisible="not is_individual">
-                            <group>
-                                <group name="employee_info_col_1">
-                                    <field name="company_name" />
-                                    <field name="company_phone" />
-                                    <field name="company_address" />
+                                    <group name="employee_info_col_2">
+                                        <field name="designation" />
+                                        <field name="service_duration" />
+                                        <field name="monthly_salary" />
+                                    </group>
                                 </group>
-                                <group name="employee_info_col_2">
-                                    <field name="designation" />
-                                    <field name="service_duration" />
-                                    <field name="monthly_salary" />
+                            </page>
+                            <page name="education_info" string="Education Info." invisible="not is_individual">
+                                <field name="educaiton_line_ids">
+                                    <tree editable="bottom">
+                                        <field name="examination" />
+                                        <field name="school_uni_center" />
+                                        <field name="board" />
+                                        <field name="percentage" />
+                                        <field name="passing_year" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="house_ownership_residency_detail" string="House Ownership / Residency Details" invisible="not is_individual">
+                                <group>
+                                    <group name="house_ownership_residency_detail_col_1">
+                                        <field name="residence_type" options="{'horizontal': True}" widget="radio" />
+                                        <field name="home_phone_no" />
+                                        <field name="rental_shared_duration" />
+                                        <field name="electricity_bill" />
+                                        <field name="gas_bill" />
+                                    </group>
+                                    <group name="house_ownership_residency_detail_col_2">
+                                        <field name="landlord_name" />
+                                        <field name="landlord_cnic_no" />
+                                        <field name="landlord_mobile" />
+                                        <field name="home_other_info" />
+                                        <field name="per_month_rent" />
+                                    </group>
                                 </group>
-                            </group>
-                        </page>
-                        <page name="education_info" string="Education Info." invisible="not is_individual">
-                            <field name="educaiton_line_ids">
-                                <tree editable="bottom">
-                                    <field name="examination" />
-                                    <field name="school_uni_center" />
-                                    <field name="board" />
-                                    <field name="percentage" />
-                                    <field name="passing_year" />
-                                </tree>
-                            </field>
-                        </page>
-                        <page name="house_ownership_residency_detail" string="House Ownership / Residency Details" invisible="not is_individual">
-                            <group>
-                                <group name="house_ownership_residency_detail_col_1">
-                                    <field name="residence_type" options="{'horizontal': True}" widget="radio" />
-                                    <field name="home_phone_no" />
-                                    <field name="rental_shared_duration" />
-                                    <field name="electricity_bill" />
-                                    <field name="gas_bill" />
+                            </page>
+                            <page name="other_finance" string="Other Finance" invisible="not is_individual">
+                                <group>
+                                    <group name="other_finance_col_1">
+                                        <field name="monthly_income" />
+                                        <field name="bank_account" options="{'horizontal': True}" widget="radio" />
+                                        <field name="bank_name" invisible="bank_account == 'no'" />
+                                        <field name="account_no" invisible="bank_account == 'no'" />
+                                    </group>
+                                    <group name="other_finance_col_2">
+                                        <field name="monthly_household_expense" />
+                                        <field name="other_loan" />
+                                        <field name="institute_name" invisible="other_loan == 'no'" />
+                                        <field name="outstanding_amount" invisible="other_loan == 'no'" />
+                                    </group>
                                 </group>
-                                <group name="house_ownership_residency_detail_col_2">
-                                    <field name="landlord_name" />
-                                    <field name="landlord_cnic_no" />
-                                    <field name="landlord_mobile" />
-                                    <field name="home_other_info" />
-                                    <field name="per_month_rent" />
+                            </page>
+                            <page name="other_information" string="Other Information" invisible="not is_individual">
+                                <group>
+                                    <group name="other_information_col_1">
+                                        <field name="aid_from_other_organization" />
+                                        <field name="details_1" />
+                                    </group>
+                                    <group name="other_information_col_2">
+                                        <field name="have_applied_swit" />
+                                        <field name="details_2" />
+                                    </group>
                                 </group>
-                            </group>
-                        </page>
-                        <page name="other_finance" string="Other Finance" invisible="not is_individual">
-                            <group>
-                                <group name="other_finance_col_1">
-                                    <field name="monthly_income" />
-                                    <field name="bank_account" options="{'horizontal': True}" widget="radio" />
-                                    <field name="bank_name" invisible="bank_account == 'no'" />
-                                    <field name="account_no" invisible="bank_account == 'no'" />
+                            </page>
+                            <page name="request_details" string="Request Details" invisible="not is_individual">
+                                <group>
+                                    <group name="request_details_col_1">
+                                        <!-- <field name="loan_request_amount" /> -->
+                                        <field name="loan_request_amount" required="1"/>
+                                        <field name="security_offered" />
+                                    </group>
+                                    <group name="request_details_col_2">
+                                        <field name="loan_tenure_expected" />
+                                    </group>
                                 </group>
-                                <group name="other_finance_col_2">
-                                    <field name="monthly_household_expense" />
-                                    <field name="other_loan" />
-                                    <field name="institute_name" invisible="other_loan == 'no'" />
-                                    <field name="outstanding_amount" invisible="other_loan == 'no'" />
+                            </page>
+                            <page name="guarantor_information" string="Guarantor Information" invisible="not is_individual">
+                                <field name="guarantor_line_ids">
+                                    <tree editable="bottom">
+                                        <field name="name" />
+                                        <field name="father_spouse_name" />
+                                        <field name="cnic_no" />
+                                        <field name="relation" />
+                                        <field name="address" />
+                                        <field name="mobile" />
+                                        <field name="landline_no" />
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="family_member" string="Family Details" invisible="not is_individual">
+                                <group>
+                                    <group name="family_member_col_1">
+                                        <field name="dependent_person" />
+                                    </group>
+                                    <group name="family_member_col_2">
+                                        <field name="household_member" />
+                                    </group>
                                 </group>
-                            </group>
-                        </page>
-                        <page name="other_information" string="Other Information" invisible="not is_individual">
-                            <group>
-                                <group name="other_information_col_1">
-                                    <field name="aid_from_other_organization" />
-                                    <field name="details_1" />
-                                </group>
-                                <group name="other_information_col_2">
-                                    <field name="have_applied_swit" />
-                                    <field name="details_2" />
-                                </group>
-                            </group>
-                        </page>
-                        <page name="request_details" string="Request Details" invisible="not is_individual">
-                            <group>
-                                <group name="request_details_col_1">
-                                    <!-- <field name="loan_request_amount" /> -->
-                                    <field name="loan_request_amount" required="1"/>
-                                    <field name="security_offered" />
-                                </group>
-                                <group name="request_details_col_2">
-                                    <field name="loan_tenure_expected" />
-                                </group>
-                            </group>
-                        </page>
-                        <page name="guarantor_information" string="Guarantor Information" invisible="not is_individual">
-                            <field name="guarantor_line_ids">
-                                <tree editable="bottom">
-                                    <field name="name" />
-                                    <field name="father_spouse_name" />
-                                    <field name="cnic_no" />
-                                    <field name="relation" />
-                                    <field name="address" />
-                                    <field name="mobile" />
-                                    <field name="landline_no" />
-                                </tree>
-                            </field>
-                        </page>
-                        <page name="family_member" string="Family Details" invisible="not is_individual">
-                            <group>
-                                <group name="family_member_col_1">
-                                    <field name="dependent_person" />
-                                </group>
-                                <group name="family_member_col_2">
-                                    <field name="household_member" />
-                                </group>
-                            </group>
-                            <field name="family_line_ids">
-                                <tree editable="bottom">
-                                    <field name="complete_name" />
-                                    <field name="cnic_no" />
-                                    <field name="age" />
-                                    <field name="relation" />
-                                    <field name="cnic_b_form_name" column_invisible="1"/>
-                                    <field name="cnic_b_form" filename="cnic_b_form_name"/>
-                                    <field name="education" />
-                                    <field name="monthly_income" />
-                                    <button name="action_view_disbursement_history" string="View History" type="object" class="btn-info" />
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
-                </sheet>
-            </form>
-        </field>
-    </record>
+                                <field name="family_line_ids">
+                                    <tree editable="bottom">
+                                        <field name="complete_name" />
+                                        <field name="cnic_no" />
+                                        <field name="age" />
+                                        <field name="relation" />
+                                        <field name="cnic_b_form_name" column_invisible="1"/>
+                                        <field name="cnic_b_form" filename="cnic_b_form_name"/>
+                                        <field name="education" />
+                                        <field name="monthly_income" />
+                                        <button name="action_view_disbursement_history" string="View History" type="object" class="btn-info" />
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
 
-    <!-- Rest of your XML remains the same -->
-    <record id="welfare_action_individual" model="ir.actions.act_window">
-        <field name="name">Individual Disbursement</field>
-        <field name="res_model">welfare</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[("is_individual", "=", True)]</field>
-        <field name="context">{'default_is_individual': True}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Let's create an Individual Disbursement Request....
-            </p>
-        </field>
-    </record>
+        <!-- Rest of your XML remains the same -->
+        <record id="welfare_action_individual" model="ir.actions.act_window">
+            <field name="name">Individual Disbursement</field>
+            <field name="res_model">welfare</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[("is_individual", "=", True)]</field>
+            <field name="context">{'default_is_individual': True}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Let's create an Individual Disbursement Request....
+                </p>
+            </field>
+        </record>
 
-    <record id="welfare_action_institution" model="ir.actions.act_window">
-        <field name="name">Institution Disbursement</field>
-        <field name="res_model">welfare</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[("is_individual", "=", False)]</field>
-        <field name="context">{'default_is_individual': False}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Let's create an Institution Disbursement Request....
-            </p>
-        </field>
-    </record>
+        <record id="welfare_action_institution" model="ir.actions.act_window">
+            <field name="name">Institution Disbursement</field>
+            <field name="res_model">welfare</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[("is_individual", "=", False)]</field>
+            <field name="context">{'default_is_individual': False}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Let's create an Institution Disbursement Request....
+                </p>
+            </field>
+        </record>
 
-    <menuitem
-        id="welfare_menu"
-        name="Welfare"
-        web_icon="bn_welfare,static/description/icon.png"
-        groups="bn_welfare.welfare_group"
-        action="welfare_action_institution"
-        sequence="6"/>
+        <menuitem
+            id="welfare_menu"
+            name="Welfare"
+            web_icon="bn_welfare,static/description/icon.png"
+            groups="bn_welfare.welfare_group"
+            action="welfare_action_institution"
+            sequence="6"/>
 
-    <menuitem
-        id="disbursement_request_menu"
-        name="Disbursement Request"
-        parent="welfare_menu"
-        sequence="0"/>
+        <menuitem
+            id="disbursement_request_menu"
+            name="Disbursement Request"
+            parent="welfare_menu"
+            sequence="0"/>
 
-    <menuitem
-        id="disbursement_request_menu_individual"
-        name="Individual Disbursement"
-        parent="disbursement_request_menu"
-        action="welfare_action_individual"
-        sequence="1"/>
+        <menuitem
+            id="disbursement_request_menu_individual"
+            name="Individual Disbursement"
+            parent="disbursement_request_menu"
+            action="welfare_action_individual"
+            sequence="1"/>
 
-    <menuitem
-        id="disbursement_request_menu_institution"
-        name="Institution Disbursement"
-        parent="disbursement_request_menu"
-        action="welfare_action_institution"
-        sequence="2"/>
-    <menuitem    
-        id="menu_fetch_institution_applications"
-        name="Fetch Institution Applications"
-        parent="welfare_menu"
-        sequence="100"/>
-    <menuitem    
-        id="fetch_institution_applications"
-        name="Fetch"
-        parent="menu_fetch_institution_applications"
-        action="action_fetch_institution_applications"
-        sequence="100"/>
+        <menuitem
+            id="disbursement_request_menu_institution"
+            name="Institution Disbursement"
+            parent="disbursement_request_menu"
+            action="welfare_action_institution"
+            sequence="2"/>
+        <menuitem    
+            id="menu_fetch_institution_applications"
+            name="Fetch Institution Applications"
+            parent="welfare_menu"
+            sequence="100"/>
+        <menuitem    
+            id="fetch_institution_applications"
+            name="Fetch"
+            parent="menu_fetch_institution_applications"
+            action="action_fetch_institution_applications"
+            sequence="100"/>
 
-    <menuitem id="menu_welfare_institution_fetch_log" 
-        name="Logs"
-        parent="menu_fetch_institution_applications" 
-        action="action_welfare_institution_fetch_log" 
-        sequence="99"/>
-</odoo>
+        <menuitem id="menu_welfare_institution_fetch_log" 
+            name="Logs"
+            parent="menu_fetch_institution_applications" 
+            action="action_welfare_institution_fetch_log" 
+            sequence="99"/>
+    </odoo>
