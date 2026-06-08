@@ -740,6 +740,7 @@ class Welfare(models.Model):
             message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
             donee_in_portal = self._create_donee_in_portal()
+            message = "✅ Donee created in portal"
 
         # Check for applications
         application = self._search_portal_applications()
@@ -750,24 +751,16 @@ class Welfare(models.Model):
         all_media = []
         all_remarks = []
 
-        # Document type mapping
-        document_field_map = {
-            'applicationFormImage': 'application_form',
-            'frcImage': 'frc',
-            'electricityBillImage': 'electricity_bill',
-            'gasBillImage': 'gas_bill',
-            'familyCnicImage': 'family_cnic',
-        }
+        # Document field mapping
+        document_configs = [
+            ('applicationFormImage', 'application_form', ['applicationFormImage', 'applicationForm', 'application_form_image']),
+            ('frcImage', 'frc', ['frcImage', 'frc', 'frc_image']),
+            ('electricityBillImage', 'electricity_bill_file', ['electricityBillImage', 'electricityBill', 'electricity_bill_image']),
+            ('gasBillImage', 'gas_bill_file', ['gasBillImage', 'gasBill', 'gas_bill_image']),
+            ('familyCnicImage', 'family_cnic', ['familyCnicImage', 'familyCnic', 'family_cnic_image']),
+        ]
 
-        document_aliases = {
-            'applicationFormImage': ('applicationFormImage', 'applicationForm', 'application_form_image'),
-            'frcImage': ('frcImage', 'frc', 'frc_image'),
-            'electricityBillImage': ('electricityBillImage', 'electricityBill', 'electricity_bill_image'),
-            'gasBillImage': ('gasBillImage', 'gasBill', 'gas_bill_image'),
-            'familyCnicImage': ('familyCnicImage', 'familyCnic', 'family_cnic_image'),
-        }
-
-        document_sources = [application]
+        document_sources = [application] if application else []
         
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
@@ -780,77 +773,47 @@ class Welfare(models.Model):
 
                 if media:
                     for url in media:
-                        all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
+                        all_media.append(f'<a href="{url}" target="_blank">View Image ({len(all_media)+1})</a><br/>')
 
                 if remarks:
                     all_remarks.append(remarks)
 
                 document_sources.append(report)
 
-        # Process each document type
-        for portal_field, doc_type in document_field_map.items():
-            # Get all document values for this field
+        # Process each document type for multiple files
+        for portal_field, odoo_field, aliases in document_configs:
             all_doc_values = []
+            
             for source in document_sources:
-                doc_values = self._get_portal_document_values(
-                    source, document_aliases.get(portal_field, (portal_field,))
-                )
-                all_doc_values.extend(doc_values)
+                # Get all documents for this field type
+                doc_values = self._get_all_portal_documents(source, aliases)
+                if doc_values:
+                    all_doc_values.extend(doc_values)
             
             if all_doc_values:
-                # Download all documents
-                downloaded_docs = self._download_portal_documents(portal_field, all_doc_values)
-                
-                # Clear existing documents of this type
-                existing_docs = self.env['welfare.document'].search([
-                    ('welfare_id', '=', self.id),
-                    ('doc_type', '=', doc_type)
-                ])
-                existing_docs.unlink()
-                
-                # Create new document records
-                for idx, doc_data in enumerate(downloaded_docs):
-                    self.env['welfare.document'].create({
-                        'welfare_id': self.id,
-                        'doc_type': doc_type,
-                        'name': doc_data['filename'],
-                        'file_data': doc_data['base64'],
-                        'sequence': idx,
-                        'portal_url': doc_data.get('metadata', {}).get('url', ''),
-                        'is_primary': idx == 0,  # Mark first as primary for backward compatibility
-                    })
-                    
-                    # Also update the single binary field for backward compatibility (optional)
-                    if idx == 0:
-                        # Map to the old single field
-                        single_field_map = {
-                            'application_form': ('application_form', 'application_form_name'),
-                            'frc': ('frc', 'frc_name'),
-                            'electricity_bill': ('electricity_bill_file', 'electricity_bill_name'),
-                            'gas_bill': ('gas_bill_file', 'gas_bill_name'),
-                            'family_cnic': ('family_cnic', 'family_cnic_name'),
-                        }
-                        if doc_type in single_field_map:
-                            binary_field, name_field = single_field_map[doc_type]
-                            self.write({
-                                binary_field: doc_data['base64'],
-                                name_field: doc_data['filename']
-                            })
-                
-                _logger.info(f"Downloaded {len(downloaded_docs)} {portal_field} documents from portal")
+                # Process multiple documents
+                self._process_multiple_documents(portal_field, all_doc_values, odoo_field)
+                message += f"\n📄 Found {len(all_doc_values)} {portal_field} document(s)"
 
         if app_state == 'inquiry_complete':
+            # Update state and notes
             write_vals = {
                 'inquiry_media': '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
                 'state': 'inquiry',
             }
+            
+            # Only update state if it's appropriate
+            if self.state == 'send_for_inquiry':
+                write_vals['state'] = 'inquiry'
+            
             self.write(write_vals)
+            
             result = self._handle_existing_application(application)
-            message += f" | 📋 application status: {app_state} "
-            message += f" | 📋 {result['message']} "
+            message += f"\n📋 Application status: {app_state}"
+            message += f"\n{result['message']}"
         else:
-            message += f" | 📋 No applications found"
+            message += f"\n📋 No applications found"
 
         return self._show_notification('Portal Status Check', message, 'info')
     
@@ -1378,54 +1341,70 @@ class Welfare(models.Model):
                 'sticky': False,
             }
             }
-    def _get_portal_document_values(self, payload, portal_fields):
-        """Find ALL document values anywhere in a nested portal payload."""
+    def _get_portal_document_value(self, payload, portal_fields):
+        """Find a document value anywhere in a nested portal payload.
+        Returns the first found document (for backward compatibility)
+        """
+        if not payload:
+            return None
+
+        field_names = set(portal_fields)
+        stack = [payload]
+        while stack:
+            value = stack.pop()
+            if isinstance(value, dict):
+                for field_name in field_names:
+                    field_value = value.get(field_name)
+                    if field_value:
+                        # If it's a list, return the first item
+                        if isinstance(field_value, list) and field_value:
+                            return field_value[0]
+                        return field_value
+
+                document_key = value.get('field') or value.get('key') or value.get('name')
+                if document_key in field_names:
+                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
+                        if value.get(url_key):
+                            return value.get(url_key)
+
+                stack.extend(value.values())
+            elif isinstance(value, list):
+                stack.extend(value)
+
+        return None
+
+    def _get_all_portal_documents(self, payload, portal_fields):
+        """Get ALL document values from portal (for multiple files)"""
         if not payload:
             return []
         
-        found_documents = []
+        all_documents = []
         field_names = set(portal_fields)
         stack = [payload]
         
         while stack:
             value = stack.pop()
             if isinstance(value, dict):
-                # Check if this dict contains document information
                 for field_name in field_names:
                     field_value = value.get(field_name)
                     if field_value:
-                        # Handle if it's a list or single value
                         if isinstance(field_value, list):
+                            # Add all items in the list
                             for item in field_value:
-                                found_documents.append({
-                                    'value': item,
-                                    'type': field_name,
-                                    'metadata': value
-                                })
-                        else:
-                            found_documents.append({
-                                'value': field_value,
-                                'type': field_name,
-                                'metadata': value
-                            })
+                                if item:
+                                    all_documents.append(item)
+                        elif field_value:
+                            all_documents.append(field_value)
                 
-                # Check for document keys in nested structures
-                document_key = value.get('field') or value.get('key') or value.get('name')
-                if document_key in field_names:
-                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
-                        if value.get(url_key):
-                            found_documents.append({
-                                'value': value.get(url_key),
-                                'type': document_key,
-                                'metadata': value
-                            })
-                
-                # Continue searching
-                stack.extend(value.values())
+                # Also check nested structures
+                for key, val in value.items():
+                    if isinstance(val, (dict, list)):
+                        stack.append(val)
+                        
             elif isinstance(value, list):
                 stack.extend(value)
         
-        return found_documents
+        return all_documents
 
     def _download_portal_documents(self, portal_field, document_values):
         """Return list of base64 strings and filenames for portal document payloads."""
@@ -1491,3 +1470,85 @@ class Welfare(models.Model):
                     return f"{name}_{idx}{ext}"
                 return filename
         return f"{portal_field}_{idx}.jpg"
+
+    def _process_multiple_documents(self, portal_field, document_values, odoo_field_base):
+        """Process multiple documents from portal and store them"""
+        if not document_values:
+            return
+        
+        doc_count = 0
+        for idx, doc_value in enumerate(document_values):
+            try:
+                # Skip empty values
+                if not doc_value:
+                    continue
+                    
+                binary_data, filename = self._download_single_document(portal_field, doc_value, idx)
+                if binary_data and filename:
+                    # For the first document, update the main fields (backward compatibility)
+                    if idx == 0:
+                        field_name = f"{odoo_field_base}"
+                        name_field = f"{odoo_field_base}_name"
+                        if hasattr(self, field_name) and hasattr(self, name_field):
+                            self.write({
+                                field_name: binary_data,
+                                name_field: filename
+                            })
+                    
+                    # For ALL documents, create log entries or store in a text field
+                    # This won't break existing functionality
+                    doc_log = f"\n📎 {odoo_field_base.upper()} Document {idx+1}: {filename}"
+                    current_log = self.portal_last_sync_message or ''
+                    if 'Documents:' not in current_log:
+                        self.write({'portal_last_sync_message': current_log + f"\n\nDocuments Received:\n{doc_log}"})
+                    else:
+                        self.write({'portal_last_sync_message': current_log + doc_log})
+                    
+                    doc_count += 1
+                    
+            except Exception as e:
+                _logger.error(f"Error processing {portal_field} document {idx}: {str(e)}")
+                continue
+        
+        if doc_count > 0:
+            _logger.info(f"Processed {doc_count} documents for {portal_field}")
+
+    def _download_single_document(self, portal_field, document_value, index=0):
+        """Download a single document and return base64 and filename"""
+        for value in self._iter_portal_document_values(document_value):
+            try:
+                if value.startswith('data:') and ',' in value:
+                    base64_data = value.split(',', 1)[1]
+                    filename = self._generate_filename(portal_field, value, index)
+                    return base64_data, filename
+
+                if value.startswith('http'):
+                    response = requests.get(value, timeout=10)
+                    if response.status_code == 200:
+                        base64_data = base64.b64encode(response.content).decode('utf-8')
+                        filename = self._generate_filename(portal_field, value, index)
+                        return base64_data, filename
+                    _logger.warning(f"Failed to download {portal_field}: HTTP {response.status_code}")
+                    continue
+
+                # Try as plain base64
+                base64.b64decode(value, validate=True)
+                filename = self._generate_filename(portal_field, value, index)
+                return value, filename
+                
+            except Exception as e:
+                _logger.error(f"Error processing {portal_field} document: {str(e)}")
+                continue
+        
+        return None, None
+
+    def _generate_filename(self, portal_field, value, index=0):
+        """Generate a filename for a downloaded document"""
+        if isinstance(value, str) and value.startswith('http'):
+            filename = urlparse(value).path.rsplit('/', 1)[-1]
+            if filename:
+                if index > 0:
+                    name, ext = os.path.splitext(filename)
+                    return f"{name}_{index}{ext}"
+                return filename
+        return f"{portal_field}_{index}.jpg"
