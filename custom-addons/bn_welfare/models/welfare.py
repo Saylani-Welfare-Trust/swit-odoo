@@ -1233,12 +1233,11 @@ class Welfare(models.Model):
             if is_hod:
                 within_limit, error_message = record._check_amount_within_hod_limit()
                 if not within_limit:
-                    # raise ValidationError(error_message)
-                    record.state = 'approve'
+                    raise ValidationError(error_message)
 
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
-            record.state = 'mem_approve'
+            record.state = 'approve'
     def action_approve(self):
         """Final approval logic"""
         for record in self:
@@ -1412,6 +1411,7 @@ class Welfare(models.Model):
         for line in self.welfare_line_ids:
             # Check amount limit
             if line.total_amount > limit.max_amount_limit:
+                self.record.state = 'mem_approve'
                 return False, _(
                     "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
                     "This request cannot be approved by HOD."
@@ -1419,6 +1419,8 @@ class Welfare(models.Model):
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
+                self.record.state = 'mem_approve'
+
                 return False, _(
                     "Product '%s' is not in the allowed products list for HOD approval. "
                     "Please contact your administrator."
