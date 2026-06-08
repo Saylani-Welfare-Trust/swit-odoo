@@ -97,21 +97,24 @@ class Welfare(models.Model):
     
     portal_last_sync_message = fields.Text('Portal Last Sync Message')
 
-    application_form = fields.Binary('Application Form')
+    # application_form = fields.Binary('Application Form')
     application_form_name = fields.Char('Application Form Name')
 
-    frc = fields.Binary('FRC')
+    # frc = fields.Binary('FRC')
     frc_name = fields.Char('FRC Name')
     
 
-    electricity_bill_file = fields.Binary('Electricity Bill')
+    # electricity_bill_file = fields.Binary('Electricity Bill')
     electricity_bill_name = fields.Char('Electricity Bill Name')
     
-    gas_bill_file = fields.Binary('Gas Bill')
+    # gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
     
-    family_cnic = fields.Binary('Family CNIC')
+    # family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
+    document_ids = fields.One2many(
+    'welfare.document', 'welfare_id', string='Documents'
+)
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -782,27 +785,42 @@ class Welfare(models.Model):
 
                 document_sources.append(report)
 
-        # Download document images and convert to binary. The portal may send these
-        # on the application itself, inside form/documents, or inside inquiryReports.
-        for portal_field, (odoo_field, filename_field) in document_field_map.items():
-            if odoo_field in document_vals:
-                continue
+            IrAttachment = self.env['ir.attachment']
+            WelfareDoc   = self.env['welfare.document']
 
-            for source in document_sources:
-                image_value = self._get_portal_document_value(
-                    source, document_aliases.get(portal_field, (portal_field,))
-                )
-                if not image_value:
-                    continue
+            for portal_field, doc_type in document_field_map.items():
+                # collect raw_values ... (same logic as before)
 
-                binary_value, filename = self._download_portal_document(portal_field, image_value)
-                if binary_value:
-                    document_vals[odoo_field] = binary_value
-                    document_vals[filename_field] = filename
-                    _logger.info(
-                        f"Downloaded {portal_field} to {odoo_field} from portal payload"
-                    )
-                    break
+                # Delete old docs of this type
+                WelfareDoc.search([
+                    ('welfare_id', '=', self.id),
+                    ('document_type', '=', doc_type),
+                ]).mapped('attachment_id').unlink()
+                WelfareDoc.search([
+                    ('welfare_id', '=', self.id),
+                    ('document_type', '=', doc_type),
+                ]).unlink()
+
+                for raw in raw_values:
+                    if not raw:
+                        continue
+                    binary_value, filename = self._download_portal_document(portal_field, raw)
+                    if not binary_value:
+                        continue
+
+                    attachment = IrAttachment.create({
+                        'name':      filename or f'{doc_type}.jpg',
+                        'type':      'binary',
+                        'datas':     binary_value,
+                        'res_model': 'welfare',
+                        'res_id':    self.id,
+                        'mimetype':  'image/jpeg',
+                    })
+                    WelfareDoc.create({
+                        'welfare_id':    self.id,
+                        'document_type': doc_type,
+                        'attachment_id': attachment.id,
+                    })
 
         if app_state == 'inquiry_complete':
             # Single write with all fields including documents
