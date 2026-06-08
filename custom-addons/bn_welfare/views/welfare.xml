@@ -93,22 +93,53 @@
                             <field name="application_form_name" invisible="1"/>
                             <field name="application_form" filename="application_form_name" readonly="state != 'draft'" required="0"/>
                             <field name="document_ids" nolabel="1"
-                                readonly="state not in ['draft', 'inquiry', 'committee_approval']">
-                                <tree>
-                                    <field name="document_type" />
-                                    <field name="name" />
-                                    <field name="mimetype" optional="hide"/>
-                                    <button name="action_delete" type="object"
-                                            string="Delete" icon="fa-trash"
-                                            class="btn-danger"
-                                            confirm="Are you sure you want to delete this document?"
-                                            invisible="parent.state not in ['draft', 'inquiry', 'committee_approval']"/>
-                                    <button string="Download"
-                                            type="url"
-                                            name="url"
-                                            icon="fa-download"
-                                            class="btn-primary"/>
-                                </tree>
+                                readonly="state not in ['draft', 'inquiry', 'committee_approval']"
+                                mode="kanban,tree,form">
+                                <kanban>
+                                    <field name="document_type"/>
+                                    <field name="name"/>
+                                    <field name="mimetype"/>
+                                    <field name="image_thumbnail"/>
+                                    <field name="url"/>
+                                    
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click">
+                                                <div class="o_kanban_image">
+                                                    <img t-att-src="record.image_thumbnail.raw_value" 
+                                                        t-att-alt="record.name.value"
+                                                        style="width: 100px; height: 100px; object-fit: cover;"
+                                                        t-if="record.image_thumbnail.raw_value"/>
+                                                    <i class="fa fa-file-pdf-o fa-4x" t-else=""></i>
+                                                </div>
+                                                <div class="oe_kanban_details">
+                                                    <strong class="o_kanban_record_title">
+                                                        <field name="document_type" widget="badge"/>
+                                                    </strong>
+                                                    <div class="text-muted o_kanban_record_subtitle">
+                                                        <field name="name"/>
+                                                    </div>
+                                                    <div class="oe_kanban_buttons">
+                                                        <button type="object" name="action_view_document"
+                                                                class="btn btn-sm btn-info">
+                                                            View
+                                                        </button>
+                                                        <button type="object" name="action_delete"
+                                                                class="btn btn-sm btn-danger"
+                                                                confirm="Are you sure you want to delete this document?"
+                                                                attrs="{'invisible': [['parent.state', 'not in', ['draft', 'inquiry', 'committee_approval']]]}">
+                                                            Delete
+                                                        </button>
+                                                        <button type="url" name="url"
+                                                                class="btn btn-sm btn-primary">
+                                                            Download
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
                             </field>
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
