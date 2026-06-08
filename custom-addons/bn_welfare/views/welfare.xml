@@ -266,7 +266,7 @@
                         </page>
                         
                         <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
-                            <field name="inquiry_report_ids" readonly="1">
+                            <field name="inquiry_report_ids" readonly="1" mode="tree,form">
                                 <tree>
                                     <field name="create_date"/>
                                     <field name="officer_name"/>
