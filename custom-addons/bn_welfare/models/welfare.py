@@ -1196,31 +1196,26 @@ class Welfare(models.Model):
 
     
     def action_committee_approval(self):
-        """Committee Approval - Check limits here"""
         for record in self:
-
-            
-            # Your existing committee approval validations
-            # if not record.committee_remarks:
-            #     raise ValidationError(_('Plea   e enter Committee Remarks before approval.'))
-            
-            # Document validation
             missing_fields = []
-            if not record.application_form:
+
+            # Check each document type exists
+            doc_types_present = record.document_ids.mapped('document_type')
+
+            if 'application_form' not in doc_types_present:
                 missing_fields.append("Application Form")
-            if not record.electricity_bill_file:
+            if 'electricity_bill' not in doc_types_present:
                 missing_fields.append("Electricity Bill")
-            if not record.gas_bill_file:
+            if 'gas_bill' not in doc_types_present:
                 missing_fields.append("Gas Bill")
-            if not record.family_cnic:
+            if 'family_cnic' not in doc_types_present:
                 missing_fields.append("Family CNIC")
-            
+
             if missing_fields:
                 raise ValidationError(_(
                     "Please upload the following documents before approval:\n- %s"
                 ) % ("\n- ".join(missing_fields)))
-            
-            # Set state to committee_approval
+
             record.state = 'committee_approval'
         
 
