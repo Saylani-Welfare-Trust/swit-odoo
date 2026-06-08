@@ -172,7 +172,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="recurring_line" string="Recurring Details" invisible="state != 'recurring'">
+                        <page name="recurring_line" string="Recurring Details" invisible="state not in ['recurring','return']">
                             <field name="welfare_recurring_line_ids" readonly="1">
                                 <tree>
                                     <field name="employee_category_id_officer" column_invisible="1" />
