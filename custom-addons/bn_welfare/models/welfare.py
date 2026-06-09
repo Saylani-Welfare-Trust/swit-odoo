@@ -447,13 +447,17 @@ class Welfare(models.Model):
             self.company_address = previous_welfare.company_address
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
-            # Auto-populate document fields
-            self.frc_media = previous_welfare.frc_media
-            self.application_form_media = previous_welfare.application_form_media
-            self.electricity_bill_media = previous_welfare.electricity_bill_media
-            self.gas_bill_media = previous_welfare.gas_bill_media
-            self.family_cnic_media = previous_welfare.family_cnic_media
-            
+            # Auto-populate document fields only if previous record has them
+            if previous_welfare.application_form_media:
+                self.application_form_media = previous_welfare.application_form_media
+            if previous_welfare.frc_media:
+                self.frc_media = previous_welfare.frc_media
+            if previous_welfare.electricity_bill_media:
+                self.electricity_bill_media = previous_welfare.electricity_bill_media
+            if previous_welfare.gas_bill_media:
+                self.gas_bill_media = previous_welfare.gas_bill_media
+            if previous_welfare.family_cnic_media:
+                self.family_cnic_media = previous_welfare.family_cnic_media
             # Auto-populate family info
             self.dependent_person = previous_welfare.dependent_person
             self.household_member = previous_welfare.household_member
