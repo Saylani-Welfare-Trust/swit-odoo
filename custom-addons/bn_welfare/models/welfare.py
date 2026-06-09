@@ -113,12 +113,11 @@ class Welfare(models.Model):
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # New Html fields for portal documents
-    application_form_media = fields.Html('Application Form', sanitize=False, sanitize_attributes=False, strip_style=False)
-    frc_media              = fields.Html('FRC', sanitize=False, sanitize_attributes=False, strip_style=False)
-    electricity_bill_media = fields.Html('Electricity Bill', sanitize=False, sanitize_attributes=False, strip_style=False)
-    gas_bill_media         = fields.Html('Gas Bill', sanitize=False, sanitize_attributes=False, strip_style=False)
-    family_cnic_media      = fields.Html('Family CNIC', sanitize=False, sanitize_attributes=False, strip_style=False)
-
+    application_form_media = fields.Text('Application Form Media')
+    frc_media              = fields.Text('FRC Media')
+    electricity_bill_media = fields.Text('Electricity Bill Media')
+    gas_bill_media         = fields.Text('Gas Bill Media')
+    family_cnic_media      = fields.Text('Family CNIC Media')
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
