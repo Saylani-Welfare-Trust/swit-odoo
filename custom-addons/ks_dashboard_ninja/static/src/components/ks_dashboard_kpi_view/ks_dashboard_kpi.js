@@ -29,12 +29,6 @@ export class Ksdashboardkpiview extends Component{
                     await this.ksFetchUpdateItem(this.item.id)
                 }
             }
-            if (Object.keys(nextprops.custom_filter).length){
-                if (nextprops.custom_filter?.item_ids?.includes(this.item.id)){
-                    await this.ksFetchUpdateItem(this.item.id)
-                }
-            }
-
 
         })
         useEffect(()=>{
@@ -415,8 +409,7 @@ Ksdashboardkpiview.props = {
     item: { type: Object, Optional:true},
     dashboard_data: { type: Object, Optional:true},
     ksdatefilter :{type :String, Optional:true},
-    pre_defined_filter:{type: Object, Optional:true},
-    custom_filter :{type:Object, Optional:true}
+    pre_defined_filter:{type: Object, Optional:true}
 };
 
 Ksdashboardkpiview.template = "Ksdashboardkpiview";

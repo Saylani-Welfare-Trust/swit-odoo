@@ -67,12 +67,12 @@ export class KsMapPreview extends Component {
         let domain = [];
         var partners;
         const chart_data = JSON.parse(this.props.record.data.ks_chart_data);
-        if (chart_data.groupByIds.length !=0){
+        if (chart_data.groupByIds){
 //            domain = [['id', 'in', chart_data.groupByIds]]
 //            var  fields = ["partner_latitude", "partner_longitude", "name"];
 //            partners = await this.orm.searchRead("res.partner", domain, fields);
             partners = chart_data['partner']
-
+    }
 //        const partners_query = await this._fetchRecordsPartner(rec);
         const partners_query = chart_data['ks_partners_map']
         var ks_labels = chart_data['labels'];
@@ -317,10 +317,6 @@ export class KsMapPreview extends Component {
         // Make stuff animate on load
         chart.appear(1000, 100);
 
-}
-else{
-            $(this.mapContainerRef.el).append($("<div class='graph_text'>").text("No Data Available."));
-}
 }
 //    }else{
 //        $(this.mapContainerRef.el).append($("<div class='graph_text'>").text("Please select Groupby that has Address"));}

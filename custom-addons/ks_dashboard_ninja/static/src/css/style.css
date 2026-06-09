@@ -825,7 +825,7 @@ body:not(.o_touch_device) .o_field_selection:not(:hover):not(:focus-within) sele
     border: solid 1px var(--ks-dn-gray-50);
     border-radius: 8px;
     background: transparent;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     flex-direction: column;

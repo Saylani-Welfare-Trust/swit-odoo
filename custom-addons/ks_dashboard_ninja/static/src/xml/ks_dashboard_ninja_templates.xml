@@ -221,25 +221,25 @@
 
                         <!-- This should only be shown on : Edit Mode Layout-->
 
-                                                    <div class="o_generator_menu"
-                                                         t-if="Object.keys(state.ks_dashboard_data.ks_dashboard_custom_domain_filter).length">
-                                                        <span>Custom Filter</span>
-                                                        <div id="ks_dn_custom_filters_container"
-                                                             class="o_filter_condition dropdown-item-text">
+<!--                                                    <div class="o_generator_menu"-->
+<!--                                                         t-if="Object.keys(state.ks_dashboard_data.ks_dashboard_custom_domain_filter).length">-->
+<!--                                                        <span>Custom Filter</span>-->
+<!--                                                        <div id="ks_dn_custom_filters_container"-->
+<!--                                                             class="o_filter_condition dropdown-item-text">-->
 
-                                                        </div>
-                                                        <div class="o_add_filter_menu dropdown-item-text">
-                                                            <button type="button"
-                                                                    class="btn btn-primary o_apply_filter ks_dn_filter_apply" t-on-click="ksOnCustomFilterApply">
-                                                                Apply
-                                                            </button>
-                                                            <button type="button"
-                                                                    class="btn btn-secondary ks_custom_filter_add_condition" t-on-click="ksOnCustomFilterConditionAdd">
-                                                                <i class="fa fa-plus-circle"/>
-                                                                Add a condition
-                                                            </button>
-                                                        </div>
-                                                    </div>
+<!--                                                        </div>-->
+<!--                                                        <div class="o_add_filter_menu dropdown-item-text">-->
+<!--                                                            <button type="button"-->
+<!--                                                                    class="btn btn-primary o_apply_filter ks_dn_filter_apply">-->
+<!--                                                                Apply-->
+<!--                                                            </button>-->
+<!--                                                            <button type="button"-->
+<!--                                                                    class="btn btn-secondary ks_custom_filter_add_condition">-->
+<!--                                                                <i class="fa fa-plus-circle"/>-->
+<!--                                                                Add a condition-->
+<!--                                                            </button>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
                                                 </div>
                                                 <t t-debug="pdb"/>
                                                 <div t-att-class="Object.keys(state.ks_dashboard_data.ks_dashboard_domain_data).length ? 'ks_dn_filter_applied_container': 'ks_dn_filter_applied_container ks_hide'">
@@ -410,16 +410,16 @@
     <t t-name="ks_dashboard_item_template">
         <t t-foreach="state.ks_dashboard_items" t-as="items" t-key="items.id">
             <t t-if="items.ks_dashboard_item_type === 'ks_tile'">
-                <Ksdashboardtile item="items" dashboard_data="ks_dashboard_data" ksdatefilter = "state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter" custom_filter="state.custom_filter"/>
+                <Ksdashboardtile item="items" dashboard_data="ks_dashboard_data" ksdatefilter = "state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter"/>
             </t>
             <t t-elif="items.ks_dashboard_item_type === 'ks_kpi'">
-                <Ksdashboardkpiview item="items" dashboard_data="ks_dashboard_data" ksdatefilter="state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter" custom_filter="state.custom_filter"/>
+                <Ksdashboardkpiview item="items" dashboard_data="ks_dashboard_data" ksdatefilter="state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter"/>
             </t>
             <t t-elif="items.ks_dashboard_item_type === 'ks_to_do'">
                 <Ksdashboardtodo item="items" dashboard_data="ks_dashboard_data"/>
             </t>
             <t t-else="">
-                <Ksdashboardgraph item="items" dashboard_data="ks_dashboard_data" ksdatefilter="state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter" custom_filter="state.custom_filter"/>
+                <Ksdashboardgraph item="items" dashboard_data="ks_dashboard_data" ksdatefilter="state.ksDateFilterSelection" pre_defined_filter = "state.pre_defined_filter"/>
             </t>
         </t>
     </t>
@@ -439,7 +439,7 @@
             </div>
         </div>
     </t>
-(ev)=>self.kslayout(ev)
+
     <t t-name="ks_dn_layout_container_new">
         <t t-if="ks_multi_layout">
             <div class="ks_am_element">
@@ -456,7 +456,7 @@
                     role="menu">
                     <t t-foreach="Object.keys(ks_child_boards)" t-as="layout_id" t-key="layout_id_index">
                         <li t-att-class="ks_selected_board_id === layout_id ? 'ks_dashboard_layout_event ks_layout_selected': 'ks_dashboard_layout_event'"
-                            t-att-data-ks_layout_id="layout_id" t-on-click="(ev)=>self._ksOnDnLayoutMenuSelect(ev)">
+                            t-att-data-ks_layout_id="layout_id">
                             <span class="df_selection_text">
                                 <t t-esc="ks_child_boards[layout_id][0]"/>
                             </span>

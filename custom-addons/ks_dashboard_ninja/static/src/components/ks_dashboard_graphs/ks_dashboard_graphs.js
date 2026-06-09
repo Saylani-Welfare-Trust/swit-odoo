@@ -37,11 +37,6 @@ export class Ksdashboardgraph extends Component{
                     await this.ksFetchUpdateItem(this.item.id)
                 }
             }
-             if (Object.keys(nextprops.custom_filter).length){
-                if (nextprops.custom_filter?.item_ids?.includes(this.item.id)){
-                    await this.ksFetchUpdateItem(this.item.id)
-                }
-            }
 
         })
         useEffect(()=>{
@@ -74,12 +69,6 @@ export class Ksdashboardgraph extends Component{
                     this.ksrenderfunnelchart($(this.ks_gridstack_container.el),this.item);
                 }else if(this.item.ks_dashboard_item_type =="ks_list_view"){
                     this.prepare_list()
-                     if (this.intial_count < this.item.ks_pagination_limit ) {
-                        $(this.ks_list_view.el).find('.ks_load_next').addClass('ks_event_offer_list');
-                    }else{
-                        $(this.ks_list_view.el).find('.ks_load_next').removeClass('ks_event_offer_list');
-                    }
-
                 }else if(this.item.ks_dashboard_item_type == ("ks_map_view")){
                     $(this.ks_gridstack_container.el).find(".card-body").remove()
                     this.ksrendermapview($(this.ks_gridstack_container.el),this.item)
@@ -1734,7 +1723,7 @@ export class Ksdashboardgraph extends Component{
             var offset = self.ks_dashboard_data.ks_item_data[itemId].ks_pagination_limit;
             var context = self.ks_dashboard_data['context']
 
-            var params = self.__owl__.parent.component.ksGetParamsForItemFetch(parseInt(itemId));
+            var params = {};
             this._rpc("/web/dataset/call_kw/ks_dashboard_ninja.board/ks_get_list_view_data_offset",{
                 model: 'ks_dashboard_ninja.board',
                 method: 'ks_get_list_view_data_offset',
@@ -1765,7 +1754,7 @@ export class Ksdashboardgraph extends Component{
             var ks_offset =  parseInt(e.target.parentElement.dataset.prevOffset) - (offset + 1) ;
             var ks_intial_count = e.target.parentElement.dataset.next_offset;
             var context = self.ks_dashboard_data['context']
-            var params = self.__owl__.parent.component.ksGetParamsForItemFetch(parseInt(itemId));
+            var params = {};
             this._rpc("/web/dataset/call_kw/ks_dashboard_ninja.board/ks_get_list_view_data_offset",{
                 model: 'ks_dashboard_ninja.board',
                 method: 'ks_get_list_view_data_offset',
@@ -1846,9 +1835,7 @@ Ksdashboardgraph.props = {
     item: { type: Object, Optional:true},
     dashboard_data: { type: Object, Optional:true},
     ksdatefilter : {type: String ,Optional:true},
-    pre_defined_filter :{type:Object, Optional:true},
-    custom_filter :{type:Object, Optional:true}
-
+    pre_defined_filter :{type:Object, Optional:true}
 };
 
 Ksdashboardgraph.template = "Ks_chart_list_container";

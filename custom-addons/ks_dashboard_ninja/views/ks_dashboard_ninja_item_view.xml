@@ -570,7 +570,7 @@
                                                 <field name="ks_model_id" column_invisible="True"/>
                                                 <field name="ks_sort_by_field"
                                                        options="{'no_open':True,'no_create':True}"/>
-                                                <field name="ks_sort_by_order" readonly="ks_sort_by_field == False"/>
+                                                <field name="ks_sort_by_order"/>
                                                 <field name="ks_record_limit"/>
                                             </tree>
                                         </field>

@@ -2,7 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import datetime
 import json
 from odoo.addons.ks_dashboard_ninja.common_lib.ks_date_filter_selections import ks_get_date, ks_convert_into_local, \
@@ -306,6 +306,7 @@ class KsDashboardNinjaBoard(models.Model):
         self = self.ks_set_date(ks_dashboard_id)
         items = {}
         item_model = self.env['ks_dashboard_ninja.item']
+        # raise UserError('Hit')
         for item_id in item_list:
             item = self.ks_fetch_item_data(item_model.browse(item_id), params)
             items[item['id']] = item
@@ -318,6 +319,7 @@ class KsDashboardNinjaBoard(models.Model):
         :param item_id: item object
         :return: object with formatted item data
         """
+        # raise UserError('Hit')
         try:
             ks_precision = self.sudo().env.ref('ks_dashboard_ninja.ks_dashboard_ninja_precision')
             ks_precision_digits = ks_precision.digits
@@ -534,6 +536,7 @@ class KsDashboardNinjaBoard(models.Model):
         return item.ks_get_next_offset(ks_dashboard_item_id, offset, item_domain)
 
     def ks_view_items_view(self):
+        raise UserError('Hit')
         self.ensure_one()
         return {
             'name': _("Dashboard Items"),
@@ -1379,7 +1382,7 @@ class KsDashboardNinjaBoard(models.Model):
                 'model': rec.ks_model_id.model,
                 'model_name': rec.ks_model_id.name,
                 'field_name': rec.ks_domain_field_id.name,
-                'type': rec.ks_domain_field_id.ttype,
+                'field_type': rec.ks_domain_field_id.ttype,
                 'special_data': {}
             }
             if rec.ks_domain_field_id.ttype == 'selection':
