@@ -844,19 +844,18 @@ class Welfare(models.Model):
 
                 if valid_urls:
                     links_html = ''.join(
-                        f'<div style="display:inline-block; margin:6px; text-align:center;">'
-                        f'<a href="{url}" target="_blank">'
-                        f'<img src="{url}" style="width:150px; height:130px; object-fit:contain; '
+                        f'<a href="{url}" target="_blank" style="display:inline-block; margin:4px;">'
+                        f'<img src="{url}" '
+                        f'style="width:150px; height:130px; object-fit:contain; '
                         f'border:1px solid #dee2e6; border-radius:6px; display:block;"/>'
-                        f'</a>'
-                        f'<div style="font-size:11px; color:#6c757d; margin-top:4px;">'
+                        f'<div style="font-size:11px; color:#6c757d; margin-top:4px; text-align:center;">'
                         f'{label} {idx + 1}'
                         f'</div>'
-                        f'</div>'
+                        f'</a>'
                         for idx, url in enumerate(valid_urls)
                     )
                     write_vals[html_field] = (
-                        f'<div style="display:flex; flex-wrap:wrap; gap:4px;">'
+                        f'<div style="display:flex; flex-wrap:wrap; gap:8px; padding:8px;">'
                         f'{links_html}'
                         f'</div>'
                     )
