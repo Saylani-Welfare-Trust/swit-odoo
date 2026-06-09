@@ -1243,7 +1243,7 @@ class Welfare(models.Model):
     
     def action_committee_approval(self):
 
-            record.state = 'committee_approval'
+            self.state = 'committee_approval'
         
 
     def action_complete(self):
