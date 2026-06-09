@@ -112,13 +112,19 @@ class Welfare(models.Model):
     
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
-    # New Html fields for portal documents
-    application_form_media = fields.Html('Application Form', sanitize=False, )
-    frc_media              = fields.Html('FRC', sanitize=False, )
-    electricity_bill_media = fields.Html('Electricity Bill', sanitize=False, )
-    gas_bill_media         = fields.Html('Gas Bill', sanitize=False, )
-    family_cnic_media      = fields.Html('Family CNIC', sanitize=False, )
+    # Store raw URLs (never touched by sanitizer)
+    application_form_urls  = fields.Text('Application Form URLs')
+    frc_urls               = fields.Text('FRC URLs')
+    electricity_bill_urls  = fields.Text('Electricity Bill URLs')
+    gas_bill_urls          = fields.Text('Gas Bill URLs')
+    family_cnic_urls       = fields.Text('Family CNIC URLs')
 
+    # Computed Html fields for display only — never written by the form
+    application_form_media = fields.Html('Application Form', compute='_compute_document_media', sanitize=False)
+    frc_media              = fields.Html('FRC', compute='_compute_document_media', sanitize=False)
+    electricity_bill_media = fields.Html('Electricity Bill', compute='_compute_document_media', sanitize=False)
+    gas_bill_media         = fields.Html('Gas Bill', compute='_compute_document_media', sanitize=False)
+    family_cnic_media      = fields.Html('Family CNIC', compute='_compute_document_media', sanitize=False)
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -387,6 +393,39 @@ class Welfare(models.Model):
             else:
                 rec.previous_disbursement_id = False
 
+    @api.depends(
+        'application_form_urls', 'frc_urls',
+        'electricity_bill_urls', 'gas_bill_urls', 'family_cnic_urls'
+    )
+    def _compute_document_media(self):
+        def build_html(urls_raw, label):
+            if not urls_raw:
+                return ''
+            urls = [u.strip() for u in urls_raw.split('\n') if u.strip()]
+            if not urls:
+                return ''
+            links = ''.join(
+                f'<a href="{url}" target="_blank">{label} {idx + 1}</a><br/>'
+                for idx, url in enumerate(urls)
+            )
+            return links
+
+        for rec in self:
+            rec.application_form_media = build_html(
+                rec.application_form_urls, 'Application Form'
+            )
+            rec.frc_media = build_html(
+                rec.frc_urls, 'FRC'
+            )
+            rec.electricity_bill_media = build_html(
+                rec.electricity_bill_urls, 'Electricity Bill'
+            )
+            rec.gas_bill_media = build_html(
+                rec.gas_bill_urls, 'Gas Bill'
+            )
+            rec.family_cnic_media = build_html(
+                rec.family_cnic_urls, 'Family CNIC'
+            )
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
@@ -448,16 +487,16 @@ class Welfare(models.Model):
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
             # Auto-populate document fields only if previous record has them
-            if previous_welfare.application_form_media:
-                self.application_form_media = previous_welfare.application_form_media
-            if previous_welfare.frc_media:
-                self.frc_media = previous_welfare.frc_media
-            if previous_welfare.electricity_bill_media:
-                self.electricity_bill_media = previous_welfare.electricity_bill_media
-            if previous_welfare.gas_bill_media:
-                self.gas_bill_media = previous_welfare.gas_bill_media
-            if previous_welfare.family_cnic_media:
-                self.family_cnic_media = previous_welfare.family_cnic_media
+            if previous_welfare.application_form_urls:
+                self.application_form_urls = previous_welfare.application_form_urls
+            if previous_welfare.frc_urls:
+                self.frc_urls = previous_welfare.frc_urls
+            if previous_welfare.electricity_bill_urls:
+                self.electricity_bill_urls = previous_welfare.electricity_bill_urls
+            if previous_welfare.gas_bill_urls:
+                self.gas_bill_urls = previous_welfare.gas_bill_urls
+            if previous_welfare.family_cnic_urls:
+                self.family_cnic_urls = previous_welfare.family_cnic_urls
             # Auto-populate family info
             self.dependent_person = previous_welfare.dependent_person
             self.household_member = previous_welfare.household_member
@@ -745,11 +784,11 @@ class Welfare(models.Model):
         all_remarks = []
 
         portal_to_html_field = {
-            'applicationFormImages': 'application_form_media',
-            'frcImages':             'frc_media',
-            'electricityBillImages': 'electricity_bill_media',
-            'gasBillImages':         'gas_bill_media',
-            'familyCnicImages':      'family_cnic_media',
+            'applicationFormImages': 'application_form_urls',
+            'frcImages':             'frc_urls',
+            'electricityBillImages': 'electricity_bill_urls',
+            'gasBillImages':         'gas_bill_urls',
+            'familyCnicImages':      'family_cnic_urls',
         }
 
         document_labels = {
@@ -828,13 +867,9 @@ class Welfare(models.Model):
                 ]
 
                 if valid_urls:
-                    links_html = '<br/>'.join(
-                        f'<a href="{url}" target="_blank">{label} {idx + 1}</a>'
-                        for idx, url in enumerate(valid_urls)
-                    )
-                    write_vals[html_field] = links_html
+                    write_vals[html_field.replace('_media', '_urls')] = '\n'.join(valid_urls)
                 else:
-                    write_vals[html_field] = ''
+                    write_vals[html_field.replace('_media', '_urls')] = ''
 
             # Replace self.write(write_vals) with:
             self.sudo().write(write_vals)
@@ -1121,13 +1156,13 @@ class Welfare(models.Model):
         for record in self:
             missing_fields = []
 
-            if not record.application_form_media:
+            if not record.application_form_urls:
                 missing_fields.append("Application Form")
-            if not record.electricity_bill_media:
+            if not record.electricity_bill_urls:
                 missing_fields.append("Electricity Bill")
-            if not record.gas_bill_media:
+            if not record.gas_bill_urls:
                 missing_fields.append("Gas Bill")
-            if not record.family_cnic_media:
+            if not record.family_cnic_urls:
                 missing_fields.append("Family CNIC")
 
             if missing_fields:
