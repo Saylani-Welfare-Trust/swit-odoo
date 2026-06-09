@@ -94,39 +94,34 @@
                             <field name="application_form_media" 
                                 widget="html" 
                                 readonly="1"
-                                nolabel="1"/>
+                                />
                             
                             <!-- FRC -->
-                            <field name="frc" invisible="1"/>
                             <field name="frc_name" invisible="1"/>
                             <field name="frc_media" 
                                 widget="html" 
-                                readonly="1"
-                                nolabel="1"/>
+                                readonly="1"/>
                             
                             <!-- Electricity Bill -->
-                            <field name="electricity_bill_file" invisible="1"/>
                             <field name="electricity_bill_name" invisible="1"/>
                             <field name="electricity_bill_media" 
                                 widget="html" 
                                 readonly="1"
-                                nolabel="1"/>
+                                />
                             
                             <!-- Gas Bill -->
-                            <field name="gas_bill_file" invisible="1"/>
                             <field name="gas_bill_name" invisible="1"/>
                             <field name="gas_bill_media" 
                                 widget="html" 
                                 readonly="1"
-                                nolabel="1"/>
+                                />
                             
                             <!-- Family CNIC -->
-                            <field name="family_cnic" invisible="1"/>
                             <field name="family_cnic_name" invisible="1"/>
                             <field name="family_cnic_media" 
                                 widget="html" 
                                 readonly="1"
-                                nolabel="1"/>                           
+                                />                           
                             
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>

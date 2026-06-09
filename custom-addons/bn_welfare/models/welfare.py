@@ -469,11 +469,11 @@ class Welfare(models.Model):
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
             # Auto-populate document fields
-            self.frc = previous_welfare.frc
-            self.application_form = previous_welfare.application_form
-            self.electricity_bill_file = previous_welfare.electricity_bill_file
-            self.gas_bill_file = previous_welfare.gas_bill_file
-            self.family_cnic = previous_welfare.family_cnic
+            self.frc_media = previous_welfare.frc_media
+            self.application_form_media = previous_welfare.application_form_media
+            self.electricity_bill_media = previous_welfare.electricity_bill_media
+            self.gas_bill_media_media = previous_welfare.gas_bill_media
+            self.family_cnic_media = previous_welfare.family_cnic_media
             
             # Auto-populate family info
             self.dependent_person = previous_welfare.dependent_person
