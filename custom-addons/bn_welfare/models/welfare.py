@@ -137,9 +137,7 @@ class Welfare(models.Model):
         string="Family CNIC Media",
         sanitize=False,
     )
-    document_ids = fields.One2many(
-    'welfare.document', 'welfare_id', string='Documents'
-)
+
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -748,39 +746,35 @@ class Welfare(models.Model):
     def action_check_portal_status(self):
         self.ensure_one()
 
-        # Check if donee exists in portal
         donee_data = self._check_donee_exists_in_portal()
         if donee_data:
             message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
             self._create_donee_in_portal()
 
-        application = self._search_portal_applications()
-        app_state = application.get('status') if application else None
+        application     = self._search_portal_applications()
+        app_state       = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
 
-        all_media = []
+        all_media   = []
         all_remarks = []
 
-        # portal key → document_type selection value
-        document_field_map = {
-            'applicationFormImages': 'application_form',
-            'frcImages': 'frc',
-            'electricityBillImages': 'electricity_bill',
-            'gasBillImages': 'gas_bill',
-            'familyCnicImages': 'family_cnic',
-        }
-
-        # Map portal fields to their Html media fields
         portal_to_html_field = {
             'applicationFormImages': 'application_form_media',
-            'frcImages': 'frc_media',
+            'frcImages':             'frc_media',
             'electricityBillImages': 'electricity_bill_media',
-            'gasBillImages': 'gas_bill_media',
-            'familyCnicImages': 'family_cnic_media',
+            'gasBillImages':         'gas_bill_media',
+            'familyCnicImages':      'family_cnic_media',
         }
 
-        # All known aliases per portal key (new plural + legacy singular)
+        document_labels = {
+            'applicationFormImages': 'Application Form',
+            'frcImages':             'FRC',
+            'electricityBillImages': 'Electricity Bill',
+            'gasBillImages':         'Gas Bill',
+            'familyCnicImages':      'Family CNIC',
+        }
+
         document_aliases = {
             'applicationFormImages': (
                 'applicationFormImages', 'applicationFormImage',
@@ -804,15 +798,12 @@ class Welfare(models.Model):
         }
 
         document_sources = [application]
-        
-        # Dictionary to store HTML content for each document type
-        html_media_content = {field: [] for field in portal_to_html_field.values()}
 
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
                 if not isinstance(report, dict):
                     continue
-                media = report.get('media')
+                media   = report.get('media')
                 remarks = report.get('remarks')
                 if media:
                     for url in media:
@@ -822,51 +813,16 @@ class Welfare(models.Model):
                 document_sources.append(report)
 
         if app_state == 'inquiry_complete':
-            # Collect HTML links for each document type (similar to inquiry_media)
-            for portal_field, html_field in portal_to_html_field.items():
-                raw_values = []
-                for source in document_sources:
-                    if not isinstance(source, dict):
-                        continue
-                    for alias in document_aliases.get(portal_field, (portal_field,)):
-                        candidate = source.get(alias)
-                        if candidate is None:
-                            continue
-                        if isinstance(candidate, list):
-                            raw_values.extend(candidate)
-                        else:
-                            raw_values.append(candidate)
-                
-                # Convert URLs to HTML links
-                for idx, raw in enumerate(raw_values):
-                    if raw and isinstance(raw, str) and (raw.startswith('http') or raw.startswith('/web/content')):
-                        # Add label for better identification
-                        label = f"{portal_field.replace('Images', '')} {idx + 1}"
-                        html_media_content[html_field].append(
-                            f'<a href="{raw}" target="_blank">{label}</a>'
-                        )
-            
-            # Prepare write values
             write_vals = {
-                'inquiry_media': '<br/>'.join(all_media) if all_media else '',
+                'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
-                'state': 'inquiry',
+                'state':               'inquiry',
             }
-            
-            # Add all Html media fields
-            for html_field, links in html_media_content.items():
-                if links:
-                    write_vals[html_field] = '<br/>'.join(links)
-            
-            self.write(write_vals)
-            
-            # Your existing attachment creation code continues here...
-            IrAttachment = self.env['ir.attachment']
-            WelfareDoc = self.env['welfare.document']
 
-            for portal_field, doc_type in document_field_map.items():
-                # Collect all raw values from all sources
+            for portal_field, html_field in portal_to_html_field.items():
+                label      = document_labels[portal_field]
                 raw_values = []
+
                 for source in document_sources:
                     if not isinstance(source, dict):
                         continue
@@ -879,60 +835,37 @@ class Welfare(models.Model):
                         else:
                             raw_values.append(candidate)
 
-                if not raw_values:
-                    continue
-
-                # Delete existing docs + attachments of this type before re-syncing
-                existing_docs = WelfareDoc.search([
-                    ('welfare_id', '=', self.id),
-                    ('document_type', '=', doc_type),
-                ])
-                existing_docs.mapped('attachment_id').unlink()
-                existing_docs.unlink()
-
-                # Download each image and create attachment + welfare.document
-                for raw in raw_values:
-                    if not raw:
-                        continue
-
-                    binary_value, filename = self._download_portal_document(
-                        portal_field, raw
+                valid_urls = [
+                    r for r in raw_values
+                    if r and isinstance(r, str) and (
+                        r.startswith('http') or r.startswith('/web/content')
                     )
-                    if not binary_value:
-                        continue
+                ]
 
-                    # Detect mimetype from filename
-                    ext = (filename or '').rsplit('.', 1)[-1].lower()
-                    mimetype = {
-                        'jpg': 'image/jpeg',
-                        'jpeg': 'image/jpeg',
-                        'png': 'image/png',
-                        'gif': 'image/gif',
-                        'pdf': 'application/pdf',
-                        'webp': 'image/webp',
-                    }.get(ext, 'application/octet-stream')
-
-                    attachment = IrAttachment.create({
-                        'name': filename or f'{doc_type}.jpg',
-                        'type': 'binary',
-                        'datas': binary_value,
-                        'res_model': 'welfare',
-                        'res_id': self.id,
-                        'mimetype': mimetype,
-                    })
-
-                    WelfareDoc.create({
-                        'welfare_id': self.id,
-                        'document_type': doc_type,
-                        'attachment_id': attachment.id,
-                    })
-
-                    _logger.info(
-                        "Saved %s document '%s' on welfare %s",
-                        doc_type, filename, self.id,
+                if valid_urls:
+                    links_html = ''.join(
+                        f'<div style="display:inline-block; margin:6px; text-align:center;">'
+                        f'<a href="{url}" target="_blank">'
+                        f'<img src="{url}" style="width:150px; height:130px; object-fit:contain; '
+                        f'border:1px solid #dee2e6; border-radius:6px; display:block;"/>'
+                        f'</a>'
+                        f'<div style="font-size:11px; color:#6c757d; margin-top:4px;">'
+                        f'{label} {idx + 1}'
+                        f'</div>'
+                        f'</div>'
+                        for idx, url in enumerate(valid_urls)
                     )
+                    write_vals[html_field] = (
+                        f'<div style="display:flex; flex-wrap:wrap; gap:4px;">'
+                        f'{links_html}'
+                        f'</div>'
+                    )
+                else:
+                    write_vals[html_field] = ''
 
-            result = self._handle_existing_application(application)
+            self.write(write_vals)
+
+            result  = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state}"
             message += f" | 📋 {result['message']}"
 
@@ -1209,16 +1142,29 @@ class Welfare(models.Model):
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
 
-    
     def action_move_to_hod(self):
         """HOD Approval - No limit check here"""
         for record in self:
+            missing_fields = []
+
+            if not record.application_form_media:
+                missing_fields.append("Application Form")
+            if not record.electricity_bill_media:
+                missing_fields.append("Electricity Bill")
+            if not record.gas_bill_media:
+                missing_fields.append("Gas Bill")
+            if not record.family_cnic_media:
+                missing_fields.append("Family CNIC")
+
+            if missing_fields:
+                raise ValidationError(_(
+                    "Please upload the following documents before approval:\n- %s"
+                ) % ("\n- ".join(missing_fields)))
+
             if not record.committee_remarks:
                 raise ValidationError('Please enter Committee Remarks!')
-            
-            # No limit check - just move to HOD approval
+
             record.state = 'hod_approve'
-    
     def action_move_to_member(self):
         for record in self:
             current_user = self.env.user
@@ -1296,25 +1242,6 @@ class Welfare(models.Model):
 
     
     def action_committee_approval(self):
-        for record in self:
-            missing_fields = []
-
-            # Check each document type exists
-            doc_types_present = record.document_ids.mapped('document_type')
-
-            if 'application_form' not in doc_types_present:
-                missing_fields.append("Application Form")
-            if 'electricity_bill' not in doc_types_present:
-                missing_fields.append("Electricity Bill")
-            if 'gas_bill' not in doc_types_present:
-                missing_fields.append("Gas Bill")
-            if 'family_cnic' not in doc_types_present:
-                missing_fields.append("Family CNIC")
-
-            if missing_fields:
-                raise ValidationError(_(
-                    "Please upload the following documents before approval:\n- %s"
-                ) % ("\n- ".join(missing_fields)))
 
             record.state = 'committee_approval'
         

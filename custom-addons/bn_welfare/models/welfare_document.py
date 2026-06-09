@@ -8,15 +8,6 @@ class WelfareDocument(models.Model):
     _order = 'create_date desc'
     
     welfare_id = fields.Many2one('welfare', string='Welfare Request', required=True, ondelete='cascade')
-    
-    document_type = fields.Selection([
-        ('application_form', 'Application Form'),
-        ('frc', 'FRC'),
-        ('family_cnic', 'Family CNIC'),
-        ('electricity_bill', 'Electricity Bill'),
-        ('gas_bill', 'Gas Bill'),
-    ], string='Document Type', required=True)
-    
     attachment_id = fields.Many2one('ir.attachment', string='Attachment', required=True, ondelete='cascade')
     
     # Related fields from attachment

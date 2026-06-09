@@ -226,42 +226,7 @@
                                 </group>
                             </group>
                         </page>
-                        <page name="attached_documents" string="Attached Documents">
-                            <field name="document_ids" nolabel="1"
-                                readonly="state not in ['draft', 'inquiry', 'committee_approval']">
-                                <tree create="false" delete="false" default_order="id desc">
-                                        <field name="document_type" widget="badge"
-                                            decoration-info="document_type in ['application_form']"
-                                            decoration-success="document_type in ['frc', 'family_cnic']"
-                                            decoration-warning="document_type in ['electricity_bill', 'gas_bill']"/>
-                                    
-                                    <field name="name" string="Document Name" 
-                                       column_invisible = "1"/>
-                                    
-                                    <field name="mimetype" string="Type" optional="hide"/>
-                                    <field name="file_size" string="Size" optional="hide"/>
-                                    <field name="create_date" string="Uploaded" widget="date" optional="hide"/>
-                                    
-                                    <button name="action_view_document" type="object"
-                                            string="View" icon="fa-eye"
-                                            class="btn-link text-info"
-                                            title="View Document"/>
-                                    
-                                    <button name="action_delete" type="object"
-                                            icon="fa-trash"
-                                            class="btn-link text-danger"
-                                            confirm="Are you sure you want to delete this document?"
-                                            title="Delete Document"/>
-                                    
-                                    <button string="Download"
-                                            type="url"
-                                            name="url"
-                                            icon="fa-download"
-                                            class="btn-link text-primary"
-                                            title="Download Document"/>
-                                </tree>
-                            </field>
-                        </page>
+
                         <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
                             <field name="inquiry_report_ids" readonly="1" mode="tree,form">
                                 <tree>
