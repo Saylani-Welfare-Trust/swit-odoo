@@ -156,7 +156,7 @@
 
                             <!-- ===== TOTALS ===== -->
                             <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="order.user_id.name"/></strong></div>
+                                <div>Entered by: <strong><t t-esc="order.user_id.employee_id.name"/></strong></div>
                                 <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/></strong></div>
                             </div>
 
@@ -186,7 +186,7 @@
                                         <strong>Date &amp; Time:</strong>
                                         <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
                                     </div>
-                                    <div><strong>Entered by: </strong> <t t-esc="order.user_id.name"/></div>
+                                    <div><strong>Entered by: </strong> <t t-esc="order.user_id.employee_id.name"/></div>
                                 </div>
                             </div>
 
