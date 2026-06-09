@@ -113,11 +113,12 @@ class Welfare(models.Model):
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # New Html fields for portal documents
-    application_form_media = fields.Text('Application Form Media')
-    frc_media              = fields.Text('FRC Media')
-    electricity_bill_media = fields.Text('Electricity Bill Media')
-    gas_bill_media         = fields.Text('Gas Bill Media')
-    family_cnic_media      = fields.Text('Family CNIC Media')
+    application_form_media = fields.Html('Application Form', sanitize=False, )
+    frc_media              = fields.Html('FRC', sanitize=False, )
+    electricity_bill_media = fields.Html('Electricity Bill', sanitize=False, )
+    gas_bill_media         = fields.Html('Gas Bill', sanitize=False, )
+    family_cnic_media      = fields.Html('Family CNIC', sanitize=False, )
+
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -835,8 +836,8 @@ class Welfare(models.Model):
                 else:
                     write_vals[html_field] = ''
 
-
-            self.write(write_vals)
+            # Replace self.write(write_vals) with:
+            self.sudo().write(write_vals)
 
             result  = self._handle_existing_application(application)
             message = f" | 📋 application status: {app_state}"
