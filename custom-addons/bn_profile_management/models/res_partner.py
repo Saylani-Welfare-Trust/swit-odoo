@@ -138,8 +138,8 @@ class ResPartner(models.Model):
             rec.donee_required_fields = False
             category_names = rec.category_id.mapped('name')
 
-            if 'Donee' in category_names and 'Individual' in category_names:
-                rec.donee_required_fields = True
+            # if 'Donee' in category_names and 'Individual' in category_names:
+            #     rec.donee_required_fields = True
 
             if 'Welfare' in category_names or 'Medical' in category_names:
                 rec.donee_required_fields = True
