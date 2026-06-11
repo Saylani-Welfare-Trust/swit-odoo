@@ -217,12 +217,12 @@ class BulkKeyIssuance(models.TransientModel):
                     valid_issuances.append(issuance)
 
             # 🚫 Block entire bunch if any key invalid
-            # if invalid_keys:
-            #     raise ValidationError(
-            #         "❌ Cannot return this Key Bunch!\n\n"
-            #         "Following keys are not in returnable state:\n" +
-            #         "\n".join([f"  • {k}" for k in invalid_keys])
-            #     )
+            if invalid_keys:
+                raise ValidationError(
+                    "❌ Cannot return this Key Bunch!\n\n"
+                    "Following keys are not in returnable state:\n" +
+                    "\n".join([f"  • {k}" for k in invalid_keys])
+                )
 
             # ✅ All keys valid → return entire bunch
             for issuance in valid_issuances:
