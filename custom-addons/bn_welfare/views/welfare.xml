@@ -26,7 +26,7 @@
             <form string="Document Image">
                 <sheet>
                     <group>
-                        <field name="document_type" readonly="1"/>
+                        <field name="document_type"/>
                         <field name="image_filename" string="File Name"/>
                         <!-- <field name="source_url" string="Source URL"/> -->
                     </group>
@@ -165,67 +165,13 @@
                             </field>
                         </page>
                         <page string="Documents" name="documents">
-
-                            <separator string="Application Form"/>
-                            <field name="document_image_ids"
-                                domain="[('document_type', '=', 'application_form')]"
-                                context="{'default_document_type': 'application_form'}"
-                                nolabel="1">
-                                <tree editable="false">
-                                    <field name="document_type" column_invisible="1"/>
+                            <field name="document_image_ids" nolabel="1" mode="tree">
+                                <tree default_group_by="document_type">
+                                    <field name="document_type" string="Document Type"/>
                                     <field name="image_filename" string="File Name"/>
                                     <field name="display_image" string="Preview" widget="html"/>
                                 </tree>
                             </field>
-
-                            <separator string="FRC"/>
-                            <field name="document_image_ids"
-                                domain="[('document_type', '=', 'frc')]"
-                                context="{'default_document_type': 'frc'}"
-                                nolabel="1">
-                                <tree editable="false">
-                                    <field name="document_type" column_invisible="1"/>
-                                    <field name="image_filename" string="File Name"/>
-                                    <field name="display_image" string="Preview" widget="html"/>
-                                </tree>
-                            </field>
-
-                            <separator string="Electricity Bill"/>
-                            <field name="document_image_ids"
-                                domain="[('document_type', '=', 'electricity_bill')]"
-                                context="{'default_document_type': 'electricity_bill'}"
-                                nolabel="1">
-                                <tree editable="false">
-                                    <field name="document_type" column_invisible="1"/>
-                                    <field name="image_filename" string="File Name"/>
-                                    <field name="display_image" string="Preview" widget="html"/>
-                                </tree>
-                            </field>
-
-                            <separator string="Gas Bill"/>
-                            <field name="document_image_ids"
-                                domain="[('document_type', '=', 'gas_bill')]"
-                                context="{'default_document_type': 'gas_bill'}"
-                                nolabel="1">
-                                <tree editable="false">
-                                    <field name="document_type" column_invisible="1"/>
-                                    <field name="image_filename" string="File Name"/>
-                                    <field name="display_image" string="Preview" widget="html"/>
-                                </tree>
-                            </field>
-
-                            <separator string="Family CNIC"/>
-                            <field name="document_image_ids"
-                                domain="[('document_type', '=', 'family_cnic')]"
-                                context="{'default_document_type': 'family_cnic'}"
-                                nolabel="1">
-                                <tree editable="false">
-                                    <field name="document_type" column_invisible="1"/>
-                                    <field name="image_filename" string="File Name"/>
-                                    <field name="display_image" string="Preview" widget="html"/>
-                                </tree>
-                            </field>
-
                         </page>
                         <page name="recurring_line" string="Recurring Details" invisible="state not in ['recurring','return']">
                             <field name="welfare_recurring_line_ids" readonly="state not in ['return']" >

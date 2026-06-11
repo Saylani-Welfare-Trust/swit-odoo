@@ -1,4 +1,4 @@
-from odoo import models, fields, _, api
+from odoo import models, fields, _, api, tools
 from odoo.exceptions import ValidationError, UserError
 
 import requests
@@ -113,38 +113,59 @@ class Welfare(models.Model):
     
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
-        # Computed Html fields for display only — never written by the form
-    application_form_media = fields.Html(
-        string='Application Form Media',
-        compute='_compute_document_media',
-        sanitize=False,
-        store=False
-    )
-    frc_media = fields.Html(
-        string='FRC Media',
-        compute='_compute_document_media',
-        sanitize=False,
-        store=False
-    )
-    electricity_bill_media = fields.Html(
-        string='Electricity Bill Media',
-        compute='_compute_document_media',
-        sanitize=False,
-        store=False
-    )
-    gas_bill_media = fields.Html(
-        string='Gas Bill Media',
-        compute='_compute_document_media',
-        sanitize=False,
-        store=False
-    )
-    family_cnic_media = fields.Html(
-        string='Family CNIC Media',
-        compute='_compute_document_media',
-        sanitize=False,
-        store=False
+        # Separate document image fields for each document type
+    application_form_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Application Forms',
+        domain=[('document_type', '=', 'application_form')]
     )
     
+    frc_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id', 
+        string='FRC Documents',
+        domain=[('document_type', '=', 'frc')]
+    )
+    
+    electricity_bill_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Electricity Bills',
+        domain=[('document_type', '=', 'electricity_bill')]
+    )
+    
+    gas_bill_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Gas Bills',
+        domain=[('document_type', '=', 'gas_bill')]
+    )
+    
+    family_cnic_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Family CNICs',
+        domain=[('document_type', '=', 'family_cnic')]
+    )
+
+    
+
+    app_form_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Application Forms', 
+                                domain=[('document_type', '=', 'application_form')])
+    frc_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                            string='FRC', 
+                            domain=[('document_type', '=', 'frc')])
+    elec_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Electricity Bill', 
+                                    domain=[('document_type', '=', 'electricity_bill')])
+    gas_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Gas Bill', 
+                                domain=[('document_type', '=', 'gas_bill')])
+    family_cnic_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Family CNIC', 
+                                    domain=[('document_type', '=', 'family_cnic')])
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # Store raw URLs (never touched by sanitizer)
@@ -153,7 +174,41 @@ class Welfare(models.Model):
     electricity_bill_urls  = fields.Text('Electricity Bill URLs')
     gas_bill_urls          = fields.Text('Gas Bill URLs')
     family_cnic_urls       = fields.Text('Family CNIC URLs')
-
+    # Computed fields for filtered document images
+    application_form_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Application Forms',
+        readonly=True
+    )
+    
+    frc_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='FRC Documents',
+        readonly=True
+    )
+    
+    electricity_bill_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Electricity Bills',
+        readonly=True
+    )
+    
+    gas_bill_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Gas Bills',
+        readonly=True
+    )
+    
+    family_cnic_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Family CNICs',
+        readonly=True
+    )
     # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
@@ -244,21 +299,19 @@ class Welfare(models.Model):
     def _save_portal_images_to_document_model(self):
         field_config = {
             'application_form_urls': 'application_form',
-            'frc_urls':              'frc',
+            'frc_urls': 'frc',
             'electricity_bill_urls': 'electricity_bill',
-            'gas_bill_urls':         'gas_bill',
-            'family_cnic_urls':      'family_cnic',
+            'gas_bill_urls': 'gas_bill',
+            'family_cnic_urls': 'family_cnic',
         }
 
         for url_field, doc_type in field_config.items():
             raw_urls = getattr(self, url_field, '') or ''
             urls = [u.strip() for u in raw_urls.splitlines() if u.strip()]
 
-            # Delete existing images for this document type before re-syncing
-            self.env['welfare.document.image'].sudo().search([
-                ('welfare_id', '=', self.id),
-                ('document_type', '=', doc_type),
-            ]).unlink()
+            # Delete existing images for this document type
+            existing_images = self.document_image_ids.filtered(lambda img: img.document_type == doc_type)
+            existing_images.unlink()
 
             for url in urls:
                 try:
@@ -267,18 +320,38 @@ class Welfare(models.Model):
 
                     filename = urlparse(url).path.rsplit('/', 1)[-1] or f"{doc_type}.jpg"
 
-                    self.env['welfare.document.image'].sudo().create({
-                        'welfare_id':     self.id,
-                        'document_type':  doc_type,
-                        'image_data':     base64.b64encode(response.content).decode('utf-8'),
+                    # Create using document_image_ids (the main field)
+                    self.env['welfare.document.image'].create({
+                        'welfare_id': self.id,
+                        'document_type': doc_type,
+                        'image_data': base64.b64encode(response.content).decode('utf-8'),
                         'image_filename': filename,
-                        'source_url':     url,
+                        'source_url': url,
                     })
 
                     _logger.info("Saved image %s for welfare %s type %s", filename, self.id, doc_type)
 
                 except Exception as e:
                     _logger.error("Failed saving image from %s: %s", url, str(e))
+    
+    @api.depends('document_image_ids')
+    def _compute_filtered_images(self):
+        for record in self:
+            record.application_form_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'application_form'
+            )
+            record.frc_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'frc'
+            )
+            record.electricity_bill_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'electricity_bill'
+            )
+            record.gas_bill_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'gas_bill'
+            )
+            record.family_cnic_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'family_cnic'
+            )                    
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -460,39 +533,7 @@ class Welfare(models.Model):
             else:
                 rec.previous_disbursement_id = False
 
-    @api.depends(
-        'application_form_urls', 'frc_urls',
-        'electricity_bill_urls', 'gas_bill_urls', 'family_cnic_urls'
-    )
-    def _compute_document_media(self):
-        def build_html(urls_raw, label):
-            if not urls_raw:
-                return ''
-            urls = [u.strip() for u in urls_raw.split('\n') if u.strip()]
-            if not urls:
-                return ''
-            links = ''.join(
-                f'<a href="{url}" target="_blank">{label} {idx + 1}</a><br/>'
-                for idx, url in enumerate(urls)
-            )
-            return links
 
-        for rec in self:
-            rec.application_form_media = build_html(
-                rec.application_form_urls, 'Application Form'
-            )
-            rec.frc_media = build_html(
-                rec.frc_urls, 'FRC'
-            )
-            rec.electricity_bill_media = build_html(
-                rec.electricity_bill_urls, 'Electricity Bill'
-            )
-            rec.gas_bill_media = build_html(
-                rec.gas_bill_urls, 'Gas Bill'
-            )
-            rec.family_cnic_media = build_html(
-                rec.family_cnic_urls, 'Family CNIC'
-            )
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
@@ -570,19 +611,15 @@ class Welfare(models.Model):
             
             # Show notification about auto-population
 
-            # REPLACE old return with this
             return {
                 'warning': {
-                    'title': 'Data Auto-Populated',
+                    'title': 'Data Auto-Populated', 
                     'message': (
                         f'Form has been automatically populated with data from previous application '
                         f'dated {previous_welfare.date}.\n\n'
                         f'Document images will be copied on save.\n\n'
                         f'Previous Disbursements can be viewed in the "Previous Disbursements" tab.'
                     )
-                },
-                'context': {
-                    'previous_welfare_id': previous_welfare.id
                 }
             }
     @api.model
@@ -1243,14 +1280,16 @@ class Welfare(models.Model):
             summary = "No records processed."
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
-
     def action_move_to_hod(self):
-        """HOD Approval - No limit check here"""
+        """HOD Approval - Check required fields and documents"""
         for record in self:
+            # Check for required documents
             missing_fields = []
 
             if not record.document_image_ids.filtered(lambda i: i.document_type == 'application_form'):
                 missing_fields.append("Application Form")
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'frc'):
+                missing_fields.append("FRC")
             if not record.document_image_ids.filtered(lambda i: i.document_type == 'electricity_bill'):
                 missing_fields.append("Electricity Bill")
             if not record.document_image_ids.filtered(lambda i: i.document_type == 'gas_bill'):
@@ -1260,13 +1299,22 @@ class Welfare(models.Model):
 
             if missing_fields:
                 raise ValidationError(_(
-                    "Please upload the following documents before approval:\n- %s"
+                    "Please upload the following documents before HOD approval:\n- %s"
                 ) % ("\n- ".join(missing_fields)))
 
+            # Check committee remarks
             if not record.committee_remarks:
-                raise ValidationError('Please enter Committee Remarks!')
+                raise ValidationError('Please enter Committee Remarks before moving to HOD approval!')
+            
+            # Check welfare lines exist
+            if not record.welfare_line_ids:
+                raise ValidationError('Please add at least one Welfare Line before HOD approval!')
 
+            # Move to HOD approval state
             record.state = 'hod_approve'
+            
+            # Add chatter message
+            record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
     def action_move_to_member(self):
         for record in self:
             current_user = self.env.user
