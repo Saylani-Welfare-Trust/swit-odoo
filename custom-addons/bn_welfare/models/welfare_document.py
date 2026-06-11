@@ -1,60 +1,46 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 
-class WelfareDocument(models.Model):
-    _name = 'welfare.document'
-    _description = 'Welfare Document'
-    _rec_name = 'name'
-    _order = 'create_date desc'
-    
-    welfare_id = fields.Many2one('welfare', string='Welfare Request', required=True, ondelete='cascade')
-    attachment_id = fields.Many2one('ir.attachment', string='Attachment', required=True, ondelete='cascade')
-    
-    # Related fields from attachment
-    name = fields.Char(string='Document Name', related='attachment_id.name', store=True)
-    mimetype = fields.Char(string='Mime Type', related='attachment_id.mimetype')
-    file_size = fields.Integer(string='File Size', related='attachment_id.file_size')
-    create_date = fields.Datetime(string='Upload Date', related='attachment_id.create_date')
-    
-    def action_view_document(self):
-        """View document directly in browser"""
-        self.ensure_one()
-        
-        if not self.attachment_id:
-            raise UserError("No document attached.")
-        
-        # Simply open the document in a new tab
-        return {
-            'type': 'ir.actions.act_url',
-            'url': f'/web/content/{self.attachment_id.id}?download=false',
-            'target': 'new',
-        }
-    
-    def action_delete(self):
-        """Delete the document and its attachment"""
-        self.ensure_one()
-        
-        # Store the welfare_id before unlinking
-        welfare_id = self.welfare_id.id
-        
-        if not welfare_id:
-            raise UserError("Cannot delete: Document is not linked to any welfare record.")
-        
-        # Store attachment for later deletion
-        attachment = self.attachment_id
-        
-        # Delete the document record
-        self.unlink()
-        
-        # Delete the attachment if it exists
-        if attachment:
-            attachment.unlink()
-        
-        # Return to the welfare form view
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'welfare',
-            'res_id': welfare_id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+class WelfareDocumentImage(models.Model):
+    _name = 'welfare.document.image'
+    _description = 'Welfare Document Image'
+
+    welfare_id = fields.Many2one('welfare', string='Welfare', ondelete='cascade')
+    document_type = fields.Selection([
+        ('application_form', 'Application Form'),
+        ('frc', 'FRC'),
+        ('electricity_bill', 'Electricity Bill'),
+        ('gas_bill', 'Gas Bill'),
+        ('family_cnic', 'Family CNIC'),
+    ], string='Document Type', required=True)
+    image_data = fields.Binary('Image', attachment=True)
+    image_filename = fields.Char('Filename')
+    source_url = fields.Char('Source URL')
+
+    # Computed field to show image from URL if no binary
+    display_image = fields.Html(
+        string='Preview',
+        compute='_compute_display_image',
+        sanitize=False
+    )
+    @api.depends('image_data', 'source_url', 'image_filename', 'document_type')
+    def _compute_display_image(self):
+        for rec in self:
+            label = dict(rec._fields['document_type'].selection).get(rec.document_type, 'Document')
+            
+            if rec.image_data and rec.id and isinstance(rec.id, int):
+                rec.display_image = (
+                    f'<a href="/web/image/welfare.document.image/{rec.id}/image_data" target="_blank" '
+                    f'style="display:inline-block;text-align:center;text-decoration:none;">'
+                    f'<div style="font-size:13px;color:#017e84;font-weight:500;">{label}</div>'
+                    f'</a>'
+                )
+            elif rec.source_url:
+                rec.display_image = (
+                    f'<a href="{rec.source_url}" target="_blank" '
+                    f'style="display:inline-block;text-align:center;text-decoration:none;">'
+                    f'<div style="font-size:13px;color:#017e84;font-weight:500;">{label}</div>'
+                    f'</a>'
+                )
+            else:
+                rec.display_image = '<span style="color:#bbb;font-size:11px;">No Image</span>'
