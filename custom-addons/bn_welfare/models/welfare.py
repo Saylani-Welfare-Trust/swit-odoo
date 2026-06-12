@@ -562,8 +562,7 @@ class Welfare(models.Model):
             self.children_education_status = previous_welfare.children_education_status
             self.main_issue = previous_welfare.main_issue
             
-             # Auto-populate residence/house info
-
+            # Auto-populate residence/house info
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -574,9 +573,8 @@ class Welfare(models.Model):
             self.gas_bill = previous_welfare.gas_bill
             self.electricity_bill = previous_welfare.electricity_bill
             self.home_other_info = previous_welfare.home_other_info
-                      
-             # Auto-populate financial info
-
+                    
+            # Auto-populate financial info
             self.monthly_income = previous_welfare.monthly_income
             self.outstanding_amount = previous_welfare.outstanding_amount
             self.monthly_household_expense = previous_welfare.monthly_household_expense
@@ -587,13 +585,13 @@ class Welfare(models.Model):
             self.institute_name = previous_welfare.institute_name
             
             # Auto-populate employment info
-
             self.designation = previous_welfare.designation
             self.company_name = previous_welfare.company_name
             self.company_phone = previous_welfare.company_phone
             self.company_address = previous_welfare.company_address
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
+            
             # Auto-populate URL fields
             if previous_welfare.application_form_urls:
                 self.application_form_urls = previous_welfare.application_form_urls
@@ -605,19 +603,22 @@ class Welfare(models.Model):
                 self.gas_bill_urls = previous_welfare.gas_bill_urls
             if previous_welfare.family_cnic_urls:
                 self.family_cnic_urls = previous_welfare.family_cnic_urls
+                
             # Auto-populate family info
             self.dependent_person = previous_welfare.dependent_person
             self.household_member = previous_welfare.household_member
             
+            # Store the previous welfare ID in context for image copying on save
+            self = self.with_context(previous_welfare_id=previous_welfare.id)
+            
             # Show notification about auto-population
-
             return {
                 'warning': {
                     'title': 'Data Auto-Populated', 
                     'message': (
                         f'Form has been automatically populated with data from previous application '
                         f'dated {previous_welfare.date}.\n\n'
-                        f'Document images will be copied on save.\n\n'
+                        f'Document images will be copied when you save the record.\n\n'
                         f'Previous Disbursements can be viewed in the "Previous Disbursements" tab.'
                     )
                 }
