@@ -427,6 +427,7 @@ class DonationInKind(models.Model):
             return {
                 'name': _('Product Variants'),
                 'view_mode': 'form',
+                'res_model': 'product.product',
                 'type': 'ir.actions.act_window',
                 'res_id': record.product_id.id,
             }
