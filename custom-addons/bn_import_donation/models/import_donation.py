@@ -337,42 +337,46 @@ class ImportDonation(models.Model):
             'donor':      self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
-        all_records = self.env['valid.import.donation'].search([
+        valid_records = self.env['valid.import.donation'].search([
             ('import_donation_id', '=', self.id),
-        ]) + self.env['invalid.import.donation'].search([
+        ])
+        invalid_records = self.env['invalid.import.donation'].search([
             ('import_donation_id', '=', self.id),
         ])
 
-        if not all_records:
+        if not valid_records and not invalid_records:
             raise ValidationError('No records found for this import.')
 
-        # ── Bulk fetch existing partners (both Donee and Donor) ──
-        mobiles = [r.mobile for r in all_records if r.mobile]
+        # Collect all mobiles from both
+        mobiles = list(set(
+            [r.mobile for r in valid_records if r.mobile] +
+            [r.mobile for r in invalid_records if r.mobile]
+        ))
 
-        existing_donees = Partner.search([
-            ('mobile', 'in', mobiles),
-            ('category_id.name', 'in', ['Donee']),
-        ])
-        existing_donors = Partner.search([
-            ('mobile', 'in', mobiles),
-            ('category_id.name', 'in', ['Donor']),
-        ])
-
-        existing_donees_by_mobile = {p.mobile: p for p in existing_donees}
-        existing_donors_by_mobile = {p.mobile: p for p in existing_donors}
+        # Bulk fetch existing partners
+        existing_donees_by_mobile = {
+            p.mobile: p for p in Partner.search([
+                ('mobile', 'in', mobiles),
+                ('category_id.name', 'in', ['Donee']),
+            ])
+        }
+        existing_donors_by_mobile = {
+            p.mobile: p for p in Partner.search([
+                ('mobile', 'in', mobiles),
+                ('category_id.name', 'in', ['Donor']),
+            ])
+        }
 
         partners_to_register = []
 
-        for record in all_records:
+        def process_record(record):
             mobile = record.mobile
             if not mobile:
-                continue
+                return
 
             if record.is_student:
-                # ── Donee / Student ──
                 if mobile in existing_donees_by_mobile:
-                    continue
-
+                    return
                 partner = Partner.create({
                     'name': record.donor_student_name or f'Undefined {mobile}',
                     'country_code_id': Country.id,
@@ -387,12 +391,9 @@ class ImportDonation(models.Model):
                 })
                 existing_donees_by_mobile[mobile] = partner
                 partners_to_register.append(partner)
-
             else:
-                # ── Donor ──
                 if mobile in existing_donors_by_mobile:
-                    continue
-
+                    return
                 partner = Partner.create({
                     'name': record.donor_student_name or f'Undefined {mobile}',
                     'country_code_id': Country.id,
@@ -406,6 +407,12 @@ class ImportDonation(models.Model):
                 })
                 existing_donors_by_mobile[mobile] = partner
                 partners_to_register.append(partner)
+
+        for record in valid_records:
+            process_record(record)
+
+        for record in invalid_records:
+            process_record(record)
 
         for partner in partners_to_register:
             partner.action_register()
