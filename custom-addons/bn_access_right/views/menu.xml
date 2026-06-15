@@ -9,9 +9,9 @@
         <field name="groups_id" eval="[(6, 0, [ref('contacts_menu_group')])]"/>
     </record>
     
-    <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
+    <!-- <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('dashboard_menu_group')])]"/>
-    </record>
+    </record> -->
     
     <record id="hr.menu_hr_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('employees_menu_group')])]"/>
