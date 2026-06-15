@@ -80,8 +80,9 @@ class APIDonationWizard(models.TransientModel):
                 'end_date': self.end_date,
                 'name': f"Donation Fetch Page {page}",
                 'page': page,
-                'per_page': per_page,
             })
+
+            per_page = history.per_page or 50
 
             self.create_fetch_log(
                 history.id,

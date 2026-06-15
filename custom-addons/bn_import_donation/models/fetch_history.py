@@ -6,6 +6,8 @@ class FetchHistory(models.Model):
     _description = "Fetch History"
 
 
+    name = fields.Char('Name')
+
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
 
