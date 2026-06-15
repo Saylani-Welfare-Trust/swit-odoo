@@ -541,7 +541,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'donation.home.service',
                 [['name', '=', this.state.record_number]],
-                ['name', 'state', 'donor_id', 'service_charges', 'amount', 'donation_home_service_line_ids'],
+                ['name', 'state', 'donor_id', 'service_charges', 'donation_home_service_line_ids'],
                 { limit: 1 }
             );
 
@@ -862,7 +862,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         let addedProductsCount = await this.addProductsToOrder(dhsLines, record, selectedOrder);
         
         // Add service charge line if present
-        if ((record.service_charges && parseFloat(record.service_charges) > 0) || (record.amount && parseFloat(record.amount) > 0)) {
+        if (record.service_charges && parseFloat(record.service_charges) > 0) {
             // Fetch the service product
             const serviceProduct = await this.orm.searchRead(
                 'product.product',
@@ -891,7 +891,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
-                    price_extra: record?.service_charges + record?.amount,
+                    price_extra: record.service_charges,
                 });
 
                 addedProductsCount++;
