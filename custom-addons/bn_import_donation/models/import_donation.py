@@ -12,6 +12,7 @@ state_selection = [
     ('validated',  'Validated'),
     ('create_donor', 'Create Donor'),       
     ('upload', 'Uploaded'),
+    ('done', 'Done'),
 ]
 
 
@@ -278,7 +279,7 @@ class ImportDonation(models.Model):
         InvalidDonation.create(invalid_vals_list)
         ValidDonation.create(valid_vals_list)
 
-        self.state = 'create_donor'
+        self.state = 'validated'
 
     def action_register_donors(self):
         """Separate button action to search/create donors/students for valid records"""
@@ -340,7 +341,7 @@ class ImportDonation(models.Model):
                         ])]
                     })
                     donor.action_register()
-        self.state = 'upload'
+        self.state = 'done'
 
 
     def action_upload_excel_file(self):
@@ -510,7 +511,7 @@ class ImportDonation(models.Model):
         })
 
         self.journal_entry_id = journal_entry.id
-        self.state = 'upload'
+        self.state = 'create_donor'
 
     def action_show_journal_entry(self):
         return {
