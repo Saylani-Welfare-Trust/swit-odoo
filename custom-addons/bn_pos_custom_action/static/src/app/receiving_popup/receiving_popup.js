@@ -891,7 +891,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
-                    price_extra: record?.service_charges + record?.total_amount,
+                    price_extra: record?.service_charges + record?.amount,
                 });
 
                 addedProductsCount++;
