@@ -18,9 +18,22 @@
                 <field name="currency"/>
                 <field name="total_amount"/>
                 <field name="total_amount_local"/>
+                <field name="partner_creation_status" widget="badge" 
+                    decoration-success="partner_creation_status == 'created'"
+                    decoration-warning="partner_creation_status == 'pending'"
+                    decoration-danger="partner_creation_status == 'failed'"/>                
             </tree>
         </field>
     </record>
+    <record id="action_create_partners" model="ir.actions.server">
+        <field name="name">Create Partners for Selected</field>
+        <field name="model_id" ref="model_api_donation"/>
+        <field name="binding_model_id" ref="model_api_donation"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = records.action_create_partners_for_selected()
+        </field>
+    </record>   
     
     <record id="api_donation_form_view" model="ir.ui.view">
         <field name="name">api.donation.form.view</field>

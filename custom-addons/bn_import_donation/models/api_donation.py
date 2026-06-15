@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.exceptions import ValidationError
 
 
 class APIDonation(models.Model):
@@ -51,3 +52,151 @@ class APIDonation(models.Model):
     fetch_history_id = fields.Many2one('fetch.history', string="Fetch History", tracking=True)
     donor_id = fields.Many2one('res.partner', string="Donor", tracking=True)
     qurbani = fields.Boolean('Is Qurbani', tracking=True)
+    partner_creation_status = fields.Selection([
+        ('pending', 'Pending'),
+        ('created', 'Created'),
+        ('skipped', 'Skipped'),
+        ('failed', 'Failed'),
+    ], string="Partner Status", default='pending', tracking=True)
+    
+    def action_create_partners_for_selected(self):
+        """Create partners for selected donation records"""
+        if not self:
+            raise ValidationError(_("No records selected!"))
+        
+        Partner = self.env['res.partner']
+        Country = self.env['res.country']
+        
+        # Get category IDs
+        donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
+        individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
+        
+        category_ids = []
+        if donor_category:
+            category_ids.append(donor_category.id)
+        if individual_category:
+            category_ids.append(individual_category.id)
+        
+        # Default partner for records without donor info
+        default_partner = Partner.search(
+            [('primary_registration_id', '=', '2025-9999998-9')], 
+            limit=1
+        )
+        default_partner_id = default_partner.id if default_partner else False
+        
+        # Collect unique donors from selected records
+        unique_donors = {}
+        records_to_update = []
+        
+        for record in self:
+            if record.partner_creation_status != 'pending':
+                continue  # Skip already processed records
+            
+            if not record.phone and not record.email:
+                # No donor info, assign default partner
+                if default_partner_id:
+                    record.write({
+                        'donor_id': default_partner_id,
+                        'partner_creation_status': 'skipped',
+                    })
+                continue
+            
+            mobile = record.phone[-10:] if record.phone else ''
+            
+            # Find country
+            country_code = record.country or ''
+            country = Country.search([('code', '=', country_code)], limit=1)
+            
+            # Create unique key
+            key = (mobile, country.id if country else False)
+            
+            if key not in unique_donors:
+                unique_donors[key] = {
+                    'name': record.name or f'Donor {mobile}',
+                    'mobile': mobile,
+                    'email': record.email,
+                    'cnic': record.cnic,
+                    'country_id': country.id if country else False,
+                    'records': []
+                }
+            
+            unique_donors[key]['records'].append(record.id)
+        
+        # Process each unique donor
+        created_count = 0
+        skipped_count = 0
+        failed_count = 0
+        partner_mapping = {}
+        
+        for key, donor_data in unique_donors.items():
+            try:
+                mobile, country_id = key
+                
+                # Check if partner already exists
+                existing_partner = Partner.search([
+                    '|',
+                    ('email', '=', donor_data['email']),
+                    ('mobile', '=', donor_data['mobile']),
+                ], limit=1)
+                
+                if existing_partner:
+                    # Check if it's a donor
+                    is_donor = donor_category and donor_category.id in existing_partner.category_id.ids
+                    if not is_donor and category_ids:
+                        # Add donor categories
+                        existing_partner.write({
+                            'category_id': [(4, cat_id) for cat_id in category_ids if cat_id]
+                        })
+                    
+                    partner_mapping[key] = existing_partner.id
+                    skipped_count += 1
+                else:
+                    # Create new partner
+                    new_partner = Partner.create({
+                        'name': donor_data['name'],
+                        'mobile': donor_data['mobile'],
+                        'email': donor_data['email'],
+                        'cnic_no': donor_data['cnic'],
+                        'country_code_id': donor_data['country_id'],
+                        'category_id': [(6, 0, [cat_id for cat_id in category_ids if cat_id])],
+                    })
+                    
+                    partner_mapping[key] = new_partner.id
+                    created_count += 1
+                    
+            except Exception as e:
+                failed_count += 1
+                # _logger.error(f"Failed to create partner for key {key}: {str(e)}")
+                continue
+        
+        # Update donation records with partner IDs
+        records_updated = 0
+        for key, donor_data in unique_donors.items():
+            partner_id = partner_mapping.get(key)
+            if partner_id:
+                for record_id in donor_data['records']:
+                    self.browse(record_id).write({
+                        'donor_id': partner_id,
+                        'partner_creation_status': 'created',
+                    })
+                    records_updated += 1
+        
+        # Show result message
+        message = f"""
+        Partner Creation Complete:
+        - Created: {created_count}
+        - Already Existed: {skipped_count}
+        - Failed: {failed_count}
+        - Records Updated: {records_updated}
+        """
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Partner Creation',
+                'message': message,
+                'type': 'success',
+                'sticky': False,
+            }
+        }
