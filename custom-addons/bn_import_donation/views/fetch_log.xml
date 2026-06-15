@@ -14,10 +14,22 @@
         </field>
     </record>
 
-    <record id="fetch_log_action" model="ir.actions.act_window">
-        <field name="name">Fetch Logs</field>
+    <record id="fetch_all_log_action" model="ir.actions.act_window">
+        <field name="name">Fetch All Logs</field>
         <field name="res_model">fetch.log</field>
         <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Waiting for Fetch Logs....
+            </p>
+        </field>
+    </record>
+    
+    <record id="fetch_error_log_action" model="ir.actions.act_window">
+        <field name="name">Fetch Error Logs</field>
+        <field name="res_model">fetch.log</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('status', '=', 'Error')]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for Fetch Logs....
@@ -28,8 +40,21 @@
     <menuitem
         id="fetch_log_menu"
         name="Fetch Logs"
-        action="fetch_log_action"
         parent="bn_import_donation.api_donation_menu"
         sequence="3"/>
+
+    <menuitem
+        id="fetch_all_log_menu"
+        name="Fetch All Logs"
+        action="fetch_all_log_action"
+        parent="fetch_log_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="fetch_error_log_menu"
+        name="Fetch Error Logs"
+        action="fetch_error_log_action"
+        parent="fetch_log_menu"
+        sequence="1"/>
 
 </odoo>
