@@ -58,7 +58,7 @@ class DonationInKind(models.Model):
 
     quantity = fields.Float('Quantity')
 
-    analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytical_account_id', string='Analytic Account', store=True)
+    # analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytical_account_id', string='Analytic Account', store=True)
 
     donation_in_kind_line_ids = fields.One2many('donation.in.kind.line', 'donation_in_kind_id', string="Donation In Kind Lines")
     product_valuation_committee_line_ids = fields.One2many('product.valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")
