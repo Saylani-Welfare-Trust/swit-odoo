@@ -9,9 +9,9 @@
         <field name="name">Contacts Menu</field>
     </record>
     
-    <record id="dashboard_menu_group" model="res.groups">
+    <!-- <record id="dashboard_menu_group" model="res.groups">
         <field name="name">Dashboard Menu</field>
-    </record>
+    </record> -->
     
     <record id="employees_menu_group" model="res.groups">
         <field name="name">Employee Menu</field>
