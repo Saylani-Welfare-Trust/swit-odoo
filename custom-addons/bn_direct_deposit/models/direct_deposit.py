@@ -17,7 +17,8 @@ class DirectDeposit(models.Model):
     _description = "Direct Deposit"
     _order = "id desc"
 
-
+    favor = fields.Char('favor')
+    cnic_no = fields.Char('CNIC No.', size=15)
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)

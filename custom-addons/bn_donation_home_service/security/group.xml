@@ -14,9 +14,9 @@
         <field name="name">Donation Home Service / Create Access</field>
     </record>
     
-    <record id="donation_home_service_read_access_group" model="res.groups">
+    <!-- <record id="donation_home_service_read_access_group" model="res.groups">
         <field name="name">Donation Home Service / Read Access</field>
-    </record>
+    </record> -->
 
     <record id="donation_home_service_cancel_group" model="res.groups">
         <field name="name">Donation Home Service / Cancel Rights</field>

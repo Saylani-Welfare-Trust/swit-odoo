@@ -14,7 +14,9 @@
                 <button name="action_select_advance_donation"
                         string="Select from Advance Donation"
                         type="object"
-                        class="btn-primary"/>
+                        class="btn-primary"
+                        invisible="state not in ['draft', 'hod_approve','mem_approve'] "
+                        />
             </xpath>
             </field>
         </record>

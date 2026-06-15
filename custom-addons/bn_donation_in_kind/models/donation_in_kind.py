@@ -477,7 +477,12 @@ class DonationInKind(models.Model):
             self.create({
                 'donor_id': data['donor_id'],
                 'product_id': line['product_id'],
-                'quantity': line['quantity']
+                'quantity': line['quantity'],
+                'donation_in_kind_line_ids': [(0, 0, {
+                    'product_id': line['product_id'],
+                    'quantity': line['quantity'],
+                    'avg_price': line['quantity'],
+                })]
             })
 
         return {

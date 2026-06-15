@@ -50,7 +50,7 @@ class APIDonationWizard(models.TransientModel):
         })
 
     # =========================================================
-    # ENTRY POINT (ONLY MODIFIED FOR PAGINATION)
+    # ENTRY POINT (NOW PER PAGE HISTORY)
     # =========================================================
     def action_fetch_donation(self):
         self.ensure_one()
@@ -68,26 +68,26 @@ class APIDonationWizard(models.TransientModel):
         auth_url = f"{company.url.rstrip('/')}/api/odoo/auth"
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
-        history = self.env['fetch.history'].create({
-            'start_date': self.start_date,
-            'end_date': self.end_date,
-        })
-
-        self.create_fetch_log(history.id, "Initiating donation fetch.", 'Initiated', 'Started')
-
-        # =========================================================
-        # PAGINATION LOGIC (ADDED)
-        # =========================================================
-        page = history.page or 1
-        per_page = history.per_page or 50
-        donations_info = []
+        page = 1
+        per_page = 50
 
         while True:
+
+            # =========================================================
+            # 🔥 CREATE NEW HISTORY FOR EACH PAGE
+            # =========================================================
+            history = self.env['fetch.history'].create({
+                'start_date': self.start_date,
+                'end_date': self.end_date,
+                'page': page,
+            })
+
+            self.create_fetch_log(history.id, f"Starting Page {page}", "Initiated", "Page-wise fetch started")
 
             payload = {
                 "status": "success",
                 "page": page,
-                "perPage": per_page,
+                "perPage": history.per_page or 50,
             }
 
             if self.start_date:
@@ -95,13 +95,6 @@ class APIDonationWizard(models.TransientModel):
 
             if self.end_date:
                 payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
-
-            self.create_fetch_log(
-                history.id,
-                f"Fetching page {page}",
-                "Pagination",
-                str(payload)
-            )
 
             page_data = self._fetch_donations_from_api(
                 auth_url,
@@ -114,41 +107,28 @@ class APIDonationWizard(models.TransientModel):
             )
 
             if not page_data:
+                self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
 
-            donations_info.extend(page_data)
+            # =========================================================
+            # PROCESS THIS PAGE ONLY
+            # =========================================================
+            self._process_single_page(page_data, history, company)
 
-            history.write({'page': page + 1})
-
+            # stop condition
             if len(page_data) < per_page:
                 break
 
             page += 1
 
-        if not donations_info:
-            self.create_fetch_log(
-                history.id,
-                "No donations found",
-                'No Data',
-                'Empty response'
-            )
-            return True
+        return True
 
-        # =========================================================
-        # KEEP YOUR ORIGINAL LOGIC BELOW (UNCHANGED)
-        # =========================================================
+    # =========================================================
+    # PAGE PROCESSOR (WRAPPER OVER YOUR EXISTING LOGIC)
+    # =========================================================
+    def _process_single_page(self, donations_info, history, company):
 
-        total_records = len(donations_info)
-
-        qurbani_records = [r for r in donations_info if r.get('qurbani') is True]
-        normal_records = [r for r in donations_info if r.get('qurbani') is not True]
-
-        self.create_fetch_log(
-            history.id,
-            "Donation Summary",
-            "Summary",
-            f"Total={total_records}, Qurbani={len(qurbani_records)}, Normal={len(normal_records)}"
-        )
+        self.create_fetch_log(history.id, "Processing page data", "Processing", f"Records: {len(donations_info)}")
 
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
@@ -179,21 +159,10 @@ class APIDonationWizard(models.TransientModel):
                 'picking_id': result.get('picking_id') or False,
             })
 
-            self.env['api.donation'].browse(result['new_donations']).write({
-                'fetch_history_id': history.id
-            })
-
-        self.create_fetch_log(
-            history.id,
-            "Completed successfully",
-            'Completed',
-            'Done'
-        )
-
-        return True
+        self.create_fetch_log(history.id, "Page Completed", "Done", "Page processing finished")
 
     # =========================================================
-    # API CALL (ONLY ADDITION: override_payload)
+    # API CALL
     # =========================================================
     def _fetch_donations_from_api(
         self, auth_url, donate_url, company,
@@ -220,19 +189,7 @@ class APIDonationWizard(models.TransientModel):
                     'authorization': f'bearer {token}'
                 })
 
-                # =================================================
-                # PAGINATION SUPPORT (ADDED ONLY HERE)
-                # =================================================
-                if override_payload:
-                    payload = override_payload
-                else:
-                    payload = {"status": "success"}
-
-                    if self.start_date:
-                        payload['startDate'] = self._date_to_iso_z(self.start_date, time.min)
-
-                    if self.end_date:
-                        payload['endDate'] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+                payload = override_payload or {"status": "success"}
 
                 resp = session.post(donate_url, json=payload, timeout=60)
                 resp.raise_for_status()
@@ -654,7 +611,7 @@ class APIDonationWizard(models.TransientModel):
                 
                 # Try to register partners
                 try:
-                    created_partners.action_register()
+                    # created_partners.action_register()
                     self.create_fetch_log(
                         history.id,
                         f"✓ Successfully registered {actually_created_partners} partners",

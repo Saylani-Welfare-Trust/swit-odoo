@@ -10,6 +10,7 @@ import xlrd
 state_selection = [
     ('draft', 'Draft'),
     ('validated',  'Validated'),
+    ('create_donor', 'Create Donor'),
     ('upload', 'Uploaded'),
 ]
 
@@ -80,37 +81,37 @@ class ImportDonation(models.Model):
                 rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
             else:
                 raise ValidationError('Unsupported file format.')
-        except Exception:
-            raise ValidationError('The uploaded file is not a valid Excel file.')
+        except Exception as e:
+            raise ValidationError(f'The uploaded file is not a valid Excel file. Error: {str(e)}')
 
         # Cache frequently used models
-        Partner = self.env['res.partner']
-        Country = self.env['res.country'].search([('name', '=', 'Pakistan')])
         ValidDonation = self.env['valid.import.donation']
         InvalidDonation = self.env['invalid.import.donation']
 
-        # Buffer for valid and invalid records to minimize database hits
+        # Buffer for valid and invalid records
         valid_vals_list = []
         invalid_vals_list = []
 
         # Header mapping
         header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
         header_map = {name: pos for name, pos in header_list}
+        
+        # Debug: Print header mapping
+        print("Header Map:", header_map)
 
         def get_value(row, name):
             idx = header_map.get(name)
-            return row[idx] if idx is not None and idx < len(row) else None
+            if idx is not None and idx < len(row):
+                value = row[idx]
+                # Convert to string and strip if it's not None
+                return str(value).strip() if value is not None else None
+            return None
 
-        # Preload category IDs to avoid ref() calls repeatedly
-        category_refs = {
-            'student': self.env.ref('bn_profile_management.student_partner_category').id,
-            'donee': self.env.ref('bn_profile_management.donee_partner_category').id,
-            'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
-            'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
-        }
-
-        for row in rows:
+        for row_num, row in enumerate(rows, start=2):
             try:
+                # Debug: Print row data
+                print(f"Row {row_num}:", row)
+                
                 # Shared fields
                 transaction_id = get_value(row, 'Transaction ID')
                 name = get_value(row, 'Name')
@@ -123,12 +124,21 @@ class ImportDonation(models.Model):
                 reference = get_value(row, 'Reference')
                 course = get_value(row, 'Course')
 
+                # Debug: Print extracted values
+                print(f"Extracted - Name: {name}, Mobile: {mobile}, CNIC: {cnic}, Email: {email}")
+
                 if not amount or float(amount) < 0:
                     continue
 
                 # Normalize mobile number
-                if mobile and len(mobile) != 10:
+                if mobile and mobile.lower() != 'none' and len(mobile) != 10:
                     mobile = mobile[-10:]
+                
+                # Convert mobile to string and ensure it's not 'None'
+                mobile = mobile if mobile and mobile.lower() != 'none' else ''
+                name = name if name and name.lower() != 'none' else ''
+                cnic = cnic if cnic and cnic.lower() != 'none' else ''
+                email = email if email and email.lower() != 'none' else ''
 
                 gateway_name = self.gateway_config_id.name or ''
                 is_student_import = gateway_name in ['SMIT', 'PIAIC']
@@ -172,23 +182,6 @@ class ImportDonation(models.Model):
                             'reason': f'The specified course "{course}" does not exist in the System.',
                         })
                         continue
-
-                    # Create or find partner
-                    partner = Partner.search([('mobile', '=', mobile), ('category_id.name', 'in', ['Donee'])], limit=1)
-                    if not partner and mobile:
-                        partner = Partner.create({
-                            'name': name or f'Undefined {mobile}',
-                            'country_code_id': Country.id,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'category_id': [(6, 0, [
-                                category_refs['donee'],
-                                category_refs['individual'],
-                                category_refs['student']
-                            ])]
-                        })
-                        partner.action_register()
 
                     if not name:
                         invalid_vals_list.append({
@@ -259,21 +252,6 @@ class ImportDonation(models.Model):
                         })
                         continue
 
-                    donor = Partner.search([('mobile', '=', mobile), ('category_id.name', 'in', ['Donor'])], limit=1)
-                    if not donor and mobile:
-                        donor = Partner.create({
-                            'name': name or f'Undefined {mobile}',
-                            'country_code_id': Country.id,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'category_id': [(6, 0, [
-                                category_refs['donor'],
-                                category_refs['individual']
-                            ])]
-                        })
-                        donor.action_register()
-
                     valid_vals_list.append({
                         'import_donation_id': self.id,
                         'transaction_id': transaction_id,
@@ -290,13 +268,80 @@ class ImportDonation(models.Model):
             except Exception as e:
                 InvalidDonation.create({
                     'import_donation_id': self.id,
-                    'reason': f'Unexpected error processing row: {str(e)}'
+                    'reason': f'Unexpected error processing row {row_num}: {str(e)}'
                 })
 
+        # Debug: Print counts before creation
+        print(f"Valid records to create: {len(valid_vals_list)}")
+        print(f"Invalid records to create: {len(invalid_vals_list)}")
+        
         InvalidDonation.create(invalid_vals_list)
         ValidDonation.create(valid_vals_list)
 
+        self.state = 'create_donor'
+
+    def action_register_donors(self):
+        """Separate button action to search/create donors/students for valid records"""
+        if not self.valid_import_donation_ids:
+            raise ValidationError('No valid records to register donors for.')
+
+        Partner = self.env['res.partner']
+        Country = self.env['res.country'].search([('name', '=', 'Pakistan')])
+        
+        category_refs = {
+            'student': self.env.ref('bn_profile_management.student_partner_category').id,
+            'donee': self.env.ref('bn_profile_management.donee_partner_category').id,
+            'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
+            'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
+        }
+
+        for line in self.valid_import_donation_ids:
+            if not line.mobile:
+                continue
+
+            if line.is_student:
+                # Search or create student (donee)
+                partner = Partner.search([
+                    ('mobile', '=', line.mobile), 
+                    ('category_id.name', 'in', ['Donee'])
+                ], limit=1)
+                
+                if not partner:
+                    partner = Partner.create({
+                        'name': line.donor_student_name or f'Undefined {line.mobile}',
+                        'country_code_id': Country.id,
+                        'mobile': line.mobile,
+                        'cnic_no': line.cnic_no,
+                        'email': line.email,
+                        'category_id': [(6, 0, [
+                            category_refs['donee'],
+                            category_refs['individual'],
+                            category_refs['student']
+                        ])]
+                    })
+                    partner.action_register()
+            else:
+                # Search or create donor
+                donor = Partner.search([
+                    ('mobile', '=', line.mobile), 
+                    ('category_id.name', 'in', ['Donor'])
+                ], limit=1)
+                
+                if not donor:
+                    donor = Partner.create({
+                        'name': line.donor_student_name or f'Undefined {line.mobile}',
+                        'country_code_id': Country.id,
+                        'mobile': line.mobile,
+                        'cnic_no': line.cnic_no,
+                        'email': line.email,
+                        'category_id': [(6, 0, [
+                            category_refs['donor'],
+                            category_refs['individual']
+                        ])]
+                    })
+                    donor.action_register()
         self.state = 'validated'
+
 
     def action_upload_excel_file(self):
         if not self.valid_import_donation_ids:

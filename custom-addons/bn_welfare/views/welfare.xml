@@ -19,6 +19,28 @@
             </tree>
         </field>
     </record>
+    <record id="view_welfare_document_image_form" model="ir.ui.view">
+        <field name="name">welfare.document.image.form</field>
+        <field name="model">welfare.document.image</field>
+        <field name="arch" type="xml">
+            <form string="Document Image">
+                <sheet>
+                    <group>
+                        <field name="document_type"/>
+                        <field name="image_filename" string="File Name"/>
+                        <!-- <field name="source_url" string="Source URL"/> -->
+                    </group>
+                    <group string="Image">
+                        <field name="image_data" 
+                            widget="image"
+                            string="Image"
+                            options="{'size': [400, 400]}"
+                            nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
 
     <record id="welfare_view_form" model="ir.ui.view">
         <field name="name">welfare.view.form</field>
@@ -91,38 +113,14 @@
                         <group name="welfare_col_2">
                             <field name="is_individual" invisible="1"/>
                             <field name="application_form_name" invisible="1"/>
-                            <field name="application_form_media" 
-                                widget="html" 
-                                readonly="1"
-                                />
-                            
-                            <!-- FRC -->
                             <field name="frc_name" invisible="1"/>
-                            <field name="frc_media" 
-                                widget="html" 
-                                readonly="1"/>
-                            
                             <!-- Electricity Bill -->
                             <field name="electricity_bill_name" invisible="1"/>
-                            <field name="electricity_bill_media" 
-                                widget="html" 
-                                readonly="1"
-                                />
-                            
                             <!-- Gas Bill -->
                             <field name="gas_bill_name" invisible="1"/>
-                            <field name="gas_bill_media" 
-                                widget="html" 
-                                readonly="1"
-                                />
                             
                             <!-- Family CNIC -->
                             <field name="family_cnic_name" invisible="1"/>
-                            <field name="family_cnic_media" 
-                                widget="html" 
-                                readonly="1"
-                                />                           
-                            
                             <field name="old_system_id" readonly="state != 'draft'"/>
                             <field name="portal_application_id" readonly="1" invisible="is_individual"/>
                             <field name="portal_review_notes" readonly="1" />
@@ -163,6 +161,15 @@
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
 
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Documents" name="documents">
+                            <field name="document_image_ids" nolabel="1" mode="tree">
+                                <tree default_group_by="document_type">
+                                    <field name="document_type" string="Document Type"/>
+                                    <field name="image_filename" string="File Name"/>
+                                    <field name="display_image" string="Preview" widget="html"/>
                                 </tree>
                             </field>
                         </page>
