@@ -343,7 +343,6 @@ class ImportDonation(models.Model):
                     donor.action_register()
         self.state = 'done'
 
-
     def action_upload_excel_file(self):
         if not self.valid_import_donation_ids:
             raise ValidationError('There are no Valid Lines in Excel File.')
