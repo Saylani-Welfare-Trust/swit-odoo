@@ -12,10 +12,10 @@
     'data': [
         'data/paper_format.xml',
         'security/group.xml',
+        'reports/whatsapp_dn.xml',
+        'reports/duplicate_dn.xml',
         'views/pos_order.xml',
         'views/res_partner.xml',
-        'reports/duplicate_dn.xml',
-        'reports/whatsapp_dn.xml',
     ],
     'auto_install': False,
     'application': False,
