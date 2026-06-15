@@ -67,7 +67,7 @@
                                     
                                     <field name="is_student" readonly="1" />
 
-                                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" />
+                                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" groups="bn_import_donation.import_donation_approve_access_group" />
                                 </tree>
                             </field>
                         </page>
