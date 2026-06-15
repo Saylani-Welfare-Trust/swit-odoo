@@ -1099,7 +1099,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         quantity: quantity || 1,
                     });
                 }
-                else if (product.lst_price <= 0) {
+                else {
                     selectedOrder.add_product(product, {
                         quantity: quantity || 1,
                         price_extra: line.security_deposit || product.lst_price || line.amount,
