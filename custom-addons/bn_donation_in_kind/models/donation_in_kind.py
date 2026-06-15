@@ -480,7 +480,8 @@ class DonationInKind(models.Model):
                 'quantity': line['quantity'],
                 'donation_in_kind_line_ids': [(0, 0, {
                     'product_id': line['product_id'],
-                    'quantity': line['quantity']
+                    'quantity': line['quantity'],
+                    'avg_price': line['quantity'],
                 })]
             })
 
