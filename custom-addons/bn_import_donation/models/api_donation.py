@@ -60,7 +60,7 @@ class APIDonation(models.Model):
     ], string="Partner Status", default='pending', tracking=True)
     
     def action_create_partners_for_selected(self):
-        """Create partners for selected donation records"""
+        """Create partners for selected donation records - Partners stay in DRAFT state"""
         if not self:
             raise ValidationError(_("No records selected!"))
         
@@ -86,7 +86,6 @@ class APIDonation(models.Model):
         
         # Collect unique donors from selected records
         unique_donors = {}
-        records_to_update = []
         
         for record in self:
             if record.partner_creation_status != 'pending':
@@ -98,6 +97,11 @@ class APIDonation(models.Model):
                     record.write({
                         'donor_id': default_partner_id,
                         'partner_creation_status': 'skipped',
+                    })
+                else:
+                    record.write({
+                        'partner_creation_status': 'failed',
+                        'error_message': 'No donor contact info and no default partner configured'
                     })
                 continue
             
@@ -127,6 +131,7 @@ class APIDonation(models.Model):
         skipped_count = 0
         failed_count = 0
         partner_mapping = {}
+        failed_keys = []
         
         for key, donor_data in unique_donors.items():
             try:
@@ -143,36 +148,50 @@ class APIDonation(models.Model):
                     # Check if it's a donor
                     is_donor = donor_category and donor_category.id in existing_partner.category_id.ids
                     if not is_donor and category_ids:
-                        # Add donor categories
+                        # Add donor categories (without changing state)
                         existing_partner.write({
                             'category_id': [(4, cat_id) for cat_id in category_ids if cat_id]
                         })
                     
                     partner_mapping[key] = existing_partner.id
                     skipped_count += 1
+                    
                 else:
-                    # Create new partner
-                    new_partner = Partner.create({
+                    # Create new partner - STAYS IN DRAFT STATE
+                    # Make sure the partner model has a 'state' field and 'draft' is a valid value
+                    partner_vals = {
                         'name': donor_data['name'],
                         'mobile': donor_data['mobile'],
                         'email': donor_data['email'],
                         'cnic_no': donor_data['cnic'],
                         'country_code_id': donor_data['country_id'],
                         'category_id': [(6, 0, [cat_id for cat_id in category_ids if cat_id])],
-                    })
+                    }
+                    
+                    # If your partner model has a state field, explicitly set to draft
+                    if hasattr(Partner, 'state'):
+                        partner_vals['state'] = 'draft'  # Explicitly set to draft
+                    
+                    new_partner = Partner.create(partner_vals)
+                    
+                    # DO NOT call action_register() - Partner stays in draft
                     
                     partner_mapping[key] = new_partner.id
                     created_count += 1
                     
             except Exception as e:
                 failed_count += 1
-                # _logger.error(f"Failed to create partner for key {key}: {str(e)}")
+                failed_keys.append(key)
+                error_msg = str(e)
+                _logger.error(f"Failed to create partner for key {key}: {error_msg}")
                 continue
         
         # Update donation records with partner IDs
         records_updated = 0
+        
         for key, donor_data in unique_donors.items():
             partner_id = partner_mapping.get(key)
+            
             if partner_id:
                 for record_id in donor_data['records']:
                     self.browse(record_id).write({
@@ -180,14 +199,23 @@ class APIDonation(models.Model):
                         'partner_creation_status': 'created',
                     })
                     records_updated += 1
+                    
+            elif key in failed_keys:
+                for record_id in donor_data['records']:
+                    self.browse(record_id).write({
+                        'partner_creation_status': 'failed',
+                        'error_message': 'Failed to create partner during batch processing'
+                    })
         
         # Show result message
         message = f"""
         Partner Creation Complete:
-        - Created: {created_count}
+        - New Partners Created (Draft): {created_count}
         - Already Existed: {skipped_count}
         - Failed: {failed_count}
         - Records Updated: {records_updated}
+        
+        Note: New partners are in Draft state.
         """
         
         return {
@@ -196,7 +224,7 @@ class APIDonation(models.Model):
             'params': {
                 'title': 'Partner Creation',
                 'message': message,
-                'type': 'success',
-                'sticky': False,
+                'type': 'success' if failed_count == 0 else 'warning',
+                'sticky': True,
             }
         }
