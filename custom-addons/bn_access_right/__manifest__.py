@@ -10,7 +10,7 @@
         'hr',
         'contacts',
         'hr_expense',
-        'spreadsheet_dashboard'
+        # 'spreadsheet_dashboard'
     ],
     'data': [
         'security/group.xml',

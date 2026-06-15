@@ -10,17 +10,14 @@ class SyncSalughterAndDistribution(models.Model):
     end_date = fields.Date('End Date')
 
 
-    def action_sync(self, records=None, flag=False):
-        if not flag:
-            start_datetime = datetime.combine(self.start_date, time.min)
-            end_datetime = datetime.combine(self.end_date, time.max)
+    def action_sync(self):
+        start_datetime = datetime.combine(self.start_date, time.min)
+        end_datetime = datetime.combine(self.end_date, time.max)
 
-            orders = self.env['qurbani.order'].search([
-                ('create_date', '>=', start_datetime),
-                ('create_date', '<=', end_datetime),
-            ])
-        else:
-            orders = self.env['qurbani.order'].browse(records.ids)
+        orders = self.env['qurbani.order'].search([
+            ('create_date', '>=', start_datetime),
+            ('create_date', '<=', end_datetime),
+        ])
 
         for order in orders:
             for line in order.qurbani_order_line_ids:
