@@ -10,7 +10,7 @@ import xlrd
 state_selection = [
     ('draft', 'Draft'),
     ('validated',  'Validated'),
-    ('create_donor', 'Create Donor'),
+    ('create_donor', 'Create Donor'),       
     ('upload', 'Uploaded'),
 ]
 
@@ -340,7 +340,7 @@ class ImportDonation(models.Model):
                         ])]
                     })
                     donor.action_register()
-        self.state = 'validated'
+        self.state = 'upload'
 
 
     def action_upload_excel_file(self):
