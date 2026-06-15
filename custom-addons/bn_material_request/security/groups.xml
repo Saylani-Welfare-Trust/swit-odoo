@@ -9,11 +9,11 @@
     </record>
 
     <!-- Member Approval User Group -->
-    <record id="member_approval_group_user" model="res.groups">
+    <!-- <record id="member_approval_group_user" model="res.groups">
         <field name="name">Member Approval User</field>
         <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
         <field name="comment">Basic user access to Member Approval module</field>
-    </record>
+    </record> -->
 
     <!-- HOD Group -->
     <record id="member_approval_group_hod" model="res.groups">
@@ -40,11 +40,11 @@
     </record>
 
     <!-- Manager Group -->
-    <record id="member_approval_group_manager" model="res.groups">
+    <!-- <record id="member_approval_group_manager" model="res.groups">
         <field name="name">Member Approval Manager</field>
         <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
         <!-- <field name="implied_ids" eval="[(4, ref('member_approval_group_hod')), (4, ref('member_approval_group_cfo')), (4, ref('member_approval_group_coo'))]"/> -->
         <field name="comment">Full access to Member Approval module</field>
-    </record>
+    </record> -->
 
 </odoo>
