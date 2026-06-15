@@ -5,13 +5,14 @@ from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
+from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
 
 class APIDonationWizard(models.TransientModel):
     _name = 'api.donation.wizard'
-    _description = 'API Donation Wizard (Page Wise History)'
+    _description = 'API Donation Wizard (refactored)'
 
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
@@ -49,7 +50,7 @@ class APIDonationWizard(models.TransientModel):
         })
 
     # =========================================================
-    # ENTRY POINT (PAGE-WISE)
+    # ENTRY POINT (NOW PER PAGE HISTORY)
     # =========================================================
     def action_fetch_donation(self):
         self.ensure_one()
@@ -72,32 +73,21 @@ class APIDonationWizard(models.TransientModel):
 
         while True:
 
-            # =====================================================
-            # 1. CREATE HISTORY PER PAGE
-            # =====================================================
+            # =========================================================
+            # 🔥 CREATE NEW HISTORY FOR EACH PAGE
+            # =========================================================
             history = self.env['fetch.history'].create({
                 'start_date': self.start_date,
                 'end_date': self.end_date,
-                'name': f"Donation Fetch Page {page}",
                 'page': page,
             })
 
-            per_page = history.per_page or 50
+            self.create_fetch_log(history.id, f"Starting Page {page}", "Initiated", "Page-wise fetch started")
 
-            self.create_fetch_log(
-                history.id,
-                f"Start Page {page}",
-                "Initiated",
-                "Page-wise execution started"
-            )
-
-            # =====================================================
-            # 2. PAYLOAD
-            # =====================================================
             payload = {
                 "status": "success",
                 "page": page,
-                "perPage": per_page,
+                "perPage": history.per_page or 50,
             }
 
             if self.start_date:
@@ -106,9 +96,6 @@ class APIDonationWizard(models.TransientModel):
             if self.end_date:
                 payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
 
-            # =====================================================
-            # 3. FETCH API DATA
-            # =====================================================
             page_data = self._fetch_donations_from_api(
                 auth_url,
                 donate_url,
@@ -120,17 +107,15 @@ class APIDonationWizard(models.TransientModel):
             )
 
             if not page_data:
-                self.create_fetch_log(history.id, "No data found", "Empty", "")
+                self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
 
-            # =====================================================
-            # 4. PROCESS THIS PAGE ONLY
-            # =====================================================
+            # =========================================================
+            # PROCESS THIS PAGE ONLY
+            # =========================================================
             self._process_single_page(page_data, history, company)
 
-            # =====================================================
-            # 5. STOP CONDITION
-            # =====================================================
+            # stop condition
             if len(page_data) < per_page:
                 break
 
@@ -139,20 +124,17 @@ class APIDonationWizard(models.TransientModel):
         return True
 
     # =========================================================
-    # PAGE PROCESSOR
+    # PAGE PROCESSOR (WRAPPER OVER YOUR EXISTING LOGIC)
     # =========================================================
     def _process_single_page(self, donations_info, history, company):
+
+        self.create_fetch_log(history.id, "Processing page data", "Processing", f"Records: {len(donations_info)}")
 
         journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         company_currency = company.currency_id
 
-        all_data = self._prefetch_all_data(
-            donations_info,
-            gateway_config,
-            company_currency,
-            history
-        )
+        all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
 
         result = self._process_donations_bulk(
             donations_info,
@@ -163,11 +145,7 @@ class APIDonationWizard(models.TransientModel):
             history
         )
 
-        # =====================================================
-        # JOURNAL ENTRY PER PAGE
-        # =====================================================
         if result.get('new_donations') and journal and result.get('accumulators'):
-
             move = self._create_grouped_journal_move(
                 journal,
                 result['accumulators']['debit'],
@@ -176,31 +154,21 @@ class APIDonationWizard(models.TransientModel):
                 history
             )
 
-            self.env['fetch.move'].create({
-                'history_id': history.id,
-                'move_id': move.id,
-                'name': move.name,
-                'date': move.date,
-                'state': 'draft',
+            history.write({
+                'journal_entry_id': move.id,
+                'picking_id': result.get('picking_id') or False,
             })
 
-            self.env['api.donation'].browse(result['new_donations']).write({
-                'fetch_history_id': history.id
-            })
-
-        self.create_fetch_log(
-            history.id,
-            "Page Completed",
-            "Success",
-            f"Processed {len(donations_info)} records"
-        )
+        self.create_fetch_log(history.id, "Page Completed", "Done", "Page processing finished")
 
     # =========================================================
     # API CALL
     # =========================================================
-    def _fetch_donations_from_api(self, auth_url, donate_url, company,
-                                  base_url, origin_host, history,
-                                  override_payload=None):
+    def _fetch_donations_from_api(
+        self, auth_url, donate_url, company,
+        base_url, origin_host, history,
+        override_payload=None
+    ):
         try:
             with requests.Session() as session:
 
@@ -237,8 +205,10 @@ class APIDonationWizard(models.TransientModel):
             raise ValidationError(_('API Error: %s') % str(e))
 
     # =========================================================
-    # AUTH
+    # EVERYTHING BELOW REMAINS YOUR ORIGINAL CODE
     # =========================================================
+    # (UNCHANGED - your full logic stays exactly same)
+
     def _authenticate(self, session, url, client_id, client_secret):
         resp = session.post(url, json={
             "ClientID": client_id,
