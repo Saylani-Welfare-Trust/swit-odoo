@@ -97,20 +97,17 @@ class ImportDonation(models.Model):
         header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
         header_map = {name: pos for name, pos in header_list}
         
-        # Debug: Print header mapping
         print("Header Map:", header_map)
 
         def get_value(row, name):
             idx = header_map.get(name)
             if idx is not None and idx < len(row):
                 value = row[idx]
-                # Convert to string and strip if it's not None
                 return str(value).strip() if value is not None else None
             return None
 
         for row_num, row in enumerate(rows, start=2):
             try:
-                # Debug: Print row data
                 print(f"Row {row_num}:", row)
                 
                 # Shared fields
@@ -125,7 +122,6 @@ class ImportDonation(models.Model):
                 reference = get_value(row, 'Reference')
                 course = get_value(row, 'Course')
 
-                # Debug: Print extracted values
                 print(f"Extracted - Name: {name}, Mobile: {mobile}, CNIC: {cnic}, Email: {email}")
 
                 if not amount or float(amount) < 0:
@@ -135,7 +131,6 @@ class ImportDonation(models.Model):
                 if mobile and mobile.lower() != 'none' and len(mobile) != 10:
                     mobile = mobile[-10:]
                 
-                # Convert mobile to string and ensure it's not 'None'
                 mobile = mobile if mobile and mobile.lower() != 'none' else ''
                 name = name if name and name.lower() != 'none' else ''
                 cnic = cnic if cnic and cnic.lower() != 'none' else ''
@@ -272,7 +267,6 @@ class ImportDonation(models.Model):
                     'reason': f'Unexpected error processing row {row_num}: {str(e)}'
                 })
 
-        # Debug: Print counts before creation
         print(f"Valid records to create: {len(valid_vals_list)}")
         print(f"Invalid records to create: {len(invalid_vals_list)}")
         
@@ -282,7 +276,7 @@ class ImportDonation(models.Model):
         self.state = 'validated'
 
     def action_register_donors(self):
-        """Separate button action to search/create donors/students for valid records - Partners stay in DRAFT"""
+        """Create donors/students in DRAFT state for valid records"""
         if not self.valid_import_donation_ids:
             raise ValidationError('No valid records to register donors for.')
 
@@ -296,9 +290,9 @@ class ImportDonation(models.Model):
             'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
-        # Collect unique donors/students first to avoid duplicates
-        unique_contacts = {}  # key: (mobile, is_student), value: partner_vals
-        line_mapping = {}  # key: (mobile, is_student), value: list of line records
+        # Collect unique donors/students
+        unique_contacts = {}
+        line_mapping = {}
         
         for line in self.valid_import_donation_ids:
             if not line.mobile:
@@ -332,7 +326,6 @@ class ImportDonation(models.Model):
                 ], limit=1)
                 
                 if not partner:
-                    # Create partner in DRAFT state - NO action_register()
                     partner = Partner.create({
                         'name': contact_data['name'],
                         'country_code_id': Country.id,
@@ -345,10 +338,14 @@ class ImportDonation(models.Model):
                             category_refs['student']
                         ])]
                     })
-                    # ✅ REMOVED: partner.action_register()
+                    # Partner stays in DRAFT - no action_register()
                     created_count += 1
                 else:
                     existing_count += 1
+                    
+                # Update all related lines with student partner ID
+                for line in line_mapping[key]:
+                    line.donor_student_id = partner.id
                     
             else:
                 # Search or create donor
@@ -358,7 +355,6 @@ class ImportDonation(models.Model):
                 ], limit=1)
                 
                 if not donor:
-                    # Create donor in DRAFT state - NO action_register()
                     donor = Partner.create({
                         'name': contact_data['name'],
                         'country_code_id': Country.id,
@@ -370,14 +366,17 @@ class ImportDonation(models.Model):
                             category_refs['individual']
                         ])]
                     })
-                    # ✅ REMOVED: donor.action_register()
+                    # Donor stays in DRAFT - no action_register()
                     created_count += 1
                 else:
                     existing_count += 1
-            
-            # Update all related lines with partner ID
-            for line in line_mapping[key]:
-                line.donor_student_id = partner.id if is_student else donor.id
+                
+                # Update all related lines with donor partner ID
+                for line in line_mapping[key]:
+                    line.donor_student_id = donor.id
+        
+        # FIXED: Set state BEFORE return
+        self.state = 'create_donor'
         
         # Show summary message
         message = f"""
@@ -388,7 +387,6 @@ class ImportDonation(models.Model):
         Note: New partners are in Draft state and not registered.
         """
         
-        # You can use a notification or just log it
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -399,8 +397,6 @@ class ImportDonation(models.Model):
                 'sticky': False,
             }
         }
-        self.state = 'done'
-
 
     def action_upload_excel_file(self):
         if not self.valid_import_donation_ids:
@@ -422,21 +418,19 @@ class ImportDonation(models.Model):
         credit_groups = {}
         total_amount = 0.0
 
-        # =========================
-        # BULK BUFFERS
-        # =========================
         donation_vals_list = []
         stock_move_map = {}
 
         picking = False
 
-        # =========================
-        # MAIN LOOP
-        # =========================
         for line in self.valid_import_donation_ids:
 
-            # Partner (optimize later with cache if needed)
-            partner = Partner.search([('mobile', '=', line.mobile)], limit=1) or default_partner
+            # FIXED: First try to use the stored donor_student_id
+            if line.donor_student_id:
+                partner = line.donor_student_id
+            else:
+                # Fallback to mobile search or default partner
+                partner = Partner.search([('mobile', '=', line.mobile)], limit=1) or default_partner
 
             config_line = self.gateway_config_id.gateway_config_line_ids.filtered(
                 lambda c: c.name == line.product
@@ -449,9 +443,7 @@ class ImportDonation(models.Model):
             product_id = product.id if product else False
             account_id = product.property_account_income_id.id
 
-            # =========================
             # STUDENT (FEE)
-            # =========================
             if line.is_student:
                 course = self.env['product.product'].search([
                     ('name', '=', line.product),
@@ -470,9 +462,7 @@ class ImportDonation(models.Model):
                     'is_fee': True
                 })
 
-            # =========================
             # NORMAL DONATION
-            # =========================
             else:
                 donation_vals_list.append({
                     'transaction_id': line.transaction_id,
@@ -485,11 +475,8 @@ class ImportDonation(models.Model):
                     'gateway_config_id': self.gateway_config_id.id,
                 })
 
-            # =========================
             # STOCK LOGIC
-            # =========================
             if product and product.detailed_type == 'product':
-
                 stock_move_map.setdefault(product.id, {
                     'product': product,
                     'qty': 0.0
@@ -504,23 +491,15 @@ class ImportDonation(models.Model):
                         'origin': self.name,
                     })
 
-            # =========================
             # ACCOUNTING GROUPING
-            # =========================
             credit_groups[account_id] = credit_groups.get(account_id, 0.0) + line.amount
             total_amount += line.amount
 
-        # =========================
         # BULK CREATE DONATIONS
-        # =========================
         donations = Donation.create(donation_vals_list)
-
-        # confirm all in batch
         donations.action_confirm()
 
-        # =========================
         # STOCK MOVES BULK CREATE
-        # =========================
         if picking:
             stock_move_vals_list = []
 
@@ -541,10 +520,10 @@ class ImportDonation(models.Model):
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
+            
+            self.picking_id = picking.id
 
-        # =========================
         # JOURNAL ENTRY
-        # =========================
         debit_line = (0, 0, {
             'account_id': self.gateway_config_id.account_id.id,
             'name': f'Total Donations Received from {self.name}',
@@ -569,7 +548,11 @@ class ImportDonation(models.Model):
         })
 
         self.journal_entry_id = journal_entry.id
-        self.state = 'create_donor'
+        self.state = 'upload'  # Changed from 'create_donor' to 'upload'
+
+    def action_done(self):
+        """Mark the import as done"""
+        self.state = 'done'
 
     def action_show_journal_entry(self):
         return {
