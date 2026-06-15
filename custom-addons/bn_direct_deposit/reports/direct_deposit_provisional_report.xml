@@ -80,8 +80,11 @@
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
-                                    <div name="donor_name"><strong>Register Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
-                                    <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
+                                    <!-- Donor Name -->
+                                    <div><strong>Register Name:</strong> <span t-field="o.donor_id.name"/></div>
+
+                                    <!-- CNIC -->
+                                    <div><strong>CNIC No.:</strong> <span t-field="o.donor_id.cnic_no"/></div>
                                     <div><strong>Transaction No.:</strong> <t t-esc="o.transaction_ref or ''"/></div>
                                     <div>
                                         <strong>Remarks:</strong>
