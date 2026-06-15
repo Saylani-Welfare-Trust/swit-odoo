@@ -2,9 +2,9 @@
 <odoo>
 
     <template id="bn_qurbani.donation_home_service_receipt_template" inherit_id="bn_donation_home_service.donation_home_service_receipt_template">
-        <xpath expr="//div[@name='donor_name']" position="after">
+        <!-- <xpath expr="//div[@name='donor_name']" position="after">
             <div name="favor"><strong>Donor Name:</strong> <t t-esc="o.favor or '-'"/></div>
-        </xpath>
+        </xpath> -->
     </template>
 
 </odoo>
