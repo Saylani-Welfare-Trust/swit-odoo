@@ -287,7 +287,7 @@ class ImportDonation(models.Model):
             raise ValidationError('No valid records to register donors for.')
 
         Partner = self.env['res.partner']
-        Country = self.env['res.country'].search([('name', '=', 'Pakistan')])
+        Country = self.env['res.country'].search([('name', '=', 'Pakistan')], limit=1)
         
         category_refs = {
             'student': self.env.ref('bn_profile_management.student_partner_category').id,
@@ -296,21 +296,48 @@ class ImportDonation(models.Model):
             'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
+        # Step 1: Collect all unique mobiles to search in bulk
+        donor_mobiles = []
+        student_mobiles = []
         for line in self.valid_import_donation_ids:
             if not line.mobile:
                 continue
+            if line.is_student:
+                student_mobiles.append(line.mobile)
+            else:
+                donor_mobiles.append(line.mobile)
+
+        # Step 2: Bulk search existing partners
+        existing_donors = Partner.search([
+            ('mobile', 'in', list(set(donor_mobiles))),
+            ('category_id.name', 'in', ['Donor'])
+        ])
+        
+        existing_students = Partner.search([
+            ('mobile', 'in', list(set(student_mobiles))),
+            ('category_id.name', 'in', ['Donee'])
+        ])
+
+        # Create lookup dictionaries
+        donor_by_mobile = {p.mobile: p for p in existing_donors}
+        student_by_mobile = {p.mobile: p for p in existing_students}
+
+        # Step 3: Collect partners to create
+        partners_to_create = []
+        partners_to_register = []  # Track which ones need action_register()
+        
+        processed_mobiles = set()  # Avoid duplicates
+
+        for line in self.valid_import_donation_ids:
+            if not line.mobile or line.mobile in processed_mobiles:
+                continue
+            processed_mobiles.add(line.mobile)
 
             if line.is_student:
-                # Search or create student (donee)
-                partner = Partner.search([
-                    ('mobile', '=', line.mobile), 
-                    ('category_id.name', 'in', ['Donee'])
-                ], limit=1)
-                
-                if not partner:
-                    partner = Partner.create({
+                if line.mobile not in student_by_mobile:
+                    partners_to_create.append({
                         'name': line.donor_student_name or f'Undefined {line.mobile}',
-                        'country_code_id': Country.id,
+                        'country_code_id': Country.id if Country else False,
                         'mobile': line.mobile,
                         'cnic_no': line.cnic_no,
                         'email': line.email,
@@ -320,18 +347,11 @@ class ImportDonation(models.Model):
                             category_refs['student']
                         ])]
                     })
-                    partner.action_register()
             else:
-                # Search or create donor
-                donor = Partner.search([
-                    ('mobile', '=', line.mobile), 
-                    ('category_id.name', 'in', ['Donor'])
-                ], limit=1)
-                
-                if not donor:
-                    donor = Partner.create({
+                if line.mobile not in donor_by_mobile:
+                    partners_to_create.append({
                         'name': line.donor_student_name or f'Undefined {line.mobile}',
-                        'country_code_id': Country.id,
+                        'country_code_id': Country.id if Country else False,
                         'mobile': line.mobile,
                         'cnic_no': line.cnic_no,
                         'email': line.email,
@@ -340,7 +360,13 @@ class ImportDonation(models.Model):
                             category_refs['individual']
                         ])]
                     })
-                    donor.action_register()
+
+        # Step 4: Bulk create partners
+        if partners_to_create:
+            new_partners = Partner.create(partners_to_create)
+            # Bulk register all new partners at once
+            new_partners.action_register()
+
         self.state = 'done'
 
     def action_upload_excel_file(self):
