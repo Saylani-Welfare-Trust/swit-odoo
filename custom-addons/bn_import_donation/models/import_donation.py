@@ -326,27 +326,7 @@ class ImportDonation(models.Model):
 
     # ─────────────────────────────────────────────
     # STEP 2 — CREATE DONEES  (new button)
-    # Runs only for student imports after validation.
-    # Bulk-fetches existing Donee partners by mobile,
-    # creates missing ones in a single pass, then
-    # registers them all together.
-    # ─────────────────────────────────────────────
-
     def action_create_donees(self):
-        gateway_name = self.gateway_config_id.name or ''
-        is_student_import = gateway_name in ['SMIT', 'PIAIC']
-
-        if not is_student_import:
-            raise ValidationError('This action is only available for student imports (SMIT / PIAIC).')
-
-        valid_students = self.env['valid.import.donation'].search([
-            ('import_donation_id', '=', self.id),
-            ('is_student', '=', True),
-        ])
-
-        if not valid_students:
-            raise ValidationError('No valid student records found for this import.')
-
         Partner = self.env['res.partner']
         Country = self.env['res.country'].search([('name', '=', 'Pakistan')], limit=1)
 
@@ -354,51 +334,83 @@ class ImportDonation(models.Model):
             'student':    self.env.ref('bn_profile_management.student_partner_category').id,
             'donee':      self.env.ref('bn_profile_management.donee_partner_category').id,
             'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
+            'donor':      self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
-        # ── Bulk fetch all existing Donee partners whose mobile is in this import ──
-        mobiles = [r.mobile for r in valid_students if r.mobile]
-        existing_partners = Partner.search([
+        all_records = self.env['valid.import.donation'].search([
+            ('import_donation_id', '=', self.id),
+        ]) + self.env['invalid.import.donation'].search([
+            ('import_donation_id', '=', self.id),
+        ])
+
+        if not all_records:
+            raise ValidationError('No records found for this import.')
+
+        # ── Bulk fetch existing partners (both Donee and Donor) ──
+        mobiles = [r.mobile for r in all_records if r.mobile]
+
+        existing_donees = Partner.search([
             ('mobile', 'in', mobiles),
             ('category_id.name', 'in', ['Donee']),
         ])
-        # key by mobile for O(1) lookup
-        existing_by_mobile = {p.mobile: p for p in existing_partners}
+        existing_donors = Partner.search([
+            ('mobile', 'in', mobiles),
+            ('category_id.name', 'in', ['Donor']),
+        ])
 
-        # ── Single-pass create for missing partners ─────────────────────────────
+        existing_donees_by_mobile = {p.mobile: p for p in existing_donees}
+        existing_donors_by_mobile = {p.mobile: p for p in existing_donors}
+
         partners_to_register = []
 
-        for record in valid_students:
+        for record in all_records:
             mobile = record.mobile
-            if not mobile or mobile in existing_by_mobile:
-                # already exists — nothing to do
+            if not mobile:
                 continue
 
-            partner = Partner.create({
-                'name': record.donor_student_name or f'Undefined {mobile}',
-                'country_code_id': Country.id,
-                'mobile': mobile,
-                'cnic_no': record.cnic_no,
-                'email': record.email,
-                'category_id': [(6, 0, [
-                    category_refs['donee'],
-                    category_refs['individual'],
-                    category_refs['student'],
-                ])]
-            })
-            # track in dict to prevent duplicate creates within the same batch
-            existing_by_mobile[mobile] = partner
-            partners_to_register.append(partner)
+            if record.is_student:
+                # ── Donee / Student ──
+                if mobile in existing_donees_by_mobile:
+                    continue
 
-        # ── Register all newly created partners ─────────────────────────────────
+                partner = Partner.create({
+                    'name': record.donor_student_name or f'Undefined {mobile}',
+                    'country_code_id': Country.id,
+                    'mobile': mobile,
+                    'cnic_no': record.cnic_no,
+                    'email': record.email,
+                    'category_id': [(6, 0, [
+                        category_refs['donee'],
+                        category_refs['individual'],
+                        category_refs['student'],
+                    ])]
+                })
+                existing_donees_by_mobile[mobile] = partner
+                partners_to_register.append(partner)
+
+            else:
+                # ── Donor ──
+                if mobile in existing_donors_by_mobile:
+                    continue
+
+                partner = Partner.create({
+                    'name': record.donor_student_name or f'Undefined {mobile}',
+                    'country_code_id': Country.id,
+                    'mobile': mobile,
+                    'cnic_no': record.cnic_no,
+                    'email': record.email,
+                    'category_id': [(6, 0, [
+                        category_refs['donor'],
+                        category_refs['individual'],
+                    ])]
+                })
+                existing_donors_by_mobile[mobile] = partner
+                partners_to_register.append(partner)
+
         for partner in partners_to_register:
             partner.action_register()
 
         self.state = 'donee_created'
-
-    # ─────────────────────────────────────────────
-    # STEP 3 — UPLOAD / PROCESS
-    # ─────────────────────────────────────────────
 
     def action_upload_excel_file(self):
         if not self.valid_import_donation_ids:
