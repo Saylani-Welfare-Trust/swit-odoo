@@ -332,6 +332,7 @@ class ImportDonation(models.Model):
 
         category_refs = {
             'student':    self.env.ref('bn_profile_management.student_partner_category').id,
+            'donee':      self.env.ref('bn_profile_management.donee_partner_category').id,
             'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
             'donor':      self.env.ref('bn_profile_management.donor_partner_category').id,
         }
@@ -346,12 +347,19 @@ class ImportDonation(models.Model):
         if not valid_records and not invalid_records:
             raise ValidationError('No records found for this import.')
 
+        # Collect all mobiles from both
         mobiles = list(set(
             [r.mobile for r in valid_records if r.mobile] +
             [r.mobile for r in invalid_records if r.mobile]
         ))
 
-        # Bulk fetch existing donors
+        # Bulk fetch existing partners
+        existing_donees_by_mobile = {
+            p.mobile: p for p in Partner.search([
+                ('mobile', 'in', mobiles),
+                ('category_id.name', 'in', ['Donee']),
+            ])
+        }
         existing_donors_by_mobile = {
             p.mobile: p for p in Partner.search([
                 ('mobile', 'in', mobiles),
@@ -364,43 +372,47 @@ class ImportDonation(models.Model):
         def process_record(record):
             mobile = record.mobile
             if not mobile:
-                return None
-
-            if mobile in existing_donors_by_mobile:
-                return existing_donors_by_mobile[mobile]
+                return
 
             if record.is_student:
-                cats = [category_refs['donor'], category_refs['individual'], category_refs['student']]
+                if mobile in existing_donees_by_mobile:
+                    return
+                partner = Partner.create({
+                    'name': record.donor_student_name or f'Undefined {mobile}',
+                    'country_code_id': Country.id,
+                    'mobile': mobile,
+                    'cnic_no': record.cnic_no,
+                    'email': record.email,
+                    'category_id': [(6, 0, [
+                        category_refs['donee'],
+                        category_refs['individual'],
+                        category_refs['student'],
+                    ])]
+                })
+                existing_donees_by_mobile[mobile] = partner
+                partners_to_register.append(partner)
             else:
-                cats = [category_refs['donor'], category_refs['individual']]
-
-            partner = Partner.create({
-                'name': record.donor_student_name or f'Undefined {mobile}',
-                'country_code_id': Country.id,
-                'mobile': mobile,
-                'cnic_no': record.cnic_no,
-                'email': record.email,
-                'category_id': [(6, 0, cats)]
-            })
-            existing_donors_by_mobile[mobile] = partner
-            partners_to_register.append(partner)
-            return partner
+                if mobile in existing_donors_by_mobile:
+                    return
+                partner = Partner.create({
+                    'name': record.donor_student_name or f'Undefined {mobile}',
+                    'country_code_id': Country.id,
+                    'mobile': mobile,
+                    'cnic_no': record.cnic_no,
+                    'email': record.email,
+                    'category_id': [(6, 0, [
+                        category_refs['donor'],
+                        category_refs['individual'],
+                    ])]
+                })
+                existing_donors_by_mobile[mobile] = partner
+                partners_to_register.append(partner)
 
         for record in valid_records:
-            partner = process_record(record)
-            if partner:
-                record.write({
-                    'donor_student_name': partner.name,
-                    'mobile': partner.mobile,
-                })
+            process_record(record)
 
         for record in invalid_records:
-            partner = process_record(record)
-            if partner:
-                record.write({
-                    'donor_student_name': partner.name,
-                    'mobile': partner.mobile,
-                })
+            process_record(record)
 
         for partner in partners_to_register:
             partner.action_register()
