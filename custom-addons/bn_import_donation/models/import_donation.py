@@ -282,7 +282,7 @@ class ImportDonation(models.Model):
         self.state = 'validated'
 
     def action_register_donors(self):
-        """Separate button action to search/create donors/students for valid records"""
+        """Separate button action to search/create donors/students for valid records - Partners stay in DRAFT"""
         if not self.valid_import_donation_ids:
             raise ValidationError('No valid records to register donors for.')
 
@@ -296,51 +296,109 @@ class ImportDonation(models.Model):
             'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
+        # Collect unique donors/students first to avoid duplicates
+        unique_contacts = {}  # key: (mobile, is_student), value: partner_vals
+        line_mapping = {}  # key: (mobile, is_student), value: list of line records
+        
         for line in self.valid_import_donation_ids:
             if not line.mobile:
                 continue
-
-            if line.is_student:
+            
+            key = (line.mobile, line.is_student)
+            
+            if key not in unique_contacts:
+                unique_contacts[key] = {
+                    'name': line.donor_student_name or f'Undefined {line.mobile}',
+                    'mobile': line.mobile,
+                    'cnic': line.cnic_no,
+                    'email': line.email,
+                    'is_student': line.is_student,
+                }
+                line_mapping[key] = []
+            
+            line_mapping[key].append(line)
+        
+        created_count = 0
+        existing_count = 0
+        
+        for key, contact_data in unique_contacts.items():
+            mobile, is_student = key
+            
+            if is_student:
                 # Search or create student (donee)
                 partner = Partner.search([
-                    ('mobile', '=', line.mobile), 
+                    ('mobile', '=', mobile), 
                     ('category_id.name', 'in', ['Donee'])
                 ], limit=1)
                 
                 if not partner:
+                    # Create partner in DRAFT state - NO action_register()
                     partner = Partner.create({
-                        'name': line.donor_student_name or f'Undefined {line.mobile}',
+                        'name': contact_data['name'],
                         'country_code_id': Country.id,
-                        'mobile': line.mobile,
-                        'cnic_no': line.cnic_no,
-                        'email': line.email,
+                        'mobile': contact_data['mobile'],
+                        'cnic_no': contact_data['cnic'],
+                        'email': contact_data['email'],
                         'category_id': [(6, 0, [
                             category_refs['donee'],
                             category_refs['individual'],
                             category_refs['student']
                         ])]
                     })
-                    partner.action_register()
+                    # ✅ REMOVED: partner.action_register()
+                    created_count += 1
+                else:
+                    existing_count += 1
+                    
             else:
                 # Search or create donor
                 donor = Partner.search([
-                    ('mobile', '=', line.mobile), 
+                    ('mobile', '=', mobile), 
                     ('category_id.name', 'in', ['Donor'])
                 ], limit=1)
                 
                 if not donor:
+                    # Create donor in DRAFT state - NO action_register()
                     donor = Partner.create({
-                        'name': line.donor_student_name or f'Undefined {line.mobile}',
+                        'name': contact_data['name'],
                         'country_code_id': Country.id,
-                        'mobile': line.mobile,
-                        'cnic_no': line.cnic_no,
-                        'email': line.email,
+                        'mobile': contact_data['mobile'],
+                        'cnic_no': contact_data['cnic'],
+                        'email': contact_data['email'],
                         'category_id': [(6, 0, [
                             category_refs['donor'],
                             category_refs['individual']
                         ])]
                     })
-                    donor.action_register()
+                    # ✅ REMOVED: donor.action_register()
+                    created_count += 1
+                else:
+                    existing_count += 1
+            
+            # Update all related lines with partner ID
+            for line in line_mapping[key]:
+                line.donor_student_id = partner.id if is_student else donor.id
+        
+        # Show summary message
+        message = f"""
+        Partner Creation Complete:
+        - New Partners Created (Draft): {created_count}
+        - Already Existed: {existing_count}
+        
+        Note: New partners are in Draft state and not registered.
+        """
+        
+        # You can use a notification or just log it
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Donor Registration',
+                'message': message,
+                'type': 'success',
+                'sticky': False,
+            }
+        }
         self.state = 'done'
 
 
