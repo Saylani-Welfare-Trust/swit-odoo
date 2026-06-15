@@ -611,7 +611,7 @@ class APIDonationWizard(models.TransientModel):
                 
                 # Try to register partners
                 try:
-                    created_partners.action_register()
+                    # created_partners.action_register()
                     self.create_fetch_log(
                         history.id,
                         f"✓ Successfully registered {actually_created_partners} partners",
