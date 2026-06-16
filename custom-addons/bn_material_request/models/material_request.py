@@ -28,12 +28,35 @@ class MemberApproval(models.Model):
     request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
     
     # Source and Destination Locations
+    # source_location_id = fields.Many2one(
+    #     'stock.location', 
+    #     string='Source Location',
+    #     domain=[('usage', '=', 'internal')],
+    #     tracking=True
+    # )
+
+
     source_location_id = fields.Many2one(
-        'stock.location', 
+        'stock.location',
         string='Source Location',
-        domain=[('usage', '=', 'internal')],
+        domain="[('usage','=','internal'), ('warehouse_id','in', allowed_warehouse_ids)]",
         tracking=True
     )
+
+    allowed_warehouse_ids = fields.Many2many(
+        'stock.warehouse',
+        string='Allowed Warehouses',
+        compute='_compute_allowed_warehouse_ids'
+    )
+
+
+    @api.depends()
+    def _compute_allowed_warehouse_ids(self):
+        for rec in self:
+            rec.allowed_warehouse_ids = self.env.user.allowed_warehouse_ids
+
+
+    
     
     dest_location_domain = fields.Char(
         compute='_compute_dest_location_domain'
@@ -154,7 +177,7 @@ class MemberApproval(models.Model):
             if not budget_lines:
                 raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
             available_budget = sum(
-                l.practical_amount - abs(l.practical_amount)
+                l.planned_amount - abs(l.practical_amount)
                 for l in budget_lines
             )
             total_available_budget += available_budget
