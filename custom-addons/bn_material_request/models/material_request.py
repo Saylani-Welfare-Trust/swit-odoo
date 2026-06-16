@@ -31,10 +31,12 @@ class MemberApproval(models.Model):
     source_location_id = fields.Many2one(
         'stock.location', 
         string='Source Location',
-        domain=[('usage', '=', 'internal')],
         tracking=True
     )
 
+    source_location_domain = fields.Char(
+        compute='_compute_source_location_domain'
+    )
 
     dest_location_domain = fields.Char(
         compute='_compute_dest_location_domain'
@@ -105,6 +107,18 @@ class MemberApproval(models.Model):
 
 
     @api.depends('employee_location_id')
+    def _compute_source_location_domain(self):
+        for rec in self:
+            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            if warehouse_ids:
+                rec.source_location_domain = (
+                    "[('usage','=','internal'),"
+                    "('warehouse_id','in',%s)]"
+                    % warehouse_ids
+                )
+            else:
+                rec.source_location_domain = "[('usage','=','internal')]"
+
     def _compute_dest_location_domain(self):
         for rec in self:
             if rec.employee_location_id:

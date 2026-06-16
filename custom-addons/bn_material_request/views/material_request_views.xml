@@ -73,7 +73,8 @@
                             <field name="request_type" invisible="1" readonly="state != 'draft'"/>
                             <field name="request_date" invisible="1"/>
                            
-                            <field name="source_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="[('usage','=','internal'), ('warehouse_id','in', user.allowed_warehouse_ids.ids)]"/>
+                            <field name="source_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="source_location_domain"/>
+                            <field name="source_location_domain" invisible="1"/>
                             <field name="dest_location_domain" invisible="1"/>
                             
                             <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/>
