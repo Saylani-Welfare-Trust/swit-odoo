@@ -35,11 +35,15 @@ class MemberApproval(models.Model):
     )
 
     source_location_domain = fields.Char(
-        compute='_compute_source_location_domain'
+        compute='_compute_source_location_domain',
+        store=True,
+        default='[]'
     )
 
     dest_location_domain = fields.Char(
-        compute='_compute_dest_location_domain'
+        compute='_compute_dest_location_domain',
+        store=True,
+        default='[]'
     )
 
     dest_location_id = fields.Many2one(
@@ -107,6 +111,7 @@ class MemberApproval(models.Model):
 
 
     @api.depends('employee_location_id')
+    @api.depends('employee_location_id')
     def _compute_source_location_domain(self):
         for rec in self:
             warehouse_ids = self.env.user.allowed_warehouse_ids.ids
@@ -119,6 +124,7 @@ class MemberApproval(models.Model):
             else:
                 rec.source_location_domain = "[('usage','=','internal')]"
 
+    @api.depends('employee_location_id')
     def _compute_dest_location_domain(self):
         for rec in self:
             warehouse_ids = self.env.user.allowed_warehouse_ids.ids
@@ -143,6 +149,23 @@ class MemberApproval(models.Model):
                 )
             else:
                 rec.dest_location_domain = "[('usage','=','internal')]"
+
+    @api.onchange('employee_location_id')
+    def _onchange_location_domains(self):
+        warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+        source_domain = [('usage', '=', 'internal')]
+        dest_domain = [('usage', '=', 'internal')]
+        if warehouse_ids:
+            source_domain.append(('warehouse_id', 'in', warehouse_ids))
+            dest_domain.append(('warehouse_id', 'in', warehouse_ids))
+        if self.employee_location_id:
+            dest_domain.append(('analytic_account_id', '=', self.employee_location_id.id))
+        return {
+            'domain': {
+                'source_location_id': source_domain,
+                'dest_location_id': dest_domain,
+            }
+        }
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
