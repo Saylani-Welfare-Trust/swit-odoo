@@ -154,7 +154,7 @@ class MemberApproval(models.Model):
             if not budget_lines:
                 raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
             available_budget = sum(
-                l.planned_amount - abs(l.practical_amount)
+                l.practical_amount - abs(l.practical_amount)
                 for l in budget_lines
             )
             total_available_budget += available_budget
