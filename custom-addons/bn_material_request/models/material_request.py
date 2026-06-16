@@ -51,7 +51,7 @@ class MemberApproval(models.Model):
         string='Destination Location',
         tracking=True
     )
-    
+
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
     budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
@@ -115,7 +115,9 @@ class MemberApproval(models.Model):
     @api.depends('employee_location_id')
     def _compute_source_location_domain(self):
         for rec in self:
-            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = []
+            if 'allowed_warehouse_ids' in self.env.user._fields:
+                warehouse_ids = self.env.user.allowed_warehouse_ids.ids
             if warehouse_ids:
                 rec.source_location_domain = (
                     "[('usage','=','internal'),"
@@ -128,7 +130,9 @@ class MemberApproval(models.Model):
     @api.depends('employee_location_id')
     def _compute_dest_location_domain(self):
         for rec in self:
-            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = []
+            if 'allowed_warehouse_ids' in self.env.user._fields:
+                warehouse_ids = self.env.user.allowed_warehouse_ids.ids
             if rec.employee_location_id and warehouse_ids:
                 rec.dest_location_domain = (
                     "[('usage','=','internal'),"
