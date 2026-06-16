@@ -92,6 +92,14 @@
                                             <t t-esc="o.cnic_no or 'N/A'"/>
                                         </div>
                                     </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span>Address : </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <t t-esc="o.street or 'N/A'"/>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <!-- Right Column for Image -->
@@ -121,8 +129,7 @@
                     <div class="page urdu" style="margin-top: 30px;">
 
                         <div style="text-align:right;">
-                            <h1>سیلانی ویلفیئر فارم</h1>
-                            <p>یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                            <h1>سیلانی مائیکروفنانس فارم</h1>
                         </div>
 
                         <hr/>

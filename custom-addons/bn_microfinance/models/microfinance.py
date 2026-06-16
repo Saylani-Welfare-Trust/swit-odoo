@@ -52,6 +52,11 @@ state_selection = [
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
+secuirty_offered_selection = [
+    ('guarantor', 'Guarantor'),
+    ('collateral', 'Collateral'),
+    ('none', 'None'),
+    ]
 
 
 class Microfinance(models.Model):
@@ -196,9 +201,13 @@ class Microfinance(models.Model):
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
-    security_offered = fields.Char('Security Offered')
+    security_offered_id = fields.Many2one(
+        'security.offered', 
+        string='Security Offered',
+        tracking=True
+    )    
     board_approval_document=fields.Binary('Board Approval Document')
-
+    details = fields.Text('Details')
     # Guarator Information
     guarantor_line_ids = fields.One2many('microfinance.guarantor', 'microfinance_id', string='Guarator Lines')
 
@@ -714,7 +723,21 @@ class Microfinance(models.Model):
 
         total_covered = self.installment_amount * (self.installment_period - 1)
         remaining_amount = max(self.total_amount - total_covered, 0)
+        
+        installment_vals = []
 
+        # First line: Security deposit
+        security_due_date = self.delivery_date  # Security deposit due on delivery date
+        installment_vals.append({
+            'microfinance_id': self.id,
+            'installment_no': f"{self.name}/SEC",
+            'due_date': security_due_date,
+            'paid_amount': 0,
+            'amount': self.security_deposit,
+            'payment_type': 'security'
+        })
+
+        # Regular installments
         for i in range(self.installment_period):
             if self.installment_type == 'monthly':
                 due_date = self.delivery_date + relativedelta(months=i + 1)
@@ -726,13 +749,16 @@ class Microfinance(models.Model):
             else:
                 amount = remaining_amount
 
-            self.env['microfinance.line'].create({
+            installment_vals.append({
                 'microfinance_id': self.id,
                 'installment_no': f"{self.name}/{i + 1:04d}",
                 'due_date': due_date,
                 'paid_amount': 0,
-                'amount': amount
+                'amount': amount,
+                'payment_type': 'installment'
             })
+
+        self.env['microfinance.line'].create(installment_vals)
     
     def compute_recovery_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:

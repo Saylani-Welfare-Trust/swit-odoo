@@ -98,35 +98,61 @@ class MicrofinanceInstallment(models.Model):
                 'status': "error",
                 'body': "Amount can't be zero or negative."
             }
-        elif data['amount'] != microfinance_request.security_deposit:
+        
+        # Find the specific security deposit schedule line
+        security_schedule_line = microfinance_request.microfinance_line_ids.filtered(
+            lambda l: l.payment_type == 'security'
+        )
+        
+        if not security_schedule_line:
             return {
                 'status': "error",
-                'body': "Please enter the correct security deposit amount."
+                'body': "Security deposit schedule line not found."
             }
-
-
-        if self.search([('microfinance_id', '=', microfinance_request.id)]):
+        
+        # Check if this specific line is already paid
+        if security_schedule_line.state == 'paid':
             return {
                 'status': "error",
-                'body': "Someone has already paid the Security Deposit against this request."
+                'body': "Security deposit has already been paid."
+            }
+        
+        # Validate amount against this specific line
+        if data['amount'] != security_schedule_line.amount:
+            return {
+                'status': "error",
+                'body': f"Amount doesn't match. Expected: {security_schedule_line.amount}"
             }
 
+        # Create the payment transaction
         microfinance_installment = self.create({
             'payment_type': 'security',
             'amount': data['amount'],
             'microfinance_id': microfinance_request.id,
             'donee_id': microfinance_request.donee_id.id,
-            'date': fields.Date.today()
+            'date': fields.Date.today(),
+            'state': 'paid'
         })
 
+        # Update ONLY this specific line's state to paid
         if microfinance_installment:
+            security_schedule_line.write({
+                'paid_amount': data['amount'],
+                'remaining_amount': 0,
+                'state': 'paid',  # This line's state changes to paid
+                'payment_date': fields.Date.today()
+            })
+            
             return {
                 'status': "success",
                 'id': microfinance_request.id,
                 'donee_id': microfinance_request.donee_id.id,
-                'deposit_id': microfinance_installment.id
+                'deposit_id': microfinance_installment.id,
+                'line_id': security_schedule_line.id,
+                'line_state': security_schedule_line.state,  # Will be 'paid'
+                'line_installment_no': security_schedule_line.installment_no,
+                'message': f"Security deposit line {security_schedule_line.installment_no} marked as paid"
             }
-    
     @api.model
     def get_microfinance_security_deposit(self, data):
         microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])

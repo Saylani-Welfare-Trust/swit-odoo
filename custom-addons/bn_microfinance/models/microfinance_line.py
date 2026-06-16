@@ -6,7 +6,12 @@ state_selection = [
     ('partial', 'Partial'),
     ('paid', 'Paid')
 ]
-
+state_cheque_selection = [
+    ('draft', 'Draft'),
+    ('deposited', 'Deposited'),
+    ('cleared', 'Cleared'),
+    ('bounced', 'Bounced')
+]
 
 class MicrofinanceLine(models.Model):
     _name = 'microfinance.line'
@@ -22,6 +27,10 @@ class MicrofinanceLine(models.Model):
 
     due_date = fields.Date('Due Date')
     cheque_date = fields.Date('Cheque Date')
+    payment_type = fields.Selection(selection=[
+        ('security', 'Security Deposit'),
+        ('installment', 'Installment Payment')
+    ], string="Payment Type")
     
     amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
@@ -30,9 +39,23 @@ class MicrofinanceLine(models.Model):
     currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
 
     state = fields.Selection(selection=state_selection, string='State', default="unpaid")
-
+    state_cheque = fields.Selection(selection=state_cheque_selection, string='Cheque Status', default='draft')
     is_cheque_deposit = fields.Boolean('Is Cheque Deposit')
+    payment_id = fields.Many2one('microfinance.installment', string="Payment Reference")
+    payment_date = fields.Date('Payment Date')
 
+    currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
+    @api.depends('state')
+    def _get_payment_status(self):
+        for line in self:
+            if line.state == 'paid':
+                line.payment_status = 'Fully Paid'
+            elif line.state == 'partial':
+                line.payment_status = 'Partially Paid'
+            else:
+                line.payment_status = 'Unpaid'
+    
+    payment_status = fields.Char(compute='_get_payment_status', string='Payment Status')
 
     @api.model
     def create(self, vals):
