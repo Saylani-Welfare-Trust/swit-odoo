@@ -321,7 +321,7 @@ class ImportDonation(models.Model):
         # Write in bulk using a single SQL update per partner is ideal,
         # but Odoo ORM doesn't expose that directly; batch by partner_id at least
         for line, pid in lines_to_update:
-            line.partner_id = pid 
+            line.donor_student_id = pid
 
         existing_count = len(first_contact) - created_count
         self.state = 'done'  # was unreachable before — fixed
