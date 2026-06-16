@@ -288,7 +288,8 @@ class ImportDonation(models.Model):
 
         Partner = self.env['res.partner']
         Country = self.env['res.country'].search([('name', '=', 'Pakistan')], limit=1)
-        
+        country_id = Country.id if Country else False
+
         category_refs = {
             'student': self.env.ref('bn_profile_management.student_partner_category').id,
             'donee': self.env.ref('bn_profile_management.donee_partner_category').id,
@@ -296,37 +297,30 @@ class ImportDonation(models.Model):
             'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
-        # Step 1: Collect all unique mobiles to search in bulk
-        donor_mobiles = []
-        student_mobiles = []
+        # Step 1: Collect unique mobiles in one pass using sets directly
+        donor_mobiles = set()
+        student_mobiles = set()
         for line in self.valid_import_donation_ids:
-            if not line.mobile:
-                continue
-            if line.is_student:
-                student_mobiles.append(line.mobile)
-            else:
-                donor_mobiles.append(line.mobile)
+            if line.mobile:
+                (student_mobiles if line.is_student else donor_mobiles).add(line.mobile)
 
-        # Step 2: Bulk search existing partners
+        # Step 2: Bulk search using category ID — avoids SQL JOIN on name
         existing_donors = Partner.search([
-            ('mobile', 'in', list(set(donor_mobiles))),
-            ('category_id.name', 'in', ['Donor'])
-        ])
+            ('mobile', 'in', list(donor_mobiles)),
+            ('category_id', 'in', [category_refs['donor']]),
+        ]) if donor_mobiles else Partner
         
         existing_students = Partner.search([
-            ('mobile', 'in', list(set(student_mobiles))),
-            ('category_id.name', 'in', ['Donee'])
-        ])
+            ('mobile', 'in', list(student_mobiles)),
+            ('category_id', 'in', [category_refs['donee']]),
+        ]) if student_mobiles else Partner
 
-        # Create lookup dictionaries
-        donor_by_mobile = {p.mobile: p for p in existing_donors}
-        student_by_mobile = {p.mobile: p for p in existing_students}
+        donor_by_mobile = {p.mobile: True for p in existing_donors}
+        student_by_mobile = {p.mobile: True for p in existing_students}
 
-        # Step 3: Collect partners to create
+        # Step 3: Collect partners to create — one pass, no duplicates
         partners_to_create = []
-        partners_to_register = []  # Track which ones need action_register()
-        
-        processed_mobiles = set()  # Avoid duplicates
+        processed_mobiles = set()
 
         for line in self.valid_import_donation_ids:
             if not line.mobile or line.mobile in processed_mobiles:
@@ -334,37 +328,26 @@ class ImportDonation(models.Model):
             processed_mobiles.add(line.mobile)
 
             if line.is_student:
-                if line.mobile not in student_by_mobile:
-                    partners_to_create.append({
-                        'name': line.donor_student_name or f'Undefined {line.mobile}',
-                        'country_code_id': Country.id if Country else False,
-                        'mobile': line.mobile,
-                        'cnic_no': line.cnic_no,
-                        'email': line.email,
-                        'category_id': [(6, 0, [
-                            category_refs['donee'],
-                            category_refs['individual'],
-                            category_refs['student']
-                        ])]
-                    })
+                if line.mobile in student_by_mobile:
+                    continue
+                cats = [category_refs['donee'], category_refs['individual'], category_refs['student']]
             else:
-                if line.mobile not in donor_by_mobile:
-                    partners_to_create.append({
-                        'name': line.donor_student_name or f'Undefined {line.mobile}',
-                        'country_code_id': Country.id if Country else False,
-                        'mobile': line.mobile,
-                        'cnic_no': line.cnic_no,
-                        'email': line.email,
-                        'category_id': [(6, 0, [
-                            category_refs['donor'],
-                            category_refs['individual']
-                        ])]
-                    })
+                if line.mobile in donor_by_mobile:
+                    continue
+                cats = [category_refs['donor'], category_refs['individual']]
 
-        # Step 4: Bulk create partners
+            partners_to_create.append({
+                'name': line.donor_student_name or f'Undefined {line.mobile}',
+                'country_code_id': country_id,
+                'mobile': line.mobile,
+                'cnic_no': line.cnic_no,
+                'email': line.email,
+                'category_id': [(6, 0, cats)],
+            })
+
+        # Step 4: Single bulk create + single action_register on full recordset
         if partners_to_create:
             new_partners = Partner.create(partners_to_create)
-            # Bulk register all new partners at once
             new_partners.action_register()
 
         self.state = 'done'
