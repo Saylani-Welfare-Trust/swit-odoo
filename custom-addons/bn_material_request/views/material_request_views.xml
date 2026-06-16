@@ -68,6 +68,7 @@
                         <h1><field name="name" class="oe_inline" readonly="1"/></h1>
                     </div>
                     <group>
+                        
                         <group name="request_info">
                             <field name="request_type" invisible="1" readonly="state != 'draft'"/>
                             <field name="request_date" invisible="1"/>
