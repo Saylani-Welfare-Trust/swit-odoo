@@ -51,6 +51,7 @@ class MemberApproval(models.Model):
         string='Destination Location',
         tracking=True
     )
+    
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
     budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
