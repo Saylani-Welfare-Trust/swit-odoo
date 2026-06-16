@@ -56,17 +56,34 @@ class MemberApproval(models.Model):
             rec.allowed_warehouse_ids = self.env.user.allowed_warehouse_ids
 
 
-    
-    
     dest_location_domain = fields.Char(
         compute='_compute_dest_location_domain'
     )
 
+    # dest_location_id = fields.Many2one(
+    #     'stock.location',
+    #     string='Destination Location',
+    #     tracking=True
+    # )
+
+
     dest_location_id = fields.Many2one(
         'stock.location',
         string='Destination Location',
+        domain="[('id', 'in', allowed_location_ids)]",
         tracking=True
     )
+
+
+    allowed_location_ids = fields.Many2many(
+        'stock.location',
+        compute='_compute_allowed_locations'
+    )
+
+    @api.depends()
+    def _compute_allowed_locations(self):
+        for rec in self:
+            rec.allowed_location_ids = self.env.user.allowed_location_ids
 
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
