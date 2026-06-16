@@ -281,7 +281,6 @@ class ImportDonation(models.Model):
 
         self.state = 'validated'
 
-
     def action_register_donors(self):
         """Separate button action to search/create donors/students for valid records"""
         if not self.valid_import_donation_ids:
