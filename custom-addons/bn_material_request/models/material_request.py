@@ -28,81 +28,23 @@ class MemberApproval(models.Model):
     request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
     
     # Source and Destination Locations
-    # source_location_id = fields.Many2one(
-    #     'stock.location', 
-    #     string='Source Location',
-    #     domain=[('usage', '=', 'internal')],
-    #     tracking=True
-    # )
-
-
     source_location_id = fields.Many2one(
-        'stock.location',
+        'stock.location', 
         string='Source Location',
+        domain=[('usage', '=', 'internal')],
         tracking=True
     )
-
-
-    # source_location_id = fields.Many2one(
-    #     'stock.location',
-    #     string='Source Location',
-    #     domain="[('usage','=','internal'), ('warehouse_id','in', allowed_warehouse_ids)]",
-    #     tracking=True
-    # )
-
-    # allowed_warehouse_ids = fields.Many2many(
-    #     'stock.warehouse',
-    #     string='Allowed Warehouses',
-    #     compute='_compute_allowed_warehouse_ids'
-    # )
-
-
-    # @api.depends()
-    # def _compute_allowed_warehouse_ids(self):
-    #     for rec in self:
-    #         rec.allowed_warehouse_ids = self.env.user.allowed_warehouse_ids
 
 
     dest_location_domain = fields.Char(
         compute='_compute_dest_location_domain'
     )
 
-    # dest_location_id = fields.Many2one(
-    #     'stock.location',
-    #     string='Destination Location',
-    #     tracking=True
-    # )
-
-
-    # dest_location_id = fields.Many2one(
-    #     'stock.location',
-    #     string='Destination Location',
-    #     domain="[('id', 'in', allowed_location_ids)]",
-    #     tracking=True
-    # )
-
-
     dest_location_id = fields.Many2one(
         'stock.location',
         string='Destination Location',
         tracking=True
     )
-
-
-    # allowed_location_ids = fields.Many2many(
-    #     'stock.location',
-    #     compute='_compute_allowed_locations'
-    # )
-
-    # @api.depends()
-    # def _compute_allowed_locations(self):
-    #     for rec in self:
-    #         rec.allowed_location_ids = self.env.user.allowed_location_ids
-
-
-
-
-
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
     budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
@@ -146,19 +88,7 @@ class MemberApproval(models.Model):
     coo_remarks = fields.Text('COO Remarks')
 
 
-    @api.onchange('user_id')
-    def _onchange_user_domains(self):
-        return {
-            'domain': {
-                'source_location_id': [
-                    ('usage', '=', 'internal'),
-                    ('warehouse_id', 'in', self.env.user.allowed_warehouse_ids.ids)
-                ],
-                'dest_location_id': [
-                    ('id', 'in', self.env.user.allowed_location_ids.ids)
-                ]
-            }
-        }
+   
     
     
     @api.model
