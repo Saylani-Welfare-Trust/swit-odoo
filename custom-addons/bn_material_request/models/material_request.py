@@ -121,7 +121,21 @@ class MemberApproval(models.Model):
 
     def _compute_dest_location_domain(self):
         for rec in self:
-            if rec.employee_location_id:
+            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            if rec.employee_location_id and warehouse_ids:
+                rec.dest_location_domain = (
+                    "[('usage','=','internal'),"
+                    "('analytic_account_id','=',%d),"
+                    "('warehouse_id','in',%s)]"
+                    % (rec.employee_location_id.id, warehouse_ids)
+                )
+            elif warehouse_ids:
+                rec.dest_location_domain = (
+                    "[('usage','=','internal'),"
+                    "('warehouse_id','in',%s)]"
+                    % warehouse_ids
+                )
+            elif rec.employee_location_id:
                 rec.dest_location_domain = (
                     "[('usage','=','internal'),"
                     "('analytic_account_id','=',%d)]"
