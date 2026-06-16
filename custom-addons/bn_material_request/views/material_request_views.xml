@@ -68,15 +68,20 @@
                         <h1><field name="name" class="oe_inline" readonly="1"/></h1>
                     </div>
                     <group>
-                        
+
                         <group name="request_info">
                             <field name="request_type" invisible="1" readonly="state != 'draft'"/>
                             <field name="request_date" invisible="1"/>
-                            <field name="allowed_warehouse_ids" invisible="1"/>
-                            <field name="allowed_location_ids" invisible="1"/>
+                            <!-- <field name="allowed_warehouse_ids" invisible="1"/>
+                            <field name="allowed_location_ids" invisible="1"/> -->
                             <field name="source_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <!-- <field name="dest_location_domain" invisible="1"/> -->
-                            <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/>
+                            <field name="dest_location_id"
+                                required="request_type == 'internal'"
+                                invisible="request_type == 'purchase_request'"
+                                options="{'no_create': True, 'no_edit': True}"
+                                readonly="state != 'draft'"/>
+                            <!-- <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/> -->
                         </group>
                         <group name="budget_info">
                             <field name="user_id"/>
