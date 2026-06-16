@@ -11,5 +11,4 @@ from . import product_template
 from . import loan_product_line
 from . import stock_picking
 from . import account_payment
-from . import microfinance_pdc_consolidated
 from . import security_offered
