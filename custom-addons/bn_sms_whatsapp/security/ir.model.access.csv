@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sms_service,sms.service,bn_sms_whatsapp.model_sms_service,,1,1,1,1
-access_whatsapp_service,whatsapp.service,bn_sms_whatsapp.model_whatsapp_service,,1,1,1,1
