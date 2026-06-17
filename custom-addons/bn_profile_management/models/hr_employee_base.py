@@ -11,6 +11,7 @@ class HrEmployeeBase(models.AbstractModel):
             raise UserError(_('Some employee already have a work contact'))
 
         PartnerCategory = self.env['res.partner.category']
+        
         # Ensure the "Employee, Individual, and on scenario Donor / Donee" tag exists
         employee_tag = PartnerCategory.search([('name', '=', 'Employee')], limit=1)
         individual_tag = PartnerCategory.search([('name', '=', 'Individual')], limit=1)
