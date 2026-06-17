@@ -129,7 +129,7 @@ class MemberApproval(models.Model):
             else:
                 rec.source_location_domain = "[('usage','=','internal')]"
 
-    @api.depends('user_id.allowed_location_ids', 'employee_location_id')
+    @api.depends('user_id.allowed_location_ids')
     def _compute_dest_location_domain(self):
         for rec in self:
             allowed_location_ids = rec.user_id.allowed_location_ids.ids or self.env.user.allowed_location_ids.ids
@@ -138,12 +138,6 @@ class MemberApproval(models.Model):
                     "[('usage','=','internal'),"
                     "('id','in',%s)]"
                     % allowed_location_ids
-                )
-            elif rec.employee_location_id:
-                rec.dest_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('analytic_account_id','=',%d)]"
-                    % rec.employee_location_id.id
                 )
             else:
                 rec.dest_location_domain = "[('usage','=','internal')]"
