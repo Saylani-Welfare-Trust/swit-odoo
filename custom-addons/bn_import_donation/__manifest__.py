@@ -9,6 +9,7 @@
         'base_account_budget',
         'product',
         'bn_profile_management',
+        'stock',
     ],
     'data': [
         'data/sequence.xml',
