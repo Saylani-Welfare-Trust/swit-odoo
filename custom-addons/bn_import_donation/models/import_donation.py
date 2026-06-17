@@ -174,7 +174,7 @@ class ImportDonation(models.Model):
     # =========================================================
     # UPLOAD (ONLY DONATION CREATION)
     # =========================================================
-    def action_upload_excel_file(self):
+    def action_upload(self):
         if not self.valid_import_donation_ids:
             raise ValidationError("No valid records.")
 
