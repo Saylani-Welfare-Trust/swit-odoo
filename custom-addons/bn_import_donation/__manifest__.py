@@ -6,10 +6,10 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Import Donation',
     'depends': [
-        'base_account_budget',
-        'product',
-        'bn_profile_management',
         'stock',
+        'product',
+        'base_account_budget',
+        'bn_profile_management',
     ],
     'data': [
         'data/sequence.xml',

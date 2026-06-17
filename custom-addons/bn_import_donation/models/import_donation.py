@@ -39,6 +39,16 @@ class ImportDonation(models.Model):
         'valid.import.donation', 'import_donation_id'
     )
 
+    
+    # =========================================================
+    # Draft
+    # =========================================================
+    def action_draft(self):
+        self.valid_import_donation_ids.unlink()
+        self.invalid_import_donation_ids.unlink()
+
+        self.state = 'draft'
+
     # =========================================================
     # CATEGORY CACHE
     # =========================================================
