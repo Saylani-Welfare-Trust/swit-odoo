@@ -21,7 +21,8 @@ class ImportDonation(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    name = fields.Char('File Name', tracking=True)
+    name = fields.Char('Name', tracking=True)
+    file_name = fields.Char('File Name', tracking=True)
 
     gateway_config_id = fields.Many2one('gateway.config', tracking=True)
 
