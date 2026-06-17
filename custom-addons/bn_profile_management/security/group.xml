@@ -5,24 +5,20 @@
         <field name="name">Profile Management / Menu</field>
     </record>
 
-    <record id="profile_management_create_access_group" model="res.groups">
-        <field name="name">Profile Management / Create Access</field>
+    <record id="profile_management_admin_access_group" model="res.groups">
+        <field name="name">Profile Management / Admin Access</field>
     </record>
     
-    <record id="profile_management_write_access_group" model="res.groups">
-        <field name="name">Profile Management / Update Access</field>
+    <record id="profile_management_manager_access_group" model="res.groups">
+        <field name="name">Profile Management / Manager Access</field>
     </record>
     
-    <record id="profile_management_read_access_group" model="res.groups">
-        <field name="name">Profile Management / Read Access</field>
+    <record id="profile_management_super_user_access_group" model="res.groups">
+        <field name="name">Profile Management / Super User Access</field>
     </record>
     
-    <record id="profile_management_delete_access_group" model="res.groups">
-        <field name="name">Profile Management / Delete Access</field>
-    </record>
-    
-    <record id="profile_management_edit_donor_access_group" model="res.groups">
-        <field name="name">Profile Management / Edit Donor</field>
+    <record id="profile_management_user_access_group" model="res.groups">
+        <field name="name">Profile Management / User Access</field>
     </record>
 
 </odoo>

@@ -39,7 +39,6 @@
             <field name="name">Student</field>
         </record>
         
-
         <record id="employee_partner_category" model="res.partner.category">
             <field name="name">Employee</field>
         </record>

@@ -22,12 +22,15 @@
                     <button name="action_draft" type="object" string="Draft" invisible="state != 'validate'" />
                     <button name="action_validate_excel_file" type="object" string="Validate Excel File" class="oe_highlight" invisible="state != 'draft'" />
                     <button name="action_upload_excel_file" type="object" string="Upload Excel File" class="oe_highlight" invisible="state != 'validated'" />
+                    <button name="action_confirm" type="object" string="Confirm" class="oe_highlight" invisible="state != 'uploaded'" />
+                    <button name="action_sync_partner" type="object" string="Sync Partner" class="oe_highlight" invisible="state != 'confirmed'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,upload"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,uploaded,confirmed,sync_donor"/>
                 </header>
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book" />
                         <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book" invisible="not journal_entry_id">
                             <field name="journal_entry_id" widget="statinfo"/>
                         </button>
