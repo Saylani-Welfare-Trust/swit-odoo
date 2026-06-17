@@ -35,15 +35,11 @@ class MemberApproval(models.Model):
     )
 
     source_location_domain = fields.Char(
-        compute='_compute_source_location_domain',
-        store=True,
-        default='[]'
+        compute='_compute_source_location_domain'
     )
 
     dest_location_domain = fields.Char(
-        compute='_compute_dest_location_domain',
-        store=True,
-        default='[]'
+        compute='_compute_dest_location_domain'
     )
 
     dest_location_id = fields.Many2one(
@@ -51,7 +47,6 @@ class MemberApproval(models.Model):
         string='Destination Location',
         tracking=True
     )
-
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
     budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
@@ -110,59 +105,23 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
 
-    @api.depends()
+
+    @api.depends('employee_location_id')
     def _compute_source_location_domain(self):
         for rec in self:
             warehouse_ids = self.env.user.allowed_warehouse_ids.ids
-
             if warehouse_ids:
-                rec.source_location_domain = str([
-                    ('usage', '=', 'internal'),
-                    ('warehouse_id', 'in', warehouse_ids)
-                ])
-            else:
-                rec.source_location_domain = str([
-                    ('usage', '=', 'internal')
-                ])
-
-
-
-    # @api.depends('employee_location_id')
-    # @api.depends('employee_location_id')
-    # def _compute_source_location_domain(self):
-    #     for rec in self:
-    #         warehouse_ids = []
-    #         if 'allowed_warehouse_ids' in self.env.user._fields:
-    #             warehouse_ids = self.env.user.allowed_warehouse_ids.ids
-    #         if warehouse_ids:
-    #             rec.source_location_domain = (
-    #                 "[('usage','=','internal'),"
-    #                 "('warehouse_id','in',%s)]"
-    #                 % warehouse_ids
-    #             )
-    #         else:
-    #             rec.source_location_domain = "[('usage','=','internal')]"
-
-    @api.depends('employee_location_id')
-    def _compute_dest_location_domain(self):
-        for rec in self:
-            warehouse_ids = []
-            if 'allowed_warehouse_ids' in self.env.user._fields:
-                warehouse_ids = self.env.user.allowed_warehouse_ids.ids
-            if rec.employee_location_id and warehouse_ids:
-                rec.dest_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('analytic_account_id','=',%d),"
-                    "('warehouse_id','in',%s)]"
-                    % (rec.employee_location_id.id, warehouse_ids)
-                )
-            elif warehouse_ids:
-                rec.dest_location_domain = (
+                rec.source_location_domain = (
                     "[('usage','=','internal'),"
                     "('warehouse_id','in',%s)]"
                     % warehouse_ids
                 )
-            elif rec.employee_location_id:
+            else:
+                rec.source_location_domain = "[('usage','=','internal')]"
+
+    def _compute_dest_location_domain(self):
+        for rec in self:
+            if rec.employee_location_id:
                 rec.dest_location_domain = (
                     "[('usage','=','internal'),"
                     "('analytic_account_id','=',%d)]"
@@ -170,23 +129,6 @@ class MemberApproval(models.Model):
                 )
             else:
                 rec.dest_location_domain = "[('usage','=','internal')]"
-
-    @api.onchange('employee_location_id')
-    def _onchange_location_domains(self):
-        warehouse_ids = self.env.user.allowed_warehouse_ids.ids
-        source_domain = [('usage', '=', 'internal')]
-        dest_domain = [('usage', '=', 'internal')]
-        if warehouse_ids:
-            source_domain.append(('warehouse_id', 'in', warehouse_ids))
-            dest_domain.append(('warehouse_id', 'in', warehouse_ids))
-        if self.employee_location_id:
-            dest_domain.append(('analytic_account_id', '=', self.employee_location_id.id))
-        return {
-            'domain': {
-                'source_location_id': source_domain,
-                'dest_location_id': dest_domain,
-            }
-        }
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
