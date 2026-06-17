@@ -120,27 +120,31 @@ class MemberApproval(models.Model):
     def _compute_source_location_domain(self):
         for rec in self:
             warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            
             if warehouse_ids:
                 rec.source_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('warehouse_id','in',%s)]"
+                    "[('warehouse_id','in',%s)]"
                     % warehouse_ids
                 )
             else:
-                rec.source_location_domain = "[('usage','=','internal')]"
+                rec.source_location_domain = "[]"
 
-    # @api.depends('user_id.allowed_location_ids')
-    # def _compute_dest_location_domain(self):
+
+
+    # @api.depends('user_id.allowed_warehouse_ids')
+    # def _compute_source_location_domain(self):
     #     for rec in self:
-    #         allowed_location_ids = rec.user_id.allowed_location_ids.ids or self.env.user.allowed_location_ids.ids
-    #         if allowed_location_ids:
-    #             rec.dest_location_domain = (
+    #         warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+    #         if warehouse_ids:
+    #             rec.source_location_domain = (
     #                 "[('usage','=','internal'),"
-    #                 "('id','in',%s)]"
-    #                 % allowed_location_ids
+    #                 "('warehouse_id','in',%s)]"
+    #                 % warehouse_ids
     #             )
     #         else:
-    #             rec.dest_location_domain = "[('usage','=','internal')]"
+    #             rec.source_location_domain = "[('usage','=','internal')]"
+
+ 
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""

@@ -80,7 +80,7 @@
                             invisible="request_type == 'purchase_request'"
                             options="{'no_create': True, 'no_edit': True}"
                             readonly="state != 'draft'"
-                            domain="[('usage','=','internal'),('id','in',allowed_location_ids)]"/>
+                            domain="[('id','in',allowed_location_ids)]"/>
                            
                             <!-- <field name="dest_location_domain" invisible="1"/>
                             <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/> -->
