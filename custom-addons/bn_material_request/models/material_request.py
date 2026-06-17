@@ -110,22 +110,38 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
 
-
-    @api.depends('employee_location_id')
-    @api.depends('employee_location_id')
+    @api.depends()
     def _compute_source_location_domain(self):
         for rec in self:
-            warehouse_ids = []
-            if 'allowed_warehouse_ids' in self.env.user._fields:
-                warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+
             if warehouse_ids:
-                rec.source_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('warehouse_id','in',%s)]"
-                    % warehouse_ids
-                )
+                rec.source_location_domain = str([
+                    ('usage', '=', 'internal'),
+                    ('warehouse_id', 'in', warehouse_ids)
+                ])
             else:
-                rec.source_location_domain = "[('usage','=','internal')]"
+                rec.source_location_domain = str([
+                    ('usage', '=', 'internal')
+                ])
+
+
+
+    # @api.depends('employee_location_id')
+    # @api.depends('employee_location_id')
+    # def _compute_source_location_domain(self):
+    #     for rec in self:
+    #         warehouse_ids = []
+    #         if 'allowed_warehouse_ids' in self.env.user._fields:
+    #             warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+    #         if warehouse_ids:
+    #             rec.source_location_domain = (
+    #                 "[('usage','=','internal'),"
+    #                 "('warehouse_id','in',%s)]"
+    #                 % warehouse_ids
+    #             )
+    #         else:
+    #             rec.source_location_domain = "[('usage','=','internal')]"
 
     @api.depends('employee_location_id')
     def _compute_dest_location_domain(self):
