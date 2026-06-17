@@ -35,11 +35,21 @@ class MemberApproval(models.Model):
     )
 
     source_location_domain = fields.Char(
-        compute='_compute_source_location_domain'
+        compute='_compute_source_location_domain',
+        store=False
+    )
+
+    allowed_location_ids = fields.Many2many(
+        'stock.location',
+        related='user_id.allowed_location_ids',
+        string='Allowed Locations',
+        readonly=True,
+        store=False
     )
 
     dest_location_domain = fields.Char(
-        compute='_compute_dest_location_domain'
+        compute='_compute_dest_location_domain',
+        store=False
     )
 
     dest_location_id = fields.Many2one(
@@ -106,10 +116,10 @@ class MemberApproval(models.Model):
 
 
 
-    @api.depends('employee_location_id')
+    @api.depends('user_id.allowed_warehouse_ids')
     def _compute_source_location_domain(self):
         for rec in self:
-            warehouse_ids = self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
             if warehouse_ids:
                 rec.source_location_domain = (
                     "[('usage','=','internal'),"
@@ -119,9 +129,10 @@ class MemberApproval(models.Model):
             else:
                 rec.source_location_domain = "[('usage','=','internal')]"
 
+    @api.depends('user_id.allowed_location_ids', 'employee_location_id')
     def _compute_dest_location_domain(self):
         for rec in self:
-            allowed_location_ids = self.env.user.allowed_location_ids.ids
+            allowed_location_ids = rec.user_id.allowed_location_ids.ids or self.env.user.allowed_location_ids.ids
             if allowed_location_ids:
                 rec.dest_location_domain = (
                     "[('usage','=','internal'),"
