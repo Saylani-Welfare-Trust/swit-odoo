@@ -15,7 +15,7 @@
     <record id="access_import_donation_admin" model="ir.model.access">
         <field name="name">Import Donation / Admin Access</field>
         <field name="model_id" ref="model_import_donation"/>
-        <field name="group_id" ref="bn_import_donation.import_donation_admin_access_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_admin_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -25,7 +25,7 @@
     <record id="access_import_donation_user" model="ir.model.access">
         <field name="name">Import Donation User Access</field>
         <field name="model_id" ref="model_import_donation"/>
-        <field name="group_id" ref="bn_import_donation.import_donation_user_access_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_user_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -46,7 +46,7 @@
     <record id="access_donation_admin" model="ir.model.access">
         <field name="name">Donation / Admin Access</field>
         <field name="model_id" ref="model_donation"/>
-        <field name="group_id" ref="bn_import_donation.import_donation_admin_access_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_admin_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -56,7 +56,7 @@
     <record id="access_donation_user" model="ir.model.access">
         <field name="name">Donation / User Access</field>
         <field name="model_id" ref="model_donation"/>
-        <field name="group_id" ref="bn_import_donation.import_donation_user_access_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_user_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -67,7 +67,7 @@
     <record id="access_fetch_history_menu" model="ir.model.access">
         <field name="name">Fetch History / Menu Access</field>
         <field name="model_id" ref="model_fetch_history"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_menu_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_menu_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>
@@ -77,7 +77,7 @@
     <record id="access_fetch_history_admin" model="ir.model.access">
         <field name="name">Fetch History / Admin Access</field>
         <field name="model_id" ref="model_fetch_history"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_admin_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_admin_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -87,7 +87,7 @@
     <record id="access_fetch_history_user" model="ir.model.access">
         <field name="name">Fetch History / User Access</field>
         <field name="model_id" ref="model_fetch_history"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_user_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_user_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -98,7 +98,7 @@
     <record id="access_api_donation_menu" model="ir.model.access">
         <field name="name">API Donation / Menu Access</field>
         <field name="model_id" ref="model_api_donation"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_menu_group"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_menu_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>
@@ -108,7 +108,7 @@
     <record id="access_api_donation_admin" model="ir.model.access">
         <field name="name">API Donation / Admin Access</field>
         <field name="model_id" ref="model_api_donation"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_admin_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_admin_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -118,7 +118,7 @@
     <record id="access_api_donation_wizard_admin" model="ir.model.access">
         <field name="name">API Donation Wizard / Admin Access</field>
         <field name="model_id" ref="model_api_donation_wizard"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_admin_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_admin_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -128,7 +128,7 @@
     <record id="access_api_donation_user" model="ir.model.access">
         <field name="name">API Donation / User Access</field>
         <field name="model_id" ref="model_api_donation"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_user_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_user_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -138,7 +138,7 @@
     <record id="access_api_donation_wizard_user" model="ir.model.access">
         <field name="name">API Donation Wizard / User Access</field>
         <field name="model_id" ref="model_api_donation_wizard"/>
-        <field name="group_id" ref="bn_import_donation.api_donation_user_access_group"/>
+        <field name="group_id" ref="bn_import_donation.api_donation_user_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
