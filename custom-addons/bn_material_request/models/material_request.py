@@ -47,10 +47,10 @@ class MemberApproval(models.Model):
         store=False
     )
 
-    dest_location_domain = fields.Char(
-        compute='_compute_dest_location_domain',
-        store=False
-    )
+    # dest_location_domain = fields.Char(
+    #     compute='_compute_dest_location_domain',
+    #     store=False
+    # )
 
     dest_location_id = fields.Many2one(
         'stock.location',
@@ -129,18 +129,18 @@ class MemberApproval(models.Model):
             else:
                 rec.source_location_domain = "[('usage','=','internal')]"
 
-    @api.depends('user_id.allowed_location_ids')
-    def _compute_dest_location_domain(self):
-        for rec in self:
-            allowed_location_ids = rec.user_id.allowed_location_ids.ids or self.env.user.allowed_location_ids.ids
-            if allowed_location_ids:
-                rec.dest_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('id','in',%s)]"
-                    % allowed_location_ids
-                )
-            else:
-                rec.dest_location_domain = "[('usage','=','internal')]"
+    # @api.depends('user_id.allowed_location_ids')
+    # def _compute_dest_location_domain(self):
+    #     for rec in self:
+    #         allowed_location_ids = rec.user_id.allowed_location_ids.ids or self.env.user.allowed_location_ids.ids
+    #         if allowed_location_ids:
+    #             rec.dest_location_domain = (
+    #                 "[('usage','=','internal'),"
+    #                 "('id','in',%s)]"
+    #                 % allowed_location_ids
+    #             )
+    #         else:
+    #             rec.dest_location_domain = "[('usage','=','internal')]"
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
