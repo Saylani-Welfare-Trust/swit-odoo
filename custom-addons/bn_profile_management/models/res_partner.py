@@ -17,73 +17,73 @@ class ResPartner(models.Model):
     gender = fields.Selection([
         ('male', 'Male'),
         ('female', 'Female'),
-    ], tracking=True)
+    ], string="Gender", tracking=True)
 
     religion = fields.Selection([
         ('muslim', 'Muslim'),
         ('non_muslim', 'Non-Muslim'),
         ('syed', 'Syed'),
-    ], tracking=True)
+    ], string="Religion", tracking=True)
 
     martial_status = fields.Selection([
         ('married', 'Married'),
         ('un_married', 'Unmarried'),
         ('divorce', 'Divorce'),
-    ], tracking=True)
+    ], string="Marital Status", tracking=True)
 
     has_cnic = fields.Selection([
         ('yes', 'Yes'),
         ('no', 'No'),
-    ], default='yes', tracking=True)
+    ], string="Has CNIC", default='yes', tracking=True)
 
     state = fields.Selection([
         ('draft', 'Draft'),
         ('register', 'Registered'),
         ('reject', 'Rejected'),
         ('change_request', 'Change Request'),
-    ], default='draft', tracking=True)
+    ], string="State", default='draft', tracking=True)
 
-    area = fields.Many2one('area', tracking=True)
-    country_code_id = fields.Many2one('res.country')
+    area = fields.Many2one('area', string="Area", tracking=True)
+    country_code_id = fields.Many2one('res.country', string="Country Code", tracking=True)
 
-    mobile = fields.Char(size=10, tracking=True)
-    cnic_no = fields.Char(size=15, tracking=True)
-    member_cnic_no = fields.Char(size=15, tracking=True)
-    father_cnic_no = fields.Char(size=15, tracking=True)
+    mobile = fields.Char(size=10, string="Mobile", tracking=True)
+    cnic_no = fields.Char(size=15, string="CNIC No", tracking=True)
+    member_cnic_no = fields.Char(size=15, string="Member CNIC No", tracking=True)
+    father_cnic_no = fields.Char(size=15, string="Father's CNIC No", tracking=True)
 
-    surname = fields.Char(tracking=True)
-    next_kin = fields.Char(tracking=True)
-    spouse_name = fields.Char(tracking=True)
-    father_name = fields.Char(tracking=True)
+    surname = fields.Char('Surname', tracking=True)
+    next_kin = fields.Char('Next of Kin', tracking=True)
+    spouse_name = fields.Char('Spouse Name', tracking=True)
+    father_name = fields.Char("Father's Name", tracking=True)
 
-    head_cnic_no = fields.Char(size=15)
-    old_system_id = fields.Char()
-    nearest_land_mark = fields.Char()
-    reference_remarks = fields.Char()
-    bank_wallet_account = fields.Char()
+    head_cnic_no = fields.Char(size=15, string="Head CNIC No")
+    old_system_id = fields.Char('Old System ID')
+    nearest_land_mark = fields.Char('Nearest Landmark')
+    reference_remarks = fields.Char('Reference Remarks')
+    bank_wallet_account = fields.Char('Bank Wallet Account')
 
-    primary_registration_id = fields.Char()
-    secondary_registration_id = fields.Char()
+    primary_registration_id = fields.Char('Primary Registration ID')
+    secondary_registration_id = fields.Char('Secondary Registration ID')
 
-    cnic_back_image = fields.Binary()
-    cnic_front_image = fields.Binary()
-    approved_form_file = fields.Binary()
-    reference_letter_file = fields.Binary()
+    cnic_back_image = fields.Binary('CNIC Back Image')
+    cnic_front_image = fields.Binary('CNIC Front Image')
+    approved_form_file = fields.Binary('Approved Form File')
+    reference_letter_file = fields.Binary('Reference Letter File')
 
-    cnic_expiration = fields.Date()
-    date_of_birth = fields.Date()
+    cnic_expiration = fields.Date('CNIC Expiration Date', tracking=True)
+    date_of_birth = fields.Date('Date of Birth', tracking=True)
     age = fields.Integer(compute="_compute_age", store=True)
 
-    details = fields.Text()
+    details = fields.Text('Details', tracking=True)
 
-    analytic_account_id = fields.Many2one('account.analytic.account')
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
 
-    is_change_request = fields.Boolean()
-    is_donor = fields.Boolean(compute="_set_is_donor", store=True)
+    is_change_request = fields.Boolean('Change Request', default=False, tracking=True)
+    is_donor = fields.Boolean('Donor', compute="_set_is_donor", store=True)
 
-    donee_required_fields = fields.Boolean(compute="_set_donee_required_fields", store=True)
-    welfare_donee_required_fields = fields.Boolean(compute="_set_welfare_donee_required_fields", store=True)
-    welfare_donee_female_required = fields.Boolean(compute="_compute_female_required_override", store=True)
+    donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
+    welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
+    welfare_donee_female_required = fields.Boolean('Welfare Donee Female Required', compute="_compute_female_required_override", store=True)
 
     # ---------------------------------------------------------------------
     # Helpers

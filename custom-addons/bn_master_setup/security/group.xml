@@ -3,6 +3,7 @@
 
     <record id="master_setup_group" model="res.groups">
         <field name="name">Master Setup / Menu</field>
+        <field name="category_id" ref="module_category_administration_administration"/>
     </record>
 
 </odoo>

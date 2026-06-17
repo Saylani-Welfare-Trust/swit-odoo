@@ -11,20 +11,10 @@
         <field name="perm_unlink" eval="1"/>
     </record>
     
-    <record id="access_profile_management_manager" model="ir.model.access">
-        <field name="name">Profile Management / Manager Access</field>
+    <record id="access_profile_management_user" model="ir.model.access">
+        <field name="name">Profile Management / User Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="bn_profile_management.profile_management_manager_access_group"/>
-        <field name="perm_read" eval="1"/>
-        <field name="perm_write" eval="1"/>
-        <field name="perm_create" eval="1"/>
-        <field name="perm_unlink" eval="0"/>
-    </record>
-    
-    <record id="access_profile_management_super_user" model="ir.model.access">
-        <field name="name">Profile Management / Super User Access</field>
-        <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="bn_profile_management.profile_management_super_user_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_user_access_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
@@ -32,9 +22,9 @@
     </record>
     
     <record id="access_profile_management_user" model="ir.model.access">
-        <field name="name">Profile Management / User Access</field>
+        <field name="name">Profile Management / Menu Access</field>
         <field name="model_id" ref="model_res_partner"/>
-        <field name="group_id" ref="bn_profile_management.profile_management_user_access_group"/>
+        <field name="group_id" ref="bn_profile_management.profile_management_group"/>
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>

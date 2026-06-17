@@ -15,6 +15,7 @@
         'data/sequence.xml',
         'data/server_action.xml',
         'data/res_partner_category.xml',
+        'data/ir_module_category.xml',
         
         'security/group.xml',
         'security/access_right.xml',

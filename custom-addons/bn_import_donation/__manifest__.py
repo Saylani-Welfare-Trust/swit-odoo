@@ -15,9 +15,15 @@
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
+        'data/ir_module_category.xml',
+        
         'security/group.xml',
         'security/access_right.xml',
         'security/ir.model.access.csv',
+        
+        'reports/import_donation.xml',
+        'reports/api_donation.xml',
+
         'views/import_donation.xml',
         'views/donation.xml',
         'wizards/api_donaiton_wizard.xml',
@@ -29,8 +35,6 @@
         'views/product_product.xml',
         'views/header_type.xml',
         'views/gateway_config.xml',
-        'reports/import_donation.xml',
-        'reports/api_donation.xml',
     ],
     'auto_install': False,
     'application': True,
