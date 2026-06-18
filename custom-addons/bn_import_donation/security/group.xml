@@ -6,6 +6,11 @@
         <field name="category_id" ref="module_import_donation"/>
     </record>
 
+    <record id="fetch_all_log_menu_group" model="res.groups">
+        <field name="name">Fetch All Log Menu</field>
+        <field name="category_id" ref="module_import_donation"/>
+    </record>
+
     <!-- Import Donation -->
     <record id="import_donation_admin_group" model="res.groups">
         <field name="name">Import Donation / Admin Access</field>
