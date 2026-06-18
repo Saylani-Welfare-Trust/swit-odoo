@@ -642,22 +642,24 @@ class Microfinance(models.Model):
         # Confirm SO — this auto-generates the delivery picking
         sale_order.action_confirm()
 
-        # Get the auto-generated picking and update its source location
+        # ← Write origin back AFTER confirm as action_confirm() overwrites it
+        sale_order.write({'origin': self.name})
+
         # Get the auto-generated picking and update its source location
         picking = sale_order.picking_ids and sale_order.picking_ids[0]
         if picking:
             location_id = (
-                self.recovered_location_id.id if self.in_recovery 
+                self.recovered_location_id.id if self.in_recovery
                 else self.warehouse_location_id.id
             )
             picking.write({
                 'location_id': location_id,
-                'origin': self.name,  # ← Override SO name with microfinance record name
+                'origin': self.name,
                 'scheduled_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
             })
             picking.move_ids.write({'location_id': location_id})
             self.picking_ids = [(4, picking.id)]
-        
+
         # Store SO reference
         self.sale_order_id = sale_order.id
 
