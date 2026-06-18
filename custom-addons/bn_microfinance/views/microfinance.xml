@@ -24,6 +24,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="sale_order_id" invisible="1"/>
                     <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'draft' or in_recovery" />
                     
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />

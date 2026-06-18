@@ -85,7 +85,7 @@ class Microfinance(models.Model):
         compute="_compute_microfinance_scheme_line_ids",
         store=True
     )
-
+    sale_order_id = fields.Many2one('sale.order', string="Sale Order")  
     installment_type = fields.Selection(related='microfinance_scheme_id.installment_type', string='Installment Type', store=True)
     asset_type = fields.Selection(related='microfinance_scheme_line_id.asset_type', string='Asset Type', store=True)
     asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
@@ -596,16 +596,77 @@ class Microfinance(models.Model):
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
-                raise ValidationError("Please select a Security Deposit Receipt.")
+            raise ValidationError("Please select a Security Deposit Receipt.")
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         
-        # Create picking for movable assets (don't validate - manual validation triggers done)
+        # Create Sale Order for movable assets (delivery auto-generates from confirmed SO)
         if self.asset_type == 'movable_asset':
-            self._create_microfinance_picking()
+            self._create_microfinance_sale_order()
         
         self.state = 'wfd'
 
+    def _create_microfinance_sale_order(self):
+        """Create and confirm a Sale Order; delivery picking auto-generates from it."""
+        if not self.in_recovery:
+            product_quantity = self.product_id.qty_available
+            
+            if product_quantity <= 0:
+                self.asset_availability = 'not_available'
+                raise ValidationError('Not enough stock available.')
+            
+            stock_quant = self.env['stock.quant'].search([
+                ('location_id', '=', self.warehouse_location_id.id),
+                ('product_id', '=', self.product_id.id),
+                ('inventory_quantity_auto_apply', '>', 0)
+            ], limit=1)
+
+            if not stock_quant:
+                raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
+
+        # Create Sale Order
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.donee_id.id,
+            'origin': self.name,
+            'date_order': fields.Datetime.now(),
+            'commitment_date': fields.Datetime.combine(
+                self.delivery_date, fields.Datetime.now().time()
+            ),
+            'order_line': [(0, 0, {
+                'product_id': self.product_id.id,
+                'name': self.product_id.name,
+                'product_uom_qty': 1,
+                'product_uom': self.product_id.uom_id.id,
+                'price_unit': self.product_id.lst_price or 0.0,
+            })],
+        })
+
+        # Confirm SO — this auto-generates the delivery picking
+        sale_order.action_confirm()
+
+        # Get the auto-generated picking and update its source location
+        picking = sale_order.picking_ids and sale_order.picking_ids[0]
+        if picking:
+            location_id = (
+                self.recovered_location_id.id if self.in_recovery 
+                else self.warehouse_location_id.id
+            )
+            picking.write({
+                'location_id': location_id,
+                'scheduled_date': fields.Datetime.combine(
+                    self.delivery_date, fields.Datetime.now().time()
+                ),
+            })
+            # Update move source location too
+            picking.move_ids.write({'location_id': location_id})
+
+            # Store picking reference
+            self.picking_ids = [(4, picking.id)]
+        
+        # Store SO reference
+        self.sale_order_id = sale_order.id
+
+        return sale_order
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
