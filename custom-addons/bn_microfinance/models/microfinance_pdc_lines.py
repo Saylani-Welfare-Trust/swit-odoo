@@ -33,16 +33,16 @@ class MicrofinancePDCLine(models.Model):
 
     @api.model
     def create(self, vals):
-        # Auto-set installment_number if not provided
         if not vals.get('installment_number') and vals.get('microfinance_line_id'):
             line = self.env['microfinance.line'].browse(vals['microfinance_line_id'])
             if line:
                 vals['installment_number'] = line.installment_no or line.installment_number
 
-        # AUTO-LINK: if microfinance_line_id is missing but cheque_no is present, find it
-        if not vals.get('microfinance_line_id') and vals.get('cheque_no'):
+        # AUTO-LINK via installment_number instead of cheque_no
+        if not vals.get('microfinance_line_id') and vals.get('installment_number') and vals.get('microfinance_id'):
             microfinance_line = self.env['microfinance.line'].search([
-                ('cheque_no', '=', vals['cheque_no']),
+                ('microfinance_id', '=', vals['microfinance_id']),
+                ('installment_no', '=', vals['installment_number']),
             ], limit=1)
             if microfinance_line:
                 vals['microfinance_line_id'] = microfinance_line.id

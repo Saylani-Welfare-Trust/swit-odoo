@@ -97,11 +97,12 @@ class POSCheque(models.Model):
         }
 
     def _get_or_repair_microfinance_line(self, pdc_line):
-        """Get microfinance line from link or fallback to cheque_no search, and repair the link"""
+        """Get microfinance line from link or fallback to installment_number search, and repair the link"""
         microfinance_line = pdc_line.microfinance_line_id
-        if not microfinance_line and self.name:
+        if not microfinance_line and pdc_line.installment_number and pdc_line.microfinance_id:
             microfinance_line = self.env['microfinance.line'].search([
-                ('cheque_no', '=', self.name),
+                ('microfinance_id', '=', pdc_line.microfinance_id.id),
+                ('installment_no', '=', pdc_line.installment_number),
             ], limit=1)
             if microfinance_line:
                 pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
