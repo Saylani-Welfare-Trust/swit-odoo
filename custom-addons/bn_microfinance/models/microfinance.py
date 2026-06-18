@@ -67,7 +67,7 @@ class Microfinance(models.Model):
 
     name = fields.Char('Name', default="NEW")
     old_system_record = fields.Char('Old System Record')
-
+    microfinance_pdc_line_ids = fields.One2many('microfinance.pdc.line', 'microfinance_id', string="PDC Lines")
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
@@ -716,10 +716,11 @@ class Microfinance(models.Model):
 
 
     def compute_installment(self):
+        """Create installment lines but NOT PDC lines"""
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
             return
 
-        # Don't delete existing lines to preserve user edits
+        # Don't delete existing lines
         # self.microfinance_line_ids.unlink()  # ← COMMENT THIS OUT
 
         total_covered = self.installment_amount * (self.installment_period - 1)
@@ -737,14 +738,7 @@ class Microfinance(models.Model):
                 'due_date': security_due_date,
                 'paid_amount': 0,
                 'amount': self.security_deposit,
-                'payment_type': 'security',
-                # Don't set PDC fields
-                'installment_number': '',  # Leave empty for user to fill
-                'cheque_date': False,      # Leave empty for user to fill
-                'bank_name': '',           # Leave empty for user to fill
-                'amount_total': 0,         # Leave empty for user to fill
-                'state_cheque': 'draft',   # Default draft
-                'is_cheque_deposit': False # Not deposited by default
+                'payment_type': 'security'
             })
 
             # Regular installments
@@ -759,27 +753,14 @@ class Microfinance(models.Model):
                 else:
                     amount = remaining_amount
 
-                # Only create if no line exists for this installment
-                existing_line = self.microfinance_line_ids.filtered(
-                    lambda l: l.installment_no == f"{self.name}/{i + 1:04d}"
-                )
-                
-                if not existing_line:
-                    installment_vals.append({
-                        'microfinance_id': self.id,
-                        'installment_no': f"{self.name}/{i + 1:04d}",
-                        'due_date': due_date,
-                        'paid_amount': 0,
-                        'amount': amount,
-                        'payment_type': 'installment',
-                        # Leave PDC fields empty for user input
-                        'installment_number': '',
-                        'cheque_date': False,
-                        'bank_name': '',
-                        'amount_total': 0,
-                        'state_cheque': 'draft',
-                        'is_cheque_deposit': False
-                    })
+                installment_vals.append({
+                    'microfinance_id': self.id,
+                    'installment_no': f"{self.name}/{i + 1:04d}",
+                    'due_date': due_date,
+                    'paid_amount': 0,
+                    'amount': amount,
+                    'payment_type': 'installment'
+                })
 
             if installment_vals:
                 self.env['microfinance.line'].create(installment_vals)

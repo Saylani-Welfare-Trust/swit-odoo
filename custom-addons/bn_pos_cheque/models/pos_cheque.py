@@ -41,32 +41,25 @@ class POSCheque(models.Model):
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
-    def _get_microfinance_line(self):
+    def _get_microfinance_pdc_line(self):
         """
-        Search for a microfinance.line whose cheque_no matches
-        this cheque's name (cheque number). Returns the line or
-        an empty recordset if not found — meaning this cheque is
-        not linked to any microfinance document.
+        Search for a microfinance.pdc.line whose cheque_no matches
+        this cheque's name (cheque number).
         """
         self.ensure_one()
-        return self.env['microfinance.line'].search([
+        return self.env['microfinance.pdc.line'].search([
             ('cheque_no', '=', self.name),
         ], limit=1)
 
     def _update_microfinance_cheque_line(self, new_state_cheque):
         """
-        Update the state_cheque on the matching microfinance.line.
-
-        new_state_cheque:
-            'cleared' → called from action_clear  (cheque cleared by bank)
-            'bounced' → called from action_bounce (cheque returned/bounced)
-            'draft'   → reset to draft on re-bounce after correction
+        Update the state_cheque on the matching microfinance.pdc.line.
         """
         self.ensure_one()
-        line = self._get_microfinance_line()
-        if not line:
+        pdc_line = self._get_microfinance_pdc_line()
+        if not pdc_line:
             return  # Not a microfinance cheque — skip silently
-        line.write({'state_cheque': new_state_cheque})
+        pdc_line.write({'state_cheque': new_state_cheque})
 
     def action_show_pos_order(self):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
@@ -84,13 +77,13 @@ class POSCheque(models.Model):
         }
 
     def action_clear(self):
-        self._update_microfinance_cheque_line('cleared')  # microfinance line → Cleared
+        self._update_microfinance_cheque_line('cleared')
         self.state = 'clear'
 
     def action_bounce(self):
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
-        self._update_microfinance_cheque_line('bounced')  # microfinance line → Bounced
+        self._update_microfinance_cheque_line('bounced')
         self.bounce_count += 1
         self.state = 'bounce'
 
