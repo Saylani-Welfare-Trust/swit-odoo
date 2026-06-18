@@ -91,14 +91,14 @@ class MicrofinanceLine(models.Model):
     def write(self, vals):
         res = super().write(vals)
         
-        # Sync state_cheque whenever payment state changes
         if 'state' in vals or 'paid_amount' in vals:
             for rec in self:
+                # Only sync state_cheque if this line has a cheque deposit
+                # If no cheque exists, state goes to paid normally — nothing extra happens
                 if not rec.is_cheque_deposit:
-                    continue
+                    continue  # ← skip, only installment state updates, state_cheque untouched
                 
                 if rec.state == 'paid':
-                    # Don't overwrite if already cleared/bounced by pos.cheque actions
                     if rec.state_cheque not in ('cleared', 'bounced'):
                         rec.state_cheque = 'deposited'
                 elif rec.state in ('unpaid', 'partial'):
