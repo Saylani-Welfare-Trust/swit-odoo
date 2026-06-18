@@ -39,4 +39,4 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         microfinance._compute_microfinance_scheme_line_ids()
 
         # Return the report action
-        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(data={self: microfinance.id})
+        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)
