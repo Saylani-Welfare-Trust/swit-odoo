@@ -44,7 +44,11 @@ class MicrofinanceInstallment(models.Model):
 
     date = fields.Date('Date')
     cheque_date = fields.Date('Cheque Date')
-
+    microfinance_line_id = fields.Many2one(
+        'microfinance.line', 
+        string="Microfinance Line",
+        ondelete='set null'  # Prevents cascade deletion
+    )
 
     @api.model
     def create(self, vals):
