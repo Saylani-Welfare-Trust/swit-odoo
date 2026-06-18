@@ -5,7 +5,7 @@ import math
 import re
 
 from dateutil.relativedelta import relativedelta
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 import base64
 from io import StringIO, BytesIO
@@ -629,9 +629,7 @@ class Microfinance(models.Model):
             'partner_id': self.donee_id.id,
             'origin': self.name,
             'date_order': fields.Datetime.now(),
-            'commitment_date': fields.Datetime.combine(
-                self.delivery_date, fields.Datetime.now().time()
-            ),
+            'commitment_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
             'order_line': [(0, 0, {
                 'product_id': self.product_id.id,
                 'name': self.product_id.name,
@@ -652,10 +650,8 @@ class Microfinance(models.Model):
                 else self.warehouse_location_id.id
             )
             picking.write({
-                'location_id': location_id,
-                'scheduled_date': fields.Datetime.combine(
-                    self.delivery_date, fields.Datetime.now().time()
-                ),
+                'location_id'   : location_id,
+                'scheduled_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
             })
             # Update move source location too
             picking.move_ids.write({'location_id': location_id})
