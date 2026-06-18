@@ -96,49 +96,55 @@ class POSCheque(models.Model):
             'target': 'new',
         }
 
+    def _get_or_repair_microfinance_line(self, pdc_line):
+        """Get microfinance line from link or fallback to cheque_no search, and repair the link"""
+        microfinance_line = pdc_line.microfinance_line_id
+        if not microfinance_line and self.name:
+            microfinance_line = self.env['microfinance.line'].search([
+                ('cheque_no', '=', self.name),
+            ], limit=1)
+            if microfinance_line:
+                pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
+        return microfinance_line
+
     def action_clear(self):
-        """When cheque clears: Update PDC line to cleared, microfinance line to paid"""
-        self._update_microfinance_cheque_line('cleared')
-        self._update_microfinance_line_state('paid')
+        pdc_line = self._get_microfinance_pdc_line()
+        if pdc_line:
+            pdc_line.write({'state_cheque': 'cleared'})
+            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
+            if microfinance_line:
+                microfinance_line.write({
+                    'state': 'paid',
+                    'paid_amount': microfinance_line.amount,
+                    'payment_date': fields.Date.today(),
+                })
         self.state = 'clear'
 
     def action_bounce(self):
-        """When cheque bounces: Update PDC line to bounced, microfinance line back to unpaid"""
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
-
-        # Get the PDC line ONCE and reuse it for both updates
         pdc_line = self._get_microfinance_pdc_line()
-
         if pdc_line:
-            # Update PDC line state to bounced
             pdc_line.write({'state_cheque': 'bounced'})
-
-            # Directly access microfinance_line_id from the already-fetched pdc_line
-            microfinance_line = pdc_line.microfinance_line_id
+            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
             if microfinance_line:
                 microfinance_line.write({
                     'state': 'unpaid',
                     'paid_amount': 0.0,
-                    'payment_date': False
+                    'payment_date': False,
                 })
-            else:
-                # Helps you confirm whether the link is missing
-                raise ValidationError(
-                    f'PDC line found for cheque {self.name}, '
-                    f'but no linked microfinance line (microfinance_line_id is empty).'
-                )
-        else:
-            raise ValidationError(
-                f'No PDC line found for cheque number: {self.name}. '
-                f'Cannot update installment state.'
-            )
-
         self.bounce_count += 1
         self.state = 'bounce'
 
     def action_cancel(self):
-        """When cheque is cancelled: Reset PDC line to draft, microfinance line to unpaid"""
-        self._update_microfinance_cheque_line('draft')
-        self._update_microfinance_line_state('unpaid')
+        pdc_line = self._get_microfinance_pdc_line()
+        if pdc_line:
+            pdc_line.write({'state_cheque': 'draft'})
+            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
+            if microfinance_line:
+                microfinance_line.write({
+                    'state': 'unpaid',
+                    'paid_amount': 0.0,
+                    'payment_date': False,
+                })
         self.state = 'cancel'
