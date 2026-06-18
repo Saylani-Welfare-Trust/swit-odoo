@@ -14,11 +14,11 @@
                 <field name="cheque_date" string="Cheque Date"/>
                 <field name="bank_name" string="Bank"/>
                 <field name="amount_total" string="Cheque Amount" sum="Total Amount"/>
-                <field name="state" string="State" widget="badge" 
-                       decoration-success="state == 'cleared'" 
-                       decoration-warning="state == 'deposited'" 
-                       decoration-danger="state == 'bounced'"
-                       decoration-info="state == 'draft'"/>
+                <field name="state_cheque" string="State" widget="badge" 
+                       decoration-success="state_cheque == 'cleared'" 
+                       decoration-warning="state_cheque == 'deposited'" 
+                       decoration-danger="state_cheque == 'bounced'"
+                       decoration-info="state_cheque == 'draft'"/>
                 <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
                 <!-- Button in each line -->
                 <!-- <button name="action_deposit_cheque" 
@@ -38,7 +38,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="microfinance_id"/>
-                <field name="name"/>
+                <field name="donee_id"/>
                 <field name="installment_number"/>
                 <field name="bank_name"/>
                 <field name="cheque_no"/>
@@ -47,10 +47,10 @@
                 <separator/>
                 
                 <!-- State Filters -->
-                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
-                <filter name="filter_deposited" string="Deposited" domain="[('state', '=', 'deposited')]"/>
-                <filter name="filter_cleared" string="Cleared" domain="[('state', '=', 'cleared')]"/>
-                <filter name="filter_bounced" string="Bounced" domain="[('state', '=', 'bounced')]"/>
+                <filter name="filter_draft" string="Draft" domain="[('state_cheque', '=', 'draft')]"/>
+                <filter name="filter_deposited" string="Deposited" domain="[('state_cheque', '=', 'deposited')]"/>
+                <filter name="filter_cleared" string="Cleared" domain="[('state_cheque', '=', 'cleared')]"/>
+                <filter name="filter_bounced" string="Bounced" domain="[('state_cheque', '=', 'bounced')]"/>
                 
                 <separator/>
                 
@@ -66,9 +66,9 @@
                 
                 <!-- Group By -->
                 <group expand="0" string="Group By">
-                    <filter name="group_by_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_state" string="State" context="{'group_by': 'state_cheque'}"/>
                     <filter name="group_by_bank" string="Bank" context="{'group_by': 'bank_name'}"/>
-                    <filter name="group_by_donee" string="Donee" context="{'group_by': 'microfinance_id'}"/>
+                    <filter name="group_by_donee" string="Donee" context="{'group_by': 'donee_id'}"/>
                     <filter name="group_by_date" string="Cheque Date" context="{'group_by': 'cheque_date'}"/>
                 </group>
             </search>
