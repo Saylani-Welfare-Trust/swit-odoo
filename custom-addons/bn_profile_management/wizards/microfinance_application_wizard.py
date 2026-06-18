@@ -10,6 +10,8 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme", required=True)
 
 
+
+
     def action_print_application(self):
         """Create microfinance record and print the application form"""
         self.ensure_one()
