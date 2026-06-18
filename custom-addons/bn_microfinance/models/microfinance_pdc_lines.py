@@ -38,4 +38,13 @@ class MicrofinancePDCLine(models.Model):
             line = self.env['microfinance.line'].browse(vals['microfinance_line_id'])
             if line:
                 vals['installment_number'] = line.installment_no or line.installment_number
+
+        # AUTO-LINK: if microfinance_line_id is missing but cheque_no is present, find it
+        if not vals.get('microfinance_line_id') and vals.get('cheque_no'):
+            microfinance_line = self.env['microfinance.line'].search([
+                ('cheque_no', '=', vals['cheque_no']),
+            ], limit=1)
+            if microfinance_line:
+                vals['microfinance_line_id'] = microfinance_line.id
+
         return super(MicrofinancePDCLine, self).create(vals)
