@@ -719,46 +719,70 @@ class Microfinance(models.Model):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
             return
 
-        self.microfinance_line_ids.unlink()
+        # Don't delete existing lines to preserve user edits
+        # self.microfinance_line_ids.unlink()  # ← COMMENT THIS OUT
 
         total_covered = self.installment_amount * (self.installment_period - 1)
         remaining_amount = max(self.total_amount - total_covered, 0)
         
-        installment_vals = []
+        # Only create installments if no lines exist
+        if not self.microfinance_line_ids:
+            installment_vals = []
 
-        # First line: Security deposit
-        security_due_date = self.delivery_date  # Security deposit due on delivery date
-        installment_vals.append({
-            'microfinance_id': self.id,
-            'installment_no': f"{self.name}/SEC",
-            'due_date': security_due_date,
-            'paid_amount': 0,
-            'amount': self.security_deposit,
-            'payment_type': 'security'
-        })
-
-        # Regular installments
-        for i in range(self.installment_period):
-            if self.installment_type == 'monthly':
-                due_date = self.delivery_date + relativedelta(months=i + 1)
-            elif self.installment_type == 'daily':
-                due_date = self.delivery_date + timedelta(days=i + 1)
-
-            if i < self.installment_period - 1:
-                amount = self.installment_amount
-            else:
-                amount = remaining_amount
-
+            # First line: Security deposit
+            security_due_date = self.delivery_date
             installment_vals.append({
                 'microfinance_id': self.id,
-                'installment_no': f"{self.name}/{i + 1:04d}",
-                'due_date': due_date,
+                'installment_no': f"{self.name}/SEC",
+                'due_date': security_due_date,
                 'paid_amount': 0,
-                'amount': amount,
-                'payment_type': 'installment'
+                'amount': self.security_deposit,
+                'payment_type': 'security',
+                # Don't set PDC fields
+                'installment_number': '',  # Leave empty for user to fill
+                'cheque_date': False,      # Leave empty for user to fill
+                'bank_name': '',           # Leave empty for user to fill
+                'amount_total': 0,         # Leave empty for user to fill
+                'state_cheque': 'draft',   # Default draft
+                'is_cheque_deposit': False # Not deposited by default
             })
 
-        self.env['microfinance.line'].create(installment_vals)
+            # Regular installments
+            for i in range(self.installment_period):
+                if self.installment_type == 'monthly':
+                    due_date = self.delivery_date + relativedelta(months=i + 1)
+                elif self.installment_type == 'daily':
+                    due_date = self.delivery_date + timedelta(days=i + 1)
+
+                if i < self.installment_period - 1:
+                    amount = self.installment_amount
+                else:
+                    amount = remaining_amount
+
+                # Only create if no line exists for this installment
+                existing_line = self.microfinance_line_ids.filtered(
+                    lambda l: l.installment_no == f"{self.name}/{i + 1:04d}"
+                )
+                
+                if not existing_line:
+                    installment_vals.append({
+                        'microfinance_id': self.id,
+                        'installment_no': f"{self.name}/{i + 1:04d}",
+                        'due_date': due_date,
+                        'paid_amount': 0,
+                        'amount': amount,
+                        'payment_type': 'installment',
+                        # Leave PDC fields empty for user input
+                        'installment_number': '',
+                        'cheque_date': False,
+                        'bank_name': '',
+                        'amount_total': 0,
+                        'state_cheque': 'draft',
+                        'is_cheque_deposit': False
+                    })
+
+            if installment_vals:
+                self.env['microfinance.line'].create(installment_vals)
     
     def compute_recovery_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
