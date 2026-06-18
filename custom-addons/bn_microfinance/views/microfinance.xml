@@ -66,6 +66,13 @@
                     <widget name="web_ribbon" title="In Recovery" invisible="not in_recovery"/>
 
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sale_order" 
+                                type="object"
+                                class="oe_stat_button" 
+                                icon="fa-shopping-cart"
+                                invisible="sale_order_id == False">
+                            <field name="sale_order_id" widget="statinfo" string="Sale Order"/>
+                        </button>
                         <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck" 
                                 invisible="not picking_ids">
                             <field name="picking_ids" widget="statinfo" string="Delivery"/>
