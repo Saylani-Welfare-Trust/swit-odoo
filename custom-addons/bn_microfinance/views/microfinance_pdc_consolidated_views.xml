@@ -2,44 +2,45 @@
 <odoo>
     <!-- Tree View for Consolidated Cheque List -->
     <record id="view_microfinance_pdc_consolidated_tree" model="ir.ui.view">
-        <field name="name">microfinance.pdc.consolidated.tree</field>
-        <field name="model">microfinance.pdc.consolidated</field>
+        <field name="name">microfinance.line.tree</field>
+        <field name="model">microfinance.line</field>
         <field name="priority">10</field>
         <field name="arch" type="xml">
             <tree create="0" delete="0" edit="0">
-                <field name="application_number" string="Application Number"/>
+
+                <field name="microfinance_id" string="Application Number"/>
                 <field name="installment_number" string="Installment Number"/>
-                <field name="donee_name" string="Donee"/>
+                <field name="donee_id" string="Donee"/>
                 <field name="cheque_date" string="Cheque Date"/>
-                <field name="bank_id" string="Bank"/>
-                <field name="amount" string="Cheque Amount" sum="Total Amount"/>
+                <field name="bank_name" string="Bank"/>
+                <field name="amount_total" string="Cheque Amount" sum="Total Amount"/>
                 <field name="state" string="State" widget="badge" 
                        decoration-success="state == 'cleared'" 
                        decoration-warning="state == 'deposited'" 
                        decoration-danger="state == 'bounced'"
                        decoration-info="state == 'draft'"/>
-                <field name="deposit_date" string="Deposit Date" optional="show"/>
+                <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
                 <!-- Button in each line -->
-                <button name="action_deposit_cheque" 
+                <!-- <button name="action_deposit_cheque" 
                         string="Deposit" 
                         type="object" 
                         class="btn-primary"
                         icon="fa-check-circle"
-                        invisible="state != 'draft'"/>
+                        invisible="state != 'draft'"/> -->
             </tree>
         </field>
     </record>
 
     <!-- Search View -->
     <record id="view_microfinance_pdc_consolidated_search" model="ir.ui.view">
-        <field name="name">microfinance.pdc.consolidated.search</field>
-        <field name="model">microfinance.pdc.consolidated</field>
+        <field name="name">microfinance.line.search</field>
+        <field name="model">microfinance.line</field>
         <field name="arch" type="xml">
             <search>
-                <field name="application_number"/>
-                <field name="donee_name"/>
+                <field name="microfinance_id"/>
+                <field name="name"/>
                 <field name="installment_number"/>
-                <field name="bank_id"/>
+                <field name="bank_name"/>
                 <field name="cheque_no"/>
                 <field name="cheque_date"/>
                 
@@ -66,8 +67,8 @@
                 <!-- Group By -->
                 <group expand="0" string="Group By">
                     <filter name="group_by_state" string="State" context="{'group_by': 'state'}"/>
-                    <filter name="group_by_bank" string="Bank" context="{'group_by': 'bank_id'}"/>
-                    <filter name="group_by_donee" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="group_by_bank" string="Bank" context="{'group_by': 'bank_name'}"/>
+                    <filter name="group_by_donee" string="Donee" context="{'group_by': 'microfinance_id'}"/>
                     <filter name="group_by_date" string="Cheque Date" context="{'group_by': 'cheque_date'}"/>
                 </group>
             </search>
@@ -77,7 +78,7 @@
     <!-- Action Window -->
     <record id="action_microfinance_pdc_consolidated" model="ir.actions.act_window">
         <field name="name">Post-Dated Cheques</field>
-        <field name="res_model">microfinance.pdc.consolidated</field>
+        <field name="res_model">microfinance.line</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_microfinance_pdc_consolidated_search"/>
         <field name="context">{'search_default_filter_draft': 1}</field>

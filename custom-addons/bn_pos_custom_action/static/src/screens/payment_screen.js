@@ -313,6 +313,7 @@ patch(PaymentScreen.prototype, {
                             {
                                 paid_amount: newPaidAmount,
                                 state: newState,
+                                state_cheque: newState === 'paid' ? 'deposited' : line.state_cheque,
                             }
                         );
                         

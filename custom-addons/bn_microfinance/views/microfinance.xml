@@ -156,10 +156,10 @@
                                 <tree>
                                     <field name="is_cheque_deposit" column_invisible="1" />
 
-                                    <field name="installment_no" />
+                                    <field name="installment_number" />
                                     <field name="cheque_date" />
                                     <field name="bank_name" />
-                                    <field name="amount" />
+                                    <field name="amount_total" />
                                     <field name="state_cheque" widget="badge"  />
                                     
                                 </tree>

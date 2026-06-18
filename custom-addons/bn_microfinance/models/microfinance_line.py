@@ -24,6 +24,8 @@ class MicrofinanceLine(models.Model):
     cheque_no = fields.Char('Cheque No.')
     name = fields.Char('Name', default="NEW")
     installment_no = fields.Char('Installment No.')
+    installment_number = fields.Char('Installment Number')
+    amount_total = fields.Monetary('Amount Total', currency_field='currency_id')
 
     due_date = fields.Date('Due Date')
     cheque_date = fields.Date('Cheque Date')
@@ -35,7 +37,7 @@ class MicrofinanceLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id', compute='_compute_remaining_amount', store=True)
-
+    donee_id = fields.Many2one('res.partner', string="Donee")
     currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
 
     state = fields.Selection(selection=state_selection, string='State', default="unpaid")
@@ -85,3 +87,36 @@ class MicrofinanceLine(models.Model):
                 'cheque_date': self.cheque_date,
                 'donee_id': self.microfinance_id.donee_id.id,
             })
+
+    def write(self, vals):
+        res = super().write(vals)
+        
+        # Sync state_cheque whenever payment state changes
+        if 'state' in vals or 'paid_amount' in vals:
+            for rec in self:
+                if not rec.is_cheque_deposit:
+                    continue
+                
+                if rec.state == 'paid':
+                    # Don't overwrite if already cleared/bounced by pos.cheque actions
+                    if rec.state_cheque not in ('cleared', 'bounced'):
+                        rec.state_cheque = 'deposited'
+                elif rec.state in ('unpaid', 'partial'):
+                    if rec.state_cheque == 'deposited':
+                        rec.state_cheque = 'draft'
+        
+        return res
+
+    @api.depends('state', 'paid_amount')
+    def _sync_cheque_state(self):
+        for rec in self:
+            # Only sync if this line was created via cheque deposit
+            if not rec.is_cheque_deposit:
+                continue
+            
+            if rec.state == 'paid':
+                rec.state_cheque = 'deposited'
+            elif rec.state == 'partial':
+                rec.state_cheque = 'deposited'  # partially deposited, still counts as deposited
+            elif rec.state == 'unpaid':
+                rec.state_cheque = 'draft'      # reset if payment reversed
