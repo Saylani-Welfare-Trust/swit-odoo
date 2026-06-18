@@ -41,44 +41,48 @@ class POSCheque(models.Model):
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
-    def _get_microfinance_line(self):
-        """
-        Search for a microfinance.line whose cheque_no matches this cheque's name.
-        This finds the specific installment line that was paid with this cheque.
-        """
+    def _get_microfinance_pdc_line(self):
+        """Get the PDC line linked to this cheque"""
         self.ensure_one()
-        return self.env['microfinance.line'].search([
+        return self.env['microfinance.pdc.line'].search([
             ('cheque_no', '=', self.name),
         ], limit=1)
 
-    def _update_microfinance_cheque_line(self, new_state_cheque):
-        """
-        Update the state_cheque on the matching microfinance.line.
-        """
+    def _get_microfinance_line(self):
+        """Get the microfinance.line linked through the PDC line"""
         self.ensure_one()
-        line = self._get_microfinance_line()
-        if line:
-            line.write({'state_cheque': new_state_cheque})
+        pdc_line = self._get_microfinance_pdc_line()
+        if pdc_line and pdc_line.microfinance_line_id:
+            return pdc_line.microfinance_line_id
+        return None
 
-    def _update_microfinance_installment_state(self, new_state):
-        """
-        Update the state of the microfinance.line (installment state).
-        """
+    def _update_microfinance_cheque_line(self, new_state_cheque):
+        """Update the state_cheque on the matching microfinance.pdc.line"""
         self.ensure_one()
-        line = self._get_microfinance_line()
-        if line:
+        pdc_line = self._get_microfinance_pdc_line()
+        if pdc_line:
+            pdc_line.write({'state_cheque': new_state_cheque})
+
+    def _update_microfinance_line_state(self, new_state):
+        """Update the state of the linked microfinance.line"""
+        self.ensure_one()
+        microfinance_line = self._get_microfinance_line()
+        if microfinance_line:
             if new_state == 'paid':
-                line.write({
+                microfinance_line.write({
                     'state': 'paid',
-                    'paid_amount': line.amount,
+                    'paid_amount': microfinance_line.amount,
                     'payment_date': fields.Date.today()
                 })
             elif new_state == 'unpaid':
-                line.write({
+                microfinance_line.write({
                     'state': 'unpaid',
                     'paid_amount': 0.0,
                     'payment_date': False
                 })
+            elif new_state == 'partial':
+                # Handle partial payment logic if needed
+                pass
 
     def action_show_pos_order(self):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
@@ -93,37 +97,21 @@ class POSCheque(models.Model):
         }
 
     def action_clear(self):
-        """
-        When cheque clears:
-        1. Update microfinance.line state_cheque to 'cleared'
-        2. Update microfinance.line state to 'paid'
-        3. Update POS cheque state to 'clear'
-        """
-        # Update microfinance line cheque status
+        """When cheque clears: Update PDC line to cleared, microfinance line to paid"""
         self._update_microfinance_cheque_line('cleared')
-        
-        # Update microfinance line installment state to paid
-        self._update_microfinance_installment_state('paid')
-        
-        # Update POS cheque state
+        self._update_microfinance_line_state('paid')
         self.state = 'clear'
 
     def action_bounce(self):
-        """
-        When cheque bounces:
-        1. Update microfinance.line state_cheque to 'bounced'
-        2. Update microfinance.line state back to 'unpaid'
-        3. Increment bounce count
-        4. Update POS cheque state to 'bounce'
-        """
+        """When cheque bounces: Update PDC line to bounced, microfinance line back to unpaid"""
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
         
-        # Update microfinance line cheque status to bounced
+        # Update PDC line state to bounced
         self._update_microfinance_cheque_line('bounced')
         
-        # Update microfinance line installment state back to unpaid
-        self._update_microfinance_installment_state('unpaid')
+        # CRITICAL: Update microfinance line state back to unpaid
+        self._update_microfinance_line_state('unpaid')
         
         # Increment bounce count
         self.bounce_count += 1
@@ -132,17 +120,7 @@ class POSCheque(models.Model):
         self.state = 'bounce'
 
     def action_cancel(self):
-        """
-        When cheque is cancelled:
-        1. Update microfinance.line state_cheque to 'draft'
-        2. Update microfinance.line state back to 'unpaid'
-        3. Update POS cheque state to 'cancel'
-        """
-        # Update microfinance line cheque status to draft
+        """When cheque is cancelled: Reset PDC line to draft, microfinance line to unpaid"""
         self._update_microfinance_cheque_line('draft')
-        
-        # Update microfinance line installment state to unpaid
-        self._update_microfinance_installment_state('unpaid')
-        
-        # Update POS cheque state
+        self._update_microfinance_line_state('unpaid')
         self.state = 'cancel'
