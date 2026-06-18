@@ -964,3 +964,12 @@ class Microfinance(models.Model):
                 raise ValidationError('Please provide remarks')
             self.remarks = False
             self.state = 'fully_recover'
+    def action_view_sale_order(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Sale Order',
+            'res_model': 'sale.order',
+            'view_mode': 'form',
+            'res_id': self.sale_order_id.id,
+            'target': 'current',
+        }
