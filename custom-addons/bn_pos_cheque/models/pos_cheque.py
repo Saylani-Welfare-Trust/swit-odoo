@@ -128,11 +128,12 @@ class POSCheque(models.Model):
             pdc_line.write({'state_cheque': 'bounced'})
             microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
             if microfinance_line:
-                microfinance_line.write({
-                    'state': 'unpaid',
-                    'paid_amount': 0.0,
-                    'payment_date': False,
-                })
+                raise ValidationError(
+                    f'Found line: {microfinance_line.name} | '
+                    f'cheque_no: {microfinance_line.cheque_no} | '
+                    f'microfinance_id: {microfinance_line.microfinance_id.id} | '
+                    f'current state: {microfinance_line.state}'
+                )
         self.bounce_count += 1
         self.state = 'bounce'
 
