@@ -106,17 +106,35 @@ class POSCheque(models.Model):
         """When cheque bounces: Update PDC line to bounced, microfinance line back to unpaid"""
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
-        
-        # Update PDC line state to bounced
-        self._update_microfinance_cheque_line('bounced')
-        
-        # CRITICAL: Update microfinance line state back to unpaid
-        self._update_microfinance_line_state('unpaid')
-        
-        # Increment bounce count
+
+        # Get the PDC line ONCE and reuse it for both updates
+        pdc_line = self._get_microfinance_pdc_line()
+
+        if pdc_line:
+            # Update PDC line state to bounced
+            pdc_line.write({'state_cheque': 'bounced'})
+
+            # Directly access microfinance_line_id from the already-fetched pdc_line
+            microfinance_line = pdc_line.microfinance_line_id
+            if microfinance_line:
+                microfinance_line.write({
+                    'state': 'unpaid',
+                    'paid_amount': 0.0,
+                    'payment_date': False
+                })
+            else:
+                # Helps you confirm whether the link is missing
+                raise ValidationError(
+                    f'PDC line found for cheque {self.name}, '
+                    f'but no linked microfinance line (microfinance_line_id is empty).'
+                )
+        else:
+            raise ValidationError(
+                f'No PDC line found for cheque number: {self.name}. '
+                f'Cannot update installment state.'
+            )
+
         self.bounce_count += 1
-        
-        # Update POS cheque state
         self.state = 'bounce'
 
     def action_cancel(self):
