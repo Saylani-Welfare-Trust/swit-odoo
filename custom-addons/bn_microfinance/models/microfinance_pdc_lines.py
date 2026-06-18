@@ -14,7 +14,7 @@ class MicrofinancePDCLine(models.Model):
 
     microfinance_id = fields.Many2one('microfinance', string="Microfinance", required=True, ondelete='cascade')
     microfinance_line_id = fields.Many2one('microfinance.line', string="Microfinance Line", ondelete='set null')
-    donee_id = fields.Many2one('res.partner', string='Donee Name', compute='_compute_donee_id', store=True)
+    donee_id = fields.Many2one('res.partner', string='Donee Name', related='microfinance_id.donee_id')
     installment_number = fields.Char('Installment Number')
     cheque_date = fields.Date('Cheque Date')
     bank_name = fields.Char('Bank Name')
