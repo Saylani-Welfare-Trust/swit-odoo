@@ -643,6 +643,7 @@ class Microfinance(models.Model):
         sale_order.action_confirm()
 
         # Get the auto-generated picking and update its source location
+        # Get the auto-generated picking and update its source location
         picking = sale_order.picking_ids and sale_order.picking_ids[0]
         if picking:
             location_id = (
@@ -650,13 +651,11 @@ class Microfinance(models.Model):
                 else self.warehouse_location_id.id
             )
             picking.write({
-                'location_id'   : location_id,
+                'location_id': location_id,
+                'origin': self.name,  # ← Override SO name with microfinance record name
                 'scheduled_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
             })
-            # Update move source location too
             picking.move_ids.write({'location_id': location_id})
-
-            # Store picking reference
             self.picking_ids = [(4, picking.id)]
         
         # Store SO reference
