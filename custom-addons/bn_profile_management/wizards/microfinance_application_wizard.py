@@ -10,8 +10,6 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme", required=True)
 
 
-
-
     def action_print_application(self):
         """Create microfinance record and print the application form"""
         self.ensure_one()
@@ -41,4 +39,4 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         microfinance._compute_microfinance_scheme_line_ids()
 
         # Return the report action
-        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action()
+        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self)
