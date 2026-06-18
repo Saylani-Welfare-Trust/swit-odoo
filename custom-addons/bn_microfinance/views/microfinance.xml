@@ -151,17 +151,14 @@
                             </field>
                         </page>
                         <page name="pdc" string="Post Dated Cheque" invisible="state not in ['done', 'reject'] or in_recovery">
-
-                            <field name="microfinance_line_ids" edit = "1" delete = "1" create = "1" readonly="0">
-                                <tree>
+                            <field name="microfinance_line_ids" edit="1" delete="1" create="1" readonly="0">
+                                <tree editable="top">  <!-- Use 'top' instead of 'bottom' -->
                                     <field name="is_cheque_deposit" column_invisible="1" />
-
                                     <field name="installment_number" />
                                     <field name="cheque_date" />
                                     <field name="bank_name" />
                                     <field name="amount_total" />
-                                    <field name="state_cheque" widget="badge"  />
-                                    
+                                    <field name="state_cheque" widget="badge" />
                                 </tree>
                             </field>
                         </page>
