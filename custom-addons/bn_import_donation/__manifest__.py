@@ -13,8 +13,6 @@
     ],
     'data': [
         'data/sequence.xml',
-        'data/stock_location.xml',
-        'data/stock_picking_type.xml',
         'data/ir_module_category.xml',
         
         'security/group.xml',
