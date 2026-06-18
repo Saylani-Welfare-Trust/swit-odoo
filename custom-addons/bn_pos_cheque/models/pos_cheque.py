@@ -126,15 +126,18 @@ class POSCheque(models.Model):
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
         pdc_line = self._get_microfinance_pdc_line()
-        
-        # DEBUG - remove after fix
-        raise ValidationError(
-            f'pos.cheque name: {self.name} | '
-            f'PDC line found: {bool(pdc_line)} | '
-            f'PDC cheque_no: {pdc_line.cheque_no if pdc_line else "N/A"} | '
-            f'microfinance_line_id: {pdc_line.microfinance_line_id.id if pdc_line and pdc_line.microfinance_line_id else "EMPTY"} | '
-            f'Direct search result: {self.env["microfinance.line"].search([("cheque_no", "=", self.name)], limit=1).id or "NOT FOUND"}'
-        )
+        if pdc_line:
+            pdc_line.write({'state_cheque': 'bounced'})
+            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
+            if microfinance_line:
+                microfinance_line.write({
+                    'state': 'unpaid',
+                    'paid_amount': 0.0,
+                    'payment_date': False,
+                })
+
+        self.bounce_count += 1
+        self.state = 'bounce'
 
     def action_cancel(self):
         pdc_line = self._get_microfinance_pdc_line()
