@@ -28,7 +28,9 @@
 
                 <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state not in ['pending', 'delivered']" decoration-success="state == 'delivered'" />
 
-                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="state in 'approved'"/>
+                <field name="max_distribution" column_invisible="1"/>
+
+                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="max_distribution > 2"/>
             </tree>
         </field>
     </record>
