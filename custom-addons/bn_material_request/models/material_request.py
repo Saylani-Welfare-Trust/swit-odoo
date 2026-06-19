@@ -207,105 +207,62 @@ class MemberApproval(models.Model):
             'state': next_state,
         })
         return True
-    
-    
+
     def action_hod_approve(self):
+        """HOD approves the request - next step depends on budget status"""
         self.ensure_one()
-        
-        # DEBUG: Print everything
-        for line in self.line_ids:
-            print("=" * 50)
-            print("Product:", line.product_id.name)
-            print("Product ID:", line.product_id.id)
-            
-            # Get analytic account
-            analytic_line = self.env['analytical.product.line'].search([
-                ('product_id', '=', line.product_id.id)
-            ], limit=1)
-            
-            if analytic_line:
-                print("Analytic Account ID:", analytic_line.analytic_account_id.id)
-                print("Analytic Account Name:", analytic_line.analytic_account_id.name)
-            else:
-                print("No Analytic Account Found!")
-                continue
-            
-            # Search budget line
-            budget_line = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
-            ], limit=1)
-            
-            if budget_line:
-                print("Budget Line Found!")
-                print("Budget ID:", budget_line.id)
-                print("Practical Amount:", budget_line.practical_amount)
-                print("Date From:", budget_line.date_from)
-                print("Date To:", budget_line.date_to)
-                
-                # UPDATE HERE
-                old = budget_line.practical_amount
-                budget_line.write({'practical_amount': old + line.subtotal})
-                print("New Practical Amount:", budget_line.practical_amount)
-            else:
-                print("No Budget Line Found!")
-        
-        self.state = 'done'
+        if self.state not in ['hod_approval', 'budget_check']:
+            raise ValidationError(_('This request is not in HOD Approval state.'))
 
-    # def action_hod_approve(self):
-    #     """HOD approves the request - next step depends on budget status"""
-    #     self.ensure_one()
-    #     if self.state not in ['hod_approval', 'budget_check']:
-    #         raise ValidationError(_('This request is not in HOD Approval state.'))
-
-    #     if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
-    #         raise ValidationError(_('This request can only be approved by its respected Manager.'))
+        if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
+            raise ValidationError(_('This request can only be approved by its respected Manager.'))
         
         
 
-    #     if self.is_in_budget:
-    #         # Deduct approved amount from available budget
-    #         self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
-    #         if self.budget_amount < 0:
-    #             self.budget_amount = 0.0
+        if self.is_in_budget:
+            # Deduct approved amount from available budget
+            self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+            if self.budget_amount < 0:
+                self.budget_amount = 0.0
                 
                 
-    #         # Update budget lines for each product
-    #         today = fields.Date.today()
-    #         updated_lines = self.env['budget.lines']
+            # Update budget lines for each product
+            # today = fields.Date.today()
+            # updated_lines = self.env['budget.lines']
 
-    #         for line in self.line_ids:
-    #             # Find analytic account via product
-    #             analytic = self.env['analytical.product.line'].search(
-    #                 [('product_id', '=', line.product_id.id)], limit=1
-    #             ).analytic_account_id
-    #             if analytic:
-    #                 # Find active budget line(s)
-    #                 budget_lines = self.env['budget.lines'].search([
-    #                     ('analytic_account_id', '=', analytic.id),
-    #                     ('budget_id', '=', line.budget_id.id),
-    #                     ('date_from', '<=', today),
-    #                     ('date_to', '>=', today),
-    #                 ])
-    #                 if budget_lines:
-    #                     # Deduct line.subtotal (practical_amount is negative, so add)
-    #                     budget_lines[0].practical_amount += line.subtotal
-    #                     updated_lines |= budget_lines
+            # for line in self.line_ids:
+            #     # Find analytic account via product
+            #     analytic = self.env['analytical.product.line'].search(
+            #         [('product_id', '=', line.product_id.id)], limit=1
+            #     ).analytic_account_id
+            #     if analytic:
+            #         # Find active budget line(s)
+            #         budget_lines = self.env['budget.lines'].search([
+            #             ('analytic_account_id', '=', analytic.id),
+            #             ('budget_id', '=', line.budget_id.id),
+            #             ('date_from', '<=', today),
+            #             ('date_to', '>=', today),
+            #         ])
+            #         if budget_lines:
+            #             # Deduct line.subtotal (practical_amount is negative, so add)
+            #             budget_lines[0].practical_amount += line.subtotal
+            #             updated_lines |= budget_lines
 
-    #         # Recompute total remaining budget
-    #         self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
+            # # Recompute total remaining budget
+            # self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
 
        
 
-    #         # Within budget: go to procurement (simulate with 'done' state and create transfer)
-    #         if self.request_type == 'internal':
-    #             self._create_internal_transfer()
-    #             self.state = 'done'
-    #         elif self.request_type == 'purchase_request':
-    #             self._create_purchase_request()
-    #             self.state = 'purchase_request'
-    #     else:
-    #         # Outside budget: go to COO/CFO approval
-    #         self.state = 'committee_approval'
+            # Within budget: go to procurement (simulate with 'done' state and create transfer)
+            if self.request_type == 'internal':
+                self._create_internal_transfer()
+                self.state = 'done'
+            elif self.request_type == 'purchase_request':
+                self._create_purchase_request()
+                self.state = 'purchase_request'
+        else:
+            # Outside budget: go to COO/CFO approval
+            self.state = 'committee_approval'
 
     def action_cfo_approve(self):
         """CFO approves the request"""
