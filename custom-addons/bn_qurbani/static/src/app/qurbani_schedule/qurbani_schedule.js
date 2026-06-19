@@ -91,6 +91,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
             slot_demand_id: slot.slot_demand_id,
             product: slot.product,
             day: slot.day,
+            day_id: slot.day_id,
         };
     }
 
@@ -120,7 +121,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
         const result = await this.orm.call(
             "qurbani.day",
             "validate_qurbani_day",
-            [slot.day] // adjust according to your slot structure
+            [slot.day_id] // adjust according to your slot structure
         );
 
         if (!result.valid) {
