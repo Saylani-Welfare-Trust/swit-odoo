@@ -79,7 +79,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.status = 'installed'
 
     def action_approved(self):
-        if self.key_bunch_id.key_ids.filtered(lambda x: x.state == 'issued'):
+        if self.key_bunch_id.key_ids.filtered(lambda x: x.state != 'available'):
             raise ValidationError("One or more keys in the key bunch are already issued.")
 
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
