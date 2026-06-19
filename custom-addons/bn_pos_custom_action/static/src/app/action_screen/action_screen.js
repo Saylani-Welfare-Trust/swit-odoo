@@ -14,6 +14,7 @@ export class ActionScreen extends AbstractAwaitablePopup {
         this.orm = useService("orm");
         this.popup = useService("popup");
         this.report = useService("report");
+        this.notification = useService("notification");
     }
 
     canCancel() {
