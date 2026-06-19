@@ -217,11 +217,53 @@ class MemberApproval(models.Model):
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
 
+
+
+
+        # if self.is_in_budget:
+        #     # Deduct approved amount from available budget
+        #     self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+        #     if self.budget_amount < 0:
+        #         self.budget_amount = 0.0
+
         if self.is_in_budget:
-            # Deduct approved amount from available budget
+
+            # Deduct from material.request budget
             self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+
             if self.budget_amount < 0:
                 self.budget_amount = 0.0
+
+
+            # -----------------------------------
+            # Deduct same amount from budget.lines
+            # -----------------------------------
+
+            today = fields.Date.today()
+
+            for line in self.line_ids:
+
+                analytic_line = self.env['analytical.product.line'].search([
+                    ('product_id', '=', line.product_id.id)
+                ], limit=1)
+
+                if not analytic_line:
+                    continue
+
+                budget_lines = self.env['budget.lines'].search([
+                    ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
+                    ('budget_id', '=', line.budget_id.id),
+                    ('date_from', '<=', today),
+                    ('date_to', '>=', today),
+                ], limit=1)
+
+
+                if budget_lines:
+
+                    # practical_amount is negative in your case
+                    budget_lines.practical_amount -= line.subtotal
+
+                
 
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
