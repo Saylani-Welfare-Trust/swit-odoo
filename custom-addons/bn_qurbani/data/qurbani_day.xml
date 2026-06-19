@@ -12,16 +12,4 @@
     <record id="eid_day_3" model="qurbani.day">
         <field name="name">Eid 3rd Day</field>
     </record>
-
-    <record id="1st_day" model="qurbani.day">
-        <field name="name">Eid 1st Day</field>
-    </record>
-
-    <record id="2nd_day" model="qurbani.day">
-        <field name="name">Eid 2nd Day</field>
-    </record>
-
-    <record id="3rd_day" model="qurbani.day">
-        <field name="name">Eid 3rd Day</field>
-    </record>
 </odoo>
