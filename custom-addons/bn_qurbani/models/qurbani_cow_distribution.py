@@ -38,6 +38,8 @@ class QurbaniCowDistribution(models.Model):
 
     remarks = fields.Text('Remarks')
 
+    max_distribution = fields.Integer('Max Distribution', default=1)
+
 
     @api.model
     def create(self, vals):
@@ -57,6 +59,12 @@ class QurbaniCowDistribution(models.Model):
         records_to_print = self.env[self._name]
 
         for rec in self:
+            if rec.max_distribution > 2:
+                raise ValidationError(
+                    f'Max distribution limit exceeded for record {rec.name}.'
+                )
+
+            rec.max_distribution += 1
 
             # STOP invalid records
             if rec.state not in ['pending', 'approved']:

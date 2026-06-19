@@ -79,6 +79,9 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.status = 'installed'
 
     def action_approved(self):
+        if self.key_bunch_id.key_ids.filtered(lambda x: x.state != 'available'):
+            raise ValidationError("One or more keys in the key bunch are not in valid state. Please return the keys first.")
+
         key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
 
         if key:
