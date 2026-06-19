@@ -217,9 +217,6 @@ class MemberApproval(models.Model):
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
 
-
-
-
         if self.is_in_budget:
             # Deduct approved amount from available budget
             self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
