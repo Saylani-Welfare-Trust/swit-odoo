@@ -13,8 +13,8 @@ class QurbaniDay(models.Model):
 
 
     @api.model
-    def validate_qurbani_day(self, day_name):
-        day = self.search([('web_qurbani_day', '=', day_name)], limit=1)
+    def validate_qurbani_day(self, day_id):
+        day = self.browse(day_id)
 
         if not day:
             return {
