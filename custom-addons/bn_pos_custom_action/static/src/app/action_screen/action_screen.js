@@ -25,4 +25,14 @@ export class ActionScreen extends AbstractAwaitablePopup {
             super.cancel();
         }
     }
+
+    prepareOrderLines(orderLines) {
+        return orderLines.map(line => ({
+            product_id: line.product.id,
+            quantity: line.quantity,
+            price: line.price,
+            qurbani_schedule: line.qurbani_schedule || null,
+            remarks: line.customerNote,
+        }));
+    }
 }
