@@ -210,137 +210,46 @@ class MemberApproval(models.Model):
     
     
     def action_hod_approve(self):
-        """HOD approves the request - next step depends on budget status"""
         self.ensure_one()
-        if self.state not in ['hod_approval', 'budget_check']:
-            raise ValidationError(_('This request is not in HOD Approval state.'))
-
-        if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
-            raise ValidationError(_('This request can only be approved by its respected Manager.'))
-
-        if self.is_in_budget:
-            today = fields.Date.today()
-            updated_lines = self.env['budget.lines']
-
-            for line in self.line_ids:
-                # Step 1: Find analytic account via product
-                analytic_line = self.env['analytical.product.line'].search([
-                    ('product_id', '=', line.product_id.id)
-                ], limit=1)
-
-                if not analytic_line:
-                    raise ValidationError(_(
-                        'Product "%s" has no analytical product line configured.'
-                    ) % line.product_id.display_name)
-
-                if not analytic_line.analytic_account_id:
-                    raise ValidationError(_(
-                        'Product "%s" has no analytic account configured.'
-                    ) % line.product_id.display_name)
-
-                analytic = analytic_line.analytic_account_id
-
-                # Step 2: CRITICAL - Check if budget_id exists on line
-                if not line.budget_id:
-                    raise ValidationError(_(
-                        'Please select a Budget for product "%s" in the request line.'
-                    ) % line.product_id.display_name)
-
-                # Step 3: Find budget line - EXACT match for this analytic account
-                budget_lines = self.env['budget.lines'].search([
-                    ('analytic_account_id', '=', analytic.id),
-                    ('budget_id', '=', line.budget_id.id),
-                    ('date_from', '<=', today),
-                    ('date_to', '>=', today),
-                ])
-
-                if not budget_lines:
-                    # Fallback: Search without budget_id if not found
-                    budget_lines = self.env['budget.lines'].search([
-                        ('analytic_account_id', '=', analytic.id),
-                        ('date_from', '<=', today),
-                        ('date_to', '>=', today),
-                    ])
-                    
-                    if budget_lines:
-                        # Use the first matching budget line
-                        budget_line = budget_lines[0]
-                        # Log warning
-                        self.message_post(body=_('''
-                            ⚠️ Budget line found without specific budget_id match.
-                            Using: %s (Budget: %s)
-                            Please verify this is correct.
-                        ''') % (budget_line.analytic_account_id.name, budget_line.budget_id.name))
-                    else:
-                        raise ValidationError(_('''
-                            ❌ No active budget line found for:
-                            Product: %s
-                            Analytic Account: %s
-                            Budget: %s
-                            Date: %s
-                            
-                            Please check:
-                            1. Budget line exists for this analytic account
-                            2. Budget line date range covers today's date
-                            3. Budget is active
-                        ''') % (
-                            line.product_id.display_name,
-                            analytic.display_name,
-                            line.budget_id.display_name if line.budget_id else 'No Budget Selected',
-                            today.strftime('%Y-%m-%d')
-                        ))
-                else:
-                    # Found matching budget line
-                    budget_line = budget_lines[0]
-
-                # Step 4: Update practical_amount using write() method
-                old_value = budget_line.practical_amount
-                new_value = old_value + line.subtotal
+        
+        # DEBUG: Print everything
+        for line in self.line_ids:
+            print("=" * 50)
+            print("Product:", line.product_id.name)
+            print("Product ID:", line.product_id.id)
+            
+            # Get analytic account
+            analytic_line = self.env['analytical.product.line'].search([
+                ('product_id', '=', line.product_id.id)
+            ], limit=1)
+            
+            if analytic_line:
+                print("Analytic Account ID:", analytic_line.analytic_account_id.id)
+                print("Analytic Account Name:", analytic_line.analytic_account_id.name)
+            else:
+                print("No Analytic Account Found!")
+                continue
+            
+            # Search budget line
+            budget_line = self.env['budget.lines'].search([
+                ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
+            ], limit=1)
+            
+            if budget_line:
+                print("Budget Line Found!")
+                print("Budget ID:", budget_line.id)
+                print("Practical Amount:", budget_line.practical_amount)
+                print("Date From:", budget_line.date_from)
+                print("Date To:", budget_line.date_to)
                 
-                # Write the new value
-                budget_line.write({
-                    'practical_amount': new_value
-                })
-                
-                updated_lines |= budget_line
-                
-                # Step 5: Log the update for debugging
-                self.message_post(body=_('''
-                    ✅ Budget Updated:
-                    Product: %s
-                    Analytic Account: %s
-                    Budget: %s
-                    Old Practical Amount: %s
-                    Subtotal Deducted: %s
-                    New Practical Amount: %s
-                ''') % (
-                    line.product_id.display_name,
-                    analytic.display_name,
-                    budget_line.budget_id.display_name,
-                    old_value,
-                    line.subtotal,
-                    new_value
-                ))
-
-            # Step 6: Recompute total remaining budget
-            if updated_lines:
-                total_remaining = sum(abs(bl.practical_amount) for bl in updated_lines)
-                self.budget_amount = total_remaining
-                
-                # Log total budget
-                self.message_post(body=_('''
-                    Total Remaining Budget: %s
-                ''') % total_remaining)
-
-            # Step 7: Create transfer or purchase request
-            if self.request_type == 'internal':
-                self._create_internal_transfer()
-                self.state = 'done'
-            elif self.request_type == 'purchase_request':
-                self._create_purchase_request()
-                self.state = 'purchase_request'
-        else:
-            self.state = 'committee_approval'
+                # UPDATE HERE
+                old = budget_line.practical_amount
+                budget_line.write({'practical_amount': old + line.subtotal})
+                print("New Practical Amount:", budget_line.practical_amount)
+            else:
+                print("No Budget Line Found!")
+        
+        self.state = 'done'
 
     # def action_hod_approve(self):
     #     """HOD approves the request - next step depends on budget status"""
