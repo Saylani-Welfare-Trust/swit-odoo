@@ -245,9 +245,19 @@ class MemberApproval(models.Model):
                     ('date_to', '>=', today),
                 ], limit=1)
 
+                # if budget_line:
+                #     remaining_amount = abs(budget_line.practical_amount) - self.total_amount
+                #     budget_line.practical_amount = -remaining_amount
+
                 if budget_line:
-                    remaining_amount = abs(budget_line.practical_amount) - self.total_amount
-                    budget_line.practical_amount = -remaining_amount
+
+                    request_amount = line.subtotal
+
+                    old_amount = abs(budget_line.practical_amount)
+
+                    new_amount = old_amount - request_amount
+
+                    budget_line.practical_amount = -new_amount
                 
 
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
