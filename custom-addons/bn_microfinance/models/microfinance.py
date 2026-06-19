@@ -788,17 +788,6 @@ class Microfinance(models.Model):
         if not self.microfinance_line_ids:
             installment_vals = []
 
-            # First line: Security deposit
-            security_due_date = self.delivery_date
-            installment_vals.append({
-                'microfinance_id': self.id,
-                'installment_no': f"{self.name}/SEC",
-                'due_date': security_due_date,
-                'paid_amount': 0,
-                'amount': self.security_deposit,
-                'payment_type': 'security'
-            })
-
             # Regular installments
             for i in range(self.installment_period):
                 if self.installment_type == 'monthly':
