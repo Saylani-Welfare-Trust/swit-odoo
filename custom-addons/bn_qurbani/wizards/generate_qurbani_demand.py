@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, _
 from odoo.exceptions import UserError
 
 
@@ -17,6 +17,13 @@ class GenerateQurbaniDemand(models.TransientModel):
 
     def action_generate_demand(self):
         self.ensure_one()
+
+        current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+        if not current_hijri:
+            raise UserError(_("No Hijri date found!"))
+        elif self.hijri_id != current_hijri:
+            raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
 
         CityDemand = self.env['qurbani.city.demand']
         SlaughterDemand = self.env['qurbani.slaughter.demand']
