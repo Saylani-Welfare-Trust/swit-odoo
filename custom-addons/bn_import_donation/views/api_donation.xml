@@ -145,8 +145,6 @@
                                 </tree>
                             </field>
                         </page>
-                    </notebook>
-                    <notebook>
                         <page string=" Qurbani Items" invisible="not qurbani">
                             <field name="qurbani_order_line_ids">
                                 <tree create="0" delete="0" editable="bottom">
