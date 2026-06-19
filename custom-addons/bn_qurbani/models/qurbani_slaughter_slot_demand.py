@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 
@@ -154,6 +154,13 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # UPDATE DEMAND
     # ==================================================
     def update_demand(self):
+        current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+        if not current_hijri:
+            raise UserError(_("No Hijri date found!"))
+        elif self.hijri_id != current_hijri:
+            raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
+            
         return {
             'type': 'ir.actions.act_window',
             'name': 'Update Demand',
@@ -168,6 +175,12 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
     def _update_demand(self):
         for record in self:
+            current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+            if not current_hijri:
+                raise UserError(_("No Hijri date found!"))
+            elif record.hijri_id != current_hijri:
+                raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
 
             if not record.inventory_product_id:
                 continue
