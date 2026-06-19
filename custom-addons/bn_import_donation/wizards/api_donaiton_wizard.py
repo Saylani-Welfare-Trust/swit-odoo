@@ -539,11 +539,11 @@ class APIDonationWizard(models.TransientModel):
         items = info.get('items') or []
         orm_items = []
         order_lines = []
-        
         for it in items:
             types_name = ''
             item_name = ''
             
+            # Fast extraction of type and item names
             type_data = it.get('type', {})
             if isinstance(type_data, dict) and 'en' in type_data:
                 types_name = type_data.get('en', {}).get('name', '')
@@ -564,50 +564,51 @@ class APIDonationWizard(models.TransientModel):
                     'donation_no': it.get('donationNo', 0),
                     'is_priced_item': it.get('isPricedItem', False),
                 })
-            else:
-                # Qurbani processing (unchanged)
-                product_key = (
-                    f"{info.get('donationType', '')}"
-                    f"{item_name}"
-                    f"{types_name}"
-                ).strip().lower()
+            
+            else:   # qurbani == True
+                # -------------------------------------------------------------
+                # 1. Product resolution (from your upper code)
+                # -------------------------------------------------------------
+                self.create_fetch_log(
+                    history.id,
+                    f"Distribution Data from API",
+                    "Qurbani",
+                    f"Qurbani json {info}"
+                )
 
-                config = all_data['gateway_product_lines'].get(product_key)
-                product = False
-                if config:
-                    product = self.env['product.product'].browse(config['product_id'])
-
-                quantity = int(it.get('qty', 1) or 1)
-                amount = float(it.get('price', 0) or 0)
-                day_name = it.get('day', '')
-                city_name = it.get('qurbaniCity', '')
-                branch_name = it.get('qurbaniBranch', '')
-                qurbani_fullfilment = it.get('qurbaniFulfillment', '')
-                
+                # -------------------------------------------------------------
+                # 2. Share names (from upper code)
+                # -------------------------------------------------------------
                 share_names = it.get('share_names', [donor.get('name', '')])
                 if not share_names:
                     share_names = [donor.get('name', '')]
 
-                for idx in range(quantity):
+                # -------------------------------------------------------------
+                # 3. Create qurbani order lines (from upper code)
+                # -------------------------------------------------------------
+                for idx in range(int(it.get('qty', 1) or 1)):
                     share_name = share_names[idx % len(share_names)]
-                    hissa_name = (
-                        f"{idx + 1}. {share_name}"
-                        if quantity > 1 else share_name
-                    )
 
-                    line_vals = {
-                        'product_id': product.id if product else False,
-                        'quantity': 1,
-                        'amount': amount,
-                        'day': day_name if day_name else False,
-                        'city': city_name if city_name else False,
-                        'hissa_name': hissa_name,
-                        'branch': branch_name if branch_name else False,
-                        'qurbani_fullfilment': qurbani_fullfilment if qurbani_fullfilment else False,
-                    }
-                    order_lines.append([0, 0, line_vals])
+                    order_lines.append({
+                        'donation_type': it.get('donationType', ''),
+                        'total': float(it.get('total', 0) or 0),
+                        'price': it.get('price', 0),
+                        'price_id': it.get('price_id', 0),
+                        'qty': it.get('qty', 0),
+                        'type': types_name,
+                        'item': item_name,
+                        'donation_no': it.get('donationNo', 0),
+                        'day': it.get('day', ''),
+                        'city': it.get('qurbaniCity', ''),
+                        'hissa_name': share_name,
+                        'branch': it.get('qurbaniBranch', ''),
+                        'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
+                    })
 
-        # BUILD DONATION VALUES - No donor_id, just store donor info as fields
+        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
+        self.create_fetch_log(history.id, f"order_lines for donation at index {info_idx}: {order_lines}", 'Processing', f"Prepared Order lines for donation at index {info_idx}")
+
+        # Build donation values
         donation_vals = {
             'import_id': info.get('_id', ''),
             'remarks': info.get('remarks', ''),
@@ -634,8 +635,6 @@ class APIDonationWizard(models.TransientModel):
             'donation_id': info.get('donation_id', ''),
             'invoice_id': info.get('invoice_id', ''),
             'transaction_id': info.get('transaction_id', ''),
-            
-            # Store donor info as text fields (not creating partner)
             'name': donor.get('name', ''),
             'phone': donor.get('phone', ''),
             'email': donor.get('email', ''),
@@ -648,18 +647,14 @@ class APIDonationWizard(models.TransientModel):
             'qurbani_country': donor.get('qurbaniCountry', ''),
             'qurbani_city': donor.get('qurbaniCity', ''),
             'qurbani_day': donor.get('qurbaniDay', ''),
-            
             'donation_item_ids': [(0, 0, it) for it in orm_items],
-            'qurbani_order_line_ids': order_lines,
+            'qurbani_order_line_ids': [(0, 0, it) for it in order_lines],
             'fetch_history_id': history.id,
-            'qurbani': True if info.get('qurbani') == True else False,
-            
-            # No donor_id - will be assigned later by the partner creation function
-            'donor_id': False,
-            'partner_creation_status': 'pending',  # Add this field to track status
+            'qurbani': True if info.get('qurbani') else False,
         }
 
-        return donation_vals        
+        return donation_vals
+          
     def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
         self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
 
@@ -940,7 +935,69 @@ class APIDonationWizard(models.TransientModel):
                 'credit': c,
             })
         # raise ValidationError(str(missing_account_products))
-        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
+        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast process for normal donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
+
+        missing_account_products = []
+        # Process items
+        for it in donation_vals.get('qurbani_order_line_ids', []):
+            item = it[2]  # (0, 0, values) format
+            product_name = (
+                f"{item.get('donation_type', '')}"
+                f"{item.get('item', '')}"
+                f"{item.get('type', '')}"
+            ).strip().lower()
+
+            config = all_data['gateway_product_lines'].get(product_name)
+            if not config:
+                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
+
+                _logger.warning(f"Product config not found for {product_name}")
+                continue
+            
+            credit_account_id = config['account_id']
+            if not credit_account_id:
+                missing_account_products.append({
+                'product_name': product_name,
+                'config': config,
+                'reason': 'Missing gateway config or account_id'
+            })
+            
+            item_total = float(item.get('total', 0))
+            conv_rate = float(donation_vals.get('conversion_rate', 1.0))
+            
+            # Apply rounding at the item level
+            if is_foreign:
+                # Round foreign amount to currency precision
+                item_total = currency_rec.round(item_total)
+            
+            item_total_base = item_total / conv_rate
+            # Round base amount to company currency precision
+            item_total_base = company_currency.round(item_total_base)
+            
+            # Ensure we have a currency ID
+            currency_id = currency_rec.id if currency_rec else company_currency.id
+            
+            # Accumulate debit
+            debit_key = (debit_account_id, currency_id)
+            d = debit_accumulator[debit_key]
+            d['debit_base'] += item_total_base
+            if is_foreign:
+                d['amount_currency'] += item_total
+            
+            # Accumulate credit
+            credit_key = (credit_account_id, currency_id)
+            c = credit_accumulator[credit_key]
+            c['credit_base'] += item_total_base
+            if is_foreign:
+                c['amount_currency'] -= item_total
+            missing_account_products.append({
+                'product_name': product_name,
+                'config': config,
+                'reason': 'Missing gateway config or account_id',
+                'credit': c,
+            })
+        # raise ValidationError(str(missing_account_products))
+        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast for qurbani donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
     def _date_to_iso_z(self, date_val, t):
