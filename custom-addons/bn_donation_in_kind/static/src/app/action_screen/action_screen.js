@@ -56,7 +56,7 @@ patch(ActionScreen.prototype, {
                 });
 
                 this.cancel()
-                this.pos.removeOrder(selectedOrder);
+                this.pos.removeOrder(order);
                 this.pos.add_new_order();
             }
         })
