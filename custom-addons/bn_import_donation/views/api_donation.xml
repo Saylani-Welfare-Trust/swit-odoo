@@ -129,7 +129,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Donation Item" name="donation_item" invisible="qurbani">
+                        <page string="Donation Item" name="donation_item">
                             <field name="donation_item_ids" string="Donation Item">
                                 <tree string="Donation Item">
                                     <field name="donation_type"/>
@@ -146,8 +146,8 @@
                             </field>
                         </page>
                         <page string=" Qurbani Items" invisible="not qurbani">
-                            <field name="qurbani_order_line_ids">
-                                <tree create="0" delete="0" editable="bottom">
+                            <field name="qurbani_order_line_ids" readonly="1">
+                                <tree>
                                     <field name="day" readonly="1" />
                                     <field name="hissa_name" />
                                     <field name="donation_type"/>
