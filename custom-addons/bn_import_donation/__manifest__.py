@@ -20,7 +20,8 @@
         'views/import_donation.xml',
         'views/donation.xml',
         'wizards/api_donaiton_wizard.xml',
-        # 'views/api_donation.xml',
+        'views/api_donation.xml',
+        
         'views/fetch_history.xml',
         'views/fetch_log.xml',
         'views/res_partner.xml',
