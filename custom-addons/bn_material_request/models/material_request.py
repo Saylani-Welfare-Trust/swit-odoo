@@ -220,25 +220,13 @@ class MemberApproval(models.Model):
 
 
 
-        # if self.is_in_budget:
-        #     # Deduct approved amount from available budget
-        #     self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
-        #     if self.budget_amount < 0:
-        #         self.budget_amount = 0.0
-
         if self.is_in_budget:
-
-            # Deduct from material.request budget
+            # Deduct approved amount from available budget
             self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
-
             if self.budget_amount < 0:
                 self.budget_amount = 0.0
 
-
-            # -----------------------------------
-            # Deduct same amount from budget.lines
-            # -----------------------------------
-
+            # Update budget.lines
             today = fields.Date.today()
 
             for line in self.line_ids:
@@ -250,19 +238,16 @@ class MemberApproval(models.Model):
                 if not analytic_line:
                     continue
 
-                budget_lines = self.env['budget.lines'].search([
+                budget_line = self.env['budget.lines'].search([
                     ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
                     ('budget_id', '=', line.budget_id.id),
                     ('date_from', '<=', today),
                     ('date_to', '>=', today),
                 ], limit=1)
 
-
-                if budget_lines:
-
-                    # practical_amount is negative in your case
-                    budget_lines.practical_amount -= line.subtotal
-
+                if budget_line:
+                    remaining_amount = abs(budget_line.practical_amount) - self.total_amount
+                    budget_line.practical_amount = -remaining_amount
                 
 
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
