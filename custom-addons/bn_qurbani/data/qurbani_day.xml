@@ -12,4 +12,5 @@
     <record id="eid_day_3" model="qurbani.day">
         <field name="name">Eid 3rd Day</field>
     </record>
+    
 </odoo>
