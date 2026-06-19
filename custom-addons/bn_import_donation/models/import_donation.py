@@ -282,7 +282,6 @@ class ImportDonation(models.Model):
         self.state = 'validated'
 
     def action_register_donors(self):
-        """Separate button action to search/create donors/students for valid records"""
         if not self.valid_import_donation_ids:
             raise ValidationError('No valid records to register donors for.')
 
@@ -291,38 +290,40 @@ class ImportDonation(models.Model):
         country_id = Country.id if Country else False
 
         category_refs = {
-            'student': self.env.ref('bn_profile_management.student_partner_category').id,
-            'donee': self.env.ref('bn_profile_management.donee_partner_category').id,
+            'student':    self.env.ref('bn_profile_management.student_partner_category').id,
+            'donee':      self.env.ref('bn_profile_management.donee_partner_category').id,
             'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
-            'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
+            'donor':      self.env.ref('bn_profile_management.donor_partner_category').id,
         }
 
-        # Step 1: Collect unique mobiles in one pass using sets directly
-        donor_mobiles = set()
+        lines = self.valid_import_donation_ids
+
+        # Step 1: Collect unique mobiles
+        donor_mobiles   = set()
         student_mobiles = set()
-        for line in self.valid_import_donation_ids:
+        for line in lines:
             if line.mobile:
                 (student_mobiles if line.is_student else donor_mobiles).add(line.mobile)
 
-        # Step 2: Bulk search using category ID — avoids SQL JOIN on name
+        # Step 2: Bulk search — no state filter to block duplicates in any state
         existing_donors = Partner.search([
-            ('mobile', 'in', list(donor_mobiles)),
+            ('mobile', 'in', donor_mobiles),
             ('category_id', 'in', [category_refs['donor']]),
-        ]) if donor_mobiles else Partner
-        
+        ]) if donor_mobiles else Partner.browse()
+
         existing_students = Partner.search([
-            ('mobile', 'in', list(student_mobiles)),
+            ('mobile', 'in', student_mobiles),
             ('category_id', 'in', [category_refs['donee']]),
-        ]) if student_mobiles else Partner
+        ]) if student_mobiles else Partner.browse()
 
-        donor_by_mobile = {p.mobile: True for p in existing_donors}
-        student_by_mobile = {p.mobile: True for p in existing_students}
+        donor_by_mobile   = {p.mobile for p in existing_donors}
+        student_by_mobile = {p.mobile for p in existing_students}
 
-        # Step 3: Collect partners to create — one pass, no duplicates
+        # Step 3: Build creation list — skip existing and duplicates within import
         partners_to_create = []
-        processed_mobiles = set()
+        processed_mobiles  = set()
 
-        for line in self.valid_import_donation_ids:
+        for line in lines:
             if not line.mobile or line.mobile in processed_mobiles:
                 continue
             processed_mobiles.add(line.mobile)
@@ -337,18 +338,17 @@ class ImportDonation(models.Model):
                 cats = [category_refs['donor'], category_refs['individual']]
 
             partners_to_create.append({
-                'name': line.donor_student_name or f'Undefined {line.mobile}',
+                'name':            line.donor_student_name or f'Undefined {line.mobile}',
                 'country_code_id': country_id,
-                'mobile': line.mobile,
-                'cnic_no': line.cnic_no,
-                'email': line.email,
-                'category_id': [(6, 0, cats)],
+                'mobile':          line.mobile,
+                'cnic_no':         line.cnic_no,
+                'email':           line.email,
+                'category_id':     [(6, 0, cats)],
             })
 
-        # Step 4: Single bulk create + single action_register on full recordset
+        # Step 4: Bulk create — draft by default, no action_register()
         if partners_to_create:
-            new_partners = Partner.create(partners_to_create)
-            new_partners.action_register()
+            Partner.create(partners_to_create)
 
         self.state = 'done'
 
