@@ -841,7 +841,7 @@ class APIDonationWizard(models.TransientModel):
             'donation_item_ids': [(0, 0, it) for it in orm_items],
             'qurbani_order_line_ids': [(0, 0, it) for it in order_lines],
             'fetch_history_id': history.id,
-            'qurbani': True if info.get('qurbani') == True else False,
+            'qurbani': True if info.get('qurbani') else False,
         }
 
         # Set donor_id - either from cache, from new partner, or default
