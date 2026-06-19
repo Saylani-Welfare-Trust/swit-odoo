@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data>
+
+        <record id="correct_din_records_server_action" model="ir.actions.server">
+            <field name="name">Correct DIN Records | BN</field>
+            <field name="model_id" ref="bn_donation_in_kind.model_donation_in_kind"/>
+            <field name="state">code</field>
+            <field name="code">
+model.correct_records(records)
+            </field>
+        </record>
+
+    </data>
+
+</odoo>

@@ -58,6 +58,8 @@ class DonationInKind(models.Model):
 
     quantity = fields.Float('Quantity')
 
+    is_sync = fields.Boolean('Is Sync', default=False)
+
     analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytic_account_id', string='Analytic Account', store=True)
 
     donation_in_kind_line_ids = fields.One2many('donation.in.kind.line', 'donation_in_kind_id', string="Donation In Kind Lines")
@@ -491,3 +493,24 @@ class DonationInKind(models.Model):
             "status": "success",
             "origin": self.name
         }
+    
+    def correct_records(self, records):
+        for record in records:
+            if not record.is_sync:
+                record.donation_in_kind_line_ids = [(0, 0, {
+                    'product_id': record.product_id.id,
+                    'quantity': record.quantity,
+                    'avg_price': record.quantity,
+                })]
+
+                product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
+                
+                if product_stock_move_config:
+                    record.write({
+                        'location_id': product_stock_move_config.location_id.id,
+                        'picking_type_id': product_stock_move_config.picking_type_id.id,
+                        'journal_id': product_stock_move_config.journal_id.id,
+                        'debit_account_id': product_stock_move_config.debit_account_id.id
+                    })
+                
+                record.is_sync = True
