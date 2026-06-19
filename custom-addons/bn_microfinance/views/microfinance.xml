@@ -166,11 +166,13 @@
                                     <field name="cheque_date" />
                                     <field name="bank_name" />
                                     <field name="amount_total" />
+                                    <field name="is_cheque_deposit" widget="boolean" invisible = "1" />
                                     <field name="state_cheque" widget="badge" 
                                         decoration-success="state_cheque == 'cleared'"
                                         decoration-danger="state_cheque == 'bounced'"
                                         decoration-warning="state_cheque == 'draft'"
                                         decoration-info="state_cheque == 'deposited'" />
+                                    <field name="pos_cheque_id" invisible="1" />
                                 </tree>
                             </field>
                         </page>
