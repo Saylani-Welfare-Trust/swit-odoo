@@ -218,6 +218,11 @@ class MemberApproval(models.Model):
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
 
         if self.is_in_budget:
+            # Deduct approved amount from available budget
+            self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+            if self.budget_amount < 0:
+                self.budget_amount = 0.0
+
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
                 self._create_internal_transfer()
