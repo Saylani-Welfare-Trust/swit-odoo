@@ -226,38 +226,38 @@ class MemberApproval(models.Model):
             if self.budget_amount < 0:
                 self.budget_amount = 0.0
 
-            # Update budget.lines
-            today = fields.Date.today()
+        #     # Update budget.lines
+        #     today = fields.Date.today()
 
-            for line in self.line_ids:
+        #     for line in self.line_ids:
 
-                analytic_line = self.env['analytical.product.line'].search([
-                    ('product_id', '=', line.product_id.id)
-                ], limit=1)
+        #         analytic_line = self.env['analytical.product.line'].search([
+        #             ('product_id', '=', line.product_id.id)
+        #         ], limit=1)
 
-                if not analytic_line:
-                    continue
+        #         if not analytic_line:
+        #             continue
 
-                budget_line = self.env['budget.lines'].search([
-                    ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
-                    ('budget_id', '=', line.budget_id.id),
-                    ('date_from', '<=', today),
-                    ('date_to', '>=', today),
-                ], limit=1)
+        #         budget_line = self.env['budget.lines'].search([
+        #             ('analytic_account_id', '=', analytic_line.analytic_account_id.id),
+        #             ('budget_id', '=', line.budget_id.id),
+        #             ('date_from', '<=', today),
+        #             ('date_to', '>=', today),
+        #         ], limit=1)
 
-                # if budget_line:
-                #     remaining_amount = abs(budget_line.practical_amount) - self.total_amount
-                #     budget_line.practical_amount = -remaining_amount
+        #         # if budget_line:
+        #         #     remaining_amount = abs(budget_line.practical_amount) - self.total_amount
+        #         #     budget_line.practical_amount = -remaining_amount
 
-                if budget_line:
+        #         if budget_line:
 
-                    request_amount = line.subtotal
+        #             request_amount = line.subtotal
 
-                    old_amount = abs(budget_line.practical_amount)
+        #             old_amount = abs(budget_line.practical_amount)
 
-                    new_amount = old_amount - request_amount
+        #             new_amount = old_amount - request_amount
 
-                    budget_line.practical_amount = -new_amount
+        #             budget_line.practical_amount = -new_amount
                 
 
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
