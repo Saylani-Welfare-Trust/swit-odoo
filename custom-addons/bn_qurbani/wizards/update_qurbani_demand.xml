@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="update_qurbani_demand_view_form" model="ir.ui.view">
+        <field name="name">update.qurbani.demand.view.form</field>
+        <field name="model">update.qurbani.demand</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="demand" required="1"/>  
+                    </group>
+
+                    
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

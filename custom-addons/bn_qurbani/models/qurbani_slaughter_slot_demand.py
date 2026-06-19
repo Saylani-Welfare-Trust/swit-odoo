@@ -154,7 +154,19 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # UPDATE DEMAND
     # ==================================================
     def update_demand(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Update Demand',
+            'res_model': 'update.qurbani.demand',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
+            'target': 'new',
+            'context': {
+                'default_qurbani_slaughter_slot_demand_id': self.id,
+            }
+        }
 
+    def _update_demand(self):
         for record in self:
 
             if not record.inventory_product_id:
