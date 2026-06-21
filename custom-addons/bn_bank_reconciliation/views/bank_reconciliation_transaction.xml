@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_bank_reconciliation_transaction_tree" model="ir.ui.view">
+        <field name="name">bank.reconciliation.transaction.tree</field>
+        <field name="model">bank.reconciliation.transaction</field>
+        <field name="arch" type="xml">
+            <tree string="Transactions">
+                <field name="date"/>
+                <field name="description"/>
+                <field name="amount"/>
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="account_id"/>
+                <field name="state" widget="badge"/>
+                <field name="confidence_level" widget="badge"/>
+                <field name="in_exception" widget="boolean_toggle"/>
+                <field name="follow_up_needed" widget="boolean_toggle"/>
+                <field name="reconciled_by"/>
+                <field name="reconciled_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bank_reconciliation_transaction_form" model="ir.ui.view">
+        <field name="name">bank.reconciliation.transaction.form</field>
+        <field name="model">bank.reconciliation.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Transaction">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="master_id"/>
+                            <field name="date"/>
+                            <field name="description"/>
+                            <field name="amount"/>
+                            <field name="reference"/>
+                            <field name="payment_reference"/>
+                        </group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="invoice_number"/>
+                            <field name="account_id"/>
+                            <field name="state" widget="badge"/>
+                            <field name="confidence_level" widget="badge"/>
+                        </group>
+                    </group>
+                    <group string="Matching Details">
+                        <group>
+                            <field name="matched_move_id"/>
+                            <field name="matched_move_line_id"/>
+                            <field name="matched_by_amount" widget="boolean_toggle"/>
+                            <field name="matched_by_reference" widget="boolean_toggle"/>
+                            <field name="matched_by_partner" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="matched_by_invoice" widget="boolean_toggle"/>
+                            <field name="matched_by_date" widget="boolean_toggle"/>
+                            <field name="reconciled" widget="boolean_toggle"/>
+                            <field name="reconciled_by"/>
+                            <field name="reconciled_date"/>
+                        </group>
+                    </group>
+                    <group string="Exception Handling">
+                        <field name="in_exception" widget="boolean_toggle"/>
+                        <field name="exception_reason"/>
+                        <field name="follow_up_needed" widget="boolean_toggle"/>
+                        <field name="follow_up_notes"/>
+                    </group>
+                    <group string="Audit">
+                        <field name="created_by"/>
+                        <field name="previous_account_id"/>
+                        <field name="write_date"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bank_reconciliation_transaction" model="ir.actions.act_window">
+        <field name="name">Transactions</field>
+        <field name="res_model">bank.reconciliation.transaction</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

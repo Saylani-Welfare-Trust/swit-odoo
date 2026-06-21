@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_bank_reconciliation_root"
+              name="Bank Reconciliation"
+              sequence="10"
+              web_icon="bn_bank_reconciliation,static/description/icon.png"/>
+
+    <menuitem id="menu_bank_reconciliation_master"
+              name="Reconciliations"
+              parent="menu_bank_reconciliation_root"
+              action="action_bank_reconciliation_master"
+              sequence="10"/>
+
+    <menuitem id="menu_bank_reconciliation_transaction"
+              name="All Transactions"
+              parent="menu_bank_reconciliation_root"
+              action="action_bank_reconciliation_transaction"
+              sequence="20"/>
+</odoo>
