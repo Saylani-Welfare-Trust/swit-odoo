@@ -1,6 +1,6 @@
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, timedelta
 from urllib.parse import urlparse
 import requests
 import logging
@@ -55,7 +55,16 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_donation(self):
         self.ensure_one()
 
-        if self.start_date and self.end_date and self.start_date > self.end_date:
+        today = fields.Date.today()
+
+        # Yesterday range
+        yesterday_start_date = today - timedelta(days=1)
+        yesterday_end_date = today - timedelta(days=1)
+
+        start_date = yesterday_start_date or self.start_date
+        end_date = yesterday_end_date or self.end_date
+
+        if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
         company = self.env.company
@@ -77,8 +86,8 @@ class APIDonationWizard(models.TransientModel):
             # 🔥 CREATE NEW HISTORY FOR EACH PAGE
             # =========================================================
             history = self.env['fetch.history'].create({
-                'start_date': self.start_date,
-                'end_date': self.end_date,
+                'start_date': start_date,
+                'end_date': end_date,
                 'page': page,
             })
 
@@ -90,11 +99,11 @@ class APIDonationWizard(models.TransientModel):
                 "perPage": history.per_page or 50,
             }
 
-            if self.start_date:
-                payload["startDate"] = self._date_to_iso_z(self.start_date, time.min)
+            if start_date:
+                payload["startDate"] = self._date_to_iso_z(start_date, time.min)
 
-            if self.end_date:
-                payload["endDate"] = self._date_to_iso_z(self.end_date, time(23, 59, 59))
+            if end_date:
+                payload["endDate"] = self._date_to_iso_z(end_date, time(23, 59, 59))
 
             page_data = self._fetch_donations_from_api(
                 auth_url,
