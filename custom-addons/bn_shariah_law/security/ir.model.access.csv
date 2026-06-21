@@ -1,2 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_shariah_law,shariah.law,bn_shariah_law.model_shariah_law,,1,1,1,1
+access_shariah_law,access.shariah.law,model_shariah_law,,1,1,1,1
+access_shariah_daily_balance,access.shariah.daily.balance,model_shariah_daily_balance,,1,1,1,1
+access_shariah_transfer,access.shariah.transfer,model_shariah_transfer,,1,1,1,1
+access_shariah_transfer_wizard,access.shariah.transfer.wizard,model_shariah_transfer_wizard,,1,1,1,0
