@@ -196,12 +196,4 @@
         parent="shariah_law_menu"
         sequence="30"/>
 
-    <!-- Optional: direct link to create a transfer -->
-    <menuitem
-        id="shariah_law_transfer_wizard_menu"
-        name="New Transfer"
-        action="action_transfer_wizard"
-        parent="shariah_law_menu"
-        sequence="35"/>
-
 </odoo>
