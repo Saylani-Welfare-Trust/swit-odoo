@@ -1,4 +1,6 @@
-from odoo import fields, models, _
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+from datetime import date
 
 class ShariahLaw(models.Model):
     _name = 'shariah.law'
@@ -9,13 +11,13 @@ class ShariahLaw(models.Model):
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", required=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
-    # Cumulative totals (from the start)
+    # Cumulative totals
     inflow_restricted_amount = fields.Monetary('Inflow (Restricted)', currency_field='currency_id', default=0)
     inflow_unrestricted_amount = fields.Monetary('Inflow (Unrestricted)', currency_field='currency_id', default=0)
     purchase_amount = fields.Monetary('Purchase', currency_field='currency_id', default=0)
-    expense_amount = fields.Monetary('Expense', currency_field='currency_id', default=0)
     welfare_individual_amount = fields.Monetary('Welfare (Individual)', currency_field='currency_id', default=0)
     welfare_portal_amount = fields.Monetary('Welfare (Portal)', currency_field='currency_id', default=0)
+    expense_amount = fields.Monetary('Expense', currency_field='currency_id', default=0)
 
     # Opening and Closing balances (computed from daily records)
     opening_balance = fields.Monetary(
@@ -47,7 +49,6 @@ class ShariahLaw(models.Model):
                 rec.closing_balance = 0.0
 
     def action_transfer_to(self):
-        """Open transfer wizard with this account as source."""
         return {
             'name': _('Transfer To'),
             'type': 'ir.actions.act_window',
@@ -60,7 +61,6 @@ class ShariahLaw(models.Model):
         }
 
     def action_transfer_from(self):
-        """Open transfer wizard with this account as destination."""
         return {
             'name': _('Transfer From'),
             'type': 'ir.actions.act_window',
@@ -71,12 +71,14 @@ class ShariahLaw(models.Model):
                 'default_destination_analytic_account_id': self.analytic_account_id.id,
             }
         }
-    
+
+    @api.model
     def _sync_shariah_data(self):
         """
         Synchronize all un-synced transactions and update daily balances.
-        This method is called by the cron job daily.
+        Called by the cron job daily.
         """
+        from odoo import fields
 
         # Helper to add amounts to both aggregate and daily dictionaries
         def add_amounts(analytic_id, restricted=0, unrestricted=0, purchase=0, expense=0):
@@ -258,3 +260,5 @@ class ShariahLaw(models.Model):
         # Recompute balances for all daily records of today
         all_today = self.env['shariah.daily.balance'].search([('date', '=', today)])
         all_today._compute_balances()
+
+        return True
