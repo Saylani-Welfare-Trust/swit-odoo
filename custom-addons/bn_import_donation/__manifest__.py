@@ -13,6 +13,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'data/schedule_action.xml',
         'data/ir_module_category.xml',
         
         'security/group.xml',
