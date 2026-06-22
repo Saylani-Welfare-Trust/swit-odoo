@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_mrp_bom_form_inherit_kitchen" model="ir.ui.view">
+            <field name="name">mrp.bom.form.inherit.kitchen</field>
+            <field name="model">mrp.bom</field>
+            <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+            <field name="arch" type="xml">
+                <!-- Remove domain from product_tmpl_id to use Python domain instead -->
+                <field name="product_tmpl_id" position="attributes">
+                    <attribute name="domain"/>
+                </field>
+                
+                <!-- Remove domain from product_id to use Python domain instead -->
+                <field name="product_id" position="attributes">
+                    <attribute name="domain"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>
