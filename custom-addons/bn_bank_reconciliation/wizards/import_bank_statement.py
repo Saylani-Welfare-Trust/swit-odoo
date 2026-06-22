@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 import base64
 import csv
 import io
@@ -130,7 +130,7 @@ class BankStatementImportWizard(models.TransientModel):
     def _parse_csv(self):
         data = []
         try:
-            file_content = base64.b64decode(self.file)
+            file_content = base64.b64decode(self.master_id.file)
             try:
                 content = file_content.decode('utf-8')
             except UnicodeDecodeError:
@@ -180,7 +180,7 @@ class BankStatementImportWizard(models.TransientModel):
             raise UserError(_('xlrd library is required to read Excel files. Please install it (pip install xlrd).'))
         data = []
         try:
-            file_content = base64.b64decode(self.file)
+            file_content = base64.b64decode(self.master_id.file)
             book = xlrd.open_workbook(file_contents=file_content)
             sheet = book.sheet_by_index(0)
             header = [str(cell.value).strip() for cell in sheet.row(0)]
