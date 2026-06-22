@@ -16,6 +16,7 @@
         'views/issuance_request.xml',
         'views/kitchen_menu.xml',
         'views/branch_kitchen_request.xml',
+        'views/product_template.xml',
     ],
     'auto_install': False,
     'application': True,
