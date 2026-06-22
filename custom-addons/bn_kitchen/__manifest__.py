@@ -17,7 +17,6 @@
         'views/kitchen_menu.xml',
         'views/branch_kitchen_request.xml',
         'views/product_template.xml',
-        'views/mrp_bom.xml',
     ],
     'auto_install': False,
     'application': True,
