@@ -54,14 +54,6 @@ class BankStatementImportWizard(models.TransientModel):
         default=lambda self: self.env.company
     )
 
-    file = fields.Binary(string='File', required=True, attachment=True)
-    file_name = fields.Char(string='File Name', store=True)
-    file_type = fields.Selection([
-        ('csv', 'CSV'),
-        ('xls', 'Excel (.xls)'),
-        ('xlsx', 'Excel (.xlsx)'),
-    ], string='File Type', compute='_compute_file_type', store=False)
-
     delimiter = fields.Selection([
         (',', 'Comma (,)'),
         (';', 'Semicolon (;)'),
@@ -71,28 +63,12 @@ class BankStatementImportWizard(models.TransientModel):
     skip_first_row = fields.Boolean(string='Skip First Row (Header)', default=True)
     create_master = fields.Boolean(string='Create New Reconciliation', default=True)
 
-    @api.depends('file_name')
-    def _compute_file_type(self):
-        for rec in self:
-            if rec.file_name:
-                ext = rec.file_name.lower().split('.')[-1]
-                if ext in ('csv',):
-                    rec.file_type = 'csv'
-                elif ext in ('xls',):
-                    rec.file_type = 'xls'
-                elif ext in ('xlsx',):
-                    rec.file_type = 'xlsx'
-                else:
-                    rec.file_type = False
-            else:
-                rec.file_type = False
-
     def action_import(self):
         self.ensure_one()
-        if not self.file:
+        if not self.master_id.file:
             raise UserError(_('Please select a file to upload.'))
 
-        ext = self.file_name.lower().split('.')[-1]
+        ext = self.master_id.file_name.lower().split('.')[-1]
         if ext == 'csv':
             data = self._parse_csv()
         elif ext in ('xls', 'xlsx'):

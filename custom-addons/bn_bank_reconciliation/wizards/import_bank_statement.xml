@@ -19,9 +19,6 @@
                             <field name="currency_id" readonly="1"/>
                         </group>
                         <group string="File">
-                            <field name="file" filename="file_name" required="1" widget="binary"/>
-                            <field name="file_name" readonly="1"/>
-                            <field name="file_type" readonly="1"/>
                             <field name="delimiter" invisible="file_type != 'csv'"/>
                             <field name="skip_first_row" invisible="1"/>
                         </group>

@@ -67,6 +67,13 @@
                             <field name="closing_balance"/>
                         </group>
                     </group>
+                    <group>
+                        <group string="File">
+                            <field name="file" filename="file_name" required="1" widget="binary"/>
+                            <field name="file_name" readonly="1"/>
+                            <field name="file_type" readonly="1"/>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="Transactions">
                             <field name="transaction_ids">
