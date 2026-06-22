@@ -85,10 +85,7 @@ class MicrofinancePDCConsolidated(models.Model):
                     mf.id IS NOT NULL
             )
         """ % self._table)
-    def action_deposit (self):
-        '''true the is_depost field of the line when button is clicked'''
-        for record in self:
-            record.is_deposit = True
+
     
     def action_deposit_cheque(self):
         """

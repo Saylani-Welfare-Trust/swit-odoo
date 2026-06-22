@@ -23,6 +23,7 @@ class MicrofinancePDCLine(models.Model):
     state_cheque = fields.Selection(selection=state_cheque_selection, string='Cheque Status', default='draft')
     is_cheque_deposit = fields.Boolean('Is Cheque Deposit', default=False)
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', string="Currency")
+    is_deposit = fields.Boolean('Deposited', default=False)
     
     # For POS integration
     pos_cheque_id = fields.Many2one('pos.cheque', string="POS Cheque")
@@ -58,3 +59,9 @@ class MicrofinancePDCLine(models.Model):
                 rec.donee_id = rec.microfinance_id.donee_id.id
             else:
                 rec.donee_id = False
+
+
+    def action_deposit (self):
+        '''true the is_depost field of the line when button is clicked'''
+        for record in self:
+            record.is_deposit = True
