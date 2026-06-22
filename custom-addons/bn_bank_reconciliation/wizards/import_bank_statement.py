@@ -55,7 +55,7 @@ class BankStatementImportWizard(models.TransientModel):
     )
 
     file = fields.Binary(string='File', required=True, attachment=True)
-    file_name = fields.Char(string='File Name', required=True)
+    file_name = fields.Char(string='File Name')
     file_type = fields.Selection([
         ('csv', 'CSV'),
         ('xls', 'Excel (.xls)'),
