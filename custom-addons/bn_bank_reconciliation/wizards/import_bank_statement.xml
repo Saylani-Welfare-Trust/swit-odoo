@@ -19,7 +19,6 @@
                             <field name="currency_id" readonly="1"/>
                         </group>
                         <group string="File">
-                            <field name="delimiter" invisible="file_type != 'csv'"/>
                             <field name="skip_first_row" invisible="1"/>
                         </group>
                     </group>

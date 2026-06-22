@@ -141,6 +141,11 @@ class BankReconciliationMaster(models.Model):
         ('xls', 'Excel (.xls)'),
         ('xlsx', 'Excel (.xlsx)'),
     ], string='File Type', compute='_compute_file_type', store=False)
+    delimiter = fields.Selection([
+        (',', 'Comma (,)'),
+        (';', 'Semicolon (;)'),
+        ('\t', 'Tab'),
+    ], string='CSV Delimiter', default=',')
 
 
     @api.depends('file_name')

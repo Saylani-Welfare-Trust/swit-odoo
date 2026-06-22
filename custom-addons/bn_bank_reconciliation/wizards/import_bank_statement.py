@@ -54,12 +54,6 @@ class BankStatementImportWizard(models.TransientModel):
         default=lambda self: self.env.company
     )
 
-    delimiter = fields.Selection([
-        (',', 'Comma (,)'),
-        (';', 'Semicolon (;)'),
-        ('\t', 'Tab'),
-    ], string='CSV Delimiter', default=',')
-
     skip_first_row = fields.Boolean(string='Skip First Row (Header)', default=True)
     create_master = fields.Boolean(string='Create New Reconciliation', default=True)
 
@@ -135,7 +129,7 @@ class BankStatementImportWizard(models.TransientModel):
                 content = file_content.decode('utf-8')
             except UnicodeDecodeError:
                 content = file_content.decode('latin-1')
-            csv_reader = csv.DictReader(io.StringIO(content), delimiter=self.delimiter)
+            csv_reader = csv.DictReader(io.StringIO(content), delimiter=self.master_id.delimiter)
             expected_headers = ['Date', 'Description', 'Amount', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
             if not all(h in csv_reader.fieldnames for h in expected_headers):
                 raise UserError(_(
