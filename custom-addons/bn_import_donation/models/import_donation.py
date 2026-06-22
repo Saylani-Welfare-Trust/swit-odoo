@@ -58,6 +58,70 @@ class ImportDonation(models.Model):
 
         self.state = 'draft'
 
+    def action_correct_records(self):
+        if not self.import_file:
+            raise ValidationError('No file uploaded.')
+
+        file_data = base64.b64decode(self.import_file)
+        if not file_data:
+            raise ValidationError('The uploaded file is empty.')
+
+        file_stream = BytesIO(file_data)
+
+        # Detect file format
+        try:
+            if file_data[:4] == b'PK\x03\x04':  # .xlsx
+                workbook = openpyxl.load_workbook(file_stream)
+                sheet = workbook.active
+                rows = sheet.iter_rows(min_row=2, values_only=True)
+            elif file_data[:4] == b'\xD0\xCF\x11\xE0':  # .xls
+                workbook = xlrd.open_workbook(file_contents=file_data)
+                sheet = workbook.sheet_by_index(0)
+                rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
+            else:
+                raise ValidationError('Unsupported file format.')
+        except Exception:
+            raise ValidationError('The uploaded file is not a valid Excel file.')
+
+        # Cache frequently used models
+        Donation = self.env['donation']
+
+        # Header mapping
+        header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
+        header_map = {name: pos for name, pos in header_list}
+
+        def get_value(row, name):
+            idx = header_map.get(name)
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        for row in rows:
+            try:
+                # Shared fields
+                transaction_id = get_value(row, 'Transaction ID')
+                # name = get_value(row, 'Name')
+                # mobile = str(get_value(row, 'Cell Number') or '').strip()
+                # cnic = get_value(row, 'CNIC No.')
+                # email = get_value(row, 'Email')
+                date = get_value(row, 'Date')
+                # amount = get_value(row, 'Amount')
+                # product = get_value(row, 'Product')
+                # reference = get_value(row, 'Reference')
+                # course = get_value(row, 'Course')
+
+                for line in self.valid_import_donation_ids:
+                    if line.transaction_id == transaction_id:
+                        line.date = date
+                for line in self.invalid_import_donation_ids:
+                    if line.transaction_id == transaction_id:
+                        line.date = date
+
+                Donation.search([('transaction_id', '=', transaction_id)]).write({
+                    'date': date
+                })
+
+            except Exception as e:
+                raise ValidationError(f'Unexpected error processing row: {str(e)}')
+
     def action_validate_excel_file(self):
         if not self.import_file:
             raise ValidationError('No file uploaded.')
