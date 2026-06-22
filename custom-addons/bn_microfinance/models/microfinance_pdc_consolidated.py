@@ -44,6 +44,7 @@ class MicrofinancePDCConsolidated(models.Model):
     cheque_no = fields.Char('Cheque Number', readonly=True)
     amount = fields.Monetary('Cheque Amount', currency_field='currency_id', readonly=True)
     currency_id = fields.Many2one('res.currency', string='Currency', readonly=True)
+    is_deposit = fields.Boolean('Is Deposit Allowed', readonly=True)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('deposited', 'Deposited'),
@@ -84,6 +85,10 @@ class MicrofinancePDCConsolidated(models.Model):
                     mf.id IS NOT NULL
             )
         """ % self._table)
+    def action_deposit (self):
+        '''true the is_depost field of the line when button is clicked'''
+        for record in self:
+            record.is_deposit = True
     
     def action_deposit_cheque(self):
         """

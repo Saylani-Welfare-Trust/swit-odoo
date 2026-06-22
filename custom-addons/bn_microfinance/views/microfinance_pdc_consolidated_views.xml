@@ -21,12 +21,12 @@
                        decoration-info="state_cheque == 'draft'"/>
                 <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
                 <!-- Button in each line -->
-                <!-- <button name="action_deposit_cheque" 
+                <button name="action_deposit" 
                         string="Deposit" 
                         type="object" 
                         class="btn-primary"
                         icon="fa-check-circle"
-                        invisible="state != 'draft'"/> -->
+                    />
             </tree>
         </field>
     </record>
