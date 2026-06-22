@@ -135,12 +135,12 @@ class BankReconciliationMaster(models.Model):
     )
 
     file = fields.Binary(string='File', required=True, attachment=True)
-    file_name = fields.Char(string='File Name', store=True)
-    file_type = fields.Selection([
-        ('csv', 'CSV'),
-        ('xls', 'Excel (.xls)'),
-        ('xlsx', 'Excel (.xlsx)'),
-    ], string='File Type', compute='_compute_file_type', store=False)
+    file_name = fields.Char(string='File Name')
+    # file_type = fields.Selection([
+    #     ('csv', 'CSV'),
+    #     ('xls', 'Excel (.xls)'),
+    #     ('xlsx', 'Excel (.xlsx)'),
+    # ], string='File Type', compute='_compute_file_type', store=False)
     delimiter = fields.Selection([
         (',', 'Comma (,)'),
         (';', 'Semicolon (;)'),
@@ -148,21 +148,21 @@ class BankReconciliationMaster(models.Model):
     ], string='CSV Delimiter', default=',')
 
 
-    @api.depends('file_name')
-    def _compute_file_type(self):
-        for rec in self:
-            if rec.file_name:
-                ext = rec.file_name.lower().split('.')[-1]
-                if ext in ('csv',):
-                    rec.file_type = 'csv'
-                elif ext in ('xls',):
-                    rec.file_type = 'xls'
-                elif ext in ('xlsx',):
-                    rec.file_type = 'xlsx'
-                else:
-                    rec.file_type = False
-            else:
-                rec.file_type = False
+    # @api.depends('file_name')
+    # def _compute_file_type(self):
+    #     for rec in self:
+    #         if rec.file_name:
+    #             ext = rec.file_name.lower().split('.')[-1]
+    #             if ext in ('csv',):
+    #                 rec.file_type = 'csv'
+    #             elif ext in ('xls',):
+    #                 rec.file_type = 'xls'
+    #             elif ext in ('xlsx',):
+    #                 rec.file_type = 'xlsx'
+    #             else:
+    #                 rec.file_type = False
+    #         else:
+    #             rec.file_type = False
 
     @api.model
     def create(self, vals):
