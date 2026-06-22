@@ -11,6 +11,7 @@
         'product'
     ],
     'data': [
+        'data/server_action.xml',
         'data/sequence.xml',
         'data/schedule_action.xml',
         'data/ir_module_category.xml',
