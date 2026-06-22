@@ -21,6 +21,8 @@
                        decoration-info="state_cheque == 'draft'"/>
                 <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
                 <!-- Button in each line -->
+
+                <field name="is_deposit" widget = "boolean"/>
                 <button name="action_deposit" 
                         string="Deposit" 
                         type="object" 
