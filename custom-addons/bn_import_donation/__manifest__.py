@@ -11,7 +11,6 @@
         'product',
     ],
     'data': [
-        'data/server_action.xml',
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
