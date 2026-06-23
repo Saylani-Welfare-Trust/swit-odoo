@@ -56,7 +56,7 @@
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-12 text-center mb-2">
-                                    <img src="/bn_pos_order/static/img/your_header_image.png" 
+                                    <img src="/bn_pos_order/static/description/your_header_image.png" 
                                         style="width:100%; max-height:80px; object-fit:contain;"/>
                                 </div>
                             </div>
