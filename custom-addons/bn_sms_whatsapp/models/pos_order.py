@@ -108,6 +108,8 @@ May Allah bless you!
     # -----------------------------------
     # Save Attachment + Generate URL
     # -----------------------------------
+
+    
     def _save_as_attachment(self, order, pdf_data):
         safe_name = order.name.replace('/', '_')
         filename = f"Receipt_{safe_name}.pdf"
