@@ -78,7 +78,6 @@ class ShariahLaw(models.Model):
         Synchronize all un-synced transactions and update daily balances.
         Called by the cron job daily.
         """
-        from odoo import fields
 
         # Helper to add amounts to both aggregate and daily dictionaries
         def add_amounts(analytic_id, restricted=0, unrestricted=0, purchase=0, expense=0):
