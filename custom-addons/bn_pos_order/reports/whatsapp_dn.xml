@@ -18,7 +18,7 @@
                                 }
 
                                 h1 {pos_whatsapp_donation_receipt_template
-                                    font-size: 14px;
+                                    font-size: 10px;
                                     font-weight: bold;
                                     margin: 2px 0;
                                 }
