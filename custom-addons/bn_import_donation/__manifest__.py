@@ -8,7 +8,7 @@
     'depends': [
         'stock',
         'product',
-        'base_account_budget',
+        'base_accounting_kit',
         'bn_profile_management',
     ],
     'data': [
