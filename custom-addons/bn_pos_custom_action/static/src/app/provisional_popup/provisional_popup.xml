@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_pos_custom_action.ProvisionalPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h3 class="modal-title"><t t-esc="this.title" /></h3>
+            </div>
+            <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Donor</div>
+                    <div class="col-8 fw-bold" t-esc="this.donor_name"/>
+                </div>
+                
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
+                    <div class="col-4 fw-semibold">Transaction Ref</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.transaction_ref"
+                            t-on-change="updateTransactionRef"
+                            placeholder="Enter transaction reference"/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Amount</div>
+                    <div class="col-8 fw-bold" t-esc="this.state.amount"/>
+                </div>
+
+                <div class="row mb-2 text-start"
+                    t-if="this.action_type === 'dd'">
+                    <div class="col-4 fw-semibold">Deposit to Bank</div>
+                    <div class="col-8">
+                        <select class="form-select form-select-sm"
+                                t-on-change="onBankChange">
+                            <option value="">Select Bank</option>
+
+                            <t t-foreach="this.props.bank_id" t-as="bank" t-key="bank.id">
+                                <option t-att-value="bank.id"
+                                        t-att-selected="bank.id === this.state.selected_bank_id">
+                                    <t t-esc="bank.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
+                    <div class="col-4 fw-semibold">Donation Home Service</div>
+                    <div class="col-8">
+                        <input type="checkbox"
+                            class="form-check-input"
+                            t-att-checked="this.state.transfer_to_dhs"
+                            t-on-change="updateTransferToDHS"/>
+                    </div>
+                </div>
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'" >
+                    <div class="col-4 fw-semibold">Address</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.address"
+                            t-on-change="updateAddress"
+                            placeholder="Enter address"/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'">
+                    <div class="col-4 fw-semibold">Service Charges</div>
+                    <div class="col-8">
+                        <input type="number" class="form-control form-control-sm"
+                            t-att-value="this.state.service_charges"
+                            id="service_charges"
+                            name="service_charges"
+                            t-on-change="saveServiceCharger"/>
+                    </div>
+                </div>
+
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs'">
+                    <div class="col-4 fw-semibold">Total</div>
+                    <div class="col-8 fw-bold" t-esc="this.state.total"/>
+                </div>
+            </main>
+
+            <!-- Microfinance -->
+            <main class="modal-body" t-if="this.action_type == 'mf'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.microfinance_request_no"
+                            t-on-change="updateMicrofinanceRequestNo"
+                            placeholder="Enter Microfinance Requets No."/>
+                    </div>
+                </div>
+            </main>
+            
+            <main class="modal-body" t-if="this.action_type == 'me'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.medical_equipment_request_no"
+                            t-on-change="updateMedicalEquipmentRequestNo"
+                            placeholder="Enter Medical Equipment Requets No."/>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="footer modal-footer">
+                <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
+                <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
+            </footer>
+        </div>
+    </t>
+
+</templates>

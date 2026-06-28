@@ -1,0 +1,819 @@
+/** @odoo-module **/
+
+import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment_screen";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { _t } from "@web/core/l10n/translation";
+import { patch } from "@web/core/utils/patch";
+
+patch(PaymentScreen.prototype, {
+    async validateOrder(isForceValidate) {
+        const currentOrder = this.currentOrder;
+
+        // Generate sequence from backend
+        const sequence = await this.orm.call(
+            'ir.sequence',
+            'next_by_code',
+            ['pos_order_seq']
+        );
+
+        currentOrder.set_pos_order_seq(sequence);
+        
+        // Only process medical equipment if order has extra_data with medical_equipment
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
+            const medicalData = currentOrder.extra_data.medical_equipment;
+            const equipmentId = medicalData.equipment_id;
+            const medical_equipment_request_no = medicalData.medical_equipment_request_no;
+            const securityDepositId = medicalData.security_deposit_id;
+            
+            if (equipmentId) {
+                // First, get the current state of the medical equipment record
+                
+                const equipmentRecord = await this.env.services.orm.searchRead(
+                    'medical.equipment',
+                    [['id', '=', equipmentId]],
+                    ['name', 'state', 'medical_equipment_line_ids','remaining_amount'],
+                    { limit: 1 }
+                );
+            
+                if (equipmentRecord && equipmentRecord.length > 0) {
+                    const currentState = equipmentRecord[0].state;
+                    // console.log(`🔍 Current state of equipment ${medicalData.record_number}: ${currentState}`);
+                    let newState;
+                    if (currentState === 'donate' ) {
+                        // console.warn(`⚠️ Remaining amount for donated equipment. Setting remaining_amount to 0.`);
+                        const result = await this.env.services.orm.write(
+                            'medical.equipment',
+                            [equipmentId],
+                            { remaining_amount: 0 }
+                        );   
+                    }
+                    // Condition 1: If state is 'draft', update to 'payment'
+                    if (currentState === 'sd_received') {
+                        // Check for negative quantities
+                        const hasNegativeQty = currentOrder
+                            .get_orderlines()
+                            .some((line) => line.get_quantity() < 0);
+
+                        if (hasNegativeQty) {
+                            await this.popup.add(ErrorPopup, {
+                                title: _t("Invalid Quantity"),
+                                body: _t("You cannot process an order with negative quantities."),
+                            });
+                            return; // Stop validation
+                        }
+
+                        newState = 'payment_received';
+                    }
+                    // Condition 2: If state is 'refund', update to 'payment_return'
+                    else if (currentState === 'refund') {
+                        const checkUpdate = await this.processEquipmentLines(equipmentRecord[0], currentOrder);
+                    
+                        if (checkUpdate) {
+                            return super.validateOrder(isForceValidate);
+                        }
+
+                        newState = 'payment_return';
+                    }
+                    // For other states, don't update or use default
+                    else {
+                        newState = currentState; // Keep current state
+                    }
+                    
+                    // Only update if state changed
+                    if (newState && newState !== currentState) {
+                        const result = await this.env.services.orm.write(
+                            'medical.equipment',
+                            [equipmentId],
+                            { state: newState }
+                        );
+                        
+                        // Show appropriate notification based on state change
+                        if (currentState === 'approved') {
+                            currentOrder.set_source_document(medicalData.record_number);
+
+                            this.env.services.notification.add(
+                                `Medical equipment ${medicalData.record_number} marked as paid`,
+                                { type: 'success' }
+                            );
+                        } else if (currentState === 'refund') {
+                            currentOrder.set_source_document(medicalData.record_number);
+
+                            this.env.services.notification.add(
+                                `Medical equipment ${medicalData.record_number} refund payment processed`,
+                                { type: 'success' }
+                            );
+                        }
+                    } else {
+                        console.log("🟡 [Medical Equipment] No state change required");
+                    }
+                } else {
+                    console.error("❌ [Medical Equipment] Equipment record not found");
+                }
+            } else {
+                // if (!securityDepositId) {
+                const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+
+                const payload = {
+                    deposit_id: securityDepositId || null,
+                    payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                    bank_name: currentOrder.bank_name,
+                    medical_equipment_request_no: medical_equipment_request_no,
+                    cheque_no: currentOrder.cheque_number,
+                    cheque_date: currentOrder.cheque_date,
+                    state: 'paid',
+                }
+                console.log("📤 Payload for setting security deposit values:", payload);
+
+                await this.env.services.orm.call(
+                    'medical.security.deposit', "set_security_depsoit_values",
+                    [payload]
+                );
+                currentOrder.set_source_document(medicalData.record_number);
+                // }
+                
+                console.log("✅ Security deposit values set successfully");
+                // console.error("❌ [Medical Equipment] No equipment ID found");
+            }
+            
+        }
+        // Only process donation home service if order has extra_data with dhs
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.dhs) {
+            try {
+                const dhsData = currentOrder.extra_data.dhs;
+                const dhsId = dhsData.dhs_id;
+                
+                if (dhsId) {
+                    // First, get the current state of the medical equipment record
+                    const dhsRecord = await this.env.services.orm.searchRead(
+                        'donation.home.service',
+                        [['id', '=', dhsId]],
+                        ['name', 'state'],
+                        { limit: 1 }
+                    );
+                    
+                    if (dhsRecord && dhsRecord.length > 0) {
+                        const currentState = dhsRecord[0].state;
+                        
+                        const newState = 'paid'; // Keep current state
+                        
+                        // Only update if state changed
+                        if (newState && newState !== currentState) {
+                            const result = await this.env.services.orm.write(
+                                'donation.home.service',
+                                [dhsId],
+                                { state: newState }
+                            );
+                            
+                            // Show appropriate notification based on state change
+                            if (currentState === 'gate_in') {
+                                currentOrder.set_source_document(dhsData.record_number);
+
+                                this.env.services.notification.add(
+                                    `Donation Home Service ${dhsData.record_number} payment processed`,
+                                    { type: 'success' }
+                                );
+                            }
+                        } else {
+                            console.log("🟡 [Donation Home Service] No state change required");
+                        }
+                    } else {
+                        console.error("❌ [Donation Home Service] Equipment record not found");
+                    }
+                } else {
+                    console.error("❌ [Donation Home Service] No donation home service ID found");
+                }
+            } catch (error) {
+                console.error("❌ [Donation Home Service] Error updating state:", error);
+                this.env.services.notification.add(
+                    "Note: Donation Home Service status not updated, but order will proceed",
+                    { type: 'warning' }
+                );
+            }
+        }
+        // --- MICROFINANCE ---
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.microfinance) {
+            const mfData = currentOrder.extra_data.microfinance;
+            
+
+            if (mfData.security_desposit) {
+                const depositID = mfData.security_deposit_id || null;
+                const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                const partnerId = currentOrder.get_partner()?.id || null;
+
+                
+
+                if (depositID) {
+                    // Update existing record
+                    await this.env.services.orm.write(
+                        'microfinance.installment',
+                        [depositID],
+                        {
+                            payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                            bank_name: currentOrder.bank_name,
+                            cheque_no: currentOrder.cheque_number,
+                            cheque_date: currentOrder.cheque_date,
+                            donee_id: partnerId,
+                            state: 'paid',
+                        }
+                    );
+                    
+                    currentOrder.set_source_document(mfData.record_number);
+
+                    this.env.services.notification.add(
+                        `Deposit Received successfully`,
+                        { type: 'success' }
+                    );
+                } else {
+                    // Create new microfinance.installment record if it doesn't exist
+                    const microfinanceId = mfData.microfinance_id || null;
+                    const amount = mfData.amount || 0;
+
+                    try {
+                        const newInstallment = await this.env.services.orm.create(
+                            'microfinance.installment',
+                            [{
+                                payment_type: 'security',
+                                payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                                bank_name: currentOrder.bank_name || false,
+                                cheque_no: currentOrder.cheque_number || false,
+                                cheque_date: currentOrder.cheque_date || false,
+                                microfinance_id: microfinanceId,
+                                donee_id: partnerId,
+                                amount: amount,
+                                date: new Date().toISOString().split('T')[0],
+                                state: 'paid',
+                            }]
+                        );
+
+                        if (newInstallment) {
+                            currentOrder.set_source_document(mfData.record_number);
+
+                            this.env.services.notification.add(
+                                `Security Deposit record created and paid successfully`,
+                                { type: 'success' }
+                            );
+                        }
+                    } catch (error) {
+                        console.error("❌ [Microfinance] Error creating installment:", error);
+                        this.env.services.notification.add(
+                            `Error creating security deposit: ${error.message}`,
+                            { type: 'danger' }
+                        );
+                    }
+                }
+            } else {
+                const microfinanceLineIds = mfData.microfinance_line_ids || [];
+                
+                if (microfinanceLineIds.length > 0) {
+                    const payment_method = currentOrder.paymentlines[0]?.name || 'Cash';
+                    const partnerId = currentOrder.get_partner()?.id || null;
+                    const microfinanceId = mfData.microfinance_id || null;
+                    
+                    // Get the actual paid amount from the order line (user may have modified it)
+                    let actualPaidAmount = 0;
+                    const orderLines = currentOrder.get_orderlines();
+                    for (const ol of orderLines) {
+                        // Find Microfinance Installment product line
+                        if (ol.product && ol.product.display_name === 'Microfinance Installment') {
+                            actualPaidAmount += ol.get_price_with_tax();
+                        }
+                    }
+                    
+                    // Distribute payment across installment lines (sorted by due_date - already sorted)
+                    let remainingPayment = actualPaidAmount;
+                    let processedLines = 0;
+                    
+                    for (const line of microfinanceLineIds) {
+                        if (remainingPayment <= 0) break;
+                        
+                        const lineRemaining = line.remaining_amount || (line.amount - (line.paid_amount || 0));
+                        
+                        if (lineRemaining <= 0) continue; // Skip fully paid lines
+                        
+                        let paymentForThisLine = 0;
+                        let newState = 'unpaid';
+                        
+                        if (remainingPayment >= lineRemaining) {
+                            // Full payment for this line
+                            paymentForThisLine = lineRemaining;
+                            remainingPayment -= lineRemaining;
+                            newState = 'paid';
+                        } else {
+                            // Partial payment for this line
+                            paymentForThisLine = remainingPayment;
+                            remainingPayment = 0;
+                            newState = 'partial';
+                        }
+                        
+                        const newPaidAmount = (line.paid_amount || 0) + paymentForThisLine;
+                        
+                        await this.env.services.orm.write(
+                            'microfinance.line',
+                            [line.id],
+                            {
+                                paid_amount: newPaidAmount,
+                                state: newState,
+                            }
+                        );
+                        
+                        processedLines++;
+                    }
+                    
+                    // Create microfinance.installment record for tracking the installment payment
+                    try {
+                        const newInstallment = await this.env.services.orm.create(
+                            'microfinance.installment',
+                            [{
+                                payment_type: 'installment',
+                                payment_method: payment_method == 'Cash' ? 'cash' : 'cheque',
+                                bank_name: currentOrder.bank_name || false,
+                                cheque_no: currentOrder.cheque_number || false,
+                                cheque_date: currentOrder.cheque_date || false,
+                                microfinance_id: microfinanceId,
+                                donee_id: partnerId,
+                                amount: actualPaidAmount,
+                                date: new Date().toISOString().split('T')[0],
+                                state: 'paid',
+                            }]
+                        );
+                    } catch (error) {
+                        console.error("❌ [Microfinance] Error creating installment record:", error);
+                    }
+                    
+                    currentOrder.set_source_document(mfData.record_number);
+
+                    this.env.services.notification.add(
+                        `Processed payment of ${actualPaidAmount} across ${processedLines} installment(s)`,
+                        { type: 'success' }
+                    );
+                } else {
+                    const microfinanceRecoveryLineIds = mfData.microfinance_recovery_line_ids || [];
+                    
+                    // Fetch unpaid microfinance lines
+                    
+                    for (const line of microfinanceRecoveryLineIds) {
+                        await this.env.services.orm.write(
+                            'microfinance.recovery.line',
+                            [line.id],
+                            {
+                                paid_amount: line.amount,
+                                state: 'paid', // optional
+                            }
+                        );
+                    }
+                    
+                    currentOrder.set_source_document(mfData.record_number);
+
+                    this.env.services.notification.add(
+                        `Processed ${microfinanceLineIds.length} microfinance instalments`,
+                        { type: 'success' }
+                    );
+                }
+            }
+
+        }
+
+        // ---------- Advance Donation Processing ----------
+        // Check for products with is_advance_donation field set to true
+        const donationLines = currentOrder.get_orderlines().filter(line =>
+            line.product && line.product.is_advance_donation === true
+        );
+
+        if (donationLines && donationLines.length > 0) {
+            // try {
+                
+                for (const donationLine of donationLines) {
+                    
+                    const donationAmount = Math.abs(donationLine.get_display_price());
+                    const partner = currentOrder.get_partner();
+
+                    // Get payment method from order
+                    const paymentLines = currentOrder.get_paymentlines();
+                    if (paymentLines.length === 0) {
+                        throw new Error("No payment method found");
+                    }
+
+                    // Use the first payment method (you might want to handle multiple payments differently)
+                    const paymentMethod = paymentLines[0].payment_method;
+
+                    // Prepare data for register_pos_payment
+                    const data = {
+                        'payment_type': paymentMethod.type === 'Cash' ? 'cash' : 'cheque',
+                        'is_donation_id': false,
+                        'order_name': currentOrder.name,  // Use order name as donation identifier
+                        'amount': donationAmount,
+                        'donor_id': partner ? partner.id : null,
+                        'product_id': donationLine.product.id,
+                    };
+                    
+                    // // Only add cheque fields if payment type is cheque
+                    if (data.payment_type === 'cheque') {
+                        // data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback                        
+                        data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
+                        data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
+                    }
+
+                    const result = await     this.env.services.orm.call(
+                        'advance.donation.receipt',
+                        'register_pos_payment',
+                        [data]
+                    );
+                    console.log("📤 Data sent for donation receipt creation:", data);
+                    console.log("📥 Result from donation receipt creation:", result);
+                    if (result.status === 'success') {
+                        currentOrder.set_source_document(result.receipt_name);
+
+                        this.env.services.notification.add(
+                            `Donation receipt created for ${donationLine.product.display_name}`,
+                            { type: 'success' }
+                        );
+                    } else {
+                        throw new Error(result.body || 'Failed to create donation receipt');
+                    }
+                }
+        }
+        // ========== WELFARE DISBURSEMENT ==========
+        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+            const welfareData = currentOrder.extra_data.welfare;
+            
+            // Only process if it's a welfare order and not already completed
+            if (welfareData.is_welfare_order === true && welfareData.disbursement_status !== 'completed') {
+                try {
+                    const welfareLineIds = welfareData.is_recurring
+                        ? (welfareData.recurring_line_ids || [])
+                        : (welfareData.welfare_line_ids || []);
+                    const lineModel = welfareData.is_recurring ? 'welfare.recurring.line' : 'welfare.line';
+                    
+                    for (let i = 0; i < welfareLineIds.length; i++) {
+                        const line = welfareLineIds[i];
+                        await this.env.services.orm.call(
+                            lineModel,
+                            'action_disbursed',
+                            [[line.id]]
+                        );
+                        
+                        // Update tracking info
+                        if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i]) {
+                            welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
+                            welfareData.disbursed_line_ids[i].status = 'disbursed';
+                            welfareData.total_disbursed_amount += line.amount || 0;
+                        }
+                    }
+                    
+                    welfareData.disbursement_status = 'completed';
+                    welfareData.payment_status = 'completed';
+                    welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
+                    
+                    currentOrder.set_source_document(welfareData.record_number);
+                    this.env.services.notification.add(
+                        `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
+                        { type: 'success' }
+                    );
+                } catch (error) {
+                    console.error("Welfare Error:", error);
+                    welfareData.disbursement_status = 'failed';
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Welfare Payment Blocked"),
+                        body: _t(error.message || "This welfare payment could not be processed."),
+                    });
+                    this.env.services.notification.add(
+                        "Welfare payment was not processed.",
+                        { type: 'danger' }
+                    );
+                    return;
+                }
+            }
+        }
+
+        // ========== WELFARE RETURN ==========
+        // Check if the order has welfare return lines.
+        if (currentOrder) {
+            const orderLines = currentOrder.get_orderlines();
+            let hasWelfareReturn = false;
+            const welfareReturnData = currentOrder.extra_data && currentOrder.extra_data.welfare_return;
+            const returnLines = [];
+            const seenReturnLines = new Set();
+
+            if (welfareReturnData && welfareReturnData.status !== 'completed') {
+                const model = welfareReturnData.line_model ||
+                    (welfareReturnData.return_type === 'recurring' ? 'welfare.recurring.line' : 'welfare.line');
+
+                for (const line of welfareReturnData.line_ids || []) {
+                    const key = `${model}-${line.id}`;
+                    if (!seenReturnLines.has(key)) {
+                        seenReturnLines.add(key);
+                        returnLines.push({
+                            model,
+                            id: line.id,
+                            welfareNumber: welfareReturnData.record_number || '',
+                            returnType: welfareReturnData.return_type || 'one_time',
+                        });
+                    }
+                }
+            }
+            
+            for (let i = 0; i < orderLines.length; i++) {
+                const line = orderLines[i];
+                const extras = line.get_extras ? line.get_extras() : {};
+                
+                if (extras.is_welfare_return === true && extras.welfare_line_id) {
+                    const model = extras.return_type === 'recurring' ? 'welfare.recurring.line' : 'welfare.line';
+                    const key = `${model}-${extras.welfare_line_id}`;
+
+                    if (!seenReturnLines.has(key)) {
+                        seenReturnLines.add(key);
+                        returnLines.push({
+                            model,
+                            id: extras.welfare_line_id,
+                            welfareNumber: extras.welfare_number || '',
+                            returnType: extras.return_type || 'one_time',
+                            originalWelfareOrderId: extras.original_welfare_order_id,
+                            returnAmount: extras.return_amount || 0,
+                        });
+                    }
+                }
+            }
+
+            for (const returnLine of returnLines) {
+                hasWelfareReturn = true;
+                
+                try {
+                    await this.env.services.orm.call(
+                        returnLine.model,
+                        'action_return_to_pos',
+                        [[returnLine.id]],
+                        {
+                            pos_order_id: currentOrder.server_id,
+                            welfare_number: returnLine.welfareNumber,
+                            return_type: returnLine.returnType
+                        }
+                    );
+                    
+                    // Update the original welfare order's return tracking
+                    if (returnLine.originalWelfareOrderId) {
+                        const originalOrder = await this.env.services.orm.call(
+                            'pos.order',
+                            'search_read',
+                            [[['id', '=', returnLine.originalWelfareOrderId]]]
+                        );
+                        
+                        if (originalOrder && originalOrder[0] && originalOrder[0].extra_data && originalOrder[0].extra_data.welfare) {
+                            const originalWelfare = originalOrder[0].extra_data.welfare;
+                            originalWelfare.return_status = 'completed';
+                            originalWelfare.return_order_ids.push(currentOrder.id);
+                            originalWelfare.total_returned_amount += returnLine.returnAmount || 0;
+                            originalWelfare.net_amount = originalWelfare.total_disbursed_amount - originalWelfare.total_returned_amount;
+                            
+                            // Update payment status if partially returned
+                            if (originalWelfare.total_returned_amount >= originalWelfare.total_disbursed_amount) {
+                                originalWelfare.payment_status = 'fully_returned';
+                            } else if (originalWelfare.total_returned_amount > 0) {
+                                originalWelfare.payment_status = 'partially_returned';
+                            }
+                            
+                            await this.env.services.orm.call(
+                                'pos.order',
+                                'write',
+                                [[originalOrder[0].id], { extra_data: originalOrder[0].extra_data }]
+                            );
+                        }
+                    }
+                    
+                    this.env.services.notification.add(
+                        `${returnLine.returnType === 'recurring' ? 'Recurring' : 'One Time'} Welfare return processed: ${returnLine.welfareNumber}`,
+                        { type: 'success' }
+                    );
+                } catch (error) {
+                    console.error("Welfare Return Error:", error);
+                    this.env.services.notification.add(
+                        `Return failed: ${error.message}`,
+                        { type: 'danger' }
+                    );
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Welfare Return Blocked"),
+                        body: _t(error.message || "This welfare return could not be processed."),
+                    });
+                    return;
+                }
+            }
+
+            if (welfareReturnData && hasWelfareReturn) {
+                welfareReturnData.status = 'completed';
+            }
+            
+            // If no welfare return lines found, skip
+            if (!hasWelfareReturn) {
+                console.log("Return order without welfare lines, skipping welfare return processing");
+            }
+        }
+
+        // Continue with normal POS flow
+        return super.validateOrder(isForceValidate);
+
+    //     // --- WELFARE ---
+        // if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+    //         try {
+    //             const wfData = currentOrder.extra_data.welfare;
+    //             const welfareId = wfData.welfare_id;
+    //             const isRecurring = wfData.is_recurring;
+
+    //             if (welfareId) {
+    //                 if (!isRecurring) {
+    //                     // One-time disbursement: Update welfare.state to 'disbursed'
+    //                     const welfareLineIds = wfData.welfare_line_ids || [];
+    //                     if (welfareLineIds.length > 0) {
+    //                         for (const line of welfareLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]] 
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} one-time disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 } else {
+    //                     // Recurring disbursement: Update recurring lines to 'disbursed'
+    //                     const recurringLineIds = wfData.recurring_line_ids || [];
+                        
+    //                     if (recurringLineIds.length > 0) {
+    //                         for (const line of recurringLineIds) {
+    //                             // Call the server-side action_disbursed method if needed
+    //                             await this.env.services.orm.call(
+    //                                 'welfare.recurring.line',
+    //                                 'action_disbursed',
+    //                                 [[line.id]]
+    //                             );
+    //                         }
+    //                     }
+
+    //                     currentOrder.set_source_document(wfData.record_number);
+
+    //                     this.env.services.notification.add(
+    //                         `Welfare ${wfData.record_number} recurring disbursement completed`,
+    //                         { type: 'success' }
+    //                     );
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("❌ [Welfare] Error updating state:", error);
+    //             this.env.services.notification.add(
+    //                 "Note: Welfare status not updated, but order will proceed",
+    //                 { type: 'warning' }
+    //             );
+    //         }
+    //     }
+        
+    //     // Continue with normal POS flow
+    //     super.validateOrder(isForceValidate);
+    },
+
+    /**
+     * Process equipment lines and add products to POS order
+     */
+    async processEquipmentLines(record, selectedOrder) {
+        if (!this.hasEquipmentLines(record)) {
+            return;
+        }
+
+        const equipmentLines = await this.fetchEquipmentLines(record);
+
+        for (const line of equipmentLines) {
+            const equipmentLineId = line.id;
+            const productId = line.product_id[0];
+            const productName = line.product_id[1];
+            const equipmentQty = line.quantity || 0;
+
+            const orderLine = selectedOrder.orderlines.find(
+                (ol) => ol.product.id === productId
+            );
+
+            if (orderLine) {
+                const orderQty = orderLine.quantity || 0;
+                const absOrderQty = Math.abs(orderQty); // ✅ Treat -3 and 3 as same
+
+                // Detect quantity mismatch
+                if (absOrderQty !== equipmentQty) {
+                    let newQty = equipmentQty - absOrderQty;
+
+                    // ✅ Prevent negative quantities
+                    if (newQty < 0) {
+                        newQty = 0;
+                        console.warn(`⚠️ Prevented negative qty for ${productName}`);
+                    }
+
+                    try {
+                        await this.env.services.orm.write(
+                            "medical.equipment.line",
+                            [equipmentLineId],
+                            { quantity: newQty }
+                        );
+
+                        this.env.services.notification.add(
+                            `${productName} quantity updated: ${equipmentQty} → ${newQty}`,
+                            { type: "info" }
+                        );
+                    } catch (error) {
+                        console.error(`❌ Failed to update ${productName}`, error);
+                        this.env.services.notification.add(
+                            `Error updating quantity for ${productName}`,
+                            { type: "warning" }
+                        );
+                    }
+
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                console.warn(`⚠️ Product ${productName} not found in POS order`);
+            }
+        }
+    },
+
+    /**
+     * Check if equipment has lines
+     */
+    hasEquipmentLines(record) {
+        if (!record.medical_equipment_line_ids || record.medical_equipment_line_ids.length === 0) {
+            this.notification.add(
+                "No products configured for this equipment",
+                { type: 'warning' }
+            );
+            return false;
+        }
+        return true;
+    },
+
+    /**
+     * Fetch equipment lines from database
+     */
+    async fetchEquipmentLines(record) {
+        const equipmentLines = await this.orm.searchRead(
+            'medical.equipment.line',
+            [['id', 'in', record.medical_equipment_line_ids]],
+            ['id', 'product_id', 'quantity'],
+            {}
+        );
+        
+        return equipmentLines;
+    },
+        // ========== ADD RETURN LINES TO ORDER ==========
+    async addWelfareReturn() {
+        const welfareNumber = prompt("Enter Welfare Form Number:");
+        if (!welfareNumber) return;
+        
+        try {
+            const lines = await this.env.services.orm.call(
+                'welfare.line',
+                'search_read',
+                [[
+                    ['welfare_id.name', '=', welfareNumber],
+                    ['payment_type', '=', 'assigned_officer'],
+                    ['state', '=', 'pending']
+                ]],
+                { fields: ['id', 'product_id', 'total_amount', 'quantity'] }
+            );
+            
+            if (lines.length === 0) {
+                this.env.services.notification.add(
+                    `No eligible pending Marfat lines found for ${welfareNumber}`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+            
+            for (const line of lines) {
+                const product = this.env.pos.db.product_by_id(line.product_id[0]);
+                if (product) {
+                    this.currentOrder.add_product(product, {
+                        quantity: line.quantity,  // POSITIVE quantity
+                        price: line.total_amount / line.quantity,
+                        extras: {
+                            is_welfare_return: true,
+                            welfare_number: welfareNumber,
+                            welfare_line_id: line.id
+                        }
+                    });
+                }
+            }
+            
+            this.env.services.notification.add(
+                `Added ${lines.length} return line(s) for ${welfareNumber}. Total: ${lines.reduce((sum, l) => sum + l.total_amount, 0)}`,
+                { type: 'success' }
+            );
+        } catch (error) {
+            console.error("Error adding return:", error);
+            this.env.services.notification.add(
+                `Error: ${error.message}`,
+                { type: 'danger' }
+            );
+        }
+    },
+});
