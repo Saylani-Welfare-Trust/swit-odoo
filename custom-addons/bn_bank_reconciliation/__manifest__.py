@@ -18,6 +18,7 @@
         'views/bank_reconciliation_reconciled.xml',
         'views/menu.xml',
         'wizards/reconcile_wizard.xml',
+        'wizards/import_bank_statement.xml',
     ],
     'auto_install': False,
     'application': True,

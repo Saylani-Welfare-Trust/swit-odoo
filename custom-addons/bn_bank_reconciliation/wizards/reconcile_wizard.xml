@@ -18,32 +18,35 @@
                         <field name="partner_id"/>
                         <field name="show_only_matching_amount"/>
                     </group>
-                    <field name="unreconciled_line_ids" nolabel="1">
-                        <tree string="Unreconciled Entries" editable="bottom">
-                            <field name="date"/>
-                            <field name="move_id"/>
-                            <field name="partner_id"/>
-                            <field name="name"/>
-                            <field name="balance"/>
-                            <field name="debit"/>
-                            <field name="credit"/>
-                            <field name="currency_id"/>
-                            <field name="amount_currency"/>
-                        </tree>
-                    </field>
-                    <group>
-                        <field name="selected_line_ids" nolabel="1">
-                            <tree string="Selected Entries">
-                                <field name="date"/>
-                                <field name="move_id"/>
-                                <field name="partner_id"/>
-                                <field name="name"/>
-                                <field name="balance"/>
-                                <field name="debit"/>
-                                <field name="credit"/>
-                            </tree>
-                        </field>
-                    </group>
+                    <notebook>
+                        <page name="details" string="Details">
+                            <field name="unreconciled_line_ids">
+                                <tree string="Unreconciled Entries" editable="bottom">
+                                    <field name="date"/>
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="name"/>
+                                    <field name="balance"/>
+                                    <field name="debit"/>
+                                    <field name="credit"/>
+                                    <field name="currency_id"/>
+                                    <field name="amount_currency"/>
+                                </tree>
+                            </field>
+
+                            <field name="selected_line_ids">
+                                <tree string="Selected Entries" create="0">
+                                    <field name="date"/>
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="name"/>
+                                    <field name="balance"/>
+                                    <field name="debit"/>
+                                    <field name="credit"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
                 <footer>
                     <button name="action_reconcile" string="Reconcile" type="object" class="btn-primary"/>

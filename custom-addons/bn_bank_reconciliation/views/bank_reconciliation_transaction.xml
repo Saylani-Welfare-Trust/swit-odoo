@@ -8,13 +8,14 @@
             <tree string="Transactions">
                 <field name="date"/>
                 <field name="description"/>
-                <field name="amount"/>
+                <field name="debit"/>
+                <field name="credit"/>
+                <field name="amount" optional="hide"/>
                 <field name="reference"/>
                 <field name="partner_id"/>
                 <field name="account_id"/>
                 <field name="state" widget="badge"/>
                 <field name="confidence_level" widget="badge"/>
-                <field name="in_exception" widget="boolean_toggle"/>
                 <field name="follow_up_needed" widget="boolean_toggle"/>
                 <field name="reconciled_by"/>
                 <field name="reconciled_date"/>
@@ -60,12 +61,6 @@
                             <field name="reconciled_by"/>
                             <field name="reconciled_date"/>
                         </group>
-                    </group>
-                    <group string="Exception Handling">
-                        <field name="in_exception" widget="boolean_toggle"/>
-                        <field name="exception_reason"/>
-                        <field name="follow_up_needed" widget="boolean_toggle"/>
-                        <field name="follow_up_notes"/>
                     </group>
                     <group string="Audit">
                         <field name="created_by"/>

@@ -33,7 +33,7 @@
                     <!-- Existing buttons -->
                     <button name="action_process_matching" string="Process Matching" type="object"
                             class="btn-primary"
-                            invisible="state != 'draft'"/>
+                            invisible="state != 'uploaded'"/>
                     <button name="action_master_reconcile" string="Master Reconcile" type="object"
                             class="btn-primary"
                             context="{'default_account_id': account_id}"
@@ -43,8 +43,8 @@
                             invisible="state != 'in_progress'"/>
                     <button name="action_cancel_reconciliation" string="Cancel" type="object"
                             class="btn-danger"
-                            invisible="state not in ['draft','in_progress']"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,completed"/>
+                            invisible="state not in ['draft','uploaded','in_progress']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,uploaded,in_progress,completed"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -55,8 +55,9 @@
                     <group>
                         <group>
                             <field name="date"/>
-                            <field name="account_id"/>
-                            <field name="journal_id"/>
+                            <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="currency_id"/>
                         </group>
@@ -74,13 +75,14 @@
                                     <!-- All fields used in modifiers must be present -->
                                     <field name="date"/>
                                     <field name="description"/>
-                                    <field name="amount" sum="Total"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                    <field name="amount" optional="hide" sum="Total"/>
                                     <field name="reference"/>
                                     <field name="partner_id"/>
                                     <field name="account_id"/>
                                     <field name="state" widget="badge"/>
                                     <field name="confidence_level" widget="badge"/>
-                                    <field name="in_exception" widget="boolean_toggle"/>
                                     <field name="matched_move_id" invisible="1"/>
 
                                     <button name="action_accept_match" type="object"
@@ -103,7 +105,9 @@
                                 <tree string="Reconciled Transactions">
                                     <field name="date"/>
                                     <field name="description"/>
-                                    <field name="amount"/>
+                                    <field name="debit"/>
+                                    <field name="credit"/>
+                                    <field name="amount" optional="hide"/>
                                     <field name="account_id"/>
                                     <field name="matched_move_id"/>
                                     <field name="reconciled_by"/>

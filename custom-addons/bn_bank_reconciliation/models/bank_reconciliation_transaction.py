@@ -38,11 +38,26 @@ class BankReconciliationTransaction(models.Model):
         string='Description',
         required=True
     )
-    amount = fields.Monetary(
-        string='Amount',
-        required=True,
-        currency_field='currency_id'
+    
+    # Debit and Credit fields
+    debit = fields.Monetary(
+        string='Debit',
+        currency_field='currency_id',
+        help='Debit amount for this transaction'
     )
+    credit = fields.Monetary(
+        string='Credit',
+        currency_field='currency_id',
+        help='Credit amount for this transaction'
+    )
+    amount = fields.Monetary(
+        string='Net Amount',
+        compute='_compute_amount',
+        store=True,
+        currency_field='currency_id',
+        help='Net amount (Debit - Credit)'
+    )
+    
     reference = fields.Char(
         string='Reference Number'
     )
@@ -133,17 +148,41 @@ class BankReconciliationTransaction(models.Model):
     )
 
     _sql_constraints = [
-        ('unique_master_transaction', 'unique(master_id, reference, date, amount)',
+        ('unique_master_transaction', 'unique(master_id, reference, date, debit, credit)',
          'A transaction with this reference, date, and amount already exists in this reconciliation batch.')
     ]
 
+    @api.depends('debit', 'credit')
+    def _compute_amount(self):
+        """Compute net amount from debit and credit"""
+        for record in self:
+            record.amount = (record.debit or 0.0) - (record.credit or 0.0)
+
     @api.model
     def create(self, vals):
+        # Handle backward compatibility - if amount is provided but debit/credit not
+        if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
+            if vals['amount'] >= 0:
+                vals['debit'] = vals['amount']
+                vals['credit'] = 0.0
+            else:
+                vals['debit'] = 0.0
+                vals['credit'] = abs(vals['amount'])
+        
         if not vals.get('state'):
             vals['state'] = 'draft'
         return super(BankReconciliationTransaction, self).create(vals)
 
     def write(self, vals):
+        # Handle backward compatibility - if amount is provided but debit/credit not
+        if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
+            if vals['amount'] >= 0:
+                vals['debit'] = vals['amount']
+                vals['credit'] = 0.0
+            else:
+                vals['debit'] = 0.0
+                vals['credit'] = abs(vals['amount'])
+        
         if 'account_id' in vals and self.account_id:
             self.previous_account_id = self.account_id.id
         return super(BankReconciliationTransaction, self).write(vals)
@@ -164,16 +203,33 @@ class BankReconciliationTransaction(models.Model):
         matches = []
         domain = [
             ('reconciled', '=', False),
-            ('account_id', '=', transaction.account_id.id if transaction.account_id else False),
             ('company_id', '=', transaction.company_id.id)
         ]
+        
+        # If account_id is set, use it in search
+        if transaction.account_id:
+            domain.append(('account_id', '=', transaction.account_id.id))
+            
         matching_moves = self.env['account.move.line'].search(domain)
+        
         for move_line in matching_moves:
             score = 0
             criteria = {}
-            if float_compare(abs(move_line.balance), abs(transaction.amount), precision_digits=2) == 0:
+            
+            # Match by debit/credit instead of amount
+            if transaction.debit and move_line.debit:
+                if float_compare(move_line.debit, transaction.debit, precision_digits=2) == 0:
+                    score += 30
+                    criteria['amount'] = True
+            elif transaction.credit and move_line.credit:
+                if float_compare(move_line.credit, transaction.credit, precision_digits=2) == 0:
+                    score += 30
+                    criteria['amount'] = True
+            # Fallback to amount comparison for backward compatibility
+            elif float_compare(abs(move_line.balance), abs(transaction.amount), precision_digits=2) == 0:
                 score += 30
                 criteria['amount'] = True
+                
             if transaction.reference and move_line.move_id.ref:
                 if transaction.reference.lower() in move_line.move_id.ref.lower():
                     score += 20
@@ -210,6 +266,8 @@ class BankReconciliationTransaction(models.Model):
                     'score': score,
                     'criteria': criteria,
                     'balance': move_line.balance,
+                    'debit': move_line.debit,
+                    'credit': move_line.credit,
                     'date': move_line.date
                 })
         return sorted(matches, key=lambda x: x['score'], reverse=True)
@@ -251,11 +309,15 @@ class BankReconciliationTransaction(models.Model):
             raise UserError(_('Only matched transactions can be accepted.'))
         if not self.account_id:
             raise UserError(_('Please select an account for this transaction.'))
+        
+        # Create reconciled record
+        self._create_reconciled_record()
+        
         self.state = 'reconciled'
         self.reconciled = True
         self.reconciled_date = fields.Datetime.now()
         self.reconciled_by = self.env.user
-        self._create_reconciled_record()
+        
         return True
 
     def _create_reconciled_record(self):
@@ -266,16 +328,20 @@ class BankReconciliationTransaction(models.Model):
             'transaction_id': self.id,
             'date': self.date,
             'description': self.description,
+            'debit': self.debit or 0.0,
+            'credit': self.credit or 0.0,
             'amount': self.amount,
             'account_id': self.account_id.id,
             'matched_move_id': self.matched_move_id.id,
+            'matched_move_line_id': self.matched_move_line_id.id,
             'reconciled_by': self.env.user.id,
             'reconciliation_date': fields.Datetime.now(),
             'reference': self.reference,
             'partner_id': self.partner_id.id,
             'confidence_level': self.confidence_level,
+            'adjustment_type': self.adjustment_type,
         }
-        Reconciled.create(vals)
+        return Reconciled.create(vals)
 
     def action_reject_match(self):
         self.ensure_one()
@@ -300,32 +366,21 @@ class BankReconciliationTransaction(models.Model):
             raise UserError(_('Only matched or unmatched transactions can be reconciled.'))
         if not self.account_id:
             raise UserError(_('Please select an account for this transaction.'))
+        
+        # Create reconciled record directly
+        self._create_reconciled_record()
+        self.state = 'reconciled'
+        self.reconciled = True
+        self.reconciled_date = fields.Datetime.now()
+        self.reconciled_by = self.env.user
+        
         return {
-            'name': _('Manual Reconciliation'),
             'type': 'ir.actions.act_window',
-            'res_model': 'reconcile.wizard',
+            'res_model': 'bank.reconciliation.master',
+            'res_id': self.master_id.id,
             'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_transaction_id': self.id,
-                'default_account_id': self.account_id.id,
-                'default_master_id': self.master_id.id,
-            }
+            'target': 'current'
         }
-
-    def action_reconcile_with_selected(self):
-        self.ensure_one()
-        # Placeholder: implement if needed
-        pass
-
-    def action_mark_follow_up(self):
-        self.ensure_one()
-        self.follow_up_needed = not self.follow_up_needed
-        if self.follow_up_needed:
-            self.state = 'unmatched'
-            self.in_exception = True
-            self.exception_reason = 'Marked for follow-up'
-        return True
 
     def action_view_related_move(self):
         self.ensure_one()
@@ -355,3 +410,9 @@ class BankReconciliationTransaction(models.Model):
             'domain': domain,
             'context': {'search_default_unreconciled': 1}
         }
+
+    @api.onchange('debit', 'credit')
+    def _onchange_debit_credit(self):
+        """Update amount when debit or credit changes"""
+        if self.debit or self.credit:
+            self.amount = (self.debit or 0.0) - (self.credit or 0.0)

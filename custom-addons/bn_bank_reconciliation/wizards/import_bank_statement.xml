@@ -12,15 +12,16 @@
                             <field name="master_id" invisible="1"/>
                             <field name="name" placeholder="Auto-generated if left empty"/>
                             <field name="date"/>
-                            <field name="account_id"/>
-                            <field name="journal_id"/>
+                            <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="opening_balance"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="currency_id" readonly="1"/>
                         </group>
                         <group string="File">
-                            <field name="file" filename="file_name" required="1" widget="binary"/>
-                            <field name="file_name" readonly="1"/>
+                            <field name="file" filename="file_name" required="1"/>
+                            <field name="file_name" readonly="0" invisible="1"/>
                             <field name="file_type" readonly="1"/>
                             <field name="delimiter" invisible="file_type != 'csv'"/>
                             <field name="skip_first_row" invisible="1"/>
