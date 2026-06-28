@@ -363,13 +363,19 @@ class ImportDonation(models.Model):
         lines = self.valid_import_donation_ids
 
         # Step 1: Collect unique mobiles
-        donor_mobiles   = set()
-        student_mobiles = set()
+        donor_mobiles = []
+        student_mobiles = []
+
         for line in lines:
             if line.mobile:
-                (student_mobiles if line.is_student else donor_mobiles).add(line.mobile)
+                if line.is_student:
+                    if line.mobile not in student_mobiles:
+                        student_mobiles.append(line.mobile)
+                else:
+                    if line.mobile not in donor_mobiles:
+                        donor_mobiles.append(line.mobile)
 
-        # Step 2: Bulk search — no state filter to block duplicates in any state
+        # Step 2: Bulk search
         existing_donors = Partner.search([
             ('mobile', 'in', donor_mobiles),
             ('category_id', 'in', [category_refs['donor']]),
