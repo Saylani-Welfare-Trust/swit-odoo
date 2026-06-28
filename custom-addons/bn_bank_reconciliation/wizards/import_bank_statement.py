@@ -25,37 +25,28 @@ class BankStatementImportWizard(models.TransientModel):
     )
 
     name = fields.Char(string='Reference', help='Leave empty for auto-sequence')
-    date = fields.Date(string='Statement Date', required=True, default=fields.Date.context_today)
-    account_id = fields.Many2one(
-        'account.account',
-        string='Bank Account',
-        required=True,
-        domain="[('account_type', 'in', ['asset_cash', 'asset_current'])]"
-    )
-    journal_id = fields.Many2one(
-        'account.journal',
-        string='Journal',
-        required=True,
-        domain="[('type', 'in', ['bank', 'cash'])]"
-    )
-    opening_balance = fields.Monetary(
-        string='Opening Balance',
-        currency_field='currency_id'
-    )
-    currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        related='company_id.currency_id',
-        readonly=True
-    )
-    company_id = fields.Many2one(
-        'res.company',
-        string='Company',
-        default=lambda self: self.env.company
-    )
+    date = fields.Date(related='master_id.date', string='Date', store=True)
+    account_id = fields.Many2one(related='master_id.account_id', string='Account', store=True)
+    journal_id = fields.Many2one(related='master_id.journal_id', string='Journal', store=True)
+    posted_account_id = fields.Many2one(related='master_id.posted_account_id', string='Posted Account', store=True)
+    opening_balance = fields.Monetary(related='master_id.opening_balance', string='Opening Balance', store=True)
+    currency_id = fields.Many2one(related='master_id.currency_id', string='Currency', store=True)
+    company_id = fields.Many2one(related='master_id.company_id', string='Company', store=True)
 
-    skip_first_row = fields.Boolean(string='Skip First Row (Header)', default=True)
-    create_master = fields.Boolean(string='Create New Reconciliation', default=True)
+    file = fields.Binary(string='File', required=True, attachment=True)
+    file_name = fields.Char(string='File Name', required=True)
+    file_type = fields.Selection([
+        ('csv', 'CSV'),
+        ('xls', 'Excel (.xls)'),
+        ('xlsx', 'Excel (.xlsx)'),
+    ], string='File Type', compute='_compute_file_type', store=False)
+
+    delimiter = fields.Selection([
+        (',', 'Comma (,)'),
+        (';', 'Semicolon (;)'),
+        ('\t', 'Tab'),
+    ], string='CSV Delimiter', default=',')
+
 
     def action_import(self):
         self.ensure_one()
@@ -81,7 +72,9 @@ class BankStatementImportWizard(models.TransientModel):
                 'master_id': master.id,
                 'date': row.get('Date'),
                 'description': row.get('Description', ''),
-                'amount': row.get('Amount', 0.0),
+                'debit': row.get('Debit', 0.0),
+                'credit': row.get('Credit', 0.0),
+                'account_id': self.account_id.id,
                 'reference': row.get('Reference', ''),
                 'payment_reference': row.get('Payment Reference', ''),
                 'invoice_number': row.get('Invoice Number', ''),
@@ -97,14 +90,7 @@ class BankStatementImportWizard(models.TransientModel):
 
         master._compute_transaction_counts()
         master._compute_totals()
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.master',
-            'res_id': master.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        master.state = 'uploaded'
 
     def _get_or_create_master(self):
         if self.master_id:
@@ -129,11 +115,11 @@ class BankStatementImportWizard(models.TransientModel):
                 content = file_content.decode('utf-8')
             except UnicodeDecodeError:
                 content = file_content.decode('latin-1')
-            csv_reader = csv.DictReader(io.StringIO(content), delimiter=self.master_id.delimiter)
-            expected_headers = ['Date', 'Description', 'Amount', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
+            csv_reader = csv.DictReader(io.StringIO(content), delimiter=self.delimiter)
+            expected_headers = ['Date', 'Description', 'Debit', 'Credit', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
             if not all(h in csv_reader.fieldnames for h in expected_headers):
                 raise UserError(_(
-                    'CSV headers must include: Date, Description, Amount, Reference, Payment Reference, Partner, Invoice Number. '
+                    'CSV headers must include: Date, Description, Debit, Credit, Reference, Payment Reference, Partner, Invoice Number. '
                     'Found headers: %s' % ', '.join(csv_reader.fieldnames)
                 ))
             for row in csv_reader:
@@ -151,15 +137,23 @@ class BankStatementImportWizard(models.TransientModel):
                         raise ValueError
                 except:
                     raise UserError(_('Invalid date format in row: %s. Please use YYYY-MM-DD, DD/MM/YYYY, or similar.') % date_str)
-                amount_str = row.get('Amount', '0').strip().replace(',', '')
+                
+                debit_str = row.get('Debit', '0').strip().replace(',', '')
+                credit_str = row.get('Credit', '0').strip().replace(',', '')
                 try:
-                    amount = float(amount_str)
+                    debit = float(debit_str)
                 except:
-                    amount = 0.0
+                    debit = 0.0
+                try:
+                    credit = float(credit_str)
+                except:
+                    credit = 0.0
+                    
                 data.append({
                     'Date': date_obj,
                     'Description': row.get('Description', '').strip(),
-                    'Amount': amount,
+                    'Debit': debit,
+                    'Credit': credit,
                     'Reference': row.get('Reference', '').strip(),
                     'Payment Reference': row.get('Payment Reference', '').strip(),
                     'Partner': row.get('Partner', '').strip(),
@@ -178,10 +172,10 @@ class BankStatementImportWizard(models.TransientModel):
             book = xlrd.open_workbook(file_contents=file_content)
             sheet = book.sheet_by_index(0)
             header = [str(cell.value).strip() for cell in sheet.row(0)]
-            expected_headers = ['Date', 'Description', 'Amount', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
+            expected_headers = ['Date', 'Description', 'Debit', 'Credit', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
             if not all(h in header for h in expected_headers):
                 raise UserError(_(
-                    'Excel headers must include: Date, Description, Amount, Reference, Payment Reference, Partner, Invoice Number. '
+                    'Excel headers must include: Date, Description, Debit, Credit, Reference, Payment Reference, Partner, Invoice Number. '
                     'Found: %s' % ', '.join(header)
                 ))
             col_map = {h: header.index(h) for h in expected_headers if h in header}
@@ -202,15 +196,23 @@ class BankStatementImportWizard(models.TransientModel):
                         date_obj = False
                 if not date_obj:
                     continue
-                amount_str = str(row[col_map['Amount']].value).strip().replace(',', '')
+                    
+                debit_str = str(row[col_map['Debit']].value).strip().replace(',', '')
+                credit_str = str(row[col_map['Credit']].value).strip().replace(',', '')
                 try:
-                    amount = float(amount_str)
+                    debit = float(debit_str)
                 except:
-                    amount = 0.0
+                    debit = 0.0
+                try:
+                    credit = float(credit_str)
+                except:
+                    credit = 0.0
+                    
                 data.append({
                     'Date': date_obj,
                     'Description': str(row[col_map['Description']].value).strip(),
-                    'Amount': amount,
+                    'Debit': debit,
+                    'Credit': credit,
                     'Reference': str(row[col_map['Reference']].value).strip(),
                     'Payment Reference': str(row[col_map['Payment Reference']].value).strip(),
                     'Partner': str(row[col_map['Partner']].value).strip(),
