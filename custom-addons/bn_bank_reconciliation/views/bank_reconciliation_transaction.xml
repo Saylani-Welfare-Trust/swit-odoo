@@ -5,20 +5,38 @@
         <field name="name">bank.reconciliation.transaction.tree</field>
         <field name="model">bank.reconciliation.transaction</field>
         <field name="arch" type="xml">
-            <tree string="Transactions">
+            <tree string="Bank Transactions">
+                <field name="matched_move_id" column_invisible="1"/>
+
                 <field name="date"/>
                 <field name="description"/>
-                <field name="debit"/>
-                <field name="credit"/>
-                <field name="amount" optional="hide"/>
+                <field name="debit" sum="Total Debit"/>
+                <field name="credit" sum="Total Credit"/>
+                <field name="amount" optional="hide" sum="Net Total"/>
                 <field name="reference"/>
                 <field name="partner_id"/>
                 <field name="account_id"/>
                 <field name="state" widget="badge"/>
                 <field name="confidence_level" widget="badge"/>
+                <field name="match_score" optional="hide"/>
+                <field name="in_exception" widget="boolean_toggle"/>
                 <field name="follow_up_needed" widget="boolean_toggle"/>
-                <field name="reconciled_by"/>
-                <field name="reconciled_date"/>
+                <field name="reconciled_by" optional="hide"/>
+                <field name="reconciled_date" optional="hide"/>
+                <field name="matched_move_line_name" string="Matched Line" optional="show"/>
+                
+                <button name="action_accept_match" type="object"
+                        string="Accept" icon="fa-check"
+                        invisible="state != 'matched'"/>
+                <button name="action_reject_match" type="object"
+                        string="Reject" icon="fa-times"
+                        invisible="state != 'matched'"/>
+                <button name="action_view_related_move" type="object"
+                        string="View Entry" icon="fa-eye"
+                        invisible="not matched_move_id"/>
+                <button name="action_manual_match" type="object"
+                        string="Manual Match" icon="fa-hand-pointer-o"
+                        invisible="state in ['reconciled']"/>
             </tree>
         </field>
     </record>
@@ -27,46 +45,103 @@
         <field name="name">bank.reconciliation.transaction.form</field>
         <field name="model">bank.reconciliation.transaction</field>
         <field name="arch" type="xml">
-            <form string="Transaction">
+            <form string="Bank Transaction">
+                <header>
+                    <button name="action_accept_match" type="object"
+                            string="Accept Match" class="btn-primary"
+                            invisible="state != 'matched'"/>
+                    <button name="action_reject_match" type="object"
+                            string="Reject Match" class="btn-danger"
+                            invisible="state != 'matched'"/>
+                    <button name="action_manual_reconcile" type="object"
+                            string="Manual Reconcile" class="btn-primary"
+                            invisible="state not in ['matched','unmatched']"/>
+                    <button name="action_view_related_move" type="object"
+                            string="View Entry" class="btn-info"
+                            invisible="not matched_move_id"/>
+                    <button name="action_view_related_move_line" type="object"
+                            string="View Line" class="btn-info"
+                            invisible="not matched_move_line_id"/>
+                    <button name="action_manual_match" type="object"
+                            string="Manual Match" class="btn-warning"
+                            invisible="state in ['reconciled']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,matched,unmatched,reconciled"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="description" placeholder="Description"/>
+                        </h1>
+                    </div>
                     <group>
                         <group>
                             <field name="master_id"/>
                             <field name="date"/>
-                            <field name="description"/>
-                            <field name="amount"/>
                             <field name="reference"/>
                             <field name="payment_reference"/>
-                        </group>
-                        <group>
                             <field name="partner_id"/>
                             <field name="invoice_number"/>
-                            <field name="account_id"/>
+                        </group>
+                        <group>
+                            <field name="debit"/>
+                            <field name="credit"/>
+                            <field name="amount" readonly="1"/>
+                            <field name="account_id" required="1"/>
                             <field name="state" widget="badge"/>
                             <field name="confidence_level" widget="badge"/>
+                            <field name="match_score"/>
                         </group>
                     </group>
-                    <group string="Matching Details">
-                        <group>
-                            <field name="matched_move_id"/>
-                            <field name="matched_move_line_id"/>
-                            <field name="matched_by_amount" widget="boolean_toggle"/>
-                            <field name="matched_by_reference" widget="boolean_toggle"/>
-                            <field name="matched_by_partner" widget="boolean_toggle"/>
-                        </group>
-                        <group>
-                            <field name="matched_by_invoice" widget="boolean_toggle"/>
-                            <field name="matched_by_date" widget="boolean_toggle"/>
-                            <field name="reconciled" widget="boolean_toggle"/>
-                            <field name="reconciled_by"/>
-                            <field name="reconciled_date"/>
-                        </group>
-                    </group>
-                    <group string="Audit">
-                        <field name="created_by"/>
-                        <field name="previous_account_id"/>
-                        <field name="write_date"/>
-                    </group>
+                    <notebook>
+                        <page string="Matching Details">
+                            <group>
+                                <group string="Match Criteria">
+                                    <field name="matched_by_manual" widget="boolean_toggle"/>
+                                    <field name="matched_by_amount"/>
+                                    <field name="matched_by_reference"/>
+                                    <field name="matched_by_partner"/>
+                                    <field name="matched_by_invoice"/>
+                                    <field name="matched_by_date"/>
+                                    <field name="matched_by_description" optional="hide"/>
+                                </group>
+                                <group string="Matched Entry">
+                                    <field name="matched_move_id"/>
+                                    <field name="matched_move_line_id"/>
+                                    <field name="matched_move_line_name" string="Matched Line Description"/>
+                                    <field name="matched_move_ref" string="Entry Reference"/>
+                                    <button name="action_view_related_move" type="object" 
+                                            string="View Accounting Entry" class="btn-info"
+                                            invisible="not matched_move_id"/>
+                                    <button name="action_view_related_move_line" type="object"
+                                            string="View Journal Item" class="btn-info"
+                                            invisible="not matched_move_line_id"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Adjustment">
+                            <group>
+                                <field name="is_adjustment"/>
+                                <field name="adjustment_type" invisible="not is_adjustment"/>
+                            </group>
+                        </page>
+                        <page string="Follow-up">
+                            <group>
+                                <field name="in_exception"/>
+                                <field name="exception_reason" nolabel="1" invisible="not in_exception"/>
+                                <field name="follow_up_needed"/>
+                                <field name="follow_up_notes" nolabel="1" invisible="not follow_up_needed"/>
+                            </group>
+                        </page>
+                        <page string="Audit">
+                            <group>
+                                <field name="created_by"/>
+                                <field name="reconciled_by"/>
+                                <field name="reconciled_date"/>
+                                <field name="write_date"/>
+                                <field name="previous_account_id"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
@@ -77,10 +152,65 @@
         </field>
     </record>
 
+    <record id="view_bank_reconciliation_transaction_search" model="ir.ui.view">
+        <field name="name">bank.reconciliation.transaction.search</field>
+        <field name="model">bank.reconciliation.transaction</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="description"/>
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="account_id"/>
+                <field name="state"/>
+                
+                <filter name="state_draft" string="Draft" domain="[('state','=','draft')]"/>
+                <filter name="state_matched" string="Matched" domain="[('state','=','matched')]"/>
+                <filter name="state_unmatched" string="Unmatched" domain="[('state','=','unmatched')]"/>
+                <filter name="state_reconciled" string="Reconciled" domain="[('state','=','reconciled')]"/>
+                
+                <separator/>
+                
+                <filter name="in_exception" string="In Exception" domain="[('in_exception','=',True)]"/>
+                <filter name="follow_up" string="Follow-up Needed" domain="[('follow_up_needed','=',True)]"/>
+                <filter name="manual_match" string="Manual Match" domain="[('matched_by_manual','=',True)]"/>
+                <filter name="auto_match" string="Auto Match" domain="[('matched_by_manual','=',False),('state','=','matched')]"/>
+                
+                <separator/>
+                
+                <filter name="has_debit" string="Has Debit" domain="[('debit','>',0)]"/>
+                <filter name="has_credit" string="Has Credit" domain="[('credit','>',0)]"/>
+                <filter name="high_confidence" string="High Confidence" domain="[('confidence_level','=','high')]"/>
+                <filter name="medium_confidence" string="Medium Confidence" domain="[('confidence_level','=','medium')]"/>
+                <filter name="low_confidence" string="Low Confidence" domain="[('confidence_level','=','low')]"/>
+                <filter name="has_adjustment" string="Is Adjustment" domain="[('is_adjustment','=',True)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" domain="[]" context="{'group_by':'state'}"/>
+                    <filter name="group_date" string="Date" domain="[]" context="{'group_by':'date'}"/>
+                    <filter name="group_account" string="Account" domain="[]" context="{'group_by':'account_id'}"/>
+                    <filter name="group_partner" string="Partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                    <filter name="group_confidence" string="Confidence" domain="[]" context="{'group_by':'confidence_level'}"/>
+                    <filter name="group_master" string="Reconciliation" domain="[]" context="{'group_by':'master_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_bank_reconciliation_transaction" model="ir.actions.act_window">
-        <field name="name">Transactions</field>
+        <field name="name">Bank Transactions</field>
         <field name="res_model">bank.reconciliation.transaction</field>
         <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                View and manage bank reconciliation transactions.
+            </p>
+        </field>
     </record>
+
+    <menuitem id="menu_bank_reconciliation_transaction" 
+              name="All Transactions" 
+              parent="menu_bank_reconciliation_root"
+              action="action_bank_reconciliation_transaction"
+              sequence="20"/>
 
 </odoo>

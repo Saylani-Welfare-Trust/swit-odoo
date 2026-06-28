@@ -33,8 +33,8 @@ class BankStatementImportWizard(models.TransientModel):
     currency_id = fields.Many2one(related='master_id.currency_id', string='Currency', store=True)
     company_id = fields.Many2one(related='master_id.company_id', string='Company', store=True)
 
-    file = fields.Binary('File')
-    file_name = fields.Char('File Name')
+    file = fields.Binary(string='File', required=True, attachment=True)
+    file_name = fields.Char(string='File Name', required=True)
     file_type = fields.Selection([
         ('csv', 'CSV'),
         ('xls', 'Excel (.xls)'),
@@ -47,8 +47,6 @@ class BankStatementImportWizard(models.TransientModel):
         ('\t', 'Tab'),
     ], string='CSV Delimiter', default=',')
 
-    skip_first_row = fields.Boolean(string='Skip First Row (Header)', default=True)
-    create_master = fields.Boolean(string='Create New Reconciliation', default=True)
 
     @api.depends('file_name')
     def _compute_file_type(self):
@@ -86,18 +84,12 @@ class BankStatementImportWizard(models.TransientModel):
 
         Transaction = self.env['bank.reconciliation.transaction']
         for row in data:
-            # Calculate net amount from debit and credit
-            debit = row.get('Debit', 0.0)
-            credit = row.get('Credit', 0.0)
-            amount = debit - credit  # or credit - debit depending on your accounting convention
-            
             vals = {
                 'master_id': master.id,
                 'date': row.get('Date'),
                 'description': row.get('Description', ''),
-                'amount': amount,
-                'debit': debit,
-                'credit': credit,
+                'debit': row.get('Debit', 0.0),
+                'credit': row.get('Credit', 0.0),
                 'account_id': self.account_id.id,
                 'reference': row.get('Reference', ''),
                 'payment_reference': row.get('Payment Reference', ''),
@@ -115,14 +107,6 @@ class BankStatementImportWizard(models.TransientModel):
         master._compute_transaction_counts()
         master._compute_totals()
         master.state = 'uploaded'
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.master',
-            'res_id': master.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
 
     def _get_or_create_master(self):
         if self.master_id:

@@ -7,37 +7,47 @@
         <field name="arch" type="xml">
             <form string="Import Bank Statement">
                 <sheet>
+                    <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
+                        <i class="fa fa-info-circle"/> 
+                        <span>Upload a CSV or Excel file with bank transactions.</span>
+                    </div>
                     <group>
                         <group>
                             <field name="master_id" invisible="1"/>
-                            <field name="name" placeholder="Auto-generated if left empty"/>
-                            <field name="date"/>
-                            <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="opening_balance"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="currency_id" readonly="1"/>
-                        </group>
-                        <group string="File">
-                            <field name="file" filename="file_name" required="1"/>
-                            <field name="file_name" readonly="0" invisible="1"/>
-                            <field name="file_type" readonly="1"/>
+                            <field name="file" widget="binary" filename="file_name"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file_type" invisible="1"/>
                             <field name="delimiter" invisible="file_type != 'csv'"/>
-                            <field name="skip_first_row" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="name" placeholder="Reference"/>
+                            <field name="date"/>
+                            <field name="account_id"/>
+                            <field name="journal_id"/>
+                            <field name="opening_balance"/>
                         </group>
                     </group>
-                    <div class="alert alert-info" role="alert">
-                        <p><strong>File Format Requirements</strong></p>
-                        <ul>
-                            <li>CSV or Excel (.xls, .xlsx)</li>
-                            <li>Header row must contain: <strong>Date, Description, Amount, Reference, Payment Reference, Partner, Invoice Number</strong></li>
-                            <li>Date format: YYYY-MM-DD or DD/MM/YYYY</li>
-                            <li>Amount: numeric (decimal point)</li>
-                            <li>Partner column can be empty</li>
-                        </ul>
-                        <p><i>For CSV, select the appropriate delimiter (comma, semicolon, or tab).</i></p>
-                    </div>
+                    <group string="Expected File Format">
+                        <div>
+                            <strong>Headers Required:</strong>
+                            <ul>
+                                <li>Date</li>
+                                <li>Description</li>
+                                <li>Debit</li>
+                                <li>Credit</li>
+                                <li>Reference</li>
+                                <li>Payment Reference</li>
+                                <li>Partner</li>
+                                <li>Invoice Number</li>
+                            </ul>
+                            <strong>Supported Date Formats:</strong>
+                            <ul>
+                                <li>YYYY-MM-DD</li>
+                                <li>DD/MM/YYYY</li>
+                                <li>MM/DD/YYYY</li>
+                            </ul>
+                        </div>
+                    </group>
                 </sheet>
                 <footer>
                     <button name="action_import" string="Import" type="object" class="btn-primary"/>
@@ -45,13 +55,6 @@
                 </footer>
             </form>
         </field>
-    </record>
-
-    <record id="action_import_bank_statement_wizard" model="ir.actions.act_window">
-        <field name="name">Import Bank Statement</field>
-        <field name="res_model">import.bank.statement.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
     </record>
 
 </odoo>
