@@ -39,17 +39,14 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_product_box" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="product_id == False">
-                            <field name="product_id" widget="statinfo"/>
-                        </button>
                         <button name="action_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="picking_id == False">
                             <field name="picking_id" widget="statinfo"/>
                         </button>
                         <button name="action_journal_entries" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="account_move_id == False">
                             <field name="account_move_id" widget="statinfo"/>
                         </button>
-                        <button name="action_journal_entries_2" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="account_move_list_id == False">
-                            <field name="account_move_list_id" widget="statinfo"/>
+                        <button name="action_reversal_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reversal_picking_id == False">
+                            <field name="reversal_picking_id" widget="statinfo"/>
                         </button>
                     </div>
 
@@ -62,7 +59,6 @@
                         <group>
                             <field name="donor_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="product_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                            <field name="debit_account_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="picking_type_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="check_bool" invisible="1" />
                         </group>
@@ -86,8 +82,8 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Valuation Committee" name="product_valuation_committee_line_ids" groups="bn_donation_in_kind.donation_in_kind_valuation_committee_group">
-                            <field name="product_valuation_committee_line_ids" readonly="state in ['draft', 'validate', 'approval', 'box_validate', 'cancel']">
+                        <page string="Valuation Committee" name="valuation_committee_line_ids" groups="bn_donation_in_kind.donation_in_kind_valuation_committee_group">
+                            <field name="valuation_committee_line_ids" readonly="state in ['draft', 'validate', 'approval', 'box_validate', 'cancel']">
                                 <tree string="Valuation Committee" editable="bottom" create="false" edit="true" delete="false">
                                     <field name="product_id" readonly="check_price_bool == True" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="quantity" readonly="check_price_bool == True" />
@@ -100,6 +96,11 @@
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
             </form>
         </field>
     </record>

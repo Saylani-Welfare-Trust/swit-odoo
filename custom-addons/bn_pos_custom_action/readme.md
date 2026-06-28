@@ -1,3 +1,4 @@
 # POS Custom Action Button
 
-Having all the custom action under a one umbrella
+Create a custom action which hold multiple Modules POS button under its popup. A module use to define generic custom component to odoo and then reuse by
+many custom modules onward.

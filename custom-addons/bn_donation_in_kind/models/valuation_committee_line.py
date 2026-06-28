@@ -1,9 +1,9 @@
 from odoo import models, fields, api
 
 
-class DonationInKindLine(models.Model):
-    _name = 'donation.in.kind.line'
-    _description = "Donation In Kind Line"
+class ValuationCommitteeLine(models.Model):
+    _name = 'valuation.committee.line'
+    _description = "Valuation Committee Line"
 
 
     def default_set_value(self, name):
@@ -17,9 +17,10 @@ class DonationInKindLine(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     donation_in_kind_id = fields.Many2one('donation.in.kind', string="Donation In Kind")
-    location_id = fields.Many2one('stock.location', string='Location', required=True, domain="[('usage', '=', 'internal')]", default=lambda self: self.default_set_value('location_id'))
+    donation_in_kind_line_id = fields.Many2one('donation.in.kind.line', string='Donation In Kind Line')
+    location_id = fields.Many2one('stock.location', string='Location', required=True,domain="[('usage', '=', 'internal')]",default=lambda self: self.default_set_value('location_id'))
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
-
+    
     quantity = fields.Float('Quantity')
     avg_price = fields.Float('Average Price', required=True)
 
@@ -27,8 +28,6 @@ class DonationInKindLine(models.Model):
     check_price_bool = fields.Boolean('Check Price Bool', default=False)
     
     name = fields.Char('Name', default="New")
-
-    remarks = fields.Text('Remarks')
 
 
     @api.depends('product_id', 'avg_price')
@@ -45,7 +44,7 @@ class DonationInKindLine(models.Model):
     def constraint_product_id(self):
         for record in self:
             if record.product_id:
-                record.avg_price = record.product_id.standard_price
+                record.avg_price = record.product_id.lst_price
             else:
                 record.avg_price = 0
 
@@ -53,6 +52,6 @@ class DonationInKindLine(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('donation_in_kind_line')
-
-        return super(DonationInKindLine, self).create(vals_list)
+                vals['name'] = self.env['ir.sequence'].next_by_code('valuation_committee_line')
+                
+        return super(ValuationCommitteeLine, self).create(vals_list)

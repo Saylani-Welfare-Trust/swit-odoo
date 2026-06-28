@@ -17,9 +17,9 @@
             <field name="padding">5</field>
         </record>
         
-        <record id="product_valuation_committee_line_sequence" model="ir.sequence">
-            <field name="name">Product Valuation Committee Line</field>
-            <field name="code">product_valuation_committee_line</field>
+        <record id="valuation_committee_line_sequence" model="ir.sequence">
+            <field name="name">Valuation Committee Line</field>
+            <field name="code">valuation_committee_line</field>
             <field name="prefix">PVCL/%(year)s/</field>
             <field name="padding">5</field>
         </record>

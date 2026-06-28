@@ -1,6 +1,5 @@
 from odoo import models, fields
 from odoo.exceptions import ValidationError
-
 import base64
 from io import BytesIO
 import openpyxl
@@ -9,10 +8,10 @@ import xlrd
 
 state_selection = [
     ('draft', 'Draft'),
-    ('validated',  'Validated'),
-    ('create_donor', 'Create Donor'),       
-    ('upload', 'Uploaded'),
-    ('done', 'Done'),
+    ('validated', 'Validated'),
+    ('uploaded', 'Uploaded'),
+    ('confirmed', 'Confirmed'),
+    ('sync_donor', 'Sync Donor'),
 ]
 
 
@@ -22,249 +21,110 @@ class ImportDonation(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    name = fields.Char('File Name', tracking=True)
-
-    gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config", tracking=True)
-    journal_entry_id = fields.Many2one('account.move', string="Journal Entry", tracking=True)
-    picking_id = fields.Many2one('stock.picking', string="Picking", tracking=True)
-
-    def _default_picking_type(self):
-        picking_type = self.env.ref(
-            'bn_import_donation.online_donation_stock_picking_type',
-            raise_if_not_found=False
-        )
-        return picking_type.id if picking_type else False
-    
-    picking_type_id = fields.Many2one(
-        'stock.picking.type',
-        string="Picking Type",
-        default=_default_picking_type 
-    )
-    source_location_id = fields.Many2one(related='picking_type_id.default_location_src_id', string="Source Location", store=True)
-    destination_location_id = fields.Many2one(related='picking_type_id.default_location_dest_id', string="Destination Location", store=True)
-    state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
-
+    name = fields.Char('Name', tracking=True)
     file_name = fields.Char('File Name', tracking=True)
+
+    gateway_config_id = fields.Many2one('gateway.config', tracking=True)
+
+    journal_entry_id = fields.Many2one('account.move')
+    picking_id = fields.Many2one('stock.picking')
+
+    state = fields.Selection(state_selection, default='draft', tracking=True)
+
     import_file = fields.Binary('Import File')
 
-    invalid_import_donation_ids = fields.One2many('invalid.import.donation', 'import_donation_id', string="Invalid Import Donations")
-    valid_import_donation_ids = fields.One2many('valid.import.donation', 'import_donation_id', string="Valid Import Donations")
+    invalid_import_donation_ids = fields.One2many(
+        'invalid.import.donation', 'import_donation_id'
+    )
+    valid_import_donation_ids = fields.One2many(
+        'valid.import.donation', 'import_donation_id'
+    )
+
     
-
+    # =========================================================
+    # Draft
+    # =========================================================
     def action_draft(self):
-        for line in self.invalid_import_donation_ids:
-            line.unlink()
-
-        for line in self.valid_import_donation_ids:
-            line.unlink()
+        self.valid_import_donation_ids.unlink()
+        self.invalid_import_donation_ids.unlink()
 
         self.state = 'draft'
 
-    def action_correct_records(self):
+    # =========================================================
+    # CATEGORY CACHE
+    # =========================================================
+    def _get_category_refs(self):
+        return {
+            'student': self.env.ref('bn_profile_management.student_partner_category').id,
+            'donee': self.env.ref('bn_profile_management.donee_partner_category').id,
+            'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
+            'donor': self.env.ref('bn_profile_management.donor_partner_category').id,
+        }
+
+    # =========================================================
+    # VALIDATE EXCEL
+    # =========================================================
+    def action_validate_excel_file(self):
         if not self.import_file:
-            raise ValidationError('No file uploaded.')
+            raise ValidationError("No file uploaded.")
 
-        file_data = base64.b64decode(self.import_file)
-        if not file_data:
-            raise ValidationError('The uploaded file is empty.')
+        data = base64.b64decode(self.import_file)
+        stream = BytesIO(data)
 
-        file_stream = BytesIO(file_data)
+        if data[:4] == b'PK\x03\x04':
+            workbook = openpyxl.load_workbook(stream)
+            sheet = workbook.active
+            rows = sheet.iter_rows(min_row=2, values_only=True)
 
-        # Detect file format
-        try:
-            if file_data[:4] == b'PK\x03\x04':  # .xlsx
-                workbook = openpyxl.load_workbook(file_stream)
-                sheet = workbook.active
-                rows = sheet.iter_rows(min_row=2, values_only=True)
-            elif file_data[:4] == b'\xD0\xCF\x11\xE0':  # .xls
-                workbook = xlrd.open_workbook(file_contents=file_data)
-                sheet = workbook.sheet_by_index(0)
-                rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
-            else:
-                raise ValidationError('Unsupported file format.')
-        except Exception:
-            raise ValidationError('The uploaded file is not a valid Excel file.')
+        elif data[:4] == b'\xD0\xCF\x11\xE0':
+            workbook = xlrd.open_workbook(file_contents=data)
+            sheet = workbook.sheet_by_index(0)
+            rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
+        else:
+            raise ValidationError("Unsupported file format.")
 
-        # Cache frequently used models
-        Donation = self.env['donation']
+        Gateway = self.gateway_config_id
 
-        # Header mapping
-        header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
-        header_map = {name: pos for name, pos in header_list}
+        header_map = {
+            h.header_type_id.name: h.position
+            for h in Gateway.gateway_config_header_ids
+        }
 
-        def get_value(row, name):
-            idx = header_map.get(name)
-            return row[idx] if idx is not None and idx < len(row) else None
+        def get(row, key):
+            idx = header_map.get(key)
+            return row[idx] if idx is not None else None
+
+        is_student = Gateway.name in ['SMIT', 'PIAIC']
+
+        valid_vals, invalid_vals = [], []
 
         for row in rows:
             try:
-                # Shared fields
-                transaction_id = get_value(row, 'Transaction ID')
-                # name = get_value(row, 'Name')
-                # mobile = str(get_value(row, 'Cell Number') or '').strip()
-                # cnic = get_value(row, 'CNIC No.')
-                # email = get_value(row, 'Email')
-                date = get_value(row, 'Date')
-                # amount = get_value(row, 'Amount')
-                # product = get_value(row, 'Product')
-                # reference = get_value(row, 'Reference')
-                # course = get_value(row, 'Course')
-
-                for line in self.valid_import_donation_ids:
-                    if line.transaction_id == transaction_id:
-                        line.date = date
-                for line in self.invalid_import_donation_ids:
-                    if line.transaction_id == transaction_id:
-                        line.date = date
-
-                Donation.search([('transaction_id', '=', transaction_id)]).write({
-                    'date': date
-                })
-
-            except Exception as e:
-                raise ValidationError(f'Unexpected error processing row: {str(e)}')
-
-    def action_validate_excel_file(self):
-        if not self.import_file:
-            raise ValidationError('No file uploaded.')
-
-        file_data = base64.b64decode(self.import_file)
-        if not file_data:
-            raise ValidationError('The uploaded file is empty.')
-
-        file_stream = BytesIO(file_data)
-
-        # Detect file format
-        try:
-            if file_data[:4] == b'PK\x03\x04':  # .xlsx
-                workbook = openpyxl.load_workbook(file_stream)
-                sheet = workbook.active
-                rows = sheet.iter_rows(min_row=2, values_only=True)
-            elif file_data[:4] == b'\xD0\xCF\x11\xE0':  # .xls
-                workbook = xlrd.open_workbook(file_contents=file_data)
-                sheet = workbook.sheet_by_index(0)
-                rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
-            else:
-                raise ValidationError('Unsupported file format.')
-        except Exception as e:
-            raise ValidationError(f'The uploaded file is not a valid Excel file. Error: {str(e)}')
-
-        # Cache frequently used models
-        ValidDonation = self.env['valid.import.donation']
-        InvalidDonation = self.env['invalid.import.donation']
-
-        # Buffer for valid and invalid records
-        valid_vals_list = []
-        invalid_vals_list = []
-
-        # Header mapping
-        header_list = [(h.header_type_id.name, h.position) for h in self.gateway_config_id.gateway_config_header_ids]
-        header_map = {name: pos for name, pos in header_list}
-        
-        # Debug: Print header mapping
-        print("Header Map:", header_map)
-
-        def get_value(row, name):
-            idx = header_map.get(name)
-            if idx is not None and idx < len(row):
-                value = row[idx]
-                # Convert to string and strip if it's not None
-                return str(value).strip() if value is not None else None
-            return None
-
-        for row_num, row in enumerate(rows, start=2):
-            try:
-                # Debug: Print row data
-                print(f"Row {row_num}:", row)
-                
-                # Shared fields
-                transaction_id = get_value(row, 'Transaction ID')
-                name = get_value(row, 'Name')
-                mobile = str(get_value(row, 'Cell Number') or '').strip()
-                cnic = get_value(row, 'CNIC No.')
-                email = get_value(row, 'Email')
-                date = get_value(row, 'Date')
-                amount = get_value(row, 'Amount')
-                product = get_value(row, 'Product')
-                reference = get_value(row, 'Reference')
-                course = get_value(row, 'Course')
-
-                # Debug: Print extracted values
-                print(f"Extracted - Name: {name}, Mobile: {mobile}, CNIC: {cnic}, Email: {email}")
+                transaction_id = get(row, 'Transaction ID')
+                name = get(row, 'Name')
+                mobile = str(get(row, 'Cell Number') or '').strip()
+                cnic = get(row, 'CNIC No.')
+                email = get(row, 'Email')
+                date = get(row, 'Date')
+                amount = get(row, 'Amount')
+                product = get(row, 'Product')
+                reference = get(row, 'Reference')
+                course = get(row, 'Course')
 
                 if not amount or float(amount) < 0:
                     continue
 
-                # Normalize mobile number
-                if mobile and mobile.lower() != 'none' and len(mobile) != 10:
+                if mobile and len(mobile) != 10:
                     mobile = mobile[-10:]
-                
-                # Convert mobile to string and ensure it's not 'None'
-                mobile = mobile if mobile and mobile.lower() != 'none' else ''
-                name = name if name and name.lower() != 'none' else ''
-                cnic = cnic if cnic and cnic.lower() != 'none' else ''
-                email = email if email and email.lower() != 'none' else ''
 
-                gateway_name = self.gateway_config_id.name or ''
-                is_student_import = gateway_name in ['SMIT', 'PIAIC']
-
-                # ===== Student (Donee) Imports =====
-                if is_student_import:
-                    if self.env['donation'].search_count([('transaction_id', '=', transaction_id), ('is_fee', '=', True)]):
-                        invalid_vals_list.append({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': course,
-                            'date': date,
-                            'amount': amount,
-                            'is_student': True,
-                            'reason': 'A Transaction with same ID already exists in the System.',
-                        })
+                if is_student:
+                    if self.env['donation'].search_count([
+                        ('transaction_id', '=', transaction_id),
+                        ('is_fee', '=', True)
+                    ]):
                         continue
 
-                    # Validate course
-                    course_id = self.env['product.product'].search([
-                        ('name', 'ilike', course),
-                        ('is_course', '=', True)
-                    ], limit=1)
-
-                    if not course_id:
-                        invalid_vals_list.append({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': course,
-                            'date': date,
-                            'amount': amount,
-                            'is_student': True,
-                            'reason': f'The specified course "{course}" does not exist in the System.',
-                        })
-                        continue
-
-                    if not name:
-                        invalid_vals_list.append({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': course,
-                            'date': date,
-                            'amount': amount,
-                            'is_student': True,
-                            'reason': 'Student Name is not defined.',
-                        })
-                        continue
-
-                    valid_vals_list.append({
+                    valid_vals.append({
                         'import_donation_id': self.id,
                         'transaction_id': transaction_id,
                         'donor_student_name': name,
@@ -277,47 +137,17 @@ class ImportDonation(models.Model):
                         'is_student': True,
                     })
 
-                # ===== Donor Imports =====
                 else:
                     if not product:
                         continue
 
-                    if self.env['donation'].search_count([('transaction_id', '=', transaction_id)]):
-                        invalid_vals_list.append({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': product,
-                            'date': date,
-                            'amount': amount,
-                            'reference': reference,
-                            'reason': 'A Transaction with same ID already exists in the System.',
-                        })  
+                    if self.env['donation'].search_count([
+                        ('transaction_id', '=', transaction_id),
+                        ('is_fee', '=', False)
+                    ]):
                         continue
 
-                    config_line = self.gateway_config_id.gateway_config_line_ids.filtered(lambda x: x.name == product)
-                    product_id = config_line.mapped('product_id')
-
-                    if not product_id:
-                        invalid_vals_list.append({
-                            'import_donation_id': self.id,
-                            'transaction_id': transaction_id,
-                            'donor_student_name': name,
-                            'mobile': mobile,
-                            'cnic_no': cnic,
-                            'email': email,
-                            'product': product,
-                            'date': date,
-                            'amount': amount,
-                            'reference': reference,
-                            'reason': f'The specified product "{product}" does not exist in the System.',
-                        })
-                        continue
-
-                    valid_vals_list.append({
+                    valid_vals.append({
                         'import_donation_id': self.id,
                         'transaction_id': transaction_id,
                         'donor_student_name': name,
@@ -328,193 +158,141 @@ class ImportDonation(models.Model):
                         'date': date,
                         'amount': amount,
                         'reference': reference,
+                        'is_student': False,
                     })
 
             except Exception as e:
-                InvalidDonation.create({
+                invalid_vals.append({
                     'import_donation_id': self.id,
-                    'reason': f'Unexpected error processing row {row_num}: {str(e)}'
+                    'reason': str(e)
                 })
 
-        # Debug: Print counts before creation
-        print(f"Valid records to create: {len(valid_vals_list)}")
-        print(f"Invalid records to create: {len(invalid_vals_list)}")
-        
-        InvalidDonation.create(invalid_vals_list)
-        ValidDonation.create(valid_vals_list)
+        self.env['invalid.import.donation'].create(invalid_vals)
+        self.env['valid.import.donation'].create(valid_vals)
 
         self.state = 'validated'
 
-    def action_register_donors(self):
+    # =========================================================
+    # UPLOAD (ONLY DONATION CREATION)
+    # =========================================================
+    def action_upload(self):
         if not self.valid_import_donation_ids:
-            raise ValidationError('No valid records to register donors for.')
-
-        Partner = self.env['res.partner']
-        Country = self.env['res.country'].search([('name', '=', 'Pakistan')], limit=1)
-        country_id = Country.id if Country else False
-
-        category_refs = {
-            'student':    self.env.ref('bn_profile_management.student_partner_category').id,
-            'donee':      self.env.ref('bn_profile_management.donee_partner_category').id,
-            'individual': self.env.ref('bn_profile_management.individual_partner_category').id,
-            'donor':      self.env.ref('bn_profile_management.donor_partner_category').id,
-        }
-
-        lines = self.valid_import_donation_ids
-
-        # Step 1: Collect unique mobiles
-        donor_mobiles = []
-        student_mobiles = []
-
-        for line in lines:
-            if line.mobile:
-                if line.is_student:
-                    if line.mobile not in student_mobiles:
-                        student_mobiles.append(line.mobile)
-                else:
-                    if line.mobile not in donor_mobiles:
-                        donor_mobiles.append(line.mobile)
-
-        # Step 2: Bulk search
-        existing_donors = Partner.search([
-            ('mobile', 'in', donor_mobiles),
-            ('category_id', 'in', [category_refs['donor']]),
-        ]) if donor_mobiles else Partner.browse()
-
-        existing_students = Partner.search([
-            ('mobile', 'in', student_mobiles),
-            ('category_id', 'in', [category_refs['donee']]),
-        ]) if student_mobiles else Partner.browse()
-
-        donor_by_mobile   = {p.mobile for p in existing_donors}
-        student_by_mobile = {p.mobile for p in existing_students}
-
-        # Step 3: Build creation list — skip existing and duplicates within import
-        partners_to_create = []
-        processed_mobiles  = set()
-
-        for line in lines:
-            if not line.mobile or line.mobile in processed_mobiles:
-                continue
-            processed_mobiles.add(line.mobile)
-
-            if line.is_student:
-                if line.mobile in student_by_mobile:
-                    continue
-                cats = [category_refs['donee'], category_refs['individual'], category_refs['student']]
-            else:
-                if line.mobile in donor_by_mobile:
-                    continue
-                cats = [category_refs['donor'], category_refs['individual']]
-
-            partners_to_create.append({
-                'name':            line.donor_student_name or f'Undefined {line.mobile}',
-                'country_code_id': country_id,
-                'mobile':          line.mobile,
-                'cnic_no':         line.cnic_no,
-                'email':           line.email,
-                'category_id':     [(6, 0, cats)],
-            })
-
-        # Step 4: Bulk create — draft by default, no action_register()
-        if partners_to_create:
-            Partner.create(partners_to_create)
-
-        self.state = 'done'
-
-    def action_upload_excel_file(self):
-        if not self.valid_import_donation_ids:
-            raise ValidationError('There are no Valid Lines in Excel File.')
-
-        journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
-        if not journal:
-            raise ValidationError("Bank journal not found.")
-
-        default_partner = self.env['res.partner'].search(
-            [('primary_registration_id', '=', '2025-9999998-9')], limit=1
-        )
+            raise ValidationError("No valid records.")
 
         Donation = self.env['donation']
-        Partner = self.env['res.partner']
-        StockPicking = self.env['stock.picking']
-        StockMove = self.env['stock.move']
 
-        credit_groups = {}
-        total_amount = 0.0
+        donation_vals = []
 
-        # =========================
-        # BULK BUFFERS
-        # =========================
-        donation_vals_list = []
-        stock_move_map = {}
-
-        picking = False
-
-        # =========================
-        # MAIN LOOP
-        # =========================
         for line in self.valid_import_donation_ids:
-
-            # Partner (optimize later with cache if needed)
-            partner = Partner.search([('mobile', '=', line.mobile)], limit=1) or default_partner
 
             config_line = self.gateway_config_id.gateway_config_line_ids.filtered(
                 lambda c: c.name == line.product
             )
 
-            if not config_line:
-                raise ValidationError(f"Missing configuration for: {line.product}")
+            product = config_line.product_id if config_line else False
 
-            product = config_line.product_id
-            product_id = product.id if product else False
-            account_id = product.property_account_income_id.id
+            donation_vals.append({
+                'import_donation_id': self.id,
+                'transaction_id': line.transaction_id,
+                'donor_id': False,  # NOT LINKED HERE
+                'product_id': product.id if product else False,
+                'date': line.date,
+                'amount': line.amount,
+                'reference': line.reference,
+                'gateway_config_id': self.gateway_config_id.id,
+                'is_fee': line.is_student,
+            })
 
-            # =========================
-            # STUDENT (FEE)
-            # =========================
-            if line.is_student:
-                course = self.env['product.product'].search([
-                    ('name', '=', line.product),
-                    ('is_course', '=', True)
-                ], limit=1)
+        Donation.create(donation_vals)
 
-                donation_vals_list.append({
-                    'transaction_id': line.transaction_id,
-                    'donor_id': partner.id,
-                    'journal_id': journal.id,
-                    'product_id': course.id,
-                    'date': line.date,
-                    'amount': line.amount,
-                    'reference': line.reference,
-                    'gateway_config_id': self.gateway_config_id.id,
-                    'is_fee': True
-                })
+        self.state = 'uploaded'
 
-            # =========================
-            # NORMAL DONATION
-            # =========================
+    # =========================================================
+    # SYNC PARTNER (ONLY PARTNER + LINKING)
+    # =========================================================
+    def action_sync_partner(self):
+        Partner = self.env['res.partner']
+        Donation = self.env['donation']
+
+        donation_map = {
+            d.transaction_id: d
+            for d in Donation.search([
+                ('transaction_id', 'in', self.valid_import_donation_ids.mapped('transaction_id'))
+            ])
+        }
+
+        partner_cache = {}
+
+        cats = self._get_category_refs()
+
+        for line in self.valid_import_donation_ids:
+
+            key = line.mobile
+
+            if key in partner_cache:
+                partner = partner_cache[key]
             else:
-                donation_vals_list.append({
-                    'transaction_id': line.transaction_id,
-                    'donor_id': partner.id,
-                    'journal_id': journal.id,
-                    'product_id': product_id,
-                    'date': line.date,
-                    'amount': line.amount,
-                    'reference': line.reference,
-                    'gateway_config_id': self.gateway_config_id.id,
-                })
+                partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
 
-            # =========================
-            # STOCK LOGIC
-            # =========================
-            if product and product.detailed_type == 'product':
+                if not partner:
+                    vals = {
+                        'name': line.donor_student_name or f"Undefined {line.mobile}",
+                        'mobile': line.mobile,
+                        'cnic_no': line.cnic_no,
+                        'email': line.email,
+                    }
 
-                stock_move_map.setdefault(product.id, {
-                    'product': product,
-                    'qty': 0.0
-                })
-                stock_move_map[product.id]['qty'] += 1.0
+                    vals['category_id'] = [(6, 0, [
+                        cats['donee'] if line.is_student else cats['donor'],
+                        cats['individual']
+                    ])]
+
+                    partner = Partner.create(vals)
+
+                partner_cache[key] = partner
+
+            donation = donation_map.get(line.transaction_id)
+            if donation:
+                donation.write({'donor_id': partner.id})
+
+        self.state = 'sync_donor'
+
+    # =========================================================
+    # CONFIRM (ACCOUNT + STOCK CREATION HERE)
+    # =========================================================
+    def action_confirm(self):
+        Donation = self.env['donation']
+        StockPicking = self.env['stock.picking']
+        StockMove = self.env['stock.move']
+
+        journal = self.env['account.journal'].search(
+            [('name', 'ilike', 'Bank')], limit=1
+        )
+
+        if not journal:
+            raise ValidationError("Bank journal not found.")
+
+        donations = Donation.search([
+            ('transaction_id', 'in', self.valid_import_donation_ids.mapped('transaction_id'))
+        ])
+
+        credit_groups = {}
+        total = 0.0
+
+        stock_map = {}
+        picking = False
+
+        for d in donations:
+
+            total += d.amount
+
+            acc = d.product_id.property_account_income_id.id if d.product_id else False
+            if acc:
+                credit_groups[acc] = credit_groups.get(acc, 0.0) + d.amount
+
+            if d.product_id and d.product_id.detailed_type == 'product':
+                stock_map.setdefault(d.product_id.id, {'product': d.product_id, 'qty': 0})
+                stock_map[d.product_id.id]['qty'] += 1
 
                 if not picking:
                     picking = StockPicking.create({
@@ -524,73 +302,61 @@ class ImportDonation(models.Model):
                         'origin': self.name,
                     })
 
-            # =========================
-            # ACCOUNTING GROUPING
-            # =========================
-            credit_groups[account_id] = credit_groups.get(account_id, 0.0) + line.amount
-            total_amount += line.amount
-
-        # =========================
-        # BULK CREATE DONATIONS
-        # =========================
-        donations = Donation.create(donation_vals_list)
-
-        # confirm all in batch
-        donations.action_confirm()
-
-        # =========================
-        # STOCK MOVES BULK CREATE
-        # =========================
+        # STOCK
         if picking:
-            stock_move_vals_list = []
-
-            for data in stock_move_map.values():
-                stock_move_vals_list.append({
-                    'name': data['product'].name,
-                    'product_id': data['product'].id,
-                    'product_uom_qty': data['qty'],
-                    'quantity': data['qty'],
-                    'product_uom': data['product'].uom_id.id,
+            StockMove.create([
+                {
+                    'name': v['product'].name,
+                    'product_id': v['product'].id,
+                    'product_uom_qty': v['qty'],
+                    'quantity': v['qty'],
+                    'product_uom': v['product'].uom_id.id,
                     'picking_id': picking.id,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.destination_location_id.id,
-                })
-
-            StockMove.create(stock_move_vals_list)
+                }
+                for v in stock_map.values()
+            ])
 
             picking.action_confirm()
             picking.action_assign()
             picking.button_validate()
 
-        # =========================
-        # JOURNAL ENTRY
-        # =========================
-        debit_line = (0, 0, {
+        # ACCOUNT MOVE
+        debit = (0, 0, {
             'account_id': self.gateway_config_id.account_id.id,
-            'name': f'Total Donations Received from {self.name}',
-            'debit': total_amount,
+            'name': f"Donations {self.name}",
+            'debit': total,
         })
 
-        credit_lines = [
+        credits = [
             (0, 0, {
-                'account_id': acc_id,
-                'name': 'Various Donations',
+                'account_id': acc,
+                'name': 'Donation',
                 'credit': amt,
             })
-            for acc_id, amt in credit_groups.items()
+            for acc, amt in credit_groups.items()
         ]
 
-        journal_entry = self.env['account.move'].sudo().create({
+        move = self.env['account.move'].create({
             'move_type': 'entry',
-            'ref': self.name,
-            'date': fields.Date.today(),
             'journal_id': journal.id,
-            'line_ids': [debit_line] + credit_lines,
+            'ref': self.name,
+            'line_ids': [debit] + credits,
         })
 
-        self.journal_entry_id = journal_entry.id
-        self.state = 'create_donor'
-
+        self.journal_entry_id = move.id
+        self.picking_id = picking.id if picking else False
+        self.state = 'confirmed'
+    
+    def action_show_donations(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'donation',
+            'view_mode': 'tree',
+            'domain': [('import_donation_id', '=', self.id)],
+        }
+    
     def action_show_journal_entry(self):
         return {
             'type': 'ir.actions.act_window',

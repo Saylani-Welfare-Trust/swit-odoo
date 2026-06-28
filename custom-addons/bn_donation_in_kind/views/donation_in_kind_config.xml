@@ -9,7 +9,6 @@
                 <field name="picking_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="debit_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </tree>
         </field>
     </record>
@@ -26,10 +25,16 @@
     </record>
 
     <menuitem
-        id="donaiton_in_kind_config_menu"
-        name="Donation In Kind Config."
-        action="donation_in_kind_config_action"
+        id="donaiton_in_kind_root_config_menu"
+        name="Donation In Kind"
         parent="bn_import_donation.donation_inflow_config_menu"
         sequence="2"/>
+    
+    <menuitem
+        id="donaiton_in_kind_config_menu"
+        name="Configuration"
+        action="donation_in_kind_config_action"
+        parent="donaiton_in_kind_root_config_menu"
+        sequence="0"/>
 
 </odoo>

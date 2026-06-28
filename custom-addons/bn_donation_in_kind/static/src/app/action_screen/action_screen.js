@@ -7,17 +7,12 @@ import {_t} from "@web/core/l10n/translation";
 
 
 patch(ActionScreen.prototype, {
-    get checkProduct() {
+    get hasDonationInKind() {
         const orderlines = this.pos.get_order().get_orderlines();
 
-        if (orderlines) {
-            if (orderlines.length >= 1) {
-                return true;
-            }
-
-        } else {
-            return false;
-        }
+        return orderlines.length > 0 && orderlines.every(line => {
+            return !!line.product.is_donation_in_kind;
+        });
     },
     
     async clickRecordDonationInKind() {
@@ -25,10 +20,17 @@ patch(ActionScreen.prototype, {
 
         const donor = order.partner ? order.partner : null;
 
-        if (!donor && this.checkProduct) {
+        if (!donor) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Error"),
                 body: "Please select a donor first..."
+            });
+        }
+
+        if (!this.hasDonationInKind) {
+            return this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: "Please select a valid product..."
             });
         }
 
@@ -56,9 +58,13 @@ patch(ActionScreen.prototype, {
                 });
 
                 this.cancel()
-                this.pos.removeOrder(order);
-                this.pos.add_new_order();
+
+                this.report.doAction("bn_donation_in_kind.action_report_donation_in_kind", [
+                    data.id,
+                ]);
             }
+            this.pos.removeOrder(order);
+            this.pos.add_new_order();
         })
     }
 });

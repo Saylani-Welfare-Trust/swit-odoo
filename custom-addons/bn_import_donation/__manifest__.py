@@ -6,12 +6,12 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Import Donation',
     'depends': [
+        'stock',
+        'product',
+        'base_accounting_kit',
         'bn_profile_management',
-        'bn_master_setup',
-        'product'
     ],
     'data': [
-        'data/server_action.xml',
         'data/sequence.xml',
         'data/schedule_action.xml',
         'data/ir_module_category.xml',
@@ -19,11 +19,14 @@
         'security/group.xml',
         'security/access_right.xml',
         'security/ir.model.access.csv',
+        
+        'reports/import_donation.xml',
+        'reports/api_donation.xml',
+
         'views/import_donation.xml',
         'views/donation.xml',
         'wizards/api_donaiton_wizard.xml',
         'views/api_donation.xml',
-        
         'views/fetch_history.xml',
         'views/fetch_log.xml',
         'views/res_partner.xml',
@@ -31,8 +34,6 @@
         'views/product_product.xml',
         'views/header_type.xml',
         'views/gateway_config.xml',
-        'reports/import_donation.xml',
-        'reports/api_donation.xml',
     ],
     'auto_install': False,
     'application': True,
