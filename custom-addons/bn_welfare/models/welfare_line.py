@@ -501,8 +501,13 @@ class WelfareLine(models.Model):
             # Mark as disbursed or collected based on payment type
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
             
-            if getattr(line, 'advance_donation_line_id', False):
-                line.advance_donation_line_id.write({'disbursed_amount': line.advance_donation_amount})
+            if getattr(line, 'advance_donation_line_id', False) and line.advance_donation_line_id:
+                donation_line = line.advance_donation_line_id
+                advance_donation = donation_line.advance_donation_id  # ← gets the parent advance.donation record
+
+                self.env['advance.donation.disbursement.line'].create({
+                    'advance_donation_id': advance_donation.id,  # ← links to that advance.donation record
+                })
             
             if line.welfare_id:
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
