@@ -424,7 +424,7 @@ class AdvanceDonation(models.Model):
             'context': self.env.context,
         }
 
-    def onchange_donation_slip_ids(self,amount):
+    def onchange_donation_slip_ids(self, amount):
         # Reset all donation lines to unpaid state
         for rec in self.advance_donation_lines:
             rec.paid_amount = 0
@@ -453,37 +453,34 @@ class AdvanceDonation(models.Model):
                     continue
 
                 if remaining_value <= 0:
-                    break  # Exit the loop if there's no remaining value to distribute
+                    break
 
-                # Skip if the line is already fully paid
                 if donation_line.paid_amount >= donation_line.amount:
                     continue
 
-                # Only continue if there's still remaining amount for both the donation slip and donation line
                 if donation_slip_remaining_amount <= 0:
-                    continue  # Skip if this donation slip has no remaining amount to use
+                    continue
 
-                # Determine how much can be paid from this donation slip
                 amount_to_pay = min(remaining_installment_amount, donation_slip_remaining_amount, remaining_value)
 
-                # Update the donation line's paid amount
                 donation_line.write({
                     'paid_amount': donation_line.paid_amount + amount_to_pay,
                     'remaining_amount': donation_line.remaining_amount - amount_to_pay
                 })
 
-                # Update remaining values
-                remaining_value -= amount_to_pay  # Deduct from the total remaining value
-                donation_slip_remaining_amount -= amount_to_pay  # Deduct from the slip's available balance
-                remaining_installment_amount -= amount_to_pay  # Deduct from the line's remaining balance
+                remaining_value -= amount_to_pay
+                donation_slip_remaining_amount -= amount_to_pay
+                remaining_installment_amount -= amount_to_pay
 
-                # Create a DonationSlipUsage record to track the used amount
                 self.env['advance.donation.slip.usage'].create({
                     'advance_donation_id': self.id,
                     'donation_slip_id': donation_slip.id,
                     'usage_amount': amount_to_pay,
                     'receipt_date': date.today()
                 })
+
+        # Create disbursement lines for fully paid lines
+        self.create_disbursement_lines()
 
     def write(self, vals):
         # Only handle donation_slip_ids changes, don't unlink usage lines for other field updates
@@ -564,7 +561,7 @@ class AdvanceDonation(models.Model):
         receipts = self.env['advance.donation.receipt'].browse(receipt_ids).sorted(lambda r: (r.date, r.id))
 
         remaining_to_allocate = amount
-        allocation_details = []          # list of (receipt, line, allocated_amount)
+        allocation_details = []
         used_receipt_ids = set()
 
         r_idx = 0
@@ -606,8 +603,7 @@ class AdvanceDonation(models.Model):
         if set(new_slips) != set(current_slips):
             self.write({'donation_slip_ids': [(6, 0, new_slips)]})
 
-        # --- GROUP ALLOCATIONS BY RECEIPT ---
-        # Create one usage record per receipt with the total allocated amount
+        # Group allocations by receipt
         alloc_by_receipt = {}
         for receipt, line, amount in allocation_details:
             if receipt.id not in alloc_by_receipt:
@@ -622,21 +618,23 @@ class AdvanceDonation(models.Model):
                 'donation_slip_id': receipt.id,
                 'usage_amount': total_alloc,
                 'receipt_date': fields.Date.today(),
-                'receipt_remaining_amount': receipt.remaining_amount,  # final remaining after all allocations
+                'receipt_remaining_amount': receipt.remaining_amount,
             })
 
-        # Update each line (the in‑memory values are already correct)
+        # Update each line
         for receipt, line, alloc_amount in allocation_details:
             line.write({
                 'paid_amount': line.paid_amount,
                 'remaining_amount': line.remaining_amount,
             })
 
-        # Force receipt fields to recompute (if they depend on a boolean trigger)
+        # Force receipt fields to recompute
         for rid in used_receipt_ids:
             receipt = self.env['advance.donation.receipt'].browse(rid)
             receipt.write({'update_used_amount': not receipt.update_used_amount})
 
+        # Create disbursement lines for fully paid lines
+        self.create_disbursement_lines()
 
     def action_open_payment_wizard(self):
         return {
@@ -649,3 +647,48 @@ class AdvanceDonation(models.Model):
                 'default_advance_donation_id': self.id,
         }
     }
+    def create_disbursement_lines(self):
+        """Create disbursement lines for fully paid donation lines"""
+        for donation in self:
+            # Get lines that are fully paid and not yet disbursed
+            lines_to_disburse = donation.advance_donation_lines.filtered(
+                lambda l: l.paid_amount >= l.amount and l.amount > 0 and not l.is_disbursed
+            )
+            
+            for line in lines_to_disburse:
+                # Check if disbursement line already exists
+                existing = self.env['advance.donation.disbursement.line'].search([
+                    ('advance_donation_line_id', '=', line.id),
+                    ('advance_donation_id', '=', donation.id)
+                ], limit=1)
+                
+                if not existing:
+                    # Create disbursement line
+                    disbursement_vals = {
+                        'advance_donation_id': donation.id,
+                        'advance_donation_line_id': line.id,
+                        'product_id': line.product_id.id,
+                        'date': fields.Date.today(),
+                        'total_amount': line.amount,
+                        'advance_amount': line.paid_amount,
+                        'disbursed_amount': line.paid_amount,
+                        'disbursed_record': donation.name,
+                    }
+                    
+                    # Add welfare reference if line has it
+                    if hasattr(line, 'welfare_id') and line.welfare_id:
+                        disbursement_vals['welfare_id'] = line.welfare_id.id
+                    if hasattr(line, 'welfare_line_id') and line.welfare_line_id:
+                        disbursement_vals['welfare_line_id'] = line.welfare_line_id.id
+                    if hasattr(line, 'microfinance_id') and line.microfinance_id:
+                        disbursement_vals['microfinance_id'] = line.microfinance_id.id
+                    
+                    self.env['advance.donation.disbursement.line'].create(disbursement_vals)
+                    
+                    # Update disbursed_amount on donation line
+                    line.write({
+                        'disbursed_amount': line.paid_amount
+                    })
+                    
+                    # Trigger recomputation of is_disbursed
+                    line._compute_disbursement_and_disbursed()

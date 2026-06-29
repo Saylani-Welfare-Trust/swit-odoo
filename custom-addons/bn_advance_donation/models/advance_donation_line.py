@@ -52,11 +52,16 @@ class AdvanceDonationLine(models.Model):
     @api.depends('disbursed_amount', 'paid_amount')
     def _compute_disbursement_and_disbursed(self):
         for rec in self:
-            is_disbursed = rec.disbursed_amount == rec.paid_amount and rec.paid_amount != 0
-            rec.is_disbursed = is_disbursed
-            if is_disbursed:
-                rec.disbursement_date = td.today()
+            # Check if there's a disbursement line for this donation line
+            disbursement_line = self.env['advance.donation.disbursement.line'].search([
+                ('advance_donation_line_id', '=', rec.id)
+            ], limit=1)
+            
+            if disbursement_line:
+                rec.is_disbursed = True
+                rec.disbursement_date = disbursement_line.date or fields.Date.today()
             else:
+                rec.is_disbursed = False
                 rec.disbursement_date = False
     
     @api.depends('advance_donation_id.contract_type')
