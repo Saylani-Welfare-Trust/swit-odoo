@@ -48,12 +48,7 @@ class AdvanceDonation(models.Model):
     total_product_amount = fields.Monetary('Total Amount', currency_field='currency_id')
     paid_amount = fields.Monetary('Paid Amount', compute='_compute_amount')
     remaining_amount = fields.Monetary('Remaining Amount', compute='_compute_amount')
-    total_disbursed_amount = fields.Monetary(
-        'Total Disbursed Amount',
-        currency_field='currency_id',
-        compute='_compute_disbursed_amount',
-        store=True
-    )
+
     # New fields for balance management
     total_balance = fields.Monetary('Total Balance', currency_field='currency_id', compute='_compute_total_balance', store=False)
     # manual_payment_amount = fields.Monetary('Manual Payment Amount', currency_field='currency_id', default=0 ,store=True)
@@ -679,7 +674,46 @@ class AdvanceDonation(models.Model):
             receipt = self.env['advance.donation.receipt'].browse(rid)
             receipt.write({'update_used_amount': not receipt.update_used_amount})
 
-        # Create disbursement lines
+        # REMOVE this line - don't auto-create disbursement
+        # self.create_disbursement_lines()
+
+        # Attach only used receipts (keep existing ones)
+        current_slips = self.donation_slip_ids.ids
+        new_slips = list(set(current_slips) | used_receipt_ids)
+        if set(new_slips) != set(current_slips):
+            self.write({'donation_slip_ids': [(6, 0, new_slips)]})
+
+        # Group allocations by receipt
+        alloc_by_receipt = {}
+        for receipt, line, amount in allocation_details:
+            if receipt.id not in alloc_by_receipt:
+                alloc_by_receipt[receipt.id] = {'receipt': receipt, 'total': 0}
+            alloc_by_receipt[receipt.id]['total'] += amount
+
+        for receipt_id, data in alloc_by_receipt.items():
+            receipt = data['receipt']
+            total_alloc = data['total']
+            self.env['advance.donation.slip.usage'].create({
+                'advance_donation_id': self.id,
+                'donation_slip_id': receipt.id,
+                'usage_amount': total_alloc,
+                'receipt_date': fields.Date.today(),
+                'receipt_remaining_amount': receipt.remaining_amount,
+            })
+
+        # Update each line
+        for receipt, line, alloc_amount in allocation_details:
+            line.write({
+                'paid_amount': line.paid_amount,
+                'remaining_amount': line.remaining_amount,
+            })
+
+        # Force receipt fields to recompute
+        for rid in used_receipt_ids:
+            receipt = self.env['advance.donation.receipt'].browse(rid)
+            receipt.write({'update_used_amount': not receipt.update_used_amount})
+
+        # Create disbursement lines for fully paid lines
         self.create_disbursement_lines()
 
     def action_open_payment_wizard(self):
@@ -693,11 +727,6 @@ class AdvanceDonation(models.Model):
                 'default_advance_donation_id': self.id,
         }
     }
-    @api.depends('disbursement_line_ids.disbursed_amount')
-    def _compute_disbursed_amount(self):
-        """Compute total disbursed amount from disbursement lines"""
-        for rec in self:
-            rec.total_disbursed_amount = sum(rec.disbursement_line_ids.mapped('disbursed_amount'))
     def create_disbursement_lines(self):
         """Create disbursement lines only when linked welfare/microfinance is disbursed"""
         for donation in self:
@@ -780,7 +809,7 @@ class AdvanceDonation(models.Model):
                     
                     line._compute_disbursement_and_disbursed()
             
-            # donation._compute_disbursed_amount()
+            donation._compute_disbursed_amount()
             
     def check_and_create_disbursement_from_record(self, record_type, record_ids):
         """
