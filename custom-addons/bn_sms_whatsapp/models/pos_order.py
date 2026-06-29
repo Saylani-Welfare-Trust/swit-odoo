@@ -36,58 +36,72 @@ class PosOrder(models.Model):
             
             sms_message = f"""Dear {order.partner_id.name},
 
-Thank you for your donation!
+    Thank you for your donation!
 
-Amount: {order.amount_total} PKR
-Items:
-{donation_items}
+    Amount: {order.amount_total} PKR
+    Items:
+    {donation_items}
 
-May Allah bless you!
+    May Allah bless you!
 
-- SWIT"""
+    - SWIT"""
 
             # -------------------------------
             # WhatsApp Flow
             # -------------------------------
             if order.partner_id.whatsapp:
 
-                # 1. Generate PDF
-                pdf_data = self._generate_pdf_from_report(order)
+                # ADD THESE CHECKS WITH DETAILED ERRORS
+                try:
+                    # 1. Generate PDF
+                    pdf_data = self._generate_pdf_from_report(order)
+                    
+                    if not pdf_data or not pdf_data.startswith(b'%PDF'):
+                        return {
+                            'status': 'error', 
+                            'message': f'PDF generation failed: {pdf_data[:100] if pdf_data else "No data"}'
+                        }
+                    
+                    # 2. Save attachment + get URL
+                    attachment, pdf_url = self._save_as_attachment(order, pdf_data)
+                    
+                    if not pdf_url:
+                        return {'status': 'error', 'message': 'Failed to get PDF URL'}
+                    
+                    _logger.info('PDF URL: %s', pdf_url)
 
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
+                    # 3. Send WhatsApp
+                    whatsapp_result = self.env['whatsapp.service'].send_template_message(
+                        order.partner_id.whatsapp,
+                        pdf_url,
+                        f"Receipt_{order.name}.pdf"
+                    )
+                    
+                    # ADD THIS - Check for service response
+                    if whatsapp_result and whatsapp_result.get('status') == 'error':
+                        return {
+                            'status': 'error', 
+                            'message': f'WhatsApp API error: {whatsapp_result.get("error", "Unknown error")}'
+                        }
+                    
+                    _logger.info('WhatsApp sent successfully')
+                    return {'status': 'success', 'message': 'WhatsApp sent'}
 
-                # 2. Save attachment + get URL
-                attachment, pdf_url = self._save_as_attachment(order, pdf_data)
-
-                _logger.info('PDF URL: %s', pdf_url)
-
-                # 3. Send WhatsApp
-                self.env['whatsapp.service'].send_template_message(
-                    order.partner_id.whatsapp,
-                    pdf_url,
-                    f"Receipt_{order.name}.pdf"
-                )
-
-                _logger.info('WhatsApp sent successfully')
+                except Exception as e:
+                    # CATCH THE EXACT ERROR AND RETURN IT
+                    error_msg = str(e)
+                    _logger.error('WhatsApp error: %s', error_msg)
+                    return {
+                        'status': 'error',
+                        'message': f'WhatsApp failed: {error_msg}'
+                    }
 
             else:
-                raise Exception("No WhatsApp number")
-
-            return {'status': 'success', 'message': 'WhatsApp sent'}
+                return {'status': 'error', 'message': 'No WhatsApp number for this customer'}
 
         except Exception as e:
-            _logger.error('WhatsApp failed: %s', str(e))
-
-            # -------------------------------
-            # SMS fallback
-            # -------------------------------
-            mobile = order.partner_id.mobile or order.partner_id.phone
-            if mobile:
-                self.env['sms.service'].send_sms(mobile, sms_message)
-                return {'status': 'success', 'message': 'SMS sent instead'}
-            else:
-                return {'status': 'error', 'message': 'No contact number'}
+            _logger.error('General error: %s', str(e))
+            return {'status': 'error', 'message': f'Error: {str(e)}'}
 
     # -----------------------------------
     # Generate PDF
