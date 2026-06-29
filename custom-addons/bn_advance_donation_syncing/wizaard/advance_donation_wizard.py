@@ -5,13 +5,18 @@ class AdvanceDonationWizard(models.TransientModel):
     _name = 'advance.donation.wizard'
     _description = 'Wizard to Select Advance Donation'
 
+        # Dynamic domain field
+    advance_donation_domain = fields.Char(
+        compute='_compute_advance_donation_domain',
+        store=False,
+    )
     advance_donation_id = fields.Many2one(
         'advance.donation', 
         string="Advance Donation",
         required=True,
         help="Select an advance donation to import its lines."
     )
-    
+
     product_id = fields.Many2one('product.product', string="Product", required=True)
     today_date = fields.Date(string="Today Date", default=fields.Date.today)
     
@@ -20,6 +25,17 @@ class AdvanceDonationWizard(models.TransientModel):
     recurring_line_id = fields.Many2one('welfare.recurring.line', string="Recurring Line")
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
 
+    @api.depends('product_id')
+    def _compute_advance_donation_domain(self):
+        for rec in self:
+            if rec.product_id:
+                # Find advance.donation records that have lines matching the product
+                matching_donations = self.env['advance.donation'].search([
+                    ('advance_donation_lines.product_id', '=', rec.product_id.id)
+                ])
+                rec.advance_donation_domain = str([('id', 'in', matching_donations.ids)])
+            else:
+                rec.advance_donation_domain = str([('id', 'in', [])])
     def action_show_lines(self):
         if not self.advance_donation_id or not self.product_id:
             raise UserError(_("Please select both Advance Donation and Product."))
@@ -93,7 +109,10 @@ class AdvanceDonationWizard(models.TransientModel):
 class AdvanceDonationLineSelectionWizard(models.TransientModel):
     _name = 'advance.donation.line.selection.wizard'
     _description = 'Wizard to Select Specific Donation Line'
-
+    advance_donation_domain = fields.Char(
+        compute='_compute_advance_donation_domain',
+        store=False,
+    )
     advance_donation_id = fields.Many2one('advance.donation', string="Advance Donation", required=True)
     product_id = fields.Many2one('product.product', string="Product", required=True)
     
@@ -109,6 +128,17 @@ class AdvanceDonationLineSelectionWizard(models.TransientModel):
     recurring_line_id = fields.Many2one('welfare.recurring.line', string="Recurring Line")
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     
+    @api.depends('product_id')
+    def _compute_advance_donation_domain(self):
+        for rec in self:
+            if rec.product_id:
+                # Find advance.donation records that have lines matching the product
+                matching_donations = self.env['advance.donation'].search([
+                    ('advance_donation_lines.product_id', '=', rec.product_id.id)
+                ])
+                rec.advance_donation_domain = str([('id', 'in', matching_donations.ids)])
+            else:
+                rec.advance_donation_domain = str([('id', 'in', [])])
     def action_confirm(self):
         """Confirm selected donation line"""
         selected_line = self.donation_line_ids.filtered(lambda l: l.is_selected)
