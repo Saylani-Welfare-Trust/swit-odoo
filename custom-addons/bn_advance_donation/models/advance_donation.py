@@ -430,12 +430,15 @@ class AdvanceDonation(models.Model):
             rec.paid_amount = 0
             rec.remaining_amount = rec.amount
 
+        # Use manual_payment_amount instead of total from all slips
         payment_to_distribute = amount
         remaining_value = payment_to_distribute
 
+        # If no manual payment amount is set, don't distribute anything
         if payment_to_distribute <= 0:
             return
 
+        # Sort donation slips by date for FIFO logic
         sorted_donation_slips = self.donation_slip_ids.sorted(lambda x: (x.date, x.id))
 
         for donation_slip in sorted_donation_slips:
@@ -476,8 +479,8 @@ class AdvanceDonation(models.Model):
                     'receipt_date': date.today()
                 })
 
-        # REMOVE this line - don't auto-create disbursement
-        # self.create_disbursement_lines()
+        # Create disbursement lines for fully paid lines
+        self.create_disbursement_lines()
 
     def write(self, vals):
         # Only handle donation_slip_ids changes, don't unlink usage lines for other field updates
@@ -544,56 +547,7 @@ class AdvanceDonation(models.Model):
     
     def action_print_non_cash_report(self):
         return self.env.ref('bn_advance_donation.action_report_advance_donation_non_cash').report_action(self)
-    def sync_donation_with_welfare(self, welfare_line_id, donation_line_id):
-        """Called from welfare when advance donation is selected"""
-        donation_line = self.env['advance.donation.lines'].browse(donation_line_id)
-        if donation_line:
-            donation_line.write({
-                'welfare_line_id': welfare_line_id,
-                'welfare_id': self.env['welfare.line'].browse(welfare_line_id).welfare_id.id if welfare_line_id else False
-            })  
-    def action_check_disbursement_status(self):
-        """Manually check and create disbursement lines for disbursed welfare/microfinance records"""
-        for donation in self:
-            created_count = 0
-            
-            # Check welfare lines
-            welfare_lines = donation.advance_donation_lines.mapped('welfare_line_id').filtered(lambda l: l)
-            if welfare_lines:
-                disbursed_welfare_lines = welfare_lines.filtered(
-                    lambda l: hasattr(l, 'state') and l.state in ['disbursed', 'done', 'completed']
-                )
-                if disbursed_welfare_lines:
-                    donation.check_and_create_disbursement_from_record(
-                        'welfare', 
-                        disbursed_welfare_lines.ids
-                    )
-                    created_count += len(disbursed_welfare_lines)
-            
-            # Check microfinance
-            microfinance_records = donation.advance_donation_lines.mapped('microfinance_id').filtered(lambda l: l)
-            if microfinance_records:
-                disbursed_microfinance = microfinance_records.filtered(
-                    lambda l: hasattr(l, 'state') and l.state in ['disbursed', 'done', 'completed']
-                )
-                if disbursed_microfinance:
-                    donation.check_and_create_disbursement_from_record(
-                        'microfinance',
-                        disbursed_microfinance.ids
-                    )
-                    created_count += len(disbursed_microfinance)
-            
-            if created_count > 0:
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Success',
-                        'message': f'Created {created_count} disbursement line(s)',
-                        'type': 'success',
-                        'sticky': False,
-                    }
-                }  
+    
     def allocate_payment(self, amount, receipt_ids):
         self.ensure_one()
         if amount <= 0:
@@ -633,6 +587,7 @@ class AdvanceDonation(models.Model):
                 used_receipt_ids.add(receipt.id)
                 remaining_to_allocate -= allocate
 
+                # In‑memory updates for loop progression
                 receipt.remaining_amount -= allocate
                 line.remaining_amount -= allocate
                 line.paid_amount += allocate
@@ -641,41 +596,6 @@ class AdvanceDonation(models.Model):
                 r_idx += 1
             if line.remaining_amount == 0:
                 l_idx += 1
-
-        current_slips = self.donation_slip_ids.ids
-        new_slips = list(set(current_slips) | used_receipt_ids)
-        if set(new_slips) != set(current_slips):
-            self.write({'donation_slip_ids': [(6, 0, new_slips)]})
-
-        alloc_by_receipt = {}
-        for receipt, line, amount in allocation_details:
-            if receipt.id not in alloc_by_receipt:
-                alloc_by_receipt[receipt.id] = {'receipt': receipt, 'total': 0}
-            alloc_by_receipt[receipt.id]['total'] += amount
-
-        for receipt_id, data in alloc_by_receipt.items():
-            receipt = data['receipt']
-            total_alloc = data['total']
-            self.env['advance.donation.slip.usage'].create({
-                'advance_donation_id': self.id,
-                'donation_slip_id': receipt.id,
-                'usage_amount': total_alloc,
-                'receipt_date': fields.Date.today(),
-                'receipt_remaining_amount': receipt.remaining_amount,
-            })
-
-        for receipt, line, alloc_amount in allocation_details:
-            line.write({
-                'paid_amount': line.paid_amount,
-                'remaining_amount': line.remaining_amount,
-            })
-
-        for rid in used_receipt_ids:
-            receipt = self.env['advance.donation.receipt'].browse(rid)
-            receipt.write({'update_used_amount': not receipt.update_used_amount})
-
-        # REMOVE this line - don't auto-create disbursement
-        # self.create_disbursement_lines()
 
         # Attach only used receipts (keep existing ones)
         current_slips = self.donation_slip_ids.ids
@@ -728,7 +648,7 @@ class AdvanceDonation(models.Model):
         }
     }
     def create_disbursement_lines(self):
-        """Create disbursement lines only when linked welfare/microfinance is disbursed"""
+        """Create disbursement lines for fully paid donation lines"""
         for donation in self:
             # Get lines that are fully paid and not yet disbursed
             lines_to_disburse = donation.advance_donation_lines.filtered(
@@ -736,42 +656,6 @@ class AdvanceDonation(models.Model):
             )
             
             for line in lines_to_disburse:
-                # Check if this line is linked to a welfare or microfinance record
-                has_welfare = hasattr(line, 'welfare_line_id') and line.welfare_line_id
-                has_microfinance = hasattr(line, 'microfinance_id') and line.microfinance_id
-                
-                # If linked to welfare, check if welfare line is disbursed
-                if has_welfare:
-                    is_record_disbursed = False
-                    if hasattr(line.welfare_line_id, 'state'):
-                        is_record_disbursed = line.welfare_line_id.state in ['disbursed', 'done', 'completed']
-                    elif hasattr(line.welfare_line_id, 'is_disbursed'):
-                        is_record_disbursed = line.welfare_line_id.is_disbursed
-                    elif hasattr(line.welfare_line_id, 'disbursed_date'):
-                        is_record_disbursed = bool(line.welfare_line_id.disbursed_date)
-                    
-                    # Only create if welfare line is disbursed
-                    if not is_record_disbursed:
-                        continue
-                        
-                # If linked to microfinance, check if microfinance is disbursed
-                elif has_microfinance:
-                    is_record_disbursed = False
-                    if hasattr(line.microfinance_id, 'state'):
-                        is_record_disbursed = line.microfinance_id.state in ['disbursed', 'done', 'completed']
-                    elif hasattr(line.microfinance_id, 'is_disbursed'):
-                        is_record_disbursed = line.microfinance_id.is_disbursed
-                    elif hasattr(line.microfinance_id, 'disbursed_date'):
-                        is_record_disbursed = bool(line.microfinance_id.disbursed_date)
-                    
-                    # Only create if microfinance is disbursed
-                    if not is_record_disbursed:
-                        continue
-                
-                # If no welfare or microfinance linked, don't create disbursement
-                if not has_welfare and not has_microfinance:
-                    continue
-                
                 # Check if disbursement line already exists
                 existing = self.env['advance.donation.disbursement.line'].search([
                     ('advance_donation_line_id', '=', line.id),
@@ -791,82 +675,20 @@ class AdvanceDonation(models.Model):
                         'disbursed_record': donation.name,
                     }
                     
-                    # Add welfare/microfinance references
-                    if has_welfare:
-                        disbursement_vals['welfare_id'] = line.welfare_line_id.welfare_id.id if hasattr(line.welfare_line_id, 'welfare_id') else False
+                    # Add welfare reference if line has it
+                    if hasattr(line, 'welfare_id') and line.welfare_id:
+                        disbursement_vals['welfare_id'] = line.welfare_id.id
+                    if hasattr(line, 'welfare_line_id') and line.welfare_line_id:
                         disbursement_vals['welfare_line_id'] = line.welfare_line_id.id
-                        disbursement_vals['disbursed_record'] = f"Welfare Line: {line.welfare_line_id.name or line.welfare_line_id.id}"
-                        
-                    if has_microfinance:
+                    if hasattr(line, 'microfinance_id') and line.microfinance_id:
                         disbursement_vals['microfinance_id'] = line.microfinance_id.id
-                        disbursement_vals['disbursed_record'] = f"Microfinance: {line.microfinance_id.name or line.microfinance_id.id}"
                     
                     self.env['advance.donation.disbursement.line'].create(disbursement_vals)
                     
+                    # Update disbursed_amount on donation line
                     line.write({
                         'disbursed_amount': line.paid_amount
                     })
                     
+                    # Trigger recomputation of is_disbursed
                     line._compute_disbursement_and_disbursed()
-            
-            donation._compute_disbursed_amount()
-            
-    def check_and_create_disbursement_from_record(self, record_type, record_ids):
-        """
-        Check and create disbursement lines when welfare/microfinance records are disbursed
-        record_type: 'welfare' or 'microfinance'
-        record_ids: list of record IDs
-        """
-        if record_type == 'welfare':
-            donation_lines = self.env['advance.donation.lines'].search([
-                ('welfare_line_id', 'in', record_ids),
-                ('paid_amount', '>=', 'amount'),  # Fully paid
-                ('is_disbursed', '=', False)
-            ])
-        elif record_type == 'microfinance':
-            donation_lines = self.env['advance.donation.lines'].search([
-                ('microfinance_id', 'in', record_ids),
-                ('paid_amount', '>=', 'amount'),  # Fully paid
-                ('is_disbursed', '=', False)
-            ])
-        else:
-            return
-        
-        for line in donation_lines:
-            # Create disbursement line
-            donation = line.advance_donation_id
-            if donation:
-                # Check if disbursement line already exists
-                existing = self.env['advance.donation.disbursement.line'].search([
-                    ('advance_donation_line_id', '=', line.id),
-                    ('advance_donation_id', '=', donation.id)
-                ], limit=1)
-                
-                if not existing:
-                    disbursement_vals = {
-                        'advance_donation_id': donation.id,
-                        'advance_donation_line_id': line.id,
-                        'product_id': line.product_id.id,
-                        'date': fields.Date.today(),
-                        'total_amount': line.amount,
-                        'advance_amount': line.paid_amount,
-                        'disbursed_amount': line.paid_amount,
-                    }
-                    
-                    if record_type == 'welfare' and line.welfare_line_id:
-                        disbursement_vals['welfare_id'] = line.welfare_line_id.welfare_id.id if hasattr(line.welfare_line_id, 'welfare_id') else False
-                        disbursement_vals['welfare_line_id'] = line.welfare_line_id.id
-                        disbursement_vals['disbursed_record'] = f"Welfare Line: {line.welfare_line_id.name or line.welfare_line_id.id}"
-                    
-                    if record_type == 'microfinance' and line.microfinance_id:
-                        disbursement_vals['microfinance_id'] = line.microfinance_id.id
-                        disbursement_vals['disbursed_record'] = f"Microfinance: {line.microfinance_id.name or line.microfinance_id.id}"
-                    
-                    self.env['advance.donation.disbursement.line'].create(disbursement_vals)
-                    
-                    line.write({
-                        'disbursed_amount': line.paid_amount
-                    })
-                    
-                    line._compute_disbursement_and_disbursed()
-                    donation._compute_disbursed_amount()
