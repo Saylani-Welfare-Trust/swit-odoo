@@ -235,7 +235,12 @@ class Welfare(models.Model):
         ('hod', 'HOD Approval Required'),
         ('member', 'Member Approval Required')
     ], string="Required Approval Based on Amount", compute="_compute_required_approval", store=False)
-
+    previous_welfare_source_id = fields.Many2one(
+        'welfare', 
+        string="Previous Welfare Source",
+        help="Used internally to copy document images on save",
+        store=True  # Must be stored so it survives the create()
+    )
 
     # Employee Informaiton Fields
     designation = fields.Char('Designation') 
@@ -533,27 +538,23 @@ class Welfare(models.Model):
             else:
                 rec.previous_disbursement_id = False
 
-
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
         if not self.donee_id:
             return
 
-        # Build domain for previous welfare records
         domain = [
             ('donee_id', '=', self.donee_id.id),
             ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
         ]
         
-        # Exclude current record only if it is already saved (has a real integer ID)
         if self.id and isinstance(self.id, int) and self.id > 0:
             domain.append(('id', '!=', self.id))
         
         previous_welfare = self.search(domain, order='date desc', limit=1)
 
         if previous_welfare:
-            # Auto-populate all fields (same as your original code)
             self.applicant_occupation = previous_welfare.applicant_occupation
             self.residence_ownership = previous_welfare.residence_ownership
             self.total_children = previous_welfare.total_children
@@ -561,8 +562,6 @@ class Welfare(models.Model):
             self.girls_count = previous_welfare.girls_count
             self.children_education_status = previous_welfare.children_education_status
             self.main_issue = previous_welfare.main_issue
-            
-            # Auto-populate residence/house info
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -573,8 +572,6 @@ class Welfare(models.Model):
             self.gas_bill = previous_welfare.gas_bill
             self.electricity_bill = previous_welfare.electricity_bill
             self.home_other_info = previous_welfare.home_other_info
-                    
-            # Auto-populate financial info
             self.monthly_income = previous_welfare.monthly_income
             self.outstanding_amount = previous_welfare.outstanding_amount
             self.monthly_household_expense = previous_welfare.monthly_household_expense
@@ -583,16 +580,15 @@ class Welfare(models.Model):
             self.account_no = previous_welfare.account_no
             self.other_loan = previous_welfare.other_loan
             self.institute_name = previous_welfare.institute_name
-            
-            # Auto-populate employment info
             self.designation = previous_welfare.designation
             self.company_name = previous_welfare.company_name
             self.company_phone = previous_welfare.company_phone
             self.company_address = previous_welfare.company_address
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
-            
-            # Auto-populate URL fields
+            self.dependent_person = previous_welfare.dependent_person
+            self.household_member = previous_welfare.household_member
+
             if previous_welfare.application_form_urls:
                 self.application_form_urls = previous_welfare.application_form_urls
             if previous_welfare.frc_urls:
@@ -603,18 +599,13 @@ class Welfare(models.Model):
                 self.gas_bill_urls = previous_welfare.gas_bill_urls
             if previous_welfare.family_cnic_urls:
                 self.family_cnic_urls = previous_welfare.family_cnic_urls
-                
-            # Auto-populate family info
-            self.dependent_person = previous_welfare.dependent_person
-            self.household_member = previous_welfare.household_member
-            
-            # Store the previous welfare ID in context for image copying on save
-            self = self.with_context(previous_welfare_id=previous_welfare.id)
-            
-            # Show notification about auto-population
+
+            # ✅ This is the only change — replaces the broken self.with_context() line
+            self.previous_welfare_source_id = previous_welfare.id
+
             return {
                 'warning': {
-                    'title': 'Data Auto-Populated', 
+                    'title': 'Data Auto-Populated',
                     'message': (
                         f'Form has been automatically populated with data from previous application '
                         f'dated {previous_welfare.date}.\n\n'
@@ -718,16 +709,14 @@ class Welfare(models.Model):
     @api.model
     def create(self, vals):
         if not vals.get('name') or vals.get('name') == 'New':
-            # Use sudo() to bypass company restrictions
             seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
-            if seq:
-                vals['name'] = seq
-            else:
-                vals['name'] = _('New')
+            vals['name'] = seq if seq else _('New')
 
         record = super().create(vals)
-        # Copy document images from previous welfare if set in context
-        previous_welfare_id = self.env.context.get('previous_welfare_id')
+
+        # ✅ Read from the stored field, not from lost context
+        previous_welfare_id = record.previous_welfare_source_id.id
+
         if previous_welfare_id:
             previous_welfare = self.browse(previous_welfare_id)
             for img in previous_welfare.document_image_ids:
@@ -738,6 +727,9 @@ class Welfare(models.Model):
                     'image_filename': img.image_filename,
                     'source_url':     img.source_url,
                 })
+            
+            # ✅ Clear the helper field after copying so it doesn't linger
+            record.previous_welfare_source_id = False
 
         return record
     
