@@ -48,7 +48,7 @@ class AdvanceDonation(models.Model):
     total_product_amount = fields.Monetary('Total Amount', currency_field='currency_id')
     paid_amount = fields.Monetary('Paid Amount', compute='_compute_amount')
     remaining_amount = fields.Monetary('Remaining Amount', compute='_compute_amount')
-    
+
     # New fields for balance management
     total_balance = fields.Monetary('Total Balance', currency_field='currency_id', compute='_compute_total_balance', store=False)
     # manual_payment_amount = fields.Monetary('Manual Payment Amount', currency_field='currency_id', default=0 ,store=True)
