@@ -497,21 +497,35 @@ class WelfareLine(models.Model):
                     "This welfare line cannot be paid again. "
                     "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
-        
-            # Mark as disbursed or collected based on payment type
+
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
-            
+
             if getattr(line, 'advance_donation_line_id', False) and line.advance_donation_line_id:
                 donation_line = line.advance_donation_line_id
-                advance_donation = donation_line.advance_donation_id  # ← gets the parent advance.donation record
+                advance_donation = donation_line.advance_donation_id
+                amount_to_disburse = line.advance_donation_amount
 
+                # Update disbursed_amount so is_disbursed becomes True
+                donation_line.write({'disbursed_amount': amount_to_disburse})
+                donation_line._compute_disbursement_and_disbursed()
+
+                # Create disbursement line with all fields populated
                 self.env['advance.donation.disbursement.line'].create({
-                    'advance_donation_id': advance_donation.id,  # ← links to that advance.donation record
+                    'advance_donation_id': advance_donation.id,
+                    'advance_donation_line_id': donation_line.id,
+                    'product_id': donation_line.product_id.id if donation_line.product_id else False,
+                    'date': fields.Date.today(),
+                    'total_amount': line.total_amount,
+                    'advance_amount': amount_to_disburse,
+                    'disbursed_amount': amount_to_disburse,
+                    'welfare_id': line.welfare_id.id if line.welfare_id else False,
+                    'welfare_line_id': line.id,
+                    'disbursed_record': line.welfare_id.name if line.welfare_id else '',
                 })
-            
+
             if line.welfare_id:
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
-        
+
         return True
                             
     def action_delivered(self):

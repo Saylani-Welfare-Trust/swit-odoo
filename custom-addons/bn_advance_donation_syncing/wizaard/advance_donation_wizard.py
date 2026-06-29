@@ -21,81 +21,72 @@ class AdvanceDonationWizard(models.TransientModel):
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
 
     def action_show_lines(self):
-        """Automatically select and confirm the first available donation line"""
-
         if not self.advance_donation_id or not self.product_id:
             raise UserError(_("Please select both Advance Donation and Product."))
-        
-        # Get filtered lines
+
         donation_lines = self.advance_donation_id.advance_donation_lines.filtered(
             lambda l: l.product_id.id == self.product_id.id
         )
-        
+
         if not donation_lines:
             raise UserError(_("No donation lines found for this product."))
-        
-        # Find first non-reserved line
+
         available_line = donation_lines.filtered(lambda l: not l.is_reserved)
         if not available_line:
             raise UserError(_("All donation lines for this product are already reserved."))
-        
-        available_line = available_line[0]  # Take the first available line
-        
-        
+
+        available_line = available_line[0]
+
         if self.welfare_line_id:
             target_model = self.welfare_line_id
             limit_amount = target_model.total_amount
-
         elif self.recurring_line_id:
             target_model = self.recurring_line_id
-            limit_amount = target_model.amount 
-
+            limit_amount = target_model.amount
         elif self.microfinance_id:
             target_model = self.microfinance_id
             limit_amount = target_model.total_amount
-
         else:
             raise UserError(_("No target record found to link the donation."))
 
         if target_model.advance_donation_id and target_model.advance_donation_id.id == self.advance_donation_id.id:
             raise UserError(_("This Advance Donation is already linked to this record."))
-       
-        if not available_line.paid_amount > limit_amount:
-        
-            # Prepare values to write
-            vals = {
-                'advance_donation_id': self.advance_donation_id.id,
-                'advance_donation_line_id': available_line.id,
-                'advance_donation_amount': available_line.paid_amount
-            }
+
+        # Use available_line.amount instead of paid_amount
+        # paid_amount is 0 before payment allocation
+        # amount is the actual installment value
+        line_amount = available_line.amount
+
+        if self.advance_donation_id.contract_type == 'open_contract':
+            # For open contract use limit_amount (welfare total)
+            donation_amount_to_use = limit_amount
         else:
-            vals = {
-                'advance_donation_id': self.advance_donation_id.id,
-                'advance_donation_line_id': available_line.id,
-                'advance_donation_amount': limit_amount
-            }
-        
+            # For other contracts use the line amount
+            # Cap at limit_amount if line amount exceeds it
+            donation_amount_to_use = min(line_amount, limit_amount)
+
+        vals = {
+            'advance_donation_id': self.advance_donation_id.id,
+            'advance_donation_line_id': available_line.id,
+            'advance_donation_amount': donation_amount_to_use,  # ← fixed
+        }
+
         # Apply deduction only if recurring_line_id exists
         if self.recurring_line_id:
             current_amount = target_model.amount or 0.0
-            if not self.advance_donation_id.contract_type == 'open_contract':
+            vals['amount'] = current_amount - donation_amount_to_use
 
-                vals['amount'] = current_amount - available_line.paid_amount
-            else:
-                vals['amount'] = current_amount - limit_amount
-
-        
-        # Update the target record
         target_model.write(vals)
-        if not self.advance_donation_id.contract_type == 'open_contract':
-            # Mark original line as reserved
+
+        if self.advance_donation_id.contract_type != 'open_contract':
             available_line.write({'is_reserved': True})
         else:
-            # For open contracts, we reserve the amount instead of the line
-            if available_line.reserved_amount + limit_amount > available_line.paid_amount:
+            if available_line.reserved_amount + donation_amount_to_use > available_line.amount:
                 raise UserError(_("Not enough available amount in the selected donation line."))
-            available_line.write({'reserved_amount': available_line.reserved_amount + limit_amount})      
-        # Close wizard
+            available_line.write({
+                'reserved_amount': available_line.reserved_amount + donation_amount_to_use
+            })
+
         return {'type': 'ir.actions.act_window_close'}
 
 
