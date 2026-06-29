@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="bn_pos_order_inherit_donee_name" inherit_id="bn_pos_order.pos_whatsapp_donation_receipt_template">
+        <xpath expr="//div[@name='custom-donor']" position="after">
+            <div name="donee-name">
+                <strong>Donee Name:</strong> 
+                <t t-esc="order.donee_name or '-'"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>

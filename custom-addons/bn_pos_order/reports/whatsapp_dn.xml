@@ -67,10 +67,9 @@
                             </style>
 
                             <!-- ===== HEADER ===== -->
-                            <div class="header-wrapper">
-                                <img class="receipt-header-img"
-                                     src="/bn_pos_order/static/description/your_header_image.png"/>
-                            </div>                            
+                            <img t-if="order.env.company.dn_image"
+                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                                style="height: 100%; width: 100%;"/>                   
 
                             <div class="row mb-2">
                                 <div class="col-6">
@@ -199,6 +198,9 @@
                                     </div>
                                     <div><strong>Entered by: </strong> <t t-esc="order.user_id.employee_id.name"/></div>
                                 </div>
+                            </div>
+                            <div style="text-align: center; font-size: 12px;">
+                                © 2026–2027. All Rights Reserved. Saylani Welfare International Trust.
                             </div>
 
                             <div style="text-align: center; font-size: 12px;">

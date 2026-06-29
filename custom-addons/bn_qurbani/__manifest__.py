@@ -31,6 +31,7 @@
         'reports/donation_home_service_report.xml',
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
+        'reports/donation_receipt_whatsapp_dn.xml'
         'reports/direct_deposit_dn_report.xml',
         
         'views/product_template.xml',
