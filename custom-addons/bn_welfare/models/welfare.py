@@ -149,6 +149,7 @@ class Welfare(models.Model):
         domain=[('document_type', '=', 'family_cnic')]
     )
 
+
     
 
     app_form_ids = fields.One2many('welfare.document.image', 'welfare_id', 
