@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='address']" position="after">
-                <field name="analytical_product_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="product_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>
         </field>
     </record>

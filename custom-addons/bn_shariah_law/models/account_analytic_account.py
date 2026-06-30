@@ -6,4 +6,4 @@ class AnalyticAccount(models.Model):
 
 
 
-    analytical_product_ids = fields.Many2many('analytical.product.line', string="Products")
+    product_ids = fields.Many2many('analytical.product.line', string="Products")
