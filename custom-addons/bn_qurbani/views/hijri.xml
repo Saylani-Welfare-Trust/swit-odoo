@@ -18,22 +18,22 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <!-- Request Approval button - visible only in draft state and for creator -->
+                    <!-- Request Approval button - visible to all approvers -->
                     <button name="action_request_approval" string="Request Approval" type="object" 
                             class="btn-primary" 
-                            invisible="state != 'draft' or create_uid != uid"/>
+                            attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('state', '=', 'approved'), ('create_uid', '!=', uid)]}"/>
                     
-                    <!-- Approve button - only for approver group and pending state -->
+                    <!-- Approve button - only for approver group -->
                     <button name="action_approve" string="Approve" type="object" 
                             class="btn-success" 
-                            groups="bn_qurbani.group_hijri_approver"
-                            invisible="state != 'pending'"/>
+                            groups="hijri_approval.group_hijri_approver"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
                     
-                    <!-- Reject button - only for approver group and pending state -->
+                    <!-- Reject button - only for approver group -->
                     <button name="action_reject" string="Reject" type="object" 
                             class="btn-danger" 
-                            groups="bn_qurbani.group_hijri_approver"
-                            invisible="state != 'pending'"/>
+                            groups="hijri_approval.group_hijri_approver"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,pending,approved"/>
                 </header>
@@ -44,8 +44,8 @@
                         <field name="write_uid" readonly="1"/>
                         <field name="create_date" readonly="1"/>
                         <field name="write_date" readonly="1"/>
-                        <field name="approved_by" readonly="1" invisible="state != 'approved'"/>
-                        <field name="approval_date" readonly="1" invisible="state != 'approved'"/>
+                        <field name="approved_by" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')]}"/>
+                        <field name="approval_date" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')]}"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
