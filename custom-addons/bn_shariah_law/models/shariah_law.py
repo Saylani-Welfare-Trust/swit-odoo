@@ -62,18 +62,16 @@ class ShariahLaw(models.Model):
         """
 
         # Helper to add amounts to both aggregate and daily dictionaries
-        def add_amounts(analytic_id, restricted=0, unrestricted=0, purchase=0, expense=0):
+        def add_amounts(analytic_id, donation=0, purchase=0, expense=0):
             if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0, 'purchase': 0, 'expense': 0}
-            shariah_record[analytic_id]['inflow_restricted'] += restricted
-            shariah_record[analytic_id]['inflow_unrestricted'] += unrestricted
+                shariah_record[analytic_id] = {'donation_amount': 0, 'purchase': 0, 'expense': 0}
+            shariah_record[analytic_id]['donation_amount'] += donation
             shariah_record[analytic_id]['purchase'] += purchase
             shariah_record[analytic_id]['expense'] += expense
 
             if analytic_id not in daily_changes:
-                daily_changes[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0, 'purchase': 0, 'expense': 0}
-            daily_changes[analytic_id]['inflow_restricted'] += restricted
-            daily_changes[analytic_id]['inflow_unrestricted'] += unrestricted
+                daily_changes[analytic_id] = {'donation_amount': 0, 'purchase': 0, 'expense': 0}
+            daily_changes[analytic_id]['donation_amount'] += donation
             daily_changes[analytic_id]['purchase'] += purchase
             daily_changes[analytic_id]['expense'] += expense
 
@@ -84,20 +82,12 @@ class ShariahLaw(models.Model):
         pos_orders = self.env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', 'in', ['cfo_approval', 'paid'])])
         for order in pos_orders:
             for line in order.lines:
-                if not line.product_id:
+                if not line.product_id or line.product_id.name == self.company_id.medical_equipment_security_depsoit_product:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_id', '=', line.product_id.id)])
+                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [line.product_id.id])])
                 for a_line in analytical_lines:
-                    categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
-                    if not categ_name:
-                        continue
                     analytic_id = a_line.analytic_account_id.id
-                    restricted = unrestricted = 0.0
-                    if self.env.company.restricted_category and self.env.company.restricted_category.lower() in categ_name:
-                        restricted = line.price_subtotal_incl
-                    if self.env.company.unrestricted_category and self.env.company.unrestricted_category.lower() in categ_name:
-                        unrestricted = line.price_subtotal_incl
-                    add_amounts(analytic_id, restricted=restricted, unrestricted=unrestricted)
+                    add_amounts(analytic_id, donation=line.price_subtotal_incl)
             order.is_sync_shariah_law = True
 
         # 2. Donations (model 'donation')
@@ -105,18 +95,13 @@ class ShariahLaw(models.Model):
         for donation in donations:
             if not donation.product_id:
                 continue
-            analytical_lines = self.env['analytical.product.line'].search([('product_id', '=', donation.product_id.id)])
+            analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [donation.product_id.id])])
             for a_line in analytical_lines:
                 categ_name = donation.product_id.categ_id.complete_name.lower() if donation.product_id.categ_id else ''
                 if not categ_name:
                     continue
                 analytic_id = a_line.analytic_account_id.id
-                restricted = unrestricted = 0.0
-                if self.env.company.restricted_category and self.env.company.restricted_category.lower() in categ_name:
-                    restricted = donation.amount
-                if self.env.company.unrestricted_category and self.env.company.unrestricted_category.lower() in categ_name:
-                    unrestricted = donation.amount
-                add_amounts(analytic_id, restricted=restricted, unrestricted=unrestricted)
+                add_amounts(analytic_id, donation=donation.amount)
             donation.is_sync_shariah_law = True
 
         # 3. API Donations (model 'api.donation')
@@ -129,18 +114,11 @@ class ShariahLaw(models.Model):
                 found = self.env['gateway.config.line'].search([('name', '=', product_name)], limit=1)
                 if not found or not found.product_id:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_id', '=', found.product_id.id)])
+                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [found.product_id.id])])
                 for a_line in analytical_lines:
-                    categ_name = found.product_id.categ_id.complete_name.lower() if found.product_id.categ_id else ''
-                    if not categ_name:
-                        continue
                     analytic_id = a_line.analytic_account_id.id
-                    restricted = unrestricted = 0.0
-                    if self.env.company.restricted_category and self.env.company.restricted_category.lower() in categ_name:
-                        restricted = line.total
-                    if self.env.company.unrestricted_category and self.env.company.unrestricted_category.lower() in categ_name:
-                        unrestricted = line.total
-                    add_amounts(analytic_id, restricted=restricted, unrestricted=unrestricted)
+                    add_amounts(analytic_id, donation=line.total)
+                    
             api_don.is_sync_shariah_law = True
 
         # 4. Expenses (hr.expense)
@@ -148,11 +126,8 @@ class ShariahLaw(models.Model):
         for expense in expenses:
             if not expense.product_id:
                 continue
-            analytical_lines = self.env['analytical.product.line'].search([('product_id', '=', expense.product_id.id)])
+            analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [expense.product_id.id])])
             for a_line in analytical_lines:
-                categ_name = expense.product_id.categ_id.complete_name.lower() if expense.product_id.categ_id else ''
-                if not categ_name:
-                    continue
                 analytic_id = a_line.analytic_account_id.id
                 add_amounts(analytic_id, expense=expense.total_amount_currency)
             expense.is_sync_shariah_law = True
@@ -163,11 +138,8 @@ class ShariahLaw(models.Model):
             for line in purchase.order_line:
                 if not line.product_id:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_id', '=', line.product_id.id)])
+                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [line.product_id.id])])
                 for a_line in analytical_lines:
-                    categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
-                    if not categ_name:
-                        continue
                     analytic_id = a_line.analytic_account_id.id
                     add_amounts(analytic_id, purchase=line.price_subtotal)
             purchase.is_sync_shariah_law = True
