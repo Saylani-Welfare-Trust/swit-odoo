@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 from datetime import date
 from collections import defaultdict
 
@@ -257,6 +258,8 @@ class ShariahLaw(models.Model):
                 update_parent(account.parent_id, values)
 
         for analytic_id, values in shariah_record.items():
+
+            raise UserError(f"Debug: Analytic ID: {analytic_id}, Values: {values}")
 
             account = self.env['account.analytic.account'].browse(analytic_id)
 
