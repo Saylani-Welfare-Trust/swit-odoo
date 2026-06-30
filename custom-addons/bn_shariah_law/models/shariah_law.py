@@ -241,7 +241,7 @@ class ShariahLaw(models.Model):
 
             if record:
                 record.write({
-                    'donation_amount': record.donation_amount + values['donation_amount'],
+                    'donation_amount': record.donation_amount + values['donation'],
                     'purchase_amount': record.purchase_amount + values['purchase'],
                     'expense_amount': record.expense_amount + values['expense'],
                 })
@@ -249,7 +249,7 @@ class ShariahLaw(models.Model):
                 self.env['shariah.law'].create({
                     'parent_id': account.parent_id.id if account.parent_id else False,
                     'analytic_account_id': account.id,
-                    'donation_amount': values['donation_amount'],
+                    'donation_amount': values['donation'],
                     'purchase_amount': values['purchase'],
                     'expense_amount': values['expense'],
                 })
@@ -259,7 +259,7 @@ class ShariahLaw(models.Model):
 
         for analytic_id, values in shariah_record.items():
 
-            raise UserError(f"Debug: Analytic ID: {analytic_id}, Values: {values}")
+            # raise UserError(f"Debug: Analytic ID: {analytic_id}, Values: {values}")
 
             account = self.env['account.analytic.account'].browse(analytic_id)
 
