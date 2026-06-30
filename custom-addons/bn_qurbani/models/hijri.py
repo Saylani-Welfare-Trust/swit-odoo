@@ -28,8 +28,9 @@ class Hijri(models.Model):
     ]
 
     def action_request_approval(self):
-        """Request approval for the record"""
+        """Request approval for the record - Changes state to pending"""
         for record in self:
+            # Validate current state
             if record.state == 'approved':
                 raise UserError('This record is already approved!')
             if record.state == 'pending':
@@ -37,12 +38,20 @@ class Hijri(models.Model):
             if record.state == 'rejected':
                 raise UserError('Rejected records cannot be sent for approval. Please create a new one.')
             
+            # CHANGE STATE TO PENDING
             record.write({
                 'state': 'pending'
             })
             
             # Send notification to approvers
             self._notify_approvers()
+            
+            # Optional: Add a message to the chatter
+            record.message_post(
+                body=f"<b>Approval Requested</b><br/>"
+                     f"Record <b>{record.name}</b> has been submitted for approval by {self.env.user.name}.",
+                subject="Approval Requested"
+            )
 
     def action_approve(self):
         """Approve the record - Only for approver group"""
@@ -50,11 +59,19 @@ class Hijri(models.Model):
             if record.state != 'pending':
                 raise UserError('Only pending records can be approved!')
             
+            # CHANGE STATE TO APPROVED
             record.write({
                 'state': 'approved',
                 'approved_by': self.env.user.id,
                 'approval_date': fields.Datetime.now()
             })
+            
+            # Add message to chatter
+            record.message_post(
+                body=f"<b>Approved</b><br/>"
+                     f"Record <b>{record.name}</b> has been approved by {self.env.user.name}.",
+                subject="Approved"
+            )
 
     def action_reject(self):
         """Reject the record - Only for approver group"""
@@ -77,7 +94,7 @@ class Hijri(models.Model):
 
     def _notify_approvers(self):
         """Send notification to all users in approver group"""
-        approver_group = self.env.ref('hijri_approval.group_hijri_approver', raise_if_not_found=False)
+        approver_group = self.env.ref('bn_qurbani.group_hijri_approver', raise_if_not_found=False)
         
         if not approver_group:
             return
@@ -96,7 +113,8 @@ class Hijri(models.Model):
                     body=f"<b>Approval Required</b><br/>"
                          f"<b>Record:</b> {record.name}<br/>"
                          f"<b>Requested by:</b> {self.env.user.name}<br/>"
-                         f"<b>Date:</b> {fields.Datetime.now()}",
+                         f"<b>Date:</b> {fields.Datetime.now()}<br/><br/>"
+                         f"Please review and approve/reject this record.",
                     subject="Approval Required",
                     partner_ids=approvers.mapped('partner_id').ids
                 )
@@ -111,19 +129,13 @@ class Hijri(models.Model):
     def write(self, vals):
         """Override write to prevent editing approved records"""
         for record in self:
-            if record.state == 'approved' and vals.get('state') != 'rejected':
-                # Allow state changes but prevent field modifications
+            if record.state == 'approved':
+                # Only allow state changes for approved records
                 if any(field not in ['state', 'approved_by', 'approval_date', 'rejected_by', 'rejection_reason'] 
                        for field in vals.keys()):
                     raise UserError('Approved records cannot be modified!')
         return super(Hijri, self).write(vals)
 
-    @api.onchange('state')
-    def _onchange_state(self):
-        """Handle state changes"""
-        if self.state == 'approved':
-            self.approval_date = fields.Datetime.now()
-            
     def unlink(self):
         """Prevent deletion of approved records"""
         for record in self:
@@ -140,13 +152,14 @@ class HijriRejectWizard(models.TransientModel):
     rejection_reason = fields.Text(string='Rejection Reason', required=True)
 
     def action_confirm_reject(self):
-        """Confirm rejection with reason"""
+        """Confirm rejection with reason - Changes state to rejected"""
         if not self.hijri_id:
             raise UserError('No Hijri record found!')
         
         if self.hijri_id.state != 'pending':
             raise UserError('Only pending records can be rejected!')
         
+        # CHANGE STATE TO REJECTED
         self.hijri_id.write({
             'state': 'rejected',
             'rejected_by': self.env.user.id,

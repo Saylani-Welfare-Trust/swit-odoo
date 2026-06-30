@@ -5,9 +5,11 @@
         <field name="name">hijri.view.tree</field>
         <field name="model">hijri</field>
         <field name="arch" type="xml">
-            <tree editable="bottom" delete="0">
+            <tree editable="bottom" delete="state == 'approved'">
                 <field name="name" />
                 <field name="state" widget="badge"/>
+                <!-- Make name readonly when approved -->
+                <field name="name" readonly="state == 'approved'"/>
             </tree>
         </field>
     </record>
@@ -39,13 +41,15 @@
                 </header>
                 <sheet>
                     <group>
-                        <field name="name"/>
+                        <field name="name" readonly="state == 'approved'"/>
                         <field name="create_uid" readonly="1"/>
                         <field name="write_uid" readonly="1"/>
                         <field name="create_date" readonly="1"/>
                         <field name="write_date" readonly="1"/>
                         <field name="approved_by" readonly="1" invisible="state != 'approved'"/>
                         <field name="approval_date" readonly="1" invisible="state != 'approved'"/>
+                        <field name="rejected_by" readonly="1" invisible="state != 'rejected'"/>
+                        <field name="rejection_reason" readonly="1" invisible="state != 'rejected'"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
