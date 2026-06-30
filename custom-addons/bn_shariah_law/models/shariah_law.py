@@ -1,6 +1,6 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
 from datetime import date
+from collections import defaultdict
 
 class ShariahLaw(models.Model):
     _name = 'shariah.law'
@@ -53,150 +53,253 @@ class ShariahLaw(models.Model):
             'view_mode': 'form',
             'target': 'new',
         }
+    # -----------------------------------------------------------------
+    # MAIN SYNC METHOD
+    # -----------------------------------------------------------------
 
     @api.model
     def _sync_shariah_data(self):
-        """
-        Synchronize all un-synced transactions and update daily balances.
-        Called by the cron job daily.
-        """
 
-        # Helper to add amounts to both aggregate and daily dictionaries
-        def add_amounts(analytic_id, donation=0, purchase=0, expense=0):
-            if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'donation_amount': 0, 'purchase': 0, 'expense': 0}
-            shariah_record[analytic_id]['donation_amount'] += donation
+        shariah_record = defaultdict(lambda: {
+            'donation': 0.0,
+            'purchase': 0.0,
+            'expense': 0.0
+        })
+
+        daily_changes = defaultdict(lambda: {
+            'donation': 0.0,
+            'purchase': 0.0,
+            'expense': 0.0
+        })
+
+        # ============================================================
+        # Helper
+        # ============================================================
+
+        def add_amounts(analytic_id, donation=0.0, purchase=0.0, expense=0.0):
+            if not analytic_id:
+                return
+
+            shariah_record[analytic_id]['donation'] += donation
             shariah_record[analytic_id]['purchase'] += purchase
             shariah_record[analytic_id]['expense'] += expense
 
-            if analytic_id not in daily_changes:
-                daily_changes[analytic_id] = {'donation_amount': 0, 'purchase': 0, 'expense': 0}
-            daily_changes[analytic_id]['donation_amount'] += donation
+            daily_changes[analytic_id]['donation'] += donation
             daily_changes[analytic_id]['purchase'] += purchase
             daily_changes[analytic_id]['expense'] += expense
 
-        shariah_record = {}
-        daily_changes = {}
+        # ============================================================
+        # 1. POS ORDERS
+        # ============================================================
 
-        # 1. POS Orders
-        pos_orders = self.env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'done')])
+        pos_orders = self.env['pos.order'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'done')
+        ])
+
         for order in pos_orders:
             for line in order.lines:
-                if not line.product_id or line.product_id.name == self.env.company.medical_equipment_security_depsoit_product:
-                    continue
-                analytic_id = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])])
-                add_amounts(analytic_id.id, donation=line.price_subtotal_incl)
-            order.is_sync_shariah_law = True
 
-        # 2. Donations (model 'donation')
-        donations = self.env['donation'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'posted')])
-        for donation in donations:
-            if not donation.product_id:
-                continue
-            analytic_account_id = self.env['account.analytic.account'].search([('product_ids', 'in', [donation.product_id.id])])
-            add_amounts(analytic_account_id.id, donation=donation.amount)
-            donation.is_sync_shariah_law = True
-
-        # 3. API Donations (model 'api.donation')
-        api_donations = self.env['api.donation'].search([('is_sync_shariah_law', '=', False)])
-        for api_don in api_donations:
-            for line in api_don.donation_item_ids:
-                product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
-                if not product_name:
-                    continue
-                found = self.env['gateway.config.line'].search([('name', '=', product_name)], limit=1)
-                if not found or not found.product_id:
-                    continue
-                analytic_account_id = self.env['account.analytic.account'].search([('product_ids', 'in', [found.product_id.id])])
-                add_amounts(analytic_account_id.id, donation=line.total)
-                    
-            api_don.is_sync_shariah_law = True
-
-        # 4. Expenses (hr.expense)
-        expenses = self.env['hr.expense'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'done')])
-        for expense in expenses:
-            if not expense.product_id:
-                continue
-            analytic_account_id = self.env['account.analytic.account'].search([('product_ids', 'in', [expense.product_id.id])])
-            add_amounts(analytic_account_id.id, expense=expense.total_amount_currency)
-            expense.is_sync_shariah_law = True
-
-        # 5. Purchase Orders
-        purchases = self.env['purchase.order'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'purchase')])
-        for purchase in purchases:
-            for line in purchase.order_line:
                 if not line.product_id:
                     continue
-                analytic_account_id = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])])
-                add_amounts(analytic_account_id.id, purchase=line.price_subtotal)
+
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [line.product_id.id])
+                ], limit=1)
+
+                add_amounts(
+                    analytic.id,
+                    donation=line.price_subtotal_incl
+                )
+
+            order.is_sync_shariah_law = True
+
+        # ============================================================
+        # 2. DONATIONS
+        # ============================================================
+
+        donations = self.env['donation'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'posted')
+        ])
+
+        for donation in donations:
+
+            if not donation.product_id:
+                continue
+
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [donation.product_id.id])
+            ], limit=1)
+
+            add_amounts(
+                analytic.id,
+                donation=donation.amount
+            )
+
+            donation.is_sync_shariah_law = True
+
+        # ============================================================
+        # 3. API DONATIONS
+        # ============================================================
+
+        api_donations = self.env['api.donation'].search([
+            ('is_sync_shariah_law', '=', False)
+        ])
+
+        for api_don in api_donations:
+
+            for line in api_don.donation_item_ids:
+
+                product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
+
+                if not product_name:
+                    continue
+
+                found = self.env['gateway.config.line'].search([
+                    ('name', '=', product_name)
+                ], limit=1)
+
+                if not found or not found.product_id:
+                    continue
+
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [found.product_id.id])
+                ], limit=1)
+
+                add_amounts(
+                    analytic.id,
+                    donation=line.total
+                )
+
+            api_don.is_sync_shariah_law = True
+
+        # ============================================================
+        # 4. EXPENSES
+        # ============================================================
+
+        expenses = self.env['hr.expense'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'done')
+        ])
+
+        for expense in expenses:
+
+            if not expense.product_id:
+                continue
+
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [expense.product_id.id])
+            ], limit=1)
+
+            add_amounts(
+                analytic.id,
+                expense=expense.total_amount_currency
+            )
+
+            expense.is_sync_shariah_law = True
+
+        # ============================================================
+        # 5. PURCHASE ORDERS
+        # ============================================================
+
+        purchases = self.env['purchase.order'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'purchase')
+        ])
+
+        for purchase in purchases:
+
+            for line in purchase.order_line:
+
+                if not line.product_id:
+                    continue
+
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [line.product_id.id])
+                ], limit=1)
+
+                add_amounts(
+                    analytic.id,
+                    purchase=line.price_subtotal
+                )
+
             purchase.is_sync_shariah_law = True
 
-        # 6. Process unposted transfers
-        draft_transfers = self.env['shariah.transfer'].search([('state', '=', 'draft')])
-        for transfer in draft_transfers:
-            transfer.action_post()
+        # ============================================================
+        # 6. UPDATE CUMULATIVE (shariah.law)
+        # ============================================================
 
-        # ------------------------------------------------------------
-        # Update aggregate (shariah.law) – cumulative totals
-        # ------------------------------------------------------------
+        def update_parent(account, values):
+            if not account:
+                return
+
+            record = self.env['shariah.law'].search([
+                ('analytic_account_id', '=', account.id)
+            ], limit=1)
+
+            if record:
+                record.write({
+                    'donation_amount': record.donation_amount + values['donation'],
+                    'purchase_amount': record.purchase_amount + values['purchase'],
+                    'expense_amount': record.expense_amount + values['expense'],
+                })
+            else:
+                self.env['shariah.law'].create({
+                    'parent_id': account.parent_id.id if account.parent_id else False,
+                    'analytic_account_id': account.id,
+                    'donation_amount': values['donation'],
+                    'purchase_amount': values['purchase'],
+                    'expense_amount': values['expense'],
+                })
+
+            if account.parent_id:
+                update_parent(account.parent_id, values)
+
         for analytic_id, values in shariah_record.items():
-            analytic_account = self.env['account.analytic.account'].browse(analytic_id)
-            if not analytic_account.exists():
-                continue
 
-            def create_or_update_parent(account, amounts):
-                parent = account.parent_id
-                sh = self.env['shariah.law'].search([('analytic_account_id', '=', account.id)], limit=1)
-                if sh:
-                    sh.write({
-                        'donation_amount': sh.donation_amount + amounts.get('donation_amount', 0),
-                        'purchase_amount': sh.purchase_amount + amounts.get('purchase', 0),
-                        'expense_amount': sh.expense_amount + amounts.get('expense', 0),
-                    })
-                else:
-                    self.env['shariah.law'].create({
-                        'parent_id': parent.id if parent else False,
-                        'analytic_account_id': account.id,
-                        'donation_amount': amounts.get('donation_amount', 0),
-                        'purchase_amount': amounts.get('purchase', 0),
-                        'expense_amount': amounts.get('expense', 0),
-                    })
-                if parent:
-                    create_or_update_parent(parent, amounts)
+            account = self.env['account.analytic.account'].browse(analytic_id)
 
-            create_or_update_parent(analytic_account, values)
+            if account.exists():
+                update_parent(account, values)
 
-        # ------------------------------------------------------------
-        # Update daily balances (shariah.daily.balance)
-        # ------------------------------------------------------------
+        # ============================================================
+        # 7. UPDATE DAILY BALANCES
+        # ============================================================
+
         today = fields.Date.context_today(self)
-        for analytic_id, changes in daily_changes.items():
-            analytic_account = self.env['account.analytic.account'].browse(analytic_id)
-            if not analytic_account.exists():
-                continue
+
+        for analytic_id, values in daily_changes.items():
+
             daily = self.env['shariah.daily.balance'].search([
                 ('analytic_account_id', '=', analytic_id),
                 ('date', '=', today)
             ], limit=1)
+
             if daily:
                 daily.write({
-                    'inflow_restricted': daily.inflow_restricted + changes.get('inflow_restricted', 0),
-                    'inflow_unrestricted': daily.inflow_unrestricted + changes.get('inflow_unrestricted', 0),
-                    'purchase': daily.purchase + changes.get('purchase', 0),
-                    'expense': daily.expense + changes.get('expense', 0),
+                    'donation': daily.donation + values['donation'],
+                    'purchase': daily.purchase + values['purchase'],
+                    'expense': daily.expense + values['expense'],
                 })
             else:
                 self.env['shariah.daily.balance'].create({
                     'analytic_account_id': analytic_id,
                     'date': today,
-                    'inflow_restricted': changes.get('inflow_restricted', 0),
-                    'inflow_unrestricted': changes.get('inflow_unrestricted', 0),
-                    'purchase': changes.get('purchase', 0),
-                    'expense': changes.get('expense', 0),
+                    'donation': values['donation'],
+                    'purchase': values['purchase'],
+                    'expense': values['expense'],
                 })
 
-        # Recompute balances for all daily records of today
-        all_today = self.env['shariah.daily.balance'].search([('date', '=', today)])
-        all_today._compute_balances()
+        # ============================================================
+        # 8. FINAL RECALC (if method exists)
+        # ============================================================
+
+        all_today = self.env['shariah.daily.balance'].search([
+            ('date', '=', today)
+        ])
+
+        if hasattr(all_today, "_compute_balances"):
+            all_today._compute_balances()
 
         return True
