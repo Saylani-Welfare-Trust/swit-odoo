@@ -25,7 +25,6 @@ class TransferWizard(models.TransientModel):
             'amount': self.amount,
             'note': self.note,
         })
-        transfer.action_post()
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'shariah.transfer',
