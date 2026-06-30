@@ -49,8 +49,7 @@
                         <field name="closing_balance" readonly="1"/>
                     </group>
                     <group>
-                        <button name="action_transfer_to" type="object" string="Transfer To" class="btn-primary"/>
-                        <button name="action_transfer_from" type="object" string="Transfer From" class="btn-primary"/>
+                        <button name="action_transfer" type="object" string="Transfer" class="btn-primary"/>
                     </group>
                 </sheet>
             </form>
