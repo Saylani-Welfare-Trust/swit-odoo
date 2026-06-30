@@ -79,7 +79,7 @@ class ShariahLaw(models.Model):
         daily_changes = {}
 
         # 1. POS Orders
-        pos_orders = self.env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', 'in', ['cfo_approval', 'paid'])])
+        pos_orders = self.env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'done')])
         for order in pos_orders:
             for line in order.lines:
                 if not line.product_id or line.product_id.name == self.env.company.medical_equipment_security_depsoit_product:
