@@ -7,15 +7,92 @@
         <field name="arch" type="xml">
             <tree editable="bottom" delete="0">
                 <field name="name" />
+                <field name="state" widget="badge"/>
             </tree>
         </field>
     </record>
 
+    <record id="hijri_view_form" model="ir.ui.view">
+        <field name="name">hijri.view.form</field>
+        <field name="model">hijri</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- Request Approval button - visible to all approvers -->
+                    <button name="action_request_approval" string="Request Approval" type="object" 
+                            class="btn-primary" 
+                            attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('state', '=', 'approved'), ('create_uid', '!=', uid)]}"/>
+                    
+                    <!-- Approve button - only for approver group -->
+                    <button name="action_approve" string="Approve" type="object" 
+                            class="btn-success" 
+                            groups="hijri_approval.group_hijri_approver"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    
+                    <!-- Reject button - only for approver group -->
+                    <button name="action_reject" string="Reject" type="object" 
+                            class="btn-danger" 
+                            groups="hijri_approval.group_hijri_approver"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,pending,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="create_uid" readonly="1"/>
+                        <field name="write_uid" readonly="1"/>
+                        <field name="create_date" readonly="1"/>
+                        <field name="write_date" readonly="1"/>
+                        <field name="approved_by" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')]}"/>
+                        <field name="approval_date" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')]}"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rejection Wizard View -->
+    <record id="view_hijri_reject_wizard" model="ir.ui.view">
+        <field name="name">hijri.reject.wizard.form</field>
+        <field name="model">hijri.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="hijri_id" invisible="1"/>
+                    <field name="rejection_reason" placeholder="Please provide reason for rejection..." 
+                           nolabel="1" 
+                           style="width: 100%; min-height: 100px;"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject" string="Confirm Rejection" 
+                            type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for the rejection wizard -->
+    <record id="action_hijri_reject_wizard" model="ir.actions.act_window">
+        <field name="name">Rejection Reason</field>
+        <field name="res_model">hijri.reject.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_hijri"/>
+        <field name="binding_view_types">form</field>
+    </record>
 
     <record id="hijri_action" model="ir.actions.act_window">
         <field name="name">Hijri</field>
         <field name="res_model">hijri</field>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's create a new hijri....
