@@ -26,3 +26,5 @@ access_web_qurbani_distribution_center,access.web.qurbani.distribution.center,mo
 access_web_qurbani_slaughter_center,access.web.qurbani.slaughter.center,model_web_qurbani_slaughter_center,,1,1,1,1
 access_qurbani_city,access.qurbani.city,model_qurbani_city,,1,1,1,1
 access_update_qurbani_demand,access.update.qurbani.demand,model_update_qurbani_demand,,1,1,1,1
+access_hijri_user,hijri.user,model_hijri,,1,1,1,1
+access_hijri_approver,hijri.approver,model_hijri,group_hijri_approver,1,1,1,1
