@@ -121,6 +121,7 @@
         <field name="arch" type="xml">
             <form string="Transfer">
                 <header>
+                    <button name="action_member_post" string="Member Post" type="object" class="btn-primary" groups="bn_shariah_law.group_member_approval"/>
                     <button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -136,6 +137,7 @@
                             <field name="amount"/>
                             <field name="currency_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="member_posted"/>
                         </group>
                     </group>
                     <field name="note" nolabel="1" placeholder="Optional note"/>

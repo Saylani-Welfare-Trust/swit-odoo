@@ -119,113 +119,113 @@ class ShariahLaw(models.Model):
         # 2. DONATIONS
         # ============================================================
 
-        # donations = self.env['donation'].search([
-        #     ('is_sync_shariah_law', '=', False),
-        #     ('state', '=', 'posted')
-        # ])
+        donations = self.env['donation'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'posted')
+        ])
 
-        # for donation in donations:
+        for donation in donations:
 
-        #     if not donation.product_id:
-        #         continue
+            if not donation.product_id:
+                continue
 
-        #     analytic = self.env['account.analytic.account'].search([
-        #         ('product_ids', 'in', [donation.product_id.id])
-        #     ], limit=1)
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [donation.product_id.id])
+            ], limit=1)
 
-        #     add_amounts(
-        #         analytic.id,
-        #         donation=donation.amount
-        #     )
+            add_amounts(
+                analytic.id,
+                donation=donation.amount
+            )
 
-        #     donation.is_sync_shariah_law = True
+            donation.is_sync_shariah_law = True
 
         # ============================================================
         # 3. API DONATIONS
         # ============================================================
 
-        # api_donations = self.env['api.donation'].search([
-        #     ('is_sync_shariah_law', '=', False)
-        # ])
+        api_donations = self.env['api.donation'].search([
+            ('is_sync_shariah_law', '=', False)
+        ])
 
-        # for api_don in api_donations:
+        for api_don in api_donations:
 
-        #     for line in api_don.donation_item_ids:
+            for line in api_don.donation_item_ids:
 
-        #         product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
+                product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
 
-        #         if not product_name:
-        #             continue
+                if not product_name:
+                    continue
 
-        #         found = self.env['gateway.config.line'].search([
-        #             ('name', '=', product_name)
-        #         ], limit=1)
+                found = self.env['gateway.config.line'].search([
+                    ('name', '=', product_name)
+                ], limit=1)
 
-        #         if not found or not found.product_id:
-        #             continue
+                if not found or not found.product_id:
+                    continue
 
-        #         analytic = self.env['account.analytic.account'].search([
-        #             ('product_ids', 'in', [found.product_id.id])
-        #         ], limit=1)
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [found.product_id.id])
+                ], limit=1)
 
-        #         add_amounts(
-        #             analytic.id,
-        #             donation=line.total
-        #         )
+                add_amounts(
+                    analytic.id,
+                    donation=line.total
+                )
 
-        #     api_don.is_sync_shariah_law = True
+            api_don.is_sync_shariah_law = True
 
         # ============================================================
         # 4. EXPENSES
         # ============================================================
 
-        # expenses = self.env['hr.expense'].search([
-        #     ('is_sync_shariah_law', '=', False),
-        #     ('state', '=', 'done')
-        # ])
+        expenses = self.env['hr.expense'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'done')
+        ])
 
-        # for expense in expenses:
+        for expense in expenses:
 
-        #     if not expense.product_id:
-        #         continue
+            if not expense.product_id:
+                continue
 
-        #     analytic = self.env['account.analytic.account'].search([
-        #         ('product_ids', 'in', [expense.product_id.id])
-        #     ], limit=1)
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [expense.product_id.id])
+            ], limit=1)
 
-        #     add_amounts(
-        #         analytic.id,
-        #         expense=expense.total_amount_currency
-        #     )
+            add_amounts(
+                analytic.id,
+                expense=expense.total_amount_currency
+            )
 
-        #     expense.is_sync_shariah_law = True
+            expense.is_sync_shariah_law = True
 
         # ============================================================
         # 5. PURCHASE ORDERS
         # ============================================================
 
-        # purchases = self.env['purchase.order'].search([
-        #     ('is_sync_shariah_law', '=', False),
-        #     ('state', '=', 'purchase')
-        # ])
+        purchases = self.env['purchase.order'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'purchase')
+        ])
 
-        # for purchase in purchases:
+        for purchase in purchases:
 
-        #     for line in purchase.order_line:
+            for line in purchase.order_line:
 
-        #         if not line.product_id:
-        #             continue
+                if not line.product_id:
+                    continue
 
-        #         analytic = self.env['account.analytic.account'].search([
-        #             ('product_ids', 'in', [line.product_id.id])
-        #         ], limit=1)
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [line.product_id.id])
+                ], limit=1)
 
-        #         add_amounts(
-        #             analytic.id,
-        #             purchase=line.price_subtotal
-        #         )
+                add_amounts(
+                    analytic.id,
+                    purchase=line.price_subtotal
+                )
 
-        #     purchase.is_sync_shariah_law = True
+            purchase.is_sync_shariah_law = True
 
         # ============================================================
         # 6. UPDATE CUMULATIVE (shariah.law)

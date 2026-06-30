@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class ShariahTransfer(models.Model):
@@ -20,11 +21,16 @@ class ShariahTransfer(models.Model):
         ('posted', 'Posted'),
     ], string='Status', default='draft', tracking=True)
 
+    member_posted = fields.Boolean(string='Member Posted', default=False, tracking=True)
+
     def action_post(self):
         """Post the transfer: update daily balances."""
         for rec in self:
             if rec.state == 'posted':
                 continue
+            if rec.destination_analytic_account_id.member_approval and not rec.member_posted:
+                raise UserError(_('Need member approval first.'))
+
             today = rec.date
             # Source: transfer_out
             daily_source = self.env['shariah.daily.balance'].search([
@@ -56,6 +62,11 @@ class ShariahTransfer(models.Model):
             daily_source._compute_balances()
             daily_dest._compute_balances()
             rec.state = 'posted'
+
+    def action_member_post(self):
+        """Post the transfer: update daily balances."""
+        for rec in self:
+            rec.member_posted = True
 
     @api.model
     def create(self, vals):
