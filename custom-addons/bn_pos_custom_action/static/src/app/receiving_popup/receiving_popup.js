@@ -379,7 +379,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         try {
             const record = await this.orm.searchRead(
                 'microfinance',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_record', '=', this.state.record_number]],
                 ['name', 'state', 'donee_id', 'microfinance_line_ids', 'microfinance_recovery_line_ids'],
                 { limit: 1 }
             );
@@ -423,7 +423,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         try {
             const record = await this.orm.searchRead(
                 'microfinance',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_record', '=', this.state.record_number]],
                 ['name', 'state', 'donee_id', 'microfinance_recovery_line_ids'],
                 { limit: 1 }
             );

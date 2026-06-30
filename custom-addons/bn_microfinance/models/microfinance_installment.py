@@ -89,7 +89,11 @@ class MicrofinanceInstallment(models.Model):
 
     @api.model
     def create_microfinance_security_deposit(self, data):
-        microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])
+        microfinance_request = self.env['microfinance'].search([
+            '|',
+            ('name', '=', data['microfinance_request_no']),
+            ('old_system_record', '=', data['microfinance_request_no'])
+        ], limit=1)
 
         if not microfinance_request:
             return {
@@ -159,7 +163,11 @@ class MicrofinanceInstallment(models.Model):
             }
     @api.model
     def get_microfinance_security_deposit(self, data):
-        microfinance_request = self.env['microfinance'].search([('name', '=', data['microfinance_request_no'])])
+        microfinance_request = self.env['microfinance'].search([
+            '|',
+            ('name', '=', data['microfinance_request_no']),
+            ('old_system_record', '=', data['microfinance_request_no'])
+        ], limit=1)
 
         if not microfinance_request:
             return {
