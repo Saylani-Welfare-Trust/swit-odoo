@@ -23,6 +23,7 @@
         'views/donation.xml',
         'views/api_donation.xml',
         'views/hr_expense.xml',
+        'views/account_analytic_account.xml',
         'wizards/transfer_wizard.xml',
     ],
     'auto_install': False,
