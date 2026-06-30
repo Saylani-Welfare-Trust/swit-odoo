@@ -93,7 +93,7 @@ class ShariahLaw(models.Model):
         # ============================================================
 
         pos_orders = self.env['pos.order'].search([
-            ('is_sync_shariah_law', '=', False),
+            ('is_sync_shariah_law', '=', True),
             ('state', '=', 'done')
         ])
 
