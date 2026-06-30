@@ -26,14 +26,15 @@
                             invisible="state != 'draft' or create_uid != uid"/>
                     
                     <!-- Approve button - only for approver group and pending state -->
-                    <!-- Approve button - visible to all in pending state -->
                     <button name="action_approve" string="Approve" type="object" 
                             class="btn-success" 
+                            groups="bn_qurbani.group_hijri_approver"
                             invisible="state != 'pending'"/>
-
-                    <!-- Reject button - visible to all in pending state -->
+                    
+                    <!-- Reject button - only for approver group and pending state -->
                     <button name="action_reject" string="Reject" type="object" 
                             class="btn-danger" 
+                            groups="bn_qurbani.group_hijri_approver"
                             invisible="state != 'pending'"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,pending,approved"/>
