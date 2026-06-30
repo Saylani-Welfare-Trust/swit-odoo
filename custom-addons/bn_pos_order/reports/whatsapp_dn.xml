@@ -67,9 +67,9 @@
                             </style>
 
                             <!-- ===== HEADER ===== -->
-                            <!-- <img t-if="order.env.company.dn_image"
+                            <img t-if="order.env.company.dn_image"
                                 t-att-src="image_data_uri(order.env.company.dn_image)"
-                                style="height: 100%; width: 100%;"/>                    -->
+                                style="height: 100%; width: 100%;"/>                   
 
                             <div class="row mb-2">
                                 <div class="col-6">
