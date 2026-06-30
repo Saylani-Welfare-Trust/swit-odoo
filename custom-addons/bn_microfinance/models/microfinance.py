@@ -5,7 +5,7 @@ import math
 import re
 
 from dateutil.relativedelta import relativedelta
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 import base64
 from io import StringIO, BytesIO
@@ -52,6 +52,11 @@ state_selection = [
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
+secuirty_offered_selection = [
+    ('guarantor', 'Guarantor'),
+    ('collateral', 'Collateral'),
+    ('none', 'None'),
+    ]
 
 
 class Microfinance(models.Model):
@@ -62,7 +67,7 @@ class Microfinance(models.Model):
 
     name = fields.Char('Name', default="NEW")
     old_system_record = fields.Char('Old System Record')
-
+    microfinance_pdc_line_ids = fields.One2many('microfinance.pdc.line', 'microfinance_id', string="PDC Lines")
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
@@ -80,7 +85,7 @@ class Microfinance(models.Model):
         compute="_compute_microfinance_scheme_line_ids",
         store=True
     )
-
+    sale_order_id = fields.Many2one('sale.order', string="Sale Order")  
     installment_type = fields.Selection(related='microfinance_scheme_id.installment_type', string='Installment Type', store=True)
     asset_type = fields.Selection(related='microfinance_scheme_line_id.asset_type', string='Asset Type', store=True)
     asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
@@ -196,9 +201,13 @@ class Microfinance(models.Model):
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
-    security_offered = fields.Char('Security Offered')
+    security_offered_id = fields.Many2one(
+        'security.offered', 
+        string='Security Offered',
+        tracking=True
+    )    
     board_approval_document=fields.Binary('Board Approval Document')
-
+    details = fields.Text('Details')
     # Guarator Information
     guarantor_line_ids = fields.One2many('microfinance.guarantor', 'microfinance_id', string='Guarator Lines')
 
@@ -587,16 +596,74 @@ class Microfinance(models.Model):
 
     def action_proceed(self):
         if self.asset_type != 'cash' and not self.sd_slip_id:
-                raise ValidationError("Please select a Security Deposit Receipt.")
+            raise ValidationError("Please select a Security Deposit Receipt.")
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
         
-        # Create picking for movable assets (don't validate - manual validation triggers done)
+        # Create Sale Order for movable assets (delivery auto-generates from confirmed SO)
         if self.asset_type == 'movable_asset':
-            self._create_microfinance_picking()
+            self._create_microfinance_sale_order()
         
         self.state = 'wfd'
 
+    def _create_microfinance_sale_order(self):
+        """Create and confirm a Sale Order; delivery picking auto-generates from it."""
+        if not self.in_recovery:
+            product_quantity = self.product_id.qty_available
+            
+            if product_quantity <= 0:
+                self.asset_availability = 'not_available'
+                raise ValidationError('Not enough stock available.')
+            
+            stock_quant = self.env['stock.quant'].search([
+                ('location_id', '=', self.warehouse_location_id.id),
+                ('product_id', '=', self.product_id.id),
+                ('inventory_quantity_auto_apply', '>', 0)
+            ], limit=1)
+
+            if not stock_quant:
+                raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
+
+        # Create Sale Order
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.donee_id.id,
+            'origin': self.name,
+            'date_order': fields.Datetime.now(),
+            'commitment_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
+            'order_line': [(0, 0, {
+                'product_id': self.product_id.id,
+                'name': self.product_id.name,
+                'product_uom_qty': 1,
+                'product_uom': self.product_id.uom_id.id,
+                'price_unit': self.product_id.lst_price or 0.0,
+            })],
+        })
+
+        # Confirm SO — this auto-generates the delivery picking
+        sale_order.action_confirm()
+
+        # ← Write origin back AFTER confirm as action_confirm() overwrites it
+        sale_order.write({'origin': self.name})
+
+        # Get the auto-generated picking and update its source location
+        picking = sale_order.picking_ids and sale_order.picking_ids[0]
+        if picking:
+            location_id = (
+                self.recovered_location_id.id if self.in_recovery
+                else self.warehouse_location_id.id
+            )
+            picking.write({
+                'location_id': location_id,
+                'origin': self.name,
+                'scheduled_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
+            })
+            picking.move_ids.write({'location_id': location_id})
+            self.picking_ids = [(4, picking.id)]
+
+        # Store SO reference
+        self.sale_order_id = sale_order.id
+
+        return sale_order
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
@@ -707,32 +774,43 @@ class Microfinance(models.Model):
 
 
     def compute_installment(self):
+        """Create installment lines but NOT PDC lines"""
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
             return
 
-        self.microfinance_line_ids.unlink()
+        # Don't delete existing lines
+        # self.microfinance_line_ids.unlink()  # ← COMMENT THIS OUT
 
         total_covered = self.installment_amount * (self.installment_period - 1)
         remaining_amount = max(self.total_amount - total_covered, 0)
+        
+        # Only create installments if no lines exist
+        if not self.microfinance_line_ids:
+            installment_vals = []
 
-        for i in range(self.installment_period):
-            if self.installment_type == 'monthly':
-                due_date = self.delivery_date + relativedelta(months=i + 1)
-            elif self.installment_type == 'daily':
-                due_date = self.delivery_date + timedelta(days=i + 1)
+            # Regular installments
+            for i in range(self.installment_period):
+                if self.installment_type == 'monthly':
+                    due_date = self.delivery_date + relativedelta(months=i + 1)
+                elif self.installment_type == 'daily':
+                    due_date = self.delivery_date + timedelta(days=i + 1)
 
-            if i < self.installment_period - 1:
-                amount = self.installment_amount
-            else:
-                amount = remaining_amount
+                if i < self.installment_period - 1:
+                    amount = self.installment_amount
+                else:
+                    amount = remaining_amount
 
-            self.env['microfinance.line'].create({
-                'microfinance_id': self.id,
-                'installment_no': f"{self.name}/{i + 1:04d}",
-                'due_date': due_date,
-                'paid_amount': 0,
-                'amount': amount
-            })
+                installment_vals.append({
+                    'microfinance_id': self.id,
+                    'installment_no': f"{self.name}/{i + 1:04d}",
+                    'due_date': due_date,
+                    'paid_amount': 0,
+                    'amount': amount,
+                    'payment_type': 'installment'
+                })
+
+            if installment_vals:
+                self.env['microfinance.line'].create(installment_vals)
     
     def compute_recovery_installment(self):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
@@ -876,3 +954,12 @@ class Microfinance(models.Model):
                 raise ValidationError('Please provide remarks')
             self.remarks = False
             self.state = 'fully_recover'
+    def action_view_sale_order(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Sale Order',
+            'res_model': 'sale.order',
+            'view_mode': 'form',
+            'res_id': self.sale_order_id.id,
+            'target': 'current',
+        }
