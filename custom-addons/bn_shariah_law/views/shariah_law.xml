@@ -78,8 +78,7 @@
             <tree string="Daily Balances">
                 <field name="date"/>
                 <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="inflow_restricted" sum="Total"/>
-                <field name="inflow_unrestricted" sum="Total"/>
+                <field name="donation_amount" sum="Total"/>
                 <field name="purchase" sum="Total"/>
                 <field name="expense" sum="Total"/>
                 <field name="transfer_in" sum="Total"/>
