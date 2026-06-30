@@ -82,7 +82,7 @@ class ShariahLaw(models.Model):
         pos_orders = self.env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', 'in', ['cfo_approval', 'paid'])])
         for order in pos_orders:
             for line in order.lines:
-                if not line.product_id or line.product_id.name == self.company_id.medical_equipment_security_depsoit_product:
+                if not line.product_id or line.product_id.name == self.env.company_id.medical_equipment_security_depsoit_product:
                     continue
                 analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [line.product_id.id])])
                 for a_line in analytical_lines:
