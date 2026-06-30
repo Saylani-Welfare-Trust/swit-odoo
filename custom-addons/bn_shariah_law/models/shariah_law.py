@@ -240,7 +240,7 @@ class ShariahLaw(models.Model):
 
             if record:
                 record.write({
-                    'donation_amount': record.donation_amount + values['donation'],
+                    'donation_amount': record.donation_amount + values['donation_amount'],
                     'purchase_amount': record.purchase_amount + values['purchase'],
                     'expense_amount': record.expense_amount + values['expense'],
                 })
@@ -248,7 +248,7 @@ class ShariahLaw(models.Model):
                 self.env['shariah.law'].create({
                     'parent_id': account.parent_id.id if account.parent_id else False,
                     'analytic_account_id': account.id,
-                    'donation_amount': values['donation'],
+                    'donation_amount': values['donation_amount'],
                     'purchase_amount': values['purchase'],
                     'expense_amount': values['expense'],
                 })
