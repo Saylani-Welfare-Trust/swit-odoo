@@ -149,8 +149,7 @@ class ShariahLaw(models.Model):
                 sh = self.env['shariah.law'].search([('analytic_account_id', '=', account.id)], limit=1)
                 if sh:
                     sh.write({
-                        'inflow_restricted_amount': sh.inflow_restricted_amount + amounts.get('inflow_restricted', 0),
-                        'inflow_unrestricted_amount': sh.inflow_unrestricted_amount + amounts.get('inflow_unrestricted', 0),
+                        'donation_amount': sh.donation_amount + amounts.get('donation_amount', 0),
                         'purchase_amount': sh.purchase_amount + amounts.get('purchase', 0),
                         'expense_amount': sh.expense_amount + amounts.get('expense', 0),
                     })
@@ -158,8 +157,7 @@ class ShariahLaw(models.Model):
                     self.env['shariah.law'].create({
                         'parent_id': parent.id if parent else False,
                         'analytic_account_id': account.id,
-                        'inflow_restricted_amount': amounts.get('inflow_restricted', 0),
-                        'inflow_unrestricted_amount': amounts.get('inflow_unrestricted', 0),
+                        'donation_amount': amounts.get('donation_amount', 0),
                         'purchase_amount': amounts.get('purchase', 0),
                         'expense_amount': amounts.get('expense', 0),
                     })
