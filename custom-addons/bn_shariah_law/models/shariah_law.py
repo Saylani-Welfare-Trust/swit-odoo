@@ -12,11 +12,8 @@ class ShariahLaw(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
     # Cumulative totals
-    inflow_restricted_amount = fields.Monetary('Inflow (Restricted)', currency_field='currency_id', default=0)
-    inflow_unrestricted_amount = fields.Monetary('Inflow (Unrestricted)', currency_field='currency_id', default=0)
+    donation_amount = fields.Monetary('Donation', currency_field='currency_id', default=0)
     purchase_amount = fields.Monetary('Purchase', currency_field='currency_id', default=0)
-    welfare_individual_amount = fields.Monetary('Welfare (Individual)', currency_field='currency_id', default=0)
-    welfare_portal_amount = fields.Monetary('Welfare (Portal)', currency_field='currency_id', default=0)
     expense_amount = fields.Monetary('Expense', currency_field='currency_id', default=0)
 
     # Opening and Closing balances (computed from daily records)
@@ -48,28 +45,13 @@ class ShariahLaw(models.Model):
                 rec.opening_balance = 0.0
                 rec.closing_balance = 0.0
 
-    def action_transfer_to(self):
-        return {
-            'name': _('Transfer To'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'shariah.transfer.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_source_analytic_account_id': self.analytic_account_id.id,
-            }
-        }
-
-    def action_transfer_from(self):
+    def action_transfer(self):
         return {
             'name': _('Transfer From'),
             'type': 'ir.actions.act_window',
             'res_model': 'shariah.transfer.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {
-                'default_destination_analytic_account_id': self.analytic_account_id.id,
-            }
         }
 
     @api.model
