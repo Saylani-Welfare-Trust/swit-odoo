@@ -39,11 +39,8 @@
                             <field name="currency_id"/>
                         </group>
                         <group>
-                            <field name="inflow_restricted_amount"/>
-                            <field name="inflow_unrestricted_amount"/>
+                            <field name="donation_amount"/>
                             <field name="purchase_amount"/>
-                            <field name="welfare_individual_amount"/>
-                            <field name="welfare_portal_amount"/>
                             <field name="expense_amount"/>
                         </group>
                     </group>
