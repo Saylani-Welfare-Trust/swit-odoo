@@ -5,4 +5,4 @@ class AnalyticAccount(models.Model):
     _inherit = 'account.analytic.account'
 
 
-    product_ids = fields.Many2many('analytical.product.line', string="Products")
+    product_ids = fields.Many2many('product.product', string="Products")
