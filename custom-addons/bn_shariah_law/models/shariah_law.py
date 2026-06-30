@@ -84,7 +84,7 @@ class ShariahLaw(models.Model):
             for line in order.lines:
                 if not line.product_id or line.product_id.name == self.env.company.medical_equipment_security_depsoit_product:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [line.product_id.id])])
+                analytical_lines = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])])
                 for a_line in analytical_lines:
                     analytic_id = a_line.analytic_account_id.id
                     add_amounts(analytic_id, donation=line.price_subtotal_incl)
@@ -95,7 +95,7 @@ class ShariahLaw(models.Model):
         for donation in donations:
             if not donation.product_id:
                 continue
-            analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [donation.product_id.id])])
+            analytical_lines = self.env['account.analytic.account'].search([('product_ids', 'in', [donation.product_id.id])])
             for a_line in analytical_lines:
                 categ_name = donation.product_id.categ_id.complete_name.lower() if donation.product_id.categ_id else ''
                 if not categ_name:
@@ -114,7 +114,7 @@ class ShariahLaw(models.Model):
                 found = self.env['gateway.config.line'].search([('name', '=', product_name)], limit=1)
                 if not found or not found.product_id:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [found.product_id.id])])
+                analytical_lines = self.env['account.analytic.account'].search([('product_ids', 'in', [found.product_id.id])])
                 for a_line in analytical_lines:
                     analytic_id = a_line.analytic_account_id.id
                     add_amounts(analytic_id, donation=line.total)
@@ -126,7 +126,7 @@ class ShariahLaw(models.Model):
         for expense in expenses:
             if not expense.product_id:
                 continue
-            analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [expense.product_id.id])])
+            analytical_lines = self.env['account.analytic.account'].search([('product_ids', 'in', [expense.product_id.id])])
             for a_line in analytical_lines:
                 analytic_id = a_line.analytic_account_id.id
                 add_amounts(analytic_id, expense=expense.total_amount_currency)
@@ -138,7 +138,7 @@ class ShariahLaw(models.Model):
             for line in purchase.order_line:
                 if not line.product_id:
                     continue
-                analytical_lines = self.env['analytical.product.line'].search([('product_ids', 'in', [line.product_id.id])])
+                analytical_lines = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])])
                 for a_line in analytical_lines:
                     analytic_id = a_line.analytic_account_id.id
                     add_amounts(analytic_id, purchase=line.price_subtotal)
