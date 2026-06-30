@@ -281,7 +281,7 @@ class ShariahLaw(models.Model):
 
             if daily:
                 daily.write({
-                    'donation': daily.donation + values['donation'],
+                    'donation_amount': daily.donation_amount + values['donation'],
                     'purchase': daily.purchase + values['purchase'],
                     'expense': daily.expense + values['expense'],
                 })
@@ -289,7 +289,7 @@ class ShariahLaw(models.Model):
                 self.env['shariah.daily.balance'].create({
                     'analytic_account_id': analytic_id,
                     'date': today,
-                    'donation': values['donation'],
+                    'donation_amount': values['donation'],
                     'purchase': values['purchase'],
                     'expense': values['expense'],
                 })
