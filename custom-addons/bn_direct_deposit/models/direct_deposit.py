@@ -64,6 +64,15 @@ class DirectDeposit(models.Model):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('direct_deposit') or ('New')
 
+        # If a microfinance record is provided, use its name as transaction reference
+        if vals.get('microfinance_id') and not vals.get('transaction_ref'):
+            mf = self.env['microfinance'].browse(vals.get('microfinance_id'))
+            if mf:
+                vals['transaction_ref'] = mf.name
+            # also set donor if missing
+            if not vals.get('donor_id') and mf and mf.donee_id:
+                vals['donor_id'] = mf.donee_id.id
+
         return super(DirectDeposit, self).create(vals)
     
     def calculate_amount(self):
@@ -141,6 +150,16 @@ class DirectDeposit(models.Model):
             "status": "success",
             "id": dd.id
         }
+
+    @api.onchange('microfinance_id')
+    def _onchange_microfinance_id(self):
+        for rec in self:
+            if rec.microfinance_id:
+                mf = rec.microfinance_id
+                # use microfinance record name as transaction reference
+                rec.transaction_ref = mf.name
+                if mf.donee_id:
+                    rec.donor_id = mf.donee_id.id
     
     def _create_invoice(self):
         self.ensure_one()
@@ -255,6 +274,11 @@ class DirectDeposit(models.Model):
         self.picking_id = picking.id
 
     def _get_target_microfinance(self):
+        # Prefer an explicit transaction_ref match (microfinance record number)
+        if self.transaction_ref:
+            mf = self.env['microfinance'].search(['|', ('name', '=', self.transaction_ref), ('old_system_record', '=', self.transaction_ref)], limit=1)
+            if mf:
+                return mf
         if self.microfinance_id:
             return self.microfinance_id
 
