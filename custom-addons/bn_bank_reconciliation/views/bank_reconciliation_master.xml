@@ -73,14 +73,6 @@
                             <field name="move_id" invisible="not move_id"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="File">
-                            <field name="file" filename="file_name" required="1"/>
-                            <field name="file_name" readonly="1"/>
-                            <!-- <field name="file_type" readonly="1"/> -->
-                            <!-- <field name="delimiter" invisible="file_type != 'csv'"/> -->
-                        </group>
-                    </group>
                     <notebook>
                         <page string="Transactions">
                             <field name="transaction_ids">
