@@ -141,7 +141,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             const record = await this.orm.searchRead(
                 'welfare',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_record', '=', this.state.record_number]],
                 ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids', 'order_type'],
                 { limit: 1 }
             );
