@@ -182,7 +182,7 @@
                                         <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="receipt_number"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/>
                                     </div>
-                                    <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
+                                    <div><strong>Register Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div>
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
