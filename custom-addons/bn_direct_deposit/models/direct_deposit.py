@@ -253,7 +253,64 @@ class DirectDeposit(models.Model):
 
         self.picking_id = picking.id
 
+    def _apply_microfinance_payment(self):
+        """Apply direct deposit amount to matching microfinance installment lines."""
+        microfinance_model = self.env['ir.model'].search([('model', '=', 'microfinance')], limit=1)
+        line_model = self.env['ir.model'].search([('model', '=', 'microfinance.line')], limit=1)
+        if not microfinance_model or not line_model:
+            return False
+
+        payment_amount = self.amount or sum(
+            line.amount * line.quantity for line in self.direct_deposit_line_ids
+        )
+        if payment_amount <= 0:
+            return False
+
+        microfinance_id = self.env.context.get('microfinance_id')
+        if microfinance_id:
+            microfinance_records = self.env['microfinance'].browse(int(microfinance_id))
+        else:
+            microfinance_records = self.env['microfinance'].search([
+                ('donee_id', '=', self.donor_id.id)
+            ])
+
+        if not microfinance_records:
+            return False
+
+        lines = microfinance_records.mapped('microfinance_line_ids').filtered(
+            lambda line: line.state in ('unpaid', 'partial') and (line.amount - line.paid_amount) > 0
+        )
+        if not lines:
+            return False
+
+        remaining_amount = payment_amount
+        for line in lines.sorted('due_date'):
+            if remaining_amount <= 0:
+                break
+
+            outstanding_amount = max(line.amount - line.paid_amount, 0)
+            if outstanding_amount <= 0:
+                continue
+
+            applied_amount = min(outstanding_amount, remaining_amount)
+            if applied_amount <= 0:
+                continue
+
+            new_paid_amount = line.paid_amount + applied_amount
+            line.write({
+                'paid_amount': new_paid_amount,
+                'payment_date': fields.Date.today(),
+                'state': 'paid' if new_paid_amount >= line.amount else 'partial',
+            })
+            remaining_amount -= applied_amount
+
+        return True
+
     def action_clear(self):
+        if self._apply_microfinance_payment():
+            self.state = 'clear'
+            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
+
         if self.transfer_to_dhs:
             self.action_transfer_to_dhs()
         else:
