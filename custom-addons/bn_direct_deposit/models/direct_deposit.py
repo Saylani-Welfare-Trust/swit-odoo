@@ -254,33 +254,39 @@ class DirectDeposit(models.Model):
 
         self.picking_id = picking.id
 
+    def _get_target_microfinance(self):
+        if self.microfinance_id:
+            return self.microfinance_id
+
+        active_model = self.env.context.get('active_model')
+        active_id = self.env.context.get('active_id')
+        if active_model == 'microfinance' and active_id:
+            return self.env['microfinance'].browse(int(active_id)).exists()
+
+        microfinance_id = self.env.context.get('microfinance_id') or self.env.context.get('default_microfinance_id')
+        if microfinance_id:
+            return self.env['microfinance'].browse(int(microfinance_id)).exists()
+
+        if self.donor_id:
+            return self.env['microfinance'].search([
+                ('donee_id', '=', self.donor_id.id)
+            ], limit=1, order='id desc')
+
+        return self.env['microfinance']
+
     def _apply_microfinance_payment(self):
         """Apply direct deposit amount to matching microfinance installment lines."""
-        microfinance_model = self.env['ir.model'].search([('model', '=', 'microfinance')], limit=1)
-        line_model = self.env['ir.model'].search([('model', '=', 'microfinance.line')], limit=1)
-        if not microfinance_model or not line_model:
-            return False
-
         payment_amount = self.amount or sum(
             line.amount * line.quantity for line in self.direct_deposit_line_ids
         )
         if payment_amount <= 0:
             return False
 
-        microfinance_records = self.microfinance_id
-        if not microfinance_records:
-            microfinance_id = self.env.context.get('microfinance_id') or self.env.context.get('default_microfinance_id')
-            if microfinance_id:
-                microfinance_records = self.env['microfinance'].browse(int(microfinance_id)).exists()
-            elif self.donor_id:
-                microfinance_records = self.env['microfinance'].search([
-                    ('donee_id', '=', self.donor_id.id)
-                ], limit=1, order='id desc')
-
-        if not microfinance_records:
+        microfinance_record = self._get_target_microfinance()
+        if not microfinance_record:
             return False
 
-        lines = microfinance_records.mapped('microfinance_line_ids').filtered(
+        lines = microfinance_record.mapped('microfinance_line_ids').filtered(
             lambda line: line.state in ('unpaid', 'partial') and (line.amount - line.paid_amount) > 0
         )
         if not lines:
@@ -291,20 +297,10 @@ class DirectDeposit(models.Model):
             if remaining_amount <= 0:
                 break
 
-            outstanding_amount = max(line.amount - line.paid_amount, 0)
-            if outstanding_amount <= 0:
-                continue
-
-            applied_amount = min(outstanding_amount, remaining_amount)
+            applied_amount = line._apply_direct_deposit_payment(remaining_amount)
             if applied_amount <= 0:
                 continue
 
-            new_paid_amount = line.paid_amount + applied_amount
-            line.write({
-                'paid_amount': new_paid_amount,
-                'payment_date': fields.Date.today(),
-                'state': 'paid' if new_paid_amount >= line.amount else 'partial',
-            })
             remaining_amount -= applied_amount
 
         return True
