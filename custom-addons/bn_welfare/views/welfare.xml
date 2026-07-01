@@ -52,7 +52,7 @@
                     <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
                             invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
-                    <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['inquiry','committee_approval']"/>
+                    <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['committee_approval','hod_approve']"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" />
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" />
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" />
@@ -213,23 +213,30 @@
                                 <group name="inquiry_col_1">
                                     <field name="donee_house_status" 
                                         string="Residential Status" 
+                                        required="state in ['inquiry']"
                                         placeholder="e.g., Own House, Rented House, Living with relatives"/>
                                     <field name="num_of_children" 
                                         string="Total Children" 
+                                        required="state in ['inquiry']"
+
                                         placeholder="Enter total number"/>
                                     <field name="num_of_sons" 
                                         string="Sons" 
+                                        required="state in ['inquiry']"
                                         placeholder="Enter number of sons"/>
                                 </group>
                                 <group name="inquiry_col_2">
                                     <field name="num_of_daughters" 
                                         string="Daughters" 
+                                        required="state in ['inquiry']"                                        
                                         placeholder="Enter number of daughters"/>
                                     <field name="children_education" 
                                         string="Children's Education" 
+                                        required="state in ['inquiry']"
                                         placeholder="e.g., School, College, University, or Multiple"/>
                                     <field name="donee_issues" 
                                         string="Issues/Concerns" 
+                                        required="state in ['inquiry']"
                                         placeholder="Describe any issues or concerns related to the donee..."/>
                                 </group>
                             </group>
