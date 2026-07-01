@@ -58,6 +58,7 @@
                     <group>
                         <group name="direct_deposit_col_1">
                             <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
+                            <field name="microfinance_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <label for="mobile"/>
                             <div style="display: flex;">
                                 <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" style="width: 30% !important;" name="country_code_id" nolabel="1" /> 
