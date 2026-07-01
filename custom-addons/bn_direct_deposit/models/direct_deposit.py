@@ -21,6 +21,7 @@ class DirectDeposit(models.Model):
     cnic_no = fields.Char('CNIC No.', size=15)
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor")
+    microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
@@ -266,13 +267,15 @@ class DirectDeposit(models.Model):
         if payment_amount <= 0:
             return False
 
-        microfinance_id = self.env.context.get('microfinance_id')
-        if microfinance_id:
-            microfinance_records = self.env['microfinance'].browse(int(microfinance_id))
-        else:
-            microfinance_records = self.env['microfinance'].search([
-                ('donee_id', '=', self.donor_id.id)
-            ])
+        microfinance_records = self.microfinance_id
+        if not microfinance_records:
+            microfinance_id = self.env.context.get('microfinance_id') or self.env.context.get('default_microfinance_id')
+            if microfinance_id:
+                microfinance_records = self.env['microfinance'].browse(int(microfinance_id)).exists()
+            elif self.donor_id:
+                microfinance_records = self.env['microfinance'].search([
+                    ('donee_id', '=', self.donor_id.id)
+                ], limit=1, order='id desc')
 
         if not microfinance_records:
             return False

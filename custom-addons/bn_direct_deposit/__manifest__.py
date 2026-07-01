@@ -8,6 +8,7 @@
     'depends': [
         'bn_pos_cheque',
         'bn_donation_home_service',
+        'bn_microfinance',
     ],
     'data': [
         'data/server_action.xml',
