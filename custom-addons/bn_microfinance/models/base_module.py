@@ -7,6 +7,3 @@ class BaseModule(models.Model):
 
     def unlink(self):
         raise UserError(_('You cannot delete a record.'))
-
-
-
