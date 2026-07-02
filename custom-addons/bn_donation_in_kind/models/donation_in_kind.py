@@ -232,7 +232,7 @@ class DonationInKind(models.Model):
                     self.message_notify_to_product_stock_move(lines)
             
             for donation_in_kind_lines in record.donation_in_kind_line_ids.filtered(lambda rec: rec.check_price_bool == True):
-                product_valuation_lines = self.env['product.valuation.committee.line'].sudo().search([('donation_in_kind_id', '=', donation_in_kind_lines.donation_in_kind_id.id), ('product_id', '=', donation_in_kind_lines.product_id.id), ('location_id', '=', donation_in_kind_lines.location_id.id)])
+                product_valuation_lines = self.env['valuation.committee.line'].sudo().search([('donation_in_kind_id', '=', donation_in_kind_lines.donation_in_kind_id.id), ('product_id', '=', donation_in_kind_lines.product_id.id), ('location_id', '=', donation_in_kind_lines.location_id.id)])
             
                 if product_valuation_lines:
                     for lines in product_valuation_lines:
@@ -247,7 +247,7 @@ class DonationInKind(models.Model):
                             'donation_in_kind_line_id': donation_in_kind_lines.id,
                         })
                 else:
-                    self.env['product.valuation.committee.line'].sudo().create({
+                    self.env['valuation.committee.line'].sudo().create({
                         'product_id': donation_in_kind_lines.product_id.id,
                         'location_id': donation_in_kind_lines.location_id.id,
                         'quantity': donation_in_kind_lines.quantity,
