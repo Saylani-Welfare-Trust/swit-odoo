@@ -506,17 +506,19 @@ class Microfinance(models.Model):
 
     def action_send_to_recovery(self):
         lines = []
-
-        for line in self.microfinance_line_ids.filtered(lambda l: l.state != 'paid'):
+        
+        for line in self.microfinance_line_ids:
             lines.append((0, 0, {
                 'installment_no': line.installment_no,
                 'due_date': line.due_date,
-                'amount': line.remaining_amount,
-                'paid_amount': 0,
+                'amount': line.amount,
+                'paid_amount': line.paid_amount,
             }))
 
         self.microfinance_recovery_line_ids = lines
+
         self.in_recovery = True
+
         self.state = 'in_recovery'
 
     def action_move_to_member(self):
