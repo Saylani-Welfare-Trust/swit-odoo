@@ -30,7 +30,6 @@
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book" />
                         <button name="action_show_journal_entry" type="object" class="oe_stat_button" icon="fa-book" invisible="not journal_entry_id">
                             <field name="journal_entry_id" widget="statinfo"/>
                         </button>
