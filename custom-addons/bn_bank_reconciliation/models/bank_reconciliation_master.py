@@ -531,9 +531,10 @@ class BankReconciliationMaster(models.Model):
         }
 
     def unlink(self):
-        for record in self:
-            if record.state != 'draft':
-                raise UserError(_('You can only delete draft reconciliations.'))
-            if record.transaction_ids:
-                raise UserError(_('Cannot delete a reconciliation with transactions. Please cancel it first.'))
-        return super(BankReconciliationMaster, self).unlink()
+        raise UserError(_('You cannot delete a bank reconciliation.'))
+        # for record in self:
+        #     if record.state != 'draft':
+        #         raise UserError(_('You can only delete draft reconciliations.'))
+        #     if record.transaction_ids:
+        #         raise UserError(_('Cannot delete a reconciliation with transactions. Please cancel it first.'))
+        # return super(BankReconciliationMaster, self).unlink()

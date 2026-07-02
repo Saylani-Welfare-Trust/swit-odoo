@@ -235,17 +235,18 @@ class AccountAssetAsset(models.Model):
                             required=True)
 
     def unlink(self):
-        for asset in self:
-            if asset.state in ['open', 'close']:
-                raise UserError(
-                    _('You cannot delete a document is in %s state.') % (
-                        asset.state,))
-            for depreciation_line in asset.depreciation_line_ids:
-                if depreciation_line.move_id:
-                    raise UserError(_(
-                        'You cannot delete a document that contains '
-                        'posted entries.'))
-        return super(AccountAssetAsset, self).unlink()
+        raise UserError(_('You cannot delete an asset.'))
+        # for asset in self:
+        #     if asset.state in ['open', 'close']:
+        #         raise UserError(
+        #             _('You cannot delete a document is in %s state.') % (
+        #                 asset.state,))
+        #     for depreciation_line in asset.depreciation_line_ids:
+        #         if depreciation_line.move_id:
+        #             raise UserError(_(
+        #                 'You cannot delete a document that contains '
+        #                 'posted entries.'))
+        # return super(AccountAssetAsset, self).unlink()
 
     def _get_last_depreciation_date(self):
         """
@@ -896,11 +897,12 @@ class AccountAssetDepreciationLine(models.Model):
                 asset.message_post(body=msg)
 
     def unlink(self):
-        for record in self:
-            if record.move_check:
-                if record.asset_id.category_id.type == 'purchase':
-                    msg = _("You cannot delete posted depreciation lines.")
-                else:
-                    msg = _("You cannot delete posted installment lines.")
-                raise UserError(msg)
-        return super(AccountAssetDepreciationLine, self).unlink()
+        raise UserError(_('You cannot delete a depreciation line.'))
+        # for record in self:
+        #     if record.move_check:
+        #         if record.asset_id.category_id.type == 'purchase':
+        #             msg = _("You cannot delete posted depreciation lines.")
+        #         else:
+        #             msg = _("You cannot delete posted installment lines.")
+        #         raise UserError(msg)
+        # return super(AccountAssetDepreciationLine, self).unlink()

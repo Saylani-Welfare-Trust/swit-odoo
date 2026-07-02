@@ -26,7 +26,8 @@ class HRExpense(models.Model):
             raise ValidationError('Expense payment mode can be set as ( Company ).')
         
     def unlink(self):
-        if self.state == 'approved':
-            raise ValidationError('No one have right to delete an approved expense.')
+        raise UserError(_('You cannot delete an expense.'))
+        # if self.state == 'approved':
+        #     raise ValidationError('No one have right to delete an approved expense.')
         
-        return super(HRExpense, self).unlink()
+        # return super(HRExpense, self).unlink()

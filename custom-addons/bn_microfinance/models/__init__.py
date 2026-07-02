@@ -13,3 +13,4 @@ from . import stock_picking
 from . import account_payment
 from . import security_offered
 from . import microfinance_pdc_lines
+from . import base_module

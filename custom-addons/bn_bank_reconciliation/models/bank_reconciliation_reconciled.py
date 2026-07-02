@@ -264,7 +264,8 @@ class BankReconciliationReconciled(models.Model):
         return super(BankReconciliationReconciled, self).write(vals)
 
     def unlink(self):
-        for record in self:
-            if record.is_posted:
-                raise UserError(_('Cannot delete a posted reconciled transaction.'))
-        return super(BankReconciliationReconciled, self).unlink()
+        raise UserError(_('You cannot delete a reconciled transaction.'))
+        # for record in self:
+        #     if record.is_posted:
+        #         raise UserError(_('Cannot delete a posted reconciled transaction.'))
+        # return super(BankReconciliationReconciled, self).unlink()
