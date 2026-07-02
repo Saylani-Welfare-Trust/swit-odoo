@@ -507,7 +507,7 @@ class Microfinance(models.Model):
     def action_send_to_recovery(self):
         lines = []
 
-        for line in self.microfinance_line_ids.filtered(lambda l: (l.amount - l.paid_amount) > 0):
+        for line in self.microfinance_line_ids.filtered(lambda l: l.state != 'paid'):
             lines.append((0, 0, {
                 'installment_no': line.installment_no,
                 'due_date': line.due_date,
