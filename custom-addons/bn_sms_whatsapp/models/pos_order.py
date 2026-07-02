@@ -112,7 +112,7 @@ May Allah bless you!
     
     def _save_as_attachment(self, order, pdf_data):
         safe_name = order.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
+        filename = f"Donation Receipt.pdf"
 
         # Delete old
         old = self.env['ir.attachment'].search([
