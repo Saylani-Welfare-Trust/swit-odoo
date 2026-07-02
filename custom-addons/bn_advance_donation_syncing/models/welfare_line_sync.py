@@ -44,6 +44,8 @@ class WelfareLineSync(models.Model):
 
     #     return super(WelfareLineSync, self).action_disburse()
     
+
+    
     def unlink(self):
         raise UserError(_('You cannot delete a welfare line.'))
         ## For each welfare line being deleted, unlink the associated donation line's reserved status
