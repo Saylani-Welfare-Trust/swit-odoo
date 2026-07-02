@@ -722,9 +722,9 @@ class Microfinance(models.Model):
         # Compute installments
         if not self.in_recovery:
             self.compute_installment()
-            self.state='done'
+            self.state = 'done'
         else:
-            # self.compute_recovery_installment()
+            self.compute_recovery_installment()
             self.state = 'recover'
 
     def action_view_picking(self):
