@@ -31,9 +31,9 @@ class MicrofinanceRecoveryLine(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_recovery_line') or 'New'
-
+        if vals.get('name', _('NEW') == _('NEW')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_recovery_line') or ('New')
+                
         return super(MicrofinanceRecoveryLine, self).create(vals)
     
     @api.depends('due_date', 'paid_amount')
