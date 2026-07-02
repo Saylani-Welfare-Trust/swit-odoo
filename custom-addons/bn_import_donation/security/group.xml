@@ -37,5 +37,10 @@
         <field name="name">API Donation / User Access</field>
         <field name="category_id" ref="module_import_donation"/>
     </record>
+    
+    <record id="manual_sync_group" model="res.groups">
+        <field name="name">Manual Sync</field>
+        <field name="category_id" ref="module_import_donation"/>
+    </record>
 
 </odoo>
