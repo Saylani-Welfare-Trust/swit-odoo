@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import models, fields, _
+from odoo.exceptions import UserError
 
 
 option_selection = [
@@ -45,11 +46,19 @@ class TransferSlaughter(models.TransientModel):
 
     def action_tranfer(self):
         if self.option == 'hole':
+            current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+            if not current_hijri:
+                raise UserError(_("No Hijri date found!"))
 
             # ==================================================
             # COW
             # ==================================================
             if self.qurbani_cow_slaughter_id and self.actual_qurbani_cow_slaughter_id:
+                if self.qurbani_cow_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
+                elif self.actual_qurbani_cow_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
 
                 vals_lst = []
                 lines_to_delete = self.env['qurbani.cow.slaughter.line']
@@ -85,6 +94,10 @@ class TransferSlaughter(models.TransientModel):
             # GOAT
             # ==================================================
             elif self.qurbani_goat_slaughter_id and self.actual_qurbani_goat_slaughter_id:
+                if self.qurbani_goat_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
+                elif self.actual_qurbani_goat_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
 
                 self.actual_qurbani_goat_slaughter_id.write({
                     'qurbani_order_no': self.qurbani_goat_slaughter_id.qurbani_order_no,
@@ -107,6 +120,10 @@ class TransferSlaughter(models.TransientModel):
             # SINGLE TRANSFER
             # ==================================================
             if self.qurbani_cow_slaughter_line_id and self.actual_qurbani_cow_slaughter_id:
+                if self.qurbani_cow_slaughter_line_id.qurbani_cow_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
+                elif self.actual_qurbani_cow_slaughter_id.hijri_id != current_hijri:
+                    raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
 
                 self.actual_qurbani_cow_slaughter_id.write({
                     'qurbani_cow_slaughter_line': [(0, 0, {

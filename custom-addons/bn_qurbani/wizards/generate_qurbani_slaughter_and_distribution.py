@@ -59,6 +59,13 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     def action_generate_slaughter(self):
         self.ensure_one()
 
+        current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+
+        if not current_hijri:
+            raise UserError(_("No Hijri date found!"))
+        elif self.hijri_id != current_hijri:
+            raise UserError(_("Hijri date mismatch! Current Hijri is %s. You cannot update this record.") % current_hijri.name)
+
         demands = self._get_demands()
         models = self._get_product_models()
 

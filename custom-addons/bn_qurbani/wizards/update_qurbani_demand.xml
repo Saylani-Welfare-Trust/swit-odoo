@@ -8,36 +8,13 @@
             <form>
                 <sheet>
                     <group>
-                        <group name="update_qurbani_demand_col_1">
-                            <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
-                            <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
-                        </group>
-                        <group name="update_qurbani_demand_col_2">
-                            <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
-                            <field name="demand" required="1"/>
-                        </group>
+                        <field name="demand" required="1"/>  
                     </group>
+
+                    
                 </sheet>
-                <footer>
-                    <button string="Update Demand" type="object" name="action_update_demand" class="btn-primary"/>
-                    <button string="Close" class="btn-secondary" special="cancel"/>
-                </footer>
             </form>
         </field>
     </record>
-
-    <record id="update_qurbani_demand_action" model="ir.actions.act_window">
-        <field name="name">Update Qurbani Demand</field>
-        <field name="res_model">update.qurbani.demand</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
-
-    <menuitem
-        id="update_qurbani_demand_menu"
-        name="Update Qurbani Demand"
-        action="update_qurbani_demand_action"
-        parent="bn_qurbani.qurbani_coniguration_menu"
-        sequence="1"/>
 
 </odoo>

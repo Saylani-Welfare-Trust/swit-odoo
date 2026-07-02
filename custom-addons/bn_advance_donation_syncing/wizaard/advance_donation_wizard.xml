@@ -27,7 +27,8 @@
         <field name="arch" type="xml">
             <form string="Select Donation Line">
                 <group>
-                    <field name="advance_donation_id" readonly="1"/>
+                    <field name="advance_donation_domain" invisible="1"/>
+                    <field name="advance_donation_id" domain="advance_donation_domain" readonly="1"/>
                     <field name="product_id" readonly="1"/>
                 </group>
                 <field name="donation_line_ids">

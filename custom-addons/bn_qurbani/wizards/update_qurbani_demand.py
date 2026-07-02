@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.exceptions import ValidationError
 
 
 class UpdateQurbaniDemand(models.TransientModel):
@@ -6,17 +7,12 @@ class UpdateQurbaniDemand(models.TransientModel):
     _description = 'Update Qurbani Demand'
 
 
-    hijri_id = fields.Many2one('hijri', string="Hijri")
-    day_id = fields.Many2one('qurbani.day', string="Day")
-
-    slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location')
-
+    slaughter_slot_demand_id = fields.Many2one('qurbani.slaughter.slot.demand', string='Slaughter Slot Demand')
     demand = fields.Float('Demand')
 
 
-    def action_update_demand(self):
-        if self.hijri_id and self.day_id and self.slaughter_location_id and self.demand:
-            demand = self.env['qurbani.demand'].search([('hijri_id', '=', self.hijri_id.id), ('day_id', '=', self.day_id.id), ('slaughter_location_id', '=', self.slaughter_location_id.id)])
-            if demand:
-                for record in demand:
-                    record.city_demand += self.demand
+    def update_demand(self):
+        for wizard in self:
+            wizard.slaughter_slot_demand_id.demand = wizard.demand
+
+            wizard.slaughter_slot_demand_id._update_demand()
