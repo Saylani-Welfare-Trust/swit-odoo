@@ -123,7 +123,7 @@
                                 <tbody>
                                     <tr>
                                         <td>
-                                            <t t-esc="o.product_id.name"/>
+                                            <t t-esc="o.product_id.display_name"/>
                                         </td>
                                         <td>
                                             <t t-esc="o.donation_box_request_id.name"/>
