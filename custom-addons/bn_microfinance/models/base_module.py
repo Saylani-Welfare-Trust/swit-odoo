@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-import UserError, ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 class BaseModule(models.Model):
     _inherit = 'base'
