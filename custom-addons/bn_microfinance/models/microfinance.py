@@ -505,19 +505,35 @@ class Microfinance(models.Model):
         #     self.used_advance_donation_line_id.disbursed_amount += self.advance_donation_amount
 
     def action_send_to_recovery(self):
-        lines = []
+        self.ensure_one()
 
-        for line in self.microfinance_line_ids.filtered(lambda l: (l.amount - l.paid_amount) > 0):
+        existing_lines = self.env['microfinance.line'].search([('microfinance_id', '=', self.id)])
+        outstanding_lines = existing_lines.filtered(
+            lambda l: (l.amount or 0) > 0 and ((l.paid_amount or 0) < (l.amount or 0))
+        ).sorted('due_date')
+
+        if self.microfinance_recovery_line_ids:
+            self.microfinance_recovery_line_ids.unlink()
+
+        lines = []
+        for line in outstanding_lines:
+            outstanding_amount = max((line.amount or 0) - (line.paid_amount or 0), 0)
+            if outstanding_amount <= 0:
+                continue
+
             lines.append((0, 0, {
                 'installment_no': line.installment_no,
                 'due_date': line.due_date,
-                'amount': line.remaining_amount,
+                'amount': outstanding_amount,
                 'paid_amount': 0,
+                'state': 'unpaid',
             }))
 
-        self.microfinance_recovery_line_ids = lines
-        self.in_recovery = True
-        self.state = 'in_recovery'
+        self.write({
+            'microfinance_recovery_line_ids': lines,
+            'in_recovery': True,
+            'state': 'in_recovery',
+        })
 
     def action_move_to_member(self):
         self.state = 'mem_approve'
