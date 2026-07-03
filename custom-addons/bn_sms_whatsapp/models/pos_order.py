@@ -66,7 +66,7 @@ May Allah bless you!
                 self.env['whatsapp.service'].send_template_message(
                     order.partner_id.whatsapp,
                     pdf_url,
-                    f"Receipt_{order.name}.pdf"
+                    "Donation Receipt.pdf"
                 )
 
                 _logger.info('WhatsApp sent successfully')
