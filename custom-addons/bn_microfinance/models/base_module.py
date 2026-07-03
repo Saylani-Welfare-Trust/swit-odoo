@@ -1,9 +1,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
-class BaseModule(models.Model):
+class GlobalUnlinkRestriction(models.AbstractModel):
     _inherit = 'base'
     _name = 'base.module'
 
     def unlink(self):
-        raise UserError(_('You cannot delete a record.'))
+        raise UserError(_('Records of this model cannot be deleted.'))
