@@ -111,7 +111,7 @@ May Allah bless you!
 
     
     def _save_as_attachment(self, order, pdf_data):
-        safe_name = order.name.replace('/', '_')
+        # safe_name = order.name.replace('/', '_')
         filename = f"Donation Receipt.pdf"
 
         # Delete old
@@ -139,6 +139,8 @@ May Allah bless you!
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
 
         # ✅ FINAL WORKING URL
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
+        pdf_url = (
+            f"{base_url}/web/content/{attachment.id}/"
+            f"Donation%20Receipt.pdf?access_token={attachment.access_token}&download=true"
+        )
         return attachment, pdf_url
