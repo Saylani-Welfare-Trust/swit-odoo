@@ -79,7 +79,7 @@ class APIDonationWizard(models.TransientModel):
 
         page = 1
         per_page = 50
-
+        all_page_data = []
         while True:
 
             # =========================================================
@@ -115,12 +115,14 @@ class APIDonationWizard(models.TransientModel):
                 override_payload=payload
             )
 
-            raise ValidationError(str(page_data))
+            # raise ValidationError(str(page_data[0]))
 
             if not page_data:
-                self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
+                # self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
-
+            all_page_data.append({"page": page, "data": page_data})
+            if page == 3:
+                raise ValidationError(str(all_page_data))
             # =========================================================
             # PROCESS THIS PAGE ONLY
             # =========================================================
