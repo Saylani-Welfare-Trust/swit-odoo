@@ -115,7 +115,7 @@ class APIDonationWizard(models.TransientModel):
                 override_payload=payload
             )
 
-            # raise ValidationError(str(page_data[0]))
+            raise ValidationError(str(page_data[0]))
 
             if not page_data:
                 self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
