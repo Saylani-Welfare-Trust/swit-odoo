@@ -163,8 +163,8 @@ class MemberApproval(models.Model):
         analytic_amount_map = {}  # {analytic_account: total_amount}
 
         for line in self.line_ids:
-            analytic_line = self.env['analytical.product.line'].search([
-                ('product_id', '=', line.product_id.id)
+            analytic_line = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [line.product_id.id])
             ], limit=1)
 
             if not analytic_line or not analytic_line.analytic_account_id:
