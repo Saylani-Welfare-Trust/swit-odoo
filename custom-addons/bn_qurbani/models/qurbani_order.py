@@ -105,17 +105,39 @@ class QurbaniOrder(models.Model):
 
             return False
 
+        def _normalize_day_tokens(value):
+            if not value:
+                return set()
+            return set(re.findall(r'[a-z0-9]+', str(value).lower()))
+
+        def _match_qurbani_day(raw_value):
+            input_tokens = _normalize_day_tokens(raw_value)
+            if not input_tokens:
+                return False
+
+            for day in self.env['qurbani.day'].search([]):
+                for field_name in ('name', 'web_qurbani_day'):
+                    field_value = getattr(day, field_name, False)
+                    field_tokens = _normalize_day_tokens(field_value)
+                    if field_tokens and (
+                        input_tokens == field_tokens
+                        or input_tokens.issubset(field_tokens)
+                        or field_tokens.issubset(input_tokens)
+                    ):
+                        return day
+
+            return False
+
         def _get_demand(line, default_hijri, default_product):
             product = _resolve_product(line, default_product)
             if not product:
                 raise ValidationError(f"Line {line.id if line else '?'} has no matching qurbani product")
 
             # DAY MAPPING
-            day = False
-            if getattr(line, 'day', False):
-                day = self.env['qurbani.day'].search([('web_qurbani_day', 'ilike', line.day)], limit=1)
+            day = _match_qurbani_day(getattr(line, 'day', False) or getattr(line, 'name', False))
             if not day:
-                raise ValidationError(f"Unable to map qurbani day '{line.day}'")
+                raw_day = getattr(line, 'day', False) or getattr(line, 'name', False) or ''
+                raise ValidationError(f"Unable to map qurbani day '{raw_day}'")
 
             # HIJRI
             hijri = default_hijri
