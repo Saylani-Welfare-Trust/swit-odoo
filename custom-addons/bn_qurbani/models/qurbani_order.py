@@ -82,10 +82,33 @@ class QurbaniOrder(models.Model):
             except:
                 return time_str
 
+        def _resolve_product(api_line, default_product=False):
+            product = default_product
+            if isinstance(product, str):
+                product = self.env['product.product'].search([('name', 'ilike', product)], limit=1)
+            if product and hasattr(product, 'name'):
+                return product
+
+            candidate_values = []
+            for field_name in ('item', 'type', 'donation_type', 'name'):
+                value = getattr(api_line, field_name, False)
+                if value:
+                    candidate_values.append(str(value).strip())
+
+            for candidate in candidate_values:
+                product = self.env['product.product'].search([('name', 'ilike', candidate)], limit=1)
+                if product:
+                    return product
+                product = self.env['product.product'].search([('display_name', 'ilike', candidate)], limit=1)
+                if product:
+                    return product
+
+            return False
+
         def _get_demand(line, default_hijri, default_product):
-            product = line.product_id or default_product
+            product = _resolve_product(line, default_product)
             if not product:
-                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
+                raise ValidationError(f"Line {line.id if line else '?'} has no matching qurbani product")
 
             # DAY MAPPING
             day = False
@@ -203,9 +226,13 @@ class QurbaniOrder(models.Model):
             if not api_line.exists():
                 raise ValidationError(f"Line ID {api_line.id} does not exist")
 
-            mapping_data = _get_demand(api_line, default_hijri, False)
+            product = _resolve_product(api_line, False)
+            if not product:
+                raise ValidationError(f"Unable to resolve qurbani product for API line {api_line.id}")
+
+            mapping_data = _get_demand(api_line, default_hijri, product)
             demand = mapping_data['demand']
-            qty = int(api_line.quantity or 1)
+            qty = int(getattr(api_line, 'qty', False) or getattr(api_line, 'quantity', False) or 1)
 
             if demand.id not in schedule_usage:
                 schedule_usage[demand.id] = {'demand': demand, 'qty': 0}
@@ -220,8 +247,8 @@ class QurbaniOrder(models.Model):
                 'distribution_id': mapping_data['distribution_id'],
                 'slaughter_location_id': mapping_data['slaughter_location_id'],
                 'quantity': qty,
-                'product_id': api_line.product_id.id,
-                'amount': api_line.amount or 0.0,
+                'product_id': product.id,
+                'amount': getattr(api_line, 'price', False) or getattr(api_line, 'total', 0.0) or 0.0,
                 'hissa_name': api_line.hissa_name or '',
                 'branch': api_line.branch or '',
             })
