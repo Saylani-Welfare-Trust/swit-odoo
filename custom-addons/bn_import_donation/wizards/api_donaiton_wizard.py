@@ -80,8 +80,6 @@ class APIDonationWizard(models.TransientModel):
         page = 1
         per_page = 50
         all_page_data = []
-        max_debug_pages = 5
-        debug_page_reports = []  # DEBUG: page-by-page sync report
         while True:
 
             # =========================================================
@@ -132,18 +130,7 @@ class APIDonationWizard(models.TransientModel):
             # =========================================================
             # PROCESS THIS PAGE ONLY
             # =========================================================
-            page_result = self._process_single_page(page_data, history, company)
-
-            # DEBUG: build a report of what came in on this page
-            debug_page_reports.append({
-                'page': page,
-                'already_synced': page_result.get('already_synced_records', []),
-                'new': page_result.get('new_records', []),
-            })
-
-            # DEBUG: stop after max_debug_pages and show everything collected so far
-            if page >= max_debug_pages:
-                self._raise_sync_debug_report(debug_page_reports)
+            self._process_single_page(page_data, history, company)
 
             # stop condition
             if len(page_data) < per_page:
@@ -151,30 +138,7 @@ class APIDonationWizard(models.TransientModel):
 
             page += 1
 
-        # DEBUG: pagination ended before reaching max_debug_pages - show what we have
-        if debug_page_reports:
-            self._raise_sync_debug_report(debug_page_reports)
-
         return True
-
-    # =========================================================
-    # DEBUG HELPER - builds and raises the page-by-page sync report
-    # =========================================================
-    def _raise_sync_debug_report(self, debug_page_reports):
-        lines = ["Sync check report (per page):\n"]
-        for report in debug_page_reports:
-            page_num = report['page']
-            synced = report['already_synced']
-            new = report['new']
-            lines.append(f"=== Page {page_num} ===")
-            lines.append(f"Already synced: {len(synced)}")
-            for rec in synced:
-                lines.append(pformat(rec))
-            lines.append(f"\nNew (not yet synced): {len(new)}")
-            for rec in new:
-                lines.append(pformat(rec))
-            lines.append("")
-        raise ValidationError("\n".join(lines))
 
     # =========================================================
     # PAGE PROCESSOR (WRAPPER OVER YOUR EXISTING LOGIC)
@@ -213,8 +177,6 @@ class APIDonationWizard(models.TransientModel):
             })
 
         self.create_fetch_log(history.id, "Page Completed", "Done", "Page processing finished")
-
-        return result
 
     # =========================================================
     # API CALL
@@ -432,9 +394,9 @@ class APIDonationWizard(models.TransientModel):
         skipped_records = 0
         processed_records = 0
 
-        # DEBUG: track full record data for already-synced vs newly seen donations
-        already_synced_records = []
-        new_records = []
+        # DEBUG: track which import_ids were already synced vs newly seen
+        already_synced_ids = []
+        new_import_ids = []
 
         donations_to_create = []
 
@@ -444,7 +406,8 @@ class APIDonationWizard(models.TransientModel):
 
             if not import_id or import_id in all_data['existing_import_ids']:
                 skipped_records += 1
-                already_synced_records.append(info)
+                if import_id:
+                    already_synced_ids.append(import_id)
                 self.create_fetch_log(
                     history.id,
                     f"Skipping donation with import_id {import_id} (already exists or missing)",
@@ -454,7 +417,7 @@ class APIDonationWizard(models.TransientModel):
                 continue
 
             processed_records += 1
-            new_records.append(info)
+            new_import_ids.append(import_id)
 
             # Prepare donation values WITHOUT partner creation
             donation_vals = self._prepare_donation_vals_fast_no_partner(
@@ -497,6 +460,17 @@ class APIDonationWizard(models.TransientModel):
                 if product and product.detailed_type == 'product':
                     qty = float(it.get('qty') or 1.0)
                     stock_accumulator[product.id] += qty
+
+        # DEBUG: surface which import_ids were already synced vs which are new,
+        # via ValidationError, instead of the earlier blocking raises.
+        raise ValidationError(
+            "Sync check for this page:\n\n"
+            f"Total records fetched: {total_records}\n"
+            f"Already synced (skipped): {len(already_synced_ids)}\n"
+            f"{already_synced_ids}\n\n"
+            f"New (to be created): {len(new_import_ids)}\n"
+            f"{new_import_ids}"
+        )
 
         # CREATE DONATIONS IN BULK - Just store them, no partner creation
         if donations_to_create:
@@ -554,10 +528,7 @@ class APIDonationWizard(models.TransientModel):
                 'debit': dict(debit_accumulator),
                 'credit': dict(credit_accumulator)
             },
-            'picking_id': picking.id if picking else False,
-            # DEBUG: full record data, used to build the page-by-page sync report
-            'already_synced_records': already_synced_records,
-            'new_records': new_records,
+            'picking_id': picking.id if picking else False
         }
         
     def _prepare_donation_vals_fast_no_partner(self, info, all_data, info_idx, history):
