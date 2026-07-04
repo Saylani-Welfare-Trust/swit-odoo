@@ -70,7 +70,6 @@
                             <img t-if="order.env.company.dn_image"
                                 t-att-src="image_data_uri(order.env.company.dn_image)"
                                 style="height: 100%; width: 100%;"/>                   
-                            <div class="watermark">Duplicate</div>
 
                             <div class="row mb-2">
                                 <div class="col-6">
