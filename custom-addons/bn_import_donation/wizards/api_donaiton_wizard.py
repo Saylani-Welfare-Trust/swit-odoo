@@ -57,12 +57,15 @@ class APIDonationWizard(models.TransientModel):
 
         today = fields.Date.today()
 
-        # Yesterday range
+        # Fallback range: yesterday (used only if the wizard's own dates are empty)
         yesterday_start_date = today - timedelta(days=1)
         yesterday_end_date = today - timedelta(days=1)
 
-        start_date = yesterday_start_date or self.start_date
-        end_date = yesterday_end_date or self.end_date
+        # FIXED: previously `yesterday_start_date or self.start_date` always picked
+        # yesterday because yesterday_start_date is never falsy - the wizard's
+        # own start_date/end_date fields were being ignored entirely.
+        start_date = self.start_date or yesterday_start_date
+        end_date = self.end_date or yesterday_end_date
 
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
@@ -133,6 +136,7 @@ class APIDonationWizard(models.TransientModel):
             # before any dedup/validation/processing logic touches it
             debug_page_reports.append({
                 'page': page,
+                'requested_payload': payload,
                 'count': len(page_data),
                 'records': page_data,
             })
@@ -165,8 +169,18 @@ class APIDonationWizard(models.TransientModel):
     def _raise_sync_debug_report(self, debug_page_reports):
         lines = ["Raw data from API (per page):\n"]
         for report in debug_page_reports:
+            payload = report.get('requested_payload', {})
             lines.append(f"=== Page {report['page']} ({report['count']} records) ===")
+            lines.append(
+                f"Requested startDate: {payload.get('startDate')}  "
+                f"endDate: {payload.get('endDate')}"
+            )
             for rec in report['records']:
+                lines.append(
+                    f"  _id={rec.get('_id')}  "
+                    f"createdAt={rec.get('createdAt')}  "
+                    f"updatedAt={rec.get('updatedAt')}"
+                )
                 lines.append(pformat(rec))
             lines.append("")
         raise ValidationError("\n".join(lines))
