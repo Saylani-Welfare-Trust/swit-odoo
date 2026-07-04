@@ -57,12 +57,15 @@ class APIDonationWizard(models.TransientModel):
 
         today = fields.Date.today()
 
-        # Yesterday range
+        # Fallback range: yesterday (used only if the wizard's own dates are empty)
         yesterday_start_date = today - timedelta(days=1)
         yesterday_end_date = today - timedelta(days=1)
 
-        start_date = yesterday_start_date or self.start_date
-        end_date = yesterday_end_date or self.end_date
+        # FIXED: previously `yesterday_start_date or self.start_date` always picked
+        # yesterday because yesterday_start_date is never falsy - the wizard's
+        # own start_date/end_date fields were being ignored entirely.
+        start_date = self.start_date or yesterday_start_date
+        end_date = self.end_date or yesterday_end_date
 
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
@@ -80,6 +83,8 @@ class APIDonationWizard(models.TransientModel):
         page = 1
         per_page = 50
         all_page_data = []
+        max_debug_pages = 5
+        debug_page_reports = []  # DEBUG: page-by-page sync report
         while True:
 
             # =========================================================
@@ -115,18 +120,36 @@ class APIDonationWizard(models.TransientModel):
                 override_payload=payload
             )
 
-            # raise ValidationError(str(page_data[0]))
+            # DEBUG (commented out): was halting execution right after fetch
+            # raise ValidationError(str(page_data))
 
             if not page_data:
                 # self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
             all_page_data.append({"page": page, "data": page_data})
-            if page == 3:
-                raise ValidationError(str(all_page_data))
+
+            # DEBUG (commented out): was halting execution on page 3
+            # if page == 3:
+            #     raise ValidationError(str(all_page_data))
+
+            # DEBUG: capture the raw data as returned by the API for this page,
+            # before any dedup/validation/processing logic touches it
+            debug_page_reports.append({
+                'page': page,
+                'requested_payload': payload,
+                'count': len(page_data),
+                'records': page_data,
+            })
+
+            # DEBUG: stop after max_debug_pages and show everything collected so far
+            if page >= max_debug_pages:
+                self._raise_sync_debug_report(debug_page_reports)
+
             # =========================================================
             # PROCESS THIS PAGE ONLY
             # =========================================================
-            self._process_single_page(page_data, history, company)
+            # DEBUG: processing skipped while inspecting raw data
+            # page_result = self._process_single_page(page_data, history, company)
 
             # stop condition
             if len(page_data) < per_page:
@@ -134,7 +157,33 @@ class APIDonationWizard(models.TransientModel):
 
             page += 1
 
+        # DEBUG: pagination ended before reaching max_debug_pages - show what we have
+        if debug_page_reports:
+            self._raise_sync_debug_report(debug_page_reports)
+
         return True
+
+    # =========================================================
+    # DEBUG HELPER - builds and raises the page-by-page raw data report
+    # =========================================================
+    def _raise_sync_debug_report(self, debug_page_reports):
+        lines = ["Raw data from API (per page):\n"]
+        for report in debug_page_reports:
+            payload = report.get('requested_payload', {})
+            lines.append(f"=== Page {report['page']} ({report['count']} records) ===")
+            lines.append(
+                f"Requested startDate: {payload.get('startDate')}  "
+                f"endDate: {payload.get('endDate')}"
+            )
+            for rec in report['records']:
+                lines.append(
+                    f"  _id={rec.get('_id')}  "
+                    f"createdAt={rec.get('createdAt')}  "
+                    f"updatedAt={rec.get('updatedAt')}"
+                )
+                lines.append(pformat(rec))
+            lines.append("")
+        raise ValidationError("\n".join(lines))
 
     # =========================================================
     # PAGE PROCESSOR (WRAPPER OVER YOUR EXISTING LOGIC)
@@ -173,6 +222,8 @@ class APIDonationWizard(models.TransientModel):
             })
 
         self.create_fetch_log(history.id, "Page Completed", "Done", "Page processing finished")
+
+        return result
 
     # =========================================================
     # API CALL
@@ -390,6 +441,10 @@ class APIDonationWizard(models.TransientModel):
         skipped_records = 0
         processed_records = 0
 
+        # DEBUG: track full record data for already-synced vs newly seen donations
+        already_synced_records = []
+        new_records = []
+
         donations_to_create = []
 
         for info_idx, info in enumerate(donations_info):
@@ -398,6 +453,7 @@ class APIDonationWizard(models.TransientModel):
 
             if not import_id or import_id in all_data['existing_import_ids']:
                 skipped_records += 1
+                already_synced_records.append(info)
                 self.create_fetch_log(
                     history.id,
                     f"Skipping donation with import_id {import_id} (already exists or missing)",
@@ -407,6 +463,7 @@ class APIDonationWizard(models.TransientModel):
                 continue
 
             processed_records += 1
+            new_records.append(info)
 
             # Prepare donation values WITHOUT partner creation
             donation_vals = self._prepare_donation_vals_fast_no_partner(
@@ -506,7 +563,10 @@ class APIDonationWizard(models.TransientModel):
                 'debit': dict(debit_accumulator),
                 'credit': dict(credit_accumulator)
             },
-            'picking_id': picking.id if picking else False
+            'picking_id': picking.id if picking else False,
+            # DEBUG: full record data, used to build the page-by-page sync report
+            'already_synced_records': already_synced_records,
+            'new_records': new_records,
         }
         
     def _prepare_donation_vals_fast_no_partner(self, info, all_data, info_idx, history):
@@ -597,24 +657,50 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 3. Create qurbani order lines (from upper code)
                 # -------------------------------------------------------------
-                for idx in range(int(it.get('qty', 1) or 1)):
+                # FIXED: number of lines should follow the number of share
+                # names actually provided, not `qty` - a "Full - 7 Shares"
+                # item can have qty=2 (2 units bought) but 14 share_names
+                # (2 x 7 shares). Using qty here silently dropped shares.
+                item_qty = int(it.get('qty', 1) or 1)
+                num_lines = len(share_names)
+                if num_lines != item_qty:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani share count mismatch for item '{item_name}': "
+                        f"qty={item_qty} but {num_lines} share_names provided. "
+                        f"Using share_names count ({num_lines}) to build order lines.",
+                        'Warning',
+                        'qty vs share_names length mismatch'
+                    )
+
+                item_total = float(it.get('total', 0) or 0)
+                # FIXED: previously each generated line carried the item's
+                # full total, so summing `total` across lines double/multi
+                # counted the amount. Split evenly across the actual lines.
+                per_line_total = item_total / num_lines if num_lines else item_total
+
+                for idx in range(num_lines):
                     share_name = share_names[idx % len(share_names)]
 
                     order_lines.append({
                         'donation_type': it.get('donationType', ''),
-                        'total': float(it.get('total', 0) or 0),
+                        'total': per_line_total,
                         'price': it.get('price', 0),
                         'price_id': it.get('price_id', 0),
-                        'qty': it.get('qty', 0),
+                        'qty': 1,
                         'type': types_name,
                         'item': item_name,
                         'donation_no': it.get('donationNo', 0),
                         'day': it.get('day', ''),
-                        'city': it.get('qurbaniCity', ''),
+                        # FIXED: item JSON uses flat 'city'/'branch' keys,
+                        # not 'qurbaniCity'/'qurbaniBranch' (those only
+                        # exist under donor_details) - was always blank.
+                        'city': it.get('city', ''),
                         'hissa_name': share_name,
-                        'branch': it.get('qurbaniBranch', ''),
+                        'branch': it.get('branch', ''),
                         'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
                     })
+
 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         self.create_fetch_log(history.id, f"order_lines for donation at index {info_idx}: {order_lines}", 'Processing', f"Prepared Order lines for donation at index {info_idx}")
@@ -783,24 +869,50 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 # 3. Create qurbani order lines (from upper code)
                 # -------------------------------------------------------------
-                for idx in range(int(it.get('qty', 1) or 1)):
+                # FIXED: number of lines should follow the number of share
+                # names actually provided, not `qty` - a "Full - 7 Shares"
+                # item can have qty=2 (2 units bought) but 14 share_names
+                # (2 x 7 shares). Using qty here silently dropped shares.
+                item_qty = int(it.get('qty', 1) or 1)
+                num_lines = len(share_names)
+                if num_lines != item_qty:
+                    self.create_fetch_log(
+                        history.id,
+                        f"Qurbani share count mismatch for item '{item_name}': "
+                        f"qty={item_qty} but {num_lines} share_names provided. "
+                        f"Using share_names count ({num_lines}) to build order lines.",
+                        'Warning',
+                        'qty vs share_names length mismatch'
+                    )
+
+                item_total = float(it.get('total', 0) or 0)
+                # FIXED: previously each generated line carried the item's
+                # full total, so summing `total` across lines double/multi
+                # counted the amount. Split evenly across the actual lines.
+                per_line_total = item_total / num_lines if num_lines else item_total
+
+                for idx in range(num_lines):
                     share_name = share_names[idx % len(share_names)]
 
                     order_lines.append({
                         'donation_type': it.get('donationType', ''),
-                        'total': float(it.get('total', 0) or 0),
+                        'total': per_line_total,
                         'price': it.get('price', 0),
                         'price_id': it.get('price_id', 0),
-                        'qty': it.get('qty', 0),
+                        'qty': 1,
                         'type': types_name,
                         'item': item_name,
                         'donation_no': it.get('donationNo', 0),
                         'day': it.get('day', ''),
-                        'city': it.get('qurbaniCity', ''),
+                        # FIXED: item JSON uses flat 'city'/'branch' keys,
+                        # not 'qurbaniCity'/'qurbaniBranch' (those only
+                        # exist under donor_details) - was always blank.
+                        'city': it.get('city', ''),
                         'hissa_name': share_name,
-                        'branch': it.get('qurbaniBranch', ''),
+                        'branch': it.get('branch', ''),
                         'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
                     })
+
 
         self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
         self.create_fetch_log(history.id, f"order_lines for donation at index {info_idx}: {order_lines}", 'Processing', f"Prepared Order lines for donation at index {info_idx}")
