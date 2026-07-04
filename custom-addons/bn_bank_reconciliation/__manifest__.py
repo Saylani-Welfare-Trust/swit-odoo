@@ -8,7 +8,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Bank Reconciliation',
     'depends': [
-        'base_accounting_kit'
+        'base_accounting_kit',
+        'bn_master_setup',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -17,6 +18,8 @@
         'views/bank_reconciliation_transaction.xml',
         'views/bank_reconciliation_reconciled.xml',
         'views/menu.xml',
+        'views/bank_statement_header_type.xml',
+        'views/bank_statement_config.xml',
         'wizards/reconcile_wizard.xml',
         'wizards/import_bank_statement.xml',
     ],

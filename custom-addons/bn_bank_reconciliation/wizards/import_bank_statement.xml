@@ -22,6 +22,7 @@
                         <group>
                             <field name="name" placeholder="Reference"/>
                             <field name="date"/>
+                            <field name="bank_statement_config_id" string="Bank Statement"/>
                             <field name="account_id"/>
                             <field name="journal_id"/>
                             <field name="opening_balance"/>

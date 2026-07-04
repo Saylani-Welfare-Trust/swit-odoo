@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bank_view_tree" model="ir.ui.view">
+        <field name="name">bank.view.tree</field>
+        <field name="model">bank</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+    
+    <record id="bank_action" model="ir.actions.act_window">
+        <field name="name">Bank</field>
+        <field name="res_model">bank</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new bank....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="bank_menu"
+        name="Bank"
+        action="bank_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="5"/>
+
+</odoo>
