@@ -648,7 +648,7 @@ class APIDonationWizard(models.TransientModel):
                         # 'city' key.
                         'city': donor.get('qurbaniCity', ''),
                         'hissa_name': share_name,
-                        'branch': it.get('branch', ''),
+                        'branch': it.get('qurbaniBranch', ''),
                         'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
                     })
 
