@@ -18,7 +18,7 @@
                                 }
 
                                 h1 {
-                                    font-size: 14px;
+                                    font-size: 10px;
                                     font-weight: bold;
                                     margin: 2px 0;
                                 }
@@ -63,7 +63,7 @@
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1>Donation Receipt</h1>
+                                    <h1 style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1 class="text-transform" style="font-size: 12px;">
@@ -171,7 +171,7 @@
                                         <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/>
                                     </div>
-                                    <div><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
+                                    <div><strong>Register Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div>
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
@@ -189,7 +189,9 @@
                                     <div><strong>Entered by: </strong> <t t-esc="order.user_id.employee_id.name"/></div>
                                 </div>
                             </div>
-
+                            <div style="text-align: center; font-size: 12px;">
+                                © 2026–2027. All Rights Reserved. Saylani Welfare International Trust.
+                            </div>
                             <div style="text-align: center; font-size: 12px;">
                                 Powered by BytesNode
                             </div>
