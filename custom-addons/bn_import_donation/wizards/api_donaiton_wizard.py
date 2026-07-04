@@ -83,8 +83,6 @@ class APIDonationWizard(models.TransientModel):
         page = 1
         per_page = 50
         all_page_data = []
-        max_debug_pages = 5
-        debug_page_reports = []  # DEBUG: page-by-page sync report
         while True:
 
             # =========================================================
@@ -120,36 +118,15 @@ class APIDonationWizard(models.TransientModel):
                 override_payload=payload
             )
 
-            # DEBUG (commented out): was halting execution right after fetch
-            # raise ValidationError(str(page_data))
-
             if not page_data:
                 # self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
             all_page_data.append({"page": page, "data": page_data})
 
-            # DEBUG (commented out): was halting execution on page 3
-            # if page == 3:
-            #     raise ValidationError(str(all_page_data))
-
-            # DEBUG: capture the raw data as returned by the API for this page,
-            # before any dedup/validation/processing logic touches it
-            debug_page_reports.append({
-                'page': page,
-                'requested_payload': payload,
-                'count': len(page_data),
-                'records': page_data,
-            })
-
-            # DEBUG: stop after max_debug_pages and show everything collected so far
-            if page >= max_debug_pages:
-                self._raise_sync_debug_report(debug_page_reports)
-
             # =========================================================
             # PROCESS THIS PAGE ONLY
             # =========================================================
-            # DEBUG: processing skipped while inspecting raw data
-            # page_result = self._process_single_page(page_data, history, company)
+            self._process_single_page(page_data, history, company)
 
             # stop condition
             if len(page_data) < per_page:
@@ -157,33 +134,7 @@ class APIDonationWizard(models.TransientModel):
 
             page += 1
 
-        # DEBUG: pagination ended before reaching max_debug_pages - show what we have
-        if debug_page_reports:
-            self._raise_sync_debug_report(debug_page_reports)
-
         return True
-
-    # =========================================================
-    # DEBUG HELPER - builds and raises the page-by-page raw data report
-    # =========================================================
-    def _raise_sync_debug_report(self, debug_page_reports):
-        lines = ["Raw data from API (per page):\n"]
-        for report in debug_page_reports:
-            payload = report.get('requested_payload', {})
-            lines.append(f"=== Page {report['page']} ({report['count']} records) ===")
-            lines.append(
-                f"Requested startDate: {payload.get('startDate')}  "
-                f"endDate: {payload.get('endDate')}"
-            )
-            for rec in report['records']:
-                lines.append(
-                    f"  _id={rec.get('_id')}  "
-                    f"createdAt={rec.get('createdAt')}  "
-                    f"updatedAt={rec.get('updatedAt')}"
-                )
-                lines.append(pformat(rec))
-            lines.append("")
-        raise ValidationError("\n".join(lines))
 
     # =========================================================
     # PAGE PROCESSOR (WRAPPER OVER YOUR EXISTING LOGIC)
