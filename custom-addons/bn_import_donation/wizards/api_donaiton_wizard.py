@@ -129,21 +129,23 @@ class APIDonationWizard(models.TransientModel):
             # if page == 3:
             #     raise ValidationError(str(all_page_data))
 
-            # =========================================================
-            # PROCESS THIS PAGE ONLY
-            # =========================================================
-            page_result = self._process_single_page(page_data, history, company)
-
-            # DEBUG: build a report of what came in on this page
+            # DEBUG: capture the raw data as returned by the API for this page,
+            # before any dedup/validation/processing logic touches it
             debug_page_reports.append({
                 'page': page,
-                'already_synced': page_result.get('already_synced_records', []),
-                'new': page_result.get('new_records', []),
+                'count': len(page_data),
+                'records': page_data,
             })
 
             # DEBUG: stop after max_debug_pages and show everything collected so far
             if page >= max_debug_pages:
                 self._raise_sync_debug_report(debug_page_reports)
+
+            # =========================================================
+            # PROCESS THIS PAGE ONLY
+            # =========================================================
+            # DEBUG: processing skipped while inspecting raw data
+            # page_result = self._process_single_page(page_data, history, company)
 
             # stop condition
             if len(page_data) < per_page:
@@ -158,20 +160,13 @@ class APIDonationWizard(models.TransientModel):
         return True
 
     # =========================================================
-    # DEBUG HELPER - builds and raises the page-by-page sync report
+    # DEBUG HELPER - builds and raises the page-by-page raw data report
     # =========================================================
     def _raise_sync_debug_report(self, debug_page_reports):
-        lines = ["Sync check report (per page):\n"]
+        lines = ["Raw data from API (per page):\n"]
         for report in debug_page_reports:
-            page_num = report['page']
-            synced = report['already_synced']
-            new = report['new']
-            lines.append(f"=== Page {page_num} ===")
-            lines.append(f"Already synced: {len(synced)}")
-            for rec in synced:
-                lines.append(pformat(rec))
-            lines.append(f"\nNew (not yet synced): {len(new)}")
-            for rec in new:
+            lines.append(f"=== Page {report['page']} ({report['count']} records) ===")
+            for rec in report['records']:
                 lines.append(pformat(rec))
             lines.append("")
         raise ValidationError("\n".join(lines))
