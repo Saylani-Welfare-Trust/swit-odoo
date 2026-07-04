@@ -115,14 +115,18 @@ class APIDonationWizard(models.TransientModel):
                 override_payload=payload
             )
 
-            raise ValidationError(str(page_data))
+            # DEBUG (commented out): was halting execution right after fetch
+            # raise ValidationError(str(page_data))
 
             if not page_data:
                 # self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
                 break
             all_page_data.append({"page": page, "data": page_data})
-            if page == 3:
-                raise ValidationError(str(all_page_data))
+
+            # DEBUG (commented out): was halting execution on page 3
+            # if page == 3:
+            #     raise ValidationError(str(all_page_data))
+
             # =========================================================
             # PROCESS THIS PAGE ONLY
             # =========================================================
@@ -390,6 +394,10 @@ class APIDonationWizard(models.TransientModel):
         skipped_records = 0
         processed_records = 0
 
+        # DEBUG: track which import_ids were already synced vs newly seen
+        already_synced_ids = []
+        new_import_ids = []
+
         donations_to_create = []
 
         for info_idx, info in enumerate(donations_info):
@@ -398,6 +406,8 @@ class APIDonationWizard(models.TransientModel):
 
             if not import_id or import_id in all_data['existing_import_ids']:
                 skipped_records += 1
+                if import_id:
+                    already_synced_ids.append(import_id)
                 self.create_fetch_log(
                     history.id,
                     f"Skipping donation with import_id {import_id} (already exists or missing)",
@@ -407,6 +417,7 @@ class APIDonationWizard(models.TransientModel):
                 continue
 
             processed_records += 1
+            new_import_ids.append(import_id)
 
             # Prepare donation values WITHOUT partner creation
             donation_vals = self._prepare_donation_vals_fast_no_partner(
@@ -449,6 +460,17 @@ class APIDonationWizard(models.TransientModel):
                 if product and product.detailed_type == 'product':
                     qty = float(it.get('qty') or 1.0)
                     stock_accumulator[product.id] += qty
+
+        # DEBUG: surface which import_ids were already synced vs which are new,
+        # via ValidationError, instead of the earlier blocking raises.
+        raise ValidationError(
+            "Sync check for this page:\n\n"
+            f"Total records fetched: {total_records}\n"
+            f"Already synced (skipped): {len(already_synced_ids)}\n"
+            f"{already_synced_ids}\n\n"
+            f"New (to be created): {len(new_import_ids)}\n"
+            f"{new_import_ids}"
+        )
 
         # CREATE DONATIONS IN BULK - Just store them, no partner creation
         if donations_to_create:
