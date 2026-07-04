@@ -643,10 +643,10 @@ class APIDonationWizard(models.TransientModel):
                         'item': item_name,
                         'donation_no': it.get('donationNo', 0),
                         'day': it.get('day', ''),
-                        # FIXED: item JSON uses flat 'city'/'branch' keys,
-                        # not 'qurbaniCity'/'qurbaniBranch' (those only
-                        # exist under donor_details) - was always blank.
-                        'city': it.get('city', ''),
+                        # City now sourced from donor_details.qurbaniCity
+                        # (donation-level city) instead of the item's own
+                        # 'city' key.
+                        'city': donor.get('qurbaniCity', ''),
                         'hissa_name': share_name,
                         'branch': it.get('branch', ''),
                         'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
@@ -855,10 +855,10 @@ class APIDonationWizard(models.TransientModel):
                         'item': item_name,
                         'donation_no': it.get('donationNo', 0),
                         'day': it.get('day', ''),
-                        # FIXED: item JSON uses flat 'city'/'branch' keys,
-                        # not 'qurbaniCity'/'qurbaniBranch' (those only
-                        # exist under donor_details) - was always blank.
-                        'city': it.get('city', ''),
+                        # City now sourced from donor_details.qurbaniCity
+                        # (donation-level city) instead of the item's own
+                        # 'city' key.
+                        'city': donor.get('qurbaniCity', ''),
                         'hissa_name': share_name,
                         'branch': it.get('branch', ''),
                         'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
