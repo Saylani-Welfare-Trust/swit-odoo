@@ -89,7 +89,13 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
-    
+    @api.model_create_multi
+    def create(self, vals_list):
+        pakistan_id = self.env.ref('base.pk').id
+        for vals in vals_list:
+            if not vals.get('country_code_id'):
+                vals['country_code_id'] = pakistan_id
+        return super().create(vals_list)  
     
     @api.onchange('category_id')
     def _onchange_category_id(self):
@@ -421,3 +427,4 @@ class ResPartner(models.Model):
                 'default_partner_id': self.id,
             }
         }
+
