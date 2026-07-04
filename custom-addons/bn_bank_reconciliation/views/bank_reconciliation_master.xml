@@ -58,9 +58,10 @@
                     <group>
                         <group>
                             <field name="date"/>
+                            <field name="bank_statement_config_id" string="Bank Statement" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="0"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="currency_id"/>
                         </group>

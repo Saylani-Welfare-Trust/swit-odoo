@@ -30,17 +30,18 @@ class BankReconciliationMaster(models.Model):
         required=True,
         domain="[('deprecated', '=', False)]"
     )
-    posted_account_id = fields.Many2one(
-        'account.account',
-        string='Posted Account',
-        required=True,
-        domain="[('account_type', 'in', ['asset_cash', 'asset_current']), ('deprecated', '=', False)]"
-    )
     journal_id = fields.Many2one(
         'account.journal',
         string='Journal',
         required=True,
         domain="[('type', 'in', ['bank', 'cash'])]"
+    )
+    posted_account_id = fields.Many2one(
+        related='journal_id.default_account_id',
+        string='Posted Account',
+        required=True,
+        store=True,
+        domain="[('account_type', 'in', ['asset_cash', 'asset_current']), ('deprecated', '=', False)]"
     )
     company_id = fields.Many2one(
         'res.company',
@@ -53,6 +54,11 @@ class BankReconciliationMaster(models.Model):
         string='Currency',
         related='company_id.currency_id',
         readonly=True
+    )
+    bank_statement_config_id = fields.Many2one(
+        'bank.statement.config',
+        string='Bank Statement Config',
+        required=True
     )
 
     state = fields.Selection([

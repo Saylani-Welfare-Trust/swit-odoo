@@ -26,12 +26,14 @@ class BankStatementImportWizard(models.TransientModel):
 
     name = fields.Char(string='Reference', help='Leave empty for auto-sequence')
     date = fields.Date(related='master_id.date', string='Date', store=True)
+    
     account_id = fields.Many2one(related='master_id.account_id', string='Account', store=True)
     journal_id = fields.Many2one(related='master_id.journal_id', string='Journal', store=True)
     posted_account_id = fields.Many2one(related='master_id.posted_account_id', string='Posted Account', store=True)
     opening_balance = fields.Monetary(related='master_id.opening_balance', string='Opening Balance', store=True)
     currency_id = fields.Many2one(related='master_id.currency_id', string='Currency', store=True)
     company_id = fields.Many2one(related='master_id.company_id', string='Company', store=True)
+    bank_statement_config_id = fields.Many2one(related='master_id.bank_statement_config_id', string='Bank Statement Config', store=True)
 
     file = fields.Binary(string='File', required=True, attachment=True)
     file_name = fields.Char(string='File Name', required=True)
@@ -109,115 +111,171 @@ class BankStatementImportWizard(models.TransientModel):
 
     def _parse_csv(self):
         data = []
+
         try:
-            file_content = base64.b64decode(self.master_id.file)
+            file_content = base64.b64decode(self.file)
+
             try:
-                content = file_content.decode('utf-8')
+                content = file_content.decode("utf-8")
             except UnicodeDecodeError:
-                content = file_content.decode('latin-1')
-            csv_reader = csv.DictReader(io.StringIO(content), delimiter=self.delimiter)
-            expected_headers = ['Date', 'Description', 'Debit', 'Credit', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
-            if not all(h in csv_reader.fieldnames for h in expected_headers):
-                raise UserError(_(
-                    'CSV headers must include: Date, Description, Debit, Credit, Reference, Payment Reference, Partner, Invoice Number. '
-                    'Found headers: %s' % ', '.join(csv_reader.fieldnames)
-                ))
-            for row in csv_reader:
-                date_str = row.get('Date', '').strip()
+                content = file_content.decode("latin-1")
+
+            rows = list(csv.reader(io.StringIO(content), delimiter=self.delimiter))
+
+            if len(rows) <= 1:
+                return []
+
+            config = self.bank_statement_config_id
+
+            if not config:
+                raise UserError(_("Please select a Bank Statement Configuration."))
+
+            header_map = {
+                line.header_type_id.name: line.position
+                for line in config.header_ids
+            }
+
+            def get(row, key):
+                index = header_map.get(key)
+                if index is None or index >= len(row):
+                    return ""
+                return row[index]
+
+            for row in rows[1:]:
+
+                date_str = str(get(row, "Date")).strip()
+
                 if not date_str:
                     continue
+
+                date_obj = False
+
+                for fmt in (
+                    "%Y-%m-%d",
+                    "%d/%m/%Y",
+                    "%m/%d/%Y",
+                    "%d-%m-%Y",
+                ):
+                    try:
+                        date_obj = datetime.strptime(date_str, fmt).date()
+                        break
+                    except Exception:
+                        pass
+
+                if not date_obj:
+                    continue
+
                 try:
-                    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y'):
-                        try:
-                            date_obj = datetime.strptime(date_str, fmt).date()
-                            break
-                        except ValueError:
-                            continue
-                    else:
-                        raise ValueError
-                except:
-                    raise UserError(_('Invalid date format in row: %s. Please use YYYY-MM-DD, DD/MM/YYYY, or similar.') % date_str)
-                
-                debit_str = row.get('Debit', '0').strip().replace(',', '')
-                credit_str = row.get('Credit', '0').strip().replace(',', '')
-                try:
-                    debit = float(debit_str)
-                except:
+                    debit = float(str(get(row, "Debit") or 0).replace(",", ""))
+                except Exception:
                     debit = 0.0
+
                 try:
-                    credit = float(credit_str)
-                except:
+                    credit = float(str(get(row, "Credit") or 0).replace(",", ""))
+                except Exception:
                     credit = 0.0
-                    
+
                 data.append({
-                    'Date': date_obj,
-                    'Description': row.get('Description', '').strip(),
-                    'Debit': debit,
-                    'Credit': credit,
-                    'Reference': row.get('Reference', '').strip(),
-                    'Payment Reference': row.get('Payment Reference', '').strip(),
-                    'Partner': row.get('Partner', '').strip(),
-                    'Invoice Number': row.get('Invoice Number', '').strip(),
+                    "Date": date_obj,
+                    "Description": str(get(row, "Description") or "").strip(),
+                    "Debit": debit,
+                    "Credit": credit,
+                    "Reference": str(get(row, "Reference") or "").strip(),
+                    "Payment Reference": str(get(row, "Payment Reference") or "").strip(),
+                    "Partner": str(get(row, "Partner") or "").strip(),
+                    "Invoice Number": str(get(row, "Invoice Number") or "").strip(),
                 })
+
         except Exception as e:
-            raise UserError(_('Error parsing CSV: %s') % str(e))
+            raise UserError(_("Error parsing CSV: %s") % str(e))
+
         return data
 
     def _parse_excel(self):
         if not xlrd:
-            raise UserError(_('xlrd library is required to read Excel files. Please install it (pip install xlrd).'))
+            raise UserError(_("Please install xlrd."))
+
         data = []
+
         try:
             file_content = base64.b64decode(self.master_id.file)
             book = xlrd.open_workbook(file_contents=file_content)
             sheet = book.sheet_by_index(0)
-            header = [str(cell.value).strip() for cell in sheet.row(0)]
-            expected_headers = ['Date', 'Description', 'Debit', 'Credit', 'Reference', 'Payment Reference', 'Partner', 'Invoice Number']
-            if not all(h in header for h in expected_headers):
-                raise UserError(_(
-                    'Excel headers must include: Date, Description, Debit, Credit, Reference, Payment Reference, Partner, Invoice Number. '
-                    'Found: %s' % ', '.join(header)
-                ))
-            col_map = {h: header.index(h) for h in expected_headers if h in header}
-            for row_idx in range(1, sheet.nrows):
-                row = sheet.row(row_idx)
-                date_val = row[col_map['Date']].value
+
+            config = self.bank_statement_config_id
+
+            if not config:
+                raise UserError(_("Please select a Bank Statement Configuration."))
+
+            header_map = {
+                line.header_type_id.name: line.position
+                for line in config.header_ids
+            }
+
+            def get(row, key):
+                index = header_map.get(key)
+                if index is None or index >= len(row):
+                    return ""
+                return row[index].value
+
+            for row_no in range(1, sheet.nrows):
+                row = sheet.row(row_no)
+
+                date_val = get(row, "Date")
+                if not date_val:
+                    continue
+
                 if isinstance(date_val, float):
                     try:
-                        date_tuple = xlrd.xldate.xldate_as_tuple(date_val, book.datemode)
+                        date_tuple = xlrd.xldate.xldate_as_tuple(
+                            date_val,
+                            book.datemode
+                        )
                         date_obj = datetime(*date_tuple).date()
-                    except:
-                        date_obj = False
+                    except Exception:
+                        continue
                 else:
-                    date_str = str(date_val).strip()
-                    try:
-                        date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
-                    except:
-                        date_obj = False
-                if not date_obj:
-                    continue
-                    
-                debit_str = str(row[col_map['Debit']].value).strip().replace(',', '')
-                credit_str = str(row[col_map['Credit']].value).strip().replace(',', '')
+                    date_obj = False
+                    for fmt in (
+                        "%Y-%m-%d",
+                        "%d/%m/%Y",
+                        "%m/%d/%Y",
+                        "%d-%m-%Y",
+                    ):
+                        try:
+                            date_obj = datetime.strptime(
+                                str(date_val).strip(),
+                                fmt,
+                            ).date()
+                            break
+                        except Exception:
+                            pass
+
+                    if not date_obj:
+                        continue
+
                 try:
-                    debit = float(debit_str)
-                except:
+                    debit = float(str(get(row, "Debit") or 0).replace(",", ""))
+                except Exception:
                     debit = 0.0
+
                 try:
-                    credit = float(credit_str)
-                except:
+                    credit = float(str(get(row, "Credit") or 0).replace(",", ""))
+                except Exception:
                     credit = 0.0
-                    
+
                 data.append({
-                    'Date': date_obj,
-                    'Description': str(row[col_map['Description']].value).strip(),
-                    'Debit': debit,
-                    'Credit': credit,
-                    'Reference': str(row[col_map['Reference']].value).strip(),
-                    'Payment Reference': str(row[col_map['Payment Reference']].value).strip(),
-                    'Partner': str(row[col_map['Partner']].value).strip(),
-                    'Invoice Number': str(row[col_map['Invoice Number']].value).strip(),
+                    "Date": date_obj,
+                    "Description": str(get(row, "Description") or "").strip(),
+                    "Debit": debit,
+                    "Credit": credit,
+                    "Reference": str(get(row, "Reference") or "").strip(),
+                    "Payment Reference": str(get(row, "Payment Reference") or "").strip(),
+                    "Partner": str(get(row, "Partner") or "").strip(),
+                    "Invoice Number": str(get(row, "Invoice Number") or "").strip(),
                 })
+
         except Exception as e:
-            raise UserError(_('Error parsing Excel: %s') % str(e))
+            raise UserError(_("Error parsing Excel: %s") % str(e))
+
         return data
