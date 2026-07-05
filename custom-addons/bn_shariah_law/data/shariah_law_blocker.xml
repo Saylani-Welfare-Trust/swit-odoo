@@ -5,7 +5,6 @@
         <field name="enable_pos">False</field>
         <field name="enable_donations">False</field>
         <field name="enable_dik">False</field>
-        <field name="enable_api_donation">False</field>
         <field name="enable_expense">False</field>
         <field name="enable_purchase">False</field>
         <field name="enable_welfare">False</field>
