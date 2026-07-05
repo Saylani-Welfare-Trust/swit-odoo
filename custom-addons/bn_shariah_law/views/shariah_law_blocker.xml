@@ -6,7 +6,7 @@
         <field name="name">shariah.law.blocker.view.tree</field>
         <field name="model">shariah.law.blocker</field>
         <field name="arch" type="xml">
-            <tree string="Shariah Law Blocker" create="0" edit="0" delete="0">
+            <tree string="Shariah Law Blocker" editable="bottom" create="0" delete="0">
                 <field name="company_id"/>
                 <field name="enable_pos" widget="boolean_toggle"/>
                 <field name="enable_donations" widget="boolean_toggle"/>
