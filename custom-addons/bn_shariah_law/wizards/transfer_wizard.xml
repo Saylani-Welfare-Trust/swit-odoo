@@ -7,6 +7,8 @@
         <field name="arch" type="xml">
             <form string="Fund Transfer">
                 <sheet>
+                    <field name="allowed_dest_count" invisible="1"/>
+
                     <!-- Info Messages -->
                     <div class="alert alert-info" role="alert" 
                          invisible="allowed_dest_count != 0">
