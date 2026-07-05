@@ -16,6 +16,7 @@
         'bn_welfare',
     ],
     'data': [
+        'data/ir_module_category.xml',
         'data/schedule_action.xml',
         'data/sequence.xml',
         'security/group.xml',
