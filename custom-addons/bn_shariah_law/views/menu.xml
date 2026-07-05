@@ -30,10 +30,16 @@
         sequence="30"/>
 
     <menuitem
+        id="shariah_law_master_menu"
+        name="Shariah Law"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="40"/>
+
+    <menuitem
         id="shariah_law_config_menu"
         name="Configuration"
         action="shariah_law_config_action"
-        parent="bn_master_setup.master_setup_menu"
+        parent="shariah_law_master_menu"
         sequence="40"/>
 
     <menuitem
