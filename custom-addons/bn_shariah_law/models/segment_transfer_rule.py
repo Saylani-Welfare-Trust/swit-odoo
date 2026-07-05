@@ -6,7 +6,7 @@ class SegmentTransferRule(models.Model):
     _name = 'segment.transfer.rule'
     _description = 'Segment Transfer Rules'
     _rec_name = 'source_segment_id'
-    _order = 'source_segment_id, destination_segment_id'
+    _order = 'source_segment_id'
 
     source_segment_id = fields.Many2one(
         'account.analytic.account',
