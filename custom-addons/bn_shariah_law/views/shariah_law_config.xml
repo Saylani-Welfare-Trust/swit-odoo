@@ -22,8 +22,7 @@
                         <group>
                             <field name="stop_on_error"/>
                             <field name="email_notification"/>
-                            <field name="notification_email" 
-                                   attrs="{'invisible': [('email_notification', '=', False)], 'required': [('email_notification', '=', True)]}"/>
+                            <field name="notification_email" invisible="email_notification == False" required="email_notification"/>
                         </group>
                     </group>
                     
