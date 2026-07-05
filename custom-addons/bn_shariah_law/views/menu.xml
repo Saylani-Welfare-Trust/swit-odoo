@@ -4,7 +4,7 @@
     <menuitem
         id="shariah_law_menu"
         name="Shariah Law"
-        web_icon="shariah_law,static/description/icon.png"
+        web_icon="bn_shariah_law,static/description/icon.png"
         groups="bn_shariah_law.shariah_law_menu_group"
         sequence="6"/>
 
