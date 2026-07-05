@@ -30,8 +30,6 @@ class ShariahLawConfig(models.Model):
     
     # Error handling
     stop_on_error = fields.Boolean(string='Stop on Error', default=True)
-    email_notification = fields.Boolean(string='Send Email Notification on Error', default=True)
-    notification_email = fields.Char(string='Notification Email')
     
     # Logging
     sync_log_ids = fields.One2many('shariah.law.sync.log', 'config_id', string='Sync Logs')

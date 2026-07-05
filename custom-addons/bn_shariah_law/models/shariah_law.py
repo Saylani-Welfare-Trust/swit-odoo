@@ -143,25 +143,6 @@ class ShariahLaw(models.Model):
             }
             self.env['shariah.law.sync.log'].create(log_vals)
 
-    def _send_error_notification(self, module_name, error_msg, config):
-        """Send email notification for sync errors."""
-        try:
-            mail = self.env['mail.mail'].create({
-                'subject': f'Shariah Law Sync Error - {module_name}',
-                'body_html': f"""
-                    <h2>Shariah Law Sync Error</h2>
-                    <p><strong>Module:</strong> {module_name}</p>
-                    <p><strong>Error:</strong> {error_msg}</p>
-                    <p><strong>Time:</strong> {fields.Datetime.now()}</p>
-                    <p><strong>Company:</strong> {self.env.company.name}</p>
-                """,
-                'email_to': config.notification_email,
-                'email_from': self.env.company.email or 'noreply@example.com',
-            })
-            mail.send()
-        except Exception as e:
-            _logger.error(f"Failed to send error notification email: {str(e)}")
-
     # ============================================================
     # INDIVIDUAL SYNC METHODS WITH CONFIG CHECK
     # ============================================================
@@ -231,8 +212,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('POS Donations', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -300,8 +279,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Donations (DIK)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -377,8 +354,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('API / Wallet Donations', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -446,8 +421,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Expenses', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -516,8 +489,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Purchase Orders (PO)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -588,8 +559,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Welfare (Cash)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -693,8 +662,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Microfinance (Cash)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -794,8 +761,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Transfers (Cron Backup)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
@@ -866,8 +831,6 @@ class ShariahLaw(models.Model):
                 error_details=error_msg,
                 duration=duration
             )
-            if config.email_notification and config.notification_email:
-                self._send_error_notification('Donation In Kind (DIK)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
