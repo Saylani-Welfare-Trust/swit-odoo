@@ -8,12 +8,11 @@ class ShariahLawBlocker(models.Model):
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     
     # Enable/Disable for each module
-    enable_pos = fields.Boolean(string='POS Donations', default=True)
-    enable_donations = fields.Boolean(string='Donations (DIK)', default=True)
-    enable_dik = fields.Boolean(string='Donation In Kind (DIK)', default=True)
-    enable_api_donation = fields.Boolean(string='API / Wallet Donations', default=True)
+    enable_pos = fields.Boolean(string='POS', default=True)
+    enable_donations = fields.Boolean(string='Wallet', default=True)
+    enable_dik = fields.Boolean(string='Donation In Kind', default=True)
     enable_expense = fields.Boolean(string='Expenses', default=True)
-    enable_purchase = fields.Boolean(string='Purchase Orders (PO)', default=True)
+    enable_purchase = fields.Boolean(string='Purchase Orders', default=True)
     enable_welfare = fields.Boolean(string='Welfare (Cash)', default=True)
     enable_microfinance = fields.Boolean(string='Microfinance (Cash)', default=True)
     enable_transfer = fields.Boolean(string='Transfers', default=True)
