@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_shariah_daily_balance_tree" model="ir.ui.view">
+        <field name="name">shariah.daily.balance.tree</field>
+        <field name="model">shariah.daily.balance</field>
+        <field name="arch" type="xml">
+            <tree string="Daily Balances">
+                <field name="date"/>
+                <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                
+                <!-- Opening/Closing Balances -->
+                <field name="opening_balance" sum="Total"/>
+                <field name="closing_balance" sum="Total"/>
+                
+                <!-- Donation Sources -->
+                <field name="pos_donation" sum="Total"/>
+                <field name="api_donation" sum="Total"/>
+                <field name="dik" sum="Total"/>
+                <field name="po" sum="Total"/>
+                <field name="welfare" sum="Total"/>
+                <field name="microfinance" sum="Total"/>
+                <field name="total_donation" sum="Total"/>
+                
+                <!-- Expenses and Transfers -->
+                <field name="expense" sum="Total"/>
+                <field name="transfer_in" sum="Total"/>
+                <field name="transfer_out" sum="Total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_shariah_daily_balance_form" model="ir.ui.view">
+        <field name="name">shariah.daily.balance.form</field>
+        <field name="model">shariah.daily.balance</field>
+        <field name="arch" type="xml">
+            <form string="Daily Balance">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="date"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Opening &amp; Closing Balances">
+                        <group>
+                            <field name="opening_balance" readonly="1"/>
+                            <field name="closing_balance" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Donations by Source">
+                        <group>
+                            <field name="pos_donation"/>
+                            <field name="api_donation"/>
+                            <field name="dik"/>
+                            <field name="po"/>
+                        </group>
+                        <group>
+                            <field name="welfare"/>
+                            <field name="microfinance"/>
+                            <field name="total_donation" readonly="1" style="font-weight: bold;"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Expenses &amp; Transfers">
+                        <group>
+                            <field name="expense"/>
+                            <field name="transfer_in"/>
+                        </group>
+                        <group>
+                            <field name="transfer_out"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_shariah_daily_balance" model="ir.actions.act_window">
+        <field name="name">Daily Balances</field>
+        <field name="res_model">shariah.daily.balance</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

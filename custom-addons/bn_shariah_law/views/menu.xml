@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="shariah_law_menu"
+        name="Shariah Law"
+        web_icon="bn_shariah_law,static/description/icon.png"
+        groups="bn_shariah_law.shariah_law_menu_group"
+        sequence="6"/>
+
+    <menuitem
+        id="shariah_law_overview_menu"
+        name="Totals"
+        action="shariah_law_action"
+        parent="shariah_law_menu"
+        sequence="10"/>
+
+    <menuitem
+        id="shariah_law_daily_balance_menu"
+        name="Daily Balances"
+        action="action_shariah_daily_balance"
+        parent="shariah_law_menu"
+        sequence="20"/>
+
+    <menuitem
+        id="shariah_law_transfer_menu"
+        name="Transfers"
+        action="action_shariah_transfer"
+        parent="shariah_law_menu"
+        sequence="30"/>
+
+</odoo>

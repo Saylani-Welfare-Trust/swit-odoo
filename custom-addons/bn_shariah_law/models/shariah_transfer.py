@@ -22,6 +22,7 @@ class ShariahTransfer(models.Model):
     ], string='Status', default='draft', tracking=True)
 
     member_posted = fields.Boolean(string='Member Posted', default=False, tracking=True)
+    is_sync_shariah_law = fields.Boolean(string='Synced with Shariah Law', default=False)
 
     def action_post(self):
         """Post the transfer: update daily balances."""
@@ -32,6 +33,7 @@ class ShariahTransfer(models.Model):
                 raise UserError(_('Need member approval first.'))
 
             today = rec.date
+            
             # Source: transfer_out
             daily_source = self.env['shariah.daily.balance'].search([
                 ('analytic_account_id', '=', rec.source_analytic_account_id.id),
@@ -45,6 +47,7 @@ class ShariahTransfer(models.Model):
                     'date': today,
                     'transfer_out': rec.amount,
                 })
+            
             # Destination: transfer_in
             daily_dest = self.env['shariah.daily.balance'].search([
                 ('analytic_account_id', '=', rec.destination_analytic_account_id.id),
@@ -58,13 +61,19 @@ class ShariahTransfer(models.Model):
                     'date': today,
                     'transfer_in': rec.amount,
                 })
-            # Recompute balances
-            daily_source._compute_balances()
-            daily_dest._compute_balances()
+            
+            # Recompute balances for both accounts
+            if daily_source:
+                daily_source._compute_balances()
+                daily_source._compute_total_donation()
+            if daily_dest:
+                daily_dest._compute_balances()
+                daily_dest._compute_total_donation()
+            
             rec.state = 'posted'
 
     def action_member_post(self):
-        """Post the transfer: update daily balances."""
+        """Member approval for transfer."""
         for rec in self:
             rec.member_posted = True
 

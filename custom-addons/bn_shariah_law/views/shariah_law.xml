@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ================================ -->
-    <!-- Shariah Law Totals (Tree/Form)   -->
-    <!-- ================================ -->
-
     <record id="shariah_law_view_tree" model="ir.ui.view">
         <field name="name">shariah.law.view.tree</field>
         <field name="model">shariah.law</field>
@@ -13,13 +9,24 @@
                 <field name="parent_id" column_invisible="1" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 
-                <field name="donation_amount" />
-                <field name="purchase_amount" />
-                <field name="expense_amount" />
+                <!-- Opening/Closing Balances -->
+                <field name="opening_balance" sum="Total" />
+                <field name="closing_balance" sum="Total" />
                 
-                <!-- New opening/closing balances (computed from daily) -->
-                <field name="opening_balance" />
-                <field name="closing_balance" />
+                <!-- Donation Sources -->
+                <field name="pos_donation_amount" sum="Total" />
+                <field name="api_donation_amount" sum="Total" />
+                <field name="dik_amount" sum="Total" />
+                <field name="po_amount" sum="Total" />
+                <field name="welfare_amount" sum="Total" />
+                <field name="microfinance_amount" sum="Total" />
+                <field name="total_donation" sum="Total" />
+                
+                <!-- Expenses and Transfers -->
+                <field name="expense_amount" sum="Total" />
+                <field name="transfer_in_amount" sum="Total" />
+                <field name="transfer_out_amount" sum="Total" />
+                <field name="net_transfer" sum="Total" />
 
                 <button string="Transfer" name="action_transfer" type="object" class="btn-primary"/>
             </tree>
@@ -38,16 +45,40 @@
                             <field name="parent_id" readonly="1"/>
                             <field name="currency_id"/>
                         </group>
+                    </group>
+                    
+                    <group string="Daily Balances (Today)">
                         <group>
-                            <field name="donation_amount"/>
-                            <field name="purchase_amount"/>
-                            <field name="expense_amount"/>
+                            <field name="opening_balance" readonly="1"/>
+                            <field name="closing_balance" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Daily Balances (Today)">
-                        <field name="opening_balance" readonly="1"/>
-                        <field name="closing_balance" readonly="1"/>
+                    
+                    <group string="Donations by Source" colspan="2">
+                        <group>
+                            <field name="pos_donation_amount" readonly="1"/>
+                            <field name="api_donation_amount" readonly="1"/>
+                            <field name="dik_amount" readonly="1"/>
+                            <field name="po_amount" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="welfare_amount" readonly="1"/>
+                            <field name="microfinance_amount" readonly="1"/>
+                            <field name="total_donation" readonly="1" style="font-weight: bold;"/>
+                        </group>
                     </group>
+                    
+                    <group string="Expenses &amp; Transfers" colspan="2">
+                        <group>
+                            <field name="expense_amount" readonly="1"/>
+                            <field name="transfer_in_amount" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="transfer_out_amount" readonly="1"/>
+                            <field name="net_transfer" readonly="1" style="font-weight: bold;"/>
+                        </group>
+                    </group>
+                    
                     <group>
                         <button name="action_transfer" type="object" string="Transfer" class="btn-primary"/>
                     </group>
@@ -62,131 +93,9 @@
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Shariah-compliant tracking of inflows, purchases, and expenses.
+                Shariah-compliant tracking of donations, purchases, expenses, and transfers.
             </p>
         </field>
     </record>
-
-    <!-- ================================ -->
-    <!-- Daily Balances                    -->
-    <!-- ================================ -->
-
-    <record id="view_shariah_daily_balance_tree" model="ir.ui.view">
-        <field name="name">shariah.daily.balance.tree</field>
-        <field name="model">shariah.daily.balance</field>
-        <field name="arch" type="xml">
-            <tree string="Daily Balances">
-                <field name="date"/>
-                <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="donation_amount" sum="Total"/>
-                <field name="purchase" sum="Total"/>
-                <field name="expense" sum="Total"/>
-                <field name="transfer_in" sum="Total"/>
-                <field name="transfer_out" sum="Total"/>
-                <field name="opening_balance" sum="Total"/>
-                <field name="closing_balance" sum="Total"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="action_shariah_daily_balance" model="ir.actions.act_window">
-        <field name="name">Daily Balances</field>
-        <field name="res_model">shariah.daily.balance</field>
-        <field name="view_mode">tree</field>
-    </record>
-
-    <!-- ================================ -->
-    <!-- Transfers                        -->
-    <!-- ================================ -->
-
-    <record id="view_shariah_transfer_tree" model="ir.ui.view">
-        <field name="name">shariah.transfer.tree</field>
-        <field name="model">shariah.transfer</field>
-        <field name="arch" type="xml">
-            <tree string="Transfers">
-                <field name="name"/>
-                <field name="date"/>
-                <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="amount"/>
-                <field name="state" widget="badge"/>
-                <field name="note"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="view_shariah_transfer_form" model="ir.ui.view">
-        <field name="name">shariah.transfer.form</field>
-        <field name="model">shariah.transfer</field>
-        <field name="arch" type="xml">
-            <form string="Transfer">
-                <header>
-                    <button name="action_member_post" string="Member Post" type="object" class="btn-primary" groups="bn_shariah_law.group_member_approval"/>
-                    <button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <field name="state" widget="statusbar"/>
-                </header>
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="date"/>
-                            <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                        </group>
-                        <group>
-                            <field name="amount"/>
-                            <field name="currency_id"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="member_posted"/>
-                        </group>
-                    </group>
-                    <field name="note" nolabel="1" placeholder="Optional note"/>
-                </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_shariah_transfer" model="ir.actions.act_window">
-        <field name="name">Transfers</field>
-        <field name="res_model">shariah.transfer</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ================================ -->
-    <!-- Menus                            -->
-    <!-- ================================ -->
-
-    <menuitem
-        id="shariah_law_menu"
-        name="Shariah Law"
-        web_icon="bn_shariah_law,static/description/icon.png"
-        groups="bn_shariah_law.shariah_law_menu_group"
-        sequence="6"/>
-
-    <menuitem
-        id="shariah_law_overview_menu"
-        name="Totals"
-        action="shariah_law_action"
-        parent="shariah_law_menu"
-        sequence="10"/>
-
-    <menuitem
-        id="shariah_law_daily_balance_menu"
-        name="Daily Balances"
-        action="action_shariah_daily_balance"
-        parent="shariah_law_menu"
-        sequence="20"/>
-
-    <menuitem
-        id="shariah_law_transfer_menu"
-        name="Transfers"
-        action="action_shariah_transfer"
-        parent="shariah_law_menu"
-        sequence="30"/>
 
 </odoo>
