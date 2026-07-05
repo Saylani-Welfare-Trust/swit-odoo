@@ -23,6 +23,8 @@
         'views/shariah_daily_balance.xml',
         'views/shariah_transfer.xml',
         'views/shariah_law.xml',
+        'views/shariah_sync_config.xml',
+        'views/shariah_sync_log.xml',
         'views/menu.xml',
         'views/pos_order.xml',
         'views/purchase_order.xml',

@@ -4,8 +4,8 @@
     <menuitem
         id="shariah_law_menu"
         name="Shariah Law"
-        web_icon="bn_shariah_law,static/description/icon.png"
-        groups="bn_shariah_law.shariah_law_menu_group"
+        web_icon="shariah_law,static/description/icon.png"
+        groups="shariah_law.shariah_law_menu_group"
         sequence="6"/>
 
     <menuitem
@@ -28,5 +28,19 @@
         action="action_shariah_transfer"
         parent="shariah_law_menu"
         sequence="30"/>
+
+    <menuitem
+        id="shariah_law_config_menu"
+        name="Configuration"
+        action="shariah_law_config_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="40">
+
+    <menuitem
+        id="shariah_law_sync_log_menu"
+        name="Sync Logs"
+        action="shariah_law_sync_log_action"
+        parent="shariah_law_menu"
+        sequence="50"/>
 
 </odoo>

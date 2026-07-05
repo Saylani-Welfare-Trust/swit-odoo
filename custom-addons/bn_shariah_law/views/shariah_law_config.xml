@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Configuration Form View -->
+    <record id="shariah_law_config_view_form" model="ir.ui.view">
+        <field name="name">shariah.law.config.view.form</field>
+        <field name="model">shariah.law.config</field>
+        <field name="arch" type="xml">
+            <form string="Shariah Law Configuration">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_sync_all" string="Sync All" type="object" class="oe_stat_button" icon="fa-refresh"/>
+                        <button name="action_view_logs" string="View Logs" type="object" class="oe_stat_button" icon="fa-history"/>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="sync_frequency"/>
+                            <field name="last_sync_date" readonly="1"/>
+                            <field name="next_sync_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="stop_on_error"/>
+                            <field name="email_notification"/>
+                            <field name="notification_email" 
+                                   attrs="{'invisible': [('email_notification', '=', False)], 'required': [('email_notification', '=', True)]}"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Enabled Modules">
+                            <group string="Select which modules to sync" colspan="2">
+                                <group>
+                                    <field name="enable_pos_sync"/>
+                                    <field name="enable_donations_sync"/>
+                                    <field name="enable_dik_sync"/>
+                                    <field name="enable_api_donation_sync"/>
+                                    <field name="enable_expense_sync"/>
+                                </group>
+                                <group>
+                                    <field name="enable_purchase_sync"/>
+                                    <field name="enable_welfare_sync"/>
+                                    <field name="enable_microfinance_sync"/>
+                                    <field name="enable_transfer_sync"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <span class="fa fa-info-circle"/> 
+                                <b>Note:</b> Only enabled modules will be synced by their respective cron jobs.
+                                Disabled modules will skip sync execution.
+                            </div>
+                        </page>
+                        
+                        <page string="Sync Logs">
+                            <field name="sync_log_ids" nolabel="1">
+                                <tree string="Sync Logs">
+                                    <field name="sync_date"/>
+                                    <field name="module_name"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="records_synced"/>
+                                    <field name="duration"/>
+                                    <field name="message"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Configuration Tree View -->
+    <record id="shariah_law_config_view_tree" model="ir.ui.view">
+        <field name="name">shariah.law.config.view.tree</field>
+        <field name="model">shariah.law.config</field>
+        <field name="arch" type="xml">
+            <tree string="Shariah Law Configurations">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="sync_frequency"/>
+                <field name="last_sync_date"/>
+                <field name="enable_pos_sync"/>
+                <field name="enable_dik_sync"/>
+                <field name="enable_welfare_sync"/>
+                <field name="enable_microfinance_sync"/>
+                <field name="stop_on_error"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="shariah_law_config_action" model="ir.actions.act_window">
+        <field name="name">Shariah Law Configuration</field>
+        <field name="res_model">shariah.law.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure which modules should be synced by the Shariah Law cron jobs.
+            </p>
+        </field>
+    </record>
+
+</odoo>
