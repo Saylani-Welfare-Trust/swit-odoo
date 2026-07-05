@@ -34,7 +34,7 @@
         name="Configuration"
         action="shariah_law_config_action"
         parent="bn_master_setup.master_setup_menu"
-        sequence="40">
+        sequence="40"/>
 
     <menuitem
         id="shariah_law_sync_log_menu"
