@@ -36,7 +36,6 @@ class ShariahLawBlocker(models.Model):
             'pos': 'enable_pos',
             'donations': 'enable_donations',
             'dik': 'enable_dik',
-            'api_donation': 'enable_api_donation',
             'expense': 'enable_expense',
             'purchase': 'enable_purchase',
             'welfare': 'enable_welfare',
