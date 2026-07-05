@@ -3,5 +3,5 @@ access_shariah_law,access.shariah.law,model_shariah_law,,1,1,1,1
 access_shariah_daily_balance,access.shariah.daily.balance,model_shariah_daily_balance,,1,1,1,1
 access_shariah_transfer,access.shariah.transfer,model_shariah_transfer,,1,1,1,1
 access_shariah_transfer_wizard,access.shariah.transfer.wizard,model_shariah_transfer_wizard,,1,1,1,0
-access_shariah_law_sync_config,access.shariah.law.sync.config,model_shariah_law_sync_config,,1,1,1,1
+access_shariah_law_config,access.shariah.law.config,model_shariah_law_config,,1,1,1,1
 access_shariah_law_sync_log,access.shariah.law.sync.log,model_shariah_law_sync_log,,1,1,1,1
