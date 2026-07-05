@@ -268,7 +268,7 @@ class ShariahLaw(models.Model):
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic.id,
-                        dik=donation.amount
+                        api_donation=donation.amount
                     )
 
                 donation.is_sync_shariah_law = True
@@ -280,7 +280,7 @@ class ShariahLaw(models.Model):
             duration = (datetime.now() - start_time).total_seconds()
             self._create_sync_log(
                 config=config,
-                module_name='Donations (DIK)',
+                module_name='Donations',
                 status='success',
                 message=f"Synced {len(donations)} donations",
                 records_synced=len(donations),
@@ -727,7 +727,8 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_transfers(self):
-        """Sync Transfers - Transfer In/Out."""
+        """Sync Transfers - Transfer In/Out (Cron job for backup sync)."""
+        # Check if enabled in configuration
         if not self._is_sync_enabled('_sync_transfers'):
             _logger.info("Transfers sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -736,6 +737,8 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
+            # Get transfers that are posted but not synced
+            # This catches any transfers that weren't synced instantly
             transfers = self.env['shariah.transfer'].search([
                 ('is_sync_shariah_law', '=', False),
                 ('state', '=', 'posted')
@@ -771,9 +774,9 @@ class ShariahLaw(models.Model):
             duration = (datetime.now() - start_time).total_seconds()
             self._create_sync_log(
                 config=config,
-                module_name='Transfers',
+                module_name='Transfers (Cron Backup)',
                 status='success',
-                message=f"Synced {len(transfers)} transfers",
+                message=f"Synced {len(transfers)} transfers (backup sync)",
                 records_synced=len(transfers),
                 duration=duration
             )
@@ -785,14 +788,14 @@ class ShariahLaw(models.Model):
             error_msg = str(e)
             self._create_sync_log(
                 config=config,
-                module_name='Transfers',
+                module_name='Transfers (Cron Backup)',
                 status='error',
                 message=f"Sync failed: {error_msg}",
                 error_details=error_msg,
                 duration=duration
             )
             if config.email_notification and config.notification_email:
-                self._send_error_notification('Transfers', error_msg, config)
+                self._send_error_notification('Transfers (Cron Backup)', error_msg, config)
             if config.stop_on_error:
                 raise
             return {'records_synced': 0, 'error': error_msg}
