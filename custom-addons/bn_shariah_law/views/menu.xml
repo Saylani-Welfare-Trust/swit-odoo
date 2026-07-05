@@ -41,6 +41,27 @@
         action="shariah_law_config_action"
         parent="shariah_law_master_menu"
         sequence="40"/>
+    
+    <menuitem
+        id="segment_transfer_rules_menu"
+        name="Segment Transfer Rules"
+        action="segment_transfer_rule_action"
+        parent="shariah_law_master_menu"
+        sequence="41"/>
+    
+    <menuitem
+        id="shariah_law_blocker_menu"
+        name="Blocker"
+        action="shariah_law_blocker_action"
+        parent="shariah_law_master_menu"
+        sequence="42"/>
+    
+    <menuitem
+        id="shariah_law_person_menu"
+        name="Shariah Law Persons"
+        action="shariah_law_person_action"
+        parent="shariah_law_master_menu"
+        sequence="43"/>
 
     <menuitem
         id="shariah_law_sync_log_menu"

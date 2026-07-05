@@ -1,27 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
+
     <record id="view_transfer_wizard_form" model="ir.ui.view">
         <field name="name">shariah.transfer.wizard.form</field>
         <field name="model">shariah.transfer.wizard</field>
         <field name="arch" type="xml">
             <form string="Fund Transfer">
                 <sheet>
+                    <!-- Info Messages -->
+                    <div class="alert alert-info" role="alert" 
+                         attrs="{'invisible': [('allowed_dest_count', '!=', 0)]}">
+                        <span class="fa fa-info-circle"/>
+                        <b>No allowed destinations found!</b> Please configure transfer rules for this source segment.
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" 
+                         attrs="{'invisible': [('allowed_dest_count', '=', 0)]}">
+                        <span class="fa fa-check-circle"/>
+                        <b>Allowed Destinations:</b> <span field="allowed_dest_count"/> destination(s) available for this source.
+                    </div>
+                    
+                    <div class="alert alert-danger" role="alert" 
+                         attrs="{'invisible': [('transfer_allowed', '=', True)]}">
+                        <span class="fa fa-exclamation-circle"/>
+                        <b>Transfer not allowed!</b> Please check the rules below.
+                    </div>
+                    
+                    <!-- Main Fields -->
                     <group>
                         <group>
-                            <field name="source_analytic_account_id"/>
-                            <field name="destination_analytic_account_id"/>
+                            <field name="source_analytic_account_id" 
+                                   domain="[('plan_id.name', '=', 'Segment')]" 
+                                   options="{'no_create': True}" 
+                                   required="1"/>
+                            <field name="destination_analytic_account_id" 
+                                   domain="[('plan_id.name', '=', 'Segment'), ('id', 'in', allowed_destination_ids)]" 
+                                   options="{'no_create': True}" 
+                                   required="1"
+                                   attrs="{'invisible': [('allowed_dest_count', '=', 0)]}"/>
                         </group>
                         <group>
-                            <field name="date"/>
-                            <field name="amount"/>
+                            <field name="date" 
+                                   attrs="{'invisible': [('allowed_dest_count', '=', 0)]}"/>
+                            <field name="amount" 
+                                   required="1"
+                                   attrs="{'invisible': [('allowed_dest_count', '=', 0)]}"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
-                    <field name="note" placeholder="Optional note"/>
+                    
+                    <!-- Rule Information -->
+                    <group string="Transfer Rules Information" readonly="1" colspan="2"
+                           attrs="{'invisible': [('allowed_dest_count', '=', 0)]}">
+                        <group>
+                            <field name="transfer_allowed" widget="boolean_toggle"/>
+                            <field name="max_transfer_amount"/>
+                            <field name="requires_approval" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="rule_notes" nolabel="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Notes -->
+                    <field name="note" placeholder="Optional note" nolabel="1"
+                           attrs="{'invisible': [('allowed_dest_count', '=', 0)]}"/>
                 </sheet>
                 <footer>
-                    <button name="action_create_transfer" string="Transfer" type="object" class="btn-primary"/>
+                    <button name="action_create_transfer" string="Transfer" type="object" class="btn-primary"
+                            attrs="{'invisible': ['|', ('transfer_allowed', '=', False), ('allowed_dest_count', '=', 0)]}"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -33,6 +80,7 @@
         <field name="res_model">shariah.transfer.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+        <field name="context">{}</field>
     </record>
 
 </odoo>

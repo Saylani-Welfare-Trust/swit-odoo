@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="segment_transfer_rule_view_tree" model="ir.ui.view">
+        <field name="name">segment.transfer.rule.view.tree</field>
+        <field name="model">segment.transfer.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Segment Transfer Rules">
+                <field name="source_segment_id" domain="[('plan_id.name', '=', 'Segment')]"/>
+                <field name="destination_names" string="Destinations"/>
+                <field name="allowed" widget="boolean_toggle"/>
+                <field name="max_transfer_amount" sum="Total"/>
+                <field name="requires_approval" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="segment_transfer_rule_view_form" model="ir.ui.view">
+        <field name="name">segment.transfer.rule.view.form</field>
+        <field name="model">segment.transfer.rule</field>
+        <field name="arch" type="xml">
+            <form string="Segment Transfer Rule">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button"
+                                icon="fa-toggle-on" attrs="{'invisible': [('active', '=', False)]}"/>
+                        <button name="toggle_active" type="object" class="oe_stat_button"
+                                icon="fa-toggle-off" attrs="{'invisible': [('active', '=', True)]}"/>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="source_segment_id" domain="[('plan_id.name', '=', 'Segment')]" 
+                                   options="{'no_create': True}"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="allowed" widget="boolean_toggle"/>
+                            <field name="max_transfer_amount"/>
+                            <field name="currency_id"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Destination Segments">
+                        <field name="destination_segment_ids" 
+                               domain="[('plan_id.name', '=', 'Segment'), ('id', '!=', source_segment_id)]"
+                               options="{'no_create': True}"/>
+                    </group>
+                    
+                    <group string="Approval Settings">
+                        <group>
+                            <field name="requires_approval" widget="boolean_toggle"/>
+                            <field name="approval_group_id" 
+                                   attrs="{'invisible': [('requires_approval', '=', False)], 'required': [('requires_approval', '=', True)]}"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" placeholder="Add notes about this transfer rule..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="segment_transfer_rule_action" model="ir.actions.act_window">
+        <field name="name">Segment Transfer Rules</field>
+        <field name="res_model">segment.transfer.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define which segments can transfer funds to which other segments.
+                <br/><br/>
+                <b>Example:</b> Source Segment "Main Treasury" can transfer to 
+                "Project A", "Project B", and "Project C".
+            </p>
+        </field>
+    </record>
+
+</odoo>

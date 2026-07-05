@@ -12,7 +12,9 @@
                 <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                 <field name="amount" sum="Total"/>
                 <field name="state" widget="badge"/>
-                <field name="member_posted"/>
+                <field name="requires_approval" widget="boolean_toggle"/>
+                <field name="member_posted" widget="boolean_toggle"/>
+                <field name="shariah_law_person_id"/>
                 <field name="note"/>
             </tree>
         </field>
@@ -24,11 +26,56 @@
         <field name="arch" type="xml">
             <form string="Transfer">
                 <header>
-                    <button name="action_member_post" string="Member Post" type="object" class="btn-primary" groups="bn_shariah_law.group_member_approval" invisible="state != 'draft'"/>
-                    <button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <field name="state" widget="statusbar"/>
+                    <!-- Draft State Buttons -->
+                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="btn-primary" 
+                            invisible="state != 'draft'"
+                            attrs="{'invisible': [('requires_approval', '=', False)]}"/>
+                    <button name="action_post" string="Post" type="object" class="btn-primary" 
+                            invisible="state != 'draft'"/>
+                    
+                    <!-- Member Approval State Buttons -->
+                    <button name="action_member_post" string="Member Post" type="object" class="btn-success" 
+                            invisible="state != 'member_approval'" 
+                            groups="shariah_law.group_shariah_law_manager_group"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-danger" 
+                            invisible="state != 'member_approval'"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,member_approval,posted"/>
                 </header>
                 <sheet>
+                    <!-- Warning Messages -->
+                    <div class="alert alert-warning" role="alert" 
+                         attrs="{'invisible': [('requires_approval', '=', False)]}">
+                        <span class="fa fa-exclamation-triangle"/>
+                        <b>Approval Required:</b> This transfer requires member approval.
+                        <ul>
+                            <li>Select a Shariah Law Person</li>
+                            <li>Click "Member Post" to approve</li>
+                            <li>Then click "Post" to complete the transfer</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert" 
+                         attrs="{'invisible': [('requires_approval', '=', True)]}">
+                        <span class="fa fa-info-circle"/>
+                        <b>No Approval Required:</b> This transfer does not require member approval.
+                        You can post it directly.
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" 
+                         attrs="{'invisible': ['|', ('requires_approval', '=', False), ('member_posted', '=', False)]}">
+                        <span class="fa fa-check-circle"/>
+                        <b>Approved:</b> This transfer has been approved by member.
+                    </div>
+                    
+                    <div class="alert alert-danger" role="alert" 
+                         attrs="{'invisible': [('state', '!=', 'rejected')]}">
+                        <span class="fa fa-times-circle"/>
+                        <b>Rejected:</b> This transfer has been rejected.
+                        <field name="rejection_reason" nolabel="1"/>
+                    </div>
+                    
+                    <!-- Main Fields -->
                     <group>
                         <group>
                             <field name="name"/>
@@ -39,11 +86,31 @@
                         <group>
                             <field name="amount"/>
                             <field name="currency_id"/>
+                            <field name="shariah_law_person_id" 
+                                   options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="member_posted" readonly="state == 'posted'"/>
+                            <field name="requires_approval" widget="boolean_toggle" readonly="1"/>
+                            <field name="member_posted" readonly="1"/>
+                            <field name="is_sync_shariah_law" readonly="1"/>
                         </group>
                     </group>
-                    <field name="note" nolabel="1" placeholder="Optional note"/>
+                    
+                    <!-- Approval Details -->
+                    <group string="Approval Details" 
+                           attrs="{'invisible': [('state', 'not in', ['member_approval', 'posted', 'rejected'])]}">
+                        <group>
+                            <field name="member_approval_user_id" readonly="1"/>
+                            <field name="member_approval_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="rejection_reason" 
+                                   attrs="{'invisible': [('state', '!=', 'rejected')], 'required': [('state', '=', 'rejected')]}"
+                                   placeholder="Please provide reason for rejection..."/>
+                        </group>
+                    </group>
+                    
+                    <!-- Notes -->
+                    <field name="note" placeholder="Optional note" nolabel="1"/>
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
