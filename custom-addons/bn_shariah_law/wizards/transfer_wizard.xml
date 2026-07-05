@@ -8,6 +8,7 @@
             <form string="Fund Transfer">
                 <sheet>
                     <field name="allowed_dest_count" invisible="1"/>
+                    <field name="allowed_destination_ids" invisible="1"/>
 
                     <!-- Info Messages -->
                     <div class="alert alert-info" role="alert" 
