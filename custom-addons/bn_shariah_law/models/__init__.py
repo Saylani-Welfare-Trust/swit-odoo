@@ -6,4 +6,7 @@ from . import purchase_order
 from . import donation
 from . import api_donation
 from . import hr_expense
+from . import donation_in_kind
+from . import microfinance
+from . import welfare
 from . import account_analytic_account

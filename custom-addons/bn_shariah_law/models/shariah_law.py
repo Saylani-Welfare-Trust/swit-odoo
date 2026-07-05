@@ -1,6 +1,4 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
-from datetime import date
 from collections import defaultdict
 
 class ShariahLaw(models.Model):
@@ -100,128 +98,95 @@ class ShariahLaw(models.Model):
             'target': 'new',
         }
 
-    # -----------------------------------------------------------------
-    # MAIN SYNC METHOD
-    # -----------------------------------------------------------------
+    # ============================================================
+    # SYNC METHODS FOR EACH DATA SOURCE
+    # ============================================================
 
     @api.model
-    def _sync_shariah_data(self):
-
-        shariah_record = defaultdict(lambda: {
-            'pos_donation': 0.0,
-            'api_donation': 0.0,
-            'dik': 0.0,
-            'po': 0.0,
-            'welfare': 0.0,
-            'microfinance': 0.0,
-            'expense': 0.0,
-            'transfer_in': 0.0,
-            'transfer_out': 0.0
-        })
-
-        daily_changes = defaultdict(lambda: {
-            'pos_donation': 0.0,
-            'api_donation': 0.0,
-            'dik': 0.0,
-            'po': 0.0,
-            'welfare': 0.0,
-            'microfinance': 0.0,
-            'expense': 0.0,
-            'transfer_in': 0.0,
-            'transfer_out': 0.0
-        })
-
-        # ============================================================
-        # Helper
-        # ============================================================
-
-        def add_amounts(analytic_id, pos_donation=0.0, api_donation=0.0, dik=0.0, 
-                       po=0.0, welfare=0.0, microfinance=0.0, expense=0.0,
-                       transfer_in=0.0, transfer_out=0.0):
-            if not analytic_id:
-                return
-
-            shariah_record[analytic_id]['pos_donation'] += pos_donation
-            shariah_record[analytic_id]['api_donation'] += api_donation
-            shariah_record[analytic_id]['dik'] += dik
-            shariah_record[analytic_id]['po'] += po
-            shariah_record[analytic_id]['welfare'] += welfare
-            shariah_record[analytic_id]['microfinance'] += microfinance
-            shariah_record[analytic_id]['expense'] += expense
-            shariah_record[analytic_id]['transfer_in'] += transfer_in
-            shariah_record[analytic_id]['transfer_out'] += transfer_out
-
-            daily_changes[analytic_id]['pos_donation'] += pos_donation
-            daily_changes[analytic_id]['api_donation'] += api_donation
-            daily_changes[analytic_id]['dik'] += dik
-            daily_changes[analytic_id]['po'] += po
-            daily_changes[analytic_id]['welfare'] += welfare
-            daily_changes[analytic_id]['microfinance'] += microfinance
-            daily_changes[analytic_id]['expense'] += expense
-            daily_changes[analytic_id]['transfer_in'] += transfer_in
-            daily_changes[analytic_id]['transfer_out'] += transfer_out
-
-        # ============================================================
-        # 1. POS ORDERS (POS Donation)
-        # ============================================================
-
+    def _sync_pos_orders(self):
+        """Sync POS Orders - POS Donation."""
         pos_orders = self.env['pos.order'].search([
             ('is_sync_shariah_law', '=', False),
             ('state', '=', 'done')
         ])
+
+        if not pos_orders:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
 
         for order in pos_orders:
             for line in order.lines:
                 if not line.product_id:
                     continue
 
-                analytic = self.env['account.analytic.account'].search([
-                    ('product_ids', 'in', [line.product_id.id])
-                ], limit=1)
-
-                add_amounts(
-                    analytic.id,
-                    pos_donation=line.price_subtotal_incl
-                )
+                analytic = self._get_analytic_account_from_product(line.product_id.id)
+                if analytic:
+                    self._add_amounts(
+                        shariah_record, daily_changes,
+                        analytic.id,
+                        pos_donation=line.price_subtotal_incl
+                    )
 
             order.is_sync_shariah_law = True
 
-        # ============================================================
-        # 2. DONATIONS (DIK)
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
+        return True
+
+    @api.model
+    def _sync_donations(self):
+        """Sync Donations - DIK."""
         donations = self.env['donation'].search([
             ('is_sync_shariah_law', '=', False),
             ('state', '=', 'posted')
         ])
 
+        if not donations:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
+
         for donation in donations:
             if not donation.product_id:
                 continue
 
-            analytic = self.env['account.analytic.account'].search([
-                ('product_ids', 'in', [donation.product_id.id])
-            ], limit=1)
-
-            add_amounts(
-                analytic.id,
-                dik=donation.amount
-            )
+            analytic = self._get_analytic_account_from_product(donation.product_id.id)
+            if analytic:
+                self._add_amounts(
+                    shariah_record, daily_changes,
+                    analytic.id,
+                    dik=donation.amount
+                )
 
             donation.is_sync_shariah_law = True
 
-        # ============================================================
-        # 3. API DONATIONS (API / Wallet)
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
+        return True
+
+    @api.model
+    def _sync_api_donations(self):
+        """Sync API Donations - API / Wallet."""
         api_donations = self.env['api.donation'].search([
             ('is_sync_shariah_law', '=', False)
         ])
 
+        if not api_donations:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
+
         for api_don in api_donations:
             for line in api_don.donation_item_ids:
                 product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
-
                 if not product_name:
                     continue
 
@@ -232,138 +197,388 @@ class ShariahLaw(models.Model):
                 if not found or not found.product_id:
                     continue
 
-                analytic = self.env['account.analytic.account'].search([
-                    ('product_ids', 'in', [found.product_id.id])
-                ], limit=1)
-
-                add_amounts(
-                    analytic.id,
-                    api_donation=line.total
-                )
+                analytic = self._get_analytic_account_from_product(found.product_id.id)
+                if analytic:
+                    self._add_amounts(
+                        shariah_record, daily_changes,
+                        analytic.id,
+                        api_donation=line.total
+                    )
 
             api_don.is_sync_shariah_law = True
 
-        # ============================================================
-        # 4. EXPENSES
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
+        return True
+
+    @api.model
+    def _sync_expenses(self):
+        """Sync HR Expenses - Expense."""
         expenses = self.env['hr.expense'].search([
             ('is_sync_shariah_law', '=', False),
-            ('state', '=', 'done')
+            ('state', '=', 'approved')
         ])
+
+        if not expenses:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
 
         for expense in expenses:
             if not expense.product_id:
                 continue
 
-            analytic = self.env['account.analytic.account'].search([
-                ('product_ids', 'in', [expense.product_id.id])
-            ], limit=1)
-
-            add_amounts(
-                analytic.id,
-                expense=expense.total_amount_currency
-            )
+            analytic = self._get_analytic_account_from_product(expense.product_id.id)
+            if analytic:
+                self._add_amounts(
+                    shariah_record, daily_changes,
+                    analytic.id,
+                    expense=expense.total_amount_currency
+                )
 
             expense.is_sync_shariah_law = True
 
-        # ============================================================
-        # 5. PURCHASE ORDERS (PO)
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
+        return True
+
+    @api.model
+    def _sync_purchase_orders(self):
+        """Sync Purchase Orders - PO."""
         purchases = self.env['purchase.order'].search([
             ('is_sync_shariah_law', '=', False),
             ('state', '=', 'purchase')
         ])
+
+        if not purchases:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
 
         for purchase in purchases:
             for line in purchase.order_line:
                 if not line.product_id:
                     continue
 
-                analytic = self.env['account.analytic.account'].search([
-                    ('product_ids', 'in', [line.product_id.id])
-                ], limit=1)
-
-                add_amounts(
-                    analytic.id,
-                    po=line.price_subtotal
-                )
+                analytic = self._get_analytic_account_from_product(line.product_id.id)
+                if analytic:
+                    self._add_amounts(
+                        shariah_record, daily_changes,
+                        analytic.id,
+                        po=line.price_subtotal
+                    )
 
             purchase.is_sync_shariah_law = True
 
-        # ============================================================
-        # 6. WELFARE (Cash) - If you have a welfare model
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
-        # TODO: Add welfare model sync when available
-        # welfare_records = self.env['welfare.model'].search([
-        #     ('is_sync_shariah_law', '=', False),
-        #     ('state', '=', 'posted')
-        # ])
-        # for welfare in welfare_records:
-        #     if not welfare.product_id:
-        #         continue
-        #     analytic = self.env['account.analytic.account'].search([
-        #         ('product_ids', 'in', [welfare.product_id.id])
-        #     ], limit=1)
-        #     add_amounts(
-        #         analytic.id,
-        #         welfare=welfare.amount
-        #     )
-        #     welfare.is_sync_shariah_law = True
+        return True
 
-        # ============================================================
-        # 7. MICROFINANCE (Cash) - If you have a microfinance model
-        # ============================================================
+    @api.model
+    def _sync_welfare(self):
+        """Sync Welfare records - Only disbursed state with amounts from welfare lines."""
+        # Get all welfare records that are:
+        # 1. Not synced yet
+        # 2. In disbursed state
+        welfare_records = self.env['welfare'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'disbursed')
+        ])
 
-        # TODO: Add microfinance model sync when available
-        # microfinance_records = self.env['microfinance.model'].search([
-        #     ('is_sync_shariah_law', '=', False),
-        #     ('state', '=', 'posted')
-        # ])
-        # for microfinance in microfinance_records:
-        #     if not microfinance.product_id:
-        #         continue
-        #     analytic = self.env['account.analytic.account'].search([
-        #         ('product_ids', 'in', [microfinance.product_id.id])
-        #     ], limit=1)
-        #     add_amounts(
-        #         analytic.id,
-        #         microfinance=microfinance.amount
-        #     )
-        #     microfinance.is_sync_shariah_law = True
+        if not welfare_records:
+            return
 
-        # ============================================================
-        # 8. TRANSFERS - From Transfer Model
-        # ============================================================
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
 
+        for welfare in welfare_records:
+            # Calculate total amount from welfare lines
+            total_amount = self._calculate_welfare_amount(welfare)
+            
+            if total_amount <= 0:
+                continue
+
+            # Get analytic account from welfare lines or product
+            analytic_account = self._get_analytic_account_from_welfare(welfare)
+            
+            if analytic_account:
+                self._add_amounts(
+                    shariah_record, daily_changes,
+                    analytic_account.id,
+                    welfare=total_amount
+                )
+
+            welfare.is_sync_shariah_law = True
+
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
+
+        return True
+
+    def _calculate_welfare_amount(self, welfare_record):
+        """Calculate the total amount from welfare lines."""
+        amount = 0.0
+        
+        # Get all welfare lines for this welfare record
+        welfare_lines = welfare_record.welfare_line_ids
+        
+        if not welfare_lines:
+            return amount
+        
+        # Sum up amounts from all lines
+        for line in welfare_lines:
+            # Only include lines that are disbursed or collected
+            if line.state == 'disbursed':
+                amount += line.total_amount or line.amount or 0.0
+        
+        # Also check recurring lines if any
+        if welfare_record.welfare_recurring_line_ids:
+            for line in welfare_record.welfare_recurring_line_ids:
+                if line.state in ['disbursed', 'collected']:
+                    amount += line.total_amount or line.amount or 0.0
+        
+        return amount
+
+    def _get_analytic_account_from_welfare(self, welfare_record):
+        """Get analytic account from welfare record."""
+        # Try from product
+        for line in welfare_record.welfare_line_ids:
+            if line.product_id:
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [line.product_id.id])
+                ], limit=1)
+                if analytic:
+                    return analytic
+        
+        return False
+
+    @api.model
+    def _sync_microfinance(self):
+        """Sync Microfinance records - Only Cash type."""
+        # Get all microfinance records that are:
+        # 1. Not synced yet
+        # 2. Have cash asset type
+        # 3. Are in valid states (treasury, done, fully_recover, recover)
+        microfinance_records = self.env['microfinance'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('asset_type', '=', 'cash'),
+            ('state', '=', 'done')
+        ])
+
+        if not microfinance_records:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
+
+        for microfinance in microfinance_records:
+            # Calculate the amount to sync
+            amount = self._calculate_microfinance_amount(microfinance)
+            
+            if amount <= 0:
+                continue
+
+            # Get analytic account from the product or scheme line
+            analytic_account = self._get_analytic_account_from_microfinance(microfinance)
+            
+            if analytic_account:
+                self._add_amounts(
+                    shariah_record, daily_changes,
+                    analytic_account.id,
+                    microfinance=amount
+                )
+
+            microfinance.is_sync_shariah_law = True
+
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
+
+        return True
+
+    def _calculate_microfinance_amount(self, microfinance_record):
+        """Calculate the total amount from paid installment lines for a microfinance record."""
+        amount = 0.0
+        
+        # Get all paid installment lines for this microfinance
+        paid_lines = self.env['microfinance.line'].search([
+            ('microfinance_id', '=', microfinance_record.id),
+            ('state', '=', 'paid'),  # Only paid installments
+            ('payment_type', '=', 'installment')  # Only installment payments (not security deposit)
+        ])
+        
+        # Sum up the paid amounts from all paid lines
+        for line in paid_lines:
+            amount += line.paid_amount or line.amount or 0.0
+        
+        return amount
+
+    def _get_analytic_account_from_microfinance(self, microfinance_record):
+        """Get analytic account from microfinance record."""
+        # Try from the product
+        if microfinance_record.product_id:
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [microfinance_record.product_id.id])
+            ], limit=1)
+            if analytic:
+                return analytic
+        
+        return False
+
+    @api.model
+    def _sync_transfers(self):
+        """Sync Transfers - Transfer In/Out."""
         transfers = self.env['shariah.transfer'].search([
             ('is_sync_shariah_law', '=', False),
             ('state', '=', 'posted')
         ])
 
+        if not transfers:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
+
         for transfer in transfers:
             # Source account (transfer out)
             if transfer.source_analytic_account_id:
-                add_amounts(
+                self._add_amounts(
+                    shariah_record, daily_changes,
                     transfer.source_analytic_account_id.id,
                     transfer_out=transfer.amount
                 )
             
             # Destination account (transfer in)
             if transfer.destination_analytic_account_id:
-                add_amounts(
+                self._add_amounts(
+                    shariah_record, daily_changes,
                     transfer.destination_analytic_account_id.id,
                     transfer_in=transfer.amount
                 )
             
             transfer.is_sync_shariah_law = True
 
-        # ============================================================
-        # 9. UPDATE CUMULATIVE (shariah.law)
-        # ============================================================
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
 
+        return True
+    
+    @api.model
+    def _sync_donation_in_kind(self):
+        """Sync Donation In Kind (DIK) records."""
+        dik_records = self.env['donation.in.kind'].search([
+            ('is_sync_shariah_law', '=', False),
+            ('state', '=', 'box_validate')  # Sync only validated/approved records
+        ])
+
+        if not dik_records:
+            return
+
+        shariah_record = defaultdict(lambda: self._get_default_record())
+        daily_changes = defaultdict(lambda: self._get_default_record())
+
+        for dik in dik_records:
+            # Get total amount from the account move or calculate from lines
+            amount = self._calculate_dik_amount(dik)
+            
+            if amount <= 0:
+                continue
+
+            # Use the analytic account from the record or from the user
+            analytic_account = dik.analytical_account_id or self._get_analytic_account_from_dik(dik)
+            
+            if analytic_account:
+                self._add_amounts(
+                    shariah_record, daily_changes,
+                    analytic_account.id,
+                    dik=amount
+                )
+
+            dik.is_sync_shariah_law = True
+
+        self._update_cumulative_totals(shariah_record)
+        self._update_daily_balances(daily_changes)
+        self._recompute_balances()
+
+        return True
+
+    def _calculate_dik_amount(self, dik_record):
+        """Calculate the total amount for a DIK record."""
+        amount = 0.0
+        
+        # Try to get from account move first
+        if dik_record.account_move_id:
+            amount = abs(dik_record.account_move_id.amount_total)
+        elif dik_record.donation_in_kind_line_ids:
+            # Calculate from lines
+            for line in dik_record.donation_in_kind_line_ids:
+                if line.avg_price and line.quantity:
+                    amount += line.avg_price * line.quantity
+        elif dik_record.product_id and dik_record.quantity:
+            # Use product standard price if no lines
+            amount = dik_record.product_id.standard_price * dik_record.quantity
+            
+        return amount
+
+    def _get_analytic_account_from_dik(self, dik_record):
+        """Get analytic account from DIK record."""
+        
+        # Try from the product
+        if dik_record.product_id:
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [dik_record.product_id.id])
+            ], limit=1)
+            if analytic:
+                return analytic
+        
+        return False
+
+    # ============================================================
+    # HELPER METHODS
+    # ============================================================
+
+    def _get_default_record(self):
+        """Return default record structure."""
+        return {
+            'pos_donation': 0.0,
+            'api_donation': 0.0,
+            'dik': 0.0,
+            'po': 0.0,
+            'welfare': 0.0,
+            'microfinance': 0.0,
+            'expense': 0.0,
+            'transfer_in': 0.0,
+            'transfer_out': 0.0
+        }
+
+    def _add_amounts(self, shariah_record, daily_changes, analytic_id, **kwargs):
+        """Helper to add amounts to both shariah_record and daily_changes."""
+        if not analytic_id:
+            return
+
+        for key, value in kwargs.items():
+            if value:
+                shariah_record[analytic_id][key] += value
+                daily_changes[analytic_id][key] += value
+
+    def _get_analytic_account_from_product(self, product_id):
+        """Get analytic account from product."""
+        return self.env['account.analytic.account'].search([
+            ('product_ids', 'in', [product_id])
+        ], limit=1)
+
+    def _update_cumulative_totals(self, shariah_record):
+        """Update cumulative totals in shariah.law."""
         def update_parent(account, values):
             if not account:
                 return
@@ -407,10 +622,8 @@ class ShariahLaw(models.Model):
             if account.exists():
                 update_parent(account, values)
 
-        # ============================================================
-        # 10. UPDATE DAILY BALANCES
-        # ============================================================
-
+    def _update_daily_balances(self, daily_changes):
+        """Update daily balances."""
         today = fields.Date.context_today(self)
 
         for analytic_id, values in daily_changes.items():
@@ -446,18 +659,13 @@ class ShariahLaw(models.Model):
                     'transfer_out': values['transfer_out'],
                 })
 
-        # ============================================================
-        # 11. FORCE RECALCULATION OF BALANCES
-        # ============================================================
-
-        # Force recompute all daily balances for today
+    def _recompute_balances(self):
+        """Force recomputation of all balances for today."""
+        today = fields.Date.context_today(self)
         all_today = self.env['shariah.daily.balance'].search([
             ('date', '=', today)
         ])
         
         if all_today:
-            # Trigger recomputation
             all_today._compute_balances()
             all_today._compute_total_donation()
-
-        return True
