@@ -5,6 +5,7 @@ from . import shariah_law_config
 from . import shariah_law_sync_log
 from . import shariah_law_blocker
 from . import shariah_law_person
+from . import segment_transfer_rule
 from . import pos_order
 from . import purchase_order
 from . import donation
