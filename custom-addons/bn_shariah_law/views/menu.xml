@@ -58,7 +58,7 @@
     
     <menuitem
         id="shariah_law_person_menu"
-        name="Shariah Law Persons"
+        name="Authorized Persons"
         action="shariah_law_person_action"
         parent="shariah_law_config_menu"
         sequence="43"/>
