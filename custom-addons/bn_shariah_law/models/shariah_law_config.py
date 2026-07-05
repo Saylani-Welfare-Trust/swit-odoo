@@ -1,6 +1,5 @@
 from odoo import api, fields, models, _
 
-
 class ShariahLawConfig(models.Model):
     _name = 'shariah.law.config'
     _description = 'Shariah Law Configuration'

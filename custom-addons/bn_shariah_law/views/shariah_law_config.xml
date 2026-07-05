@@ -9,7 +9,6 @@
             <form string="Shariah Law Configuration">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_sync_all" string="Sync All" type="object" class="oe_stat_button" icon="fa-refresh"/>
                         <button name="action_view_logs" string="View Logs" type="object" class="oe_stat_button" icon="fa-history"/>
                     </div>
                     
