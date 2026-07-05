@@ -27,9 +27,9 @@
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="toggle_active" type="object" class="oe_stat_button"
-                                icon="fa-toggle-on" attrs="{'invisible': [('active', '=', False)]}"/>
+                                icon="fa-toggle-on" invisible="active == False"/>
                         <button name="toggle_active" type="object" class="oe_stat_button"
-                                icon="fa-toggle-off" attrs="{'invisible': [('active', '=', True)]}"/>
+                                icon="fa-toggle-off" invisible="active == True"/>
                     </div>
                     
                     <group>
@@ -56,7 +56,8 @@
                         <group>
                             <field name="requires_approval" widget="boolean_toggle"/>
                             <field name="approval_group_id" 
-                                   attrs="{'invisible': [('requires_approval', '=', False)], 'required': [('requires_approval', '=', True)]}"/>
+                                   invisible="requires_approval == False"
+                                   required="requires_approval == True"/>
                         </group>
                     </group>
                     
