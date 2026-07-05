@@ -8,10 +8,10 @@ class ShariahLawConfig(models.Model):
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     
     # Enable/Disable sync for each module
-    enable_pos_sync = fields.Boolean(string='Sync POS Donations', default=True)
-    enable_donations_sync = fields.Boolean(string='Sync Donations (DIK)', default=True)
-    enable_dik_sync = fields.Boolean(string='Sync Donation In Kind (DIK)', default=True)
-    enable_api_donation_sync = fields.Boolean(string='Sync API / Wallet Donations', default=True)
+    enable_pos_sync = fields.Boolean(string='Sync POS', default=True)
+    enable_donations_sync = fields.Boolean(string='Sync Donations', default=True)
+    enable_dik_sync = fields.Boolean(string='Sync Donation In Kind', default=True)
+    enable_api_donation_sync = fields.Boolean(string='Sync API Donations', default=True)
     enable_expense_sync = fields.Boolean(string='Sync Expenses', default=True)
     enable_purchase_sync = fields.Boolean(string='Sync Purchase Orders (PO)', default=True)
     enable_welfare_sync = fields.Boolean(string='Sync Welfare (Cash)', default=True)
