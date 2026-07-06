@@ -144,7 +144,7 @@ class ShariahLaw(models.Model):
             self.env['shariah.law.sync.log'].create(log_vals)
 
     # ============================================================
-    # INDIVIDUAL SYNC METHODS WITH CONFIG CHECK
+    # INDIVIDUAL SYNC METHODS WITH OLD LOGIC INTEGRATED
     # ============================================================
 
     @api.model
@@ -161,7 +161,7 @@ class ShariahLaw(models.Model):
         try:
             pos_orders = self.env['pos.order'].search([
                 ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'done')
+                ('state', '==', 'posted')
             ])
 
             if not pos_orders:
@@ -175,10 +175,15 @@ class ShariahLaw(models.Model):
                     if not line.product_id:
                         continue
 
+                    # Skip excluded products
                     if line.product_id.display_name.lower() == self.env.company.medical_equipment_security_depsoit_product.lower() or line.product_id.display_name.lower() == self.env.company.microfinance_intallement_product.lower():
                         continue
 
-                    analytic = self._get_analytic_account_from_product(line.product_id.id)
+                    # Get analytic accounts from analytical.product.line
+                    analytic = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [line.product_id.id])
+                    ])
+                    
                     if analytic:
                         self._add_amounts(
                             shariah_record, daily_changes,
@@ -245,13 +250,19 @@ class ShariahLaw(models.Model):
                 if not donation.product_id:
                     continue
 
-                analytic = self._get_analytic_account_from_product(donation.product_id.id)
+                # Get analytic accounts from analytical.product.line
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [donation.product_id.id])
+                ], limit=1)
+
                 if analytic:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        analytic.id,
-                        api_donation=donation.amount
-                    )
+                    analytic = analytic.analytic_account_id
+                    if analytic:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            analytic.id,
+                            api_donation=donation.amount
+                        )
 
                 donation.is_sync_shariah_law = True
 
@@ -320,7 +331,11 @@ class ShariahLaw(models.Model):
                     if not found or not found.product_id:
                         continue
 
-                    analytic = self._get_analytic_account_from_product(found.product_id.id)
+                    # Get analytic accounts from analytical.product.line
+                    analytic = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [found.product_id.id])
+                    ], limit=1)
+
                     if analytic:
                         self._add_amounts(
                             shariah_record, daily_changes,
@@ -374,7 +389,7 @@ class ShariahLaw(models.Model):
         try:
             expenses = self.env['hr.expense'].search([
                 ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'approved')
+                ('state', '=', 'done')
             ])
 
             if not expenses:
@@ -387,13 +402,17 @@ class ShariahLaw(models.Model):
                 if not expense.product_id:
                     continue
 
-                analytic = self._get_analytic_account_from_product(expense.product_id.id)
+                # Get analytic accounts from account.analytic.account
+                analytic = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [expense.product_id.id])
+                ], limit=1)
+
                 if analytic:
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic.id,
-                        expense=expense.total_amount_currency
-                    )
+                            expense=expense.total_amount_currency
+                        )
 
                 expense.is_sync_shariah_law = True
 
@@ -455,13 +474,17 @@ class ShariahLaw(models.Model):
                     if not line.product_id:
                         continue
 
-                    analytic = self._get_analytic_account_from_product(line.product_id.id)
+                    # Get analytic accounts from account.analytic.account
+                    analytic = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [line.product_id.id])
+                    ], limit=1)
+
                     if analytic:
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
-                            po=line.price_subtotal
-                        )
+                                po=line.price_subtotal
+                            )
 
                 purchase.is_sync_shariah_law = True
 
@@ -524,6 +547,7 @@ class ShariahLaw(models.Model):
                 if total_amount <= 0:
                     continue
 
+                # Get analytic account from welfare
                 analytic_account = self._get_analytic_account_from_welfare(welfare)
                 
                 if analytic_account:
@@ -708,7 +732,6 @@ class ShariahLaw(models.Model):
         
         try:
             # Get transfers that are posted but not synced
-            # This catches any transfers that weren't synced instantly
             transfers = self.env['shariah.transfer'].search([
                 ('is_sync_shariah_law', '=', False),
                 ('state', '=', 'posted')
@@ -898,50 +921,74 @@ class ShariahLaw(models.Model):
             ('product_ids', 'in', [product_id])
         ], limit=1)
 
-    def _update_cumulative_totals(self, shariah_record):
-        """Update cumulative totals in shariah.law."""
-        def update_parent(account, values):
-            if not account:
-                return
-
-            record = self.env['shariah.law'].search([
-                ('analytic_account_id', '=', account.id)
-            ], limit=1)
-
-            if record:
-                record.write({
-                    'pos_donation_amount': record.pos_donation_amount + values['pos_donation'],
-                    'api_donation_amount': record.api_donation_amount + values['api_donation'],
-                    'dik_amount': record.dik_amount + values['dik'],
-                    'po_amount': record.po_amount + values['po'],
-                    'welfare_amount': record.welfare_amount + values['welfare'],
-                    'microfinance_amount': record.microfinance_amount + values['microfinance'],
-                    'expense_amount': record.expense_amount + values['expense'],
-                    'transfer_in_amount': record.transfer_in_amount + values['transfer_in'],
-                    'transfer_out_amount': record.transfer_out_amount + values['transfer_out'],
-                })
-            else:
-                self.env['shariah.law'].create({
-                    'parent_id': account.parent_id.id if account.parent_id else False,
-                    'analytic_account_id': account.id,
-                    'pos_donation_amount': values['pos_donation'],
-                    'api_donation_amount': values['api_donation'],
-                    'dik_amount': values['dik'],
-                    'po_amount': values['po'],
-                    'welfare_amount': values['welfare'],
-                    'microfinance_amount': values['microfinance'],
-                    'expense_amount': values['expense'],
-                    'transfer_in_amount': values['transfer_in'],
-                    'transfer_out_amount': values['transfer_out'],
-                })
-
-            if account.parent_id:
-                update_parent(account.parent_id, values)
-
+    def _update_cumulative_totals_with_hierarchy(self, shariah_record):
+        """
+        Update cumulative totals in shariah.law with hierarchy support.
+        This implements the old logic's parent hierarchy update.
+        """
         for analytic_id, values in shariah_record.items():
             account = self.env['account.analytic.account'].browse(analytic_id)
-            if account:
-                update_parent(account, values)
+            if not account:
+                continue
+            
+            # Update the current account
+            self._update_single_record(account, values)
+            
+            # Update all parent accounts (hierarchy)
+            parent = account.parent_id
+            while parent:
+                self._update_single_record(parent, values)
+                parent = parent.parent_id
+
+    def _update_single_record(self, account, values):
+        """
+        Update or create a single shariah.law record for an analytic account.
+        """
+        record = self.search([
+            ('analytic_account_id', '=', account.id)
+        ], limit=1)
+
+        update_vals = {}
+        
+        # Map values to fields
+        field_mapping = {
+            'pos_donation': 'pos_donation_amount',
+            'api_donation': 'api_donation_amount',
+            'dik': 'dik_amount',
+            'po': 'po_amount',
+            'welfare': 'welfare_amount',
+            'microfinance': 'microfinance_amount',
+            'expense': 'expense_amount',
+            'transfer_in': 'transfer_in_amount',
+            'transfer_out': 'transfer_out_amount',
+        }
+        
+        for key, value in values.items():
+            if value:
+                mapped_field = field_mapping.get(key, key)
+                if record:
+                    current_value = getattr(record, mapped_field, 0.0)
+                    update_vals[mapped_field] = current_value + value
+                else:
+                    update_vals[mapped_field] = value
+
+        if not update_vals:
+            return
+
+        if record:
+            record.write(update_vals)
+        else:
+            create_vals = {
+                'parent_id': account.parent_id.id if account.parent_id else False,
+                'analytic_account_id': account.id,
+                'currency_id': self.env.company.currency_id.id,
+            }
+            create_vals.update(update_vals)
+            self.create(create_vals)
+
+    def _update_cumulative_totals(self, shariah_record):
+        """Update cumulative totals in shariah.law."""
+        self._update_cumulative_totals_with_hierarchy(shariah_record)
 
     def _update_daily_balances(self, daily_changes):
         """Update daily balances."""
