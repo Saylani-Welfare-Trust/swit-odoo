@@ -187,31 +187,23 @@ class QurbaniOrder(models.Model):
                 )
                 
                 if not slaughter_center:
-                    all_centers = self.env['web.qurbani.slaughter.center'].search([])
-                    existing_records = "\n".join(
-                        f"  - ID={c.id}, name={c.name!r}, "
-                        f"distribution_center_id={c.distribution_center_id.id if c.distribution_center_id else None}, "
-                        f"slaughter_center_id={c.slaughter_center_id.id if c.slaughter_center_id else None} "
-                        f"({c.slaughter_center_id.name if c.slaughter_center_id else 'N/A'})"
-                        for c in all_centers
-                    ) or "  (no records exist in web.qurbani.slaughter.center at all)"
-
                     raise ValidationError(
                         f"No slaughter center mapping found for non-meat line "
                         f"(API line ID={getattr(line, 'id', '?')}, "
                         f"day={getattr(line, 'day', False) or getattr(line, 'name', '?')}, "
                         f"city={getattr(line, 'city', False) or 'N/A'}, "
                         f"branch={getattr(line, 'branch', False) or 'N/A'}, "
-                        f"fulfilment={qurbani_fullfilment}).\n\n"
-                        f"Expected a 'web.qurbani.slaughter.center' record with an empty name, "
-                        f"but none was found. Existing records in this table:\n{existing_records}"
+                        f"fulfilment={qurbani_fullfilment}). "
+                        f"No 'web.qurbani.slaughter.center' record with an empty name exists — "
+                        f"a default no-meat slaughter center must be configured."
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
                         f"Slaughter center record (ID={slaughter_center.id}, name={slaughter_center.name!r}) "
                         f"exists but has no 'slaughter_center_id' set — required for non-meat line "
                         f"(API line ID={getattr(line, 'id', '?')})."
-                    )
+                    )            
+                        
                 
             slaughter_location_id = slaughter_center.slaughter_center_id.id
 
