@@ -64,22 +64,6 @@ class QurbaniOrder(models.Model):
     
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
-
-    def _is_qurbani_sale_product(self, product):
-        """True only for POS/web Qurbani animal products, not fees/add-ons."""
-        if not product or not product.exists():
-            return False
-
-        if product.is_pos_qurbani_inventory:
-            return True
-
-        product_name = (product.name or '').lower()
-        category_name = (product.categ_id.name or '').lower()
-        return (
-            bool(product.is_livestock)
-            and 'qurbani' in category_name
-            and ('cow' in product_name or 'goat' in product_name)
-        )
     
     def create_web_qurbani_order(self, donation_record, donation_name=None):
         """
@@ -245,12 +229,6 @@ class QurbaniOrder(models.Model):
             product = _resolve_product(api_line, False)
             if not product:
                 raise ValidationError(f"Unable to resolve qurbani product for API line {api_line.id}")
-
-            # Skip non-qurbani products (e.g. Communication/fee line items
-            # that ride along in the same donation payload but aren't
-            # actual qurbani animal products).
-            if not self._is_qurbani_sale_product(product):
-                continue
 
             mapping_data = _get_demand(api_line, default_hijri, product)
             demand = mapping_data['demand']
@@ -591,8 +569,8 @@ class QurbaniOrder(models.Model):
 
             product = self.env['product.product'].browse(line['product_id'])
 
-            # Skip non-qurbani products
-            if not self._is_qurbani_sale_product(product):
+            # ❌ Skip non-qurbani products
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             demand = _get_demand(line)
@@ -674,8 +652,8 @@ class QurbaniOrder(models.Model):
 
             product = self.env['product.product'].browse(line['product_id'])
 
-            # Skip non-qurbani products
-            if not self._is_qurbani_sale_product(product):
+            # ❌ Skip non-qurbani products
+            if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
             schedule = line.get('qurbani_schedule', {})
