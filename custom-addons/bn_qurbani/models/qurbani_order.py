@@ -174,7 +174,7 @@ class QurbaniOrder(models.Model):
                     )
                     if not slaughter_center:
                         raise ValidationError(
-                            f"No slaughter center mapping found for distribution center ID {distribution_rec.distribution_center_id.name}"
+                            f"No slaughter center mapping found for distribution center ID {distribution_id.name}"
                         )
                     if not slaughter_center.slaughter_center_id:
                         raise ValidationError(
@@ -187,30 +187,12 @@ class QurbaniOrder(models.Model):
                 )
                 
                 if not slaughter_center:
-                    all_centers = self.env['web.qurbani.slaughter.center'].search([])
-                    existing_records = "\n".join(
-                        f"  - ID={c.id}, name={c.name!r}, "
-                        f"distribution_center_id={c.distribution_center_id.id if c.distribution_center_id else None}, "
-                        f"slaughter_center_id={c.slaughter_center_id.id if c.slaughter_center_id else None} "
-                        f"({c.slaughter_center_id.name if c.slaughter_center_id else 'N/A'})"
-                        for c in all_centers
-                    ) or "  (no records exist in web.qurbani.slaughter.center at all)"
-
                     raise ValidationError(
-                        f"No slaughter center mapping found for non-meat line "
-                        f"(API line ID={getattr(line, 'id', '?')}, "
-                        f"day={getattr(line, 'day', False) or getattr(line, 'name', '?')}, "
-                        f"city={getattr(line, 'city', False) or 'N/A'}, "
-                        f"branch={getattr(line, 'branch', False) or 'N/A'}, "
-                        f"fulfilment={qurbani_fullfilment}).\n\n"
-                        f"Expected a 'web.qurbani.slaughter.center' record with an empty name, "
-                        f"but none was found. Existing records in this table:\n{existing_records}"
+                        f"No slaughter center mapping found "
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
-                        f"Slaughter center record (ID={slaughter_center.id}, name={slaughter_center.name!r}) "
-                        f"exists but has no 'slaughter_center_id' set — required for non-meat line "
-                        f"(API line ID={getattr(line, 'id', '?')})."
+                        f"Slaughter center record exists but slaughter_center_id is empty"
                     )
                     
                 distribution_id = self.env.company.web_no_meat_distribution_location_id.id 
@@ -709,31 +691,25 @@ class QurbaniOrder(models.Model):
 
             # ==================================================
             # GET CITY
-            # Never let this block crash the whole sync. If we can't
-            # cleanly resolve a single city, just leave city_id blank
-            # and continue — city is informational only here.
+            # Kept as originally designed (single-record .location_id
+            # traversal), but wrapped so an unexpected multi-record
+            # result never rolls back the whole sync — it just leaves
+            # city_id blank and moves on.
             # ==================================================
             city_id = False
 
             try:
-                if demand.slaughter_location_id and demand.slaughter_location_id.location_id:
-                    locations = demand.slaughter_location_id.location_id
-                    schedule_city = schedule.get('city')
-
-                    if schedule_city:
-                        matched = locations.filtered(
-                            lambda loc: schedule_city.lower() in (loc.name or '').lower()
-                            or schedule_city.lower() in (loc.complete_name or '').lower()
-                        )
-                        city_id = matched[0].id if matched else False
-                    else:
-                        # No city string to match against — don't guess, just skip
-                        city_id = False
+                if demand.slaughter_location_id:
+                    city_id = (
+                        demand.slaughter_location_id.location_id.id
+                        if hasattr(demand.slaughter_location_id, 'location_id')
+                        else False
+                    )
             except Exception as e:
                 _logger.warning(f"Could not resolve city_id for slot demand {demand.id}: {str(e)}")
                 city_id = False
 
-            # fallback from schedule city (kept as-is — single search result, already safe)
+            # fallback from schedule city
             if not city_id and schedule.get('city'):
                 city = self.env['stock.location'].search([
                     ('name', '=', schedule.get('city'))
