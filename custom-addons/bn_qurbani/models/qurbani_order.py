@@ -176,8 +176,7 @@ class QurbaniOrder(models.Model):
                     [('name', '=', False)], limit=1
                 )
 
-                # Non-meat lines have no physical distribution point — leave blank.
-                distribution_id = False
+                distribution_id = self.env.company.web_no_meat_distribution_location_id.id or False
                 
             slaughter_location_id = slaughter_center.slaughter_center_id.id if slaughter_center and slaughter_center.slaughter_center_id else False
 
