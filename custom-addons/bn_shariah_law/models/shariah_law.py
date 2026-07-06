@@ -161,7 +161,7 @@ class ShariahLaw(models.Model):
         try:
             pos_orders = self.env['pos.order'].search([
                 ('is_sync_shariah_law', '=', False),
-                ('state', '==', 'posted')
+                ('state', '==', 'done')
             ])
 
             if not pos_orders:
