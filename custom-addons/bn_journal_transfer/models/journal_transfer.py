@@ -9,7 +9,7 @@ status_selection = [
 ]
 
 
-class JournalTransfer(models.TransientModel):
+class JournalTransfer(models.Model):
     _name = "journal.transfer"
     _description = "Journal Transfer"
 
