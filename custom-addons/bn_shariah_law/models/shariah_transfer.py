@@ -132,7 +132,7 @@ class ShariahTransfer(models.Model):
             
             # === 2. UPDATE SHARIAH LAW INSTANTLY ===
             config = self.env['shariah.law.config'].get_config()
-            if config.enable_instant_transfer_sync:
+            if config.enable_transfer_sync:
                 self._sync_transfer_to_shariah_law(rec)
             
             # === 3. MARK AS SYNCED ===
