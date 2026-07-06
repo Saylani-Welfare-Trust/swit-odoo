@@ -12,7 +12,7 @@ class ResPartner(models.Model):
     whatsapp = fields.Char(string="WhatsApp")
 
 
-    @api.model_create_multi
+    @api.model
     def create(self, partner):
         """Auto copy mobile to whatsapp when partner is created
         from anywhere, including POS"""
