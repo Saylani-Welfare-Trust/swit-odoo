@@ -19,6 +19,8 @@ class ResPartner(models.Model):
 
     @api.model
     def create_from_ui(self, partner):
+        raise ValidationError(str(partner))
+
         if partner.get('country_code_id'):
             country_id = self.env['res.country'].search([('id', '=', int(partner.get('country_code_id')))], limit=1).id
             partner['country_id'] = country_id
