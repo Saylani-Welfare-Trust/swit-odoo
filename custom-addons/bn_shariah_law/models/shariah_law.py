@@ -937,7 +937,7 @@ class ShariahLaw(models.Model):
 
         for analytic_id, values in shariah_record.items():
             account = self.env['account.analytic.account'].browse(analytic_id)
-            if account.exists():
+            if account:
                 update_parent(account, values)
 
     def _update_daily_balances(self, daily_changes):
