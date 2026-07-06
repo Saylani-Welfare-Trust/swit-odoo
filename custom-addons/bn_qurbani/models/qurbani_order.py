@@ -188,22 +188,18 @@ class QurbaniOrder(models.Model):
                 
                 if not slaughter_center:
                     raise ValidationError(
-                        f"No slaughter center mapping found for non-meat line "
-                        f"(API line ID={getattr(line, 'id', '?')}, "
-                        f"day={getattr(line, 'day', False) or getattr(line, 'name', '?')}, "
-                        f"city={getattr(line, 'city', False) or 'N/A'}, "
-                        f"branch={getattr(line, 'branch', False) or 'N/A'}, "
-                        f"fulfilment={qurbani_fullfilment}). "
-                        f"No 'web.qurbani.slaughter.center' record with an empty name exists — "
-                        f"a default no-meat slaughter center must be configured."
+                        f"No slaughter center mapping found "
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
-                        f"Slaughter center record (ID={slaughter_center.id}, name={slaughter_center.name!r}) "
-                        f"exists but has no 'slaughter_center_id' set — required for non-meat line "
-                        f"(API line ID={getattr(line, 'id', '?')})."
-                    )            
-                        
+                        f"Slaughter center record exists but slaughter_center_id is empty"
+                    )
+                    
+                distribution_id = self.env.company.web_no_meat_distribution_location_id.id 
+                if not distribution_id:
+                    raise ValidationError(
+                        f"Company {self.env.company.name} has no Web No-Meat Distribution Location set. Please set it and try again."
+                    )                   
                 
             slaughter_location_id = slaughter_center.slaughter_center_id.id
 
