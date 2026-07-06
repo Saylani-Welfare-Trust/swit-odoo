@@ -180,11 +180,12 @@ class ShariahLaw(models.Model):
                         continue
 
                     # Get analytic accounts from analytical.product.line
-                    analytic = self.env['account.analytic.account'].search([
+                    analytics = self.env['account.analytic.account'].search([
                         ('product_ids', 'in', [line.product_id.id])
                     ])
                     
-                    if analytic:
+                    # Process all analytic accounts found
+                    for analytic in analytics:
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
@@ -251,16 +252,17 @@ class ShariahLaw(models.Model):
                     continue
 
                 # Get analytic accounts from analytical.product.line
-                analytic = self.env['account.analytic.account'].search([
+                analytics = self.env['account.analytic.account'].search([
                     ('product_ids', 'in', [donation.product_id.id])
-                ], limit=1)
+                ])
 
-                if analytic:
-                    analytic = analytic.analytic_account_id
-                    if analytic:
+                for analytic in analytics:
+                    # Check if there's a parent relationship through analytic_account_id
+                    target_analytic = analytic.analytic_account_id if hasattr(analytic, 'analytic_account_id') else analytic
+                    if target_analytic:
                         self._add_amounts(
                             shariah_record, daily_changes,
-                            analytic.id,
+                            target_analytic.id,
                             api_donation=donation.amount
                         )
 
@@ -332,11 +334,11 @@ class ShariahLaw(models.Model):
                         continue
 
                     # Get analytic accounts from analytical.product.line
-                    analytic = self.env['account.analytic.account'].search([
+                    analytics = self.env['account.analytic.account'].search([
                         ('product_ids', 'in', [found.product_id.id])
-                    ], limit=1)
+                    ])
 
-                    if analytic:
+                    for analytic in analytics:
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
@@ -403,16 +405,16 @@ class ShariahLaw(models.Model):
                     continue
 
                 # Get analytic accounts from account.analytic.account
-                analytic = self.env['account.analytic.account'].search([
+                analytics = self.env['account.analytic.account'].search([
                     ('product_ids', 'in', [expense.product_id.id])
-                ], limit=1)
+                ])
 
-                if analytic:
+                for analytic in analytics:
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic.id,
-                            expense=expense.total_amount_currency
-                        )
+                        expense=expense.total_amount_currency
+                    )
 
                 expense.is_sync_shariah_law = True
 
@@ -475,16 +477,16 @@ class ShariahLaw(models.Model):
                         continue
 
                     # Get analytic accounts from account.analytic.account
-                    analytic = self.env['account.analytic.account'].search([
+                    analytics = self.env['account.analytic.account'].search([
                         ('product_ids', 'in', [line.product_id.id])
-                    ], limit=1)
+                    ])
 
-                    if analytic:
+                    for analytic in analytics:
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
-                                po=line.price_subtotal
-                            )
+                            po=line.price_subtotal
+                        )
 
                 purchase.is_sync_shariah_law = True
 
@@ -614,10 +616,10 @@ class ShariahLaw(models.Model):
         """Get analytic account from welfare record."""
         for line in welfare_record.welfare_line_ids:
             if line.product_id:
-                analytic = self.env['account.analytic.account'].search([
+                analytics = self.env['account.analytic.account'].search([
                     ('product_ids', 'in', [line.product_id.id])
-                ], limit=1)
-                if analytic:
+                ])
+                for analytic in analytics:
                     return analytic
         
         return False
@@ -711,10 +713,10 @@ class ShariahLaw(models.Model):
     def _get_analytic_account_from_microfinance(self, microfinance_record):
         """Get analytic account from microfinance record."""
         if microfinance_record.product_id:
-            analytic = self.env['account.analytic.account'].search([
+            analytics = self.env['account.analytic.account'].search([
                 ('product_ids', 'in', [microfinance_record.product_id.id])
-            ], limit=1)
-            if analytic:
+            ])
+            for analytic in analytics:
                 return analytic
         
         return False
@@ -879,10 +881,10 @@ class ShariahLaw(models.Model):
     def _get_analytic_account_from_dik(self, dik_record):
         """Get analytic account from DIK record."""
         if dik_record.product_id:
-            analytic = self.env['account.analytic.account'].search([
+            analytics = self.env['account.analytic.account'].search([
                 ('product_ids', 'in', [dik_record.product_id.id])
-            ], limit=1)
-            if analytic:
+            ])
+            for analytic in analytics:
                 return analytic
         
         return False
@@ -917,9 +919,11 @@ class ShariahLaw(models.Model):
 
     def _get_analytic_account_from_product(self, product_id):
         """Get analytic account from product."""
-        return self.env['account.analytic.account'].search([
+        analytics = self.env['account.analytic.account'].search([
             ('product_ids', 'in', [product_id])
-        ], limit=1)
+        ])
+        # Return the first one if exists, otherwise False
+        return analytics[:1] if analytics else False
 
     def _update_cumulative_totals_with_hierarchy(self, shariah_record):
         """
