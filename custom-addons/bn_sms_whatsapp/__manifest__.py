@@ -8,7 +8,8 @@
     'depends': [
         'base',
         'bn_profile_management',
-        'bn_pos_order',  
+        'bn_pos_order',
+        'bn_pos_customization',
     ],
     'data': [
         'security/ir.model.access.csv',
