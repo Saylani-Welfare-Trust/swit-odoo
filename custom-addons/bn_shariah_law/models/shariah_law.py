@@ -175,6 +175,9 @@ class ShariahLaw(models.Model):
                     if not line.product_id:
                         continue
 
+                    if line.product_id.display_name.lower() == self.env.company.medical_equipment_security_depsoit_product.lower() or line.product_id.display_name.lower() == self.env.company.microfinance_intallement_product.lower():
+                        continue
+
                     analytic = self._get_analytic_account_from_product(line.product_id.id)
                     if analytic:
                         self._add_amounts(
