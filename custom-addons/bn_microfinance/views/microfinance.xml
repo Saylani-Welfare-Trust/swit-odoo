@@ -9,7 +9,10 @@
                 <field name="name" />
                 <field name="donee_id" />
                 <field name="asset_type" />
-                <field name="total_amount" />
+                <field name ="product_amount"       />
+                <field name="security_deposit" string = "Security Deposit"/>
+                <field name="total_amount" string = "Net Amount"/>
+
                 <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state not in ['approve', 'done']" decoration-success="state in ['approve', 'done']" />
             </tree>
         </field>
@@ -21,6 +24,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="sale_order_id" invisible="1"/>
                     <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'draft' or in_recovery" />
                     
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />
@@ -62,6 +66,13 @@
                     <widget name="web_ribbon" title="In Recovery" invisible="not in_recovery"/>
 
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sale_order" 
+                                type="object"
+                                class="oe_stat_button" 
+                                icon="fa-shopping-cart"
+                                invisible="sale_order_id == False">
+                            <field name="sale_order_id" widget="statinfo" string="Sale Order"/>
+                        </button>
                         <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck" 
                                 invisible="not picking_ids">
                             <field name="picking_ids" widget="statinfo" string="Delivery"/>
@@ -94,7 +105,7 @@
                             <field name="advance_donation_amount" readonly="1" />
                             <field name="total_amount" />
                             <field name="amount" readonly="1" />
-                            <field name="old_system_record" readonly="state != 'draft'" />
+                            <field name="old_system_record"  />
                         </group>
                         <group name="microfinance_col_2">
                             <field name="installment_type" options="{'horizontal': True}" widget="radio" />
@@ -138,6 +149,7 @@
                             <field name="microfinance_line_ids" readonly="1">
                                 <tree>
                                     <field name="installment_no" />
+                                    <field name="payment_type" string = "Payment Type"/>
                                     <field name="due_date" />
                                     <field name="amount" />
                                     <field name="paid_amount" />
@@ -147,27 +159,20 @@
                             </field>
                         </page>
                         <page name="pdc" string="Post Dated Cheque" invisible="state not in ['done', 'reject'] or in_recovery">
-                            <group>
-                                <group name="pdc_col_1">
-                                    <button name="download_pdc_template" string="Template" type="object" class="oe_highlight"/>
-                                    <button name="action_upload_cheques" string="Upload" type="object" class="oe_highlight"/>
-                                </group>
-                                <group name="pdc_col_1">
-                                    <field name="pdc_attachment_name" invisible="1"/>
-                                    <field name="pdc_attachment" filename="pdc_attachment_name"/>
-                                </group>
-                            </group>
-                            <field name="microfinance_line_ids" readonly="1">
-                                <tree>
-                                    <field name="is_cheque_deposit" column_invisible="1" />
-
-                                    <field name="installment_no" />
+                            <field name="microfinance_pdc_line_ids" edit="1" delete="1" create="1" readonly="0">
+                                <tree editable="top">
+                                    <field name="installment_number" />
+                                    <field name="cheque_no" />
                                     <field name="cheque_date" />
                                     <field name="bank_name" />
-                                    <field name="cheque_no" />
-                                    <field name="amount" />
-                                    
-                                    <button name="action_cheque_deposit" string="Deposit Cheque" type="object" class="oe_highlight" invisible="is_cheque_deposit == True"/>
+                                    <field name="amount_total" />
+                                    <field name="is_cheque_deposit" widget="boolean" invisible = "1" />
+                                    <field name="state_cheque" widget="badge" 
+                                        decoration-success="state_cheque == 'cleared'"
+                                        decoration-danger="state_cheque == 'bounced'"
+                                        decoration-warning="state_cheque == 'draft'"
+                                        decoration-info="state_cheque == 'deposited'" />
+                                    <field name="pos_cheque_id" invisible="1" />
                                 </tree>
                             </field>
                         </page>
@@ -258,7 +263,8 @@
                             <group>
                                 <group name="request_details_col_1">
                                     <field name="loan_request_amount" />
-                                    <field name="security_offered" />
+                                    <field name="security_offered_id" 
+                                        options="{'no_create': False, 'no_edit': False, 'no_open': False}"/>                                    <field name="details" string = "Details"/>
                                 </group>
                                 <group name="request_details_col_2">
                                     <field name="loan_tenure_expected" />

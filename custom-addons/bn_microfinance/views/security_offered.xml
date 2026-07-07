@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="security_offered_view_tree" model="ir.ui.view">
+        <field name="name">security.offered.view.tree</field>
+        <field name="model">security.offered</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" required="1"/>
+                <field name="microfinance_count" string="Used"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="security_offered_view_form" model="ir.ui.view">
+        <field name="name">security.offered.view.form</field>
+        <field name="model">security.offered</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_microfinance" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-list"
+                                invisible="microfinance_count == 0">
+                            <field name="microfinance_count" 
+                                   string="Applications" 
+                                   widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" required="1"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="security_offered_view_search" model="ir.ui.view">
+        <field name="name">security.offered.view.search</field>
+        <field name="model">security.offered</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="security_offered_action" model="ir.actions.act_window">
+        <field name="name">Security Offered</field>
+        <field name="res_model">security.offered</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new security offered for microfinance....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="security_offered_menu"
+        name="Security Offered"
+        action="security_offered_action"
+        parent="bn_master_setup.microfinance_menu"
+        sequence="7"/>
+
+</odoo>
