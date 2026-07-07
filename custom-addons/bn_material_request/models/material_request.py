@@ -172,8 +172,8 @@ class MemberApproval(models.Model):
                 )
 
             budget = line.budget_id
-            if not budget:
-                raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            # if not budget:
+            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
             
             budget_lines = self.env['budget.lines'].search([
                 ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
