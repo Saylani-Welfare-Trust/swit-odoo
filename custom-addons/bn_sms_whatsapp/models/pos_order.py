@@ -16,72 +16,95 @@ class PosOrder(models.Model):
     def send_whatsapp_after_payment(self, order_id):
         if isinstance(order_id, list):
             order_id = order_id[0] if order_id else None
-        
+
         order = self.browse(int(order_id)) if order_id else None
-        
+
         if not order:
             return {'status': 'error', 'message': 'Order not found'}
-        
+
         if not order.partner_id:
             return {'status': 'error', 'message': 'No customer selected'}
-        
-        try:
-            _logger.info('Processing order: %s', order.name)
 
-            # -------------------------------
-            # SMS fallback message
-            # -------------------------------
-            
-            # 1. Generate PDF
+        sms_message = ""
+        pdf_url = ""
+
+        try:
+            _logger.info("Processing order: %s", order.name)
+
+            # ---------------------------------
+            # Generate PDF
+            # ---------------------------------
             pdf_data = self._generate_pdf_from_report(order)
 
             if not pdf_data or not pdf_data.startswith(b'%PDF'):
                 raise Exception("Invalid PDF generated")
 
-            _logger.info('PDF URL: %s', pdf_url)
-
-            # 2. Save attachment + get URL
+            # ---------------------------------
+            # Save attachment and generate URL
+            # ---------------------------------
             attachment, pdf_url = self._save_as_attachment(order, pdf_data)
 
-            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
-to Saylani Welfare International Trust. Your generousity
-will make an immediate difference in the
-lives of needy families.
+            _logger.info("PDF URL: %s", pdf_url)
 
-Link: {pdf_url}"""
+            # ---------------------------------
+            # SMS Message
+            # ---------------------------------
+            sms_message = (
+                f"Thank you for donation of Rs. {order.amount_total}. "
+                f"{order.user_id.branch_code}-"
+                f"{order.date_order.year if order.date_order else ''}-"
+                f"{order.pos_order_seq}\n\n"
+                "Your generosity.\n"
+                "Your donation will make an immediate difference in the lives of needy families.\n\n"
+                f"Receipt: {pdf_url}"
+            )
 
-            # -------------------------------
-            # WhatsApp Flow
-            # -------------------------------
-            if order.partner_id.whatsapp:
-                # 3. Send WhatsApp
-                self.env['whatsapp.service'].send_template_message(
-                    order.partner_id.whatsapp,
-                    pdf_url,
-                    "Donation Receipt.pdf"
-                )
+            # ---------------------------------
+            # WhatsApp
+            # ---------------------------------
+            if not order.partner_id.whatsapp:
+                raise Exception("Customer does not have a WhatsApp number.")
 
-                _logger.info('WhatsApp sent successfully')
+            self.env['whatsapp.service'].send_template_message(
+                order.partner_id.whatsapp,
+                pdf_url,
+                "Donation Receipt.pdf"
+            )
 
-            else:
-                raise Exception("No WhatsApp number")
+            _logger.info("WhatsApp sent successfully")
 
-            return {'status': 'success', 'message': 'WhatsApp sent'}
+            return {
+                'status': 'success',
+                'message': 'WhatsApp sent successfully'
+            }
 
         except Exception as e:
-            _logger.error('WhatsApp failed: %s', str(e))
+            _logger.exception("WhatsApp sending failed")
 
-            raise UserError(f"WhatsApp sending failed: {str(e)}. Attempting SMS fallback.")
-
-            # -------------------------------
-            # SMS fallback
-            # -------------------------------
+            # ---------------------------------
+            # SMS Fallback
+            # ---------------------------------
             mobile = order.partner_id.mobile or order.partner_id.phone
+
             if mobile:
-                self.env['sms.service'].send_sms(mobile, sms_message)
-                return {'status': 'success', 'message': 'SMS sent instead'}
-            else:
-                return {'status': 'error', 'message': 'No contact number'}
+                try:
+                    self.env['sms.service'].send_sms(mobile, sms_message)
+
+                    return {
+                        'status': 'warning',
+                        'message': f'WhatsApp failed ({str(e)}). SMS sent successfully.'
+                    }
+
+                except Exception as sms_error:
+                    raise UserError(
+                        f"WhatsApp failed: {str(e)}\n"
+                        f"SMS also failed: {str(sms_error)}"
+                    )
+
+            raise UserError(
+                f"WhatsApp failed: {str(e)}\n"
+                "Customer has no mobile number for SMS fallback."
+            )
 
     # -----------------------------------
     # Generate PDF
