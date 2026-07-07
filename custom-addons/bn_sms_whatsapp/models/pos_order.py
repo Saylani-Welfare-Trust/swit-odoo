@@ -66,7 +66,7 @@ May Allah bless you!
                 self.env['whatsapp.service'].send_template_message(
                     order.partner_id.whatsapp,
                     pdf_url,
-                    f"Receipt_{order.name}.pdf"
+                    "Donation Receipt.pdf"
                 )
 
                 _logger.info('WhatsApp sent successfully')
@@ -108,9 +108,11 @@ May Allah bless you!
     # -----------------------------------
     # Save Attachment + Generate URL
     # -----------------------------------
+
+    
     def _save_as_attachment(self, order, pdf_data):
-        safe_name = order.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
+        # safe_name = order.name.replace('/', '_')
+        filename = f"Donation Receipt.pdf"
 
         # Delete old
         old = self.env['ir.attachment'].search([
@@ -137,6 +139,8 @@ May Allah bless you!
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
 
         # ✅ FINAL WORKING URL
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
+        pdf_url = (
+            f"{base_url}/web/content/{attachment.id}/"
+            f"Donation%20Receipt.pdf?access_token={attachment.access_token}&download=true"
+        )
         return attachment, pdf_url
