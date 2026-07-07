@@ -45,9 +45,13 @@ class PosOrder(models.Model):
             sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
 to Saylani Welfare International Trust. Your generousity
 will make an immediate difference in the
-lives of needy families.
+lives of needy families."""
+#             sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
+# to Saylani Welfare International Trust. Your generousity
+# will make an immediate difference in the
+# lives of needy families.
 
-Link: {pdf_url}"""
+# Link: {pdf_url}"""
 
             # -------------------------------
             # WhatsApp Flow
