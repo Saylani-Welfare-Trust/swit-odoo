@@ -34,34 +34,28 @@ class PosOrder(models.Model):
             for line in order.lines:
                 donation_items += f"{line.qty} x {line.product_id.name} = {line.price_subtotal} PKR\n"
             
-            sms_message = f"""Dear {order.partner_id.name},
+            # 1. Generate PDF
+            pdf_data = self._generate_pdf_from_report(order)
 
-Thank you for your donation!
+            if not pdf_data or not pdf_data.startswith(b'%PDF'):
+                raise Exception("Invalid PDF generated")
 
-Amount: {order.amount_total} PKR
-Items:
-{donation_items}
+            _logger.info('PDF URL: %s', pdf_url)
 
-May Allah bless you!
+            # 2. Save attachment + get URL
+            attachment, pdf_url = self._save_as_attachment(order, pdf_data)
 
-- SWIT"""
+            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
+to Saylani Welfare International Trust. Your generousity
+will make an immediate difference in the
+lives of needy families.
+
+Link: {pdf_url}"""
 
             # -------------------------------
             # WhatsApp Flow
             # -------------------------------
             if order.partner_id.whatsapp:
-
-                # 1. Generate PDF
-                pdf_data = self._generate_pdf_from_report(order)
-
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                # 2. Save attachment + get URL
-                attachment, pdf_url = self._save_as_attachment(order, pdf_data)
-
-                _logger.info('PDF URL: %s', pdf_url)
-
                 # 3. Send WhatsApp
                 self.env['whatsapp.service'].send_template_message(
                     order.partner_id.whatsapp,
