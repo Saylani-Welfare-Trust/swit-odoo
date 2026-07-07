@@ -1,4 +1,5 @@
 from odoo import models, api
+from odoo.exceptions import UserError
 import base64
 import logging
 
@@ -31,11 +32,6 @@ class PosOrder(models.Model):
             # SMS fallback message
             # -------------------------------
             
-            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
-to Saylani Welfare International Trust. Your generousity
-will make an immediate difference in the
-lives of needy families."""
-            
             # 1. Generate PDF
             pdf_data = self._generate_pdf_from_report(order)
 
@@ -47,12 +43,12 @@ lives of needy families."""
             # 2. Save attachment + get URL
             attachment, pdf_url = self._save_as_attachment(order, pdf_data)
 
-#             sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
-# to Saylani Welfare International Trust. Your generousity
-# will make an immediate difference in the
-# lives of needy families.
+            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
+to Saylani Welfare International Trust. Your generousity
+will make an immediate difference in the
+lives of needy families.
 
-# Link: {pdf_url}"""
+Link: {pdf_url}"""
 
             # -------------------------------
             # WhatsApp Flow
@@ -74,6 +70,8 @@ lives of needy families."""
 
         except Exception as e:
             _logger.error('WhatsApp failed: %s', str(e))
+
+            raise UserError(f"WhatsApp sending failed: {str(e)}. Attempting SMS fallback.")
 
             # -------------------------------
             # SMS fallback
