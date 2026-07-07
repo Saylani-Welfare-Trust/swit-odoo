@@ -97,6 +97,17 @@ class ResPartner(models.Model):
                 vals['country_code_id'] = pakistan_id
         return super().create(vals_list)  
     
+    def write(self, vals):
+        if 'mobile' in vals:
+            mobile = vals.get('mobile')
+
+            if mobile and self.search([('mobile', '=', mobile)]):
+                raise ValidationError(
+                    "A Partner with the same Mobile No. already exists in the System."
+                )
+
+        return super(ResPartner, self).write(vals)
+
     @api.onchange('category_id')
     def _onchange_category_id(self):
         for rec in self:
