@@ -122,7 +122,7 @@
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
-                        <div><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
+                        <div><strong>Register Name:</strong> <t t-esc="partner.name || '-'"/></div>
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>
