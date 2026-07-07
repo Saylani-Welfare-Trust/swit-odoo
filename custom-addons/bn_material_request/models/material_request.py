@@ -158,44 +158,39 @@ class MemberApproval(models.Model):
         # Budget check per line (analytic + budget)
         total_available_budget = 0.0
         is_in_budget = True
-        # STEP 1: Build analytic-wise totals
-        # ----------------------------------------
-        analytic_amount_map = {}  # {analytic_account: total_amount}
 
         for line in self.line_ids:
-            analytic_line = self.env['account.analytic.account'].search([
+            # Search for analytic account linked to the product
+            analytic = self.env['account.analytic.account'].search([
                 ('product_ids', 'in', [line.product_id.id])
             ], limit=1)
 
-            if not analytic_line or not analytic_line.analytic_account_id:
+            if not analytic:
                 raise ValidationError(
                     _('Product "%s" is not linked to any Analytic Account.')
                     % line.product_id.display_name
                 )
 
-            analytic = analytic_line.analytic_account_id
-
             budget = line.budget_id
             if not budget:
                 raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            
             budget_lines = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', analytic.id),
+                ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
                 ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
                 ('date_to', '>=', today),
             ])
+            
             if not budget_lines:
                 raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
-            # available_budget = sum(
-            #     l.planned_amount - abs(l.practical_amount)
-            #     for l in budget_lines
-            # )
-
+            
             available_budget = sum(
                 abs(l.practical_amount)
                 for l in budget_lines
             )
             total_available_budget += available_budget
+            
             if line.subtotal > available_budget:
                 is_in_budget = False
 
