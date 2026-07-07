@@ -91,6 +91,17 @@ class ResPartner(models.Model):
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
     
     
+    def write(self, vals):
+        if 'mobile' in vals:
+            mobile = vals.get('mobile')
+
+            if mobile and self.search([('mobile', '=', mobile)]):
+                raise ValidationError(
+                    "A Partner with the same Mobile No. already exists in the System."
+                )
+
+        return super(ResPartner, self).write(vals)
+
     @api.onchange('category_id')
     def _onchange_category_id(self):
         for rec in self:
