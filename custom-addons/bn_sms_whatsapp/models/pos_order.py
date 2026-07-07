@@ -30,9 +30,6 @@ class PosOrder(models.Model):
             # -------------------------------
             # SMS fallback message
             # -------------------------------
-            donation_items = ""
-            for line in order.lines:
-                donation_items += f"{line.qty} x {line.product_id.name} = {line.price_subtotal} PKR\n"
             
             # 1. Generate PDF
             pdf_data = self._generate_pdf_from_report(order)
