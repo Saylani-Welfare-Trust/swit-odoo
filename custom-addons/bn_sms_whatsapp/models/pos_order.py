@@ -31,6 +31,11 @@ class PosOrder(models.Model):
             # SMS fallback message
             # -------------------------------
             
+            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
+to Saylani Welfare International Trust. Your generousity
+will make an immediate difference in the
+lives of needy families."""
+            
             # 1. Generate PDF
             pdf_data = self._generate_pdf_from_report(order)
 
@@ -42,10 +47,6 @@ class PosOrder(models.Model):
             # 2. Save attachment + get URL
             attachment, pdf_url = self._save_as_attachment(order, pdf_data)
 
-            sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
-to Saylani Welfare International Trust. Your generousity
-will make an immediate difference in the
-lives of needy families."""
 #             sms_message = f"""Thank you for donation of Rs. {order.amount_total} {order.user_id.branch_code}-{order.date_order and order.date_order.year or ''}-{order.pos_order_seq}
 # to Saylani Welfare International Trust. Your generousity
 # will make an immediate difference in the
