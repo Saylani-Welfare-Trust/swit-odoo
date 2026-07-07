@@ -324,6 +324,8 @@ class PosSession(models.Model):
         for pm_id, breakdown in payment_breakdown.items():
             pm = self.env['pos.payment.method'].browse(pm_id)
             for type_key in ['restricted', 'unrestricted', 'neutral']:
+                raise UserError(str(breakdown))
+
                 for entry in breakdown.get(type_key, []):
                     amount = entry.get('amount', 0.0)
                     if float_is_zero(amount, precision_rounding=self.currency_id.rounding):
