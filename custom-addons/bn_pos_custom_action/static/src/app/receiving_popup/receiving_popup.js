@@ -141,7 +141,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             const record = await this.orm.searchRead(
                 'welfare',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_id', '=', this.state.record_number]],
                 ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids', 'order_type'],
                 { limit: 1 }
             );
@@ -169,6 +169,35 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     );
                     return;
                 }
+            }
+
+            // Get the company-configured welfare product
+            const wfProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.welfare_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+
+            if (!wfProduct.length) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: `${this.pos.company.welfare_product} product not found or not available in POS.`
+                });
+                return;
+            }
+
+            const configuredProduct = this.pos.db.get_product_by_id(wfProduct[0].id);
+            if (!configuredProduct) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: "Welfare product not loaded in POS session."
+                });
+                return;
             }
 
             // Get current month/year
@@ -229,21 +258,18 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
                     return;
                 }
-                // Group and add to POS
+                // Group lines (kept for welfareLineIds tracking), add the configured product instead of per-line products
                 const grouped = groupLinesByProduct(dueThisMonth, false);
                 for (const group of grouped) {
-                    const product = this.pos.db.get_product_by_id(group.productId);
-                    if (product) {
-                        // Calculate per-unit price and price_extra
-                        const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
-                        const priceExtra = perUnitPrice - product.lst_price;
-                        selectedOrder.add_product(product, {
-                            quantity: -1 * group.quantity,
-                            price_extra: priceExtra,
-                        });
-                        for (const id of group.ids) {
-                            welfareLineIds.push({ id, amount: group.amount });
-                        }
+                    // Calculate per-unit price and price_extra
+                    const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
+                    const priceExtra = perUnitPrice - configuredProduct.lst_price;
+                    selectedOrder.add_product(configuredProduct, {
+                        quantity: -1 * group.quantity,
+                        price_extra: priceExtra,
+                    });
+                    for (const id of group.ids) {
+                        welfareLineIds.push({ id, amount: group.amount });
                     }
                 }
                 if (!welfareLineIds.length) {
@@ -275,21 +301,18 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                     this.notification.add("No recurring welfare lines due this month", { type: 'warning' });
                     return;
                 }
-                // Group and add to POS
+                // Group lines (kept for recurringLineIds tracking), add the configured product instead of per-line products
                 const grouped = groupLinesByProduct(dueThisMonth, true);
                 for (const group of grouped) {
-                    const product = this.pos.db.get_product_by_id(group.productId);
-                    if (product) {
-                        // Calculate per-unit price and price_extra
-                        const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
-                        const priceExtra = perUnitPrice - product.lst_price;
-                        selectedOrder.add_product(product, {
-                            quantity:-1 * group.quantity,
-                            price_extra: priceExtra,
-                        });
-                        for (const id of group.ids) {
-                            recurringLineIds.push({ id, amount: group.amount });
-                        }
+                    // Calculate per-unit price and price_extra
+                    const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
+                    const priceExtra = perUnitPrice - configuredProduct.lst_price;
+                    selectedOrder.add_product(configuredProduct, {
+                        quantity:-1 * group.quantity,
+                        price_extra: priceExtra,
+                    });
+                    for (const id of group.ids) {
+                        recurringLineIds.push({ id, amount: group.amount });
                     }
                 }
                 if (!recurringLineIds.length) {
@@ -379,7 +402,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         try {
             const record = await this.orm.searchRead(
                 'microfinance',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_record', '=', this.state.record_number]],
                 ['name', 'state', 'donee_id', 'microfinance_line_ids', 'microfinance_recovery_line_ids'],
                 { limit: 1 }
             );
@@ -423,7 +446,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         try {
             const record = await this.orm.searchRead(
                 'microfinance',
-                [['name', '=', this.state.record_number]],
+                ['|', ['name', '=', this.state.record_number], ['old_system_record', '=', this.state.record_number]],
                 ['name', 'state', 'donee_id', 'microfinance_recovery_line_ids'],
                 { limit: 1 }
             );

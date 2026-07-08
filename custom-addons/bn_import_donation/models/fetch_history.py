@@ -6,20 +6,16 @@ class FetchHistory(models.Model):
     _description = "Fetch History"
 
 
+    name = fields.Char('Name')
+
     start_date = fields.Date('Start Date')
     end_date = fields.Date('End Date')
 
     page = fields.Integer(default=1)
-    per_page = fields.Integer(default=50)
-    cursor_index = fields.Integer(default=0)
+    per_page = fields.Integer(default=100)
 
     journal_entry_id = fields.Many2one('account.move', string="Journal Entry")
     picking_id = fields.Many2one('stock.picking', string="Picking")
-
-    state = fields.Selection([
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-    ], default='in_progress')
 
 
     def show_stock_picking(self):

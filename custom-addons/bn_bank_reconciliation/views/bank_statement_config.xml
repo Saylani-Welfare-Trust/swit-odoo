@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bank_statement_config_view_tree" model="ir.ui.view">
+        <field name="name">bank.statement.config.view.tree</field>
+        <field name="model">bank.statement.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="bank_statement_config_view_form" model="ir.ui.view">
+        <field name="name">bank.statement.config.view.form</field>
+        <field name="model">bank.statement.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Name"/>
+                        <h1><field name="name" class="oe_inline" /></h1>
+                    </div>
+
+                    <notebook>
+                        <page name="gateway_config_header" string="Config. Header">
+                            <field name="bank_statement_header_line_ids">
+                                <tree editable="bottom">
+                                    <field name="name" />
+                                    <field name="header_type_id" string="Header Type" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="position" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="bank_statement_config_action" model="ir.actions.act_window">
+        <field name="name">Bank Statement Configuration</field>
+        <field name="res_model">bank.statement.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new bank statement configuration for import donation....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="bank_statement_config_menu"
+        name="Bank Statement Configuration"
+        action="bank_statement_config_action"
+        parent="bn_bank_reconciliation.bank_reconciliation_config_menu"
+        sequence="1"/>
+
+</odoo>

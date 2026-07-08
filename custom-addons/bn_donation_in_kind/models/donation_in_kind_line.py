@@ -28,6 +28,8 @@ class DonationInKindLine(models.Model):
     
     name = fields.Char('Name', default="New")
 
+    remarks = fields.Text('Remarks')
+
 
     @api.depends('product_id', 'avg_price')
     def _set_price_bool(self):

@@ -18,9 +18,22 @@
                 <field name="currency"/>
                 <field name="total_amount"/>
                 <field name="total_amount_local"/>
+                <field name="partner_creation_status" widget="badge" 
+                    decoration-success="partner_creation_status == 'created'"
+                    decoration-warning="partner_creation_status == 'pending'"
+                    decoration-danger="partner_creation_status == 'failed'"/>                
             </tree>
         </field>
     </record>
+    <record id="action_create_partners" model="ir.actions.server">
+        <field name="name">Create Partners for Selected</field>
+        <field name="model_id" ref="model_api_donation"/>
+        <field name="binding_model_id" ref="model_api_donation"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = records.action_create_partners_for_selected()
+        </field>
+    </record>   
     
     <record id="api_donation_form_view" model="ir.ui.view">
         <field name="name">api.donation.form.view</field>
@@ -116,7 +129,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Donation Item" name="donation_item" invisible="qurbani">
+                        <page string="Donation Item" name="donation_item">
                             <field name="donation_item_ids" string="Donation Item">
                                 <tree string="Donation Item">
                                     <field name="donation_type"/>
@@ -132,27 +145,23 @@
                                 </tree>
                             </field>
                         </page>
-                    </notebook>
-                    <notebook>
                         <page string=" Qurbani Items" invisible="not qurbani">
-                            <field name="qurbani_order_line_ids">
-                                <tree create="0" delete="0" editable="bottom">
-                                    <!-- <field name="name" readonly="1" /> -->
-                                    <!-- <field name="day_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" /> -->
+                            <field name="qurbani_order_line_ids" readonly="1">
+                                <tree>
                                     <field name="day" readonly="1" />
-                                    <!-- <field name="hijri_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" /> -->
                                     <field name="hissa_name" />
-                                    <!-- <field name="start_time" widget="float_time" readonly="1" /> -->
-                                    <!-- <field name="end_time" widget="float_time" readonly="1" /> -->
-                                    <!-- <field name="currency_id" column_invisible="1" readonly="1" /> -->
-                                    <field name="product_id" options="{'no_quick_create': True, 'no_create_edit': True}" readonly="1" />
-                                    <field name="quantity" readonly="1" />
-                                    <field name="amount" readonly="1" />
-                                    <field name="branch" readonly="1" /> 
-                                    <!-- <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" /> -->
+                                    <field name="donation_type"/>
+                                    <field name="donation_no"/>
+                                    <field name="type"/>
+                                    <field name="item"/>
+                                    <field name="is_priced_item"/>
+                                    <field name="qty"/>
+                                    <field name="price"/>
+                                    <field name="total"/>
+                                    <field name="price_id"/>
+                                    <field name="branch" readonly="1" />
                                     <field name="city" readonly="1" />
                                     <field name="qurbani_fullfilment" readonly="1"  string="Qurbani Fulfillment"/>
-                                    <!-- <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" /> -->
                                 </tree>
                             </field>
                         </page>

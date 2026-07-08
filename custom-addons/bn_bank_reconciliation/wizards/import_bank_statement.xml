@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_import_bank_statement_wizard_form" model="ir.ui.view">
+        <field name="name">import.bank.statement.wizard.form</field>
+        <field name="model">import.bank.statement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Bank Statement">
+                <sheet>
+                    <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
+                        <i class="fa fa-info-circle"/> 
+                        <span>Upload a CSV or Excel file with bank transactions.</span>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="master_id" invisible="1"/>
+                            <field name="file" widget="binary" filename="file_name"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file_type" invisible="1"/>
+                            <field name="delimiter" invisible="file_type != 'csv'"/>
+                        </group>
+                        <group>
+                            <field name="name" placeholder="Reference"/>
+                            <field name="date"/>
+                            <field name="bank_statement_config_id" string="Bank Statement"/>
+                            <field name="account_id"/>
+                            <field name="journal_id"/>
+                            <field name="opening_balance"/>
+                        </group>
+                    </group>
+                    <group string="Expected File Format">
+                        <div>
+                            <strong>Headers Required:</strong>
+                            <ul>
+                                <li>Date</li>
+                                <li>Description</li>
+                                <li>Debit</li>
+                                <li>Credit</li>
+                                <li>Reference</li>
+                                <li>Payment Reference</li>
+                                <li>Partner</li>
+                                <li>Invoice Number</li>
+                            </ul>
+                            <strong>Supported Date Formats:</strong>
+                            <ul>
+                                <li>YYYY-MM-DD</li>
+                                <li>DD/MM/YYYY</li>
+                                <li>MM/DD/YYYY</li>
+                            </ul>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_import" string="Import" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

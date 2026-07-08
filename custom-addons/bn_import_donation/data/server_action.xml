@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="correct_records_import_donation_action_server" model="ir.actions.server">
+        <field name="name">Correct Records Import Donation | BN</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="binding_model_id" ref="model_import_donation"/>
+        <field name="state">code</field>
+        <field name="code">
+model.action_correct_records()
+        </field>
+    </record>
+
+</odoo>

@@ -5,13 +5,9 @@
         <field name="name">fetch.history.view.tree</field>
         <field name="model">fetch.history</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
+            <tree>
                 <field name="start_date" />
                 <field name="end_date" />
-
-                <field name="page" />
-                <field name="per_page" />
-                <field name="state" widget="badge" decoration-info="state == 'in_progress'" decoration-success="state == 'completed'" />
                 
                 <field name="journal_entry_id" column_invisible="1" />
                 <field name="picking_id" column_invisible="1" />
@@ -28,6 +24,11 @@
         <field name="name">Fetch History</field>
         <field name="res_model">fetch.history</field>
         <field name="view_mode">tree</field>
+        <field name="context">{
+            'create': 0,
+            'edit': 0,
+            'delete': 0,
+        }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's fetch a new donation....
