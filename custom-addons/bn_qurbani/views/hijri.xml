@@ -6,33 +6,11 @@
         <field name="arch" type="xml">
             <tree delete="0">
                 <field name="name"/>
-                <field name="state"/>
+                <field name="approved"/>
             </tree>
         </field>
     </record>
 
-    <record id="hijri_view_form" model="ir.ui.view">
-        <field name="name">hijri.view.form</field>
-        <field name="model">hijri</field>
-        <field name="arch" type="xml">
-            <form>
-                <header>
-                    <button name="action_approve"
-                            string="Approve"
-                            type="object"
-                            class="oe_highlight"
-                            groups="bn_qurbani.group_hijri_approver"
-                            invisible="state == 'approved'"/>
-                </header>
-                <sheet>
-                    <group>
-                        <field name="name" readonly="state == 'approved'"/>
-                        <field name="state" invisible="1"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
 
     <record id="hijri_action" model="ir.actions.act_window">
         <field name="name">Hijri</field>
