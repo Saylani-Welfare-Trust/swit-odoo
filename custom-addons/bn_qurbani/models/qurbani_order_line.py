@@ -14,7 +14,7 @@ class QurbaniOrderLine(models.Model):
     slaughter_id = fields.Many2one('stock.location', string="Slaughter")
     distribution_id = fields.Many2one('stock.location', string="Distribution")
     day_id = fields.Many2one('qurbani.day', string="Day")
-    hijri_id = fields.Many2one('hijri', string="Hijri")
+    hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
 
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')

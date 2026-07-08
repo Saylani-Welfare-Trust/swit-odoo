@@ -46,7 +46,7 @@ class TransferSlaughter(models.TransientModel):
 
     def action_tranfer(self):
         if self.option == 'hole':
-            current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+            current_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
             if not current_hijri:
                 raise UserError(_("No Hijri date found!"))

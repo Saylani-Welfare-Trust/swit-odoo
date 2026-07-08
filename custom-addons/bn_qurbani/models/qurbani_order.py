@@ -72,7 +72,7 @@ class QurbaniOrder(models.Model):
         """
 
         def _get_latest_hijri():
-            return self.env['hijri'].search([], order='id desc', limit=1)
+            return self.env['hijri'].search([('approved', '=', True)], order='id desc', limit=1)
 
         def convert_to_24hr(time_str):
             if not time_str:
@@ -543,7 +543,7 @@ class QurbaniOrder(models.Model):
         schedule_usage = {}
         demand_cache = {}
 
-        Hijri = self.env['hijri'].search([], order="id desc", limit=1)
+        Hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
         if not Hijri:
             return {"status": "error", "body": "No Hijri found"}
 

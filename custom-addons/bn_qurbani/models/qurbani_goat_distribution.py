@@ -15,7 +15,7 @@ class QurbaniGoatDistribution(models.Model):
     _description = "Qurbani Goat Distribution"
 
 
-    hijri_id = fields.Many2one('hijri', string="Hijri")
+    hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
     day_id = fields.Many2one('qurbani.day', string="Day")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
     distribution_location_id = fields.Many2one('stock.location', string="Distribution Location")

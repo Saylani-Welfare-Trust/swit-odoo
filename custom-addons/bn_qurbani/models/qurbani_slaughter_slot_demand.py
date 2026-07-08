@@ -9,7 +9,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
     
     day_id = fields.Many2one("qurbani.day", string="Day", tracking=True)
-    hijri_id = fields.Many2one("hijri", string="Hijri", tracking=True)
+    hijri_id = fields.Many2one("hijri", string="Hijri", tracking=True, domain=[('approved', '=', True)])
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True)
     inventory_product_id = fields.Many2one('product.product', string='Inventory Product', tracking=True)
 
@@ -154,7 +154,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # UPDATE DEMAND
     # ==================================================
     def update_demand(self):
-        current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+        current_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
         if not current_hijri:
             raise UserError(_("No Hijri date found!"))
@@ -175,7 +175,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
 
     def _update_demand(self):
         for record in self:
-            current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+            current_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
             if not current_hijri:
                 raise UserError(_("No Hijri date found!"))

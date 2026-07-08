@@ -11,7 +11,7 @@ class DistributionSchedule(models.Model):
     end_time = fields.Float('End Time', tracking=True)
 
     day_id = fields.Many2one('qurbani.day', string="Day", tracking=True)
-    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True)
+    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True, domain=[('approved', '=', True)])
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product", tracking=True)
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True)
 
@@ -35,7 +35,7 @@ class DistributionSchedule(models.Model):
         # ==================================================
         # 1. GET HIJRI
         # ==================================================
-        last_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+        last_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
         if not last_hijri:
             return {}

@@ -13,7 +13,7 @@ class Hijri(models.Model):
     
     @api.depends()
     def _compute_can_create_new(self):
-        """Compute if user can create new records"""
+        """Compute if user can create new records"""    
         for record in self:
             unapproved_count = self.search_count([('approved', '=', True)])
             record.can_create_new = unapproved_count == 0

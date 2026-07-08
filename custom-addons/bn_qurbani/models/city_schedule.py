@@ -8,7 +8,7 @@ class CitySchedule(models.Model):
 
 
     day_id = fields.Many2one('qurbani.day', string="Day", tracking=True)
-    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True)
+    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True, domain=[('approved', '=', True)])
     location_id = fields.Many2one('stock.location', string='City', tracking=True)
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product", tracking=True)
 

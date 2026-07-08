@@ -10,7 +10,7 @@ class QurbaniCityDemand(models.Model):
     # --------------------------------
     # BASIC FIELDS
     # --------------------------------
-    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True)
+    hijri_id = fields.Many2one('hijri', string="Hijri", tracking=True, domain=[('approved', '=', True)])
     day_id = fields.Many2one('qurbani.day', string="Day", tracking=True)
     city_location_id = fields.Many2one('stock.location', string='City', tracking=True)
     inventory_product_id = fields.Many2one('product.product', string='Inventory Product', tracking=True)
