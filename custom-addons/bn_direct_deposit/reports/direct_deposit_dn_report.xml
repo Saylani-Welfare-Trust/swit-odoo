@@ -187,6 +187,7 @@
             <field name="name">Direct Deposit Receipt</field>
             <field name="model">direct.deposit</field>
             <field name="report_type">qweb-pdf</field>
+            <field name="margin_top">0</field>
             <field name="report_name">bn_direct_deposit.direct_deposit_receipt_template_dn</field>
             <field name="report_file">bn_direct_deposit.direct_deposit_receipt_template_dn</field>
             <field name="binding_model_id" ref="bn_direct_deposit.model_direct_deposit"/>
