@@ -27,6 +27,16 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     assigned_officer_id = fields.Many2one('hr.employee', related='line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='line_id.state', readonly=True)
 
+    def _reopen_wizard_action(self):
+        """Reopen this same wizard instead of just reloading the page."""
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
     def action_mark_pending(self):
         # Create return line
         self.env['welfare.return.line'].create({
@@ -45,15 +55,13 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         # Pass create_return_line=False to avoid creating return line twice
         # self.line_id.action_set_pending(create_return_line=False)
 
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload'
-        }
+        return self._reopen_wizard_action()
+
     def action_disbursed(self):
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.line_id.write({'state': 'disbursed'})
 
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return self._reopen_wizard_action()
 
 
 class WelfareRecurringLineDisbursementPopup(models.TransientModel):
@@ -82,10 +90,20 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     assigned_officer_id = fields.Many2one('hr.employee', related='recurring_line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='recurring_line_id.state', readonly=True)
 
+    def _reopen_wizard_action(self):
+        """Reopen this same wizard instead of just reloading the page."""
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
     def action_disbursed(self):
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.recurring_line_id.write({'state': 'disbursed'})
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return self._reopen_wizard_action()
 
     def action_mark_pending(self):
         self.env['welfare.return.line'].create({
@@ -100,7 +118,7 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
         })
 
         self.recurring_line_id.write({'state': 'pending'})
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return self._reopen_wizard_action()
 
 
 class CheckMarfatShift(models.TransientModel):
@@ -215,6 +233,9 @@ class CheckMarfatShift(models.TransientModel):
             if line.state != 'collected':
                 line.write({'state': 'collected'})
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
         }
