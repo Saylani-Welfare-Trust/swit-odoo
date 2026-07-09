@@ -207,6 +207,8 @@ class CheckMarfatShift(models.TransientModel):
             else:
                 rec.recurring_line_ids = False
 
+
+
     def action_check_shift(self):
         """
         Check shift button action - triggers recomputation of disbursement lines
