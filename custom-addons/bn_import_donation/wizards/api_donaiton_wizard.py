@@ -64,8 +64,18 @@ class APIDonationWizard(models.TransientModel):
         # FIXED: previously `yesterday_start_date or self.start_date` always picked
         # yesterday because yesterday_start_date is never falsy - the wizard's
         # own start_date/end_date fields were being ignored entirely.
-        start_date = self.start_date or yesterday_start_date
-        end_date = self.end_date or yesterday_end_date
+        start_date = None
+        end_date = None
+
+        if self.start_date and self.end_date:
+            start_date = self.start_date
+            end_date = self.end_date
+        else:
+            start_date = yesterday_start_date
+            end_date = yesterday_end_date
+
+        # start_date = self.start_date or yesterday_start_date
+        # end_date = self.end_date or yesterday_end_date
 
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
