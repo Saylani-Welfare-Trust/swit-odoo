@@ -1,10 +1,4 @@
-# models/welfare_consolidated.py
-
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError
-import logging
-
-_logger = logging.getLogger(__name__)
+from odoo import api, fields, models
 
 class WelfareConsolidatedLine(models.Model):
     _name = 'welfare.consolidated.line'
@@ -12,7 +6,7 @@ class WelfareConsolidatedLine(models.Model):
     _rec_name = 'display_name'
     _order = 'collection_date desc'
     
-    # All fields from both models
+    # All fields from welfare.line
     employee_id = fields.Many2one('hr.employee', string='Employee')
     disbursement_category_id = fields.Many2one('disbursement.category', string='Category')
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string='Application Type')
@@ -45,7 +39,7 @@ class WelfareConsolidatedLine(models.Model):
     is_recurring = fields.Boolean(string='Is Recurring')
     recurring_duration = fields.Integer(string='Recurring Duration')
     
-    # Tracking fields
+    # Source tracking
     source_model = fields.Char(string='Source Model')
     source_id = fields.Integer(string='Source ID')
     display_name = fields.Char(string='Display Name', compute='_compute_display_name', store=False)
@@ -58,20 +52,20 @@ class WelfareConsolidatedLine(models.Model):
             record.display_name = f"{prefix} - {name}"
     
     @api.model
-    def _get_source_records(self, domain=None):
-        """Get records from both source models"""
-        records = []
+    def search(self, domain=None, offset=0, limit=None, order=None, count=False):
+        """Simply get all records from both models"""
+        if domain is None:
+            domain = []
         
-        # Get regular welfare lines
-        welfare_domain = domain or []
-        welfare_lines = self.env['welfare.line'].search(welfare_domain)
+        # Get all welfare lines
+        welfare_lines = self.env['welfare.line'].search(domain)
+        recurring_lines = self.env['welfare.recurring.line'].search(domain)
         
-        # Get recurring welfare lines
-        recurring_lines = self.env['welfare.recurring.line'].search(welfare_domain)
-        
-        # Convert to consolidated records
+        # Combine into consolidated records
+        result = self
         for line in welfare_lines:
-            records.append({
+            # Create a new record in the consolidated model
+            values = {
                 'source_model': 'welfare.line',
                 'source_id': line.id,
                 'is_recurring': False,
@@ -91,10 +85,11 @@ class WelfareConsolidatedLine(models.Model):
                 'advance_donation_amount': line.advance_donation_amount,
                 'state': line.state,
                 'recurring_duration': 0,
-            })
+            }
+            result |= self.new(values)
         
         for line in recurring_lines:
-            records.append({
+            values = {
                 'source_model': 'welfare.recurring.line',
                 'source_id': line.id,
                 'is_recurring': True,
@@ -107,102 +102,40 @@ class WelfareConsolidatedLine(models.Model):
                 'collection_point': line.collection_point,
                 'analytic_account_id': line.analytic_account_id.id,
                 'collection_date': line.collection_date,
-                'marriage_date': None,  # Recurring might not have this
+                'marriage_date': False,
                 'quantity': line.quantity,
                 'amount': line.amount,
                 'total_amount': line.total_amount,
                 'advance_donation_amount': 0.0,
                 'state': line.state,
                 'recurring_duration': line.recurring_duration,
-            })
-        
-        return records
-    
-    @api.model
-    def search(self, domain=None, offset=0, limit=None, order=None, count=False):
-        """Override search to combine results from both models"""
-        if domain is None:
-            domain = []
-        
-        # Get all records from both models
-        all_records = self._get_source_records(domain)
-        
-        # Apply sorting
-        if order:
-            order_by = order.split()[0] if order else 'collection_date'
-            reverse = 'desc' in order.lower()
-            all_records.sort(key=lambda x: x.get(order_by, ''), reverse=reverse)
-        else:
-            all_records.sort(key=lambda x: x.get('collection_date') or '', reverse=True)
-        
-        # Apply pagination
-        if limit:
-            all_records = all_records[offset:offset + limit]
-        else:
-            all_records = all_records[offset:]
+            }
+            result |= self.new(values)
         
         if count:
-            return len(all_records)
-        
-        # Create and return the consolidated records
-        result = self
-        for rec_data in all_records:
-            # Create a new record in the consolidated model
-            new_record = self.new(rec_data)
-            result |= new_record
+            return len(result)
         
         return result
     
-    @api.model
-    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=None, lazy=True):
-        """Override read_group for grouping support"""
-        # Get all records
-        all_records = self._get_source_records(domain)
-        
-        # Simple grouping implementation
-        if groupby:
-            group_field = groupby[0]
-            grouped_data = {}
-            
-            for rec in all_records:
-                key = rec.get(group_field)
-                if key not in grouped_data:
-                    grouped_data[key] = {
-                        '__domain': [(group_field, '=', key)],
-                        '__count': 0,
-                        'id': key,
-                    }
-                    # Initialize fields with sum
-                    for field in fields:
-                        if field == '__count':
-                            continue
-                        if field.endswith(':sum'):
-                            field_name = field.split(':')[0]
-                            grouped_data[key][field] = 0.0
-                        else:
-                            grouped_data[key][field] = rec.get(field)
-                
-                grouped_data[key]['__count'] += 1
-                for field in fields:
-                    if field.endswith(':sum'):
-                        field_name = field.split(':')[0]
-                        grouped_data[key][field] += rec.get(field_name, 0.0)
-            
-            return list(grouped_data.values())
-        
-        return super().read_group(domain, fields, groupby, offset, limit, orderby, lazy)
-    
     def action_open_source_record(self):
-        """Open the source record (regular or recurring)"""
+        """Open source record"""
         self.ensure_one()
         if self.source_model == 'welfare.line':
-            action = self.env.ref('your_module.action_welfare_line').read()[0]
-            action['res_id'] = self.source_id
-            action['view_mode'] = 'form'
-            return action
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Welfare Line',
+                'res_model': 'welfare.line',
+                'res_id': self.source_id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
         elif self.source_model == 'welfare.recurring.line':
-            action = self.env.ref('your_module.action_welfare_recurring_line').read()[0]
-            action['res_id'] = self.source_id
-            action['view_mode'] = 'form'
-            return action
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Recurring Welfare Line',
+                'res_model': 'welfare.recurring.line',
+                'res_id': self.source_id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
         return None

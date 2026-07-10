@@ -1,108 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Search View -->
-    <record id="view_welfare_consolidated_search" model="ir.ui.view">
-        <field name="name">welfare.consolidated.line.search</field>
-        <field name="model">welfare.consolidated.line</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="employee_id" string="Employee"/>
-                <field name="disbursement_category_id" string="Category"/>
-                <field name="product_id" string="Product"/>
-                <field name="state" string="Status"/>
-                <field name="collection_date" string="Collection Date"/>
-                
-                <!-- Type filters -->
-                <filter name="regular" string="Regular Only" domain="[('is_recurring','=',False)]"/>
-                <filter name="recurring" string="Recurring Only" domain="[('is_recurring','=',True)]"/>
-                
-                <!-- State filters -->
-                <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
-                <filter name="disbursed" string="Disbursed" domain="[('state','=','disbursed')]"/>
-                <filter name="pending" string="Pending" domain="[('state','=','pending')]"/>
-                <filter name="returned" string="Returned" domain="[('state','=','return')]"/>
-                <filter name="recurring_state" string="Recurring" domain="[('state','=','recurring')]"/>
-                
-                <separator/>
-                <filter name="this_month" string="This Month" domain="[('collection_date','>=',context_today().replace(day=1)),('collection_date','&lt;=',context_today())]"/>
-                <filter name="last_month" string="Last Month" domain="[('collection_date','>=',context_today().replace(day=1) - relativedelta(months=1)),('collection_date','&lt;',context_today().replace(day=1))]"/>
-                
-                <group expand="0" string="Group By">
-                    <filter name="group_by_state" string="State" context="{'group_by':'state'}"/>
-                    <filter name="group_by_category" string="Category" context="{'group_by':'disbursement_category_id'}"/>
-                    <filter name="group_by_payment" string="Payment Type" context="{'group_by':'payment_type'}"/>
-                    <filter name="group_by_type" string="Line Type" context="{'group_by':'is_recurring'}"/>
-                    <filter name="group_by_employee" string="Employee" context="{'group_by':'employee_id'}"/>
-                    <filter name="group_by_month" string="Collection Month" context="{'group_by':'collection_date:month'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
     <!-- Tree View -->
     <record id="view_welfare_consolidated_tree" model="ir.ui.view">
         <field name="name">welfare.consolidated.line.tree</field>
         <field name="model">welfare.consolidated.line</field>
         <field name="arch" type="xml">
-            <tree string="All Welfare Lines" 
-                  default_order="collection_date desc"
-                  create="false"
-                  edit="false"
-                  delete="false">
-                
-                <!-- Hidden fields -->
-                <field name="source_model" column_invisible="1"/>
-                <field name="source_id" column_invisible="1"/>
-                <field name="is_recurring" column_invisible="1"/>
-                <field name="recurring_duration" column_invisible="1"/>
-                
-                <!-- Type indicator with badge -->
+            <tree string="All Welfare Lines" default_order="collection_date desc">
                 <field name="is_recurring" string="Type" widget="badge" 
                        decoration-info="is_recurring == True"
-                       decoration-success="is_recurring == False"
-                       optional="show"/>
-                
-                <!-- Employee Info -->
-                <field name="employee_id" string="Employee" optional="show"/>
-                
-                <!-- Main data fields -->
-                <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" optional="hide"/>
-                <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="payment_type" optional="hide"/>
-                <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" optional="hide"/>
-                <field name="collection_point" optional="hide"/>
-                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" optional="hide"/>
-                <field name="collection_date" />
-                <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" optional="hide"/>
-                
-                <!-- Quantity and Amount fields with summaries -->
-                <field name="quantity" sum="Total Quantity"/>   
-                <field name="amount" readonly="1" sum="Total Amount"/>
+                       decoration-success="is_recurring == False"/>
+                <field name="employee_id" string="Employee"/>
+                <field name="disbursement_category_id" string="Category"/>
+                <field name="product_id" string="Product"/>
+                <field name="collection_date"/>
+                <field name="quantity" sum="Total"/>
                 <field name="total_amount" sum="Total"/>
-                <field name="advance_donation_amount" optional="hide" string="Advance Donation" sum="Total Donation"/>
-
-                <!-- Recurring duration (only for recurring lines) -->
-                <field name="recurring_duration" string="Duration" optional="hide" 
-                       invisible="not is_recurring"/>
-                
-                <!-- Status -->
-                <field name="state" widget="badge" 
-                       decoration-warning="state == 'draft'"  
-                       decoration-success="state == 'disbursed'" 
-                       decoration-danger="state == 'return'"
-                       decoration-info="state == 'pending'"
-                       decoration-primary="state == 'recurring'"
-                       string="Status" />
-                
-                <!-- Action button to open source record -->
+                <field name="state" widget="badge"/>
                 <button name="action_open_source_record" 
-                        string="Open Source" 
+                        string="Open" 
                         type="object" 
-                        class="btn-secondary" 
-                        icon="fa-external-link"/>
-
+                        class="btn-secondary"/>
             </tree>
         </field>
     </record>
@@ -112,67 +30,55 @@
         <field name="name">welfare.consolidated.line.form</field>
         <field name="model">welfare.consolidated.line</field>
         <field name="arch" type="xml">
-            <form string="Welfare Line Details" readonly="1" create="false" edit="false">
+            <form string="Welfare Line">
                 <header>
                     <button name="action_open_source_record" 
-                            string="Open Source Record" 
+                            string="Open Source" 
                             type="object" 
                             class="btn-primary"/>
                 </header>
-                
                 <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="display_name" readonly="1"/>
-                            <field name="state" widget="badge" 
-                                   decoration-warning="state == 'draft'"  
-                                   decoration-success="state == 'disbursed'" 
-                                   decoration-danger="state == 'return'"
-                                   decoration-info="state == 'pending'"
-                                   decoration-primary="state == 'recurring'"/>
-                        </h1>
-                        <div>
-                            <field name="is_recurring" readonly="1"/>
-                            <field name="recurring_duration" readonly="1" invisible="not is_recurring"/>
-                        </div>
-                    </div>
-                    
                     <group>
-                        <group string="Employee Information">
-                            <field name="employee_id" readonly="1"/>
-                            <field name="disbursement_category_id" readonly="1"/>
-                            <field name="disbursement_application_type_id" readonly="1"/>
-                            <field name="product_id" readonly="1"/>
-                        </group>
-                        <group string="Disbursement Details">
-                            <field name="payment_type" readonly="1"/>
-                            <field name="assigned_officer_id" readonly="1"/>
-                            <field name="collection_point" readonly="1"/>
-                            <field name="analytic_account_id" readonly="1"/>
-                            <field name="collection_date" readonly="1"/>
-                            <field name="marriage_date" readonly="1" invisible="disbursement_category_id.name != 'Marriage / Wedding'"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Financial Details">
                         <group>
-                            <field name="quantity" readonly="1"/>
-                            <field name="amount" readonly="1"/>
-                            <field name="total_amount" readonly="1"/>
+                            <field name="employee_id"/>
+                            <field name="disbursement_category_id"/>
+                            <field name="product_id"/>
+                            <field name="collection_date"/>
                         </group>
                         <group>
-                            <field name="advance_donation_amount" readonly="1" optional="hide"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Source Information">
-                        <group>
-                            <field name="source_model" readonly="1"/>
-                            <field name="source_id" readonly="1"/>
+                            <field name="is_recurring"/>
+                            <field name="recurring_duration" invisible="not is_recurring"/>
+                            <field name="quantity"/>
+                            <field name="total_amount"/>
+                            <field name="state" widget="badge"/>
                         </group>
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_welfare_consolidated_search" model="ir.ui.view">
+        <field name="name">welfare.consolidated.line.search</field>
+        <field name="model">welfare.consolidated.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="disbursement_category_id"/>
+                <field name="state"/>
+                
+                <filter name="regular" string="Regular" domain="[('is_recurring','=',False)]"/>
+                <filter name="recurring" string="Recurring" domain="[('is_recurring','=',True)]"/>
+                <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                <filter name="disbursed" string="Disbursed" domain="[('state','=','disbursed')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by':'state'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by':'disbursement_category_id'}"/>
+                    <filter name="group_type" string="Type" context="{'group_by':'is_recurring'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -183,28 +89,9 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_welfare_consolidated_search"/>
         <field name="target">current</field>
-        <field name="context">{
-            'search_default_draft': 1,
-            'default_state': 'draft'
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No welfare lines found.
-            </p>
-            <p>
-                This view shows both <strong>regular</strong> and <strong>recurring</strong> welfare lines in one consolidated list.
-            </p>
-            <ul>
-                <li><strong>Regular Lines:</strong> One-time disbursements</li>
-                <li><strong>Recurring Lines:</strong> Repeated disbursements over a period</li>
-            </ul>
-            <p>
-                Click <strong>"Open Source"</strong> to view the original record.
-            </p>
-        </field>
     </record>
 
-    <!-- Menu Item -->
+    <!-- Menu -->
     <menuitem
         id="menu_welfare_consolidated"
         name="All Welfare Lines"
