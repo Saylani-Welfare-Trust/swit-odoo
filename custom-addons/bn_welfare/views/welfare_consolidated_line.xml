@@ -46,8 +46,8 @@
                 <field name="disbursement_category_id"/>
                 <field name="state"/>
 
-                <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
-                <filter name="recurring" string="Recurring" domain="[('order_type','=','recurring')]"/>
+                <!-- <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
+                <filter name="recurring" string="Recurring" domain="[('order_type','=','recurring')]"/> -->
                 <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
                 <filter name="disbursed" string="Disbursed" domain="[('state','=','disbursed')]"/>
 
