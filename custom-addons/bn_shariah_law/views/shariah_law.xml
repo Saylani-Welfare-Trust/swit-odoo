@@ -80,19 +80,4 @@
         </field>
     </record>
 
-    <!-- Add menu item if needed -->
-    <menuitem 
-        id="shariah_law_menu" 
-        name="Shariah Law" 
-        parent="account.menu_finance_entries" 
-        sequence="100"
-        groups="base.group_system"/>
-
-    <menuitem 
-        id="shariah_law_menu_totals" 
-        name="Shariah Law Totals" 
-        parent="shariah_law_menu" 
-        action="shariah_law_action"
-        sequence="10"/>
-
 </odoo>

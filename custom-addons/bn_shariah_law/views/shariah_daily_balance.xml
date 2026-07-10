@@ -79,12 +79,4 @@
         </field>
     </record>
 
-    <!-- Add menu item if needed -->
-    <menuitem 
-        id="shariah_daily_balance_menu" 
-        name="Daily Balances" 
-        parent="shariah_law_menu" 
-        action="action_shariah_daily_balance"
-        sequence="20"/>
-
 </odoo>

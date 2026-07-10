@@ -202,12 +202,4 @@
         </field>
     </record>
 
-    <!-- Add menu item if needed -->
-    <menuitem 
-        id="shariah_transfer_menu" 
-        name="Fund Transfers" 
-        parent="shariah_law_menu" 
-        action="action_shariah_transfer"
-        sequence="30"/>
-
 </odoo>
