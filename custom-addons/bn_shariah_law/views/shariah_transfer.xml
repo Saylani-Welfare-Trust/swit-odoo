@@ -155,7 +155,6 @@
                 
                 <separator/>
                 
-                <filter name="requires_approval" string="Requires Approval" domain="[('requires_approval', '=', True)]"/>
                 <filter name="member_posted" string="Member Approved" domain="[('member_posted', '=', True)]"/>
                 <filter name="not_synced" string="Not Synced" domain="[('is_sync_shariah_law', '=', False)]"/>
                 
