@@ -46,11 +46,11 @@
                 <field name="analytic_account_id" string="Segment"/>
                 <field name="parent_id" string="Parent Segment"/>
                 <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
-                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '<=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
-                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '<=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '&gt;=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
                 <separator/>
-                <filter name="positive_balance" string="Positive Balance" domain="[('closing_balance', '>', 0)]"/>
-                <filter name="negative_balance" string="Negative Balance" domain="[('closing_balance', '<', 0)]"/>
+                <filter name="positive_balance" string="Positive Balance" domain="[('closing_balance', '&lt;', 0)]"/>
+                <filter name="negative_balance" string="Negative Balance" domain="[('closing_balance', '&gt;', 0)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>

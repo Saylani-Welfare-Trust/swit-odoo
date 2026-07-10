@@ -192,8 +192,8 @@
                 <separator/>
                 
                 <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
-                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '<=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
-                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '<=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '&gt;=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
                 
                 <separator/>
                 
