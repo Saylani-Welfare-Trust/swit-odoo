@@ -12,17 +12,19 @@ class ShariahDailyBalance(models.Model):
     currency_id = fields.Many2one('res.currency', string='Currency', related='analytic_account_id.currency_id', readonly=True)
 
     # Daily movements by source
+    # POSITIVE transactions (increase balance)
     pos_donation = fields.Monetary('POS Donation', currency_field='currency_id', default=0)
     api_donation = fields.Monetary('API / Wallet', currency_field='currency_id', default=0)
     dik = fields.Monetary('DIK', currency_field='currency_id', default=0)
+    
+    # NEGATIVE transactions (decrease balance)
     po = fields.Monetary('PO', currency_field='currency_id', default=0)
     welfare = fields.Monetary('Welfare (Cash)', currency_field='currency_id', default=0)
     microfinance = fields.Monetary('Microfinance (Cash)', currency_field='currency_id', default=0)
     expense = fields.Monetary('Expense', currency_field='currency_id', default=0)
     
-    # Transfer movements
-    transfer_in = fields.Monetary('Transfer In', currency_field='currency_id', default=0)
-    transfer_out = fields.Monetary('Transfer Out', currency_field='currency_id', default=0)
+    # Transfer movements - unified field (POSITIVE = In, NEGATIVE = Out)
+    transfer = fields.Monetary('Transfer', currency_field='currency_id', default=0)
 
     # Computed fields
     total_donation = fields.Monetary(
@@ -44,25 +46,26 @@ class ShariahDailyBalance(models.Model):
         store=True
     )
 
-    @api.depends('pos_donation', 'api_donation', 'dik', 'po', 'welfare', 'microfinance')
+    @api.depends('pos_donation', 'api_donation', 'dik')
     def _compute_total_donation(self):
-        """Compute total donation from all sources."""
+        """Compute total donation from all positive sources."""
         for rec in self:
             rec.total_donation = (
                 rec.pos_donation + 
                 rec.api_donation + 
-                rec.dik + 
-                rec.po + 
-                rec.welfare + 
-                rec.microfinance
+                rec.dik
             )
 
     @api.depends(
         'pos_donation', 'api_donation', 'dik', 'po', 'welfare', 'microfinance', 
-        'expense', 'transfer_in', 'transfer_out', 'date', 'analytic_account_id'
+        'expense', 'transfer', 'date', 'analytic_account_id'
     )
     def _compute_balances(self):
-        """Compute opening and closing balances."""
+        """
+        Compute opening and closing balances.
+        Closing Balance = Opening Balance + Total Donation + Transfer - (PO + Welfare + Microfinance + Expense)
+        Note: PO, Welfare, Microfinance, and Expense are already negative values
+        """
         for rec in self:
             # Get previous day's closing balance
             prev = self.search([
@@ -74,13 +77,14 @@ class ShariahDailyBalance(models.Model):
             rec.opening_balance = opening
             
             # Calculate closing balance
-            # Closing = Opening + Total Donation + Transfers In - Expense - Transfers Out
             rec.closing_balance = (
                 opening + 
                 rec.total_donation + 
-                rec.transfer_in - 
-                rec.expense - 
-                rec.transfer_out
+                rec.transfer + 
+                rec.po + 
+                rec.welfare + 
+                rec.microfinance + 
+                rec.expense
             )
 
     _sql_constraints = [

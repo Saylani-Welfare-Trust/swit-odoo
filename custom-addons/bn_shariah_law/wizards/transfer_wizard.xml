@@ -9,6 +9,9 @@
                 <sheet>
                     <field name="allowed_dest_count" invisible="1"/>
                     <field name="allowed_destination_ids" invisible="1"/>
+                    <field name="transfer_allowed" invisible="1"/>
+                    <field name="requires_approval" invisible="1"/>
+                    <field name="rule_notes" invisible="1"/>
 
                     <!-- Info Messages -->
                     <div class="alert alert-info" role="alert" 
@@ -24,13 +27,19 @@
                     </div>
                     
                     <div class="alert alert-danger" role="alert" 
-                         invisible="transfer_allowed == True">
+                         invisible="transfer_allowed == True or allowed_dest_count == 0">
                         <span class="fa fa-exclamation-circle"/>
                         <b>Transfer not allowed!</b> Please check the rules below.
                     </div>
                     
-                    <!-- Main Fields -->
-                    <group>
+                    <div class="alert alert-warning" role="alert" 
+                         invisible="requires_approval == False or allowed_dest_count == 0">
+                        <span class="fa fa-exclamation-triangle"/>
+                        <b>Approval Required:</b> This transfer requires member approval. A Shariah Law Person must approve this transfer.
+                    </div>
+                    
+                    <!-- Transfer Details -->
+                    <group string="Transfer Details" colspan="2">
                         <group>
                             <field name="source_analytic_account_id" 
                                    domain="[('plan_id.name', '=', 'Segment')]" 
@@ -41,37 +50,79 @@
                                    options="{'no_create': True}" 
                                    required="1"
                                    invisible="allowed_dest_count == 0"/>
+                            <field name="amount" 
+                                   required="1"
+                                   widget="monetary"
+                                   invisible="allowed_dest_count == 0"/>
                         </group>
                         <group>
                             <field name="date" 
                                    invisible="allowed_dest_count == 0"/>
-                            <field name="amount" 
-                                   required="1"
-                                   invisible="allowed_dest_count == 0"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="note" 
+                                   placeholder="Optional note..."
+                                   invisible="allowed_dest_count == 0"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Balance Information -->
+                    <group string="Balance Information" colspan="2"
+                           invisible="allowed_dest_count == 0">
+                        <group string="Source Account">
+                            <field name="source_current_balance" widget="monetary" readonly="1" style="font-weight: bold;"/>
+                            <field name="source_balance_after" widget="monetary" readonly="1" 
+                                   style="font-weight: bold; color: #d63031;"/>
+                            <div style="padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107; margin-top: 5px;">
+                                <span class="fa fa-arrow-right" style="color: #ff6b00;"/> 
+                                <strong>Transfer Out:</strong> 
+                                <span style="color: #d63031;">-<field name="amount" nolabel="1" widget="monetary"/></span>
+                            </div>
+                        </group>
+                        <group string="Destination Account">
+                            <field name="destination_current_balance" widget="monetary" readonly="1" style="font-weight: bold;"/>
+                            <field name="destination_balance_after" widget="monetary" readonly="1" 
+                                   style="font-weight: bold; color: #00b894;"/>
+                            <div style="padding: 10px; background-color: #d4edda; border-radius: 5px; border-left: 4px solid #28a745; margin-top: 5px;">
+                                <span class="fa fa-arrow-right" style="color: #28a745;"/> 
+                                <strong>Transfer In:</strong> 
+                                <span style="color: #00b894;">+<field name="amount" nolabel="1" widget="monetary"/></span>
+                            </div>
                         </group>
                     </group>
                     
                     <!-- Rule Information -->
-                    <group string="Transfer Rules Information" readonly="1" colspan="2"
+                    <group string="Transfer Rules" readonly="1" colspan="2"
                            invisible="allowed_dest_count == 0">
                         <group>
-                            <field name="transfer_allowed" widget="boolean_toggle"/>
-                            <field name="max_transfer_amount"/>
-                            <field name="requires_approval" widget="boolean_toggle"/>
+                            <field name="transfer_allowed" widget="boolean_toggle" string="Allowed"/>
+                            <field name="max_transfer_amount" widget="monetary" string="Max Amount"/>
+                            <field name="requires_approval" widget="boolean_toggle" string="Requires Approval"/>
                         </group>
                         <group>
-                            <field name="rule_notes" nolabel="1"/>
+                            <field name="rule_notes" nolabel="1" placeholder="No rule notes available"/>
                         </group>
                     </group>
                     
-                    <!-- Notes -->
-                    <field name="note" placeholder="Optional note" nolabel="1"
-                           invisible="allowed_dest_count == 0"/>
+                    <!-- Warning for Insufficient Balance -->
+                    <div class="alert alert-danger" role="alert" 
+                         invisible="amount &lt;= 0 or source_current_balance >= amount or allowed_dest_count == 0">
+                        <span class="fa fa-exclamation-circle"/>
+                        <b>Insufficient Balance!</b> 
+                        Source balance: <span field="source_current_balance" widget="monetary"/> 
+                        Transfer amount: <span field="amount" widget="monetary"/>
+                        <br/>
+                        <span style="font-size: 90%;">Balance after transfer would be: <span field="source_balance_after" widget="monetary"/></span>
+                    </div>
+                    
+                    <!-- Preview Button -->
+                    <group colspan="2">
+                        <button name="action_preview_transfer" string="Preview Transfer" type="object" class="btn-secondary"
+                                invisible="transfer_allowed == False or allowed_dest_count == 0 or amount &lt;= 0 or source_current_balance &lt; amount"/>
+                    </group>
                 </sheet>
                 <footer>
                     <button name="action_create_transfer" string="Transfer" type="object" class="btn-primary"
-                            invisible="transfer_allowed == False or allowed_dest_count == 0"/>
+                            invisible="transfer_allowed == False or allowed_dest_count == 0 or amount &lt;= 0 or source_current_balance &lt; amount"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -84,6 +135,26 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Transfer funds between Shariah-compliant segments.
+            </p>
+            <p>
+                <strong>How it works:</strong><br/>
+                1. Select Source and Destination segments<br/>
+                2. Enter the amount to transfer<br/>
+                3. Review the balance information<br/>
+                4. Preview the transfer (optional)<br/>
+                5. Click Transfer to complete
+            </p>
+            <p>
+                <strong>Rules:</strong><br/>
+                - Transfers are governed by configured rules<br/>
+                - Some transfers may require approval<br/>
+                - Maximum transfer limits apply<br/>
+                - Source must have sufficient balance
+            </p>
+        </field>
     </record>
 
 </odoo>

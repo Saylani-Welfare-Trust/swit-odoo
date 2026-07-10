@@ -10,12 +10,20 @@
                 <field name="date"/>
                 <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                 <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                <field name="amount" sum="Total"/>
+                <field name="amount" sum="Total" widget="monetary"/>
                 <field name="state" widget="badge"/>
                 <field name="requires_approval" widget="boolean_toggle"/>
                 <field name="member_posted" widget="boolean_toggle"/>
                 <field name="shariah_law_person_id"/>
                 <field name="note"/>
+                
+                <!-- Quick Actions -->
+                <button name="action_post" string="Post" type="object" icon="fa-check" 
+                        class="btn-primary" invisible="state != 'draft'"/>
+                <button name="action_send_for_approval" string="Send for Approval" type="object" icon="fa-paper-plane" 
+                        class="btn-warning" invisible="state != 'draft' or requires_approval == False"/>
+                <button name="action_member_post" string="Approve" type="object" icon="fa-thumbs-up" 
+                        class="btn-success" invisible="state != 'member_approval'"/>
             </tree>
         </field>
     </record>
@@ -74,23 +82,61 @@
                         <field name="rejection_reason" nolabel="1"/>
                     </div>
                     
+                    <!-- Transfer Information -->
+                    <div class="oe_title">
+                        <label for="name" string="Transfer"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    
                     <!-- Main Fields -->
                     <group>
                         <group>
-                            <field name="name"/>
                             <field name="date"/>
                             <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                             <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                        </group>
-                        <group>
-                            <field name="amount"/>
-                            <field name="currency_id"/>
                             <field name="shariah_law_person_id" 
                                    options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="requires_approval" widget="boolean_toggle" readonly="1"/>
                             <field name="member_posted" readonly="1"/>
                             <field name="is_sync_shariah_law" readonly="1"/>
+                            <field name="rule_id" readonly="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Transfer Effect Visualization -->
+                    <group string="Transfer Effect" colspan="2">
+                        <group>
+                            <field name="source_analytic_account_id" readonly="1"/>
+                            <field name="source_balance_effect" 
+                                   string="Effect on Source" 
+                                   compute="_compute_transfer_effect" 
+                                   widget="monetary"
+                                   readonly="1"/>
+                            <div style="padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+                                <span class="fa fa-arrow-right" style="color: #ff6b00;"/> 
+                                <strong>Transfer Out:</strong> 
+                                <span style="color: #d63031;">-<field name="amount" nolabel="1" widget="monetary"/></span>
+                            </div>
+                        </group>
+                        <group>
+                            <field name="destination_analytic_account_id" readonly="1"/>
+                            <field name="destination_balance_effect" 
+                                   string="Effect on Destination" 
+                                   compute="_compute_transfer_effect" 
+                                   widget="monetary"
+                                   readonly="1"/>
+                            <div style="padding: 10px; background-color: #d4edda; border-radius: 5px; border-left: 4px solid #28a745;">
+                                <span class="fa fa-arrow-right" style="color: #28a745;"/> 
+                                <strong>Transfer In:</strong> 
+                                <span style="color: #00b894;">+<field name="amount" nolabel="1" widget="monetary"/></span>
+                            </div>
                         </group>
                     </group>
                     
@@ -105,12 +151,13 @@
                             <field name="rejection_reason" 
                                    invisible="state != 'rejected'"
                                    required="state == 'rejected'"
-                                   placeholder="Please provide reason for rejection..."/>
+                                   placeholder="Please provide reason for rejection..."
+                                   nolabel="1"/>
                         </group>
                     </group>
                     
                     <!-- Notes -->
-                    <field name="note" placeholder="Optional note" nolabel="1"/>
+                    <field name="note" placeholder="Optional note..." nolabel="1"/>
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
@@ -121,11 +168,79 @@
         </field>
     </record>
 
+    <record id="view_shariah_transfer_search" model="ir.ui.view">
+        <field name="name">shariah.transfer.search</field>
+        <field name="model">shariah.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Reference"/>
+                <field name="source_analytic_account_id" string="Source Segment"/>
+                <field name="destination_analytic_account_id" string="Destination Segment"/>
+                <field name="shariah_law_person_id" string="Shariah Law Person"/>
+                
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="member_approval" string="Pending Approval" domain="[('state', '=', 'member_approval')]"/>
+                <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                
+                <separator/>
+                
+                <filter name="requires_approval" string="Requires Approval" domain="[('requires_approval', '=', True)]"/>
+                <filter name="member_posted" string="Member Approved" domain="[('member_posted', '=', True)]"/>
+                <filter name="not_synced" string="Not Synced" domain="[('is_sync_shariah_law', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
+                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '<=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '<=', context_today().strftime('%Y-%m-%d'))]"/>
+                
+                <separator/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_by_state" string="State" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>
+                    <filter name="group_by_source" string="Source Segment" domain="[]" context="{'group_by': 'source_analytic_account_id'}"/>
+                    <filter name="group_by_destination" string="Destination Segment" domain="[]" context="{'group_by': 'destination_analytic_account_id'}"/>
+                    <filter name="group_by_person" string="Shariah Law Person" domain="[]" context="{'group_by': 'shariah_law_person_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_shariah_transfer" model="ir.actions.act_window">
-        <field name="name">Transfers</field>
+        <field name="name">Fund Transfers</field>
         <field name="res_model">shariah.transfer</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_shariah_transfer_search"/>
         <field name="context">{'default_state': 'draft'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Transfer funds between Shariah-compliant segments.
+            </p>
+            <p>
+                <strong>Transfer Rules:</strong><br/>
+                - Source account: Transfer OUT (decreases balance)<br/>
+                - Destination account: Transfer IN (increases balance)<br/>
+                - Requires approval based on configured rules
+            </p>
+            <p>
+                <strong>Approval Process:</strong><br/>
+                1. Create transfer (Draft)<br/>
+                2. Send for approval (if required)<br/>
+                3. Member approves (Member Post)<br/>
+                4. Post transfer (Posted)<br/>
+                5. Synced with Shariah Law automatically
+            </p>
+        </field>
     </record>
+
+    <!-- Add menu item if needed -->
+    <menuitem 
+        id="shariah_transfer_menu" 
+        name="Fund Transfers" 
+        parent="shariah_law_menu" 
+        action="action_shariah_transfer"
+        sequence="30"/>
 
 </odoo>

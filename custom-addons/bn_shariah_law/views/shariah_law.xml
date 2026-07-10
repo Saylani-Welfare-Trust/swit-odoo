@@ -6,96 +6,95 @@
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
+                <field name="date" string="Date" invisible="1"/>
                 <field name="parent_id" column_invisible="1" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 
-                <!-- Opening/Closing Balances -->
-                <field name="opening_balance" sum="Total" />
-                <field name="closing_balance" sum="Total" />
+                <!-- Opening Balances -->
+                <field name="opening_balance" sum="Total" widget="monetary"/>
                 
-                <!-- Donation Sources -->
-                <field name="pos_donation_amount" sum="Total" />
-                <field name="api_donation_amount" sum="Total" />
-                <field name="dik_amount" sum="Total" />
-                <field name="po_amount" sum="Total" />
-                <field name="welfare_amount" sum="Total" />
-                <field name="microfinance_amount" sum="Total" />
-                <field name="total_donation" sum="Total" />
+                <!-- POSITIVE Transactions (Increase Balance) -->
+                <field name="pos_donation_amount" sum="Total" widget="monetary"/>
+                <field name="api_donation_amount" sum="Total" widget="monetary"/>
+                <field name="dik_amount" sum="Total" widget="monetary"/>
                 
-                <!-- Expenses and Transfers -->
-                <field name="expense_amount" sum="Total" />
-                <field name="transfer_in_amount" sum="Total" />
-                <field name="transfer_out_amount" sum="Total" />
-                <field name="net_transfer" sum="Total" />
+                <!-- NEGATIVE Transactions (Decrease Balance) -->
+                <field name="po_amount" sum="Total" widget="monetary"/>
+                <field name="welfare_amount" sum="Total" widget="monetary"/>
+                <field name="microfinance_amount" sum="Total" widget="monetary"/>
+                <field name="expense_amount" sum="Total" widget="monetary"/>
+                
+                <!-- Total Donation (POSITIVE only) -->
+                <field name="total_donation" sum="Total" widget="monetary"/>
+                
+                <!-- Transfer (Unified - Positive for IN, Negative for OUT) -->
+                <field name="transfer_amount" sum="Total" widget="monetary"/>
+                
+                <!-- Closing Balances -->
+                <field name="closing_balance" sum="Total" widget="monetary"/>
 
                 <button string="Transfer" name="action_transfer" type="object" class="btn-primary"/>
             </tree>
         </field>
     </record>
 
-    <record id="shariah_law_view_form" model="ir.ui.view">
-        <field name="name">shariah.law.view.form</field>
+    <record id="shariah_law_view_search" model="ir.ui.view">
+        <field name="name">shariah.law.view.search</field>
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
-            <form string="Shariah Law">
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="parent_id" readonly="1"/>
-                            <field name="currency_id"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Daily Balances (Today)">
-                        <group>
-                            <field name="opening_balance" readonly="1"/>
-                            <field name="closing_balance" readonly="1"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Donations by Source" colspan="2">
-                        <group>
-                            <field name="pos_donation_amount" readonly="1"/>
-                            <field name="api_donation_amount" readonly="1"/>
-                            <field name="dik_amount" readonly="1"/>
-                            <field name="po_amount" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="welfare_amount" readonly="1"/>
-                            <field name="microfinance_amount" readonly="1"/>
-                            <field name="total_donation" readonly="1" style="font-weight: bold;"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Expenses &amp; Transfers" colspan="2">
-                        <group>
-                            <field name="expense_amount" readonly="1"/>
-                            <field name="transfer_in_amount" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="transfer_out_amount" readonly="1"/>
-                            <field name="net_transfer" readonly="1" style="font-weight: bold;"/>
-                        </group>
-                    </group>
-                    
-                    <group>
-                        <button name="action_transfer" type="object" string="Transfer" class="btn-primary"/>
-                    </group>
-                </sheet>
-            </form>
+            <search>
+                <field name="analytic_account_id" string="Segment"/>
+                <field name="parent_id" string="Parent Segment"/>
+                <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
+                <filter name="this_week" string="This Week" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '<=', (context_today() + timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="This Month" domain="[('date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date', '<=', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="positive_balance" string="Positive Balance" domain="[('closing_balance', '>', 0)]"/>
+                <filter name="negative_balance" string="Negative Balance" domain="[('closing_balance', '<', 0)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>
+                    <filter name="group_by_analytic" string="Segment" domain="[]" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter name="group_by_parent" string="Parent Segment" domain="[]" context="{'group_by': 'parent_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
     <record id="shariah_law_action" model="ir.actions.act_window">
         <field name="name">Shariah Law Totals</field>
         <field name="res_model">shariah.law</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="shariah_law_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Shariah-compliant tracking of donations, purchases, expenses, and transfers.
             </p>
+            <p>
+                <strong>Transaction Signs:</strong><br/>
+                + POS Donation, API Donation, DIK, Transfer IN<br/>
+                - PO, Welfare, Microfinance, Expense, Transfer OUT
+            </p>
+            <p>
+                <strong>Balance Calculation:</strong><br/>
+                Closing = Opening + POS Donations + API Donations + DIK + Transfer - PO - Welfare - Microfinance - Expense
+            </p>
         </field>
     </record>
+
+    <!-- Add menu item if needed -->
+    <menuitem 
+        id="shariah_law_menu" 
+        name="Shariah Law" 
+        parent="account.menu_finance_entries" 
+        sequence="100"
+        groups="base.group_system"/>
+
+    <menuitem 
+        id="shariah_law_menu_totals" 
+        name="Shariah Law Totals" 
+        parent="shariah_law_menu" 
+        action="shariah_law_action"
+        sequence="10"/>
 
 </odoo>

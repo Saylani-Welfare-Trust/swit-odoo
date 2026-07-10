@@ -122,15 +122,15 @@ class ShariahTransfer(models.Model):
             
             # === 1. UPDATE DAILY BALANCES ===
             daily_source = self._get_or_create_daily_balance(rec.source_analytic_account_id.id, today)
-            daily_source.write({'transfer_out': daily_source.transfer_out + rec.amount})
+            daily_source.write({'transfer': daily_source.transfer - rec.amount})  # NEGATIVE for out
             
             daily_dest = self._get_or_create_daily_balance(rec.destination_analytic_account_id.id, today)
-            daily_dest.write({'transfer_in': daily_dest.transfer_in + rec.amount})
+            daily_dest.write({'transfer': daily_dest.transfer + rec.amount})  # POSITIVE for in
             
             # Recompute balances for both accounts
             self._recompute_daily_balances([daily_source, daily_dest])
             
-            # === 2. UPDATE SHARIAH LAW INSTANTLY ===
+            # === 2. UPDATE SHARIAH LAW INSTANTLY WITH HIERARCHY ===
             config = self.env['shariah.law.config'].get_config()
             if config.enable_transfer_sync:
                 self._sync_transfer_to_shariah_law(rec)
@@ -210,42 +210,85 @@ class ShariahTransfer(models.Model):
                 raise UserError(_('This transfer does not require approval. You can post it directly.'))
 
     def _sync_transfer_to_shariah_law(self, transfer):
-        """Instantly sync transfer to shariah.law."""
+        """
+        Instantly sync transfer to shariah.law with hierarchy support.
+        Transfer Out = NEGATIVE, Transfer In = POSITIVE
+        """
         shariah_obj = self.env['shariah.law']
         
-        # Source account - Transfer OUT
+        # Source account - Transfer OUT (NEGATIVE)
         if transfer.source_analytic_account_id:
-            self._update_shariah_law_amount(
+            self._update_shariah_law_with_hierarchy(
                 shariah_obj,
-                transfer.source_analytic_account_id.id,
-                'transfer_out_amount',
-                transfer.amount
+                transfer.source_analytic_account_id,
+                -transfer.amount  # NEGATIVE for out
             )
         
-        # Destination account - Transfer IN
+        # Destination account - Transfer IN (POSITIVE)
         if transfer.destination_analytic_account_id:
-            self._update_shariah_law_amount(
+            self._update_shariah_law_with_hierarchy(
                 shariah_obj,
-                transfer.destination_analytic_account_id.id,
-                'transfer_in_amount',
-                transfer.amount
+                transfer.destination_analytic_account_id,
+                transfer.amount  # POSITIVE for in
             )
 
-    def _update_shariah_law_amount(self, shariah_obj, analytic_account_id, field_name, amount):
-        """Update shariah law record for an analytic account."""
-        shariah_law = shariah_obj.search([
-            ('analytic_account_id', '=', analytic_account_id)
-        ], limit=1)
-        
-        account = self.env['account.analytic.account'].browse(analytic_account_id)
-        if not account.exists():
+    def _update_shariah_law_with_hierarchy(self, shariah_obj, account, amount):
+        """
+        Update shariah law record for an analytic account and all its parents.
+        """
+        if not account or not amount:
             return
         
+        today = fields.Date.context_today(self)
+        
+        # Get or create today's shariah law record for this account
+        shariah_law = self._get_or_create_today_shariah_record(shariah_obj, account, today)
+        
+        # Update transfer amount
+        if shariah_law:
+            current_transfer = shariah_law.transfer_amount or 0.0
+            shariah_law.write({
+                'transfer_amount': current_transfer + amount
+            })
+        
+        # Recursively update parent accounts
+        if account.parent_id:
+            self._update_shariah_law_with_hierarchy(shariah_obj, account.parent_id, amount)
+
+    def _get_or_create_today_shariah_record(self, shariah_obj, account, today):
+        """
+        Get or create today's shariah.law record for an analytic account.
+        Creates hierarchy chain if parents don't exist.
+        """
+        if not account:
+            return False
+        
+        # Check if today's record exists
+        shariah_law = shariah_obj.search([
+            ('analytic_account_id', '=', account.id),
+            ('date', '=', today)
+        ], limit=1)
+        
         if not shariah_law:
-            # Create new shariah law record
+            # Ensure parent records exist first
+            if account.parent_id:
+                self._get_or_create_today_shariah_record(shariah_obj, account.parent_id, today)
+            
+            # Get yesterday's closing balance
+            yesterday = today - timedelta(days=1)
+            yesterday_record = shariah_obj.search([
+                ('analytic_account_id', '=', account.id),
+                ('date', '=', yesterday)
+            ], limit=1)
+            
+            opening_balance = yesterday_record.closing_balance if yesterday_record else 0.0
+            
+            # Create today's shariah law record
             shariah_law = shariah_obj.create({
                 'parent_id': account.parent_id.id if account.parent_id else False,
                 'analytic_account_id': account.id,
+                'date': today,
+                'opening_balance': opening_balance,
                 'pos_donation_amount': 0.0,
                 'api_donation_amount': 0.0,
                 'dik_amount': 0.0,
@@ -253,38 +296,10 @@ class ShariahTransfer(models.Model):
                 'welfare_amount': 0.0,
                 'microfinance_amount': 0.0,
                 'expense_amount': 0.0,
-                'transfer_in_amount': 0.0,
-                'transfer_out_amount': 0.0,
+                'transfer_amount': 0.0,
             })
         
-        # Update the specific field
-        current_value = getattr(shariah_law, field_name, 0.0)
-        shariah_law.write({
-            field_name: current_value + amount
-        })
-        
-        # Update parent accounts recursively
-        if account.parent_id:
-            self._update_parent_recursive(shariah_obj, account.parent_id, field_name, amount)
-
-    def _update_parent_recursive(self, shariah_obj, account, field_name, amount):
-        """Recursively update parent accounts."""
-        if not account:
-            return
-        
-        shariah_law = shariah_obj.search([
-            ('analytic_account_id', '=', account.id)
-        ], limit=1)
-        
-        if shariah_law:
-            current_value = getattr(shariah_law, field_name, 0.0)
-            shariah_law.write({
-                field_name: current_value + amount
-            })
-        
-        # Continue to parent
-        if account.parent_id:
-            self._update_parent_recursive(shariah_obj, account.parent_id, field_name, amount)
+        return shariah_law
 
     def _get_or_create_daily_balance(self, analytic_account_id, date):
         """Get or create daily balance record."""

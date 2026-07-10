@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
+    <!-- DAILY RESET CRON - Run at midnight to reset daily balances -->
+    <record id="cron_reset_shariah_law_balances" model="ir.cron">
+        <field name="name">Reset Shariah Law Daily Balances</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._reset_daily_balances_cron()</field>
+        <field name="nextcall" eval="(datetime.now().replace(hour=0, minute=0, second=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
     <!-- POS Orders Sync -->
     <record id="cron_sync_pos_orders" model="ir.cron">
         <field name="name">Sync POS Orders - Shariah Law</field>

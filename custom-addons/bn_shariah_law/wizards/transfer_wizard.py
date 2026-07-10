@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from datetime import timedelta
 
 class ShariahTransferWizard(models.TransientModel):
     _name = 'shariah.transfer.wizard'
@@ -38,6 +39,32 @@ class ShariahTransferWizard(models.TransientModel):
         store=False
     )
     allowed_dest_count = fields.Integer(string='Allowed Destinations', compute='_compute_rule_info', store=False)
+    
+    # Display fields
+    source_current_balance = fields.Monetary(
+        string='Source Current Balance',
+        compute='_compute_balances',
+        store=False,
+        currency_field='currency_id'
+    )
+    destination_current_balance = fields.Monetary(
+        string='Destination Current Balance',
+        compute='_compute_balances',
+        store=False,
+        currency_field='currency_id'
+    )
+    source_balance_after = fields.Monetary(
+        string='Source Balance After Transfer',
+        compute='_compute_balances',
+        store=False,
+        currency_field='currency_id'
+    )
+    destination_balance_after = fields.Monetary(
+        string='Destination Balance After Transfer',
+        compute='_compute_balances',
+        store=False,
+        currency_field='currency_id'
+    )
 
     @api.depends('source_analytic_account_id')
     def _compute_allowed_destinations(self):
@@ -76,7 +103,7 @@ class ShariahTransferWizard(models.TransientModel):
                     rule = self.env['segment.transfer.rule'].check_transfer_allowed(
                         rec.source_analytic_account_id.id,
                         rec.destination_analytic_account_id.id,
-                        rec.amount
+                        rec.amount or 0.0
                     )
                     rec.rule_id = rule.id
                     rec.transfer_allowed = rule.allowed
@@ -87,15 +114,71 @@ class ShariahTransferWizard(models.TransientModel):
                     rec.transfer_allowed = False
                     rec.rule_id = False
 
+    @api.depends('source_analytic_account_id', 'destination_analytic_account_id', 'amount')
+    def _compute_balances(self):
+        """Compute current balances and balance after transfer."""
+        today = fields.Date.context_today(self)
+        
+        for rec in self:
+            rec.source_current_balance = 0.0
+            rec.destination_current_balance = 0.0
+            rec.source_balance_after = 0.0
+            rec.destination_balance_after = 0.0
+            
+            # Get source current balance
+            if rec.source_analytic_account_id:
+                daily_balance = self.env['shariah.daily.balance'].search([
+                    ('analytic_account_id', '=', rec.source_analytic_account_id.id),
+                    ('date', '=', today)
+                ], limit=1)
+                
+                if daily_balance:
+                    rec.source_current_balance = daily_balance.closing_balance
+                else:
+                    # Get from shariah.law if daily balance doesn't exist
+                    shariah_law = self.env['shariah.law'].search([
+                        ('analytic_account_id', '=', rec.source_analytic_account_id.id),
+                        ('date', '=', today)
+                    ], limit=1)
+                    rec.source_current_balance = shariah_law.closing_balance if shariah_law else 0.0
+            
+            # Get destination current balance
+            if rec.destination_analytic_account_id:
+                daily_balance = self.env['shariah.daily.balance'].search([
+                    ('analytic_account_id', '=', rec.destination_analytic_account_id.id),
+                    ('date', '=', today)
+                ], limit=1)
+                
+                if daily_balance:
+                    rec.destination_current_balance = daily_balance.closing_balance
+                else:
+                    shariah_law = self.env['shariah.law'].search([
+                        ('analytic_account_id', '=', rec.destination_analytic_account_id.id),
+                        ('date', '=', today)
+                    ], limit=1)
+                    rec.destination_current_balance = shariah_law.closing_balance if shariah_law else 0.0
+            
+            # Calculate balances after transfer
+            if rec.amount > 0:
+                rec.source_balance_after = rec.source_current_balance - rec.amount
+                rec.destination_balance_after = rec.destination_current_balance + rec.amount
+
     @api.onchange('source_analytic_account_id')
     def _onchange_source_analytic_account_id(self):
         """Clear destination and update allowed destinations when source changes."""
         self.destination_analytic_account_id = False
         self._compute_allowed_destinations()
+        self._compute_balances()
+
+    @api.onchange('destination_analytic_account_id')
+    def _onchange_destination_analytic_account_id(self):
+        """Update rule info when destination changes."""
+        self._compute_rule_info()
+        self._compute_balances()
 
     @api.onchange('amount')
     def _onchange_amount(self):
-        """Check amount against max limit."""
+        """Check amount against max limit and update balances."""
         if self.amount > 0 and self.source_analytic_account_id and self.destination_analytic_account_id:
             try:
                 self.env['segment.transfer.rule'].check_transfer_allowed(
@@ -103,6 +186,7 @@ class ShariahTransferWizard(models.TransientModel):
                     self.destination_analytic_account_id.id,
                     self.amount
                 )
+                self._compute_balances()
             except ValidationError as e:
                 return {
                     'warning': {
@@ -110,6 +194,8 @@ class ShariahTransferWizard(models.TransientModel):
                         'message': str(e),
                     }
                 }
+        elif self.amount > 0:
+            self._compute_balances()
 
     def action_create_transfer(self):
         """Create and post the transfer."""
@@ -119,6 +205,10 @@ class ShariahTransferWizard(models.TransientModel):
         if self.source_analytic_account_id == self.destination_analytic_account_id:
             raise UserError(_('Source and destination accounts must be different.'))
         
+        # Check if amount is positive
+        if self.amount <= 0:
+            raise UserError(_('Amount must be greater than zero.'))
+        
         # Check if destination is in allowed list
         if self.destination_analytic_account_id not in self.allowed_destination_ids:
             raise UserError(_(
@@ -126,47 +216,27 @@ class ShariahTransferWizard(models.TransientModel):
                 "Please configure this destination in the transfer rules."
             ) % (self.source_analytic_account_id.name, self.destination_analytic_account_id.name))
         
+        # Check if source has enough balance
+        if self.source_current_balance < self.amount:
+            raise UserError(_(
+                "Insufficient balance in source account.\n"
+                "Current balance: %s\n"
+                "Transfer amount: %s"
+            ) % (self.source_current_balance, self.amount))
+        
         # Check transfer rules and get rule
+        rule = None
         try:
             rule = self.env['segment.transfer.rule'].check_transfer_allowed(
                 self.source_analytic_account_id.id,
                 self.destination_analytic_account_id.id,
                 self.amount
             )
-            
-            # Check if approval is required
-            if rule.requires_approval:
-                # Check if user is in approval group
-                user_has_approval = False
-                if rule.approval_group_id:
-                    user_has_approval = self.env.user.has_group(rule.approval_group_id.id)
-                
-                if not user_has_approval:
-                    # Create transfer with pending approval state
-                    transfer = self.env['shariah.transfer'].create({
-                        'date': self.date,
-                        'source_analytic_account_id': self.source_analytic_account_id.id,
-                        'destination_analytic_account_id': self.destination_analytic_account_id.id,
-                        'amount': self.amount,
-                        'note': f"{self.note or ''}\n[Pending Approval]",
-                        'state': 'draft',
-                        'requires_approval': True,
-                    })
-                    
-                    return {
-                        'type': 'ir.actions.act_window',
-                        'res_model': 'shariah.transfer',
-                        'res_id': transfer.id,
-                        'view_mode': 'form',
-                        'target': 'current',
-                        'name': _('Transfer (Pending Approval)'),
-                    }
-                    
         except ValidationError as e:
             raise UserError(str(e))
         
         # Create the transfer
-        transfer = self.env['shariah.transfer'].create({
+        transfer_vals = {
             'date': self.date,
             'source_analytic_account_id': self.source_analytic_account_id.id,
             'destination_analytic_account_id': self.destination_analytic_account_id.id,
@@ -174,10 +244,56 @@ class ShariahTransferWizard(models.TransientModel):
             'note': self.note,
             'state': 'draft',
             'requires_approval': rule.requires_approval if rule else False,
-        })
+            'rule_id': rule.id if rule else False,
+        }
+        
+        # Check if approval is required
+        if rule and rule.requires_approval:
+            # Check if shariah law person is required
+            if not rule.approval_required_by:
+                raise UserError(_(
+                    "This transfer requires approval but no Shariah Law Person is configured.\n"
+                    "Please configure the Shariah Law Person in the transfer rule."
+                ))
+            
+            # Create transfer with pending approval state
+            transfer = self.env['shariah.transfer'].create(transfer_vals)
+            
+            # If user is in approval group, they can approve directly
+            user_has_approval = False
+            if rule.approval_group_id:
+                user_has_approval = self.env.user.has_group(rule.approval_group_id.id)
+            
+            if user_has_approval:
+                # Auto-approve for users in approval group
+                transfer.action_member_post()
+            
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'shariah.transfer',
+                'res_id': transfer.id,
+                'view_mode': 'form',
+                'target': 'current',
+                'name': _('Transfer (Pending Approval)'),
+            }
+        
+        # Create the transfer
+        transfer = self.env['shariah.transfer'].create(transfer_vals)
         
         # Post the transfer (this triggers instant sync)
-        transfer.action_post()
+        try:
+            transfer.action_post()
+        except Exception as e:
+            # If posting fails, still return the transfer but show error
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'shariah.transfer',
+                'res_id': transfer.id,
+                'view_mode': 'form',
+                'target': 'current',
+                'name': _('Transfer Created with Error'),
+                'context': {'default_error_message': str(e)},
+            }
         
         return {
             'type': 'ir.actions.act_window',
@@ -187,14 +303,3 @@ class ShariahTransferWizard(models.TransientModel):
             'target': 'current',
             'name': _('Transfer'),
         }
-
-    @api.model
-    def default_get(self, fields_list):
-        """Set default source segment from context if provided."""
-        defaults = super().default_get(fields_list)
-        context = self.env.context
-        
-        if context.get('default_source_segment_id'):
-            defaults['source_analytic_account_id'] = context['default_source_segment_id']
-        
-        return defaults

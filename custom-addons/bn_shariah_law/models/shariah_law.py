@@ -1,6 +1,7 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError, ValidationError
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -9,89 +10,96 @@ class ShariahLaw(models.Model):
     _name = 'shariah.law'
     _description = "Shariah Law Aggregated Totals"
     _rec_name = 'analytic_account_id'
+    _order = 'date desc, analytic_account_id'
 
     parent_id = fields.Many2one('account.analytic.account', string="Parent Analytic Account")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", required=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
-
-    # Transaction amounts by source (cumulative totals)
+    
+    # Date tracking
+    date = fields.Date(string='Date', default=fields.Date.context_today, required=True, index=True)
+    
+    # Transaction amounts by source (cumulative totals for the day)
+    # POSITIVE transactions (increase balance)
     pos_donation_amount = fields.Monetary('POS Donation', currency_field='currency_id', default=0)
     api_donation_amount = fields.Monetary('API / Wallet', currency_field='currency_id', default=0)
     dik_amount = fields.Monetary('DIK', currency_field='currency_id', default=0)
+    
+    # NEGATIVE transactions (decrease balance)
     po_amount = fields.Monetary('PO', currency_field='currency_id', default=0)
     welfare_amount = fields.Monetary('Welfare (Cash)', currency_field='currency_id', default=0)
     microfinance_amount = fields.Monetary('Microfinance (Cash)', currency_field='currency_id', default=0)
     expense_amount = fields.Monetary('Expense', currency_field='currency_id', default=0)
     
-    # Transfer amounts (cumulative totals)
-    transfer_in_amount = fields.Monetary('Transfer In', currency_field='currency_id', default=0)
-    transfer_out_amount = fields.Monetary('Transfer Out', currency_field='currency_id', default=0)
+    # Transfer amounts (cumulative totals) - positive for in, negative for out
+    transfer_amount = fields.Monetary('Transfer', currency_field='currency_id', default=0)
     
-    # Computed fields
+    # Balance fields
+    opening_balance = fields.Monetary(
+        string='Opening Balance',
+        currency_field='currency_id',
+        compute='_compute_opening_balance',
+        store=True
+    )
+    closing_balance = fields.Monetary(
+        string='Closing Balance',
+        currency_field='currency_id',
+        compute='_compute_closing_balance',
+        store=True
+    )
     total_donation = fields.Monetary(
         string='Total Donation',
         currency_field='currency_id',
         compute='_compute_total_donation',
         store=True
     )
-    net_transfer = fields.Monetary(
-        string='Net Transfer',
-        currency_field='currency_id',
-        compute='_compute_net_transfer',
-        store=True
-    )
-    opening_balance = fields.Monetary(
-        string='Opening Balance',
-        currency_field='currency_id',
-        compute='_compute_opening_balance',
-        store=False
-    )
-    closing_balance = fields.Monetary(
-        string='Closing Balance',
-        currency_field='currency_id',
-        compute='_compute_closing_balance',
-        store=False
-    )
 
-    @api.depends('pos_donation_amount', 'api_donation_amount', 'dik_amount', 
-                 'po_amount', 'welfare_amount', 'microfinance_amount')
+    @api.depends('pos_donation_amount', 'api_donation_amount', 'dik_amount')
     def _compute_total_donation(self):
-        """Compute total donation from all sources."""
+        """Compute total donation from all positive sources."""
         for rec in self:
             rec.total_donation = (
                 rec.pos_donation_amount + 
                 rec.api_donation_amount + 
-                rec.dik_amount + 
-                rec.po_amount + 
-                rec.welfare_amount + 
-                rec.microfinance_amount
+                rec.dik_amount
             )
 
-    @api.depends('transfer_in_amount', 'transfer_out_amount')
-    def _compute_net_transfer(self):
-        """Compute net transfer (in - out)."""
-        for rec in self:
-            rec.net_transfer = rec.transfer_in_amount - rec.transfer_out_amount
-
+    @api.depends('date', 'analytic_account_id')
     def _compute_opening_balance(self):
-        """Fetch today's opening balance from daily balance model."""
-        today = fields.Date.context_today(self)
+        """Fetch opening balance from previous day's closing balance."""
         for rec in self:
-            daily = self.env['shariah.daily.balance'].search([
+            # Get previous day's record
+            prev_date = rec.date - timedelta(days=1)
+            prev_record = self.search([
                 ('analytic_account_id', '=', rec.analytic_account_id.id),
-                ('date', '=', today)
+                ('date', '=', prev_date)
             ], limit=1)
-            rec.opening_balance = daily.opening_balance if daily else 0.0
+            
+            rec.opening_balance = prev_record.closing_balance if prev_record else 0.0
 
+    @api.depends(
+        'opening_balance', 'pos_donation_amount', 'api_donation_amount', 
+        'dik_amount', 'po_amount', 'welfare_amount', 'microfinance_amount',
+        'expense_amount', 'transfer_amount'
+    )
     def _compute_closing_balance(self):
-        """Compute closing balance from daily balance model."""
-        today = fields.Date.context_today(self)
+        """
+        Compute closing balance.
+        Closing = Opening + Total Donation + Transfer + PO + Welfare + Microfinance + Expense
+        Note: PO, Welfare, Microfinance, and Expense are already negative
+        """
         for rec in self:
-            daily = self.env['shariah.daily.balance'].search([
-                ('analytic_account_id', '=', rec.analytic_account_id.id),
-                ('date', '=', today)
-            ], limit=1)
-            rec.closing_balance = daily.closing_balance if daily else 0.0
+            rec.closing_balance = (
+                rec.opening_balance +
+                rec.pos_donation_amount +
+                rec.api_donation_amount +
+                rec.dik_amount +
+                rec.transfer_amount +
+                rec.po_amount +
+                rec.welfare_amount +
+                rec.microfinance_amount +
+                rec.expense_amount
+            )
 
     def action_transfer(self):
         return {
@@ -101,6 +109,135 @@ class ShariahLaw(models.Model):
             'view_mode': 'form',
             'target': 'new',
         }
+
+    # ============================================================
+    # DAILY RESET SCHEDULED ACTION
+    # ============================================================
+
+    @api.model
+    def _reset_daily_balances(self):
+        """
+        Scheduled action to reset daily balances.
+        This should be run at midnight (or beginning of each day).
+        It creates new records for today with opening balance from yesterday's closing.
+        """
+        _logger.info("Starting daily reset of Shariah Law balances")
+        
+        today = fields.Date.context_today(self)
+        yesterday = today - timedelta(days=1)
+        
+        # Get all active analytic accounts that have shariah.law records
+        existing_records = self.search([])
+        
+        accounts_processed = set()
+        records_created = 0
+        
+        for record in existing_records:
+            account = record.analytic_account_id
+            if not account or account.id in accounts_processed:
+                continue
+            
+            accounts_processed.add(account.id)
+            
+            # Check if today's record already exists for this account
+            today_record = self.search([
+                ('analytic_account_id', '=', account.id),
+                ('date', '=', today)
+            ], limit=1)
+            
+            if today_record:
+                # If today's record exists, reset its transaction amounts to zero
+                # but keep the opening balance (which should already be set)
+                today_record.write({
+                    'pos_donation_amount': 0.0,
+                    'api_donation_amount': 0.0,
+                    'dik_amount': 0.0,
+                    'po_amount': 0.0,
+                    'welfare_amount': 0.0,
+                    'microfinance_amount': 0.0,
+                    'expense_amount': 0.0,
+                    'transfer_amount': 0.0,
+                })
+                records_created += 1
+            else:
+                # Get yesterday's closing balance
+                yesterday_record = self.search([
+                    ('analytic_account_id', '=', account.id),
+                    ('date', '=', yesterday)
+                ], limit=1)
+                
+                opening_balance = yesterday_record.closing_balance if yesterday_record else 0.0
+                
+                # Create today's record with opening balance
+                self.create({
+                    'parent_id': account.parent_id.id if account.parent_id else False,
+                    'analytic_account_id': account.id,
+                    'date': today,
+                    'opening_balance': opening_balance,
+                    'pos_donation_amount': 0.0,
+                    'api_donation_amount': 0.0,
+                    'dik_amount': 0.0,
+                    'po_amount': 0.0,
+                    'welfare_amount': 0.0,
+                    'microfinance_amount': 0.0,
+                    'expense_amount': 0.0,
+                    'transfer_amount': 0.0,
+                })
+                records_created += 1
+        
+        # Also create records for any analytic accounts that don't have shariah.law records yet
+        all_analytic_accounts = self.env['account.analytic.account'].search([])
+        for account in all_analytic_accounts:
+            if account.id not in accounts_processed:
+                today_record = self.search([
+                    ('analytic_account_id', '=', account.id),
+                    ('date', '=', today)
+                ], limit=1)
+                
+                if not today_record:
+                    # Get yesterday's closing balance from daily balance model
+                    daily_balance = self.env['shariah.daily.balance'].search([
+                        ('analytic_account_id', '=', account.id),
+                        ('date', '=', yesterday)
+                    ], limit=1)
+                    
+                    opening_balance = daily_balance.closing_balance if daily_balance else 0.0
+                    
+                    self.create({
+                        'parent_id': account.parent_id.id if account.parent_id else False,
+                        'analytic_account_id': account.id,
+                        'date': today,
+                        'opening_balance': opening_balance,
+                        'pos_donation_amount': 0.0,
+                        'api_donation_amount': 0.0,
+                        'dik_amount': 0.0,
+                        'po_amount': 0.0,
+                        'welfare_amount': 0.0,
+                        'microfinance_amount': 0.0,
+                        'expense_amount': 0.0,
+                        'transfer_amount': 0.0,
+                    })
+                    records_created += 1
+        
+        _logger.info(f"Daily reset completed. Processed {len(accounts_processed)} accounts, created/updated {records_created} records.")
+        
+        return {
+            'processed_accounts': len(accounts_processed),
+            'records_created': records_created,
+        }
+
+    @api.model
+    def _reset_daily_balances_cron(self):
+        """
+        Cron job wrapper for daily reset.
+        This method is called by the scheduled action.
+        """
+        try:
+            result = self._reset_daily_balances()
+            _logger.info(f"Daily reset cron completed successfully: {result}")
+        except Exception as e:
+            _logger.error(f"Error in daily reset cron: {str(e)}")
+            raise
 
     # ============================================================
     # CHECK IF SYNC IS ENABLED FOR A MODULE
@@ -144,13 +281,12 @@ class ShariahLaw(models.Model):
             self.env['shariah.law.sync.log'].create(log_vals)
 
     # ============================================================
-    # INDIVIDUAL SYNC METHODS WITH OLD LOGIC INTEGRATED
+    # INDIVIDUAL SYNC METHODS WITH CORRECT SIGNS
     # ============================================================
 
     @api.model
     def _sync_pos_orders(self):
-        """Sync POS Orders - POS Donation."""
-        # Check if enabled in configuration
+        """Sync POS Orders - POS Donation (POSITIVE)."""
         if not self._is_sync_enabled('_sync_pos_orders'):
             _logger.info("POS Orders sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -189,7 +325,7 @@ class ShariahLaw(models.Model):
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
-                            pos_donation=line.price_subtotal_incl
+                            pos_donation=line.price_subtotal_incl  # POSITIVE
                         )
 
                 order.is_sync_shariah_law = True
@@ -227,7 +363,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_donations(self):
-        """Sync Donations - DIK."""
+        """Sync Donations - API Donation (POSITIVE)."""
         if not self._is_sync_enabled('_sync_donations'):
             _logger.info("Donations sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -257,13 +393,12 @@ class ShariahLaw(models.Model):
                 ])
 
                 for analytic in analytics:
-                    # Check if there's a parent relationship through analytic_account_id
                     target_analytic = analytic.analytic_account_id if hasattr(analytic, 'analytic_account_id') else analytic
                     if target_analytic:
                         self._add_amounts(
                             shariah_record, daily_changes,
                             target_analytic.id,
-                            api_donation=donation.amount
+                            api_donation=donation.amount  # POSITIVE
                         )
 
                 donation.is_sync_shariah_law = True
@@ -289,7 +424,7 @@ class ShariahLaw(models.Model):
             error_msg = str(e)
             self._create_sync_log(
                 config=config,
-                module_name='Donations (DIK)',
+                module_name='Donations (API)',
                 status='error',
                 message=f"Sync failed: {error_msg}",
                 error_details=error_msg,
@@ -301,7 +436,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_api_donations(self):
-        """Sync API Donations - API / Wallet."""
+        """Sync API Donations - API / Wallet (POSITIVE)."""
         if not self._is_sync_enabled('_sync_api_donations'):
             _logger.info("API Donations sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -342,7 +477,7 @@ class ShariahLaw(models.Model):
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
-                            api_donation=line.total
+                            api_donation=line.total  # POSITIVE
                         )
 
                 api_don.is_sync_shariah_law = True
@@ -380,7 +515,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_expenses(self):
-        """Sync HR Expenses - Expense."""
+        """Sync HR Expenses - Expense (NEGATIVE)."""
         if not self._is_sync_enabled('_sync_expenses'):
             _logger.info("Expenses sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -413,7 +548,7 @@ class ShariahLaw(models.Model):
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic.id,
-                        expense=expense.total_amount_currency
+                        expense=-expense.total_amount_currency  # NEGATIVE
                     )
 
                 expense.is_sync_shariah_law = True
@@ -451,7 +586,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_purchase_orders(self):
-        """Sync Purchase Orders - PO."""
+        """Sync Purchase Orders - PO (NEGATIVE)."""
         if not self._is_sync_enabled('_sync_purchase_orders'):
             _logger.info("Purchase Orders sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -485,7 +620,7 @@ class ShariahLaw(models.Model):
                         self._add_amounts(
                             shariah_record, daily_changes,
                             analytic.id,
-                            po=line.price_subtotal
+                            po=-line.price_subtotal  # NEGATIVE
                         )
 
                 purchase.is_sync_shariah_law = True
@@ -523,7 +658,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_welfare(self):
-        """Sync Welfare records - Only disbursed state."""
+        """Sync Welfare records - Only disbursed state (NEGATIVE)."""
         if not self._is_sync_enabled('_sync_welfare'):
             _logger.info("Welfare sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -556,7 +691,7 @@ class ShariahLaw(models.Model):
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic_account.id,
-                        welfare=total_amount
+                        welfare=-total_amount  # NEGATIVE
                     )
 
                 welfare.is_sync_shariah_law = True
@@ -626,7 +761,7 @@ class ShariahLaw(models.Model):
 
     @api.model
     def _sync_microfinance(self):
-        """Sync Microfinance records - Only Cash type."""
+        """Sync Microfinance records - Only Cash type (NEGATIVE)."""
         if not self._is_sync_enabled('_sync_microfinance'):
             _logger.info("Microfinance sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -659,7 +794,7 @@ class ShariahLaw(models.Model):
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic_account.id,
-                        microfinance=amount
+                        microfinance=-amount  # NEGATIVE
                     )
 
                 microfinance.is_sync_shariah_law = True
@@ -724,7 +859,6 @@ class ShariahLaw(models.Model):
     @api.model
     def _sync_transfers(self):
         """Sync Transfers - Transfer In/Out (Cron job for backup sync)."""
-        # Check if enabled in configuration
         if not self._is_sync_enabled('_sync_transfers'):
             _logger.info("Transfers sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -733,7 +867,6 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            # Get transfers that are posted but not synced
             transfers = self.env['shariah.transfer'].search([
                 ('is_sync_shariah_law', '=', False),
                 ('state', '=', 'posted')
@@ -746,18 +879,20 @@ class ShariahLaw(models.Model):
             daily_changes = defaultdict(lambda: self._get_default_record())
 
             for transfer in transfers:
+                # For source account - transfer out (NEGATIVE)
                 if transfer.source_analytic_account_id:
                     self._add_amounts(
                         shariah_record, daily_changes,
                         transfer.source_analytic_account_id.id,
-                        transfer_out=transfer.amount
+                        transfer=-transfer.amount  # NEGATIVE
                     )
                 
+                # For destination account - transfer in (POSITIVE)
                 if transfer.destination_analytic_account_id:
                     self._add_amounts(
                         shariah_record, daily_changes,
                         transfer.destination_analytic_account_id.id,
-                        transfer_in=transfer.amount
+                        transfer=transfer.amount  # POSITIVE
                     )
                 
                 transfer.is_sync_shariah_law = True
@@ -795,7 +930,7 @@ class ShariahLaw(models.Model):
     
     @api.model
     def _sync_donation_in_kind(self):
-        """Sync Donation In Kind (DIK) records."""
+        """Sync Donation In Kind (DIK) records (POSITIVE)."""
         if not self._is_sync_enabled('_sync_donation_in_kind'):
             _logger.info("Donation In Kind sync is disabled in configuration")
             return {'records_synced': 0, 'skipped': True}
@@ -827,7 +962,7 @@ class ShariahLaw(models.Model):
                     self._add_amounts(
                         shariah_record, daily_changes,
                         analytic_account.id,
-                        dik=amount
+                        dik=amount  # POSITIVE
                     )
 
                 dik.is_sync_shariah_law = True
@@ -896,15 +1031,14 @@ class ShariahLaw(models.Model):
     def _get_default_record(self):
         """Return default record structure."""
         return {
-            'pos_donation': 0.0,
-            'api_donation': 0.0,
-            'dik': 0.0,
-            'po': 0.0,
-            'welfare': 0.0,
-            'microfinance': 0.0,
-            'expense': 0.0,
-            'transfer_in': 0.0,
-            'transfer_out': 0.0
+            'pos_donation': 0.0,      # POSITIVE
+            'api_donation': 0.0,      # POSITIVE
+            'dik': 0.0,               # POSITIVE
+            'po': 0.0,                # NEGATIVE
+            'welfare': 0.0,           # NEGATIVE
+            'microfinance': 0.0,      # NEGATIVE
+            'expense': 0.0,           # NEGATIVE
+            'transfer': 0.0           # POSITIVE for IN, NEGATIVE for OUT
         }
 
     def _add_amounts(self, shariah_record, daily_changes, analytic_id, **kwargs):
@@ -922,7 +1056,6 @@ class ShariahLaw(models.Model):
         analytics = self.env['account.analytic.account'].search([
             ('product_ids', 'in', [product_id])
         ])
-        # Return the first one if exists, otherwise False
         return analytics[:1] if analytics else False
 
     def _update_cumulative_totals_with_hierarchy(self, shariah_record):
@@ -930,27 +1063,68 @@ class ShariahLaw(models.Model):
         Update cumulative totals in shariah.law with hierarchy support.
         This implements the old logic's parent hierarchy update.
         """
+        today = fields.Date.context_today(self)
+        
         for analytic_id, values in shariah_record.items():
             account = self.env['account.analytic.account'].browse(analytic_id)
             if not account:
                 continue
             
-            # Update the current account
-            self._update_single_record(account, values)
+            # Get today's record or create it with opening balance
+            today_record = self._get_or_create_today_record(account, today)
+            
+            # Update the current account's today record
+            self._update_single_record(today_record, values)
             
             # Update all parent accounts (hierarchy)
             parent = account.parent_id
             while parent:
-                self._update_single_record(parent, values)
+                parent_record = self._get_or_create_today_record(parent, today)
+                self._update_single_record(parent_record, values)
                 parent = parent.parent_id
 
-    def _update_single_record(self, account, values):
+    def _get_or_create_today_record(self, account, today):
         """
-        Update or create a single shariah.law record for an analytic account.
+        Get or create today's shariah.law record for an account.
         """
         record = self.search([
-            ('analytic_account_id', '=', account.id)
+            ('analytic_account_id', '=', account.id),
+            ('date', '=', today)
         ], limit=1)
+        
+        if not record:
+            # Get yesterday's closing balance
+            yesterday = today - timedelta(days=1)
+            yesterday_record = self.search([
+                ('analytic_account_id', '=', account.id),
+                ('date', '=', yesterday)
+            ], limit=1)
+            
+            opening_balance = yesterday_record.closing_balance if yesterday_record else 0.0
+            
+            record = self.create({
+                'parent_id': account.parent_id.id if account.parent_id else False,
+                'analytic_account_id': account.id,
+                'date': today,
+                'opening_balance': opening_balance,
+                'pos_donation_amount': 0.0,
+                'api_donation_amount': 0.0,
+                'dik_amount': 0.0,
+                'po_amount': 0.0,
+                'welfare_amount': 0.0,
+                'microfinance_amount': 0.0,
+                'expense_amount': 0.0,
+                'transfer_amount': 0.0,
+            })
+        
+        return record
+
+    def _update_single_record(self, record, values):
+        """
+        Update a single shariah.law record with values.
+        """
+        if not record:
+            return
 
         update_vals = {}
         
@@ -963,32 +1137,17 @@ class ShariahLaw(models.Model):
             'welfare': 'welfare_amount',
             'microfinance': 'microfinance_amount',
             'expense': 'expense_amount',
-            'transfer_in': 'transfer_in_amount',
-            'transfer_out': 'transfer_out_amount',
+            'transfer': 'transfer_amount',
         }
         
         for key, value in values.items():
             if value:
                 mapped_field = field_mapping.get(key, key)
-                if record:
-                    current_value = getattr(record, mapped_field, 0.0)
-                    update_vals[mapped_field] = current_value + value
-                else:
-                    update_vals[mapped_field] = value
+                current_value = getattr(record, mapped_field, 0.0)
+                update_vals[mapped_field] = current_value + value
 
-        if not update_vals:
-            return
-
-        if record:
+        if update_vals:
             record.write(update_vals)
-        else:
-            create_vals = {
-                'parent_id': account.parent_id.id if account.parent_id else False,
-                'analytic_account_id': account.id,
-                'currency_id': self.env.company.currency_id.id,
-            }
-            create_vals.update(update_vals)
-            self.create(create_vals)
 
     def _update_cumulative_totals(self, shariah_record):
         """Update cumulative totals in shariah.law."""
@@ -1013,8 +1172,7 @@ class ShariahLaw(models.Model):
                     'welfare': daily.welfare + values['welfare'],
                     'microfinance': daily.microfinance + values['microfinance'],
                     'expense': daily.expense + values['expense'],
-                    'transfer_in': daily.transfer_in + values['transfer_in'],
-                    'transfer_out': daily.transfer_out + values['transfer_out'],
+                    'transfer': daily.transfer + values['transfer'],
                 })
             else:
                 self.env['shariah.daily.balance'].create({
@@ -1027,8 +1185,7 @@ class ShariahLaw(models.Model):
                     'welfare': values['welfare'],
                     'microfinance': values['microfinance'],
                     'expense': values['expense'],
-                    'transfer_in': values['transfer_in'],
-                    'transfer_out': values['transfer_out'],
+                    'transfer': values['transfer'],
                 })
 
     def _recompute_balances(self):
@@ -1041,3 +1198,8 @@ class ShariahLaw(models.Model):
         if all_today:
             all_today._compute_balances()
             all_today._compute_total_donation()
+
+    _sql_constraints = [
+        ('unique_account_date', 'unique(analytic_account_id, date)', 
+         'Only one record per account per day is allowed.')
+    ]
