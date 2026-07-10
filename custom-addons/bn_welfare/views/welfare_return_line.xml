@@ -2,35 +2,55 @@
 <odoo>
 
     <!-- Tree View -->
-    <record id="view_welfare_return_line_tree" model="ir.ui.view">
-        <field name="name">welfare.return.line.tree</field>
-        <field name="model">welfare.return.line</field>
+    <record id="view_welfare_line_tree" model="ir.ui.view">
+        <field name="name">welfare.line</field>
+        <field name="model">welfare.line</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
-                <field name="welfare_id"/>
-                <field name="welfare_line_id"/>
-                <field name="donee_id"/>
-                <field name="product_id"/>
-                <field name="quantity"/>
-                <field name="total_amount"/>
-                <field name="return_date"/>
-                <field name="state"/>
+            <tree>
+                <field name="product_domain" column_invisible="1" />
+                <field name="analytic_account_domain" column_invisible="1" />
+                <field name="is_collection_point_readonly" column_invisible="1" />
+                <field name="employee_category_id_officer" column_invisible="1" />
+
+                <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'" />
+                <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                <field name="payment_type" />
+                <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
+                <field name="collection_point" readonly="is_collection_point_readonly"/>
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
+                <field name="collection_date" />
+                <field name="marriage_date" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
+                <field name="quantity" />   
+                <field name="amount" readonly="1" />
+                <field name="fixed_amount_check" column_invisible="1" />
+                <field name="total_amount" readonly="fixed_amount_check" />
+                <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
+
+                <field name="show_deliver_button" column_invisible="1"/>
+                <!-- <button name="action_set_pending" string="Create New Record" type="object" class="btn-primary" invisible="state == 'pending'" /> -->
+                <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+
+                <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
+
             </tree>
         </field>
     </record>
 
     <!-- Action for Check Marfat Shift -->
-    <record id="action_welfare_return_line" model="ir.actions.act_window">
-        <field name="name">Welfare Return Line Tree View</field>
-        <field name="res_model">welfare.return.line</field>
+    <record id="action_welfare_line" model="ir.actions.act_window">
+        <field name="name">Welfare Lines View</field>
+        <field name="res_model">welfare.line</field>
         <field name="view_mode">tree</field>
         <field name="target">current</field>
     </record>
     <!-- Menu Item for Check Marfat Shift -->
     <menuitem
         id="menu_welfare_return_line"
-        name="Welfare Return Line Tree View"
-        action="action_welfare_return_line"
+        name="Welfare Line View"
+        action="action_welfare_line"
         parent="welfare_menu"
         groups="bn_welfare.welfare_group"
         sequence="25"/>
