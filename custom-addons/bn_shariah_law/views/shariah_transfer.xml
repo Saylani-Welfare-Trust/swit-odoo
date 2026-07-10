@@ -110,31 +110,6 @@
                         </group>
                     </group>
                     
-                    <!-- Transfer Effect Visualization -->
-                    <group string="Transfer Effect" colspan="2">
-                        <group>
-                            <field name="source_analytic_account_id" readonly="1"/>
-                            <div style="padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
-                                <span class="fa fa-arrow-right" style="color: #ff6b00;"/> 
-                                <strong>Transfer Out:</strong> 
-                                <span style="color: #d63031;">-<field name="amount" nolabel="1" widget="monetary"/></span>
-                            </div>
-                        </group>
-                        <group>
-                            <field name="destination_analytic_account_id" readonly="1"/>
-                            <field name="destination_balance_effect" 
-                                   string="Effect on Destination" 
-                                   compute="_compute_transfer_effect" 
-                                   widget="monetary"
-                                   readonly="1"/>
-                            <div style="padding: 10px; background-color: #d4edda; border-radius: 5px; border-left: 4px solid #28a745;">
-                                <span class="fa fa-arrow-right" style="color: #28a745;"/> 
-                                <strong>Transfer In:</strong> 
-                                <span style="color: #00b894;">+<field name="amount" nolabel="1" widget="monetary"/></span>
-                            </div>
-                        </group>
-                    </group>
-                    
                     <!-- Approval Details -->
                     <group string="Approval Details" 
                            invisible="state not in ['member_approval', 'posted', 'rejected']">
