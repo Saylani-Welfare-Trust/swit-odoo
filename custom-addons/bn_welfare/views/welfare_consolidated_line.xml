@@ -11,7 +11,7 @@
                 <field name="analytic_account_domain" column_invisible="1" />
                 <field name="is_collection_point_readonly" column_invisible="1" />
                 <field name="employee_category_id_officer" column_invisible="1" />
-
+                <field name="order_type" column_invisible="1" />
                 <field name="recurring_duration" column_invisible="order_type != 'recurring'" />    
                 <field name="disbursement_category_id" />
                 <field name="disbursement_application_type_id"  />
@@ -46,8 +46,8 @@
                 <field name="disbursement_category_id"/>
                 <field name="state"/>
 
-                <!-- <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
-                <filter name="recurring" string="Recurring" domain="[('order_type','=','recurring')]"/> -->
+                    <!-- <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
+                    <filter name="recurring" string="Recurring" domain="[('order_type','=','recurring')]"/> -->
                 <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
                 <filter name="disbursed" string="Disbursed" domain="[('state','=','disbursed')]"/>
 
