@@ -211,6 +211,6 @@
         action="action_welfare_consolidated"
         parent="welfare_menu"
         groups="bn_welfare.welfare_group"
-        sequence="20"/>
+        sequence="50"/>
 
 </odoo>
