@@ -5,7 +5,7 @@
         <field name="name">welfare.line.tree</field>
         <field name="model">welfare.line</field>
         <field name="arch" type="xml">
-            <tree editable="bottom">
+            <tree editable="0" create = "0" delete="0">
                 <field name="product_domain" column_invisible="1" />
                 <field name="analytic_account_domain" column_invisible="1" />
                 <field name="is_collection_point_readonly" column_invisible="1" />
