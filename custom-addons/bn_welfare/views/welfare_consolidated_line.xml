@@ -70,6 +70,6 @@ id="menu_welfare_consolidated"
 name="All Welfare Lines"
 action="action_welfare_consolidated"
 parent="welfare_menu"
-groups="bn_welfare.welfare_group"
+groups="bn_welfare.welfare_consolidated_group"
 sequence="50"/>
 </odoo>

@@ -20,4 +20,36 @@
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
 
+    <!-- Marfat Officer Group -->
+    <record id ="group_marfat_officer" model="res.groups">
+        <field name="name">Marfat Officer</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!-- Welfare Profile Group-->
+    <record id ="group_welfare_profile" model="res.groups">
+        <field name="name">Welfare Profile</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!---All Welfare Lines Group-->
+    <record id ="welfare_consolidated_group" model="res.groups">
+        <field name="name">All Welfare Lines</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!--Fetch institution Group-->
+    <record id ="group_fetch_institution" model="res.groups">
+        <field name="name">Fetch Institution</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!--indvisual Disbursement Group-->
+    <record id ="group_individual_disbursement" model="res.groups">
+        <field name="name">Individual Disbursement</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!--Institutional Disbursement Group-->
+    <record id ="group_institutional_disbursement" model="res.groups">
+        <field name="name">Institutional Disbursement</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!---->
+    <record>
 </odoo>
