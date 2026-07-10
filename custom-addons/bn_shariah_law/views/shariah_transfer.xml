@@ -114,11 +114,6 @@
                     <group string="Transfer Effect" colspan="2">
                         <group>
                             <field name="source_analytic_account_id" readonly="1"/>
-                            <field name="source_balance_effect" 
-                                   string="Effect on Source" 
-                                   compute="_compute_transfer_effect" 
-                                   widget="monetary"
-                                   readonly="1"/>
                             <div style="padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
                                 <span class="fa fa-arrow-right" style="color: #ff6b00;"/> 
                                 <strong>Transfer Out:</strong> 
