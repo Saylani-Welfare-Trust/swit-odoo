@@ -50,6 +50,6 @@
         <field name="name">Institutional Disbursement</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
-    <!---->
-    <record>
+    <!-- -->
+
 </odoo>
