@@ -3,7 +3,7 @@
 
     <!-- Tree View -->
     <record id="view_welfare_line_tree" model="ir.ui.view">
-        <field name="name">welfare.line</field>
+        <field name="name">welfare.line.tree</field>
         <field name="model">welfare.line</field>
         <field name="arch" type="xml">
             <tree>
@@ -48,7 +48,7 @@
     </record>
     <!-- Menu Item for Check Marfat Shift -->
     <menuitem
-        id="menu_welfare_return_line"
+        id="menu_welfare_line"
         name="Welfare Line View"
         action="action_welfare_line"
         parent="welfare_menu"
