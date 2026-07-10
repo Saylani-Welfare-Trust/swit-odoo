@@ -113,12 +113,6 @@
                         <br/>
                         <span style="font-size: 90%;">Balance after transfer would be: <span field="source_balance_after" widget="monetary"/></span>
                     </div>
-                    
-                    <!-- Preview Button -->
-                    <group colspan="2">
-                        <button name="action_preview_transfer" string="Preview Transfer" type="object" class="btn-secondary"
-                                invisible="transfer_allowed == False or allowed_dest_count == 0 or amount &lt;= 0 or source_current_balance &lt; amount"/>
-                    </group>
                 </sheet>
                 <footer>
                     <button name="action_create_transfer" string="Transfer" type="object" class="btn-primary"
