@@ -52,8 +52,12 @@ class WelfareLine(models.Model):
     return_reason = fields.Text('Return Reason')
     returned_by = fields.Many2one('res.users', string='Returned By', default=lambda self: self.env.user)
     #welfare related field name order_type put in welfare line
-    order_type = fields.Selection(selection=order_type_selection, string="Order Type", related='welfare_id.order_type', store=True)
-    
+    order_type = fields.Selection(
+        related='welfare_id.order_type',
+        string='Order Type',
+        store=True,
+        readonly=True,
+    )    
     product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     employee_category_id_officer = fields.Many2one(
