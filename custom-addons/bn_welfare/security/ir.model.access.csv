@@ -14,5 +14,5 @@ access_welfare_line_disbursement_popup,welfare.line.disbursement.popup,bn_welfar
 access_welfare_recurring_line_disbursement_popup,welfare.recurring.line.disbursement.popup,bn_welfare.model_welfare_recurring_line_disbursement_popup,base.group_user,1,0,1,0
 access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift,,1,1,1,1
 access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,,1,1,1,1
-access_welfare_consolidated_line_user,welfare.consolidated.line.user,model_welfare_consolidated_line,bn_welfare.welfare_group,1,1,1,1
+access_welfare_line_consolidated,welfare.line.consolidated,model_bn_welfare_welfare_line,bn_welfare.welfare_group,1,0,0,0
 access_welfare_document_image_user,welfare.document.image user,model_welfare_document_image,base.group_user,1,1,1,1
