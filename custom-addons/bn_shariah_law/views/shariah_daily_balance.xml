@@ -17,14 +17,14 @@
                 <field name="api_donation" sum="Total" widget="monetary"/>
                 <field name="dik" sum="Total" widget="monetary"/>
                 
+                <!-- Total Donation (POSITIVE only) -->
+                <field name="total_donation" sum="Total" widget="monetary"/>
+                
                 <!-- NEGATIVE Transactions (Decrease Balance) -->
                 <field name="po" sum="Total" widget="monetary"/>
                 <field name="welfare" sum="Total" widget="monetary"/>
                 <field name="microfinance" sum="Total" widget="monetary"/>
                 <field name="expense" sum="Total" widget="monetary"/>
-                
-                <!-- Total Donation (POSITIVE only) -->
-                <field name="total_donation" sum="Total" widget="monetary"/>
                 
                 <!-- Transfer (Unified - Positive for IN, Negative for OUT) -->
                 <field name="transfer" sum="Total" widget="monetary"/>

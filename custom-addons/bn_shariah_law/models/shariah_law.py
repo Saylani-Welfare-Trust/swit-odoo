@@ -109,6 +109,14 @@ class ShariahLaw(models.Model):
             'view_mode': 'form',
             'target': 'new',
         }
+    
+    def get_closing_balance(self, analytic_account_id):
+        """Get the closing balance for a specific analytic account."""
+        record = self.search([
+            ('analytic_account_id', '=', analytic_account_id),
+        ], limit=1)
+        
+        return record.closing_balance if record else 0.0
 
     # ============================================================
     # DAILY RESET SCHEDULED ACTION

@@ -6,7 +6,6 @@
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
-                <field name="date" string="Date" invisible="1"/>
                 <field name="parent_id" column_invisible="1" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 
@@ -18,14 +17,14 @@
                 <field name="api_donation_amount" sum="Total" widget="monetary"/>
                 <field name="dik_amount" sum="Total" widget="monetary"/>
                 
+                <!-- Total Donation (POSITIVE only) -->
+                <field name="total_donation" sum="Total" widget="monetary"/>
+                
                 <!-- NEGATIVE Transactions (Decrease Balance) -->
                 <field name="po_amount" sum="Total" widget="monetary"/>
                 <field name="welfare_amount" sum="Total" widget="monetary"/>
                 <field name="microfinance_amount" sum="Total" widget="monetary"/>
                 <field name="expense_amount" sum="Total" widget="monetary"/>
-                
-                <!-- Total Donation (POSITIVE only) -->
-                <field name="total_donation" sum="Total" widget="monetary"/>
                 
                 <!-- Transfer (Unified - Positive for IN, Negative for OUT) -->
                 <field name="transfer_amount" sum="Total" widget="monetary"/>
