@@ -44,11 +44,6 @@ class SegmentTransferRule(models.Model):
     
     # Approval settings
     requires_approval = fields.Boolean(string='Requires Approval', default=False)
-    approval_group_id = fields.Many2one(
-        'res.groups',
-        string='Approval Group',
-        help='User group that can approve transfers for this rule'
-    )
     
     # Display field for destinations
     destination_names = fields.Char(

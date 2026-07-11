@@ -45,9 +45,6 @@
                     <group string="Approval Settings">
                         <group>
                             <field name="requires_approval" widget="boolean_toggle"/>
-                            <field name="approval_group_id" 
-                                   invisible="requires_approval == False"
-                                   required="requires_approval == True"/>
                         </group>
                     </group>
                     

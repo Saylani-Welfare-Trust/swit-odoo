@@ -186,9 +186,6 @@ class ShariahTransfer(models.Model):
 
     def _check_approval_permission(self, transfer):
         """Check if current user has permission to approve."""
-        # Check if user is in approval group
-        if transfer.rule_id and transfer.rule_id.approval_group_id:
-            return self.env.user.has_group(transfer.rule_id.approval_group_id.id)
         
         # Check if user has manager rights
         return self.env.user.has_group('bn_shariah_law.group_member_approval')
