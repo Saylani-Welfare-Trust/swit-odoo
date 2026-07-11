@@ -247,53 +247,8 @@ class ShariahTransferWizard(models.TransientModel):
             'rule_id': rule.id if rule else False,
         }
         
-        # Check if approval is required
-        if rule and rule.requires_approval:
-            # Check if shariah law person is required
-            if not rule.approval_required_by:
-                raise UserError(_(
-                    "This transfer requires approval but no Shariah Law Person is configured.\n"
-                    "Please configure the Shariah Law Person in the transfer rule."
-                ))
-            
-            # Create transfer with pending approval state
-            transfer = self.env['shariah.transfer'].create(transfer_vals)
-            
-            # If user is in approval group, they can approve directly
-            user_has_approval = False
-            if rule.approval_group_id:
-                user_has_approval = self.env.user.has_group(rule.approval_group_id.id)
-            
-            if user_has_approval:
-                # Auto-approve for users in approval group
-                transfer.action_member_post()
-            
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'shariah.transfer',
-                'res_id': transfer.id,
-                'view_mode': 'form',
-                'target': 'current',
-                'name': _('Transfer (Pending Approval)'),
-            }
-        
         # Create the transfer
         transfer = self.env['shariah.transfer'].create(transfer_vals)
-        
-        # Post the transfer (this triggers instant sync)
-        try:
-            transfer.action_post()
-        except Exception as e:
-            # If posting fails, still return the transfer but show error
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'shariah.transfer',
-                'res_id': transfer.id,
-                'view_mode': 'form',
-                'target': 'current',
-                'name': _('Transfer Created with Error'),
-                'context': {'default_error_message': str(e)},
-            }
         
         return {
             'type': 'ir.actions.act_window',
