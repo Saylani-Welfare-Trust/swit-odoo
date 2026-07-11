@@ -43,7 +43,7 @@
                     <!-- Member Approval State Buttons -->
                     <button name="action_member_post" string="Member Post" type="object" class="btn-success" 
                             invisible="state != 'member_approval'" 
-                            groups="shariah_law.group_member_approval"/>
+                            groups="bn_shariah_law.group_member_approval"/>
                     <button name="action_reject" string="Reject" type="object" class="btn-danger" 
                             invisible="state != 'member_approval'"/>
                     
