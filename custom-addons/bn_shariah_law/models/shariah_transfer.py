@@ -1,6 +1,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from collections import defaultdict
+from datetime import timedelta
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ class ShariahTransfer(models.Model):
 
     def _check_approval_permission(self, transfer):
         """Check if current user has permission to approve."""
-        
+
         # Check if user has manager rights
         return self.env.user.has_group('bn_shariah_law.group_member_approval')
 
