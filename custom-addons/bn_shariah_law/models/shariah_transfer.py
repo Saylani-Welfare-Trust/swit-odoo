@@ -191,7 +191,7 @@ class ShariahTransfer(models.Model):
             return self.env.user.has_group(transfer.rule_id.approval_group_id.id)
         
         # Check if user has manager rights
-        return self.env.user.has_group('shariah_law.group_shariah_law_manager_group')
+        return self.env.user.has_group('shariah_law.group_member_approval')
 
     def action_send_for_approval(self):
         """Send transfer for member approval."""
