@@ -39,16 +39,16 @@ class WelfareLineDisbursementPopup(models.TransientModel):
 
     def action_mark_pending(self):
         # Create return line
-        self.env['welfare.return.line'].create({
-            'welfare_line_id': self.line_id.id,
-            'welfare_id': self.line_id.welfare_id.id,
-            'donee_id': self.line_id.welfare_id.donee_id.id,
-            'product_id': self.line_id.product_id.id,
-            'quantity': self.line_id.quantity,
-            'total_amount': self.line_id.total_amount,
-            'return_date': fields.Date.today(),
-            'state': 'pending',
-        })
+        # self.env['welfare.return.line'].create({
+        #     'welfare_line_id': self.line_id.id,
+        #     'welfare_id': self.line_id.welfare_id.id,
+        #     'donee_id': self.line_id.welfare_id.donee_id.id,
+        #     'product_id': self.line_id.product_id.id,
+        #     'quantity': self.line_id.quantity,
+        #     'total_amount': self.line_id.total_amount,
+        #     'return_date': fields.Date.today(),
+        #     'state': 'pending',
+        # })
         self.line_id.write({'state': 'pending'})
 
         # Create new welfare + copy all form data + copy line
@@ -106,16 +106,16 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
         return self._reopen_wizard_action()
 
     def action_mark_pending(self):
-        self.env['welfare.return.line'].create({
-            'recurring_line_id': self.recurring_line_id.id,
-            'welfare_id': self.recurring_line_id.welfare_id.id,
-            'donee_id': self.recurring_line_id.welfare_id.donee_id.id,
-            'product_id': self.recurring_line_id.product_id.id,
-            'quantity': self.recurring_line_id.quantity,
-            'total_amount': self.recurring_line_id.amount,
-            'return_date': fields.Date.today(),
-            'state': 'pending',
-        })
+        # self.env['welfare.return.line'].create({
+        #     'recurring_line_id': self.recurring_line_id.id,
+        #     'welfare_id': self.recurring_line_id.welfare_id.id,
+        #     'donee_id': self.recurring_line_id.welfare_id.donee_id.id,
+        #     'product_id': self.recurring_line_id.product_id.id,
+        #     'quantity': self.recurring_line_id.quantity,
+        #     'total_amount': self.recurring_line_id.amount,
+        #     'return_date': fields.Date.today(),
+        #     'state': 'pending',
+        # })
 
         self.recurring_line_id.write({'state': 'pending'})
         return self._reopen_wizard_action()
