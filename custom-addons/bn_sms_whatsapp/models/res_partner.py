@@ -1,7 +1,10 @@
-
 from odoo import models, fields, api
-from odoo.exceptions import UserError  # <-- Ye import karna hai
+from odoo.exceptions import UserError
 import logging
+
+_logger = logging.getLogger(__name__)
+
+
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
