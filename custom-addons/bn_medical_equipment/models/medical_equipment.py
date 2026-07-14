@@ -981,15 +981,40 @@ class MedicalEquipment(models.Model):
     def action_complete(self):
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
+        
         if self.donee_id and self.donee_id.state != 'register':
             raise ValidationError(_('Donee must be in register state before completing the application.'))
-        else:
-            for product_line in self.medical_equipment_line_ids:
-                for lot in product_line.lot_ids:
-                    if lot.lot_consume:
-                        raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
-                    lot.lot_consume = True
-            self.state = 'completed'
+        
+        # Check if donee is already in portal to avoid duplicate registration
+        if self.donee_id.state == 'register':
+            try:
+                # Check if donee already exists in portal
+                existing_donee = self._check_donee_exists_in_portal()
+                
+                # If donee exists in portal, we don't need to register again
+                if existing_donee and existing_donee.get('id'):
+                    _logger.info(f"Donee {self.donee_id.name} already exists in portal with ID: {existing_donee.get('id')}")
+                    # Just update the portal_donee_id if not set
+                    if not self.portal_donee_id:
+                        self.write({
+                            'portal_donee_id': existing_donee.get('id'),
+                            'portal_sync_status': 'synced'
+                        })
+                else:
+                    # Donee doesn't exist in portal, will be created during sync
+                    _logger.info(f"Donee {self.donee_id.name} not found in portal, will create during sync")
+            except Exception as e:
+                _logger.warning(f"Error checking donee in portal: {str(e)}")
+                # Continue anyway, the sync process will handle it
+        
+        # Process lot consumption
+        for product_line in self.medical_equipment_line_ids:
+            for lot in product_line.lot_ids:
+                if lot.lot_consume:
+                    raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
+                lot.lot_consume = True
+        
+        self.state = 'completed'
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
