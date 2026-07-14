@@ -96,7 +96,7 @@ class MedicalSecurityDeposit(models.Model):
             'medical_equipment_id': medical_equipment_id.id,
             'donee_id': donee.id if donee else data.get('donee_id'),
             'cnic_no': donee.cnic_no if donee else '',  # Populate CNIC from donee
-            'amount': total_security_deposit,  # Use calculated amount instead of data
+            'amount': medical_equipment_id.total_amount,  # Use calculated amount instead of data
             'date': fields.Date.today(),  # Set current date by default
             'payment_method': data.get('payment_method', 'cash'),
             'bank_name': data.get('bank_name'),
