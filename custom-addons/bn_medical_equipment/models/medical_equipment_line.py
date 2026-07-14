@@ -14,18 +14,11 @@ class DonationHomeServiceLine(models.Model):
     lot_ids = fields.Many2many('stock.lot', string="Product No./Lot")
 
     quantity = fields.Integer('Quantity', default=1)
-    base_security_deposit_single = fields.Monetary(
-        string='Base Security Deposit (Single)', 
+    base_security_deposit = fields.Monetary(
+        string='Base Security Deposit', 
         related='medical_equipment_category_id.security_deposit',
         readonly=True
     )
-    base_security_deposit = fields.Monetary(
-        string='Base Security Deposit',
-        compute='_compute_base_security_deposit',
-        readonly=True,
-        store=True
-    )
-
     actual_deposit_percentage = fields.Float(
         string='Actual Deposit Percentage (%)',
         related='medical_equipment_id.actual_deposit_percentage',
@@ -37,13 +30,6 @@ class DonationHomeServiceLine(models.Model):
         compute='_compute_security_deposit',
         store=True
     )
-    @api.depends('base_security_deposit_single', 'quantity')
-    def _compute_base_security_deposit(self):
-        for line in self:
-            if line.base_security_deposit_single and line.quantity:
-                line.base_security_deposit = line.base_security_deposit_single * line.quantity
-            else:
-                line.base_security_deposit = 0.0
     
     # allowed_lot_ids = fields.Many2many(
     #     'stock.lot',
