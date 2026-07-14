@@ -151,7 +151,7 @@ class MedicalSecurityDeposit(models.Model):
                 'donee_name': medical_equipment_request.donee_id.name if medical_equipment_request.donee_id else '',
                 'cnic_no': medical_equipment_request.donee_id.cnic_no if medical_equipment_request.donee_id else '',
                 'deposit_id': security_deposit.id,
-                'amount': security_deposit.amount,
+                'amount': self.medical_equipment_id.total_amount,
                 'state': security_deposit.state,
                 'deposit_exists': True,
                 'date': security_deposit.date or fields.Date.today(),
