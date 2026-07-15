@@ -122,10 +122,10 @@ class MemberApproval(models.Model):
             warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
             
             if warehouse_ids:
-                rec.source_location_domain = (
-                    "[('warehouse_id','in',%s)]"
-                    % warehouse_ids
-                )
+                rec.source_location_domain = str([
+                    ('warehouse_id', 'in', warehouse_ids),
+                    ('complete_name', 'ilike', 'Stock'),
+                ])
             else:
                 rec.source_location_domain = "[]"
 
