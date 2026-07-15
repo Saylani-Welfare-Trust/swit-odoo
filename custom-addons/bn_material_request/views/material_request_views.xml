@@ -54,6 +54,10 @@
                                 invisible="not picking_id">
                             <field name="picking_id" widget="statinfo" string="Transfer"/>
                         </button>
+                        <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck"
+                                invisible="not shortage_picking_id">
+                            <field name="shortage_picking_id" widget="statinfo" string="Shortage Transfer"/>
+                        </button>
                         <button name="action_view_purchase_request" type="object" class="oe_stat_button" icon="fa-shopping-cart"
                                 invisible="not purchase_request_id">
                             <field name="purchase_request_id" widget="statinfo" string="Purchase Request"/>
