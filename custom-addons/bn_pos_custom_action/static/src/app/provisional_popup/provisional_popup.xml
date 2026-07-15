@@ -6,12 +6,25 @@
             <div class="modal-header drag-handle">
                 <h3 class="modal-title"><t t-esc="this.title" /></h3>
             </div>
+            
+            <!-- DHS and DD (Non MF/ME) -->
             <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Donor</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
                 </div>
                 
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Case No</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.case_no"
+                            readonly="readonly"
+                            style="background-color: #e9ecef; cursor: not-allowed;"/>
+                    </div>
+                </div>
+
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
                     <div class="col-4 fw-semibold">Transaction Ref</div>
                     <div class="col-8">
@@ -28,14 +41,11 @@
                     <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
 
-                <div class="row mb-2 text-start"
-                    t-if="this.action_type === 'dd'">
+                <div class="row mb-2 text-start" t-if="this.action_type === 'dd'">
                     <div class="col-4 fw-semibold">Deposit to Bank</div>
                     <div class="col-8">
-                        <select class="form-select form-select-sm"
-                                t-on-change="onBankChange">
+                        <select class="form-select form-select-sm" t-on-change="onBankChange">
                             <option value="">Select Bank</option>
-
                             <t t-foreach="this.props.bank_id" t-as="bank" t-key="bank.id">
                                 <option t-att-value="bank.id"
                                         t-att-selected="bank.id === this.state.selected_bank_id">
@@ -55,7 +65,8 @@
                             t-on-change="updateTransferToDHS"/>
                     </div>
                 </div>
-                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'" >
+                
+                <div class="row mb-2 text-start" t-if="this.action_type == 'dhs' || this.action_type == 'dd'">
                     <div class="col-4 fw-semibold">Address</div>
                     <div class="col-8">
                         <input type="text"
@@ -82,9 +93,14 @@
                     <div class="col-8 fw-bold" t-esc="this.state.total"/>
                 </div>
             </main>
-
+            
             <!-- Microfinance -->
             <main class="modal-body" t-if="this.action_type == 'mf'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Donor</div>
+                    <div class="col-8 fw-bold" t-esc="this.donor_name"/>
+                </div>
+
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Request No.</div>
                     <div class="col-8">
@@ -92,11 +108,17 @@
                             class="form-control form-control-sm"
                             t-att-value="this.state.microfinance_request_no"
                             t-on-change="updateMicrofinanceRequestNo"
-                            placeholder="Enter Microfinance Requets No."/>
+                            placeholder="Enter Microfinance Request No."/>
                     </div>
+                </div>
+                
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Amount</div>
+                    <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
             </main>
             
+            <!-- Medical Equipment -->
             <main class="modal-body" t-if="this.action_type == 'me'">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Request No.</div>
@@ -105,8 +127,13 @@
                             class="form-control form-control-sm"
                             t-att-value="this.state.medical_equipment_request_no"
                             t-on-change="updateMedicalEquipmentRequestNo"
-                            placeholder="Enter Medical Equipment Requets No."/>
+                            placeholder="Enter Medical Equipment Request No."/>
                     </div>
+                </div>
+                
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Amount</div>
+                    <div class="col-8 fw-bold" t-esc="this.state.amount"/>
                 </div>
             </main>
 
