@@ -379,8 +379,8 @@ class MemberApproval(models.Model):
                 'move_ids_without_package': move_vals,
             })
             # Confirm and assign picking
-            picking.action_confirm()
-            picking.action_assign()
+            # picking.action_confirm()
+            # picking.action_assign()
             self.picking_id = picking.id
             
             # Log stock availability info
