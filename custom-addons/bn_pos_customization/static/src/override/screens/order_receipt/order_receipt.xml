@@ -43,7 +43,7 @@
                             <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
                         <div name="custom-donor">
-                            <strong>Registered Name:</strong>
+                            <strong>Register Name:</strong>
                             <t t-if="partner.name"><t t-esc="partner.name"/></t>
                             <t t-else="">-</t>
                         </div>
