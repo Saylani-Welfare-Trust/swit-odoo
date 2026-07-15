@@ -295,18 +295,13 @@ class MedicalEquipment(models.Model):
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
-                # Only block when mobile already belongs to a REGISTERED partner
+            for rec in self:
                 if rec.donee_id and rec.donee_id.state != 'register':
                     existing_partner = self.env['res.partner'].search([
                         ('mobile', '=', rec.mobile),
                         ('id', '!=', rec.donee_id.id),
                         ('state', '=', 'register'),
+                        ('category_id.name', '=', 'Donee'),
                     ], limit=1)
                     if existing_partner:
                         raise ValidationError(
