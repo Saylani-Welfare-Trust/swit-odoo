@@ -127,6 +127,13 @@
                             <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
                             <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                         </div>
+                                                <!-- ===== MEDICAL EQUIPMENT REFERENCE (After Total Amount) ===== -->
+                        <t t-if="order.extra_data and order.extra_data.medical_equipment">
+                            <div style="margin-top:5px; padding:3px 0; border-top:1px dashed #ccc;">
+                                <strong>Medical Equipment Ref:</strong>
+                                <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no or 'N/A'"/>
+                            </div>
+                        </t>
                     </div>
                 </div>
 
