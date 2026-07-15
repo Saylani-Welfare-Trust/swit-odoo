@@ -21,6 +21,16 @@
                 <t t-else=""><t t-esc="partner.name"/></t>
             </div>
         </xpath>
+                <!-- ===== MEDICAL EQUIPMENT REFERENCE XPATH (After Total Amount) ===== -->
+        <xpath expr="//div[@name='custom-details']//div[strong[contains(text(), 'Total Amount')]]" position="after">
+            <t t-if="!order.is_qurbani and order.extra_data and order.extra_data.medical_equipment">
+                <div name="custom-medical-equipment" style="margin-top:5px; padding:3px 0; border-top:1px dashed #ccc;">
+                    <strong>Medical Equipment Ref:</strong>
+                    <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no or 'N/A'"/>
+                </div>
+            </t>
+        </xpath>
+
 
         <xpath expr="//table[@name='items-table']" position="replace">
             <t t-if="order.is_qurbani">
@@ -148,6 +158,7 @@
                                     (hours &lt; 10 ? '0' : '') + hours + ':' +
                                     (minutes &lt; 10 ? '0' : '') + minutes"/>
                         </div>
+
                         <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                     </div>
                 </div>  
