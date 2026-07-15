@@ -301,11 +301,12 @@ class MedicalEquipment(models.Model):
                     raise ValidationError(
                         "Mobile number must contain exactly 10 digits."
                     )
-                # Check if mobile already exists for another partner (only for non-registered donees)
+                # Only block when mobile already belongs to a REGISTERED partner
                 if rec.donee_id and rec.donee_id.state != 'register':
                     existing_partner = self.env['res.partner'].search([
                         ('mobile', '=', rec.mobile),
-                        ('id', '!=', rec.donee_id.id)
+                        ('id', '!=', rec.donee_id.id),
+                        ('state', '=', 'register'),
                     ], limit=1)
                     if existing_partner:
                         raise ValidationError(
