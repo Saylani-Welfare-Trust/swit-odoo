@@ -26,6 +26,7 @@ patch(Order.prototype, {
             receive_voucher: this.receive_voucher || false,
             is_bank: this.paymentlines[0]?.payment_method?.is_bank,
             is_donation_in_kind: this.paymentlines[0]?.payment_method?.is_donation_in_kind,
+            extra_data: this.extra_data || {},
         };
     },
 
