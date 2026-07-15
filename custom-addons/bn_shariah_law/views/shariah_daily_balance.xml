@@ -1,71 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="shariah_law_view_tree" model="ir.ui.view">
-        <field name="name">shariah.law.view.tree</field>
-        <field name="model">shariah.law</field>
+    <record id="view_shariah_daily_balance_tree" model="ir.ui.view">
+        <field name="name">shariah.daily.balance.tree</field>
+        <field name="model">shariah.daily.balance</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
-                <field name="parent_id" column_invisible="1" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+            <tree string="Daily Balances" create="0" edit="0" delete="0">
+                <field name="date"/>
+                <field name="analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                 
                 <!-- Opening Balances -->
                 <field name="opening_balance" sum="Total" widget="monetary"/>
                 
                 <!-- POSITIVE Transactions (Increase Balance) -->
-                <field name="pos_donation_amount" sum="Total" widget="monetary"/>
-                <field name="api_donation_amount" sum="Total" widget="monetary"/>
-                <field name="dik_amount" sum="Total" widget="monetary"/>
+                <field name="pos_donation" sum="Total" widget="monetary"/>
+                <field name="api_donation" sum="Total" widget="monetary"/>
+                <field name="dik" sum="Total" widget="monetary"/>
                 
                 <!-- Total Donation (POSITIVE only) -->
                 <!-- <field name="total_donation" sum="Total" widget="monetary"/> -->
                 
                 <!-- NEGATIVE Transactions (Decrease Balance) -->
-                <field name="po_amount" sum="Total" widget="monetary"/>
-                <field name="welfare_amount" sum="Total" widget="monetary"/>
-                <field name="microfinance_amount" sum="Total" widget="monetary"/>
-                <field name="expense_amount" sum="Total" widget="monetary"/>
+                <field name="po" sum="Total" widget="monetary"/>
+                <field name="welfare" sum="Total" widget="monetary"/>
+                <field name="microfinance" sum="Total" widget="monetary"/>
+                <field name="expense" sum="Total" widget="monetary"/>
                 
                 <!-- Transfer (Unified - Positive for IN, Negative for OUT) -->
-                <field name="transfer_amount" sum="Total" widget="monetary"/>
+                <field name="transfer" sum="Total" widget="monetary"/>
                 
                 <!-- Closing Balances -->
                 <field name="closing_balance" sum="Total" widget="monetary"/>
-
-                <button string="Transfer" name="action_transfer" type="object" class="btn-primary"/>
             </tree>
         </field>
     </record>
 
-    <record id="shariah_law_view_search" model="ir.ui.view">
-        <field name="name">shariah.law.view.search</field>
-        <field name="model">shariah.law</field>
+    <record id="view_shariah_daily_balance_search" model="ir.ui.view">
+        <field name="name">shariah.daily.balance.search</field>
+        <field name="model">shariah.daily.balance</field>
         <field name="arch" type="xml">
             <search>
                 <field name="analytic_account_id" string="Segment"/>
-                <field name="parent_id" string="Parent Segment"/>
                 <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
                 <separator/>
                 <filter name="positive_balance" string="Positive Balance" domain="[('closing_balance', '&lt;', 0)]"/>
                 <filter name="negative_balance" string="Negative Balance" domain="[('closing_balance', '&gt;', 0)]"/>
+                <filter name="zero_balance" string="Zero Balance" domain="[('closing_balance', '=', 0)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>
                     <filter name="group_by_analytic" string="Segment" domain="[]" context="{'group_by': 'analytic_account_id'}"/>
-                    <filter name="group_by_parent" string="Parent Segment" domain="[]" context="{'group_by': 'parent_id'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <record id="shariah_law_action" model="ir.actions.act_window">
-        <field name="name">Shariah Law Totals</field>
-        <field name="res_model">shariah.law</field>
+    <record id="action_shariah_daily_balance" model="ir.actions.act_window">
+        <field name="name">Daily Balances</field>
+        <field name="res_model">shariah.daily.balance</field>
         <field name="view_mode">tree</field>
-        <field name="search_view_id" ref="shariah_law_view_search"/>
+        <field name="search_view_id" ref="view_shariah_daily_balance_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Shariah-compliant tracking of donations, purchases, expenses, and transfers.
+                Track daily balances for each Shariah-compliant segment.
             </p>
             <p>
                 <strong>Transaction Signs:</strong><br/>
@@ -74,7 +71,10 @@
             </p>
             <p>
                 <strong>Balance Calculation:</strong><br/>
-                Closing = Opening + POS Donations + API Donations + DIK + Transfer - PO - Welfare - Microfinance - Expense
+                Closing = Opening + Total Donation + Transfer - PO - Welfare - Microfinance - Expense
+            </p>
+            <p>
+                <strong>Note:</strong> PO, Welfare, Microfinance, and Expense are stored as negative values in the system.
             </p>
         </field>
     </record>

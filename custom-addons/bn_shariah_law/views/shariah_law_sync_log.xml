@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sync Log Tree View -->
+    <record id="shariah_law_sync_log_view_tree" model="ir.ui.view">
+        <field name="name">shariah.law.sync.log.view.tree</field>
+        <field name="model">shariah.law.sync.log</field>
+        <field name="arch" type="xml">
+            <tree string="Sync Logs">
+                <field name="sync_date"/>
+                <field name="module_name"/>
+                <field name="status" widget="badge"/>
+                <field name="records_synced" sum="Total Records"/>
+                <field name="duration"/>
+                <field name="message"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Sync Log Form View -->
+    <record id="shariah_law_sync_log_view_form" model="ir.ui.view">
+        <field name="name">shariah.law.sync.log.view.form</field>
+        <field name="model">shariah.law.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Sync Log">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="sync_date"/>
+                            <field name="module_name"/>
+                            <field name="status" widget="badge"/>
+                            <field name="records_synced"/>
+                            <field name="duration"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="config_id"/>
+                        </group>
+                    </group>
+                    <group string="Message">
+                        <field name="message" nolabel="1"/>
+                    </group>
+                    <group string="Error Details" invisible="error_details == ''">
+                        <field name="error_details" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="shariah_law_sync_log_action" model="ir.actions.act_window">
+        <field name="name">Sync Logs</field>
+        <field name="res_model">shariah.law.sync.log</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

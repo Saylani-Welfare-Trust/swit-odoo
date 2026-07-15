@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_shariah_law_blocker" model="shariah.law.blocker">
+        <field name="enable_pos">False</field>
+        <field name="enable_donations">False</field>
+        <field name="enable_dik">False</field>
+        <field name="enable_expense">False</field>
+        <field name="enable_purchase">False</field>
+        <field name="enable_welfare">False</field>
+        <field name="enable_microfinance">False</field>
+    </record>
+
+</odoo>

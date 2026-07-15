@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_shariah_transfer_tree" model="ir.ui.view">
+        <field name="name">shariah.transfer.tree</field>
+        <field name="model">shariah.transfer</field>
+        <field name="arch" type="xml">
+            <tree string="Transfers">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="amount" sum="Total" widget="monetary"/>
+                <field name="state" widget="badge"/>
+                <field name="requires_approval" widget="boolean_toggle"/>
+                <field name="member_posted" widget="boolean_toggle"/>
+                <field name="shariah_law_person_id"/>
+                <field name="note"/>
+                
+                <!-- Quick Actions -->
+                <button name="action_post" string="Post" type="object" icon="fa-check" 
+                        class="btn-primary" invisible="state != 'draft'"/>
+                <button name="action_send_for_approval" string="Send for Approval" type="object" icon="fa-paper-plane" 
+                        class="btn-warning" invisible="state != 'draft' or requires_approval == False"/>
+                <button name="action_member_post" string="Approve" type="object" icon="fa-thumbs-up" 
+                        class="btn-success" invisible="state != 'member_approval'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_shariah_transfer_form" model="ir.ui.view">
+        <field name="name">shariah.transfer.form</field>
+        <field name="model">shariah.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Transfer">
+                <header>
+                    <!-- Draft State Buttons -->
+                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="btn-primary" 
+                            invisible="state != 'draft' or requires_approval == False"/>
+                    <button name="action_post" string="Post" type="object" class="btn-primary" 
+                            invisible="state != 'draft'"/>
+                    
+                    <!-- Member Approval State Buttons -->
+                    <button name="action_member_post" string="Member Post" type="object" class="btn-success" 
+                            invisible="state != 'member_approval'" 
+                            groups="bn_shariah_law.group_member_approval"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-danger" 
+                            invisible="state != 'member_approval'"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,member_approval,posted"/>
+                </header>
+                <sheet>
+                    <!-- Warning Messages -->
+                    <div class="alert alert-warning" role="alert" 
+                         invisible="requires_approval == False">
+                        <span class="fa fa-exclamation-triangle"/>
+                        <b>Approval Required:</b> This transfer requires member approval.
+                        <ul>
+                            <li>Select a Shariah Law Person</li>
+                            <li>Click "Member Post" to approve</li>
+                            <li>Then click "Post" to complete the transfer</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert" 
+                         invisible="requires_approval == True">
+                        <span class="fa fa-info-circle"/>
+                        <b>No Approval Required:</b> This transfer does not require member approval.
+                        You can post it directly.
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" 
+                         invisible="requires_approval == False or member_posted == False">
+                        <span class="fa fa-check-circle"/>
+                        <b>Approved:</b> This transfer has been approved by member.
+                    </div>
+                    
+                    <div class="alert alert-danger" role="alert" 
+                         invisible="state != 'rejected'">
+                        <span class="fa fa-times-circle"/>
+                        <b>Rejected:</b> This transfer has been rejected.
+                        <field name="rejection_reason" nolabel="1"/>
+                    </div>
+                    
+                    <!-- Transfer Information -->
+                    <div class="oe_title">
+                        <label for="name" string="Transfer"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    
+                    <!-- Main Fields -->
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="source_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="destination_analytic_account_id" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="shariah_law_person_id" 
+                                   options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="requires_approval" widget="boolean_toggle" readonly="1"/>
+                            <field name="member_posted" readonly="1"/>
+                            <field name="is_sync_shariah_law" readonly="1"/>
+                            <field name="rule_id" readonly="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Approval Details -->
+                    <group string="Approval Details" 
+                           invisible="state not in ['member_approval', 'posted', 'rejected']">
+                        <group>
+                            <field name="member_approval_user_id" readonly="1"/>
+                            <field name="member_approval_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="rejection_reason" 
+                                   invisible="state != 'rejected'"
+                                   required="state == 'rejected'"
+                                   placeholder="Please provide reason for rejection..."
+                                   nolabel="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Notes -->
+                    <field name="note" placeholder="Optional note..." nolabel="1"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shariah_transfer_search" model="ir.ui.view">
+        <field name="name">shariah.transfer.search</field>
+        <field name="model">shariah.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Reference"/>
+                <field name="source_analytic_account_id" string="Source Segment"/>
+                <field name="destination_analytic_account_id" string="Destination Segment"/>
+                <field name="shariah_law_person_id" string="Shariah Law Person"/>
+                
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="member_approval" string="Pending Approval" domain="[('state', '=', 'member_approval')]"/>
+                <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                
+                <separator/>
+                
+                <filter name="member_posted" string="Member Approved" domain="[('member_posted', '=', True)]"/>
+                <filter name="not_synced" string="Not Synced" domain="[('is_sync_shariah_law', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
+                
+                <separator/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_by_state" string="State" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>
+                    <filter name="group_by_source" string="Source Segment" domain="[]" context="{'group_by': 'source_analytic_account_id'}"/>
+                    <filter name="group_by_destination" string="Destination Segment" domain="[]" context="{'group_by': 'destination_analytic_account_id'}"/>
+                    <filter name="group_by_person" string="Shariah Law Person" domain="[]" context="{'group_by': 'shariah_law_person_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shariah_transfer" model="ir.actions.act_window">
+        <field name="name">Fund Transfers</field>
+        <field name="res_model">shariah.transfer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_shariah_transfer_search"/>
+        <field name="context">{'default_state': 'draft'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Transfer funds between Shariah-compliant segments.
+            </p>
+            <p>
+                <strong>Transfer Rules:</strong><br/>
+                - Source account: Transfer OUT (decreases balance)<br/>
+                - Destination account: Transfer IN (increases balance)<br/>
+                - Requires approval based on configured rules
+            </p>
+            <p>
+                <strong>Approval Process:</strong><br/>
+                1. Create transfer (Draft)<br/>
+                2. Send for approval (if required)<br/>
+                3. Member approves (Member Post)<br/>
+                4. Post transfer (Posted)<br/>
+                5. Synced with Shariah Law automatically
+            </p>
+        </field>
+    </record>
+
+</odoo>
