@@ -183,11 +183,30 @@
             </form>
         </field>
     </record>
-
+    <record id="medical_equipment_view_search" model="ir.ui.view">
+        <field name="name">medical.equipment.view.search</field>
+        <field name="model">medical.equipment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Request No."/>
+                <field name="donee_id"/>
+                <field name="mobile" string="Mobile No."/>
+                <field name="cnic_no" string="CNIC No."/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Completed" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+                <filter string="Closed" name="filter_closed" domain="[('state', '=', 'closed')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Donee" name="group_by_donee" context="{'group_by': 'donee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="medical_equipment_action" model="ir.actions.act_window">
         <field name="name">Medical Equipment</field>
         <field name="res_model">medical.equipment</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="medical_equipment_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...
