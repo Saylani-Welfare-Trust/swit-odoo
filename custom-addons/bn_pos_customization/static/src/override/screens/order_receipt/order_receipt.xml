@@ -47,10 +47,9 @@
                             <t t-if="partner.name"><t t-esc="partner.name"/></t>
                             <t t-else="">-</t>
                         </div>
-                        <div>
+                        <div t-if="order.extra_data and order.extra_data.medical_equipment and order.extra_data.medical_equipment.medical_equipment_request_no">
                             <strong>Medical Eq. Ref:</strong>
-                            <t t-if="partner.name"><t t-esc="partner.name"/></t>
-                            <t t-else="">-</t>
+                            <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no"/>
                         </div>
                         <div>
                             <strong>CNIC No.:</strong>
