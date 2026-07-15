@@ -29,6 +29,8 @@ class JournalTransfer(models.Model):
 
     pos_move_id = fields.Many2one('account.move', string="Account Move")
 
+    analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
+
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     amount = fields.Monetary('Amount', currency_field='currency_id')
