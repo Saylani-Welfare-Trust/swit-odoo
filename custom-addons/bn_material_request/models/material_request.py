@@ -31,20 +31,32 @@ class MemberApproval(models.Model):
     source_location_id = fields.Many2one(
         'stock.location', 
         string='Source Location',
-        domain=[('usage', '=', 'internal')],
         tracking=True
     )
-    
-    dest_location_domain = fields.Char(
-        compute='_compute_dest_location_domain'
+
+    source_location_domain = fields.Char(
+        compute='_compute_source_location_domain',
+        store=False
     )
+
+    allowed_location_ids = fields.Many2many(
+        'stock.location',
+        related='user_id.allowed_location_ids',
+        string='Allowed Locations',
+        readonly=True,
+        store=False
+    )
+
+    # dest_location_domain = fields.Char(
+    #     compute='_compute_dest_location_domain',
+    #     store=False
+    # )
 
     dest_location_id = fields.Many2one(
         'stock.location',
         string='Destination Location',
         tracking=True
     )
-
 
     is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
     budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
@@ -77,6 +89,7 @@ class MemberApproval(models.Model):
     
     # Picking
     picking_id = fields.Many2one('stock.picking', string='Internal Transfer', readonly=True, copy=False)
+    shortage_picking_id = fields.Many2one('stock.picking', string='Shortage Internal Transfer', readonly=True, copy=False)
     
     # Lines
     line_ids = fields.One2many('material.request.line', 'approval_id', string='Products', copy=True)
@@ -86,6 +99,9 @@ class MemberApproval(models.Model):
     committee_remarks = fields.Text('Committee Remarks')
     cfo_remarks = fields.Text('CFO Remarks')
     coo_remarks = fields.Text('COO Remarks')
+
+
+   
     
     
     @api.model
@@ -101,17 +117,35 @@ class MemberApproval(models.Model):
 
 
 
-    @api.depends('employee_location_id')
-    def _compute_dest_location_domain(self):
+    @api.depends('user_id.allowed_warehouse_ids')
+    def _compute_source_location_domain(self):
         for rec in self:
-            if rec.employee_location_id:
-                rec.dest_location_domain = (
-                    "[('usage','=','internal'),"
-                    "('analytic_account_id','=',%d)]"
-                    % rec.employee_location_id.id
-                )
+            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            
+            if warehouse_ids:
+                rec.source_location_domain = str([
+                    ('warehouse_id', 'in', warehouse_ids),
+                    ('complete_name', 'ilike', 'Stock'),
+                ])
             else:
-                rec.dest_location_domain = "[('usage','=','internal')]"
+                rec.source_location_domain = "[]"
+
+
+
+    # @api.depends('user_id.allowed_warehouse_ids')
+    # def _compute_source_location_domain(self):
+    #     for rec in self:
+    #         warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+    #         if warehouse_ids:
+    #             rec.source_location_domain = (
+    #                 "[('usage','=','internal'),"
+    #                 "('warehouse_id','in',%s)]"
+    #                 % warehouse_ids
+    #             )
+    #         else:
+    #             rec.source_location_domain = "[('usage','=','internal')]"
+
+ 
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
@@ -125,39 +159,39 @@ class MemberApproval(models.Model):
         # Budget check per line (analytic + budget)
         total_available_budget = 0.0
         is_in_budget = True
-        # STEP 1: Build analytic-wise totals
-        # ----------------------------------------
-        analytic_amount_map = {}  # {analytic_account: total_amount}
 
         for line in self.line_ids:
-            analytic_line = self.env['analytical.product.line'].search([
-                ('product_id', '=', line.product_id.id)
+            # Search for analytic account linked to the product
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [line.product_id.id])
             ], limit=1)
 
-            if not analytic_line or not analytic_line.analytic_account_id:
+            if not analytic:
                 raise ValidationError(
                     _('Product "%s" is not linked to any Analytic Account.')
                     % line.product_id.display_name
                 )
 
-            analytic = analytic_line.analytic_account_id
-
             budget = line.budget_id
-            if not budget:
-                raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            # if not budget:
+            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            
             budget_lines = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', analytic.id),
+                ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
                 ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
                 ('date_to', '>=', today),
             ])
-            if not budget_lines:
-                raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
+            
+            # if not budget_lines:
+            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
+            
             available_budget = sum(
-                l.planned_amount - abs(l.practical_amount)
+                abs(l.practical_amount)
                 for l in budget_lines
             )
             total_available_budget += available_budget
+            
             if line.subtotal > available_budget:
                 is_in_budget = False
 
@@ -178,8 +212,43 @@ class MemberApproval(models.Model):
 
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
+        
+        
 
         if self.is_in_budget:
+            # Deduct approved amount from available budget
+            self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+            if self.budget_amount < 0:
+                self.budget_amount = 0.0
+                
+                
+            # Update budget lines for each product
+            # today = fields.Date.today()
+            # updated_lines = self.env['budget.lines']
+
+            # for line in self.line_ids:
+            #     # Find analytic account via product
+            #     analytic = self.env['analytical.product.line'].search(
+            #         [('product_id', '=', line.product_id.id)], limit=1
+            #     ).analytic_account_id
+            #     if analytic:
+            #         # Find active budget line(s)
+            #         budget_lines = self.env['budget.lines'].search([
+            #             ('analytic_account_id', '=', analytic.id),
+            #             ('budget_id', '=', line.budget_id.id),
+            #             ('date_from', '<=', today),
+            #             ('date_to', '>=', today),
+            #         ])
+            #         if budget_lines:
+            #             # Deduct line.subtotal (practical_amount is negative, so add)
+            #             budget_lines[0].practical_amount += line.subtotal
+            #             updated_lines |= budget_lines
+
+            # # Recompute total remaining budget
+            # self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
+
+       
+
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
                 self._create_internal_transfer()
@@ -225,83 +294,94 @@ class MemberApproval(models.Model):
                 self.state = 'purchase_request'
 
     def _create_internal_transfer(self):
-        """Create an internal transfer (stock.picking) for the approved request
-        
-        Logic:
-        1. Check on-hand quantity for each product at source location
-        2. If insufficient stock: create purchase requisition for shortage
-        3. Create internal transfer only for products with available stock
-        """
         self.ensure_one()
-        
+
         if not self.source_location_id:
             raise ValidationError(_('Please specify a Source Location.'))
         if not self.dest_location_id:
             raise ValidationError(_('Please specify a Destination Location.'))
-        
-        # Get internal transfer picking type
+
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
             ('company_id', '=', self.env.company.id),
         ], limit=1)
+
         if not picking_type:
             raise ValidationError(_('No internal transfer picking type found.'))
-        
-        # Analyze stock availability and prepare moves
+
         move_vals = []
+        shortage_move_vals = []
         purchase_lines = []
-        stock_info = []  # For logging
-        
+        stock_info = []
+
         for line in self.line_ids:
-            # Get on-hand quantity at source location
             stock_quant = self.env['stock.quant'].search([
                 ('product_id', '=', line.product_id.id),
                 ('location_id', '=', self.source_location_id.id),
             ])
+
             available_qty = sum(stock_quant.mapped('available_quantity'))
-            # raise UserError(_('Available quantity for product "%s" at source location is %s. Please adjust your request accordingly.') % (line.product_id.display_name, available_qty))
+
             stock_info.append({
                 'product': line.product_id.display_name,
                 'requested': line.quantity,
                 'available': available_qty,
             })
-            
-            # Determine transfer and purchase quantities
+
             if available_qty >= line.quantity:
-                # Sufficient stock: create full transfer
                 move_vals.append((0, 0, {
-                    'name': line.product_id.name,
+                    'name': line.product_id.display_name,
                     'product_id': line.product_id.id,
                     'product_uom': line.product_uom_id.id,
                     'product_uom_qty': line.quantity,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
                 }))
+
             elif available_qty > 0:
-                # Partial stock: transfer available, purchase shortage
                 move_vals.append((0, 0, {
-                    'name': line.product_id.name,
+                    'name': line.product_id.display_name,
                     'product_id': line.product_id.id,
                     'product_uom': line.product_uom_id.id,
                     'product_uom_qty': available_qty,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
                 }))
+
                 shortage_qty = line.quantity - available_qty
+
                 purchase_lines.append((0, 0, {
                     'product_id': line.product_id.id,
                     'product_uom_id': line.product_uom_id.id,
                     'product_qty': shortage_qty,
                 }))
+
+                shortage_move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': shortage_qty,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                }))
+
             else:
-                # No stock: purchase full quantity
                 purchase_lines.append((0, 0, {
                     'product_id': line.product_id.id,
                     'product_uom_id': line.product_uom_id.id,
                     'product_qty': line.quantity,
                 }))
-        
-        # Create internal transfer if there are any moves
+
+                shortage_move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': line.quantity,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                }))
+
+        # Create transfer for available stock
         if move_vals:
             picking = self.env['stock.picking'].create({
                 'picking_type_id': picking_type.id,
@@ -310,47 +390,34 @@ class MemberApproval(models.Model):
                 'origin': self.name,
                 'move_ids_without_package': move_vals,
             })
-            # Confirm and assign picking
-            picking.action_confirm()
-            picking.action_assign()
+
             self.picking_id = picking.id
-            
-            # Log stock availability info
-            stock_msg = '<p><b>Internal Transfer Created:</b></p><ul>'
-            for info in stock_info:
-                if info['available'] >= info['requested']:
-                    stock_msg += f"<li>{info['product']}: {info['requested']} units (Full stock available)</li>"
-                elif info['available'] > 0:
-                    stock_msg += f"<li>{info['product']}: {info['available']}/{info['requested']} units (Partial stock)</li>"
-            stock_msg += '</ul>'
-            self.message_post(body=stock_msg)
-        
-        # Create purchase requisition for shortages
+
+        # Create purchase requisition and shortage transfer
         if purchase_lines:
             purchase_request = self.env['purchase.requisition'].create({
-                'origin': f"{self.name} (Stock Shortage)",
+                'origin': "%s (Stock Shortage)" % self.name,
                 'line_ids': purchase_lines,
             })
+
             self.auto_purchase_request_id = purchase_request.id
-            
-            # Log purchase requisition creation
-            shortage_msg = '<p><b>Purchase Requisition Created (Stock Shortage):</b></p><ul>'
-            for info in stock_info:
-                if info['available'] < info['requested']:
-                    shortage = info['requested'] - info['available']
-                    shortage_msg += f"<li>{info['product']}: {shortage} units (Insufficient stock)</li>"
-            shortage_msg += f'</ul><p><a href="/web#id={purchase_request.id}&model=purchase.requisition&view_type=form">View Purchase Requisition</a></p>'
-            self.message_post(body=shortage_msg)
-        
-        # Log warning if no transfer was created
+
+            shortage_picking = self.env['stock.picking'].create({
+                'picking_type_id': picking_type.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.dest_location_id.id,
+                'origin': "%s (Stock Shortage)" % self.name,
+                'move_ids_without_package': shortage_move_vals,
+            })
+
+            self.shortage_picking_id = shortage_picking.id
+
         if not move_vals and not purchase_lines:
-            raise ValidationError(_('No products to transfer or purchase. Please check your request.'))
-        
-        if not move_vals:
-            warning_msg = '<p><b>⚠ No Internal Transfer Created:</b> All requested products have zero stock at source location. Purchase Requisition created instead.</p>'
-            self.message_post(body=warning_msg)
-        
-        return self.picking_id if move_vals else None
+            raise ValidationError(
+                _('No products to transfer or purchase.')
+            )
+
+        return self.picking_id
     
     def _create_purchase_request(self):
         """Create a purchase request (purchase.requisition) for the approved request"""

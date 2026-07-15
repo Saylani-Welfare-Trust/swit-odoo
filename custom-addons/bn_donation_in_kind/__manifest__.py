@@ -22,6 +22,7 @@
         'views/product_template.xml',
         'views/product_product.xml',
         'views/donation_in_kind_config.xml',
+        'views/pos_menu.xml',
     ],
     'auto_install': False,
     'application': True,

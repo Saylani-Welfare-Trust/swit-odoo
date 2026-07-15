@@ -19,6 +19,7 @@
         'base_account_budget',
         'mail',
         'purchase_requisition',
+        'bn_stock_location',
     ],
     'data': [
         'security/groups.xml',
@@ -33,3 +34,4 @@
     'application': True,
     'license': 'LGPL-3',
 } # type: ignore
+

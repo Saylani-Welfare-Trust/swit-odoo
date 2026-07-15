@@ -13,6 +13,7 @@
                 <field name="accounting_date" readonly="1" />
                 <!-- <field name="name" readonly="1" /> -->
                 <field name="descripiton" />
+                <field name="analytic_account_id" string="Branch" />
                 <field name="source_journal_id" />
                 <field name="dest_journal_id" />
                 <field name="date" />
