@@ -293,20 +293,20 @@ class MedicalEquipment(models.Model):
             if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
                 raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-            for rec in self:
-                if rec.donee_id and rec.donee_id.state != 'register':
-                    existing_partner = self.env['res.partner'].search([
-                        ('mobile', '=', rec.mobile),
-                        ('id', '!=', rec.donee_id.id),
-                        ('state', '=', 'register'),
-                        ('category_id.name', '=', 'Donee'),
-                    ], limit=1)
-                    if existing_partner:
-                        raise ValidationError(
-                            f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
-                        )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #         for rec in self:
+    #             if rec.donee_id and rec.donee_id.state != 'register':
+    #                 existing_partner = self.env['res.partner'].search([
+    #                     ('mobile', '=', rec.mobile),
+    #                     ('id', '!=', rec.donee_id.id),
+    #                     ('state', '=', 'register'),
+    #                     ('category_id.name', '=', 'Donee'),
+    #                 ], limit=1)
+    #                 if existing_partner:
+    #                     raise ValidationError(
+    #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
+    #                     )
     def action_reject(self):
         self.state = 'closed'
 
