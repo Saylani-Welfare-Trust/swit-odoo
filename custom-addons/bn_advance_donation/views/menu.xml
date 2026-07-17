@@ -4,7 +4,7 @@
       <menuitem id="main_menu_advance_donation"
             name="Advance Donation"
             groups="bn_advance_donation.group_adv_don_menu"
-            web_icon="bn_import_donation,static/description/icon2.png"
+            web_icon="bn_advance_donation,static/description/icon2.png"
             />
 
       <menuitem id="menu_advance_donation"
