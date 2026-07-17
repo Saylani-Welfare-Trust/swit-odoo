@@ -418,7 +418,11 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'source_request_no': this.state.source_request_no,
             }
     
+            console.log("DD popup - payload sent:", payload); // TEMP DEBUG
+
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
+                console.log("DD popup - response received:", data); // TEMP DEBUG
+
                 if (data.status === 'success') {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",

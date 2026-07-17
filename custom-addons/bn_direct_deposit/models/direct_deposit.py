@@ -2,6 +2,9 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 import re
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 status_selection = [       
@@ -92,12 +95,17 @@ class DirectDeposit(models.Model):
         """Resolve the exact microfinance record the POS popup auto-filled
         (via source_request_no / record_number), so the DD record can be
         linked directly instead of relying on a later text match."""
+        _logger.info("DD create - source_request_type=%r source_request_no=%r", source_request_type, source_request_no)
+
         if source_request_type != 'Microfinance' or not source_request_no:
+            _logger.info("DD create - skipping microfinance lookup (type/no missing or mismatched)")
             return self.env['microfinance']
 
         mf = self.env['microfinance'].search([
             '|', ('name', '=', source_request_no), ('old_system_record', '=', source_request_no)
         ], limit=1)
+
+        _logger.info("DD create - microfinance search result: %r (id=%s)", mf, mf.id if mf else False)
 
         return mf
 
@@ -169,7 +177,13 @@ class DirectDeposit(models.Model):
 
         return {
             "status": "success",
-            "id": dd.id
+            "id": dd.id,
+            "debug": {
+                "source_request_type": source_request_type,
+                "source_request_no": source_request_no,
+                "matched_microfinance_id": mf.id if mf else False,
+                "matched_microfinance_name": mf.name if mf else False,
+            },
         }
 
     @api.onchange('microfinance_id')
@@ -357,6 +371,7 @@ class DirectDeposit(models.Model):
             MicrofinanceInstallment.create({
                 'payment_type': line.payment_type,
                 'payment_method': 'direct_deposit',
+                'bank_name': self.bank_id.name if self.bank_id else False,
                 'amount': applied_amount,
                 'microfinance_id': microfinance_record.id,
                 'donee_id': microfinance_record.donee_id.id,
