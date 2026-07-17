@@ -319,7 +319,10 @@ class DirectDeposit(models.Model):
         return self.env['microfinance']
 
     def _apply_microfinance_payment(self):
-        """Apply direct deposit amount to matching microfinance installment lines."""
+        """Apply direct deposit amount to matching microfinance installment lines,
+        and create a microfinance.installment receipt for each portion paid, so
+        the payment shows up under Security/Installment Receipts - the same way
+        a payment made directly through the POS 'mf' popup does."""
         payment_amount = self.amount or sum(
             line.amount * line.quantity for line in self.direct_deposit_line_ids
         )
@@ -336,7 +339,10 @@ class DirectDeposit(models.Model):
         if not lines:
             return False
 
+        MicrofinanceInstallment = self.env['microfinance.installment']
         remaining_amount = payment_amount
+        applied_any = False
+
         for line in lines.sorted('due_date'):
             if remaining_amount <= 0:
                 break
@@ -345,9 +351,23 @@ class DirectDeposit(models.Model):
             if applied_amount <= 0:
                 continue
 
+            # Record a receipt for this portion of the payment so it appears
+            # under Security Receipts / Installment Receipts, keyed off the
+            # line's own payment_type (security vs installment).
+            MicrofinanceInstallment.create({
+                'payment_type': line.payment_type,
+                'amount': applied_amount,
+                'microfinance_id': microfinance_record.id,
+                'donee_id': microfinance_record.donee_id.id,
+                'date': fields.Date.today(),
+                'state': 'paid',
+                'microfinance_line_id': line.id,
+            })
+
+            applied_any = True
             remaining_amount -= applied_amount
 
-        return True
+        return applied_any
 
     def action_clear(self):
         if self._apply_microfinance_payment():
