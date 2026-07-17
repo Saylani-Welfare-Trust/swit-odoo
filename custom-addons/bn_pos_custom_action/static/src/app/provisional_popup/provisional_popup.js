@@ -4,8 +4,11 @@ import { useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+
 import { AbstractAwaitablePopup } from "@point_of_sale/app/popup/abstract_awaitable_popup";
-import { _t } from "@web/core/l10n/translation";
+
+import {_t} from "@web/core/l10n/translation";
+
 
 export class ProvisionalPopup extends AbstractAwaitablePopup {
     static template = "bn_pos_custom_action.ProvisionalPopup";
@@ -26,6 +29,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.favor = this.props.favor;
         this.action_type = this.props.action_type;
         
+        this.title = this.props.title || "Provisional Order Details";
+        
         this.state = useState({
             microfinance_request_no: '',
             medical_equipment_request_no: '',
@@ -36,27 +41,17 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
             selected_bank_id: false,
-            case_no: "",  // Only used for DHS/DD
         });
-
-        // ONLY fetch case number for DHS/DD where it's displayed
-        if (this.action_type === 'dd' || this.action_type === 'dhs') {
-            this.fetchCaseNumber();
-        }
     }
 
     saveServiceCharger(event) {
-        const service_charges = parseFloat(event.target.value) || 0;
+        const service_charges = parseFloat(event.target.value)
         this.state.service_charges = service_charges;
-        this.state.total = this.state.amount + service_charges;
+        this.state.total = this.state.amount + service_charges
     }
 
     updateMicrofinanceRequestNo(event) {
         this.state.microfinance_request_no = event.target.value;
-        // Only update case_no for DHS/DD
-        if (this.action_type === 'dd' || this.action_type === 'dhs') {
-            this.state.case_no = event.target.value;
-        }
     }
 
     updateMedicalEquipmentRequestNo(event) {
@@ -81,13 +76,16 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     }
 
     prepareOrderLines(orderLines) {
-        return orderLines.map(line => ({
-            product_id: line.product.id,
-            quantity: line.quantity,
-            price: line.price,
-            qurbani_schedule: line.qurbani_schedule || null,
-            remarks: line.customerNote
-        }));
+        return orderLines.map(line => (
+                {
+                    product_id: line.product.id,
+                    quantity: line.quantity,
+                    price: line.price,
+                    qurbani_schedule: line.qurbani_schedule || null,
+                    remarks: line.customerNote
+                }
+            )
+        );
     }
 
     canCancel() {
@@ -100,95 +98,18 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         }
     }
 
-    /**
-     * Fetch case number - ONLY for DHS/DD
-     */
-    async fetchCaseNumber() {
-        console.log("fetchCaseNumber called, action_type:", this.action_type);
-        
-        if (this.action_type === 'dd' || this.action_type === 'dhs') {
-            await this.fetchDirectDepositCaseNo();
-        }
-    }
-
-    /**
-     * Fetch case number for Direct Deposit / DHS
-     * Gets the MF number from microfinance.installment
-     */
-    async fetchDirectDepositCaseNo() {
-        console.log("fetchDirectDepositCaseNo called for donor:", this.donor_id);
-        
-        if (!this.donor_id) {
-            this.state.case_no = "No donor selected";
-            return;
-        }
-
-        try {
-            this.state.case_no = "Searching...";
-            
-            // Search for the donor's active microfinance records
-            const result = await this.orm.searchRead(
-                'microfinance.installment',
-                [
-                    ['donor_id', '=', this.donor_id],
-                    ['state', 'in', ['draft', 'confirm']],
-                    ['payment_type', '=', 'security'],
-                ],
-                ['microfinance_id', 'donor_id', 'state', 'name'],
-                { limit: 1 }
-            );
-
-            console.log("Direct Deposit search result:", result);
-
-            if (result && result.length > 0) {
-                if (result[0].microfinance_id && result[0].microfinance_id[1]) {
-                    this.state.case_no = result[0].microfinance_id[1];
-                    console.log("Found MF number:", this.state.case_no);
-                } else {
-                    this.state.case_no = "No MF number linked";
-                }
-            } else {
-                // Try searching without state filter
-                console.log("No active installment found, searching all...");
-                const allResult = await this.orm.searchRead(
-                    'microfinance.installment',
-                    [
-                        ['donor_id', '=', this.donor_id],
-                        ['payment_type', '=', 'security'],
-                    ],
-                    ['microfinance_id', 'donor_id', 'state', 'name'],
-                    { limit: 1 }
-                );
-                
-                if (allResult && allResult.length > 0) {
-                    if (allResult[0].microfinance_id && allResult[0].microfinance_id[1]) {
-                        this.state.case_no = allResult[0].microfinance_id[1];
-                        console.log("Found MF number from inactive record:", this.state.case_no);
-                    }
-                } else {
-                    this.state.case_no = "No MF found for this donor";
-                }
-            }
-
-        } catch (error) {
-            console.error("Error fetching direct deposit case number:", error);
-            this.state.case_no = "Error loading MF number";
-        }
-    }
-
-    async confirm() {
+    async confirm(){
         const selectedOrder = this.pos.get_order();
 
         // Donation Home Service
         if (this.action_type === 'dhs') {
-            const payload = {
+            const payload ={
                 'donor_id': this.donor_id,
                 'favor': this.favor,
                 'address': this.state.address,
                 'service_charges': this.state.service_charges,
                 'order_lines': this.prepareOrderLines(this.orderLines),
-                'case_no': this.state.case_no,
-            };
+            }
     
             await this.orm.call('donation.home.service', "create_dhs_record", [payload]).then((data) => {
                 if (data.status === 'success') {
@@ -196,7 +117,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         type: "info",
                     });
     
-                    this.cancel();
+                    this.cancel()
                     
                     this.report.doAction("bn_donation_home_service.report_donation_home_service", [
                         data.id,
@@ -205,7 +126,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
-            });
+            })
         }
 
         // Medical Equipment
@@ -215,23 +136,23 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     "Please enter a Medical Equipment Request No.",
                     { type: 'warning' }
                 );
+
                 return;
             }
 
             const payload = {
                 medical_equipment_request_no: this.state.medical_equipment_request_no,
                 amount: this.state.amount,
-                security_desposit: true,
-                // NO case_no here
-            };
+                security_desposit: true
+            }
 
             if (!selectedOrder.extra_data) {
                 selectedOrder.extra_data = {};
             }
 
-            selectedOrder.extra_data.medical_equipment = payload;
+            selectedOrder.extra_data.medical_equipment = payload
 
-            let record = null;
+            let record = null
 
             const data = await this.orm.call('medical.security.deposit', "get_medical_equipment_security_deposit", [payload]);
             
@@ -245,9 +166,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             
             if (data.status === 'success') {
                 record = data;
-                payload.security_deposit_id = data.deposit_id || null;
-                payload.medical_equipment_id = data.id;
-                payload.amount = data.amount;
+                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
+                payload.medical_equipment_id = data.id;  // Store microfinance_id for creating record if needed
+                payload.amount = data.amount;  // Store amount from microfinance request
 
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
@@ -264,7 +185,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     });
 
                     this.cancel();
-                    return;
+                    return
                 } else {
                     this.notification.add(_t("Security deposit will be created upon payment"), {
                         type: "info",
@@ -293,6 +214,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             );
         
             if (securityProduct.length) {
+                // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(securityProduct[0].id);
                 
                 if (!product) {
@@ -301,17 +223,19 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
                     });
                     
-                    return;
+                    return
                 }
                 
+                // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: record.quantity,
                     price_extra: record.amount,
                 });
             }
                
-            selectedOrder.set_receive_voucher(true);
-            this.cancel();
+            selectedOrder.set_receive_voucher(true)
+
+            this.cancel()
         }
 
         // Microfinance
@@ -321,23 +245,23 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     "Please enter a Microfinance Request No.",
                     { type: 'warning' }
                 );
+
                 return;
             }
 
             const payload = {
                 microfinance_request_no: this.state.microfinance_request_no,
                 amount: this.state.amount,
-                security_desposit: true,
-                // NO case_no here
-            };
+                security_desposit: true
+            }
 
             if (!selectedOrder.extra_data) {
                 selectedOrder.extra_data = {};
             }
 
-            selectedOrder.extra_data.microfinance = payload;
+            selectedOrder.extra_data.microfinance = payload
 
-            let record = null;
+            let record = null
 
             const data = await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]);
             
@@ -351,9 +275,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             
             if (data.status === 'success') {
                 record = data;
-                payload.security_deposit_id = data.deposit_id || null;
-                payload.microfinance_id = data.id;
-                payload.amount = data.amount;
+                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
+                payload.microfinance_id = data.id;  // Store microfinance_id for creating record if needed
+                payload.amount = data.amount;  // Store amount from microfinance request
 
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
@@ -396,6 +320,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             );
         
             if (securityProduct.length) {
+                // Get the product from POS DB
                 const product = this.pos.db.get_product_by_id(securityProduct[0].id);
                 
                 if (!product) {
@@ -404,28 +329,25 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         body: _t(`${this.pos.company.microfinance_security_depsoit_product} product not loaded in POS session.`),
                     });
                     
-                    return;
+                    return
                 }
                 
+                // Add product to order
                 selectedOrder.add_product(product, {
                     quantity: 1,
                     price_extra: record.amount,
                 });
             }
                
-            selectedOrder.set_receive_voucher(true);
-            this.cancel();
+            selectedOrder.set_receive_voucher(true)
+
+            this.cancel()
         }
 
         // Direct Deposit
         if (this.action_type === 'dd') {
-            // Ensure we have the latest case number
-            if (!this.state.case_no || this.state.case_no === "Searching...") {
-                await this.fetchDirectDepositCaseNo();
-            }
-
             const userId = this.pos.user ? this.pos.user.id : false;
-            const payload = {
+            const payload ={
                 'donor_id': this.donor_id,
                 'favor': this.favor,
                 'bank_id': this.state.selected_bank_id,
@@ -435,28 +357,25 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
                 'address': this.state.address,
-                'case_no': this.state.case_no,
-                'microfinance_request_no': this.state.microfinance_request_no,
-            };
-
-            console.log("Direct Deposit payload with case_no:", payload);
-
+                'service_charges': this.state.service_charges,
+            }
+    
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
                 if (data.status === 'success') {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
-
-                    this.cancel();
+    
+                    this.cancel()
                     
                     this.report.doAction("bn_direct_deposit.report_direct_deposit_provisional", [
                         data.id,
                     ]);
                 }
-
+    
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
-            });
+            })
         }
     }
 
@@ -464,7 +383,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
      * Process partner assignment
      */
     async processPartner(record, selectedOrder) {
-        if (this.action_type == 'mf' || this.action_type == 'me') {
+        if (this.action_type == 'mf') {
             if (!record.donee_id || !record.donee_id[0]) {
                 return;
             }
