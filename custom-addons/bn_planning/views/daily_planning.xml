@@ -19,7 +19,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Send to Issuance" invisible="type == 'ration'" name="action_send_to_issuance" type="object" class="oe_highlight"/>
+                    <button string="Send to Issuance" invisible="type == 'ration'" name="action_send_issuance" type="object" class="oe_highlight"/>
                 </header>
 
                 <sheet>
