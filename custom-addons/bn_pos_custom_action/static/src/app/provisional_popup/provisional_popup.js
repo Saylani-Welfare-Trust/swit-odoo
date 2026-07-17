@@ -474,7 +474,27 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         
         return null;
     }
+    populateSourceRequestFromOrder() {
+        const selectedOrder = this.pos.get_order();
+        const extraData = selectedOrder && selectedOrder.extra_data;
+        console.log("DD popup - extra_data:", extraData); // TEMP DEBUG
 
+        if (!extraData) {
+            return;
+        }
+
+        if (extraData.microfinance && extraData.microfinance.microfinance_request_no) {
+            this.state.source_request_type = 'Microfinance';
+            this.state.source_request_no = extraData.microfinance.microfinance_request_no;
+            console.log("DD popup - matched microfinance:", this.state.source_request_no); // TEMP DEBUG
+            ...
+        } else if (extraData.medical_equipment && extraData.medical_equipment.medical_equipment_request_no) {
+            ...
+            console.log("DD popup - matched medical_equipment:", this.state.source_request_no); // TEMP DEBUG
+        } else {
+            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
+        }
+    }
     /**
      * Assign partner to order
      */
