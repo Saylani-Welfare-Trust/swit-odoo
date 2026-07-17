@@ -61,8 +61,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     populateSourceRequestFromOrder() {
         const selectedOrder = this.pos.get_order();
         const extraData = selectedOrder && selectedOrder.extra_data;
+        console.log("DD popup - extra_data:", extraData); // TEMP DEBUG
 
         if (!extraData) {
+            console.log("DD popup - no extra_data on order"); // TEMP DEBUG
             return;
         }
 
@@ -74,6 +76,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.state.amount = parseFloat(extraData.microfinance.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
+            console.log("DD popup - matched microfinance:", this.state.source_request_no); // TEMP DEBUG
         } else if (extraData.medical_equipment && extraData.medical_equipment.medical_equipment_request_no) {
             this.state.source_request_type = 'Medical Equipment';
             this.state.source_request_no = extraData.medical_equipment.medical_equipment_request_no;
@@ -81,6 +84,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.state.amount = parseFloat(extraData.medical_equipment.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
+            console.log("DD popup - matched medical_equipment:", this.state.source_request_no); // TEMP DEBUG
+        } else {
+            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
         }
     }
 
@@ -474,27 +480,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         
         return null;
     }
-    populateSourceRequestFromOrder() {
-        const selectedOrder = this.pos.get_order();
-        const extraData = selectedOrder && selectedOrder.extra_data;
-        console.log("DD popup - extra_data:", extraData); // TEMP DEBUG
 
-        if (!extraData) {
-            return;
-        }
-
-        if (extraData.microfinance && extraData.microfinance.microfinance_request_no) {
-            this.state.source_request_type = 'Microfinance';
-            this.state.source_request_no = extraData.microfinance.microfinance_request_no;
-            console.log("DD popup - matched microfinance:", this.state.source_request_no); // TEMP DEBUG
-            ...
-        } else if (extraData.medical_equipment && extraData.medical_equipment.medical_equipment_request_no) {
-            ...
-            console.log("DD popup - matched medical_equipment:", this.state.source_request_no); // TEMP DEBUG
-        } else {
-            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
-        }
-    }
     /**
      * Assign partner to order
      */
