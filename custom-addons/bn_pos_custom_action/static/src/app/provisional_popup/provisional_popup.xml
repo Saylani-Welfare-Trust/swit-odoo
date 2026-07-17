@@ -22,6 +22,10 @@
                             placeholder="Enter transaction reference"/>
                     </div>
                 </div>
+                <div t-if="state.source_request_no" class="form-group">
+                    <label t-esc="state.source_request_type + ' Request No.'"/>
+                    <input type="text" t-att-value="state.source_request_no" readonly="readonly"/>
+                </div>
 
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Amount</div>

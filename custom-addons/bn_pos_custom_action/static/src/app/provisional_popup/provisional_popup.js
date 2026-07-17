@@ -41,7 +41,47 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
             selected_bank_id: false,
+            // NEW: readonly field shown only on the Direct Deposit popup
+            source_request_type: '',   // 'Microfinance' | 'Medical Equipment' | ''
+            source_request_no: '',     // the request no pulled from whichever record is on the order
         });
+
+        // NEW: for Direct Deposit, pull the request no automatically from the order
+        // that was set earlier by the Microfinance ('mf') or Medical Equipment ('me') flow.
+        if (this.action_type === 'dd') {
+            this.populateSourceRequestFromOrder();
+        }
+    }
+
+    /**
+     * NEW: Reads selectedOrder.extra_data (set earlier by the mf/me flows)
+     * and fills the readonly source_request_type / source_request_no fields
+     * shown on the Direct Deposit popup.
+     */
+    populateSourceRequestFromOrder() {
+        const selectedOrder = this.pos.get_order();
+        const extraData = selectedOrder && selectedOrder.extra_data;
+
+        if (!extraData) {
+            return;
+        }
+
+        if (extraData.microfinance && extraData.microfinance.microfinance_request_no) {
+            this.state.source_request_type = 'Microfinance';
+            this.state.source_request_no = extraData.microfinance.microfinance_request_no;
+            // Keep amount in sync too, in case DD amount should follow the linked record
+            if (extraData.microfinance.amount) {
+                this.state.amount = parseFloat(extraData.microfinance.amount) || this.state.amount;
+                this.state.total = this.state.amount + this.state.service_charges;
+            }
+        } else if (extraData.medical_equipment && extraData.medical_equipment.medical_equipment_request_no) {
+            this.state.source_request_type = 'Medical Equipment';
+            this.state.source_request_no = extraData.medical_equipment.medical_equipment_request_no;
+            if (extraData.medical_equipment.amount) {
+                this.state.amount = parseFloat(extraData.medical_equipment.amount) || this.state.amount;
+                this.state.total = this.state.amount + this.state.service_charges;
+            }
+        }
     }
 
     saveServiceCharger(event) {
@@ -357,7 +397,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
                 'address': this.state.address,
-                'service_charges': this.state.service_charges,
+                // NEW: carry the linked request info through to the backend record
+                'source_request_type': this.state.source_request_type,
+                'source_request_no': this.state.source_request_no,
             }
     
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
