@@ -356,6 +356,7 @@ class DirectDeposit(models.Model):
             # line's own payment_type (security vs installment).
             MicrofinanceInstallment.create({
                 'payment_type': line.payment_type,
+                'payment_method': 'direct_deposit',
                 'amount': applied_amount,
                 'microfinance_id': microfinance_record.id,
                 'donee_id': microfinance_record.donee_id.id,
