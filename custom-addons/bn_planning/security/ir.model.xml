@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="model_daily_planning" model="ir.model">
+        <field name="name">Daily Planning</field>
+        <field name="model">daily.planning</field>
+    </record>
+    
+    <record id="model_daily_planning_line" model="ir.model">
+        <field name="name">Daily Planning Line</field>
+        <field name="model">daily.planning.line</field>
+    </record>
+</odoo>

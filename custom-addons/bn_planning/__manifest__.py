@@ -12,6 +12,7 @@
     ],
     'data': [
         'data/stock_location.xml',
+        'security/ir.model.xml',  # Load models first
         'security/ir.model.access.csv',
         'views/daily_planning.xml',
     ],
