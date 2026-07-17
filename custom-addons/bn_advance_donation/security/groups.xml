@@ -19,5 +19,8 @@
         <field name="name">Approval 2</field>
         <field name="category_id" ref="bn_advance_donation.advance_donation"/>
     </record>
-
+    <record id="group_adv_don_menu" model="res.groups">
+        <field name="name">Adv Menu</field>
+        <field name="category_id" ref="bn_advance_donation.advance_donation"/>
+    
 </odoo>
