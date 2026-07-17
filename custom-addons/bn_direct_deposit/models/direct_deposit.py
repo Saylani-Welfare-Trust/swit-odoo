@@ -64,13 +64,12 @@ class DirectDeposit(models.Model):
         if vals.get('name', _('New') == _('New')):
             vals['name'] = self.env['ir.sequence'].next_by_code('direct_deposit') or ('New')
 
-        # If a microfinance record is provided, use its name as transaction reference
-        if vals.get('microfinance_id') and not vals.get('transaction_ref'):
+        # If a microfinance record is provided, set donor if missing.
+        # transaction_ref is no longer auto-filled from the microfinance
+        # record - it's independent, free-text data entered by the user.
+        if vals.get('microfinance_id') and not vals.get('donor_id'):
             mf = self.env['microfinance'].browse(vals.get('microfinance_id'))
-            if mf:
-                vals['transaction_ref'] = mf.name
-            # also set donor if missing
-            if not vals.get('donor_id') and mf and mf.donee_id:
+            if mf and mf.donee_id:
                 vals['donor_id'] = mf.donee_id.id
 
         return super(DirectDeposit, self).create(vals)
@@ -89,6 +88,19 @@ class DirectDeposit(models.Model):
         
         self.remarks = "-".join(remarks)
 
+    def _find_microfinance_from_source(self, source_request_type, source_request_no):
+        """Resolve the exact microfinance record the POS popup auto-filled
+        (via source_request_no / record_number), so the DD record can be
+        linked directly instead of relying on a later text match."""
+        if source_request_type != 'Microfinance' or not source_request_no:
+            return self.env['microfinance']
+
+        mf = self.env['microfinance'].search([
+            '|', ('name', '=', source_request_no), ('old_system_record', '=', source_request_no)
+        ], limit=1)
+
+        return mf
+
     @api.model
     def create_dd_record(self, data):
         address = data.get('address')
@@ -96,6 +108,14 @@ class DirectDeposit(models.Model):
         service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
+
+        # -------------------------
+        # 0. Resolve the microfinance record this DD is tied to, based on
+        #    what the POS popup auto-filled (source_request_type / source_request_no)
+        # -------------------------
+        source_request_type = data.get('source_request_type')
+        source_request_no = data.get('source_request_no')
+        mf = self._find_microfinance_from_source(source_request_type, source_request_no)
 
         # -------------------------
         # 1. Prepare Line Items
@@ -119,6 +139,7 @@ class DirectDeposit(models.Model):
             'address': address,
             'service_charges': service_charges,
             'transaction_ref': transaction_ref,
+            'microfinance_id': mf.id if mf else False,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
         })
@@ -156,8 +177,8 @@ class DirectDeposit(models.Model):
         for rec in self:
             if rec.microfinance_id:
                 mf = rec.microfinance_id
-                # use microfinance record name as transaction reference
-                rec.transaction_ref = mf.name
+                # transaction_ref is independent, free-text data - no longer
+                # auto-filled from the microfinance record's name.
                 if mf.donee_id:
                     rec.donor_id = mf.donee_id.id
     
@@ -274,11 +295,10 @@ class DirectDeposit(models.Model):
         self.picking_id = picking.id
 
     def _get_target_microfinance(self):
-        # Prefer an explicit transaction_ref match (microfinance record number)
-        if self.transaction_ref:
-            mf = self.env['microfinance'].search(['|', ('name', '=', self.transaction_ref), ('old_system_record', '=', self.transaction_ref)], limit=1)
-            if mf:
-                return mf
+        # Only use the microfinance record directly linked to this DD record,
+        # set at creation time from the POS popup's source_request_no.
+        # Text-based transaction_ref matching has been removed - it's no
+        # longer a reliable way to identify the record.
         if self.microfinance_id:
             return self.microfinance_id
 
