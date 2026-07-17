@@ -68,20 +68,30 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             return;
         }
 
-        if (extraData.microfinance && extraData.microfinance.microfinance_request_no) {
+        // NOTE: the scanned/selected record on the POS main screen stores its
+        // reference under `record_number`, not `microfinance_request_no` /
+        // `medical_equipment_request_no` (those only exist on the payload built
+        // when confirming this popup directly in mf/me mode). Check both so this
+        // works regardless of which path populated extra_data.
+        const mf = extraData.microfinance;
+        const me = extraData.medical_equipment;
+        const mfRequestNo = mf && (mf.record_number || mf.microfinance_request_no);
+        const meRequestNo = me && (me.record_number || me.medical_equipment_request_no);
+
+        if (mfRequestNo) {
             this.state.source_request_type = 'Microfinance';
-            this.state.source_request_no = extraData.microfinance.microfinance_request_no;
+            this.state.source_request_no = mfRequestNo;
             // Keep amount in sync too, in case DD amount should follow the linked record
-            if (extraData.microfinance.amount) {
-                this.state.amount = parseFloat(extraData.microfinance.amount) || this.state.amount;
+            if (mf.amount) {
+                this.state.amount = parseFloat(mf.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
             console.log("DD popup - matched microfinance:", this.state.source_request_no); // TEMP DEBUG
-        } else if (extraData.medical_equipment && extraData.medical_equipment.medical_equipment_request_no) {
+        } else if (meRequestNo) {
             this.state.source_request_type = 'Medical Equipment';
-            this.state.source_request_no = extraData.medical_equipment.medical_equipment_request_no;
-            if (extraData.medical_equipment.amount) {
-                this.state.amount = parseFloat(extraData.medical_equipment.amount) || this.state.amount;
+            this.state.source_request_no = meRequestNo;
+            if (me.amount) {
+                this.state.amount = parseFloat(me.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
             console.log("DD popup - matched medical_equipment:", this.state.source_request_no); // TEMP DEBUG
