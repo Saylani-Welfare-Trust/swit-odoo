@@ -17,9 +17,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
-        this.report = useService("report");
+        this.report = useService("report");    this.fetchCaseNumber();
         this.notification = useService("notification");
-        
+        this.fetchCaseNumber();
         this.title = this.props.title || "Provisional Order Details";
         
         this.donor_id = this.props.donor_id;
@@ -41,9 +41,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
             selected_bank_id: false,
-            // NEW: readonly field shown only on the Direct Deposit popup
-            source_request_type: '',   // 'Microfinance' | 'Medical Equipment' | ''
-            source_request_no: '',     // the request no pulled from whichever record is on the order
+            case_no: "",  
         });
 
         // NEW: for Direct Deposit, pull the request no automatically from the order
@@ -154,6 +152,62 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         }
     }
 
+    async fetchCaseNumber() {
+        // Only fetch for Direct Deposit
+        if (this.action_type !== 'dd') {
+            return;
+        }
+
+        try {
+            let caseNo = "";
+            
+            // If we have donor_id, try to fetch from donor
+            if (this.donor_id) {
+                const result = await this.orm.searchRead(
+                    'res.partner',
+                    [['id', '=', this.donor_id]],
+                    ['name', 'ref', 'display_name'],
+                    { limit: 1 }
+                );
+                
+                if (result && result.length > 0) {
+                    // Priority: display_name > name > ref
+                    caseNo = result[0].display_name || 
+                            result[0].name || 
+                            result[0].ref || 
+                            "";
+                }
+            }
+            
+            // If no donor_id, try to get from props
+            if (!caseNo && this.props.case_no) {
+                caseNo = this.props.case_no;
+            }
+            
+            // If still no case number, try from favor or other fields
+            if (!caseNo && this.favor) {
+                // You might want to fetch from favor record
+                const favorResult = await this.orm.searchRead(
+                    'donation.favor',  // or whatever your favor model is
+                    [['name', '=', this.favor]],
+                    ['name', 'display_name'],
+                    { limit: 1 }
+                );
+                
+                if (favorResult && favorResult.length > 0) {
+                    caseNo = favorResult[0].display_name || favorResult[0].name;
+                }
+            }
+            
+            // Set the case number
+            this.state.case_no = caseNo;
+            
+        } catch (error) {
+            console.error("Error fetching case number:", error);
+            // Don't show error to user for this non-critical field
+            this.state.case_no = this.props.case_no || "N/A";
+        }
+    }
     async confirm(){
         const selectedOrder = this.pos.get_order();
 

@@ -12,6 +12,16 @@
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
                 </div>
                 
+                <!-- Case No - Readonly field for Direct Deposit -->
+                <div class="form-group row">
+                    <label class="col-form-label col-md-4">Case No</label>
+                    <div class="col-md-8">
+                        <div class="form-control-static" style="padding-top: 7px;">
+                            <t t-esc="state.case_no || 'Not available'"/>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
                     <div class="col-4 fw-semibold">Transaction Ref</div>
                     <div class="col-8">

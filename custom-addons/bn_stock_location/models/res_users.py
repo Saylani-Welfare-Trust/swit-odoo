@@ -7,3 +7,5 @@ class ResUser(models.Model):
 
     allowed_location_ids = fields.Many2many('stock.location', string="Allowed Location")
     allowed_warehouse_ids = fields.Many2many('stock.warehouse', string="Allowed Warehouses")
+    
+    allowed_product_category_ids = fields.Many2many('product.category', string="Allowed Categories")

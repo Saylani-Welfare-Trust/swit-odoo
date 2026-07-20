@@ -11,6 +11,7 @@
                     <group>
                         <group name="inventory_col_1">
                           <field name="allowed_warehouse_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  
+                          <field name="allowed_product_category_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  
                         </group>
                         <group name="inventory_col_1">
                           <field name="allowed_location_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('warehouse_id', 'in', allowed_warehouse_ids)]" />  
