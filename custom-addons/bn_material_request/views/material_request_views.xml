@@ -18,7 +18,7 @@
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
-                       decoration-warning="state in ['budget_check', 'hod_approval', 'pending', 'committee_approval']"
+                       decoration-warning="state in ['budget_check', 'hod_approval', 'committee_approval', 'pending']"
                        decoration-success="state == 'done'"
                        decoration-danger="state == 'rejected'"/>
             </tree>
