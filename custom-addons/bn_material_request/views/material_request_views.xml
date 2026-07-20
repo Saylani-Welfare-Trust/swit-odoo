@@ -18,7 +18,7 @@
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
-                       decoration-warning="state in ['budget_check', 'hod_approval', 'committee_approval']"
+                       decoration-warning="state in ['budget_check', 'hod_approval', 'pending', 'committee_approval']"
                        decoration-success="state == 'done'"
                        decoration-danger="state == 'rejected'"/>
             </tree>
@@ -46,7 +46,7 @@
                             invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,pending,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
