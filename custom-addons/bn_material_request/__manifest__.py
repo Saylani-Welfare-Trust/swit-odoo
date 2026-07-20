@@ -29,6 +29,7 @@
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
         'views/wizard_views.xml',
+        'views/purchase_order.xml',
     ],
     'installable': True,
     'application': True,

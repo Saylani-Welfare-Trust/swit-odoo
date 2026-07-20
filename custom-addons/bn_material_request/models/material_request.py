@@ -398,6 +398,7 @@ class MemberApproval(models.Model):
             purchase_request = self.env['purchase.requisition'].create({
                 'origin': "%s (Stock Shortage)" % self.name,
                 'line_ids': purchase_lines,
+                'material_request_id': self.id,   # <-- autopopulate here
             })
 
             self.auto_purchase_request_id = purchase_request.id
@@ -435,6 +436,7 @@ class MemberApproval(models.Model):
         purchase_request = self.env['purchase.requisition'].create({
             'origin': self.name,
             'line_ids': line_vals,
+            'material_request_id': self.id,   # <-- autopopulate here
         })
         # Confirm and assign purchase
         self.purchase_request_id = purchase_request.id
