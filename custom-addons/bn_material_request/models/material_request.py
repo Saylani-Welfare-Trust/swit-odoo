@@ -486,7 +486,19 @@ class MemberApproval(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
-    
+    def action_view_shortage_picking(self):
+        """View the created shortage internal transfer"""
+        self.ensure_one()
+        if not self.shortage_picking_id:
+            raise ValidationError(_('No shortage internal transfer found.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Shortage Internal Transfer'),
+            'res_model': 'stock.picking',
+            'res_id': self.shortage_picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }  
     def action_view_purchase_request(self):
         """View the created purchase request"""
         self.ensure_one()
