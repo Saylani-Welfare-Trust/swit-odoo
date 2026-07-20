@@ -7,6 +7,7 @@
     'category': 'BytesNode/Stock Location Customization',
     'depends': [
         'stock',
+        'bn_pos_customization',
         'bn_analytic_account_customization'
     ],
     'data': [
