@@ -61,7 +61,9 @@
                                     text-align: center !important;
                                 }
                             </style>
-
+                            <img t-if="order.env.company.dn_image"
+                                t-att-src="image_data_uri(order.env.company.dn_image)"
+                                style="height: 100%; width: 100%;"/>  
                             <!-- ===== WATERMARK ===== -->
                             <div t-if="receipt.state == 'draft'" class="watermark">Draft</div>
                             <div t-if="receipt.state == 'pending'" class="watermark">Pending</div>
