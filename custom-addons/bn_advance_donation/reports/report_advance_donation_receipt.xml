@@ -1,133 +1,330 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Receipt Report Template -->
-    <template id="report_advance_donation_receipt">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="receipt">
-                <div class="page">
-                    <!-- Header with Logo -->
-                    <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                        <t if="receipt.company_id.logo">
-                            <img t-att-src="'data:image/png;base64,%s' % receipt.company_id.logo" 
-                                 style="max-height: 60px; margin-bottom: 5px;"/>
-                        </t>
-                        <h1 style="font-size: 24px; margin: 0;">DONATION RECEIPT</h1>
-                        <p style="font-size: 12px; color: #666; margin: 5px 0;">Official Receipt for Donation Payment</p>
-                    </div>
-                    
-                    <!-- Receipt Information -->
-                    <table style="width: 100%; margin-bottom: 20px;">
-                        <tr>
-                            <td style="width: 50%;">
-                                <p><strong>Receipt No:</strong> <span t-esc="receipt.name"/></p>
-                                <p><strong>Date:</strong> <span t-esc="receipt.date"/></p>
-                                <p><strong>Donor:</strong> <span t-esc="receipt.donor_id.name"/></p>
-                            </td>
-                            <td style="width: 50%; text-align: right;">
-                                <p><strong>Payment Type:</strong> <span t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></p>
-                                <p><strong>Status:</strong> 
-                                    <span t-if="receipt.state == 'paid'" style="color: green; font-weight: bold;">PAID</span>
-                                    <span t-elif="receipt.state == 'draft'" style="color: orange; font-weight: bold;">DRAFT</span>
-                                    <span t-elif="receipt.state == 'pending'" style="color: blue; font-weight: bold;">PENDING</span>
-                                    <span t-elif="receipt.state == 'bounced'" style="color: red; font-weight: bold;">BOUNCED</span>
-                                    <span t-else="" t-esc="receipt.state"/>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <!-- Donation Details -->
-                    <p><strong>Donation:</strong> <span t-esc="receipt.donation_id.name or 'N/A'"/></p>
-                    <p><strong>Product:</strong> <span t-esc="receipt.product_id.display_name or 'N/A'"/></p>
-                    
-                    <!-- Cheque Details (if applicable) -->
-                    <div t-if="receipt.payment_type == 'cheque'" style="background-color: #f9f9f9; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
-                        <p style="margin: 0;"><strong>Cheque Details:</strong></p>
-                        <p style="margin: 5px 0;"><strong>Cheque Number:</strong> <span t-esc="receipt.cheque_number"/></p>
-                        <p style="margin: 5px 0;"><strong>Cheque Date:</strong> <span t-esc="receipt.cheque_date"/></p>
-                        <p t-if="receipt.bank_id" style="margin: 5px 0;"><strong>Bank:</strong> <span t-esc="receipt.bank_id.name"/></p>
-                    </div>
-                    
-                    <!-- Bounced Reason (if applicable) -->
-                    <div t-if="receipt.state == 'bounced' and receipt.bounced_reason" style="background-color: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336; border-radius: 4px;">
-                        <p style="margin: 0; color: #c62828;"><strong>Bounced Reason:</strong> <span t-esc="receipt.bounced_reason"/></p>
-                    </div>
-                    
-                    <!-- Amount Table -->
-                    <h4 style="margin-top: 20px; margin-bottom: 10px;">Payment Summary</h4>
-                    <table class="table table-sm table-bordered" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background-color: #f0f0f0;">
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Description</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Amount (<span t-esc="receipt.currency_id.symbol"/>)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style="border: 1px solid #ddd; padding: 8px;">Donation Amount</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
-                                    <span t-esc="'{:,.2f}'.format(receipt.amount)"/>
-                                </td>
-                            </tr>
-                            <tr style="font-weight: bold; background-color: #fafafa;">
-                                <td style="border: 1px solid #ddd; padding: 8px;">Total Amount</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
-                                    <span t-esc="'{:,.2f}'.format(receipt.amount)"/>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #ddd; padding: 8px;">Used Amount</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
-                                    <span t-esc="'{:,.2f}'.format(receipt.used_amount)"/>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #ddd; padding: 8px;">Remaining Amount</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
-                                    <span t-esc="'{:,.2f}'.format(receipt.remaining_amount)"/>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <!-- Amount in Words (Optional) -->
-                    <p style="margin-top: 10px;"><strong>Amount in Words:</strong> <span t-esc="receipt.amount_in_words or 'Not available'"/></p>
-                    
-                    <!-- Footer -->
-                    <div style="margin-top: 40px; border-top: 2px solid #333; padding-top: 20px;">
-                        <table style="width: 100%;">
-                            <tr>
-                                <td style="width: 50%;">
-                                    <p><strong>Generated Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
-                                    <p><strong>Generated By:</strong> <span t-esc="receipt.create_uid.name or ''"/></p>
-                                </td>
-                                <td style="width: 50%; text-align: right;">
-                                    <p><strong>Authorized Signature:</strong> ___________________________</p>
-                                    <p style="font-size: 10px; color: #666; margin-top: 10px;">
-                                        <em>Authorized Officer</em>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                        <p style="font-size: 10px; color: #666; text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
-                            <em>This is a computer-generated receipt. No physical signature required.</em><br/>
-                            <em>Thank you for your generous donation!</em>
-                        </p>
-                    </div>
-                </div>
-            </t>
-        </t>
-    </template>
 
-    <!-- Report Action -->
-    <record id="action_report_advance_donation_receipt" model="ir.actions.report">
-        <field name="name">Donation Receipt</field>
-        <field name="model">advance.donation.receipt</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_advance_donation.report_advance_donation_receipt</field>
-        <field name="report_file">bn_advance_donation.report_advance_donation_receipt</field>
-        <field name="binding_model_id" ref="model_advance_donation_receipt"/>
-        <field name="binding_type">report</field>
-        <field name="print_report_name">'Donation Receipt - %s' % (object.name)</field>
-    </record>
+    <data>
+        <!-- ===================== -->
+        <!-- Advance Donation Receipt -->
+        <!-- ===================== -->
+        <template id="bn_advance_donation.report_advance_donation_receipt">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <!-- PAGE WRAPPER -->
+                        <div class="page" style="position:relative;">
+
+                            <!-- ===== STYLES ===== -->
+                            <style>
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    font-size: 11px;
+                                }
+
+                                h1 {
+                                    font-size: 14px;
+                                    font-weight: bold;
+                                    margin: 2px 0;
+                                }
+
+                                h4 {
+                                    font-size: 12px;
+                                    margin: 6px 0;
+                                    font-weight: bold;
+                                }
+
+                                table {
+                                    font-size: 11px;
+                                    border-collapse: collapse;
+                                }
+
+                                th, td {
+                                    padding: 3px 4px !important;
+                                }
+
+                                .watermark {
+                                    position: absolute;
+                                    top: 170px;
+                                    left: 50%;
+                                    transform: translateX(-50%) rotate(-30deg);
+                                    font-size: 80px;
+                                    color: rgba(200, 200, 200, 0.15);
+                                    font-weight: bold;
+                                    white-space: nowrap;
+                                    pointer-events: none;
+                                    z-index: 0;
+                                }
+
+                                .receipt-header {
+                                    border-bottom: 2px solid #000;
+                                    padding-bottom: 8px;
+                                    margin-bottom: 8px;
+                                }
+
+                                .receipt-footer {
+                                    border-top: 2px solid #000;
+                                    padding-top: 8px;
+                                    margin-top: 8px;
+                                }
+
+                                .table-bordered th, 
+                                .table-bordered td {
+                                    border: 1px solid #000;
+                                }
+
+                                .text-end {
+                                    text-align: right;
+                                }
+
+                                .text-center {
+                                    text-align: center;
+                                }
+
+                                .text-bold {
+                                    font-weight: bold;
+                                }
+
+                                .signature-line {
+                                    border-top: 1px solid #000;
+                                    width: 150px;
+                                    display: inline-block;
+                                    margin-top: 20px;
+                                }
+
+                                .donation-type-badge {
+                                    background: #f0f0f0;
+                                    padding: 2px 8px;
+                                    border-radius: 4px;
+                                    font-size: 10px;
+                                    display: inline-block;
+                                }
+                            </style>
+
+                            <!-- ===== WATERMARK ===== -->
+                            <div class="watermark" t-if="o.state == 'provisional'">Provisional</div>
+                            <div class="watermark" t-if="o.state == 'confirmed'">Confirmed</div>
+                            <div class="watermark" t-if="o.state == 'paid'">Paid</div>
+
+                            <!-- ===== HEADER ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <h1>
+                                        <span t-if="o.state == 'provisional'">Provisional </span>
+                                        <span t-if="o.state == 'confirmed'">Confirmed </span>
+                                        Advance Donation Receipt
+                                    </h1>
+                                    <div style="margin-top: 5px;">
+                                        <span class="donation-type-badge" t-if="o.donation_type == 'cash'">
+                                            <i class="fa fa-money"/> Cash
+                                        </span>
+                                        <span class="donation-type-badge" t-if="o.donation_type == 'bank'">
+                                            <i class="fa fa-university"/> Bank
+                                        </span>
+                                        <span class="donation-type-badge" t-if="o.donation_type == 'online'">
+                                            <i class="fa fa-globe"/> Online
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <h1>
+                                        Saylani Welfare International Trust
+                                        <t t-if="o.user_id.employee_id.analytic_account_id">
+                                            <br/>
+                                            (<t t-esc="o.user_id.employee_id.analytic_account_id.name"/>)
+                                        </t>
+                                    </h1>
+                                </div>
+                            </div>
+
+                            <hr style="margin:4px 0"/>
+
+                            <!-- ===== BASIC INFO ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <div><strong>Receipt #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
+                                    <div><strong>Contact No.:</strong> <t t-esc="o.donor_id.phone or '-'"/></div>
+                                    <div><strong>Favor:</strong> <t t-esc="o.favor or '-'"/></div>
+                                </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong>Date:</strong>
+                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                    </div>
+                                    <div>
+                                        <strong>Donation Type:</strong>
+                                        <span t-if="o.donation_type == 'cash'">Cash</span>
+                                        <span t-if="o.donation_type == 'bank'">Bank Transfer</span>
+                                        <span t-if="o.donation_type == 'online'">Online</span>
+                                        <span t-if="not o.donation_type">-</span>
+                                    </div>
+                                    <div t-if="o.bank_id">
+                                        <strong>Bank:</strong> <t t-esc="o.bank_id.name"/>
+                                    </div>
+                                    <div t-if="o.transaction_ref">
+                                        <strong>Transaction Ref:</strong> <t t-esc="o.transaction_ref"/>
+                                    </div>
+                                    <div>
+                                        <strong>Total Amount:</strong>
+                                        <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/>
+                                    </div>
+                                    <div t-if="o.service_charges and o.service_charges > 0">
+                                        <strong>Service Charges:</strong>
+                                        <t t-esc="'{:,}'.format(int(o.service_charges) or 0)"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ===== LINE ITEMS TABLE ===== -->
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width:50%;">Product / Description</th>
+                                        <th class="text-end" style="width:15%;">Qty</th>
+                                        <th class="text-end" style="width:15%;">Rate</th>
+                                        <th class="text-end" style="width:20%;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.advance_donation_line_ids" t-as="line">
+                                        <tr>
+                                            <td>
+                                                <t t-esc="line.product_id.display_name or line.description"/>
+                                                <t t-if="line.remarks">
+                                                    <br/>
+                                                    <small><i><t t-esc="line.remarks"/></i></small>
+                                                </t>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'{:,}'.format(int(line.quantity) or 1)"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'{:,}'.format(int(line.amount) or 0)"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'{:,}'.format(int(line.quantity * line.amount) or 0)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="o.service_charges and o.service_charges > 0">
+                                        <tr>
+                                            <td><i>Service Charges</i></td>
+                                            <td class="text-end">1</td>
+                                            <td class="text-end">
+                                                <t t-esc="'{:,}'.format(int(o.service_charges) or 0)"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'{:,}'.format(int(o.service_charges) or 0)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <hr style="margin:4px 0"/>
+
+                            <!-- ===== TOTALS ===== -->
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                                <div>
+                                    Entered by: <strong><t t-esc="o.user_id.name"/></strong>
+                                </div>
+                                <div>
+                                    <strong>Total Amount: Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong>
+                                </div>
+                            </div>
+
+                            <hr style="margin:4px 0; border-top: solid 5px;"/>
+
+                            <!-- ===== FOOTER DETAILS ===== -->
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <div><strong>Receipt #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>Donor:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>Favor:</strong> <t t-esc="o.favor or '-'"/></div>
+                                    <div>
+                                        <strong>Products:</strong>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="o.advance_donation_line_ids" t-as="l">
+                                            <div>
+                                                <t t-esc="count"/>.
+                                                <t t-esc="l.product_id.display_name or l.description"/>
+                                                -
+                                                <t t-esc="'{:,}'.format(int(l.quantity) or 1)"/>
+                                                <span t-if="l.amount">
+                                                    @ <t t-esc="'{:,}'.format(int(l.amount) or 0)"/>
+                                                </span>
+                                            </div>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong>Date &amp; Time:</strong>
+                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                    </div>
+                                    <div><strong>Entered by:</strong> <t t-esc="o.user_id.name"/></div>
+                                    <div t-if="o.donation_type == 'bank' and o.bank_id">
+                                        <strong>Bank:</strong> <t t-esc="o.bank_id.name"/>
+                                    </div>
+                                    <div t-if="o.transaction_ref">
+                                        <strong>Transaction Ref:</strong> <t t-esc="o.transaction_ref"/>
+                                    </div>
+                                    <div style="margin-top: 20px;">
+                                        <div>Received by:</div>
+                                        <div class="signature-line"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="text-align: center; font-size: 12px; margin-top: 10px;">
+                                Powered by BytesNode
+                            </div>
+
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <!-- ===================== -->
+        <!-- Advance Donation A5 Paper Format -->
+        <!-- ===================== -->
+        <record id="report_advance_donation_paperformat" model="report.paperformat">
+            <field name="name">A5 - Advance Donation Receipt</field>
+            <field name="format">A5</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">84.67</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">4</field>
+            <field name="margin_right">4</field>
+            <field name="header_spacing">0</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <!-- ===================== -->
+        <!-- Report Action -->
+        <!-- ===================== -->
+        <record id="report_advance_donation" model="ir.actions.report">
+            <field name="name">Advance Donation Receipt</field>
+            <field name="model">advance.donation</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_advance_donation.report_advance_donation_receipt</field>
+            <field name="report_file">bn_advance_donation.report_advance_donation_receipt</field>
+            <field name="binding_model_id" ref="model_advance_donation"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">'Advance Donation Receipt - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="report_advance_donation_paperformat"/>
+        </record>
+
+    </data>
 </odoo>
