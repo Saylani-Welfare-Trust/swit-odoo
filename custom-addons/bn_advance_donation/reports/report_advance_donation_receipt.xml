@@ -194,29 +194,13 @@
                                 </div>
                             </div>
 
-                            <!-- ===== SIGNATURE ===== -->
-                            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <div>
-                                        <span style="font-size: 10px;">Receiver Signature</span>
-                                        <br/>
-                                        <span style="font-size: 10px;">_________________________</span>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <span style="font-size: 10px;">Authorized Signature</span>
-                                        <br/>
-                                        <span style="font-size: 10px;">_________________________</span>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <!-- ===== FOOTER ===== -->
                             <div style="text-align: center; font-size: 10px; margin-top: 10px; color: #666;">
-                                <t t-esc="receipt.env.company.name or 'Saylani Welfare International Trust'"/>
-                                <br/>
+
                                 <span style="font-size: 8px;">This is a computer-generated receipt. No physical signature required.</span>
-                                <br/>
-                                <span style="font-size: 8px;">Thank you for your generous donation!</span>
+
                                 <br/>
                                 <span style="font-size: 8px;">Powered by BytesNode</span>
                             </div>
