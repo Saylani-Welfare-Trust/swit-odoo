@@ -100,12 +100,23 @@ class ResPartner(models.Model):
     def write(self, vals):
         if 'mobile' in vals:
             mobile = vals.get('mobile')
-
-            if mobile and self.search([('mobile', '=', mobile)]):
-                raise ValidationError(
-                    "A Partner with the same Mobile No. already exists in the System."
-                )
-
+            if mobile:
+                # Build domain to check for existing mobile numbers
+                domain = [('mobile', '=', mobile)]
+                
+                # Exclude current records from the check
+                if self:
+                    domain.append(('id', 'not in', self.ids))
+                
+                # Also check if there's a partner with the same mobile but different ID
+                existing = self.search(domain)
+                if existing:
+                    # Check if the existing partner is the same as any in self
+                    # (This shouldn't happen with the domain above, but just in case)
+                    raise ValidationError(
+                        "A Partner with the same Mobile No. already exists in the System."
+                    )
+        
         return super(ResPartner, self).write(vals)
 
     @api.onchange('category_id')

@@ -411,16 +411,35 @@ class MedicalEquipment(models.Model):
                 donee = self.env['res.partner'].browse(donee_id)
                 if donee and donee.state == 'register':
                     # Remove related fields that would cause duplicate validation
-                    # These fields are already in the donee record
                     fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
                     for field in fields_to_remove:
                         if field in vals:
                             _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
                             del vals[field]
-                    # If we removed all fields and vals is empty, return early
                     if not vals:
                         return True
 
+        # Handle medical equipment reference logic
+        if vals.get('medical_equipment_reference_id'):
+            vals['actual_deposit_percentage'] = 0.0
+            vals.setdefault('initial_deposit_percentage', 0.0)
+
+        # Handle actual_deposit_percentage validation
+        if 'actual_deposit_percentage' in vals:
+            for record in self:
+                new_value = vals.get('actual_deposit_percentage')
+                initial_value = record.initial_deposit_percentage
+
+                if new_value < 0 or new_value > 100:
+                    raise ValidationError("Value must be between 0 and 100.")
+
+                if record.state != 'draft' and initial_value >= 50:
+                    if new_value < 50:
+                        raise ValidationError(
+                            "You cannot change value below 50 because initial value was 50 or above."
+                        )
+
+        return super(MedicalEquipment, self).write(vals)
         if vals.get('medical_equipment_reference_id'):
             vals['actual_deposit_percentage'] = 0.0
             vals.setdefault('initial_deposit_percentage', 0.0)
