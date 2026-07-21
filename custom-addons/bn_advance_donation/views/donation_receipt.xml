@@ -30,6 +30,11 @@
                     <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
                     <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
                     <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'"/>
+                    <button name="%(bn_advance_donation.action_report_advance_donation_receipt)d" 
+                            string="Print Receipt" 
+                            type="action" 
+                            class="oe_highlight" 
+                            context="{'active_ids': [active_id]}"/>                    
                     <field name="state" widget="statusbar" statusbar_visible="draft,paid"/>
                 </header>
                 <sheet>
