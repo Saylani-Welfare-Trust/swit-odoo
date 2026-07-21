@@ -111,7 +111,7 @@
                             <field name="age" readonly="1" force_save="1"/>
                             <field name="donee_id" string="Donee" readonly="state != 'draft' or state == 'closed'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="state != 'closed'" />
                             <field name="currency_id" invisible="1"/>
-                            <field name="area" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
+                            <field name="area" options="{'no_create': True, 'no_edit': True}" />
 
                             <field name="portal_review_notes" readonly="1" />
                             <field name="inquiry_media" widget="html" readonly="state == 'closed'"/>
