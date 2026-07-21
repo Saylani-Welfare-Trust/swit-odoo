@@ -68,6 +68,12 @@ class MedicalEquipment(models.Model):
         store=True, readonly=False,
         inverse='_inverse_country_code_id'
     )
+    area = fields.Many2one(
+        related='donee_id.area', 
+        string="Area", 
+        store=True, 
+        readonly=False
+    )
     mobile = fields.Char(
         related='donee_id.mobile', string="Mobile No.", 
         store=True, size=10, readonly=False,
@@ -440,26 +446,7 @@ class MedicalEquipment(models.Model):
                         )
 
         return super(MedicalEquipment, self).write(vals)
-        if vals.get('medical_equipment_reference_id'):
-            vals['actual_deposit_percentage'] = 0.0
-            vals.setdefault('initial_deposit_percentage', 0.0)
 
-        if 'actual_deposit_percentage' in vals:
-            for record in self:
-                new_value = vals.get('actual_deposit_percentage')
-                initial_value = record.initial_deposit_percentage
-
-                # Always valid range
-                if new_value < 0 or new_value > 100:
-                    raise ValidationError("Value must be between 0 and 100.")
-
-                if record.state != 'draft' and initial_value >= 50:
-                    if new_value < 50:
-                        raise ValidationError(
-                            "You cannot change value below 50 because initial value was 50 or above."
-                        )
-
-        return super(MedicalEquipment, self).write(vals)
 
             
     def is_valid_cnic_format(self, cnic):
@@ -486,17 +473,46 @@ class MedicalEquipment(models.Model):
                 total += line.security_deposit * line.quantity
             record.total_amount = total
 
+    def action_register_donee(self):
+        """
+        Register the donee with area validation
+        """
+        self.ensure_one()
+        
+        # Validate area is selected
+        if not self.donee_id.area:
+            raise ValidationError(
+                _('Please select an Area before registering the Donee.')
+            )
+        
+        # Optional: Verify the area is active in master setup
+        area_obj = self.env['area']
+        area_exists = area_obj.search([
+            ('id', '=', int(self.donee_id.area)),  # Convert selection value to int
+            ('active_status', '=', True)
+        ])
+        
+        if not area_exists:
+            raise ValidationError(
+                _('Selected Area is not valid or inactive. Please select a valid area.')
+            )
+        
+        # Call partner's register method
+        try:
+            self.donee_id.action_register()
+            self.is_donee_register = True
+        except ValidationError as e:
+            # Re-raise with more context if needed
+            raise ValidationError(
+                _('Failed to register Donee: %s') % str(e)
+            )
+    
     @api.depends('donee_id')
     def _set_is_donee_register(self):
         for rec in self:
             rec.is_donee_register = False
-
             if rec.donee_id and rec.donee_id.state == 'register':
                 rec.is_donee_register = True
-
-    def action_register_donee(self):
-        self.donee_id.action_register()
-        self.is_donee_register = True
     
     @api.model
     def create(self, vals):
