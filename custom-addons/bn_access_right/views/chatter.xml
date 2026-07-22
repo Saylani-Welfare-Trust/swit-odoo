@@ -14,7 +14,7 @@
             </field>
             
             <!-- Add chatter after notebook -->
-            <xpath expr="//notebook" position="after">
+            <xpath expr="//sheet" position="after">
                 <chatter/>
             </xpath>
             
