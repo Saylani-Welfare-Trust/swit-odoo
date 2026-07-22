@@ -15,6 +15,7 @@
     'data': [
         'security/group.xml',
         'views/menu.xml',
+        'views/chatter.xml'
     ],
     'auto_install': False,
     'application': True,
