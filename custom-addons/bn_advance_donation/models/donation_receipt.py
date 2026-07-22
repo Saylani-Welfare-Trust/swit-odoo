@@ -9,6 +9,7 @@ class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
 
 
+    category_id = fields.Many2one('product.category', string='Category')    
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     payment_type = fields.Selection([('cash', 'Cash'), ('cheque', 'Cheque')], string='Payment Method', default='cash')
     is_donation_id = fields.Boolean('Donation ID?')
@@ -25,6 +26,9 @@ class DonationReceipt(models.Model):
     cheque_number = fields.Char(string='Cheque Number')
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
+    mobile_number = fields.Char(string='Mobile Number')
+    remarks = fields.Text(string='Remarks') 
+    product_name = fields.Char(string='Product Name')  # If you want a separate text field
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending', 'Pending'),
