@@ -1,5 +1,3 @@
-# models/res_groups.py
-
 from odoo import api, fields, models
 
 class ResGroups(models.Model):
