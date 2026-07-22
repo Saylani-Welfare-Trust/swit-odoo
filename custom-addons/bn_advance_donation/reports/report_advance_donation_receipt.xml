@@ -101,18 +101,20 @@
                                 <div class="col-6">
                                     <div><strong>Receipt #:</strong> <t t-esc="receipt.name or '--'"/></div>
                                     <div name="donor_name"><strong>Donor Name:</strong> <t t-esc="receipt.donor_id.name or '-'"/></div>
+                                    <!-- Donor Mobile Number -->
+                                    <div t-if="receipt.donor_id.mobile">
+                                        <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile or '-'"/>
+                                    </div>
                                     <div><strong>Donation:</strong> <t t-esc="receipt.donation_id.name or '-'"/></div>
                                     <!-- Category Field -->
                                     <div t-if="receipt.category_id">
                                         <strong>Category:</strong> <t t-esc="receipt.category_id.display_name or '-'"/>
                                     </div>
                                     <!-- Product Name Field -->
-                                    <div><strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name or '-'"/></div>
-                                    <div><strong>Payment Type:</strong> <t t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></div>
-                                    <!-- Mobile Number Field -->
-                                    <div t-if="receipt.mobile_number">
-                                        <strong>Mobile Number:</strong> <t t-esc="receipt.mobile_number or '-'"/>
+                                    <div t-if="receipt.product_id">
+                                        <strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name or '-'"/>
                                     </div>
+                                    <div><strong>Payment Type:</strong> <t t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></div>
                                 </div>
                                 <div class="col-6">
                                     <div>
@@ -139,6 +141,13 @@
                                     </div>
                                     <div t-if="receipt.state == 'bounced' and receipt.bounced_reason">
                                         <strong>Bounced Reason:</strong> <t t-esc="receipt.bounced_reason"/>
+                                    </div>
+                                    <!-- POS Session Info -->
+                                    <div t-if="receipt.pos_session_id">
+                                        <strong>POS Session:</strong> <t t-esc="receipt.pos_session_id.name or '-'"/>
+                                    </div>
+                                    <div t-if="receipt.pos_order_id">
+                                        <strong>POS Order:</strong> <t t-esc="receipt.pos_order_id.name or '-'"/>
                                     </div>
                                 </div>
                             </div>
@@ -171,8 +180,17 @@
                                 </tbody>
                             </table>
 
-                            <!-- ===== REMARKS SECTION ===== -->
-                            <div t-if="receipt.remarks" style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
+                            <!-- ===== REMARKS SECTION (from POS) ===== -->
+                            <div t-if="receipt.pos_order_id and receipt.pos_order_id.note" 
+                                 style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
+                                <strong>Remarks:</strong>
+                                <div style="margin-top: 5px; font-style: italic;">
+                                    <t t-esc="receipt.pos_order_id.note or '-'"/>
+                                </div>
+                            </div>
+                            <!-- Alternative: if remarks is stored directly on receipt -->
+                            <div t-if="not receipt.pos_order_id and receipt.remarks" 
+                                 style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
                                 <strong>Remarks:</strong>
                                 <div style="margin-top: 5px; font-style: italic;">
                                     <t t-esc="receipt.remarks or '-'"/>
@@ -194,6 +212,10 @@
                                 <div class="col-6">
                                     <div><strong>Receipt #:</strong> <t t-esc="receipt.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="receipt.donor_id.name or '-'"/></div>
+                                    <!-- Donor Mobile Number in Footer -->
+                                    <div t-if="receipt.donor_id.mobile">
+                                        <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile"/>
+                                    </div>
                                     <div>
                                         <t t-if="receipt.donation_id">
                                             <strong>Donation:</strong> <t t-esc="receipt.donation_id.name"/>
@@ -206,12 +228,12 @@
                                     <div t-if="receipt.product_id">
                                         <strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name"/>
                                     </div>
-                                    <!-- Mobile Number in Footer -->
-                                    <div t-if="receipt.mobile_number">
-                                        <strong>Mobile Number:</strong> <t t-esc="receipt.mobile_number"/>
-                                    </div>
                                     <div t-if="receipt.payment_type == 'cheque'">
                                         <strong>Cheque #:</strong> <t t-esc="receipt.cheque_number or '-'"/>
+                                    </div>
+                                    <!-- POS Order in Footer -->
+                                    <div t-if="receipt.pos_order_id">
+                                        <strong>POS Order:</strong> <t t-esc="receipt.pos_order_id.name"/>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -231,8 +253,12 @@
                                         <strong>Payment Confirmed:</strong> 
                                         <t t-esc="receipt.write_date.strftime('%d-%m-%Y %H:%M') if receipt.write_date else '--'"/>
                                     </div>
-                                    <!-- Remarks in Footer -->
-                                    <div t-if="receipt.remarks">
+                                    <!-- Remarks in Footer (from POS) -->
+                                    <div t-if="receipt.pos_order_id and receipt.pos_order_id.note">
+                                        <strong>Remarks:</strong> <t t-esc="receipt.pos_order_id.note"/>
+                                    </div>
+                                    <!-- Alternative: if remarks is stored directly on receipt -->
+                                    <div t-if="not receipt.pos_order_id and receipt.remarks">
                                         <strong>Remarks:</strong> <t t-esc="receipt.remarks"/>
                                     </div>
                                 </div>

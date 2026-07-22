@@ -27,6 +27,9 @@ class DonationReceipt(models.Model):
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
     mobile_number = fields.Char(string='Mobile Number')
+       # POS related fields
+    pos_session_id = fields.Many2one('pos.session', string='POS Session')
+    pos_order_id = fields.Many2one('pos.order', string='POS Order')
     remarks = fields.Text(string='Remarks') 
     product_name = fields.Char(string='Product Name')  # If you want a separate text field
     state = fields.Selection([
