@@ -14,6 +14,7 @@
     ],
     'data': [
         'security/group.xml',
+        'security/res_groups_view.xml',
         'views/menu.xml',
     ],
     'auto_install': False,
