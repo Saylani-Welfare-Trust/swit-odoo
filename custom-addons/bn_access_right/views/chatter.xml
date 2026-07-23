@@ -1,24 +1,46 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+    <!-- Inherit res.groups form view to add chatter -->
     <record id="view_res_groups_form_inherit" model="ir.ui.view">
         <field name="name">res.groups.form.inherit</field>
         <field name="model">res.groups</field>
         <field name="inherit_id" ref="base.view_groups_form"/>
         <field name="arch" type="xml">
-            
-            <!-- Add new fields after share -->
-            <field name="share" position="after">
-                <field name="user_count" string="Count"/>
-                <field name="user_names" string="Names"/>
-            </field>
-            
-            <!-- Add chatter after notebook -->
+            <!-- Add chatter to the form -->
             <xpath expr="//sheet" position="after">
-                <chatter/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </xpath>
             
+            <!-- Optional: Display user count in the header -->
+            <xpath expr="//header" position="inside">
+                <button name="%(action_res_groups_users)d" 
+                        type="action" 
+                        class="oe_stat_button" 
+                        icon="fa-users"
+                        groups="base.group_system">
+                    <div class="o_stat_info">
+                        <field name="user_count" widget="integer" class="o_stat_value"/>
+                        <span class="o_stat_text">Users</span>
+                    </div>
+                </button>
+            </xpath>
         </field>
     </record>
-
+    
+    <!-- Action for viewing users in the group -->
+    <record id="action_res_groups_users" model="ir.actions.act_window">
+        <field name="name">Users</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('groups_id', 'in', active_id)]</field>
+        <field name="context">{'default_groups_id': active_id}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add users to this group
+            </p>
+        </field>
+    </record>
 </odoo>
