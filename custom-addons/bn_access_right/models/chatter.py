@@ -2,6 +2,10 @@ from odoo import api, fields, models
 
 class ResGroups(models.Model):
     _inherit = 'res.groups'
+    _inherit = ['mail.thread', 'mail.activity.mixin'] 
+
+
+    
     
     user_count = fields.Integer(
         string="User Count",
