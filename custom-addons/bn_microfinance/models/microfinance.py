@@ -68,7 +68,7 @@ class Microfinance(models.Model):
     name = fields.Char('Name', default="NEW")
     old_system_record = fields.Char('Old System Record')
     microfinance_pdc_line_ids = fields.One2many('microfinance.pdc.line', 'microfinance_id', string="PDC Lines")
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_ids = fields.Many2many('res.partner', string="Donees")
     product_id = fields.Many2one('product.product', string="Product")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string="Microfinance Scheme Line")
@@ -437,7 +437,7 @@ class Microfinance(models.Model):
             )
 
             # Partner (Microfinance / Donee) receivable account
-            receivable_account = self.donee_id.property_account_receivable_id
+            receivable_account = self.donee_ids.property_account_receivable_id
 
             # Income account from product category
             income_account = product.categ_id.property_account_income_categ_id
@@ -478,7 +478,7 @@ class Microfinance(models.Model):
                     (0, 0, {
                         'name': f'Receivable from Microfinance for {product.display_name}',
                         'account_id': receivable_account.id,
-                        'partner_id': self.donee_id.id,
+                        'partner_id': self.donee_ids.id,
                         'debit': receivable_amount,
                         'credit': 0.0,
                     }),
@@ -565,7 +565,7 @@ class Microfinance(models.Model):
             raise ValidationError("Microfinance Expense account not found.")
         move_vals = {
             'move_type': 'in_invoice',  # Vendor Bill
-            'partner_id': self.donee_id.id,
+            'partner_id': self.donee_ids.id,
             'invoice_date': self.delivery_date,
             'ref': self.name,
             'invoice_line_ids': [
@@ -626,7 +626,7 @@ class Microfinance(models.Model):
 
         # Create Sale Order
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.donee_id.id,
+            'partner_id': self.donee_ids.id,
             'origin': self.name,
             'date_order': fields.Datetime.now(),
             'commitment_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
@@ -701,7 +701,7 @@ class Microfinance(models.Model):
         
         # Create picking
         picking = self.env['stock.picking'].create({
-            'partner_id': self.donee_id.id,
+            'partner_id': self.donee_ids.id,
             'picking_type_id': self.env.ref('stock.picking_type_out').id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.name
@@ -759,7 +759,7 @@ class Microfinance(models.Model):
                 'payment_type': 'security',
                 'amount': self.security_deposit,
                 'microfinance_id': self.id,
-                'donee_id': self.donee_id.id,
+                'donee_ids': self.donee_ids.id,
                 'date': fields.Date.today()
             })
         
@@ -906,7 +906,7 @@ class Microfinance(models.Model):
             ]
             if product_line and product_line.product_id:
                 action['context'] = {
-                    'default_donee_id': self.donee_id.id,
+                    'default_donee_ids': self.donee_ids.id,
                     'default_product_domain': self.product_domain.ids,
                     'default_source_document': self.name,
                     'default_microfinance_id': self.id
