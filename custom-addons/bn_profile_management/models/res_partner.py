@@ -428,3 +428,166 @@ class ResPartner(models.Model):
                 'default_partner_id': self.id,
             }
         }
+
+    def action_bulk_register_donee(self):
+        """
+        Register the donee without opening any wizard.
+        This function checks all validations and registers the partner,
+        regardless of their category (including Microfinance).
+        """
+        Partner = self.env['res.partner']
+        Sequence = self.env['ir.sequence']
+        today = fields.Date.today()
+        
+        for rec in self:
+            category_names = set(rec.category_id.mapped('name'))
+            
+            is_donee = 'Donee' in category_names
+            is_donor = 'Donor' in category_names
+            is_individual = 'Individual' in category_names
+            is_employee = 'Employee' in category_names
+            is_microfinance = 'Microfinance' in category_names
+            is_welfare = 'Welfare' in category_names
+            
+            # -------------------------
+            # Validations
+            # -------------------------
+            if is_donee and is_individual and not rec.date_of_birth:
+                raise ValidationError('Please specify your Date of Birth...')
+            
+            if (is_microfinance or is_welfare) and rec.date_of_birth and rec.age and rec.age < 18:
+                if is_microfinance:
+                    raise ValidationError(
+                        'Cannot register the Person for Microfinance as his/her age is below 18.'
+                    )
+                if is_welfare:
+                    raise ValidationError(
+                        'Cannot register the Person for Welfare as his/her age is below 18.'
+                    )
+            
+            if is_donee and rec.cnic_expiration:
+                from dateutil.relativedelta import relativedelta
+                if rec.cnic_expiration < (today + relativedelta(years=1)):
+                    raise ValidationError(
+                        'CNIC expiry date should be minimum one year from the date of application. '
+                        'Please renew your CNIC before registration.'
+                    )
+            
+            # -------------------------
+            # Duplicate & Linking Logic (Excluding current record)
+            # -------------------------
+            if is_donee:
+                # Duplicate Donee - Exclude current record
+                domain = [
+                    ('state', '=', 'register'),
+                    ('category_id.name', '=', 'Donee'),
+                    ('country_code_id', '=', rec.country_code_id.id),
+                    ('id', '!=', rec.id),  # ✅ Exclude current record
+                    '|', ('cnic_no', '=', rec.cnic_no),
+                        ('mobile', '=', rec.mobile),
+                ]
+                if Partner.search(domain, limit=1):
+                    raise ValidationError(
+                        'A Donee with same CNIC or Mobile No. already exist in the System.'
+                    )
+                
+                # Link Donor - Exclude current record
+                donor = Partner.search([
+                    ('state', '=', 'register'),
+                    ('category_id.name', '=', 'Donor'),
+                    ('country_code_id', '=', rec.country_code_id.id),
+                    ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ Exclude current record
+                ], limit=1)
+                
+                if not donor and rec.cnic_no:
+                    donor = Partner.search([
+                        ('state', '=', 'register'),
+                        ('category_id.name', '=', 'Donor'),
+                        ('cnic_no', '=', rec.cnic_no),
+                        ('id', '!=', rec.id),  # ✅ Exclude current record
+                    ], limit=1)
+                
+                if donor:
+                    rec.secondary_registration_id = donor.primary_registration_id
+            
+            elif is_donor:
+                # Duplicate Donor - Exclude current record
+                if Partner.search([
+                    ('state', '=', 'register'),
+                    ('category_id.name', '=', 'Donor'),
+                    ('country_code_id', '=', rec.country_code_id.id),
+                    ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ Exclude current record
+                ], limit=1):
+                    raise ValidationError(
+                        'A Donor with same Mobile No. already exist in the System.'
+                    )
+                
+                # Link Donee - Exclude current record
+                donee = Partner.search([
+                    ('state', '=', 'register'),
+                    ('category_id.name', '=', 'Donee'),
+                    ('country_code_id', '=', rec.country_code_id.id),
+                    ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ Exclude current record
+                ], limit=1)
+                
+                if not donee and rec.cnic_no:
+                    donee = Partner.search([
+                        ('state', '=', 'register'),
+                        ('category_id.name', '=', 'Donee'),
+                        ('cnic_no', '=', rec.cnic_no),
+                        ('id', '!=', rec.id),  # ✅ Exclude current record
+                    ], limit=1)
+                
+                if donee:
+                    rec.secondary_registration_id = donee.primary_registration_id
+            
+            # -------------------------
+            # Registration ID (sequence)
+            # -------------------------
+            if not rec.primary_registration_id:
+                RY = str(today.year)[2:]
+                BY = rec.date_of_birth.year if rec.date_of_birth else None
+                age = today.year - BY if BY else None
+                
+                if is_donee:
+                    seq = Sequence.next_by_code('donee_profile_management') or 'New'
+                    
+                    if is_employee:
+                        check_digit = 2 if rec.gender == 'female' else 3
+                    elif age and age > 18:
+                        check_digit = 0 if rec.gender == 'female' else 1
+                    else:
+                        check_digit = 4 if rec.gender == 'female' else 5
+                    
+                    rec.primary_registration_id = (
+                        f'{RY}-{str(BY)[2:]}-{seq}-{check_digit}'
+                        if is_individual else f'{RY}-{seq}-{check_digit}'
+                    )
+                
+                else:
+                    seq = Sequence.next_by_code('donor_profile_management') or 'New'
+                    check_digit = 8 if is_employee else 6 if is_individual else 7
+                    rec.primary_registration_id = f'{RY}-{seq}-{check_digit}'
+            
+            # -------------------------
+            # Final Actions - Set state to register
+            # -------------------------
+            rec.state = 'register'
+            
+            # Create welfare application if needed
+            if is_welfare:
+                # Check if welfare already exists
+                existing_welfare = self.env['welfare'].search([
+                    ('donee_id', '=', rec.id),
+                ], limit=1)
+                if not existing_welfare:
+                    rec.action_welfare_application()
+            
+            # ✅ For microfinance, JUST REGISTER - NO WIZARD OPENED
+            # We explicitly DO NOT call action_print_microfinance_application()
+            # This is the key difference from the original action_register
+        
+        return True
