@@ -92,7 +92,7 @@
         <field name="arch" type="xml">
             <tree>
                 <header>
-                    <button string="Register" name="action_register" type="object" class="oe_highlight"/>
+                    <button string="Register" name="action_bulk_register_donee" type="object" class="oe_highlight"/>
                 </header>
                 
                 <field name="primary_registration_id" string="Primary ID" />
