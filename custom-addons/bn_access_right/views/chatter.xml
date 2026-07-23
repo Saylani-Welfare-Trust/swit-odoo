@@ -1,24 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Inherit res.groups form view -->
+
     <record id="view_res_groups_form_inherit" model="ir.ui.view">
         <field name="name">res.groups.form.inherit</field>
         <field name="model">res.groups</field>
         <field name="inherit_id" ref="base.view_groups_form"/>
         <field name="arch" type="xml">
-            <!-- Add user_count and user_names after share field -->
+            
+            <!-- Add new fields after share -->
             <field name="share" position="after">
                 <field name="user_count" string="Count"/>
                 <field name="user_names" string="Names"/>
             </field>
             
-            <!-- Add chatter at the bottom -->
+            <!-- Add chatter after notebook -->
             <xpath expr="//sheet" position="after">
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </xpath>
+            
         </field>
     </record>
+
 </odoo>
