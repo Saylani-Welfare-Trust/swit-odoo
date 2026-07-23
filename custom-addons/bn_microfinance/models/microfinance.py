@@ -69,8 +69,6 @@ class Microfinance(models.Model):
     old_system_record = fields.Char('Old System Record')
     microfinance_pdc_line_ids = fields.One2many('microfinance.pdc.line', 'microfinance_id', string="PDC Lines")
     donee_id = fields.Many2one('res.partner', string="Donee")
-    additional_donee_ids = fields.Many2many('res.partner', string="Additional Donees")
-
     product_id = fields.Many2one('product.product', string="Product")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string="Microfinance Scheme Line")
@@ -234,12 +232,7 @@ class Microfinance(models.Model):
         string='Vendor Bill',
         readonly=True
     )
-    @api.depends('donee_id', 'additional_donee_ids')
-    def _get_all_donees(self):
-        for rec in self:
-            rec.all_donee_ids = rec.donee_id + rec.additional_donee_ids
-    
-    all_donee_ids = fields.Many2many('res.partner', compute='_get_all_donees', string="All Donees")
+
     def action_view_bill(self):
         """Open the picking form view"""
         # self.ensure_one()

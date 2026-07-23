@@ -446,7 +446,7 @@ class ResPartner(models.Model):
             'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
             'target': 'new',
             'context': {
-                'default_partner_ids': [self.id],
+                'default_partner_id': self.id,
             }
         }
 

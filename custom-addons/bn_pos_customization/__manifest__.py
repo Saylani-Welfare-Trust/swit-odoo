@@ -7,8 +7,7 @@
     'category': 'BytesNode/POS Customization',
     'depends': [
         'bn_pos_custom_action',
-        # 'bn_profile_management',
-        'contacts',
+        'bn_profile_management',
     ],
     'data': [
         'security/group.xml',
