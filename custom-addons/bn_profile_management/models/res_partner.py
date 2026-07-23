@@ -102,7 +102,7 @@ class ResPartner(models.Model):
             mobile = vals.get('mobile')
             if mobile:
                 # Build domain to check for existing mobile numbers
-                domain = [('mobile', '=', mobile)]
+                domain = [('mobile', '=', mobile),('id', 'not in', self.ids),]
                 
                 # Exclude current records from the check
                 if self:
@@ -326,11 +326,12 @@ class ResPartner(models.Model):
             # Duplicate & Linking Logic
             # -------------------------
             if is_donee:
-                # Duplicate Donee
+                # ✅ FIXED: Exclude current record from duplicate check
                 domain = [
                     ('state', '=', 'register'),
                     ('category_id.name', '=', 'Donee'),
                     ('country_code_id', '=', rec.country_code_id.id),
+                    ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                     '|', ('cnic_no', '=', rec.cnic_no),
                         ('mobile', '=', rec.mobile),
                 ]
@@ -345,6 +346,7 @@ class ResPartner(models.Model):
                     ('category_id.name', '=', 'Donor'),
                     ('country_code_id', '=', rec.country_code_id.id),
                     ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                 ], limit=1)
 
                 if not donor and rec.cnic_no:
@@ -352,18 +354,20 @@ class ResPartner(models.Model):
                         ('state', '=', 'register'),
                         ('category_id.name', '=', 'Donor'),
                         ('cnic_no', '=', rec.cnic_no),
+                        ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                     ], limit=1)
 
                 if donor:
                     rec.secondary_registration_id = donor.primary_registration_id
 
             elif is_donor:
-                # Duplicate Donor
+                # ✅ FIXED: Exclude current record from duplicate check
                 if Partner.search([
                     ('state', '=', 'register'),
                     ('category_id.name', '=', 'Donor'),
                     ('country_code_id', '=', rec.country_code_id.id),
                     ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                 ], limit=1):
                     raise ValidationError(
                         'A Donor with same Mobile No. already exist in the System.'
@@ -375,6 +379,7 @@ class ResPartner(models.Model):
                     ('category_id.name', '=', 'Donee'),
                     ('country_code_id', '=', rec.country_code_id.id),
                     ('mobile', '=', rec.mobile),
+                    ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                 ], limit=1)
 
                 if not donee and rec.cnic_no:
@@ -382,6 +387,7 @@ class ResPartner(models.Model):
                         ('state', '=', 'register'),
                         ('category_id.name', '=', 'Donee'),
                         ('cnic_no', '=', rec.cnic_no),
+                        ('id', '!=', rec.id),  # ✅ EXCLUDE current record
                     ], limit=1)
 
                 if donee:
@@ -421,10 +427,18 @@ class ResPartner(models.Model):
             rec.state = 'register'
 
             if is_welfare:
-                rec.action_welfare_application()
+                # Check if welfare already exists
+                existing_welfare = self.env['welfare'].search([
+                    ('donee_id', '=', rec.id),
+                ], limit=1)
+                if not existing_welfare:
+                    rec.action_welfare_application()
 
+            # ✅ Don't return here for microfinance - let the wizard handle it
             if is_microfinance:
                 return rec.action_print_microfinance_application()
+
+        return True
     
     def action_change_request(self):
         self.is_change_request = True
