@@ -7,7 +7,6 @@
     'category': 'BytesNode/Access Right',
     'depends': [
         'base',
-        'mail',
         'hr',
         'contacts',
         'hr_expense',

@@ -1,7 +1,7 @@
 from odoo import api, fields, models
 
 class ResGroups(models.Model):
-    _inherit = ['res.groups', 'mail.thread', 'mail.activity.mixin']
+    _inherit = 'res.groups'
     
     user_count = fields.Integer(
         string="User Count",
