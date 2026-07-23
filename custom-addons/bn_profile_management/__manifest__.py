@@ -8,7 +8,8 @@
     'category': 'BytesNode/Profile Management',
     'depends': [
         'bn_analytic_account_customization',
-        'contacts',
+        # 'contacts',
+        'bn_pos_customization',
     ],
     'data': [
         'data/sequence.xml',
