@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <form string="Print Microfinance Application">
                 <group>
-                    <field name="partner_id" invisible="1"/>
+                    <field name="partner_ids" invisible="1"/>
                     <field name="microfinance_scheme_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                 </group>
                 <footer>
