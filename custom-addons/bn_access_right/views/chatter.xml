@@ -5,6 +5,12 @@
         <field name="model">res.groups</field>
         <field name="inherit_id" ref="base.view_groups_form"/>
         <field name="arch" type="xml">
+            <!-- Add user_count and user_names after share field -->
+            <field name="share" position="after">
+                <field name="user_count" string="Count"/>
+                <field name="user_names" string="Names"/>
+            </field>
+            
             <!-- Add chatter at the bottom -->
             <xpath expr="//sheet" position="after">
                 <div class="oe_chatter">
@@ -13,28 +19,6 @@
                     <field name="message_ids"/>
                 </div>
             </xpath>
-            
-            <!-- Optional: Show user count in header -->
-            <xpath expr="//header" position="inside">
-                <div class="oe_stat_button" 
-                     groups="base.group_system"
-                     name="%(action_res_groups_users)d"
-                     type="action">
-                    <div class="o_stat_info">
-                        <field name="user_count" widget="integer" class="o_stat_value"/>
-                        <span class="o_stat_text">Users</span>
-                    </div>
-                </div>
-            </xpath>
         </field>
-    </record>
-    
-    <!-- Action to view users in the group -->
-    <record id="action_res_groups_users" model="ir.actions.act_window">
-        <field name="name">Users in Group</field>
-        <field name="res_model">res.users</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('groups_id', 'in', active_id)]</field>
-        <field name="context">{'default_groups_id': active_id}</field>
     </record>
 </odoo>
