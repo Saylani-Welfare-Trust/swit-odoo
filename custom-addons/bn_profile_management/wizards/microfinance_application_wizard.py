@@ -6,7 +6,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     _description = 'Microfinance Application Wizard'
 
 
-    partner_id = fields.Many2one('res.partner', string="Partner", required=True)
+    partner_ids = fields.Many2many('res.partner', string="Partner", required=True)
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme", required=True)
 
 
@@ -16,7 +16,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         
         # Check existing enrollment
         existing = self.env['microfinance'].search([
-            ('donee_id', '=', self.partner_id.id),
+            ('donee_id', 'in', self.partner_ids.ids),
             ('microfinance_scheme_id', '=', self.microfinance_scheme_id.id),
             ('state', '!=', 'rejected'),
             ('in_recovery', '=', False),
@@ -32,7 +32,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         # Create microfinance record
         microfinance = self.env['microfinance'].create({
             'microfinance_scheme_id': self.microfinance_scheme_id.id,
-            'donee_id': self.partner_id.id,
+            'donee_id': self.partner_ids.ids,
         })
 
         # Compute the scheme lines
