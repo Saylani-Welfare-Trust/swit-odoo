@@ -7,10 +7,10 @@
     'category': 'BytesNode/Access Right',
     'depends': [
         'base',
+        'mail'
         'hr',
         'contacts',
         'hr_expense',
-        'mail'
         # 'spreadsheet_dashboard'
     ],
     'data': [

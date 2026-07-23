@@ -1,11 +1,11 @@
 <odoo>
-    <!-- Inherit res.groups form view to add chatter -->
+    <!-- Inherit res.groups form view -->
     <record id="view_res_groups_form_inherit" model="ir.ui.view">
         <field name="name">res.groups.form.inherit</field>
         <field name="model">res.groups</field>
         <field name="inherit_id" ref="base.view_groups_form"/>
         <field name="arch" type="xml">
-            <!-- Add chatter to the form -->
+            <!-- Add chatter at the bottom -->
             <xpath expr="//sheet" position="after">
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
@@ -14,33 +14,27 @@
                 </div>
             </xpath>
             
-            <!-- Optional: Display user count in the header -->
+            <!-- Optional: Show user count in header -->
             <xpath expr="//header" position="inside">
-                <button name="%(action_res_groups_users)d" 
-                        type="action" 
-                        class="oe_stat_button" 
-                        icon="fa-users"
-                        groups="base.group_system">
+                <div class="oe_stat_button" 
+                     groups="base.group_system"
+                     name="%(action_res_groups_users)d"
+                     type="action">
                     <div class="o_stat_info">
                         <field name="user_count" widget="integer" class="o_stat_value"/>
                         <span class="o_stat_text">Users</span>
                     </div>
-                </button>
+                </div>
             </xpath>
         </field>
     </record>
     
-    <!-- Action for viewing users in the group -->
+    <!-- Action to view users in the group -->
     <record id="action_res_groups_users" model="ir.actions.act_window">
-        <field name="name">Users</field>
+        <field name="name">Users in Group</field>
         <field name="res_model">res.users</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[('groups_id', 'in', active_id)]</field>
         <field name="context">{'default_groups_id': active_id}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Add users to this group
-            </p>
-        </field>
     </record>
 </odoo>
