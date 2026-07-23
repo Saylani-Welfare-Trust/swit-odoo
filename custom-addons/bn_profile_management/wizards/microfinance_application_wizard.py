@@ -32,7 +32,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         # Create microfinance record
         microfinance = self.env['microfinance'].create({
             'microfinance_scheme_id': self.microfinance_scheme_id.id,
-            'donee_id': self.partner_ids.ids,
+            'donee_id': self.partner_id,
         })
 
         # Compute the scheme lines
