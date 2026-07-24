@@ -7,12 +7,14 @@
     'category': 'BytesNode/Access Right',
     'depends': [
         'base',
+        'mail',
         'hr',
         'contacts',
-        'hr_expense',
+        'hr_expense',   
         # 'spreadsheet_dashboard'
     ],
     'data': [
+        'security/ir.model.access.csv',  # Add this line
         'security/group.xml',
         'views/menu.xml',
         'views/chatter.xml'
