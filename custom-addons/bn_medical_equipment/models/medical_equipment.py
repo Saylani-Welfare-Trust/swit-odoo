@@ -665,7 +665,7 @@ class MedicalEquipment(models.Model):
     def action_approval(self):
         """
         Handle approval based on case type.
-        - 0%: Single CEO approval → Security Received (when medical equipment reference exists)
+        - 0%: Two approvals (CEO → CFO) with remarks required, then → Security Received
         - 100%: Single CEO approval → Approved (no remarks)
         - 50%: Two approvals (CEO → CFO) with remarks required for both
         - Below 50%: Same as 50% but also requires welfare portal & acknowledgment
@@ -680,7 +680,7 @@ class MedicalEquipment(models.Model):
         is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
         
         # Helper to check if case requires two approvals
-        requires_two_approvals = case_type in ['50_percent', 'below_50_percent', 'reference']
+        requires_two_approvals = case_type in ['50_percent', 'below_50_percent', 'reference'] or is_zero_percent
         requires_remarks_ceo = case_type in ['50_percent', 'below_50_percent']
         requires_remarks_cfo = case_type in ['50_percent', 'below_50_percent']
         
@@ -694,36 +694,38 @@ class MedicalEquipment(models.Model):
         # State transitions
         if current_state in ['completed', 'inquiry']:
             # First approval: from completed/inquiry to ceo_approval
+            # For 0% cases, also require remarks_approval1
             if requires_remarks_ceo and not self.remarks_approval1:
                 raise ValidationError('Approval(1) remarks are required for this case type.')
+            if is_zero_percent and not self.remarks_approval1:
+                raise ValidationError('Approval(1) remarks are required for 0% deposit cases.')
             self.write({'state': 'ceo_approval'})
             
         elif current_state == 'ceo_approval':
-            # Second approval or final approval
-            
-            # Special case: 0% deposit with medical equipment reference
-            if is_zero_percent:
-                # Go directly to security received after CEO approval
-                self.write({'state': 'sd_received'})
-                self.approval_count += 1
-                return
-                
+            # Second approval: from ceo_approval to cfo_approval or approved or sd_received
             if requires_two_approvals:
                 # Need CFO approval
                 if requires_remarks_cfo and not self.remarks_approval2:
                     raise ValidationError('Approval(2) remarks are required for this case type.')
-                self.write({'state': 'cfo_approval'})
+                if is_zero_percent and not self.remarks_approval2:
+                    raise ValidationError('Approval(2) remarks are required for 0% deposit cases.')
+                
+                # For 0% cases, after CFO approval go to security received
+                if is_zero_percent:
+                    self.write({'state': 'sd_received'})
+                else:
+                    self.write({'state': 'cfo_approval'})
             else:
                 # 100% case: directly approved
                 self.write({'state': 'cfo_approval'})
                 
         elif current_state == 'cfo_approval':
-            # Final approval to approved
-            self.write({'state': 'cfo_approval'})
+            # Final approval to approved (for non-zero cases)
+            self.write({'state': 'approved'})
             
         else:
             raise ValidationError('This record has already been approved or is in an invalid state.')
-
+        
         self.approval_count += 1
     
     def action_sync_welfare_portal(self):
