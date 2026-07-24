@@ -665,6 +665,7 @@ class MedicalEquipment(models.Model):
     def action_approval(self):
         """
         Handle approval based on case type.
+        - 0%: Single CEO approval → Security Received (when medical equipment reference exists)
         - 100%: Single CEO approval → Approved (no remarks)
         - 50%: Two approvals (CEO → CFO) with remarks required for both
         - Below 50%: Same as 50% but also requires welfare portal & acknowledgment
@@ -674,6 +675,9 @@ class MedicalEquipment(models.Model):
         
         case_type = self.case_type
         current_state = self.state
+        
+        # Check if this is a 0% deposit case (medical equipment reference)
+        is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
         
         # Helper to check if case requires two approvals
         requires_two_approvals = case_type in ['50_percent', 'below_50_percent', 'reference']
@@ -695,7 +699,15 @@ class MedicalEquipment(models.Model):
             self.write({'state': 'ceo_approval'})
             
         elif current_state == 'ceo_approval':
-            # Second approval: from ceo_approval to cfo_approval or approved
+            # Second approval or final approval
+            
+            # Special case: 0% deposit with medical equipment reference
+            if is_zero_percent:
+                # Go directly to security received after CEO approval
+                self.write({'state': 'sd_received'})
+                self.approval_count += 1
+                return
+                
             if requires_two_approvals:
                 # Need CFO approval
                 if requires_remarks_cfo and not self.remarks_approval2:
@@ -711,9 +723,8 @@ class MedicalEquipment(models.Model):
             
         else:
             raise ValidationError('This record has already been approved or is in an invalid state.')
-    
+
         self.approval_count += 1
-    
     
     def action_sync_welfare_portal(self):
         """
