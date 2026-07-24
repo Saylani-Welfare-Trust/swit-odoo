@@ -76,6 +76,7 @@ class MemberApproval(models.Model):
         ('hod_approval', 'HOD Approval'),
         # ('cfo_approval', 'CFO Approval'),
         # ('coo_approval', 'COO Approval'),
+        ('pending', 'Pending'),
         ('committee_approval', 'Committee Approval'),
         ('done', 'Done'),
         ('purchase_request', 'Purchase Request'),
@@ -252,7 +253,7 @@ class MemberApproval(models.Model):
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
                 self._create_internal_transfer()
-                self.state = 'done'
+                self.state = 'pending'
             elif self.request_type == 'purchase_request':
                 self._create_purchase_request()
                 self.state = 'purchase_request'
@@ -288,7 +289,7 @@ class MemberApproval(models.Model):
             # Both approved: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
                 self._create_internal_transfer()
-                self.state = 'done'
+                self.state = 'pending'
             elif self.request_type == 'purchase_request':
                 self._create_purchase_request()
                 self.state = 'purchase_request'
@@ -398,6 +399,7 @@ class MemberApproval(models.Model):
             purchase_request = self.env['purchase.requisition'].create({
                 'origin': "%s (Stock Shortage)" % self.name,
                 'line_ids': purchase_lines,
+                    'material_request_id': self.id,   # <-- autopopulate here
             })
 
             self.auto_purchase_request_id = purchase_request.id
@@ -435,6 +437,7 @@ class MemberApproval(models.Model):
         purchase_request = self.env['purchase.requisition'].create({
             'origin': self.name,
             'line_ids': line_vals,
+            'material_request_id': self.id,   # <-- autopopulate here
         })
         # Confirm and assign purchase
         self.purchase_request_id = purchase_request.id
@@ -483,7 +486,19 @@ class MemberApproval(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
-    
+    def action_view_shortage_picking(self):
+        """View the created shortage internal transfer"""
+        self.ensure_one()
+        if not self.shortage_picking_id:
+            raise ValidationError(_('No shortage internal transfer found.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Shortage Internal Transfer'),
+            'res_model': 'stock.picking',
+            'res_id': self.shortage_picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }  
     def action_view_purchase_request(self):
         """View the created purchase request"""
         self.ensure_one()

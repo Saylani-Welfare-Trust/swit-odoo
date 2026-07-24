@@ -7,6 +7,14 @@
         <!-- <field name="category_id" ref="base.module_category_operations_inventory"/> -->
         <field name="comment">Basic user access to Member Approval module</field>
     </record>
+    
+    <record id="menu_group_material_request_cfo" model="res.groups">
+        <field name="name">Material Request / CFO Approval</field>
+    </record>
+    
+    <record id="menu_group_material_request_coo" model="res.groups">
+        <field name="name">Material Request / COO Approval</field>
+    </record>
 
     <!-- Member Approval User Group -->
     <!-- <record id="member_approval_group_user" model="res.groups">

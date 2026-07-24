@@ -18,7 +18,7 @@
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
-                       decoration-warning="state in ['budget_check', 'hod_approval', 'committee_approval']"
+                       decoration-warning="state in ['budget_check', 'hod_approval', 'committee_approval', 'pending']"
                        decoration-success="state == 'done'"
                        decoration-danger="state == 'rejected'"/>
             </tree>
@@ -39,14 +39,14 @@
                             <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
                                 class="oe_highlight" invisible="is_in_budget or state != 'committee_approval'"/> -->
                             <button string="CFO Approve" name="action_cfo_approve" type="object"
-                                class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
+                                class="oe_highlight" groups="menu_group_material_request_cfo" invisible="state != 'committee_approval' or cfo_approved"/>
                             <button string="COO Approve" name="action_coo_approve" type="object"
-                                class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
+                                class="oe_highlight" groups="menu_group_material_request_coo" invisible="state != 'committee_approval' or coo_approved"/>
                     <button string="Reject" name="action_reject" type="object"
                             invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,pending,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -54,7 +54,7 @@
                                 invisible="not picking_id">
                             <field name="picking_id" widget="statinfo" string="Transfer"/>
                         </button>
-                        <button name="action_view_picking" type="object" class="oe_stat_button" icon="fa-truck"
+                        <button name="action_view_shortage_picking" type="object" class="oe_stat_button" icon="fa-truck"
                                 invisible="not shortage_picking_id">
                             <field name="shortage_picking_id" widget="statinfo" string="Shortage Transfer"/>
                         </button>
@@ -107,7 +107,7 @@
                         <page string="Products" name="products">
                             <field name="line_ids" readonly="state != 'draft'">
                                 <tree editable="bottom">
-                                    <field name="product_id" domain="[('detailed_type', '=', 'product')]"/>
+                                    <field name="product_id" domain="[('detailed_type', '!=', 'service')]"/>
                                     <field name="budget_id"/>
                                     <field name="product_uom_id" />
                                     <field name="quantity" readonly="0"/>
