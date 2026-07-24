@@ -662,6 +662,9 @@ class MedicalEquipment(models.Model):
         
         return True
     
+
+
+    
     def action_approval(self):
         """
         Handle approval based on case type.
