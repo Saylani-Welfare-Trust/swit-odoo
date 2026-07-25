@@ -39,9 +39,9 @@
                             <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
                                 class="oe_highlight" invisible="is_in_budget or state != 'committee_approval'"/> -->
                             <button string="CFO Approve" name="action_cfo_approve" type="object"
-                                class="oe_highlight" groups="menu_group_material_request_cfo" invisible="state != 'committee_approval' or cfo_approved"/>
+                                class="oe_highlight" groups="bn_material_request.menu_group_material_request_cfo" invisible="state != 'committee_approval' or cfo_approved"/>
                             <button string="COO Approve" name="action_coo_approve" type="object"
-                                class="oe_highlight" groups="menu_group_material_request_coo" invisible="state != 'committee_approval' or coo_approved"/>
+                                class="oe_highlight" groups="bn_material_request.menu_group_material_request_coo" invisible="state != 'committee_approval' or coo_approved"/>
                     <button string="Reject" name="action_reject" type="object"
                             invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
