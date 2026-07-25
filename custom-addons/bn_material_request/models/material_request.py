@@ -47,9 +47,6 @@ class MemberApproval(models.Model):
         store=False
     )
 
-    cfo_user_id = fields.Many2one('res.users', string='CFO User', readonly=True)
-    coo_user_id = fields.Many2one('res.users', string='COO User', readonly=True)
-
     # dest_location_domain = fields.Char(
     #     compute='_compute_dest_location_domain',
     #     store=False
@@ -274,8 +271,6 @@ class MemberApproval(models.Model):
         self.cfo_approved = True
         self._check_committee_approval()
 
-        self.cfo_user_id = self.env.user.id  # Store the CFO user who approved
-
         return True
 
     def action_coo_approve(self):
@@ -287,8 +282,6 @@ class MemberApproval(models.Model):
             raise ValidationError(_('COO Remarks are required to approve.'))
         self.coo_approved = True
         self._check_committee_approval()
-        
-        self.coo_user_id = self.env.user.id  # Store the COO user who approved
 
         return True
 

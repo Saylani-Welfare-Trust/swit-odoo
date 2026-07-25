@@ -3,8 +3,34 @@
     <record id="material_request_rule" model="ir.rule">
         <field name="name">Material Request</field>
         <field name="model_id" ref="bn_material_request.model_material_request"/>
-        <field name="domain_force">['|', '|', '|', ('user_id', '=', user.id), ('department_id.manager_id.user_id', '=', user.id), ('cfo_user_id', '=', user.id), ('coo_user_id', '=', user.id)]</field>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('department_id.manager_id.user_id', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('bn_material_request.menu_group_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+
+    <!-- CFO can see all Material Requests -->
+    <record id="material_request_rule_cfo" model="ir.rule">
+        <field name="name">Material Request - CFO Full Access</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_cfo'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+
+    <!-- COO can see all Material Requests -->
+    <record id="material_request_rule_coo" model="ir.rule">
+        <field name="name">Material Request - COO Full Access</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_coo'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="False"/>
