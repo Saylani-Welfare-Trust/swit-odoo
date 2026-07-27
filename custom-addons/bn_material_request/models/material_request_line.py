@@ -15,6 +15,7 @@ class MemberApprovalLine(models.Model):
     unit_price = fields.Float('Unit Price', related='product_id.lst_price', store=True)
     subtotal = fields.Float('Subtotal', compute='_compute_subtotal', store=True)
 
+
     user_id = fields.Many2one('res.users', string='Requested By', default=lambda self: self.env.user, readonly=True, tracking=True)
     
     allowed_product_category_ids = fields.Many2many(
