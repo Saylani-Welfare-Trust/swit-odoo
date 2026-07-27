@@ -19,7 +19,7 @@ class DirectDeposit(models.Model):
     _name = 'direct.deposit'
     _description = "Direct Deposit"
     _order = "id desc"
-    
+
     favor = fields.Char('favor')
     cnic_no = fields.Char('CNIC No.', size=15)
     bank_id = fields.Many2one('account.journal', string="Bank")
@@ -51,17 +51,7 @@ class DirectDeposit(models.Model):
     dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
-    advance_donation_receipt_ids = fields.One2many(
-        'advance.donation.receipt',
-        'direct_deposit_id',
-        string="Advance Donation Receipts"
-    )
-    
-    is_advance_donation = fields.Boolean(
-        string="Advance Donation",
-        default=False,
-        help="If checked, creates advance donation receipts when cleared"
-    )
+
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
@@ -119,29 +109,6 @@ class DirectDeposit(models.Model):
 
         return mf
 
-
-    def action_view_advance_receipts(self):
-        """Open the advance donation receipts created from this direct deposit"""
-        self.ensure_one()
-        
-        if not self.advance_donation_receipt_ids:
-            raise UserError(_("No advance donation receipts found for this direct deposit."))
-        
-        action = {
-            'name': _('Advance Donation Receipts'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'advance.donation.receipt',
-            'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.advance_donation_receipt_ids.ids)],
-            'target': 'current',
-        }
-        
-        if len(self.advance_donation_receipt_ids) == 1:
-            action['res_id'] = self.advance_donation_receipt_ids.id
-            action['view_mode'] = 'form'
-        
-        return action
-    
     @api.model
     def create_dd_record(self, data):
         address = data.get('address')
@@ -149,11 +116,18 @@ class DirectDeposit(models.Model):
         service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
-        is_advance_donation = data.get('is_advance_donation', False)
 
-        # ... existing code for resolving microfinance ...
+        # -------------------------
+        # 0. Resolve the microfinance record this DD is tied to, based on
+        #    what the POS popup auto-filled (source_request_type / source_request_no)
+        # -------------------------
+        source_request_type = data.get('source_request_type')
+        source_request_no = data.get('source_request_no')
+        mf = self._find_microfinance_from_source(source_request_type, source_request_no)
 
-        # Prepare line items
+        # -------------------------
+        # 1. Prepare Line Items
+        # -------------------------
         product_lines = []
         for line in data['order_lines']:
             product_lines.append((0, 0, {
@@ -163,7 +137,9 @@ class DirectDeposit(models.Model):
                 'remarks': line['remarks'] if line.get('remarks') else '',
             }))
 
-        # Create DD Record
+        # -------------------------
+        # 2. Create DD Record
+        # -------------------------
         dd = self.create({
             'donor_id': data['donor_id'],
             'bank_id': bank_id,
@@ -173,11 +149,31 @@ class DirectDeposit(models.Model):
             'transaction_ref': transaction_ref,
             'microfinance_id': mf.id if mf else False,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
-            'is_advance_donation': is_advance_donation,  # NEW
             'direct_deposit_line_ids': product_lines,
         })
 
-        # ... rest of the method remains the same ...
+        # -------------------------
+        # 3. Calculate prices & taxes for all lines
+        # -------------------------
+        for line in dd.direct_deposit_line_ids:
+            base_price = line.product_id.lst_price
+            taxes = line.product_id.taxes_id
+
+            total_price_incl_tax = base_price
+            for tax in taxes:
+                if tax.amount_type == 'percent':
+                    total_price_incl_tax += base_price * (tax.amount / 100)
+                else:
+                    total_price_incl_tax += tax.amount
+
+            if not line.amount:
+                line.amount = total_price_incl_tax * line.quantity
+
+        # -------------------------
+        # 4. Recalculate totals
+        # -------------------------
+        dd.calculate_amount()
+        dd.set_remarks()
 
         return {
             "status": "success",
@@ -189,6 +185,7 @@ class DirectDeposit(models.Model):
                 "matched_microfinance_name": mf.name if mf else False,
             },
         }
+
     @api.onchange('microfinance_id')
     def _onchange_microfinance_id(self):
         for rec in self:
@@ -388,22 +385,7 @@ class DirectDeposit(models.Model):
 
         return applied_any
 
-
     def action_clear(self):
-        """Override action_clear to handle advance donations"""
-        
-        # For Advance Donation: Create advance donation receipts instead of invoices
-        if self.is_advance_donation:
-            # Create advance donation receipts
-            self._create_advance_donation_receipts()
-            
-            # Mark as clear
-            self.state = 'clear'
-            
-            # Print the appropriate report
-            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-        
-        # Original behavior for non-advance donations
         if self._apply_microfinance_payment():
             self.state = 'clear'
             return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
@@ -415,6 +397,7 @@ class DirectDeposit(models.Model):
             self._create_stock_picking()
 
         self.state = 'clear'
+        # Auto-print report when transitioning to clear (duplicate watermark)
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
     def action_not_clear(self):
@@ -558,51 +541,3 @@ class DirectDeposit(models.Model):
         ]
 
         return bank_list
-
-    def _create_advance_donation_receipts(self):
-        """Create advance donation receipts from direct deposit lines after clearing"""
-        self.ensure_one()
-        
-        Receipt = self.env['advance.donation.receipt']
-        created_receipts = []
-        
-        for line in self.direct_deposit_line_ids:
-            # Calculate line total
-            line_total = line.amount * line.quantity
-            
-            # Create receipt for each product line
-            receipt_vals = {
-                'donor_id': self.donor_id.id,
-                'amount': line_total,
-                'product_id': line.product_id.id,
-                'product_name': line.product_id.name,
-                'date': fields.Date.today(),
-                'payment_type': 'cash',  # Default, can be changed
-                'direct_deposit_id': self.id,
-                'state': 'draft',  # Start as draft
-                'remarks': f"From Direct Deposit: {self.name}",
-            }
-            
-            # If this is a cheque payment
-            if self.bank_id:
-                receipt_vals.update({
-                    'payment_type': 'cheque',
-                    'bank_id': self.bank_id.id,
-                    'cheque_number': self.transaction_ref or '',
-                    'cheque_date': fields.Date.today(),
-                })
-            
-            receipt = Receipt.create(receipt_vals)
-            
-            # Process the receipt based on payment type
-            if receipt.payment_type == 'cheque':
-                receipt.action_pending()  # Mark as pending for cheque
-            else:
-                receipt.action_paid()  # Mark as paid for cash
-                
-            created_receipts.append(receipt.id)
-        
-        # Link all receipts to this direct deposit
-        self.advance_donation_receipt_ids = [(6, 0, created_receipts)]
-        
-        return created_receipts

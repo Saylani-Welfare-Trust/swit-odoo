@@ -48,15 +48,6 @@
                         <button name="action_show_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not picking_id">
                             <field name="picking_id" widget="statinfo"/>
                         </button>
-                                            <!-- NEW: Show advance donation receipts in button box -->
-                        <button name="action_view_advance_receipts" type="object"
-                                class="oe_stat_button" icon="fa-receipt"
-                                attrs="{'invisible': [('advance_donation_receipt_ids', '=', [])]}">
-                            <div class="o_stat_info">
-                                <field name="advance_donation_receipt_ids" class="o_stat_value"/>
-                                <span class="o_stat_text">Receipts</span>
-                            </div>
-                        </button>
                     </div>
 
                     <div class="oe_title">

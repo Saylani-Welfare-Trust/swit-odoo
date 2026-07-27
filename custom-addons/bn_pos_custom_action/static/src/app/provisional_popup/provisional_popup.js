@@ -457,7 +457,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         // Direct Deposit
         if (this.action_type === 'dd') {
             const userId = this.pos.user ? this.pos.user.id : false;
-            const isAdvanceDonation = this._checkAdvanceDonation(selectedOrder);
             const payload ={
                 'donor_id': this.donor_id,
                 'favor': this.favor,
@@ -471,7 +470,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 // NEW: carry the linked request info through to the backend record
                 'source_request_type': this.state.source_request_type,
                 'source_request_no': this.state.source_request_no,
-                'is_advance_donation': isAdvanceDonation,  // NEW
             }
     
             console.log("DD popup - payload sent:", payload); // TEMP DEBUG
@@ -486,7 +484,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     
                     this.cancel()
                     
-                    
                     this.report.doAction("bn_direct_deposit.report_direct_deposit_provisional", [
                         data.id,
                     ]);
@@ -497,17 +494,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             })
         }
     }
-    _checkAdvanceDonation(order) {
-        // Check if any product in the order belongs to advance donation category
-        const orderLines = order.get_orderlines();
-        for (const line of orderLines) {
-            const product = line.product;
-            if (product.categ_id && product.categ_id.is_advance_donation) {
-                return true;
-            }
-        }
-        return false;
-    }
+
     /**
      * Process partner assignment
      */
