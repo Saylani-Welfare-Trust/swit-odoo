@@ -18,9 +18,9 @@ class MemberApprovalLine(models.Model):
     user_id = fields.Many2one('res.users', string='Requested By', default=lambda self: self.env.user, readonly=True, tracking=True)
     
     allowed_product_category_ids = fields.Many2many(
-        'stock.location',
+        'product.category',
         related='user_id.allowed_product_category_ids',
-        string='Allowed Locations',
+        string='Allowed Category',
         readonly=True,
         store=False
     )
