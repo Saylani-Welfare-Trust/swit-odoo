@@ -107,13 +107,14 @@
                                     </div>
                                     <div><strong>Donation:</strong> <t t-esc="receipt.donation_id.name or '-'"/></div>
                                     <!-- Category Field -->
-                                    <div t-if="receipt.category_id">
+                                    <!-- <div t-if="receipt.category_id">
                                         <strong>Category:</strong> <t t-esc="receipt.category_id.display_name or '-'"/>
-                                    </div>
+                                    </div> -->
                                     <!-- Product Name Field -->
-                                    <div t-if="receipt.product_id">
+                                    <!-- <div t-if="receipt.product_id">
                                         <strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name or '-'"/>
-                                    </div>
+                                    </div> -->
+
                                     <div><strong>Payment Type:</strong> <t t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></div>
                                 </div>
                                 <div class="col-6">
@@ -148,6 +149,14 @@
                                     </div>
                                     <div t-if="receipt.pos_order_id">
                                         <strong>POS Order:</strong> <t t-esc="receipt.pos_order_id.name or '-'"/>
+                                    </div>
+                                                                        <div t-if="receipt.product_id">
+                                        <strong>Product:</strong> 
+                                        <t t-esc="receipt.product_id.display_name or '-'"/>
+                                    </div>    
+                                    <div t-if="receipt.product_id and receipt.product_id.categ_id">
+                                        <strong>Category:</strong> 
+                                        <t t-esc="receipt.product_id.categ_id.display_name"/>
                                     </div>
                                 </div>
                             </div>

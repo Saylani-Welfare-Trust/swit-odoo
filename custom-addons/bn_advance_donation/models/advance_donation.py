@@ -75,7 +75,12 @@ class AdvanceDonation(models.Model):
         'advance_donation_id',
         string="Disbursement Lines"
     )
-    
+        # Add this field
+    direct_deposit_id = fields.Many2one(
+        'direct.deposit',
+        string='Direct Deposit',
+        help="Direct Deposit record that created this receipt"
+    )
 
     @api.model
     def create(self, vals):
