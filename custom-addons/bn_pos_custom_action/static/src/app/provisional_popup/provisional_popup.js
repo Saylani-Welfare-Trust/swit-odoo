@@ -261,9 +261,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             }
 
             selectedOrder.extra_data.medical_equipment = payload
-            // Also store record_number for DD mode linking
-            selectedOrder.extra_data.medical_equipment.record_number = this.state.medical_equipment_request_no;
-            selectedOrder.extra_data.medical_equipment.amount = this.state.amount;            
 
             let record = null
 

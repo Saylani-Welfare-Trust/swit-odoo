@@ -1,5 +1,3 @@
-# pos_cheque.py
-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
@@ -24,27 +22,6 @@ class POSCheque(models.Model):
     date = fields.Date('Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
-    
-    # NEW: Reference fields for Welfare and Medical Equipment
-    welfare_id = fields.Many2one('welfare', string="Welfare Reference", 
-                                compute="_set_details", store=True,
-                                help="Related Welfare record if payment is for welfare")
-    medical_equipment_id = fields.Many2one('medical.equipment', string="Medical Equipment Reference", 
-                                          compute="_set_details", store=True,
-                                          help="Related Medical Equipment record if payment is for medical equipment")
-    security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit Reference", 
-                                         compute="_set_details", store=True,
-                                         help="Related Security Deposit record")
-    
-    # NEW: Display name for related record
-    reference_record_name = fields.Char('Reference Record Name', 
-                                       compute="_compute_reference_record_name", 
-                                       store=True)
-    reference_type = fields.Selection([
-        ('welfare', 'Welfare'),
-        ('medical_equipment', 'Medical Equipment'),
-        ('none', 'None')
-    ], string="Reference Type", compute="_compute_reference_type", store=True)
 
     def _get_donor_account_order_lines(self):
         """Find the linked POS order's lines for the 'Donor A/c' product."""
@@ -57,6 +34,7 @@ class POSCheque(models.Model):
             lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
         )
     
+        
     def _create_advance_donation_receipts(self):
         """For any 'Donor A/c' line on the linked POS order, create a paid
         advance.donation.receipt. Only runs when the cheque is cleared -
@@ -85,6 +63,7 @@ class POSCheque(models.Model):
             created |= receipt
     
         return created
+    
 
     @api.depends('name')
     def _set_details(self):
@@ -93,10 +72,6 @@ class POSCheque(models.Model):
             rec.analytic_account_id = None
             rec.amount = 0
             rec.order_reference = ''
-            rec.welfare_id = None
-            rec.medical_equipment_id = None
-            rec.security_deposit_id = None
-            
             pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
@@ -107,46 +82,6 @@ class POSCheque(models.Model):
                 order_date = pos_order.date_order and pos_order.date_order.year or ''
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
-                
-                # NEW: Extract welfare and medical equipment references from extra_data
-                if pos_order.extra_data:
-                    import json
-                    extra_data = json.loads(pos_order.extra_data) if isinstance(pos_order.extra_data, str) else pos_order.extra_data
-                    
-                    # Check for medical equipment
-                    me_data = extra_data.get('medical_equipment', {})
-                    if me_data:
-                        medical_equipment = self.env['medical.equipment'].search(
-                            [('name', '=', me_data.get('medical_equipment_request_no'))], limit=1
-                        )
-                        if medical_equipment:
-                            rec.medical_equipment_id = medical_equipment.id
-                            # Find linked security deposit
-                            security_deposit = self.env['medical.security.deposit'].search(
-                                [('medical_equipment_id', '=', medical_equipment.id)], limit=1
-                            )
-                            if security_deposit:
-                                rec.security_deposit_id = security_deposit.id
-
-    @api.depends('welfare_id', 'medical_equipment_id')
-    def _compute_reference_record_name(self):
-        for rec in self:
-            if rec.welfare_id:
-                rec.reference_record_name = rec.welfare_id.name
-            elif rec.medical_equipment_id:
-                rec.reference_record_name = rec.medical_equipment_id.name
-            else:
-                rec.reference_record_name = ''
-
-    @api.depends('welfare_id', 'medical_equipment_id')
-    def _compute_reference_type(self):
-        for rec in self:
-            if rec.welfare_id:
-                rec.reference_type = 'welfare'
-            elif rec.medical_equipment_id:
-                rec.reference_type = 'medical_equipment'
-            else:
-                rec.reference_type = 'none'
 
     def _get_microfinance_pdc_line(self):
         """Get the PDC line linked to this cheque"""
@@ -187,6 +122,9 @@ class POSCheque(models.Model):
                     'paid_amount': 0.0,
                     'payment_date': False
                 })
+            elif new_state == 'partial':
+                # Handle partial payment logic if needed
+                pass
 
     def action_show_pos_order(self):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
@@ -209,14 +147,12 @@ class POSCheque(models.Model):
                 ('installment_no', '=', pdc_line.installment_number),
             ], limit=1)
             if microfinance_line:
-                pdc_line.microfinance_line_id = microfinance_line.id
+                pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
         return microfinance_line
 
     def action_clear(self):
-        """Clear the cheque - disburse welfare lines and mark security deposits as paid"""
         self._create_advance_donation_receipts()
     
-        # Handle microfinance PDC lines
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'cleared'})
@@ -227,28 +163,13 @@ class POSCheque(models.Model):
                     'paid_amount': microfinance_line.amount,
                     'payment_date': fields.Date.today(),
                 })
-        
-        # NEW: Handle Welfare - disburse all welfare lines
-        if self.welfare_id:
-            for welfare_line in self.welfare_id.welfare_line_ids:
-                if welfare_line.state not in ['disbursed', 'return']:
-                    welfare_line.write({'state': 'disbursed'})
-            
-            # Check if all lines are disbursed to update welfare state
-            self.welfare_id._auto_disburse_if_all_lines_delivered()
-        
-        # NEW: Handle Medical Equipment Security Deposit
-        if self.security_deposit_id:
-            self.security_deposit_id.write({'state': 'paid'})
-        
         self.state = 'clear'
+    
 
     def action_bounce(self):
-        """Bounce the cheque - revert welfare lines to draft and mark security deposits as bounced"""
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
-        # Handle microfinance PDC lines
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'bounced'})
@@ -259,25 +180,11 @@ class POSCheque(models.Model):
                     'paid_amount': 0.0,
                     'payment_date': False,
                 })
-        
-        # NEW: Handle Welfare - revert to draft
-        if self.welfare_id:
-            for welfare_line in self.welfare_id.welfare_line_ids:
-                if welfare_line.state in ['disbursed', 'collected']:
-                    welfare_line.write({'state': 'draft'})
-            
-            # Update welfare state back to approve
-            self.welfare_id.write({'state': 'approve'})
-        
-        # NEW: Handle Medical Equipment Security Deposit
-        if self.security_deposit_id:
-            self.security_deposit_id.write({'state': 'bounced'})
 
         self.bounce_count += 1
         self.state = 'bounce'
 
     def action_cancel(self):
-        """Cancel the cheque - revert to draft state"""
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'draft'})
@@ -288,16 +195,4 @@ class POSCheque(models.Model):
                     'paid_amount': 0.0,
                     'payment_date': False,
                 })
-        
-        # NEW: Handle Welfare - revert to draft
-        if self.welfare_id:
-            for welfare_line in self.welfare_id.welfare_line_ids:
-                if welfare_line.state in ['disbursed', 'collected']:
-                    welfare_line.write({'state': 'draft'})
-            self.welfare_id.write({'state': 'approve'})
-        
-        # NEW: Handle Medical Equipment Security Deposit
-        if self.security_deposit_id:
-            self.security_deposit_id.write({'state': 'draft'})
-        
         self.state = 'cancel'
