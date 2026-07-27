@@ -54,16 +54,9 @@ class DirectDeposit(models.Model):
 
     def _get_donor_account_lines(self):
         self.ensure_one()
-        all_lines_debug = [
-            (l.id, l.product_id.id if l.product_id else None, repr(l.product_id.name) if l.product_id else None)
-            for l in self.direct_deposit_line_ids
-        ]
-        _logger.info("DD %s - all deposit lines (id, product_id, product name repr): %s", self.name, all_lines_debug)
-    
         donor_lines = self.direct_deposit_line_ids.filtered(
-            lambda l: l.product_id and l.product_id.name == 'Donor A/c'
+            lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
         )
-        _logger.info("DD %s - donor_lines matched: %s", self.name, donor_lines.ids)
         return donor_lines
     
     
@@ -71,47 +64,37 @@ class DirectDeposit(models.Model):
         donor_lines = self._get_donor_account_lines()
         return self.direct_deposit_line_ids - donor_lines
     
+
     
 
     def _create_advance_donation_receipts(self):
+        """For every 'Donor A/c' line on this direct deposit, create a
+        paid advance.donation.receipt. Only runs when the deposit is
+        cleared - not at creation time."""
         self.ensure_one()
-        _logger.info("=== _create_advance_donation_receipts CALLED for DD %s ===", self.name)
-    
         donor_lines = self._get_donor_account_lines()
         Receipt = self.env['advance.donation.receipt']
         created = Receipt
     
-        if not donor_lines:
-            _logger.info("DD %s - no donor lines found, nothing to create", self.name)
-            return created
-    
         for line in donor_lines:
             amount = line.amount * line.quantity
-            _logger.info("DD %s - donor line %s: amount=%s quantity=%s => total=%s",
-                        self.name, line.id, line.amount, line.quantity, amount)
-    
             if amount <= 0:
-                _logger.info("DD %s - skipping line %s, amount <= 0", self.name, line.id)
                 continue
     
-            try:
-                receipt = Receipt.create({
-                    'donor_id': self.donor_id.id,
-                    'amount': amount,
-                    'product_id': line.product_id.id,
-                    'payment_type': 'cash',
-                    'date': fields.Date.today(),
-                    'remarks': _('Auto-created from Direct Deposit %s') % self.name,
-                    'state': 'paid',
-                })
-                _logger.info("DD %s - CREATED receipt %s (id=%s) amount=%s state=%s",
-                            self.name, receipt.name, receipt.id, receipt.amount, receipt.state)
-                created |= receipt
-            except Exception as e:
-                _logger.error("DD %s - FAILED to create receipt for line %s: %s", self.name, line.id, e, exc_info=True)
-                raise
+            receipt = Receipt.create({
+                'donor_id': self.donor_id.id,
+                'amount': amount,
+                'product_id': line.product_id.id,
+                'payment_type': 'cash',
+                'date': fields.Date.today(),
+                'remarks': _('Auto-created from Direct Deposit %s') % self.name,
+                'state': 'paid',
+            })
+            created |= receipt
     
         return created
+    
+
 
 
 
@@ -443,22 +426,6 @@ class DirectDeposit(models.Model):
 
 
     def action_clear(self):
-        # --- TEMPORARY DEBUG BLOCK: remove once the donor-line detection is confirmed working ---
-        debug_lines = [
-            (l.id, l.product_id.id if l.product_id else None, repr(l.product_id.name) if l.product_id else None)
-            for l in self.direct_deposit_line_ids
-        ]
-        debug_donor_lines = self.direct_deposit_line_ids.filtered(
-            lambda l: l.product_id and l.product_id.name == 'Donor A/c'
-        )
-        raise ValidationError(
-            "DEBUG - action_clear reached for DD %s\n\n"
-            "All lines (line_id, product_id, repr(product name)):\n%s\n\n"
-            "Donor lines matched: %s"
-            % (self.name, debug_lines, debug_donor_lines.ids)
-        )
-        # --- END TEMPORARY DEBUG BLOCK ---
-    
         self._create_advance_donation_receipts()
     
         if self._apply_microfinance_payment():
@@ -473,7 +440,6 @@ class DirectDeposit(models.Model):
     
         self.state = 'clear'
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-
 
 
     def action_not_clear(self):
