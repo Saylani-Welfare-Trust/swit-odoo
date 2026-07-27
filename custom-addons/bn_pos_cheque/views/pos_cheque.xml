@@ -16,6 +16,8 @@
                 <field name="name" string="Cheque No." />
                 <field name="bank_name" />
                 <field name="date" />
+                <field name="reference_type" string="Type" invisible="1"/>
+                <field name="reference_record_name" string="Reference Record"/>
                 <field name="bounce_count" />
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" decoration-danger="state == 'cancel'" />
 

@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import logging
 import re
+
 _logger = logging.getLogger(__name__)
 
 payment_method_selection = [
@@ -21,7 +22,6 @@ class MedicalSecurityDeposit(models.Model):
     _name = 'medical.security.deposit'
     _description = "Medical Security Deposit"
 
-
     name = fields.Char('Name', default="NEW")
     cnic_no = fields.Char('CNIC No.', size=15)
     bank_name = fields.Char('Bank Name')
@@ -39,11 +39,14 @@ class MedicalSecurityDeposit(models.Model):
     date = fields.Date('Date')
     cheque_date = fields.Date('Cheque Date')
 
+    # Link to POS Cheque
+    pos_cheque_id = fields.Many2one('pos.cheque', string="POS Cheque", 
+                                    help="Linked POS Cheque for this security deposit")
 
     @api.model
     def create(self, vals):
         # Fix the condition - the original has a bug
-        if vals.get('name', 'NEW') == 'NEW':  # Fixed: removed _('NEW')
+        if vals.get('name', 'NEW') == 'NEW':
             vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or 'New'
         return super(MedicalSecurityDeposit, self).create(vals)
     
@@ -72,8 +75,15 @@ class MedicalSecurityDeposit(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
+    def link_pos_cheque(self, cheque_id):
+        """Link a POS cheque to this security deposit"""
+        self.ensure_one()
+        self.write({'pos_cheque_id': cheque_id})
+        _logger.info(f"Linked cheque ID {cheque_id} to security deposit {self.name}")
+
     @api.model
     def set_security_depsoit_values(self, data):
+        """Create security deposit from POS data"""
         medical_equipment_id = self.env['medical.equipment'].search(
             [('name', '=', data['medical_equipment_request_no'])],
             limit=1
@@ -82,12 +92,6 @@ class MedicalSecurityDeposit(models.Model):
         if not medical_equipment_id:
             raise ValidationError("No medical equipment found with the given request number.")
         
-        # Calculate total security deposit from lines
-        total_security_deposit = sum(
-            line.security_deposit 
-            for line in medical_equipment_id.medical_equipment_line_ids
-        )
-        
         # Get donee information
         donee = medical_equipment_id.donee_id
         
@@ -95,9 +99,9 @@ class MedicalSecurityDeposit(models.Model):
         security_deposit = self.create({
             'medical_equipment_id': medical_equipment_id.id,
             'donee_id': donee.id if donee else data.get('donee_id'),
-            'cnic_no': donee.cnic_no if donee else '',  # Populate CNIC from donee
-            'amount': medical_equipment_id.total_amount,  # Use calculated amount instead of data
-            'date': fields.Date.today(),  # Set current date by default
+            'cnic_no': donee.cnic_no if donee else '',
+            'amount': medical_equipment_id.total_amount,
+            'date': fields.Date.today(),
             'payment_method': data.get('payment_method', 'cash'),
             'bank_name': data.get('bank_name'),
             'cheque_no': data.get('cheque_no'),
@@ -109,12 +113,15 @@ class MedicalSecurityDeposit(models.Model):
             # Link back to medical equipment
             medical_equipment_id.sd_slip_id = security_deposit.id
             medical_equipment_id.state = 'sd_received'
+            
+            # If cheque payment, the linking will happen through POS order creation
+            _logger.info(f"Created security deposit {security_deposit.name} for medical equipment {medical_equipment_id.name}")
         
         return security_deposit
-   
 
     @api.model
     def get_medical_equipment_security_deposit(self, data):
+        """Get security deposit information for medical equipment"""
         medical_equipment_request = self.env['medical.equipment'].search(
             [('name', '=', data['medical_equipment_request_no'])],
             limit=1
@@ -151,7 +158,7 @@ class MedicalSecurityDeposit(models.Model):
                 'donee_name': medical_equipment_request.donee_id.name if medical_equipment_request.donee_id else '',
                 'cnic_no': medical_equipment_request.donee_id.cnic_no if medical_equipment_request.donee_id else '',
                 'deposit_id': security_deposit.id,
-                'amount': self.medical_equipment_id.total_amount,
+                'amount': security_deposit.amount,  # FIXED: Use security_deposit.amount instead of self.medical_equipment_id.total_amount
                 'state': security_deposit.state,
                 'deposit_exists': True,
                 'date': security_deposit.date or fields.Date.today(),

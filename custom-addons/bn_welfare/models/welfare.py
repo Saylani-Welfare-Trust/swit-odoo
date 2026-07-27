@@ -84,6 +84,8 @@ class Welfare(models.Model):
     'welfare_id',
     string='Document Images'
 )
+    pos_cheque_id = fields.Many2one('pos.cheque', string="POS Cheque", 
+                                   help="Linked POS Cheque for this welfare payment")
     name = fields.Char('Name', default="NEW")
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
     father_name = fields.Char(related='donee_id.father_name', string="Father Name", store=True)
