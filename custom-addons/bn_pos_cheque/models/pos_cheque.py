@@ -22,7 +22,50 @@ class POSCheque(models.Model):
     date = fields.Date('Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
+    case_number = fields.Char('Case Number')
 
+
+
+    # NEW: find the medical.security.deposit tied to this cheque's case
+    # -----------------------------------------------------------------
+    def _get_medical_security_deposit(self):
+        self.ensure_one()
+        if not self.case_number:
+            return self.env['medical.security.deposit']
+    
+        return self.env['medical.security.deposit'].search([
+            ('medical_equipment_id.name', '=', self.case_number)
+        ], limit=1)
+    
+    # NEW: find the specific welfare.line tied to this cheque's case.
+    # A welfare case (by name) can have multiple lines, so we narrow it
+    # down further by matching product name against the linked POS
+    # order's product(s).
+    # -----------------------------------------------------------------
+    def _get_welfare_line(self):
+        self.ensure_one()
+        if not self.case_number:
+            return self.env['welfare.line']
+    
+        welfare = self.env['welfare'].search([('name', '=', self.case_number)], limit=1)
+        if not welfare:
+            return self.env['welfare.line']
+    
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            return self.env['welfare.line']
+    
+        order_product_names = {
+            (l.product_id.name or '').strip()
+            for l in pos_order.lines if l.product_id
+        }
+    
+        return welfare.welfare_line_ids.filtered(
+            lambda l: (l.product_id.name or '').strip() in order_product_names
+        )
+    
+    
+    
     def _get_donor_account_order_lines(self):
         """Find the linked POS order's lines for the 'Donor A/c' product."""
         self.ensure_one()
@@ -150,8 +193,17 @@ class POSCheque(models.Model):
                 pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
         return microfinance_line
 
+
     def action_clear(self):
         self._create_advance_donation_receipts()
+    
+        security_deposit = self._get_medical_security_deposit()
+        if security_deposit:
+            security_deposit.write({'state': 'paid'})
+    
+        welfare_lines = self._get_welfare_line()
+        if welfare_lines:
+            welfare_lines.action_disbursed()
     
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
@@ -165,11 +217,18 @@ class POSCheque(models.Model):
                 })
         self.state = 'clear'
     
-
     def action_bounce(self):
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
-
+    
+        security_deposit = self._get_medical_security_deposit()
+        if security_deposit:
+            security_deposit.write({'state': 'bounced'})
+    
+        welfare_lines = self._get_welfare_line()
+        if welfare_lines:
+            welfare_lines.write({'state': 'draft'})
+    
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'bounced'})
@@ -180,7 +239,7 @@ class POSCheque(models.Model):
                     'paid_amount': 0.0,
                     'payment_date': False,
                 })
-
+    
         self.bounce_count += 1
         self.state = 'bounce'
 
