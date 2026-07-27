@@ -2,6 +2,10 @@
 
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+import json
+import logging
+
+_logger = logging.getLogger(__name__)
 
 state_selection = [
     ('draft', 'Draft'),
@@ -25,7 +29,7 @@ class POSCheque(models.Model):
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     
-    # NEW: Reference fields for Welfare and Medical Equipment
+    # Reference fields for Welfare and Medical Equipment
     welfare_id = fields.Many2one('welfare', string="Welfare Reference", 
                                 compute="_set_details", store=True,
                                 help="Related Welfare record if payment is for welfare")
@@ -36,7 +40,7 @@ class POSCheque(models.Model):
                                          compute="_set_details", store=True,
                                          help="Related Security Deposit record")
     
-    # NEW: Display name for related record
+    # Display name for related record
     reference_record_name = fields.Char('Reference Record Name', 
                                        compute="_compute_reference_record_name", 
                                        store=True)
@@ -89,6 +93,7 @@ class POSCheque(models.Model):
     @api.depends('name')
     def _set_details(self):
         for rec in self:
+            # Reset all computed fields
             rec.donor_id = None
             rec.analytic_account_id = None
             rec.amount = 0
@@ -100,33 +105,60 @@ class POSCheque(models.Model):
             pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
-                rec.analytic_account_id = pos_order.analytic_account_id.id
-                rec.amount = pos_order.amount_total
-                branch_code = pos_order.user_id.employee_id.analytic_account_id.code
-                company = pos_order.company_id.name[:3].upper()
-                order_date = pos_order.date_order and pos_order.date_order.year or ''
-                order_ref = pos_order.name and pos_order.name[-4:] or '0000'
-                rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
                 
-                # NEW: Extract welfare and medical equipment references from extra_data
-                if pos_order.extra_data:
-                    import json
-                    extra_data = json.loads(pos_order.extra_data) if isinstance(pos_order.extra_data, str) else pos_order.extra_data
+                # FIX: Use session's config's analytic_account_id or skip if not available
+                if pos_order.session_id and pos_order.session_id.config_id:
+                    rec.analytic_account_id = pos_order.session_id.config_id.analytic_account_id.id or False
+                
+                rec.amount = pos_order.amount_total
+                
+                # Generate order reference
+                try:
+                    branch_code = 'N/A'
+                    company = 'N/A'
                     
-                    # Check for medical equipment
-                    me_data = extra_data.get('medical_equipment', {})
-                    if me_data:
-                        medical_equipment = self.env['medical.equipment'].search(
-                            [('name', '=', me_data.get('medical_equipment_request_no'))], limit=1
-                        )
-                        if medical_equipment:
-                            rec.medical_equipment_id = medical_equipment.id
-                            # Find linked security deposit
-                            security_deposit = self.env['medical.security.deposit'].search(
-                                [('medical_equipment_id', '=', medical_equipment.id)], limit=1
-                            )
-                            if security_deposit:
-                                rec.security_deposit_id = security_deposit.id
+                    # Try to get branch code from user's employee
+                    if pos_order.user_id and pos_order.user_id.employee_id and pos_order.user_id.employee_id.analytic_account_id:
+                        branch_code = pos_order.user_id.employee_id.analytic_account_id.code or 'N/A'
+                    
+                    # Get company abbreviation
+                    if pos_order.company_id:
+                        company = pos_order.company_id.name[:3].upper()
+                    
+                    # Get order year
+                    order_date = pos_order.date_order.year if pos_order.date_order else ''
+                    
+                    # Get order reference suffix
+                    order_ref = pos_order.name[-4:] if pos_order.name else '0000'
+                    
+                    rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
+                except Exception as e:
+                    _logger.warning(f"Error generating order reference for cheque {rec.name}: {e}")
+                    rec.order_reference = pos_order.name or ''
+                
+                # Extract welfare and medical equipment references from extra_data
+                if pos_order.extra_data:
+                    try:
+                        extra_data = json.loads(pos_order.extra_data) if isinstance(pos_order.extra_data, str) else pos_order.extra_data
+                        
+                        # Check for medical equipment
+                        me_data = extra_data.get('medical_equipment', {})
+                        if me_data:
+                            request_no = me_data.get('medical_equipment_request_no')
+                            if request_no:
+                                medical_equipment = self.env['medical.equipment'].search(
+                                    [('name', '=', request_no)], limit=1
+                                )
+                                if medical_equipment:
+                                    rec.medical_equipment_id = medical_equipment.id
+                                    # Find linked security deposit
+                                    security_deposit = self.env['medical.security.deposit'].search(
+                                        [('medical_equipment_id', '=', medical_equipment.id)], limit=1
+                                    )
+                                    if security_deposit:
+                                        rec.security_deposit_id = security_deposit.id
+                    except (json.JSONDecodeError, TypeError) as e:
+                        _logger.warning(f"Error parsing extra_data for cheque {rec.name}: {e}")
 
     @api.depends('welfare_id', 'medical_equipment_id')
     def _compute_reference_record_name(self):
@@ -228,7 +260,7 @@ class POSCheque(models.Model):
                     'payment_date': fields.Date.today(),
                 })
         
-        # NEW: Handle Welfare - disburse all welfare lines
+        # Handle Welfare - disburse all welfare lines
         if self.welfare_id:
             for welfare_line in self.welfare_id.welfare_line_ids:
                 if welfare_line.state not in ['disbursed', 'return']:
@@ -237,9 +269,10 @@ class POSCheque(models.Model):
             # Check if all lines are disbursed to update welfare state
             self.welfare_id._auto_disburse_if_all_lines_delivered()
         
-        # NEW: Handle Medical Equipment Security Deposit
+        # Handle Medical Equipment Security Deposit
         if self.security_deposit_id:
             self.security_deposit_id.write({'state': 'paid'})
+            _logger.info(f"Security deposit {self.security_deposit_id.name} marked as paid for cheque {self.name}")
         
         self.state = 'clear'
 
@@ -260,7 +293,7 @@ class POSCheque(models.Model):
                     'payment_date': False,
                 })
         
-        # NEW: Handle Welfare - revert to draft
+        # Handle Welfare - revert to draft
         if self.welfare_id:
             for welfare_line in self.welfare_id.welfare_line_ids:
                 if welfare_line.state in ['disbursed', 'collected']:
@@ -268,10 +301,12 @@ class POSCheque(models.Model):
             
             # Update welfare state back to approve
             self.welfare_id.write({'state': 'approve'})
+            _logger.info(f"Welfare {self.welfare_id.name} reverted to draft for bounced cheque {self.name}")
         
-        # NEW: Handle Medical Equipment Security Deposit
+        # Handle Medical Equipment Security Deposit
         if self.security_deposit_id:
             self.security_deposit_id.write({'state': 'bounced'})
+            _logger.info(f"Security deposit {self.security_deposit_id.name} marked as bounced for cheque {self.name}")
 
         self.bounce_count += 1
         self.state = 'bounce'
@@ -289,14 +324,14 @@ class POSCheque(models.Model):
                     'payment_date': False,
                 })
         
-        # NEW: Handle Welfare - revert to draft
+        # Handle Welfare - revert to draft
         if self.welfare_id:
             for welfare_line in self.welfare_id.welfare_line_ids:
                 if welfare_line.state in ['disbursed', 'collected']:
                     welfare_line.write({'state': 'draft'})
             self.welfare_id.write({'state': 'approve'})
         
-        # NEW: Handle Medical Equipment Security Deposit
+        # Handle Medical Equipment Security Deposit
         if self.security_deposit_id:
             self.security_deposit_id.write({'state': 'draft'})
         
