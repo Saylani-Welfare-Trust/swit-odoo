@@ -53,40 +53,66 @@ class DirectDeposit(models.Model):
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
 
     def _get_donor_account_lines(self):
-        return self.direct_deposit_line_ids.filtered(
+        self.ensure_one()
+        all_lines_debug = [
+            (l.id, l.product_id.id if l.product_id else None, repr(l.product_id.name) if l.product_id else None)
+            for l in self.direct_deposit_line_ids
+        ]
+        _logger.info("DD %s - all deposit lines (id, product_id, product name repr): %s", self.name, all_lines_debug)
+    
+        donor_lines = self.direct_deposit_line_ids.filtered(
             lambda l: l.product_id and l.product_id.name == 'Donor A/c'
         )
+        _logger.info("DD %s - donor_lines matched: %s", self.name, donor_lines.ids)
+        return donor_lines
+    
     
     def _get_non_donor_lines(self):
         donor_lines = self._get_donor_account_lines()
         return self.direct_deposit_line_ids - donor_lines
     
+    
+
     def _create_advance_donation_receipts(self):
-        """For every 'Donor A/c' line on this direct deposit, create a
-        paid advance.donation.receipt. Only runs when the deposit is
-        cleared - not at creation time."""
         self.ensure_one()
+        _logger.info("=== _create_advance_donation_receipts CALLED for DD %s ===", self.name)
+    
         donor_lines = self._get_donor_account_lines()
         Receipt = self.env['advance.donation.receipt']
         created = Receipt
     
+        if not donor_lines:
+            _logger.info("DD %s - no donor lines found, nothing to create", self.name)
+            return created
+    
         for line in donor_lines:
             amount = line.amount * line.quantity
+            _logger.info("DD %s - donor line %s: amount=%s quantity=%s => total=%s",
+                        self.name, line.id, line.amount, line.quantity, amount)
+    
             if amount <= 0:
+                _logger.info("DD %s - skipping line %s, amount <= 0", self.name, line.id)
                 continue
-            receipt = Receipt.create({
-                'donor_id': self.donor_id.id,
-                'amount': amount,
-                'product_id': line.product_id.id,
-                'payment_type': 'cash',
-                'date': fields.Date.today(),
-                'remarks': _('Auto-created from Direct Deposit %s') % self.name,
-                'state': 'paid',
-            })
-            created |= receipt
+    
+            try:
+                receipt = Receipt.create({
+                    'donor_id': self.donor_id.id,
+                    'amount': amount,
+                    'product_id': line.product_id.id,
+                    'payment_type': 'cash',
+                    'date': fields.Date.today(),
+                    'remarks': _('Auto-created from Direct Deposit %s') % self.name,
+                    'state': 'paid',
+                })
+                _logger.info("DD %s - CREATED receipt %s (id=%s) amount=%s state=%s",
+                            self.name, receipt.name, receipt.id, receipt.amount, receipt.state)
+                created |= receipt
+            except Exception as e:
+                _logger.error("DD %s - FAILED to create receipt for line %s: %s", self.name, line.id, e, exc_info=True)
+                raise
     
         return created
-    
+
 
 
     @api.constrains('mobile')
@@ -415,9 +441,10 @@ class DirectDeposit(models.Model):
 
         return applied_any
 
+
     def action_clear(self):
-        # Advance-donation "Donor A/c" lines: create the paid receipt(s)
-        # only now, at clearing time - not when the deposit was created.
+        _logger.info("### action_clear called for DD %s ###", self.name)
+    
         self._create_advance_donation_receipts()
     
         if self._apply_microfinance_payment():
@@ -432,7 +459,7 @@ class DirectDeposit(models.Model):
     
         self.state = 'clear'
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-    
+
 
 
     def action_not_clear(self):
