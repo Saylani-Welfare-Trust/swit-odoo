@@ -48,7 +48,6 @@ class POSOrder(models.Model):
                 'bank_name': ui_order.get('bank_name') or False,
                 'name': cheque_number,
                 'date': parsed_date,
-                'case_number': ui_order.get('case_number') or False,
             })
             res['pos_cheque_id'] = cheque.id
 
