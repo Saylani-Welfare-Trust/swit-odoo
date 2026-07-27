@@ -79,17 +79,8 @@ class AdvanceDonation(models.Model):
     direct_deposit_id = fields.Many2one(
         'direct.deposit',
         string='Direct Deposit',
-        help="Direct Deposit record that created this receipt",
-        ondelete='set null'  # If DD is deleted, keep the receipt
+        help="Direct Deposit record that created this receipt"
     )
-    
-    # Also add any other relationship fields you need
-    direct_deposit_line_id = fields.Many2one(
-        'direct.deposit.line',
-        string='Direct Deposit Line',
-        help="Specific direct deposit line that created this receipt"
-    )
-    
 
     @api.model
     def create(self, vals):
