@@ -23,6 +23,48 @@ class POSCheque(models.Model):
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
 
+    def _get_donor_account_order_lines(self):
+        """Find the linked POS order's lines for the 'Donor A/c' product."""
+        self.ensure_one()
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            return self.env['pos.order.line']
+    
+        return pos_order.lines.filtered(
+            lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
+        )
+    
+        
+    def _create_advance_donation_receipts(self):
+        """For any 'Donor A/c' line on the linked POS order, create a paid
+        advance.donation.receipt. Only runs when the cheque is cleared -
+        not when the cheque was first created/recorded."""
+        self.ensure_one()
+        donor_lines = self._get_donor_account_order_lines()
+        Receipt = self.env['advance.donation.receipt']
+        created = Receipt
+    
+        for line in donor_lines:
+            amount = line.price_subtotal_incl
+            if amount <= 0:
+                continue
+    
+            receipt = Receipt.create({
+                'donor_id': self.donor_id.id,
+                'amount': amount,
+                'product_id': line.product_id.id,
+                'payment_type': 'cheque',
+                'cheque_number': self.name,
+                'cheque_date': self.date,
+                'date': fields.Date.today(),
+                'remarks': 'Auto-created from POS Cheque %s' % self.name,
+                'state': 'paid',
+            })
+            created |= receipt
+    
+        return created
+    
+
     @api.depends('name')
     def _set_details(self):
         for rec in self:
@@ -109,6 +151,8 @@ class POSCheque(models.Model):
         return microfinance_line
 
     def action_clear(self):
+        self._create_advance_donation_receipts()
+    
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'cleared'})
@@ -120,6 +164,7 @@ class POSCheque(models.Model):
                     'payment_date': fields.Date.today(),
                 })
         self.state = 'clear'
+    
 
     def action_bounce(self):
         if self.bounce_count >= 3:

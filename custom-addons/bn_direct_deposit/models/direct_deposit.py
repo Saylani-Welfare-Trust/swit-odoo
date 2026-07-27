@@ -85,7 +85,7 @@ class DirectDeposit(models.Model):
                 'donor_id': self.donor_id.id,
                 'amount': amount,
                 'product_id': line.product_id.id,
-                'payment_type': 'cash',
+                'payment_type': 'cheque',
                 'date': fields.Date.today(),
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',
