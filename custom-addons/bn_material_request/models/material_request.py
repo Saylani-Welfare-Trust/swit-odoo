@@ -270,7 +270,6 @@ class MemberApproval(models.Model):
             raise ValidationError(_('CFO Remarks are required to approve.'))
         self.cfo_approved = True
         self._check_committee_approval()
-
         return True
 
     def action_coo_approve(self):
@@ -282,7 +281,6 @@ class MemberApproval(models.Model):
             raise ValidationError(_('COO Remarks are required to approve.'))
         self.coo_approved = True
         self._check_committee_approval()
-
         return True
 
     def _check_committee_approval(self):
