@@ -14,7 +14,15 @@ class MemberApprovalLine(models.Model):
     quantity = fields.Float('Quantity', default=1.0, required=True)
     unit_price = fields.Float('Unit Price', related='product_id.lst_price', store=True)
     subtotal = fields.Float('Subtotal', compute='_compute_subtotal', store=True)
+
     
+    allowed_product_category_ids = fields.Many2many(
+        'stock.location',
+        related='user_id.allowed_product_category_ids',
+        string='Allowed Locations',
+        readonly=True,
+        store=False
+    )
 
     @api.depends('quantity', 'unit_price')
     def _compute_subtotal(self):
