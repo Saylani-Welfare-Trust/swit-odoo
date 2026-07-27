@@ -106,32 +106,57 @@ class POSCheque(models.Model):
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
                 
-                # FIX: Use session's config's analytic_account_id or skip if not available
-                if pos_order.session_id and pos_order.session_id.config_id:
-                    rec.analytic_account_id = pos_order.session_id.config_id.analytic_account_id.id or False
+                # Try to get analytic account from various possible locations
+                # First, check if user's employee has an analytic account
+                analytic_account = None
+                if pos_order.user_id and pos_order.user_id.employee_id:
+                    employee = pos_order.user_id.employee_id
+                    # Check if employee has analytic_account_id field
+                    if hasattr(employee, 'analytic_account_id') and employee.analytic_account_id:
+                        analytic_account = employee.analytic_account_id
                 
+                # If not found, try to get from POS session or config
+                if not analytic_account and pos_order.session_id:
+                    session = pos_order.session_id
+                    # Some custom modules add analytic_account_id to pos.session or pos.config
+                    if hasattr(session, 'analytic_account_id') and session.analytic_account_id:
+                        analytic_account = session.analytic_account_id
+                    elif session.config_id:
+                        config = session.config_id
+                        if hasattr(config, 'analytic_account_id') and config.analytic_account_id:
+                            analytic_account = config.analytic_account_id
+                
+                # If still not found, try to get from company
+                if not analytic_account and pos_order.company_id:
+                    company = pos_order.company_id
+                    if hasattr(company, 'analytic_account_id') and company.analytic_account_id:
+                        analytic_account = company.analytic_account_id
+                
+                rec.analytic_account_id = analytic_account.id if analytic_account else None
                 rec.amount = pos_order.amount_total
                 
-                # Generate order reference
+                # Generate order reference safely
                 try:
                     branch_code = 'N/A'
-                    company = 'N/A'
+                    company_abbr = 'N/A'
                     
                     # Try to get branch code from user's employee
-                    if pos_order.user_id and pos_order.user_id.employee_id and pos_order.user_id.employee_id.analytic_account_id:
-                        branch_code = pos_order.user_id.employee_id.analytic_account_id.code or 'N/A'
+                    if pos_order.user_id and pos_order.user_id.employee_id:
+                        employee = pos_order.user_id.employee_id
+                        if hasattr(employee, 'analytic_account_id') and employee.analytic_account_id:
+                            branch_code = employee.analytic_account_id.code or 'N/A'
                     
                     # Get company abbreviation
                     if pos_order.company_id:
-                        company = pos_order.company_id.name[:3].upper()
+                        company_abbr = pos_order.company_id.name[:3].upper() if pos_order.company_id.name else 'N/A'
                     
                     # Get order year
-                    order_date = pos_order.date_order.year if pos_order.date_order else ''
+                    order_year = pos_order.date_order.year if pos_order.date_order else ''
                     
                     # Get order reference suffix
-                    order_ref = pos_order.name[-4:] if pos_order.name else '0000'
+                    order_suffix = pos_order.name[-4:] if pos_order.name and len(pos_order.name) >= 4 else '0000'
                     
-                    rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
+                    rec.order_reference = f'{branch_code}-{company_abbr}-{order_year}-{order_suffix}'
                 except Exception as e:
                     _logger.warning(f"Error generating order reference for cheque {rec.name}: {e}")
                     rec.order_reference = pos_order.name or ''
@@ -157,6 +182,17 @@ class POSCheque(models.Model):
                                     )
                                     if security_deposit:
                                         rec.security_deposit_id = security_deposit.id
+                        
+                        # Check for welfare (add this if needed)
+                        welfare_data = extra_data.get('welfare', {})
+                        if welfare_data:
+                            welfare_request_no = welfare_data.get('welfare_request_no')
+                            if welfare_request_no:
+                                welfare = self.env['welfare'].search(
+                                    [('name', '=', welfare_request_no)], limit=1
+                                )
+                                if welfare:
+                                    rec.welfare_id = welfare.id
                     except (json.JSONDecodeError, TypeError) as e:
                         _logger.warning(f"Error parsing extra_data for cheque {rec.name}: {e}")
 
@@ -179,6 +215,7 @@ class POSCheque(models.Model):
                 rec.reference_type = 'medical_equipment'
             else:
                 rec.reference_type = 'none'
+
 
     def _get_microfinance_pdc_line(self):
         """Get the PDC line linked to this cheque"""
