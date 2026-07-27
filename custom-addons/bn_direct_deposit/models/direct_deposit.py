@@ -443,7 +443,21 @@ class DirectDeposit(models.Model):
 
 
     def action_clear(self):
-        _logger.info("### action_clear called for DD %s ###", self.name)
+        # --- TEMPORARY DEBUG BLOCK: remove once the donor-line detection is confirmed working ---
+        debug_lines = [
+            (l.id, l.product_id.id if l.product_id else None, repr(l.product_id.name) if l.product_id else None)
+            for l in self.direct_deposit_line_ids
+        ]
+        debug_donor_lines = self.direct_deposit_line_ids.filtered(
+            lambda l: l.product_id and l.product_id.name == 'Donor A/c'
+        )
+        raise ValidationError(
+            "DEBUG - action_clear reached for DD %s\n\n"
+            "All lines (line_id, product_id, repr(product name)):\n%s\n\n"
+            "Donor lines matched: %s"
+            % (self.name, debug_lines, debug_donor_lines.ids)
+        )
+        # --- END TEMPORARY DEBUG BLOCK ---
     
         self._create_advance_donation_receipts()
     
