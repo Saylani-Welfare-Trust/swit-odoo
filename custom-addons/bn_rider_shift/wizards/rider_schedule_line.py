@@ -114,6 +114,7 @@ class RiderScheduleLine(models.TransientModel):
 
         # Hide button after complaint generation
         self.is_complain_generated = True
+        self.donation_box_registration_installation_id.state = 'close'
 
         # Mark related rider collection
         if self.rider_collection_id:
