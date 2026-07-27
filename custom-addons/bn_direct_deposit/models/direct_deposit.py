@@ -62,6 +62,11 @@ class DirectDeposit(models.Model):
         default=False,
         help="If checked, creates advance donation receipts when cleared"
     )
+    advance_donation_receipt_ids = fields.One2many(
+        'advance.donation.receipt',
+        'direct_deposit_id',
+        string="Advance Donation Receipts"
+    )
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
