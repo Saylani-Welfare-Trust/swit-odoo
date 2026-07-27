@@ -52,6 +52,42 @@ class DirectDeposit(models.Model):
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
 
+    def _get_donor_account_lines(self):
+        return self.direct_deposit_line_ids.filtered(
+            lambda l: l.product_id and l.product_id.name == 'Donor A/c'
+        )
+    
+    def _get_non_donor_lines(self):
+        donor_lines = self._get_donor_account_lines()
+        return self.direct_deposit_line_ids - donor_lines
+    
+    def _create_advance_donation_receipts(self):
+        """For every 'Donor A/c' line on this direct deposit, create a
+        paid advance.donation.receipt. Only runs when the deposit is
+        cleared - not at creation time."""
+        self.ensure_one()
+        donor_lines = self._get_donor_account_lines()
+        Receipt = self.env['advance.donation.receipt']
+        created = Receipt
+    
+        for line in donor_lines:
+            amount = line.amount * line.quantity
+            if amount <= 0:
+                continue
+            receipt = Receipt.create({
+                'donor_id': self.donor_id.id,
+                'amount': amount,
+                'product_id': line.product_id.id,
+                'payment_type': 'cash',
+                'date': fields.Date.today(),
+                'remarks': _('Auto-created from Direct Deposit %s') % self.name,
+                'state': 'paid',
+            })
+            created |= receipt
+    
+        return created
+    
+
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
@@ -198,12 +234,16 @@ class DirectDeposit(models.Model):
     
     def _create_invoice(self):
         self.ensure_one()
-
+    
+        non_donor_lines = self._get_non_donor_lines()
+        if not non_donor_lines:
+            return False
+    
         if not self.bank_id:
             raise ValidationError(_("Please select a bank for the direct deposit."))
-
+    
         journal = self.env['account.journal'].browse(self.bank_id.id)
-
+    
         move_vals = {
             "move_type": "entry",
             "date": fields.Date.today(),
@@ -211,21 +251,18 @@ class DirectDeposit(models.Model):
             "journal_id": journal.id,
             "line_ids": [],
         }
-
+    
         line_vals = []
-
         total_amount = 0.0
-
-        for line in self.direct_deposit_line_ids:
-
-            # CREDIT LINE (One per product line)
+    
+        for line in non_donor_lines:
             credit_account = (
                 line.product_id.property_account_income_id
                 or line.product_id.categ_id.property_account_income_categ_id
             )
             if not credit_account:
                 raise ValidationError(_("Missing credit account for product %s") % line.product_id.name)
-
+    
             credit_line = (0, 0, {
                 "name": credit_account.name,
                 "account_id": credit_account.id,
@@ -235,18 +272,16 @@ class DirectDeposit(models.Model):
                 "date_maturity": fields.Date.today(),
             })
             line_vals.append(credit_line)
-
             total_amount += line.amount
-
-        prefix=self.env['direct.deposit.account.setup'].search([], limit=1)
-        # NOW ADD ONLY ONE DEBIT LINE
+    
+        prefix = self.env['direct.deposit.account.setup'].search([], limit=1)
         receivable_account = self.env['account.account'].search([
             ('code', '=', prefix.name),
             ('company_id', '=', self.env.company.id)
         ], limit=1)
         if not receivable_account:
             raise ValidationError(_("Missing debit account for the direct deposit."))
-
+    
         debit_line = (0, 0, {
             "name": receivable_account.name,
             "account_id": receivable_account.id,
@@ -256,40 +291,33 @@ class DirectDeposit(models.Model):
             "date_maturity": fields.Date.today(),
         })
         line_vals.append(debit_line)
-
+    
         move_vals["line_ids"] = line_vals
-
         move = self.env["account.move"].create(move_vals)
-
-        # journal entry is parked (not posted)
-        # move.action_post()  # uncomment if you want posting
-
         self.move_id = move.id
+    
 
     def _create_stock_picking(self):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
-
+    
         picking_type = self.env.ref('stock.picking_type_out')
         destination_location = self.env.ref('stock.stock_location_customers')
-
-        # ✅ Filter only storable products
-        product_lines = self.direct_deposit_line_ids.filtered(
+    
+        product_lines = self._get_non_donor_lines().filtered(
             lambda l: l.product_id and l.product_id.detailed_type == 'product'
         )
-
-        # ❌ Do nothing if no product-type lines
+    
         if not product_lines:
             return False
-
-        # ✅ Create picking ONLY if product lines exist
+    
         picking = StockPicking.create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': destination_location.id,
             'origin': self.name,
         })
-
+    
         for line in product_lines:
             StockMove.create({
                 'name': line.product_id.display_name,
@@ -301,12 +329,14 @@ class DirectDeposit(models.Model):
                 'location_id': picking.location_id.id,
                 'location_dest_id': destination_location.id,
             })
-
+    
         picking.action_confirm()
         picking.action_assign()
         picking.button_validate()
-
+    
         self.picking_id = picking.id
+    
+    
 
     def _get_target_microfinance(self):
         # Only use the microfinance record directly linked to this DD record,
@@ -386,47 +416,45 @@ class DirectDeposit(models.Model):
         return applied_any
 
     def action_clear(self):
+        # Advance-donation "Donor A/c" lines: create the paid receipt(s)
+        # only now, at clearing time - not when the deposit was created.
+        self._create_advance_donation_receipts()
+    
         if self._apply_microfinance_payment():
             self.state = 'clear'
             return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-
+    
         if self.transfer_to_dhs:
             self.action_transfer_to_dhs()
         else:
             self._create_invoice()
             self._create_stock_picking()
-
+    
         self.state = 'clear'
-        # Auto-print report when transitioning to clear (duplicate watermark)
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
+    
+
 
     def action_not_clear(self):
         self.state = 'not_clear'
 
     def action_transfer_to_dhs(self):
-        """Transfer confirmed direct deposit payment to Donation Home Service
-        
-        Splits lines by product type:
-        - Service products → DHS with state 'gate_in'
-        - Consumable products → DHS with state 'draft'
-        - Both types → Creates separate DHS records for each
-        """
         self.ensure_one()
-        
+    
         DHS = self.env['donation.home.service']
         DHSLine = self.env['donation.home.service.line']
-        
-        # Separate lines by product type
-        service_lines = self.direct_deposit_line_ids.filtered(
+    
+        non_donor_lines = self._get_non_donor_lines()
+    
+        service_lines = non_donor_lines.filtered(
             lambda l: l.product_id.type == 'service'
         )
-        consu_lines = self.direct_deposit_line_ids.filtered(
+        consu_lines = non_donor_lines.filtered(
             lambda l: l.product_id.detailed_type == 'product'
         )
-        
+    
         created_dhs_ids = []
-        
-        # Create DHS record for service products (gate_in state)
+    
         if service_lines:
             service_amount = sum(line.amount for line in service_lines)
             dhs_service = DHS.create({
@@ -436,8 +464,6 @@ class DirectDeposit(models.Model):
                 'direct_deposit_id': self.id,
                 'state': 'gate_in',
             })
-            
-            # Create DHS lines for service products
             for line in service_lines:
                 DHSLine.create({
                     'donation_home_service_id': dhs_service.id,
@@ -445,10 +471,8 @@ class DirectDeposit(models.Model):
                     'quantity': line.quantity,
                     'amount': line.amount,
                 })
-            
             created_dhs_ids.append(dhs_service.id)
-        
-        # Create DHS record for consumable products (draft state)
+    
         if consu_lines:
             consu_amount = sum(line.amount for line in consu_lines)
             dhs_consu = DHS.create({
@@ -459,8 +483,6 @@ class DirectDeposit(models.Model):
                 'service_charges': self.service_charges,
                 'state': 'draft',
             })
-            
-            # Create DHS lines for consumable products
             for line in consu_lines:
                 DHSLine.create({
                     'donation_home_service_id': dhs_consu.id,
@@ -468,28 +490,28 @@ class DirectDeposit(models.Model):
                     'quantity': line.quantity,
                     'amount': line.amount,
                 })
-            
             created_dhs_ids.append(dhs_consu.id)
+    
         self.state = 'transferred'
         if len(self.dhs_ids) == 1:
-                # Open single DHS record
-                return {
-                    "type": "ir.actions.act_window",
-                    "res_model": "donation.home.service",
-                    "view_mode": "form",
-                    "res_id": self.dhs_ids.id,   
-                    "target": "current",
-                }
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "donation.home.service",
+                "view_mode": "form",
+                "res_id": self.dhs_ids.id,
+                "target": "current",
+            }
         else:
-                # Show list of DHS records
-                return {
-                    "type": "ir.actions.act_window",
-                    "res_model": "donation.home.service",
-                    "view_mode": "tree,form",
-                    "domain": [('id', 'in', self.dhs_ids.ids)],  
-                    "target": "current",
-                }
-   
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "donation.home.service",
+                "view_mode": "tree,form",
+                "domain": [('id', 'in', self.dhs_ids.ids)],
+                "target": "current",
+            }
+    
+    
+
     def action_show_invoice(self):
         return {
             "name": _("Invoice"),
