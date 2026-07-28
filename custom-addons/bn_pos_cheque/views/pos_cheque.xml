@@ -14,7 +14,6 @@
                 <field name="create_uid" />
                 <field name="create_date" />
                 <field name="name" string="Cheque No." />
-                <field name="against_record_name" string="Against Record"/>
                 <field name="bank_name" />
                 <field name="date" />
                 <field name="bounce_count" />

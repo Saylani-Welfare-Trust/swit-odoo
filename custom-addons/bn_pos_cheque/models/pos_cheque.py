@@ -22,7 +22,6 @@ class POSCheque(models.Model):
     date = fields.Date('Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
-    against_record_name = fields.Char('Against Record', compute="_set_details", store=True)
 
     def _get_donor_account_order_lines(self):
         """Find the linked POS order's lines for the 'Donor A/c' product."""
@@ -30,11 +29,12 @@ class POSCheque(models.Model):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
         if not pos_order:
             return self.env['pos.order.line']
-
+    
         return pos_order.lines.filtered(
             lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
         )
-
+    
+        
     def _create_advance_donation_receipts(self):
         """For any 'Donor A/c' line on the linked POS order, create a paid
         advance.donation.receipt. Only runs when the cheque is cleared -
@@ -43,12 +43,12 @@ class POSCheque(models.Model):
         donor_lines = self._get_donor_account_order_lines()
         Receipt = self.env['advance.donation.receipt']
         created = Receipt
-
+    
         for line in donor_lines:
             amount = line.price_subtotal_incl
             if amount <= 0:
                 continue
-
+    
             receipt = Receipt.create({
                 'donor_id': self.donor_id.id,
                 'amount': amount,
@@ -61,8 +61,9 @@ class POSCheque(models.Model):
                 'state': 'paid',
             })
             created |= receipt
-
+    
         return created
+    
 
     @api.depends('name')
     def _set_details(self):
@@ -71,51 +72,16 @@ class POSCheque(models.Model):
             rec.analytic_account_id = None
             rec.amount = 0
             rec.order_reference = ''
-            rec.against_record_name = ''
             pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
-
-                if 'analytic_account_id' in pos_order._fields:
-                    rec.analytic_account_id = pos_order.analytic_account_id.id
-
+                rec.analytic_account_id = pos_order.analytic_account_id.id
                 rec.amount = pos_order.amount_total
-
                 branch_code = pos_order.user_id.employee_id.analytic_account_id.code
                 company = pos_order.company_id.name[:3].upper()
                 order_date = pos_order.date_order and pos_order.date_order.year or ''
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
-
-                rec.against_record_name = rec._get_against_record_name(pos_order)
-
-    def _get_against_record_name(self, pos_order):
-        """Return the name/sequence (e.g. 'MF/00023') of whichever source
-        record - Microfinance, Medical Equipment, Welfare, Direct Deposit,
-        Donation Home Service, Qurbani, Advance Donation - the linked POS
-        order was raised against.
-
-        IMPORTANT: `candidate_fields` must match the real Many2one field
-        names on pos.order that store this link in your other modules
-        (bn_microfinance, bn_medical_equipment, bn_welfare, etc). Update
-        this list with the correct names if these guesses are wrong.
-        """
-        self.ensure_one()
-        candidate_fields = [
-            'microfinance_id',
-            'medical_equipment_id',
-            'welfare_id',
-            'direct_deposit_id',
-            'donation_home_service_id',
-            'qurbani_id',
-            'advance_donation_id',
-        ]
-        for field_name in candidate_fields:
-            if field_name in pos_order._fields:
-                record = pos_order[field_name]
-                if record:
-                    return record.name
-        return ''
 
     def _get_microfinance_pdc_line(self):
         """Get the PDC line linked to this cheque"""
@@ -186,7 +152,7 @@ class POSCheque(models.Model):
 
     def action_clear(self):
         self._create_advance_donation_receipts()
-
+    
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'cleared'})
@@ -198,6 +164,7 @@ class POSCheque(models.Model):
                     'payment_date': fields.Date.today(),
                 })
         self.state = 'clear'
+    
 
     def action_bounce(self):
         if self.bounce_count >= 3:
