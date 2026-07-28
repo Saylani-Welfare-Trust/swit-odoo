@@ -14,7 +14,6 @@ class POSCheque(models.Model):
 
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_details", store=True)
     name = fields.Char('Cheque Number')
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
@@ -23,6 +22,46 @@ class POSCheque(models.Model):
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     against_record_name = fields.Char('Against Record', compute="_set_details", store=True)
+
+    def _get_donor_account_order_lines(self):
+        """Find the linked POS order's lines for the 'Donor A/c' product."""
+        self.ensure_one()
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            return self.env['pos.order.line']
+
+        return pos_order.lines.filtered(
+            lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
+        )
+
+    def _create_advance_donation_receipts(self):
+        """For any 'Donor A/c' line on the linked POS order, create a paid
+        advance.donation.receipt. Only runs when the cheque is cleared -
+        not when the cheque was first created/recorded."""
+        self.ensure_one()
+        donor_lines = self._get_donor_account_order_lines()
+        Receipt = self.env['advance.donation.receipt']
+        created = Receipt
+
+        for line in donor_lines:
+            amount = line.price_subtotal_incl
+            if amount <= 0:
+                continue
+
+            receipt = Receipt.create({
+                'donor_id': self.donor_id.id,
+                'amount': amount,
+                'product_id': line.product_id.id,
+                'payment_type': 'cheque',
+                'cheque_number': self.name,
+                'cheque_date': self.date,
+                'date': fields.Date.today(),
+                'remarks': 'Auto-created from POS Cheque %s' % self.name,
+                'state': 'paid',
+            })
+            created |= receipt
+
+        return created
 
     @api.depends('name')
     def _set_details(self):
@@ -71,67 +110,6 @@ class POSCheque(models.Model):
                 if record:
                     return record.name
         return ''
-
-
-    def _get_donor_account_order_lines(self):
-        """Find the linked POS order's lines for the 'Donor A/c' product."""
-        self.ensure_one()
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
-        if not pos_order:
-            return self.env['pos.order.line']
-    
-        return pos_order.lines.filtered(
-            lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
-        )
-    
-        
-    def _create_advance_donation_receipts(self):
-        """For any 'Donor A/c' line on the linked POS order, create a paid
-        advance.donation.receipt. Only runs when the cheque is cleared -
-        not when the cheque was first created/recorded."""
-        self.ensure_one()
-        donor_lines = self._get_donor_account_order_lines()
-        Receipt = self.env['advance.donation.receipt']
-        created = Receipt
-    
-        for line in donor_lines:
-            amount = line.price_subtotal_incl
-            if amount <= 0:
-                continue
-    
-            receipt = Receipt.create({
-                'donor_id': self.donor_id.id,
-                'amount': amount,
-                'product_id': line.product_id.id,
-                'payment_type': 'cheque',
-                'cheque_number': self.name,
-                'cheque_date': self.date,
-                'date': fields.Date.today(),
-                'remarks': 'Auto-created from POS Cheque %s' % self.name,
-                'state': 'paid',
-            })
-            created |= receipt
-    
-        return created
-    
-
-    @api.depends('name')
-    def _set_details(self):
-        for rec in self:
-            rec.donor_id = None
-            rec.analytic_account_id = None
-            rec.amount = 0
-            rec.order_reference = ''
-            pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
-            if pos_order:
-                rec.donor_id = pos_order.partner_id.id
-                rec.analytic_account_id = pos_order.analytic_account_id.id
-                rec.amount = pos_order.amount_total
-                branch_code = pos_order.user_id.employee_id.analytic_account_id.code
-                company = pos_order.company_id.name[:3].upper()
-                order_date = pos_order.date_order and pos_order.date_order.year or ''
-                order_ref = pos_order.name and pos_order.name[-4:] or '0000'
-                rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
     def _get_microfinance_pdc_line(self):
         """Get the PDC line linked to this cheque"""
@@ -202,7 +180,7 @@ class POSCheque(models.Model):
 
     def action_clear(self):
         self._create_advance_donation_receipts()
-    
+
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'cleared'})
@@ -214,7 +192,6 @@ class POSCheque(models.Model):
                     'payment_date': fields.Date.today(),
                 })
         self.state = 'clear'
-    
 
     def action_bounce(self):
         if self.bounce_count >= 3:
