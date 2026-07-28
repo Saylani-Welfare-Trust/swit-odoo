@@ -68,6 +68,12 @@ class MedicalEquipment(models.Model):
         store=True, readonly=False,
         inverse='_inverse_country_code_id'
     )
+    area = fields.Many2one(
+        related='donee_id.area', 
+        string="Area", 
+        store=True, 
+        readonly=False
+    )
     mobile = fields.Char(
         related='donee_id.mobile', string="Mobile No.", 
         store=True, size=10, readonly=False,
@@ -170,37 +176,54 @@ class MedicalEquipment(models.Model):
 
     def _inverse_mobile(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.mobile = rec.mobile
+            elif rec.donee_id:
+                # If registered, keep the mobile from donee
+                rec.mobile = rec.donee_id.mobile
+
     def _inverse_city(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.city = rec.city
+            elif rec.donee_id:
+                rec.city = rec.donee_id.city
 
     def _inverse_street(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.street = rec.street
+            elif rec.donee_id:
+                rec.street = rec.donee_id.street
 
     def _inverse_cnic_no(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.cnic_no = rec.cnic_no
+            elif rec.donee_id:
+                rec.cnic_no = rec.donee_id.cnic_no
 
     def _inverse_gender(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.gender = rec.gender
+            elif rec.donee_id:
+                rec.gender = rec.donee_id.gender
 
     def _inverse_date_of_birth(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.date_of_birth = rec.date_of_birth
+            elif rec.donee_id:
+                rec.date_of_birth = rec.donee_id.date_of_birth
 
     def _inverse_country_code_id(self):
         for rec in self:
-            if rec.donee_id:
+            if rec.donee_id and rec.donee_id.state != 'register':
                 rec.donee_id.country_code_id = rec.country_code_id.id
+            elif rec.donee_id:
+                rec.country_code_id = rec.donee_id.country_code_id
+
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -276,14 +299,20 @@ class MedicalEquipment(models.Model):
             if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
                 raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
 
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
+    # @api.constrains('mobile')
+    # def _check_mobile_number(self):
+    #         for rec in self:
+    #             if rec.donee_id and rec.donee_id.state != 'register':
+    #                 existing_partner = self.env['res.partner'].search([
+    #                     ('mobile', '=', rec.mobile),
+    #                     ('id', '!=', rec.donee_id.id),
+    #                     ('state', '=', 'register'),
+    #                     ('category_id.name', '=', 'Donee'),
+    #                 ], limit=1)
+    #                 if existing_partner:
+    #                     raise ValidationError(
+    #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
+    #                     )
     def action_reject(self):
         self.state = 'closed'
 
@@ -381,16 +410,32 @@ class MedicalEquipment(models.Model):
 
 
     def write(self, vals):
+        # Handle the scenario where mobile is being set but donee is already registered
+        if vals.get('donee_id') or self.donee_id:
+            donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
+            if donee_id:
+                donee = self.env['res.partner'].browse(donee_id)
+                if donee and donee.state == 'register':
+                    # Remove related fields that would cause duplicate validation
+                    fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+                    for field in fields_to_remove:
+                        if field in vals:
+                            _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+                            del vals[field]
+                    if not vals:
+                        return True
+
+        # Handle medical equipment reference logic
         if vals.get('medical_equipment_reference_id'):
             vals['actual_deposit_percentage'] = 0.0
             vals.setdefault('initial_deposit_percentage', 0.0)
 
+        # Handle actual_deposit_percentage validation
         if 'actual_deposit_percentage' in vals:
             for record in self:
                 new_value = vals.get('actual_deposit_percentage')
                 initial_value = record.initial_deposit_percentage
 
-                # Always valid range
                 if new_value < 0 or new_value > 100:
                     raise ValidationError("Value must be between 0 and 100.")
 
@@ -400,7 +445,8 @@ class MedicalEquipment(models.Model):
                             "You cannot change value below 50 because initial value was 50 or above."
                         )
 
-        return super().write(vals)
+        return super(MedicalEquipment, self).write(vals)
+
 
             
     def is_valid_cnic_format(self, cnic):
@@ -427,20 +473,62 @@ class MedicalEquipment(models.Model):
                 total += line.security_deposit * line.quantity
             record.total_amount = total
 
+    def action_register_donee(self):
+        """
+        Register the donee with area validation
+        """
+        self.ensure_one()
+        
+        # Validate area is selected
+        if not self.donee_id.area:
+            raise ValidationError(
+                _('Please select an Area before registering the Donee.')
+            )
+        
+        # Optional: Verify the area is active in master setup
+        area_obj = self.env['area']
+        area_exists = area_obj.search([
+            ('id', '=', int(self.donee_id.area)),  # Convert selection value to int
+            ('active_status', '=', True)
+        ])
+        
+        if not area_exists:
+            raise ValidationError(
+                _('Selected Area is not valid or inactive. Please select a valid area.')
+            )
+        
+        # Call partner's register method
+        try:
+            self.donee_id.action_register()
+            self.is_donee_register = True
+        except ValidationError as e:
+            # Re-raise with more context if needed
+            raise ValidationError(
+                _('Failed to register Donee: %s') % str(e)
+            )
+    
     @api.depends('donee_id')
     def _set_is_donee_register(self):
         for rec in self:
             rec.is_donee_register = False
-
             if rec.donee_id and rec.donee_id.state == 'register':
                 rec.is_donee_register = True
-
-    def action_register_donee(self):
-        self.donee_id.action_register()
-        self.is_donee_register = True
+    
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
+        # Handle the scenario where mobile is being set but donee is already registered
+        if vals.get('donee_id'):
+            donee = self.env['res.partner'].browse(vals.get('donee_id'))
+            if donee and donee.state == 'register':
+                # Remove mobile from vals to prevent duplicate validation
+                # The mobile is already in the donee record
+                fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+                for field in fields_to_remove:
+                    if field in vals:
+                        _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+                        del vals[field]
+
+        if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
         if vals.get('medical_equipment_reference_id'):
@@ -449,7 +537,25 @@ class MedicalEquipment(models.Model):
         elif 'actual_deposit_percentage' in vals:
             vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
 
-        return super(MedicalEquipment, self).create(vals)
+        record = super(MedicalEquipment, self).create(vals)
+        
+        # If donee is selected and registered, check portal status
+        if vals.get('donee_id'):
+            donee = self.env['res.partner'].browse(vals.get('donee_id'))
+            if donee and donee.state == 'register':
+                # Try to check if donee exists in portal and update portal_donee_id
+                try:
+                    existing_donee = record._check_donee_exists_in_portal()
+                    if existing_donee and existing_donee.get('id'):
+                        record.write({
+                            'portal_donee_id': existing_donee.get('id'),
+                            'portal_sync_status': 'synced'
+                        })
+                        _logger.info(f"Linked existing portal donee {existing_donee.get('id')} to new record {record.id}")
+                except Exception as e:
+                    _logger.warning(f"Could not check portal donee during create: {str(e)}")
+
+        return record
     
     @api.depends('state', 'case_type', 'Portal_acknowledgment')
     def _compute_approval_button_check(self):
@@ -466,6 +572,7 @@ class MedicalEquipment(models.Model):
             )
             # Button visible if either condition is True
             rec.approval_button_check = condition_completed or condition_inquiry
+    
     def action_return(self):  
         """
         Automatically create return picking and update state
@@ -558,6 +665,7 @@ class MedicalEquipment(models.Model):
     def action_approval(self):
         """
         Handle approval based on case type.
+        - 0%: Two approvals (CEO → CFO) with remarks required, then → Security Received
         - 100%: Single CEO approval → Approved (no remarks)
         - 50%: Two approvals (CEO → CFO) with remarks required for both
         - Below 50%: Same as 50% but also requires welfare portal & acknowledgment
@@ -568,8 +676,11 @@ class MedicalEquipment(models.Model):
         case_type = self.case_type
         current_state = self.state
         
+        # Check if this is a 0% deposit case (medical equipment reference)
+        is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
+        
         # Helper to check if case requires two approvals
-        requires_two_approvals = case_type in ['50_percent', 'below_50_percent', 'reference']
+        requires_two_approvals = case_type in ['50_percent', 'below_50_percent', 'reference'] or is_zero_percent
         requires_remarks_ceo = case_type in ['50_percent', 'below_50_percent']
         requires_remarks_cfo = case_type in ['50_percent', 'below_50_percent']
         
@@ -583,30 +694,39 @@ class MedicalEquipment(models.Model):
         # State transitions
         if current_state in ['completed', 'inquiry']:
             # First approval: from completed/inquiry to ceo_approval
+            # For 0% cases, also require remarks_approval1
             if requires_remarks_ceo and not self.remarks_approval1:
                 raise ValidationError('Approval(1) remarks are required for this case type.')
+            if is_zero_percent and not self.remarks_approval1:
+                raise ValidationError('Approval(1) remarks are required for 0% deposit cases.')
             self.write({'state': 'ceo_approval'})
             
         elif current_state == 'ceo_approval':
-            # Second approval: from ceo_approval to cfo_approval or approved
+            # Second approval: from ceo_approval to cfo_approval or approved or sd_received
             if requires_two_approvals:
                 # Need CFO approval
                 if requires_remarks_cfo and not self.remarks_approval2:
                     raise ValidationError('Approval(2) remarks are required for this case type.')
-                self.write({'state': 'cfo_approval'})
+                if is_zero_percent and not self.remarks_approval2:
+                    raise ValidationError('Approval(2) remarks are required for 0% deposit cases.')
+                
+                # For 0% cases, after CFO approval go to security received
+                if is_zero_percent:
+                    self.write({'state': 'sd_received'})
+                else:
+                    self.write({'state': 'cfo_approval'})
             else:
                 # 100% case: directly approved
                 self.write({'state': 'cfo_approval'})
                 
         elif current_state == 'cfo_approval':
-            # Final approval to approved
-            self.write({'state': 'cfo_approval'})
+            # Final approval to approved (for non-zero cases)
+            self.write({'state': 'approved'})
             
         else:
             raise ValidationError('This record has already been approved or is in an invalid state.')
-    
+        
         self.approval_count += 1
-    
     
     def action_sync_welfare_portal(self):
         """
@@ -978,18 +1098,44 @@ class MedicalEquipment(models.Model):
             #     app.get('whatsapp') == self.donee_id.mobile):
             #     return app
         return None            
+    
     def action_complete(self):
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
+        
         if self.donee_id and self.donee_id.state != 'register':
             raise ValidationError(_('Donee must be in register state before completing the application.'))
-        else:
-            for product_line in self.medical_equipment_line_ids:
-                for lot in product_line.lot_ids:
-                    if lot.lot_consume:
-                        raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
-                    lot.lot_consume = True
-            self.state = 'completed'
+        
+        # Check if donee is already in portal to avoid duplicate registration
+        if self.donee_id.state == 'register':
+            try:
+                # Check if donee already exists in portal
+                existing_donee = self._check_donee_exists_in_portal()
+                
+                # If donee exists in portal, we don't need to register again
+                if existing_donee and existing_donee.get('id'):
+                    _logger.info(f"Donee {self.donee_id.name} already exists in portal with ID: {existing_donee.get('id')}")
+                    # Just update the portal_donee_id if not set
+                    if not self.portal_donee_id:
+                        self.write({
+                            'portal_donee_id': existing_donee.get('id'),
+                            'portal_sync_status': 'synced'
+                        })
+                else:
+                    # Donee doesn't exist in portal, will be created during sync
+                    _logger.info(f"Donee {self.donee_id.name} not found in portal, will create during sync")
+            except Exception as e:
+                _logger.warning(f"Error checking donee in portal: {str(e)}")
+                # Continue anyway, the sync process will handle it
+        
+        # Process lot consumption
+        for product_line in self.medical_equipment_line_ids:
+            for lot in product_line.lot_ids:
+                if lot.lot_consume:
+                    raise ValidationError(f"Lot {lot.name} has already been consumed. Please select a different lot.")
+                lot.lot_consume = True
+        
+        self.state = 'completed'
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
@@ -1118,21 +1264,77 @@ class MedicalEquipment(models.Model):
         }        
     
     def _check_donee_exists_in_portal(self):
-        """Check if donee already exists in portal"""
-        try:
-            data={
-                    "json":{
-                    "odooId": self.donee_id.id
-                    }
-                }    
-            _logger.info(f"Donee checking query peremeters: {data}")
-            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}','POST', data) # type: ignore
-            # _logger.info(f"Donee found in portal: {result}")
-            # raise UserError(str(result))
-            return result
-        except Exception as e:
-            _logger.info(f"Donee not found in portal: {str(e)}")
+        """Check if donee already exists in portal using multiple criteria"""
+        if not self.donee_id:
             return None
+        
+        try:
+            # Method 1: Check by odooId (most reliable)
+            data = {
+                "json": {
+                    "odooId": self.donee_id.id
+                }
+            }
+            _logger.info(f"Checking donee by odooId: {self.donee_id.id}")
+            result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}', 'POST', data)
+            
+            if result and result.get('id'):
+                _logger.info(f"Donee found by odooId: {result.get('id')}")
+                return result
+            
+            # Method 2: Check by CNIC
+            if self.donee_id.cnic_no:
+                cnic_clean = self.donee_id.cnic_no.replace("-", "")
+                data = {
+                    "json": {
+                        "cnic": cnic_clean
+                    }
+                }
+                _logger.info(f"Checking donee by CNIC: {cnic_clean}")
+                result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}', 'POST', data)
+                
+                if result and result.get('id'):
+                    _logger.info(f"Donee found by CNIC: {result.get('id')}")
+                    # Update odooId mapping if found by CNIC
+                    self._update_donee_odoo_mapping(result.get('id'))
+                    return result
+            
+            # Method 3: Check by mobile/whatsapp
+            if self.donee_id.mobile:
+                data = {
+                    "json": {
+                        "whatsapp": self.donee_id.mobile
+                    }
+                }
+                _logger.info(f"Checking donee by mobile: {self.donee_id.mobile}")
+                result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}', 'POST', data)
+                
+                if result and result.get('id'):
+                    _logger.info(f"Donee found by mobile: {result.get('id')}")
+                    # Update odooId mapping if found by mobile
+                    self._update_donee_odoo_mapping(result.get('id'))
+                    return result
+            
+            _logger.info(f"Donee not found in portal by any criteria")
+            return None
+            
+        except Exception as e:
+            _logger.error(f"Error checking donee in portal: {str(e)}")
+            return None
+
+    def _update_donee_odoo_mapping(self, portal_donee_id):
+        """Update portal mapping for donee if found by alternate criteria"""
+        try:
+            data = {
+                "json": {
+                    "odooId": self.donee_id.id,
+                    "portalId": portal_donee_id
+                }
+            }
+            self._make_sadqa_api_call(f'{self.env.company.update_donee_mapping_endpoint}', 'POST', data)
+            _logger.info(f"Updated donee mapping: Odoo ID {self.donee_id.id} -> Portal ID {portal_donee_id}")
+        except Exception as e:
+            _logger.warning(f"Failed to update donee mapping: {str(e)}")
 
     def _update_sync_status_success(self, result):
         """Update successful sync status"""
@@ -1182,6 +1384,7 @@ class MedicalEquipment(models.Model):
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
             raise e
+    
     def _get_sadqa_api_headers(self):
         """Get API authentication headers"""
         return {
@@ -1235,6 +1438,7 @@ class MedicalEquipment(models.Model):
             else:
                 message += f" | 📋 No applications found"     # type: ignore
         return self._show_notification('Portal Status Check', message, 'info')
+    
     def _search_portal_applications(self):
         """Search for matching applications in portal"""
         try:
@@ -1310,4 +1514,3 @@ class MedicalEquipment(models.Model):
             data
         )
         return result
-    

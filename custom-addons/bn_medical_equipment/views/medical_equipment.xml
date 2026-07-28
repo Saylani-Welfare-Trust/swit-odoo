@@ -111,6 +111,7 @@
                             <field name="age" readonly="1" force_save="1"/>
                             <field name="donee_id" string="Donee" readonly="state != 'draft' or state == 'closed'" options="{'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [3, 4, 8])], 'default_country_code_id': country_code_id, 'default_city': city, 'default_street': street, 'default_cnic_no': cnic_no, 'default_mobile': mobile, 'default_date_of_birth': date_of_birth, 'default_gender': gender}" required="state != 'closed'" />
                             <field name="currency_id" invisible="1"/>
+                            <field name="area" options="{'no_create': True, 'no_edit': True}" />
 
                             <field name="portal_review_notes" readonly="1" />
                             <field name="inquiry_media" widget="html" readonly="state == 'closed'"/>
@@ -183,11 +184,30 @@
             </form>
         </field>
     </record>
-
+    <record id="medical_equipment_view_search" model="ir.ui.view">
+        <field name="name">medical.equipment.view.search</field>
+        <field name="model">medical.equipment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Request No."/>
+                <field name="donee_id"/>
+                <field name="mobile" string="Mobile No."/>
+                <field name="cnic_no" string="CNIC No."/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Completed" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+                <filter string="Closed" name="filter_closed" domain="[('state', '=', 'closed')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Donee" name="group_by_donee" context="{'group_by': 'donee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="medical_equipment_action" model="ir.actions.act_window">
         <field name="name">Medical Equipment</field>
         <field name="res_model">medical.equipment</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="medical_equipment_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...
