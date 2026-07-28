@@ -11,7 +11,7 @@ class VendorSelectionWizard(models.TransientModel):
     source_requisition_id = fields.Many2one('purchase.requisition', string='Source Purchase Requisition', 
                                      help='Original Purchase Requisition to copy products from')
     vendor_ids = fields.Many2many('res.partner', string='Vendors', 
-                                   domain="[('supplier_rank', '>', 0)]",
+                                   domain="[('category_id.name', '=', 'Vendor')]",
                                    help='Select multiple vendors to create RFQs')
     vendor_count = fields.Integer(compute='_compute_vendor_count', string='Selected Vendors')
     
