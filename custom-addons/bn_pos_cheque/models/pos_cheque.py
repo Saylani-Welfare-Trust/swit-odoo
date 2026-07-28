@@ -14,6 +14,7 @@ class POSCheque(models.Model):
 
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_details", store=True)
     name = fields.Char('Cheque Number')
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
@@ -74,13 +75,18 @@ class POSCheque(models.Model):
             pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
-                rec.analytic_account_id = pos_order.analytic_account_id.id
+
+                if 'analytic_account_id' in pos_order._fields:
+                    rec.analytic_account_id = pos_order.analytic_account_id.id
+
                 rec.amount = pos_order.amount_total
+
                 branch_code = pos_order.user_id.employee_id.analytic_account_id.code
                 company = pos_order.company_id.name[:3].upper()
                 order_date = pos_order.date_order and pos_order.date_order.year or ''
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
+
                 rec.against_record_name = rec._get_against_record_name(pos_order)
 
     def _get_against_record_name(self, pos_order):
