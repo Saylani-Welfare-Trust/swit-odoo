@@ -67,14 +67,14 @@ class POSCheque(models.Model):
     def _set_details(self):
         for rec in self:
             rec.donor_id = None
-            # rec.analytic_account_id = None
+            rec.analytic_account_id = None
             rec.amount = 0
             rec.order_reference = ''
             rec.against_record_name = ''
             pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
-                # rec.analytic_account_id = pos_order.analytic_account_id.id
+                rec.analytic_account_id = pos_order.analytic_account_id.id
                 rec.amount = pos_order.amount_total
                 branch_code = pos_order.user_id.employee_id.analytic_account_id.code
                 company = pos_order.company_id.name[:3].upper()

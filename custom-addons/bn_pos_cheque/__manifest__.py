@@ -8,6 +8,7 @@
     'depends': [
         'account',
         'bn_pos_custom_action',
+        'bn_pos_order'
     ],
     'data': [
         'security/group.xml',
