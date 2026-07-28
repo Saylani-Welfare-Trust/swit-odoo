@@ -72,7 +72,8 @@ class MedicalEquipment(models.Model):
         related='donee_id.area', 
         string="Area", 
         store=True, 
-        readonly=False
+        readonly=False,
+        inverse='_inverse_area'
     )
     mobile = fields.Char(
         related='donee_id.mobile', string="Mobile No.", 
@@ -181,6 +182,13 @@ class MedicalEquipment(models.Model):
             elif rec.donee_id:
                 # If registered, keep the mobile from donee
                 rec.mobile = rec.donee_id.mobile
+    def _inverse_area(self):
+        for rec in self:
+            if rec.donee_id and rec.donee_id.state != 'register':
+                rec.donee_id.area = rec.area
+            elif rec.donee_id:
+                # If registered, keep the mobile from donee
+                rec.area = rec.donee_id.area
 
     def _inverse_city(self):
         for rec in self:
