@@ -14,9 +14,11 @@
                 <field name="create_uid" />
                 <field name="create_date" />
                 <field name="name" string="Cheque No." />
+                <field name="against_record_name" string="Against Record"/>
                 <field name="bank_name" />
                 <field name="date" />
                 <field name="bounce_count" />
+                
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" decoration-danger="state == 'cancel'" />
 
                 <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
