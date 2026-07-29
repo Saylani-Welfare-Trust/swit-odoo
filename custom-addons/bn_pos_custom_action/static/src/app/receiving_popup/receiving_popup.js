@@ -828,26 +828,21 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     async handleRecordFound(record, selectedOrder) {
         if (this.action_type === 'dhs') {
-            // Process all record components
             await this.processDHSLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
             await this.processPartner(record, selectedOrder);
-
             super.confirm();
         }
-        
-        if (this.action_type === 'me' ) {
-            // Process all record components
-            await this.processEquipmentLines(record, selectedOrder);
-            this.addExtraOrderData(selectedOrder, record);
-            await this.processPartner(record, selectedOrder);
 
+        if (this.action_type === 'me') {
+            const equipmentLineIds = await this.processEquipmentLines(record, selectedOrder);
+            this.addExtraOrderData(selectedOrder, record, equipmentLineIds);   // <-- pass line ids through
+            await this.processPartner(record, selectedOrder);
             super.confirm();
         }
 
         return record.state;
     }
-
     /**
      * Handle record not found scenario
      */
@@ -924,22 +919,36 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.notifyProductAdditionResult(addedProductsCount);
     }
 
+
     /**
      * Process equipment lines and add products to POS order
      */
     async processEquipmentLines(record, selectedOrder) {
         if (!this.hasEquipmentLines(record)) {
-            return;
+            return [];
         }
 
         const equipmentLines = await this.fetchEquipmentLines(record);
-        console.log("Fetched equipment lines:", equipmentLines);
-        const addedProductsCount = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
-        console.log("Added products count:", addedProductsCount);
-        
-        this.notifyProductAdditionResult(addedProductsCount);
-    }
+        const addedLineIds = [];
+        let addedProductsCount = 0;
 
+        if (record.state !== 'donate') {
+            for (let line of equipmentLines) {
+                if (await this.addProductLine(line, record, selectedOrder)) {
+                    addedProductsCount++;
+                    addedLineIds.push({ id: line.id });
+                }
+            }
+        } else {
+            // donate-state path adds a single security-deposit product not tied to individual lines
+            const result = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
+            addedProductsCount = result;
+            // no per-line ids to track here since it's a lump-sum deposit product
+        }
+
+        this.notifyProductAdditionResult(addedProductsCount);
+        return addedLineIds;
+    }
     /**
      * Check if dhs has lines
      */
@@ -1289,6 +1298,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 record_number: record.name,
                 equipment_state: record.state,
                 equipment_id: record.id,
+                equipment_line_ids: lineIds || [],   // <-- NEW
                 scan_timestamp: new Date().toISOString(),
             };
         }

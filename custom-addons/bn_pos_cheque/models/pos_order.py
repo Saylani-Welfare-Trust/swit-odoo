@@ -20,16 +20,12 @@ class POSOrder(models.Model):
 
 
     def _order_fields(self, ui_order):
-        """To get the value of field in pos session to pos order"""
         res = super(POSOrder, self)._order_fields(ui_order)
 
         cheque_date = ui_order.get('cheque_date')
         parsed_date = False
-
-        # ✅ Fix date parsing (avoid timezone issues)
         if cheque_date:
             try:
-                # Handles ISO format like: 2026-03-31T00:00:00.000Z
                 parsed_date = fields.Date.to_date(cheque_date[:10])
             except Exception:
                 parsed_date = False
@@ -41,14 +37,39 @@ class POSOrder(models.Model):
             'cheque_date': parsed_date,
         })
 
-        # ✅ Create cheque record
         cheque_number = ui_order.get('cheque_number')
         if cheque_number and not ui_order.get('qr_code'):
-            cheque = self.env['pos.cheque'].create({
+            cheque_vals = {
                 'bank_name': ui_order.get('bank_name') or False,
                 'name': cheque_number,
                 'date': parsed_date,
-            })
+            }
+
+            extra_data = ui_order.get('extra_data') or {}
+            welfare_data = extra_data.get('welfare')
+            me_data = extra_data.get('medical_equipment')
+
+            if welfare_data:
+                cheque_vals['source_model'] = 'welfare'
+                cheque_vals['source_record_id'] = welfare_data.get('welfare_id')
+
+                line_ids = [l['id'] for l in (welfare_data.get('welfare_line_ids') or []) if l.get('id')]
+                recurring_ids = [l['id'] for l in (welfare_data.get('recurring_line_ids') or []) if l.get('id')]
+                if line_ids:
+                    cheque_vals['welfare_line_ids'] = [(6, 0, line_ids)]
+                if recurring_ids:
+                    cheque_vals['welfare_recurring_line_ids'] = [(6, 0, recurring_ids)]
+
+            elif me_data:
+                cheque_vals['source_model'] = 'medical_equipment'
+                equipment_id = me_data.get('equipment_id')
+                cheque_vals['source_record_id'] = equipment_id
+                if equipment_id:
+                    equipment = self.env['medical.equipment'].browse(equipment_id)
+                    if equipment.exists() and equipment.sd_slip_id:
+                        cheque_vals['medical_security_deposit_id'] = equipment.sd_slip_id.id
+
+            cheque = self.env['pos.cheque'].create(cheque_vals)
             res['pos_cheque_id'] = cheque.id
 
         return res

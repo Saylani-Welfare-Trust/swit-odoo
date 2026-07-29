@@ -22,7 +22,30 @@ class POSCheque(models.Model):
     date = fields.Date('Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
+    source_model = fields.Selection([
+        ('welfare', 'Welfare'),
+        ('medical_equipment', 'Medical Equipment'),
+    ], string="Source Type")
+    source_record_id = fields.Integer(string="Source Record ID")
 
+    welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
+    welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
+    medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")    # ---------- WELFARE ----------
+    def _update_welfare_lines_state(self, new_state):
+        """new_state: 'paid'/'disbursed' or 'unpaid'/'bounced' — confirm exact
+        selection values against welfare.line's state field before deploying."""
+        self.ensure_one()
+        if self.welfare_line_ids:
+            self.welfare_line_ids.write({'state': new_state})
+        if self.welfare_recurring_line_ids:
+            self.welfare_recurring_line_ids.write({'state': new_state})
+
+    # ---------- MEDICAL EQUIPMENT ----------
+    def _update_medical_equipment_lines_state(self, new_state):
+        self.ensure_one()
+        if self.medical_equipment_line_ids:
+            self.medical_equipment_line_ids.write({'state': new_state})
+            
     def _get_donor_account_order_lines(self):
         """Find the linked POS order's lines for the 'Donor A/c' product."""
         self.ensure_one()
@@ -150,9 +173,58 @@ class POSCheque(models.Model):
                 pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
         return microfinance_line
 
+    # ---------- WELFARE ----------
+    def _clear_welfare(self):
+        self.ensure_one()
+        # call the real action, not a raw write — this also handles
+        # advance_donation_line_id disbursement creation and calls
+        # welfare_id._auto_disburse_if_all_lines_delivered() internally
+        payable_lines = self.welfare_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
+        if payable_lines:
+            payable_lines.action_disbursed()
+
+        payable_recurring = self.welfare_recurring_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
+        if payable_recurring:
+            payable_recurring.action_disbursed()
+
+    def _bounce_welfare(self):
+        self.ensure_one()
+        lines = self.welfare_line_ids
+        recurring_lines = self.welfare_recurring_line_ids
+
+        if lines:
+            lines.write({'state': 'draft'})
+            lines.mapped('welfare_id').filtered(
+                lambda w: w.state == 'disbursed'
+            ).write({'state': 'approve'})
+
+        if recurring_lines:
+            recurring_lines.write({'state': 'draft'})
+            recurring_lines.mapped('welfare_id').filtered(
+                lambda w: w.state == 'disbursed'
+            ).write({'state': 'recurring'})
+
+    # ---------- MEDICAL EQUIPMENT ----------
+    def _clear_medical_equipment(self):
+        self.ensure_one()
+        if self.medical_security_deposit_id:
+            self.medical_security_deposit_id.write({'state': 'paid'})
+            equipment = self.medical_security_deposit_id.medical_equipment_id
+            if equipment and equipment.state == 'approved':
+                equipment.write({'state': 'sd_received'})
+
+    def _bounce_medical_equipment(self):
+        self.ensure_one()
+        if self.medical_security_deposit_id:
+            self.medical_security_deposit_id.write({'state': 'bounced'})
+            equipment = self.medical_security_deposit_id.medical_equipment_id
+            if equipment and equipment.state == 'sd_received':
+                equipment.write({'state': 'approved'})
+
+    # ---------- LIFECYCLE ----------
     def action_clear(self):
         self._create_advance_donation_receipts()
-    
+
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
             pdc_line.write({'state_cheque': 'cleared'})
@@ -163,8 +235,13 @@ class POSCheque(models.Model):
                     'paid_amount': microfinance_line.amount,
                     'payment_date': fields.Date.today(),
                 })
+
+        if self.source_model == 'welfare':
+            self._clear_welfare()
+        elif self.source_model == 'medical_equipment':
+            self._clear_medical_equipment()
+
         self.state = 'clear'
-    
 
     def action_bounce(self):
         if self.bounce_count >= 3:
@@ -181,6 +258,11 @@ class POSCheque(models.Model):
                     'payment_date': False,
                 })
 
+        if self.source_model == 'welfare':
+            self._bounce_welfare()
+        elif self.source_model == 'medical_equipment':
+            self._bounce_medical_equipment()
+
         self.bounce_count += 1
         self.state = 'bounce'
 
@@ -195,4 +277,10 @@ class POSCheque(models.Model):
                     'paid_amount': 0.0,
                     'payment_date': False,
                 })
+
+        if self.source_model == 'welfare':
+            self._bounce_welfare()          # same reset as bounce
+        elif self.source_model == 'medical_equipment':
+            self._bounce_medical_equipment()
+
         self.state = 'cancel'
