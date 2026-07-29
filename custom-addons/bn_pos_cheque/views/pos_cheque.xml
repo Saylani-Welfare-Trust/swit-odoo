@@ -18,10 +18,14 @@
                 <field name="date" />
                 <field name="bounce_count" />
                 <!-- TEMPORARY DEBUG FIELDS — remove once confirmed -->
-                <field name="source_model" />
-                <field name="medical_security_deposit_id" />
-                <field name="welfare_line_ids" widget="many2many_tags" />
-                <field name="welfare_recurring_line_ids" widget="many2many_tags" />
+                <field name="medical_security_deposit_id" 
+                    string="Security Deposit"
+                    attrs="{'invisible': [('source_model', '!=', 'medical_equipment')]}"/>
+
+                <button name="action_view_security_deposit" 
+                        string="View Security Deposit"
+                        type="object"
+                        attrs="{'invisible': [('medical_security_deposit_id', '=', False)]}"/>
                 <!-- end debug fields -->
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" decoration-danger="state == 'cancel'" />
 

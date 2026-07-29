@@ -106,8 +106,7 @@ class MedicalSecurityDeposit(models.Model):
             medical_equipment_id.sd_slip_id = security_deposit.id
             medical_equipment_id.state = 'sd_received'
 
-            # NEW: link back to any already-created pos.cheque for this equipment
-            # that's still waiting for its security-deposit link.
+            # Link to any existing POS cheque for this equipment
             pending_cheque = self.env['pos.cheque'].search([
                 ('source_model', '=', 'medical_equipment'),
                 ('source_record_id', '=', medical_equipment_id.id),
@@ -115,8 +114,22 @@ class MedicalSecurityDeposit(models.Model):
             ], order='id desc', limit=1)
 
             if pending_cheque:
-                _logger.info(f"Linking security deposit {security_deposit.id} to existing cheque {pending_cheque.id}")
                 pending_cheque.write({'medical_security_deposit_id': security_deposit.id})
+                _logger.info(f"Linked existing cheque {pending_cheque.id} to new security deposit {security_deposit.id}")
+            
+            # Also check for any cheque that might have been created without the link
+            # This catches any edge cases
+            all_cheques = self.env['pos.cheque'].search([
+                ('source_model', '=', 'medical_equipment'),
+                ('source_record_id', '=', medical_equipment_id.id),
+                '|',
+                ('medical_security_deposit_id', '=', False),
+                ('medical_security_deposit_id', '=', None),
+            ])
+            for cheque in all_cheques:
+                if cheque.id != pending_cheque.id:  # Avoid duplicate updates
+                    cheque.write({'medical_security_deposit_id': security_deposit.id})
+                    _logger.info(f"Linked cheque {cheque.id} to security deposit {security_deposit.id}")
 
         return security_deposit
     @api.model

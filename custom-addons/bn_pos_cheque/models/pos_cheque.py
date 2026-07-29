@@ -310,11 +310,10 @@ class POSCheque(models.Model):
 
         self.state = 'cancel'
 
-    def _ensure_security_deposit_link(self):
-        """Ensure the security deposit is properly linked to this cheque"""
+    def link_security_deposit(self):
+        """Link the security deposit to this cheque if not already linked"""
         self.ensure_one()
         if self.source_model == 'medical_equipment' and not self.medical_security_deposit_id:
-            # Try to find the security deposit
             equipment = self.env['medical.equipment'].browse(self.source_record_id)
             if equipment.exists():
                 sd_slip = equipment.sd_slip_id
@@ -324,5 +323,29 @@ class POSCheque(models.Model):
                     )
                 if sd_slip:
                     self.write({'medical_security_deposit_id': sd_slip.id})
-                    return sd_slip
-        return self.medical_security_deposit_id
+                    _logger.info(f"Linked security deposit {sd_slip.id} to cheque {self.id}")
+                    return True
+        return False
+
+    def _ensure_security_deposit_link(self):
+        """Ensure the security deposit is properly linked to this cheque"""
+        self.ensure_one()
+        if self.source_model == 'medical_equipment':
+            if not self.medical_security_deposit_id:
+                self.link_security_deposit()
+            return self.medical_security_deposit_id
+        return False
+    
+    def action_view_security_deposit(self):
+        """View the linked security deposit"""
+        self.ensure_one()
+        if self.medical_security_deposit_id:
+            return {
+                'name': 'Security Deposit',
+                'type': 'ir.actions.act_window',
+                'res_model': 'medical.security.deposit',
+                'view_mode': 'form',
+                'res_id': self.medical_security_deposit_id.id,
+                'target': 'new',
+            }
+        return {'type': 'ir.actions.act_window_close'}
