@@ -144,25 +144,14 @@ class POSOrder(models.Model):
     def redeposite_cheque(self, orderid):
         order = self.env['pos.order'].browse(orderid)
         
-        order.pos_cheque_id.state = 'draft'
-    
+        if order.pos_cheque_id:
+            order.pos_cheque_id.state = 'draft'    
     def settle_cheque_order(self, orderid):
         order = self.env['pos.order'].browse(orderid)
-
         if not order:
-            return {
-                "status": "error",
-                "body": "Order does not exist in the system or been delete instead."
-            }
+            return {"status": "error", "body": "Order does not exist in the system or been delete instead."}
 
+        order.pos_cheque_id.action_cancel()   # <-- was: order.pos_cheque_id.state = 'cancel'
 
-        # raise ValidationError(str(order))
-        # raise ValidationError(str(order.pos_cheque_id))
-        
-        order.pos_cheque_id.state = 'cancel'
-
-        return {
-            "status": "success",
-            "body": "Cheque Status has been updated successfully."
-        }
+        return {"status": "success", "body": "Cheque Status has been updated successfully."}
         # raise ValidationError(str(order.pos_cheque_id.state))
