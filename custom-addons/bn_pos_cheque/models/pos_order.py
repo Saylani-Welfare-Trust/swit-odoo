@@ -1,7 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-import logging
-_logger = logging.getLogger(__name__)
+
 
 class POSOrder(models.Model):
     _inherit = 'pos.order'
@@ -65,27 +64,19 @@ class POSOrder(models.Model):
                 cheque_vals['source_model'] = 'medical_equipment'
                 equipment_id = me_data.get('equipment_id')
                 cheque_vals['source_record_id'] = equipment_id
-
                 if equipment_id:
                     equipment = self.env['medical.equipment'].browse(equipment_id)
                     if equipment.exists():
                         sd_slip = equipment.sd_slip_id
                         if not sd_slip:
-                            # sd_slip_id link wasn't set yet at cheque-creation time —
-                            # fall back to a direct lookup by medical_equipment_id
+                            # fallback: search directly in case sd_slip_id link wasn't set yet
                             sd_slip = self.env['medical.security.deposit'].search(
-                                [('medical_equipment_id', '=', equipment_id)],
-                                order='id desc',
-                                limit=1
+                                [('medical_equipment_id', '=', equipment_id)], limit=1
                             )
                         if sd_slip:
                             cheque_vals['medical_security_deposit_id'] = sd_slip.id
-                        else:
-                            _logger.warning(
-                                "POS Cheque: no medical.security.deposit found for "
-                                "medical.equipment id=%s — cheque will be created unlinked.",
-                                equipment_id
-                            )
+            cheque = self.env['pos.cheque'].create(cheque_vals)
+            res['pos_cheque_id'] = cheque.id
 
         return res
     
