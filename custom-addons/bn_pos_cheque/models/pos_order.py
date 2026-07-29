@@ -69,14 +69,11 @@ class POSOrder(models.Model):
                     if equipment.exists():
                         sd_slip = equipment.sd_slip_id
                         if not sd_slip:
-                            # fallback: search directly in case sd_slip_id link wasn't set yet
                             sd_slip = self.env['medical.security.deposit'].search(
                                 [('medical_equipment_id', '=', equipment_id)], limit=1
                             )
                         if sd_slip:
                             cheque_vals['medical_security_deposit_id'] = sd_slip.id
-            cheque = self.env['pos.cheque'].create(cheque_vals)
-            res['pos_cheque_id'] = cheque.id
 
         return res
     

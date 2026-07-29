@@ -115,6 +115,7 @@ class MedicalSecurityDeposit(models.Model):
             ], order='id desc', limit=1)
 
             if pending_cheque:
+                _logger.info(f"Linking security deposit {security_deposit.id} to existing cheque {pending_cheque.id}")
                 pending_cheque.write({'medical_security_deposit_id': security_deposit.id})
 
         return security_deposit

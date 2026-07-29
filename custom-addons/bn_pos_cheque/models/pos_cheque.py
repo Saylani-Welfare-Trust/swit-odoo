@@ -1,5 +1,8 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+import logging
+_logger = logging.getLogger(__name__)
+
 
 state_selection = [
     ('draft', 'Draft'),
@@ -207,20 +210,37 @@ class POSCheque(models.Model):
     # ---------- MEDICAL EQUIPMENT ----------
     def _clear_medical_equipment(self):
         self.ensure_one()
-        if self.medical_security_deposit_id:
-            self.medical_security_deposit_id.write({'state': 'paid'})
-            equipment = self.medical_security_deposit_id.medical_equipment_id
+        
+        # Ensure security deposit is linked
+        security_deposit = self._ensure_security_deposit_link()
+        
+        if security_deposit:
+            security_deposit.write({'state': 'paid'})
+            equipment = security_deposit.medical_equipment_id
             if equipment and equipment.state == 'approved':
                 equipment.write({'state': 'sd_received'})
-
+            
+            _logger.info(f"Security deposit {security_deposit.id} marked as paid for cheque {self.name}")
+        else:
+            _logger.warning(f"No security deposit found for cheque {self.name}")
     def _bounce_medical_equipment(self):
         self.ensure_one()
-        if self.medical_security_deposit_id:
-            self.medical_security_deposit_id.write({'state': 'bounced'})
-            equipment = self.medical_security_deposit_id.medical_equipment_id
+        
+        # Ensure security deposit is linked
+        security_deposit = self._ensure_security_deposit_link()
+        
+        if security_deposit:
+            # Update security deposit state
+            security_deposit.write({'state': 'bounced'})
+            
+            # Update equipment
+            equipment = security_deposit.medical_equipment_id
             if equipment and equipment.state == 'sd_received':
                 equipment.write({'state': 'approved'})
-
+            
+            _logger.info(f"Security deposit {security_deposit.id} marked as bounced for cheque {self.name}")
+        else:
+            _logger.warning(f"No security deposit found for cheque {self.name}")
     # ---------- LIFECYCLE ----------
     def action_clear(self):
         self._create_advance_donation_receipts()
@@ -244,6 +264,7 @@ class POSCheque(models.Model):
         self.state = 'clear'
 
     def action_bounce(self):
+        _logger.info(f"Bouncing cheque {self.name}, source_model: {self.source_model}, medical_security_deposit_id: {self.medical_security_deposit_id}")
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
@@ -258,10 +279,14 @@ class POSCheque(models.Model):
                     'payment_date': False,
                 })
 
-        if self.source_model == 'welfare':
-            self._bounce_welfare()
-        elif self.source_model == 'medical_equipment':
-            self._bounce_medical_equipment()
+        try:
+            if self.source_model == 'welfare':
+                self._bounce_welfare()
+            elif self.source_model == 'medical_equipment':
+                self._bounce_medical_equipment()
+        except Exception as e:
+            _logger.error(f"Error bouncing cheque {self.name}: {str(e)}")
+            # Continue with the bounce even if related records fail
 
         self.bounce_count += 1
         self.state = 'bounce'
@@ -284,3 +309,20 @@ class POSCheque(models.Model):
             self._bounce_medical_equipment()
 
         self.state = 'cancel'
+
+    def _ensure_security_deposit_link(self):
+        """Ensure the security deposit is properly linked to this cheque"""
+        self.ensure_one()
+        if self.source_model == 'medical_equipment' and not self.medical_security_deposit_id:
+            # Try to find the security deposit
+            equipment = self.env['medical.equipment'].browse(self.source_record_id)
+            if equipment.exists():
+                sd_slip = equipment.sd_slip_id
+                if not sd_slip:
+                    sd_slip = self.env['medical.security.deposit'].search(
+                        [('medical_equipment_id', '=', self.source_record_id)], limit=1
+                    )
+                if sd_slip:
+                    self.write({'medical_security_deposit_id': sd_slip.id})
+                    return sd_slip
+        return self.medical_security_deposit_id
