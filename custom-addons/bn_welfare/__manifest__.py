@@ -18,11 +18,13 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/welfare_institution_fetch_log.xml',
+        'views/hr_employee.xml'
         'views/welfare.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',
         'reports/report_welfare_collection_document.xml',
+
     ],
     'auto_install': False,
     'application': True,
