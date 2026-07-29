@@ -11,6 +11,15 @@
         <field name="perm_create" eval="1"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+    <record id="access_donation_home_service_write" model="ir.model.access">
+        <field name="name">Donation Home Service Write Access</field>
+        <field name="model_id" ref="model_donation_home_service"/>
+        <field name="group_id" ref="bn_donation_home_service.donation_home_service_write_access_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
     
     <!-- <record id="access_donation_home_service_read" model="ir.model.access">
         <field name="name">Donation Home Service Read Access</field>
