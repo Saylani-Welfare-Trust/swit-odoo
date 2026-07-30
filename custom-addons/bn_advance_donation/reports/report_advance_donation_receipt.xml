@@ -64,18 +64,9 @@
                             <!-- ===== COMPANY LOGO ===== -->
                             <div style="text-align: center; margin-bottom: 5px;">
                                 <!-- Try dn_image first (if exists), then fallback to logo -->
-                                <img t-if="receipt.env.company.dn_image" 
-                                     t-att-src="image_data_uri(receipt.env.company.dn_image)" 
-                                     style="height: 100%; width: 100%;"
-                                     class="company-logo"/>
-                                <img t-elif="receipt.env.company.logo" 
-                                     t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo" 
-                                     style="height: 100%; width: 100%;"
-                                     class="company-logo"/>
-                                <img t-elif="receipt.env.company.logo_web" 
-                                     t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo_web" 
-                                     style="height: 100%; width: 100%;"
-                                     class="company-logo"/>
+                                <img t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="height: 100%; width: 100%;" class="company-logo"/>
+                                <img t-elif="receipt.env.company.logo" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo" style="height: 100%; width: 100%;" class="company-logo"/>
+                                <img t-elif="receipt.env.company.logo_web" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo_web" style="height: 100%; width: 100%;" class="company-logo"/>
                             </div>                                         
                             <!-- ===== WATERMARK ===== -->
                             <div t-if="receipt.state == 'draft'" class="watermark">Draft</div>
@@ -181,16 +172,14 @@
                             </table>
 
                             <!-- ===== REMARKS SECTION (from POS) ===== -->
-                            <div t-if="receipt.pos_order_id and receipt.pos_order_id.note" 
-                                 style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
+                            <div t-if="receipt.pos_order_id and receipt.pos_order_id.note" style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
                                 <strong>Remarks:</strong>
                                 <div style="margin-top: 5px; font-style: italic;">
                                     <t t-esc="receipt.pos_order_id.note or '-'"/>
                                 </div>
                             </div>
                             <!-- Alternative: if remarks is stored directly on receipt -->
-                            <div t-if="not receipt.pos_order_id and receipt.remarks" 
-                                 style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
+                            <div t-if="not receipt.pos_order_id and receipt.remarks" style="margin-top: 10px; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9;">
                                 <strong>Remarks:</strong>
                                 <div style="margin-top: 5px; font-style: italic;">
                                     <t t-esc="receipt.remarks or '-'"/>
