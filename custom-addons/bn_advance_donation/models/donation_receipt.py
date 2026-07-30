@@ -10,6 +10,8 @@ class DonationReceipt(models.Model):
 
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
+    category_id = fields.Many2one('product.category', string='Category')    
+    name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     payment_type = fields.Selection([('cash', 'Cash'), ('cheque', 'Cheque')], string='Payment Method', default='cash')
     is_donation_id = fields.Boolean('Donation ID?')
     donation_id = fields.Many2one('advance.donation', string='Donation ID')
@@ -25,6 +27,12 @@ class DonationReceipt(models.Model):
     cheque_number = fields.Char(string='Cheque Number')
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
+    mobile_number = fields.Char(string='Mobile Number')
+       # POS related fields
+    pos_session_id = fields.Many2one('pos.session', string='POS Session')
+    pos_order_id = fields.Many2one('pos.order', string='POS Order')
+    remarks = fields.Text(string='Remarks') 
+    product_name = fields.Char(string='Product Name')  # If you want a separate text field
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending', 'Pending'),
