@@ -121,6 +121,14 @@ class MedicalSecurityDeposit(models.Model):
             if pending_cheque:
                 pending_cheque.write({'medical_security_deposit_id': security_deposit.id})
 
+            pending_dd = self.env['direct.deposit'].search([
+                ('source_model', '=', 'medical_equipment'),
+                ('source_record_id', '=', medical_equipment_id.id),
+                ('medical_security_deposit_id', '=', False),
+            ], order='id desc', limit=1)
+            if pending_dd:
+                pending_dd.write({'medical_security_deposit_id': security_deposit.id})
+
         return security_deposit
     @api.model
     def get_medical_equipment_security_deposit(self, data):

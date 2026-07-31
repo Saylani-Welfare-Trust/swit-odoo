@@ -51,7 +51,32 @@ class DirectDeposit(models.Model):
     dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
+    source_model = fields.Selection([
+        ('microfinance', 'Microfinance'),
+        ('welfare', 'Welfare'),
+        ('medical_equipment', 'Medical Equipment'),
+    ], string="Source Type")
+    source_record_id = fields.Integer(string="Source Record ID")
 
+    welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
+    welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
+    medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")
+
+    def _find_welfare_from_source(self, source_request_type, source_request_no):
+        _logger.info("DD create - welfare lookup type=%r no=%r", source_request_type, source_request_no)
+        if source_request_type != 'Welfare' or not source_request_no:
+            return self.env['welfare']
+        return self.env['welfare'].search(
+            ['|', ('name', '=', source_request_no), ('old_system_id', '=', source_request_no)],
+            limit=1
+        )
+    def _find_medical_equipment_from_source(self, source_request_type, source_request_no):
+        _logger.info("DD create - medical equipment lookup type=%r no=%r", source_request_type, source_request_no)
+        if source_request_type != 'Medical Equipment' or not source_request_no:
+            return self.env['medical.equipment']
+        return self.env['medical.equipment'].search(
+            [('name', '=', source_request_no)], limit=1
+        )
     def _get_donor_account_lines(self):
         self.ensure_one()
         donor_lines = self.direct_deposit_line_ids.filtered(
@@ -154,6 +179,7 @@ class DirectDeposit(models.Model):
 
         return mf
 
+ 
     @api.model
     def create_dd_record(self, data):
         address = data.get('address')
@@ -162,17 +188,13 @@ class DirectDeposit(models.Model):
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
 
-        # -------------------------
-        # 0. Resolve the microfinance record this DD is tied to, based on
-        #    what the POS popup auto-filled (source_request_type / source_request_no)
-        # -------------------------
         source_request_type = data.get('source_request_type')
         source_request_no = data.get('source_request_no')
-        mf = self._find_microfinance_from_source(source_request_type, source_request_no)
 
-        # -------------------------
-        # 1. Prepare Line Items
-        # -------------------------
+        mf = self._find_microfinance_from_source(source_request_type, source_request_no)
+        welfare = self._find_welfare_from_source(source_request_type, source_request_no)
+        equipment = self._find_medical_equipment_from_source(source_request_type, source_request_no)
+
         product_lines = []
         for line in data['order_lines']:
             product_lines.append((0, 0, {
@@ -182,10 +204,7 @@ class DirectDeposit(models.Model):
                 'remarks': line['remarks'] if line.get('remarks') else '',
             }))
 
-        # -------------------------
-        # 2. Create DD Record
-        # -------------------------
-        dd = self.create({
+        dd_vals = {
             'donor_id': data['donor_id'],
             'bank_id': bank_id,
             'user_id': user_id,
@@ -195,28 +214,49 @@ class DirectDeposit(models.Model):
             'microfinance_id': mf.id if mf else False,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
-        })
+        }
 
-        # -------------------------
-        # 3. Calculate prices & taxes for all lines
-        # -------------------------
+        if welfare:
+            dd_vals['source_model'] = 'welfare'
+            dd_vals['source_record_id'] = welfare.id
+
+            line_ids = [l['id'] for l in (data.get('source_welfare_line_ids') or []) if l.get('id')]
+            recurring_ids = [l['id'] for l in (data.get('source_welfare_recurring_line_ids') or []) if l.get('id')]
+            if line_ids:
+                dd_vals['welfare_line_ids'] = [(6, 0, line_ids)]
+            if recurring_ids:
+                dd_vals['welfare_recurring_line_ids'] = [(6, 0, recurring_ids)]
+
+        elif equipment:
+            dd_vals['source_model'] = 'medical_equipment'
+            dd_vals['source_record_id'] = equipment.id
+
+            sd_slip = equipment.sd_slip_id
+            if not sd_slip:
+                sd_slip = self.env['medical.security.deposit'].search(
+                    [('medical_equipment_id', '=', equipment.id)], limit=1
+                )
+            if sd_slip:
+                dd_vals['medical_security_deposit_id'] = sd_slip.id
+
+        elif mf:
+            dd_vals['source_model'] = 'microfinance'
+            dd_vals['source_record_id'] = mf.id
+
+        dd = self.create(dd_vals)
+
         for line in dd.direct_deposit_line_ids:
             base_price = line.product_id.lst_price
             taxes = line.product_id.taxes_id
-
             total_price_incl_tax = base_price
             for tax in taxes:
                 if tax.amount_type == 'percent':
                     total_price_incl_tax += base_price * (tax.amount / 100)
                 else:
                     total_price_incl_tax += tax.amount
-
             if not line.amount:
                 line.amount = total_price_incl_tax * line.quantity
 
-        # -------------------------
-        # 4. Recalculate totals
-        # -------------------------
         dd.calculate_amount()
         dd.set_remarks()
 
@@ -227,10 +267,80 @@ class DirectDeposit(models.Model):
                 "source_request_type": source_request_type,
                 "source_request_no": source_request_no,
                 "matched_microfinance_id": mf.id if mf else False,
-                "matched_microfinance_name": mf.name if mf else False,
+                "matched_welfare_id": welfare.id if welfare else False,
+                "matched_medical_equipment_id": equipment.id if equipment else False,
             },
         }
+    # ---------- WELFARE (mirrors pos.cheque) ----------
+    def _clear_welfare(self):
+        self.ensure_one()
+        payable_lines = self.welfare_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
+        if payable_lines:
+            payable_lines.action_disbursed()
 
+        payable_recurring = self.welfare_recurring_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
+        if payable_recurring:
+            payable_recurring.action_disbursed()
+
+    def _bounce_welfare(self):
+        self.ensure_one()
+        lines = self.welfare_line_ids
+        recurring_lines = self.welfare_recurring_line_ids
+
+        if lines:
+            lines.write({'state': 'draft'})
+            lines.mapped('welfare_id').filtered(lambda w: w.state == 'disbursed').write({'state': 'approve'})
+
+        if recurring_lines:
+            recurring_lines.write({'state': 'draft'})
+            recurring_lines.mapped('welfare_id').filtered(lambda w: w.state == 'disbursed').write({'state': 'recurring'})
+
+    def link_security_deposit(self):
+        self.ensure_one()
+        if self.source_model != 'medical_equipment' or self.medical_security_deposit_id:
+            return bool(self.medical_security_deposit_id)
+        if not self.source_record_id:
+            return False
+
+        equipment = self.env['medical.equipment'].browse(self.source_record_id)
+        if not equipment.exists():
+            return False
+
+        sd_slip = equipment.sd_slip_id
+        if not sd_slip:
+            sd_slip = self.env['medical.security.deposit'].search(
+                [('medical_equipment_id', '=', self.source_record_id)], limit=1
+            )
+        if sd_slip:
+            self.write({'medical_security_deposit_id': sd_slip.id})
+            return True
+        return False
+
+    def _ensure_security_deposit_link(self):
+        self.ensure_one()
+        if self.source_model == 'medical_equipment':
+            if not self.medical_security_deposit_id:
+                self.link_security_deposit()
+            return self.medical_security_deposit_id
+        return False
+
+    def _clear_medical_equipment(self):
+        self.ensure_one()
+        security_deposit = self._ensure_security_deposit_link()
+        if security_deposit:
+            security_deposit.write({'state': 'paid'})
+            equipment = security_deposit.medical_equipment_id
+            if equipment:
+                equipment.write({'state': 'sd_received'})
+
+    def _bounce_medical_equipment(self):
+        self.ensure_one()
+        security_deposit = self._ensure_security_deposit_link()
+        if security_deposit:
+            security_deposit.write({'state': 'bounced'})  # closest valid value to "unpaid"
+            equipment = security_deposit.medical_equipment_id
+            if equipment:
+                equipment.write({'state': 'cfo_approval'})
     @api.onchange('microfinance_id')
     def _onchange_microfinance_id(self):
         for rec in self:
@@ -425,25 +535,41 @@ class DirectDeposit(models.Model):
         return applied_any
 
 
+    # ---------- LIFECYCLE ----------
     def action_clear(self):
         self._create_advance_donation_receipts()
-    
+
         if self._apply_microfinance_payment():
             self.state = 'clear'
             return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-    
+
+        if self.source_model == 'welfare':
+            self._clear_welfare()
+            self.state = 'clear'
+            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
+
+        if self.source_model == 'medical_equipment':
+            self._clear_medical_equipment()
+            self.state = 'clear'
+            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
+
         if self.transfer_to_dhs:
             self.action_transfer_to_dhs()
         else:
             self._create_invoice()
             self._create_stock_picking()
-    
+
         self.state = 'clear'
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
-
     def action_not_clear(self):
+        if self.source_model == 'welfare':
+            self._bounce_welfare()
+        elif self.source_model == 'medical_equipment':
+            self._bounce_medical_equipment()
         self.state = 'not_clear'
+
+
 
     def action_transfer_to_dhs(self):
         self.ensure_one()

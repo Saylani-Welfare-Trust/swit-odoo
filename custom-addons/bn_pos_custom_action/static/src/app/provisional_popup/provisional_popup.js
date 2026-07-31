@@ -59,32 +59,23 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     populateSourceRequestFromOrder() {
         const selectedOrder = this.pos.get_order();
         const extraData = selectedOrder && selectedOrder.extra_data;
-        console.log("DD popup - extra_data:", extraData); // TEMP DEBUG
+        if (!extraData) return;
 
-        if (!extraData) {
-            console.log("DD popup - no extra_data on order"); // TEMP DEBUG
-            return;
-        }
-
-        // NOTE: the scanned/selected record on the POS main screen stores its
-        // reference under `record_number`, not `microfinance_request_no` /
-        // `medical_equipment_request_no` (those only exist on the payload built
-        // when confirming this popup directly in mf/me mode). Check both so this
-        // works regardless of which path populated extra_data.
         const mf = extraData.microfinance;
         const me = extraData.medical_equipment;
+        const wf = extraData.welfare;   // NEW
+
         const mfRequestNo = mf && (mf.record_number || mf.microfinance_request_no);
         const meRequestNo = me && (me.record_number || me.medical_equipment_request_no);
+        const wfRequestNo = wf && wf.record_number;   // NEW
 
         if (mfRequestNo) {
             this.state.source_request_type = 'Microfinance';
             this.state.source_request_no = mfRequestNo;
-            // Keep amount in sync too, in case DD amount should follow the linked record
             if (mf.amount) {
                 this.state.amount = parseFloat(mf.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
-            console.log("DD popup - matched microfinance:", this.state.source_request_no); // TEMP DEBUG
         } else if (meRequestNo) {
             this.state.source_request_type = 'Medical Equipment';
             this.state.source_request_no = meRequestNo;
@@ -92,8 +83,12 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 this.state.amount = parseFloat(me.amount) || this.state.amount;
                 this.state.total = this.state.amount + this.state.service_charges;
             }
-            console.log("DD popup - matched medical_equipment:", this.state.source_request_no); // TEMP DEBUG
-        } else {
+        } else if (wfRequestNo) {   // NEW
+            this.state.source_request_type = 'Welfare';
+            this.state.source_request_no = wfRequestNo;
+            this.state.source_welfare_line_ids = wf.welfare_line_ids || [];
+            this.state.source_welfare_recurring_line_ids = wf.recurring_line_ids || [];
+        }else {
             console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
         }
     }
@@ -470,6 +465,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 // NEW: carry the linked request info through to the backend record
                 'source_request_type': this.state.source_request_type,
                 'source_request_no': this.state.source_request_no,
+                'source_welfare_line_ids': this.state.source_welfare_line_ids || [],           // NEW
+                'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
             }
     
             console.log("DD popup - payload sent:", payload); // TEMP DEBUG
