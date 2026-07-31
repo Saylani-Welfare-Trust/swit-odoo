@@ -286,9 +286,6 @@ class POSCheque(models.Model):
         self.bounce_count += 1
         self.state = 'bounce'
 
-        self.bounce_count += 1
-        self.state = 'bounce'
-
     def action_cancel(self):
         pdc_line = self._get_microfinance_pdc_line()
         if pdc_line:
