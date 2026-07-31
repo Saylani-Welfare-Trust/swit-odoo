@@ -32,6 +32,25 @@
                             placeholder="Enter transaction reference"/>
                     </div>
                 </div>
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.welfare_request_no"
+                            t-on-change="updateWelfareRequestNo"
+                            placeholder="Enter Welfare Request No."/>
+                    </div>
+                </div>
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Disbursement Type</div>
+                    <div class="col-8">
+                        <select class="form-select form-select-sm" t-on-change="updateWfRequestType">
+                            <option value="one_time" t-att-selected="this.state.wf_request_type === 'one_time'">One Time</option>
+                            <option value="recurring" t-att-selected="this.state.wf_request_type === 'recurring'">Recurring</option>
+                        </select>
+                    </div>
+                </div>
                 <!-- Readonly Microfinance / Medical Equipment Request No., auto-filled for Direct Deposit -->
                 <div t-if="state.source_request_no" class="row mb-2 text-start">
                     <div class="col-4 fw-semibold" t-esc="state.source_request_type + ' Request No.'"/>

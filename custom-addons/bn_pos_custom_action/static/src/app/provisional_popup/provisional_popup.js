@@ -34,6 +34,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state = useState({
             microfinance_request_no: '',
             medical_equipment_request_no: '',
+            welfare_request_no: '',        // NEW
+            wf_request_type: 'one_time',   // NEW
             amount: parseFloat(this.props.amount) || 0,
             service_charges: 0,
             total: parseFloat(this.props.amount) || 0,
@@ -98,7 +100,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
+    updateWelfareRequestNo(event) {
+        this.state.welfare_request_no = event.target.value;
+    }
 
+    updateWfRequestType(event) {
+        this.state.wf_request_type = event.target.value;
+    }
     updateMicrofinanceRequestNo(event) {
         this.state.microfinance_request_no = event.target.value;
     }

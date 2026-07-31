@@ -1208,6 +1208,153 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             }
             
         }
+        // Welfare
+        if (this.action_type == 'wf') {
+            if (!this.state.welfare_request_no) {
+                this.notification.add(
+                    "Please enter a Welfare Request No.",
+                    { type: 'warning' }
+                );
+                return;
+            }
+
+            const isRecurring = this.state.wf_request_type === 'recurring';
+
+            const record = await this.orm.searchRead(
+                'welfare',
+                ['|', ['name', '=', this.state.welfare_request_no], ['old_system_id', '=', this.state.welfare_request_no]],
+                ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids', 'order_type'],
+                { limit: 1 }
+            );
+
+            if (!record.length) {
+                this.notification.add("Record not found", { type: 'warning' });
+                return;
+            }
+
+            const welfareRecord = record[0];
+
+            if (!isRecurring && welfareRecord.state !== 'approve') {
+                this.notification.add(
+                    `Unauthorized Request State: ${welfareRecord.state}. Expected 'approve' for one-time disbursement.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+            if (isRecurring && welfareRecord.state !== 'recurring') {
+                this.notification.add(
+                    `Unauthorized Request State: ${welfareRecord.state}. Expected 'recurring' for recurring disbursement.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let lineIds = [];
+            let totalAmount = 0;
+
+            if (!isRecurring) {
+                const lines = await this.orm.searchRead(
+                    'welfare.line',
+                    [
+                        ['id', 'in', welfareRecord.welfare_line_ids],
+                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['collection_point', '=', 'branch'],
+                        ['state', '=', 'draft'],
+                    ],
+                    ['id', 'total_amount', 'collection_date', 'state'],
+                    {}
+                );
+                const dueThisMonth = lines.filter(l => {
+                    if (!l.collection_date) return false;
+                    const [year, month] = l.collection_date.split("-").map(Number);
+                    return month - 1 === currentMonth && year === currentYear;
+                });
+                lineIds = dueThisMonth.map(l => ({ id: l.id, amount: l.total_amount || 0 }));
+                totalAmount = lineIds.reduce((sum, l) => sum + l.amount, 0);
+            } else {
+                const lines = await this.orm.searchRead(
+                    'welfare.recurring.line',
+                    [
+                        ['welfare_id', '=', welfareRecord.id],
+                        ['state', '=', 'draft'],
+                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['collection_point', '=', 'branch'],
+                    ],
+                    ['id', 'amount', 'collection_date', 'state'],
+                    {}
+                );
+                const dueThisMonth = lines.filter(l => {
+                    if (!l.collection_date) return false;
+                    const [year, month] = l.collection_date.split("-").map(Number);
+                    return month - 1 === currentMonth && year === currentYear;
+                });
+                lineIds = dueThisMonth.map(l => ({ id: l.id, amount: l.amount || 0 }));
+                totalAmount = lineIds.reduce((sum, l) => sum + l.amount, 0);
+            }
+
+            if (!lineIds.length) {
+                this.notification.add("No welfare lines due this month", { type: 'warning' });
+                return;
+            }
+
+            if (!selectedOrder.extra_data) {
+                selectedOrder.extra_data = {};
+            }
+            selectedOrder.extra_data.welfare = {
+                record_number: welfareRecord.name,
+                welfare_id: welfareRecord.id,
+                is_recurring: isRecurring,
+                welfare_line_ids: !isRecurring ? lineIds : [],
+                recurring_line_ids: isRecurring ? lineIds : [],
+                amount: totalAmount,
+            };
+
+            if (welfareRecord.donee_id && welfareRecord.donee_id[0]) {
+                const partner = await this.getOrLoadPartner(welfareRecord.donee_id[0]);
+                if (partner) this.assignPartnerToOrder(partner, selectedOrder);
+            }
+
+            const wfProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.welfare_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+
+            if (!wfProduct.length) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: `${this.pos.company.welfare_product} product not found or not available in POS.`
+                });
+                return;
+            }
+
+            const product = this.pos.db.get_product_by_id(wfProduct[0].id);
+            if (!product) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: "Welfare product not loaded in POS session."
+                });
+                return;
+            }
+
+            selectedOrder.add_product(product, {
+                quantity: 1,
+                price_extra: totalAmount,
+            });
+
+            selectedOrder.set_receive_voucher(true);
+
+            this.cancel();
+        }
         if (this.action_type == 'me') {
             if (!record.donee_id || !record.donee_id[0]) {
                 return;
