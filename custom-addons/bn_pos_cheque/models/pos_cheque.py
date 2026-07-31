@@ -264,7 +264,6 @@ class POSCheque(models.Model):
         self.state = 'clear'
 
     def action_bounce(self):
-        _logger.info(f"Bouncing cheque {self.name}, source_model: {self.source_model}, medical_security_deposit_id: {self.medical_security_deposit_id}")
         if self.bounce_count >= 3:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
@@ -279,15 +278,13 @@ class POSCheque(models.Model):
                     'payment_date': False,
                 })
 
-        try:
-            if self.source_model == 'welfare':
-                self._bounce_welfare()
-            elif self.source_model == 'medical_equipment':
-                raise ValidationError('Cannot bounce cheque for medical equipment. Please contact support.')
-                self._bounce_medical_equipment()
-        except Exception as e:
-            _logger.error(f"Error bouncing cheque {self.name}: {str(e)}")
-            # Continue with the bounce even if related records fail
+        if self.source_model == 'welfare':
+            self._bounce_welfare()
+        elif self.source_model == 'medical_equipment':
+            self._bounce_medical_equipment()
+
+        self.bounce_count += 1
+        self.state = 'bounce'
 
         self.bounce_count += 1
         self.state = 'bounce'
