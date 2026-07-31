@@ -12,6 +12,10 @@
         <field name="name">Material Request / CFO Approval</field>
     </record>
     
+    <record id="menu_group_material_request_members" model="res.groups">
+        <field name="name">Material Request / Members</field>
+    </record>
+    
     <record id="menu_group_material_request_coo" model="res.groups">
         <field name="name">Material Request / COO Approval</field>
     </record>
