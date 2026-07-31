@@ -61,12 +61,18 @@ class POSOrder(models.Model):
                     cheque_vals['welfare_recurring_line_ids'] = [(6, 0, recurring_ids)]
 
             elif me_data:
-                raise ValidationError(f"DEBUG me_data received: {me_data}")
-
                 cheque_vals['source_model'] = 'medical_equipment'
-                equipment_id = me_data.get('equipment_id')
+
+                equipment_id = me_data.get('medical_equipment_id')
                 cheque_vals['source_record_id'] = equipment_id
-                if equipment_id:
+
+                # the payload already carries security_deposit_id directly — use it if present,
+                # only fall back to lookup if it's None (as in this sample payload)
+                sd_id = me_data.get('security_deposit_id')
+
+                if sd_id:
+                    cheque_vals['medical_security_deposit_id'] = sd_id
+                elif equipment_id:
                     equipment = self.env['medical.equipment'].browse(equipment_id)
                     if equipment.exists():
                         sd_slip = equipment.sd_slip_id
