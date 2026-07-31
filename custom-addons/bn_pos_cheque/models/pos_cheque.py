@@ -283,6 +283,7 @@ class POSCheque(models.Model):
             if self.source_model == 'welfare':
                 self._bounce_welfare()
             elif self.source_model == 'medical_equipment':
+                raise ValidationError('Cannot bounce cheque for medical equipment. Please contact support.')
                 self._bounce_medical_equipment()
         except Exception as e:
             _logger.error(f"Error bouncing cheque {self.name}: {str(e)}")
@@ -306,6 +307,7 @@ class POSCheque(models.Model):
         if self.source_model == 'welfare':
             self._bounce_welfare()          # same reset as bounce
         elif self.source_model == 'medical_equipment':
+            raise ValidationError('Cannot cancel cheque for medical equipment. Please contact support.')
             self._bounce_medical_equipment()
 
         self.state = 'cancel'
