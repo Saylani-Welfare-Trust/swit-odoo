@@ -61,27 +61,21 @@ class POSOrder(models.Model):
                     cheque_vals['welfare_recurring_line_ids'] = [(6, 0, recurring_ids)]
 
             elif me_data:
+                raise ValidationError(f"DEBUG me_data received: {me_data}")
+
                 cheque_vals['source_model'] = 'medical_equipment'
                 equipment_id = me_data.get('equipment_id')
                 cheque_vals['source_record_id'] = equipment_id
-                
                 if equipment_id:
                     equipment = self.env['medical.equipment'].browse(equipment_id)
                     if equipment.exists():
-                        # Check if security deposit exists
                         sd_slip = equipment.sd_slip_id
                         if not sd_slip:
                             sd_slip = self.env['medical.security.deposit'].search(
                                 [('medical_equipment_id', '=', equipment_id)], limit=1
                             )
-                        
                         if sd_slip:
                             cheque_vals['medical_security_deposit_id'] = sd_slip.id
-                            _logger.info(f"Linking cheque to existing security deposit {sd_slip.id}")
-                        else:
-                            # Security deposit doesn't exist yet - will be linked later
-                            _logger.info(f"No security deposit found for equipment {equipment_id}, will link later")
-                            
             # Create the cheque
             cheque = self.env['pos.cheque'].create(cheque_vals)
             res['pos_cheque_id'] = cheque.id
