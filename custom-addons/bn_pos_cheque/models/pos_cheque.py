@@ -315,22 +315,43 @@ class POSCheque(models.Model):
     def link_security_deposit(self):
         """Link the security deposit to this cheque if not already linked"""
         self.ensure_one()
-        if self.source_model == 'medical_equipment' and not self.medical_security_deposit_id:
-            equipment = self.env['medical.equipment'].browse(self.source_record_id)
-            if equipment.exists():
-                sd_slip = equipment.sd_slip_id
-                if not sd_slip:
-                    sd_slip = self.env['medical.security.deposit'].search(
-                        [('medical_equipment_id', '=', self.source_record_id)], limit=1
-                    )
-                if sd_slip:
-                    self.write({'medical_security_deposit_id': sd_slip.id})
-                    _logger.info(f"Linked security deposit {sd_slip.id} to cheque {self.id}")
-                    return True
-        return False
+
+        if self.source_model != 'medical_equipment':
+            return False
+
+        if self.medical_security_deposit_id:
+            return True  # already linked, nothing to do
+
+        if not self.source_record_id:
+            raise ValidationError(
+                f"DEBUG: Cheque {self.name} has no source_record_id set on it."
+            )
+
+        equipment = self.env['medical.equipment'].browse(self.source_record_id)
+
+        if not equipment.exists():
+            raise ValidationError(
+                f"DEBUG: medical.equipment id={self.source_record_id} does not exist."
+            )
+
+        sd_slip = equipment.sd_slip_id
+
+        if not sd_slip:
+            sd_slip = self.env['medical.security.deposit'].search(
+                [('medical_equipment_id', '=', self.source_record_id)], limit=1
+            )
+
+        if not sd_slip:
+            raise ValidationError(
+                f"DEBUG: No medical.security.deposit found for equipment id={self.source_record_id} "
+                f"(name={equipment.name}), neither via sd_slip_id nor via direct search."
+            )
+
+        self.write({'medical_security_deposit_id': sd_slip.id})
+        return True
+
 
     def _ensure_security_deposit_link(self):
-        """Ensure the security deposit is properly linked to this cheque"""
         self.ensure_one()
         if self.source_model == 'medical_equipment':
             if not self.medical_security_deposit_id:
