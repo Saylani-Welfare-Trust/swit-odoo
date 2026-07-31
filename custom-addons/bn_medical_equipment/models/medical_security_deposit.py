@@ -82,11 +82,18 @@ class MedicalSecurityDeposit(models.Model):
         if not medical_equipment_id:
             raise ValidationError("No medical equipment found with the given request number.")
 
-        total_security_deposit = sum(
-            line.security_deposit
-            for line in medical_equipment_id.medical_equipment_line_ids
+        # Idempotency guard — reuse an existing SD for this equipment instead of
+        # creating a duplicate on repeated sync calls.
+        existing = self.search(
+            [('medical_equipment_id', '=', medical_equipment_id.id)],
+            order='id desc', limit=1
         )
+        if existing:
+            return existing
 
+        total_security_deposit = sum(
+            line.security_deposit for line in medical_equipment_id.medical_equipment_line_ids
+        )
         donee = medical_equipment_id.donee_id
 
         security_deposit = self.create({
@@ -106,30 +113,13 @@ class MedicalSecurityDeposit(models.Model):
             medical_equipment_id.sd_slip_id = security_deposit.id
             medical_equipment_id.state = 'sd_received'
 
-            # Link to any existing POS cheque for this equipment
             pending_cheque = self.env['pos.cheque'].search([
                 ('source_model', '=', 'medical_equipment'),
                 ('source_record_id', '=', medical_equipment_id.id),
                 ('medical_security_deposit_id', '=', False),
             ], order='id desc', limit=1)
-
             if pending_cheque:
                 pending_cheque.write({'medical_security_deposit_id': security_deposit.id})
-                _logger.info(f"Linked existing cheque {pending_cheque.id} to new security deposit {security_deposit.id}")
-            
-            # Also check for any cheque that might have been created without the link
-            # This catches any edge cases
-            all_cheques = self.env['pos.cheque'].search([
-                ('source_model', '=', 'medical_equipment'),
-                ('source_record_id', '=', medical_equipment_id.id),
-                '|',
-                ('medical_security_deposit_id', '=', False),
-                ('medical_security_deposit_id', '=', None),
-            ])
-            for cheque in all_cheques:
-                if cheque.id != pending_cheque.id:  # Avoid duplicate updates
-                    cheque.write({'medical_security_deposit_id': security_deposit.id})
-                    _logger.info(f"Linked cheque {cheque.id} to security deposit {security_deposit.id}")
 
         return security_deposit
     @api.model
