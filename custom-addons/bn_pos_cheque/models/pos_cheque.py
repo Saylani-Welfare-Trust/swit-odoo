@@ -31,20 +31,8 @@ class POSCheque(models.Model):
     ], string="Source Type")
     source_record_id = fields.Integer(string="Source Record ID")
 
-    welfare_line_ids = fields.Many2many(
-        'welfare.line',
-        relation='direct_deposit_welfare_line_rel',
-        column1='dd_id',
-        column2='welfare_line_id',
-        string="Welfare Lines"
-    )
-    welfare_recurring_line_ids = fields.Many2many(
-        'welfare.recurring.line',
-        relation='direct_deposit_welfare_recurring_line_rel',
-        column1='dd_id',
-        column2='welfare_recurring_line_id',
-        string="Welfare Recurring Lines"
-    )
+    welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
+    welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
     medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")    # ---------- WELFARE ----------
     def _update_welfare_lines_state(self, new_state):
         """new_state: 'paid'/'disbursed' or 'unpaid'/'bounced' — confirm exact
