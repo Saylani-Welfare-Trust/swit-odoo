@@ -57,6 +57,8 @@ class DirectDeposit(models.Model):
         return result
 
 
+
+
 #     def action_not_clear(self):
 #         for line in self.qurbani_order_id.qurbani_order_line_ids:
 #             distribution_schedule = self.env['distribution.schedule'].search([('day_id', '=', line.day_id.id), ('hijri_id', '=', line.hijri_id.id), ('pos_product_ids', 'in', [line.product_id.id]), ('start_time', '=', line.start_time), ('end_time', '=', line.end_time), ('location_id', '=', line.distribution_id.id)])
