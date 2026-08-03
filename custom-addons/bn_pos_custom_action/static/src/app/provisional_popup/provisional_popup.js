@@ -279,17 +279,36 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             
             if (data.status === 'success') {
                 record = data;
-                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
-                payload.medical_equipment_id = data.id;  // Store microfinance_id for creating record if needed
-                payload.amount = data.amount;  // Store amount from microfinance request
-                // Only allow if the request state is 'cfo_approval'
-                if (data.state !== 'cfo_approval') {
+                payload.security_deposit_id = data.deposit_id || null;  
+                payload.medical_equipment_id = data.id; 
+                payload.amount = data.amount; 
+                      // ----- FETCH REQUEST STATE -----
+                // Fetch the full request record to get its state
+                const requestRecords = await this.orm.searchRead(
+                    'medical.equipment.request',   // adjust model name if different
+                    [['id', '=', data.id]],
+                    ['state'],                     // only need the state
+                    { limit: 1 }
+                );
+
+                if (!requestRecords || requestRecords.length === 0) {
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
-                        body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${data.state}).`),
+                        body: _t("Medical Equipment Request not found."),
                     });
                     return;
                 }
+
+                const requestState = requestRecords[0].state;
+
+                // Validate state
+                if (requestState !== 'cfo_approval') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
+                    });
+                    return;
+
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
                         type: "info",
