@@ -327,21 +327,70 @@ class DirectDeposit(models.Model):
 
     def _clear_medical_equipment(self):
         self.ensure_one()
-        security_deposit = self._ensure_security_deposit_link()
-        if security_deposit:
+        equipment = self.env['medical.equipment'].browse(self.source_record_id)
+        if not equipment.exists():
+            return
+
+        security_deposit = self.medical_security_deposit_id or equipment.sd_slip_id
+        if not security_deposit:
+            security_deposit = self.env['medical.security.deposit'].search(
+                [('medical_equipment_id', '=', equipment.id)], order='id desc', limit=1
+            )
+
+        if not security_deposit:
+            donee = equipment.donee_id
+            security_deposit = self.env['medical.security.deposit'].create({
+                'medical_equipment_id': equipment.id,
+                'donee_id': donee.id if donee else False,
+                'cnic_no': donee.cnic_no if donee else '',
+                'amount': equipment.total_amount,
+                'date': fields.Date.today(),
+                'payment_method': 'cheque' if self.bank_id else 'cash',
+                'bank_name': self.bank_id.name if self.bank_id else False,
+                'state': 'paid',   # created directly into paid, since we're clearing right now
+            })
+            equipment.sd_slip_id = security_deposit.id
+        else:
             security_deposit.write({'state': 'paid'})
-            equipment = security_deposit.medical_equipment_id
-            if equipment:
-                equipment.write({'state': 'sd_received'})
+
+        equipment.write({'state': 'sd_received'})
+
+        if not self.medical_security_deposit_id:
+            self.medical_security_deposit_id = security_deposit.id
+
 
     def _bounce_medical_equipment(self):
         self.ensure_one()
-        security_deposit = self._ensure_security_deposit_link()
-        if security_deposit:
-            security_deposit.write({'state': 'bounced'})  # closest valid value to "unpaid"
-            equipment = security_deposit.medical_equipment_id
-            if equipment:
-                equipment.write({'state': 'cfo_approval'})
+        equipment = self.env['medical.equipment'].browse(self.source_record_id)
+        if not equipment.exists():
+            return
+
+        security_deposit = self.medical_security_deposit_id or equipment.sd_slip_id
+        if not security_deposit:
+            security_deposit = self.env['medical.security.deposit'].search(
+                [('medical_equipment_id', '=', equipment.id)], order='id desc', limit=1
+            )
+
+        if not security_deposit:
+            donee = equipment.donee_id
+            security_deposit = self.env['medical.security.deposit'].create({
+                'medical_equipment_id': equipment.id,
+                'donee_id': donee.id if donee else False,
+                'cnic_no': donee.cnic_no if donee else '',
+                'amount': equipment.total_amount,
+                'date': fields.Date.today(),
+                'payment_method': 'cheque' if self.bank_id else 'cash',
+                'bank_name': self.bank_id.name if self.bank_id else False,
+                'state': 'bounced',   # created directly into bounced, since we're rejecting it now
+            })
+            equipment.sd_slip_id = security_deposit.id
+        else:
+            security_deposit.write({'state': 'bounced'})
+
+        equipment.write({'state': 'cfo_approval'})
+
+        if not self.medical_security_deposit_id:
+            self.medical_security_deposit_id = security_deposit.id
     @api.onchange('microfinance_id')
     def _onchange_microfinance_id(self):
         for rec in self:

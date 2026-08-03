@@ -82,37 +82,31 @@ class MedicalSecurityDeposit(models.Model):
         if not medical_equipment_id:
             raise ValidationError("No medical equipment found with the given request number.")
 
-        # Idempotency guard — reuse an existing SD for this equipment instead of
-        # creating a duplicate on repeated sync calls.
-        existing = self.search(
+        security_deposit = self.search(
             [('medical_equipment_id', '=', medical_equipment_id.id)],
             order='id desc', limit=1
         )
-        if existing:
-            return existing
 
-        total_security_deposit = sum(
-            line.security_deposit for line in medical_equipment_id.medical_equipment_line_ids
-        )
-        donee = medical_equipment_id.donee_id
-
-        security_deposit = self.create({
-            'medical_equipment_id': medical_equipment_id.id,
-            'donee_id': donee.id if donee else data.get('donee_id'),
-            'cnic_no': donee.cnic_no if donee else '',
-            'amount': medical_equipment_id.total_amount,
-            'date': fields.Date.today(),
-            'payment_method': data.get('payment_method', 'cash'),
-            'bank_name': data.get('bank_name'),
-            'cheque_no': data.get('cheque_no'),
-            'cheque_date': data.get('cheque_date'),
-            'state': data.get('state', 'draft'),
-        })
-
-        if security_deposit:
+        if not security_deposit:
+            donee = medical_equipment_id.donee_id
+            security_deposit = self.create({
+                'medical_equipment_id': medical_equipment_id.id,
+                'donee_id': donee.id if donee else data.get('donee_id'),
+                'cnic_no': donee.cnic_no if donee else '',
+                'amount': medical_equipment_id.total_amount,
+                'date': fields.Date.today(),
+                'payment_method': data.get('payment_method', 'cash'),
+                'bank_name': data.get('bank_name'),
+                'cheque_no': data.get('cheque_no'),
+                'cheque_date': data.get('cheque_date'),
+                'state': data.get('state', 'draft'),
+            })
             medical_equipment_id.sd_slip_id = security_deposit.id
             medical_equipment_id.state = 'sd_received'
 
+        # Always run the reach-back link, whether the SD was just created or already existed —
+        # a pending cheque/DD created after an existing SD still needs to be linked.
+        if security_deposit:
             pending_cheque = self.env['pos.cheque'].search([
                 ('source_model', '=', 'medical_equipment'),
                 ('source_record_id', '=', medical_equipment_id.id),
