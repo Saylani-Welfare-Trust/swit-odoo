@@ -282,7 +282,14 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
                 payload.medical_equipment_id = data.id;  // Store microfinance_id for creating record if needed
                 payload.amount = data.amount;  // Store amount from microfinance request
-
+                // Only allow if the request state is 'cfo_approval'
+                if (data.state !== 'cfo_approval') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${data.state}).`),
+                    });
+                    return;
+                }
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
                         type: "info",
