@@ -37,9 +37,6 @@ class DirectDeposit(models.Model):
 
     @api.model
     def create_dd_record(self, data):
-        # Run the base implementation FIRST — this handles donor/lines,
-        # tax/amount calc, and (critically) source_model/source_record_id
-        # resolution for microfinance/welfare/medical_equipment.
         result = super(DirectDeposit, self).create_dd_record(data)
 
         if not result or result.get('status') != 'success':
@@ -47,17 +44,18 @@ class DirectDeposit(models.Model):
 
         dd = self.browse(result['id'])
 
-        # Qurbani-specific extension
         favor = data.get('favor')
         if favor:
             dd.favor = favor
 
-        qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
-        dd.qurbani_order_id = qurbani_details.get('id')
+        # Skip Qurbani processing entirely for medical equipment / welfare / microfinance DDs
+        source_request_type = data.get('source_request_type')
+        if source_request_type not in ('Medical Equipment', 'Welfare', 'Microfinance'):
+            qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+            if qurbani_details:
+                dd.qurbani_order_id = qurbani_details.get('id')
+
         return result
-
-
-
 
 #     def action_not_clear(self):
 #         for line in self.qurbani_order_id.qurbani_order_line_ids:

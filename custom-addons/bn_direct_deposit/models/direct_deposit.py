@@ -182,7 +182,7 @@ class DirectDeposit(models.Model):
  
     @api.model
     def create_dd_record(self, data):
-        raise ValidationError(f"DEBUG DD data received: {data}")
+        
         address = data.get('address')
         bank_id = data.get('bank_id')
         service_charges = data.get('service_charges')
