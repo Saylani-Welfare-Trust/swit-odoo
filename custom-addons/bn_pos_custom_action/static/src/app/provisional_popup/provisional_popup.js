@@ -285,7 +285,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                       // ----- FETCH REQUEST STATE -----
                 // Fetch the full request record to get its state
                 const requestRecords = await this.orm.searchRead(
-                    'medical.equipment.request',   // adjust model name if different
+                    'medical.equipment',   // adjust model name if different
                     [['id', '=', data.id]],
                     ['state'],                     // only need the state
                     { limit: 1 }
