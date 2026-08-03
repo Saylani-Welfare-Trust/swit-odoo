@@ -308,7 +308,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
                     });
                     return;
-
+                }
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
                         type: "info",
