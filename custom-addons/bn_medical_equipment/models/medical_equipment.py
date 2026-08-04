@@ -177,60 +177,43 @@ class MedicalEquipment(models.Model):
 
     def _inverse_mobile(self):
         for rec in self:
-            if rec.donee_id :
+            if rec.donee_id:
                 rec.donee_id.mobile = rec.mobile
-            elif rec.donee_id:
-                # If registered, keep the mobile from donee
-                rec.mobile = rec.donee_id.mobile
+
     def _inverse_area(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.area = rec.area
-            elif rec.donee_id:
-                # If registered, keep the mobile from donee
-                rec.area = rec.donee_id.area
 
     def _inverse_city(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.city = rec.city
-            elif rec.donee_id:
-                rec.city = rec.donee_id.city
 
     def _inverse_street(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.street = rec.street
-            elif rec.donee_id:
-                rec.street = rec.donee_id.street
 
     def _inverse_cnic_no(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.cnic_no = rec.cnic_no
-            elif rec.donee_id:
-                rec.cnic_no = rec.donee_id.cnic_no
 
     def _inverse_gender(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.gender = rec.gender
-            elif rec.donee_id:
-                rec.gender = rec.donee_id.gender
 
     def _inverse_date_of_birth(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.date_of_birth = rec.date_of_birth
-            elif rec.donee_id:
-                rec.date_of_birth = rec.donee_id.date_of_birth
 
     def _inverse_country_code_id(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.country_code_id = rec.country_code_id.id
-            elif rec.donee_id:
-                rec.country_code_id = rec.donee_id.country_code_id
 
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
