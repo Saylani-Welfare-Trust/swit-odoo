@@ -90,11 +90,12 @@ class DonationBoxComplain(models.Model):
                 )
 
             registration = self.donation_box_registration_installation_id
+            if registration:
+
+                 registration.status = 'close'
 
             # If box is recovered
             if self.box_recovered:
-                if registration:
-                    registration.status = 'close'
 
                 if self.lot_id:
                     self.lot_id.is_not_return = True
@@ -107,9 +108,6 @@ class DonationBoxComplain(models.Model):
 
             # If box is NOT recovered
             else:
-                if registration:
-                    registration.status = 'close'
-
                 if self.lot_id:
                     self.lot_id.is_not_return = True
 
