@@ -79,7 +79,7 @@
         <field name="name">welfare.line.disbursement.popup.form</field>
         <field name="model">welfare.line.disbursement.popup</field>
         <field name="arch" type="xml">
-            <form string="Disbursement Details" create="false" edit="false">
+            <form string="Disbursement Details">
                 <sheet>
                     <group string="Donee Information">
                         <field name="line_id" invisible="1"/>
@@ -107,7 +107,7 @@
                         <field name="media_ids" widget="many2many_binary"
                             required="1" nolabel="1"
                             options="{'accepted_file_extensions': 'image/*,video/*'}"/>
-                    </group>                    
+                    </group>
                 </sheet>
                 <footer>
                     <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
@@ -122,7 +122,7 @@
         <field name="name">welfare.recurring.line.disbursement.popup.form</field>
         <field name="model">welfare.recurring.line.disbursement.popup</field>
         <field name="arch" type="xml">
-            <form string="Recurring Disbursement Details" create="false" edit="false">
+            <form string="Recurring Disbursement Details">
                 <sheet>
                     <group string="Donee Information">
                         <field name="recurring_line_id" invisible="1"/>
@@ -146,6 +146,11 @@
                         <field name="collection_date" readonly="1"/>
                         <field name="assigned_officer_id" readonly="1"/>
                         <field name="state" readonly="1"/>
+                    </group>
+                    <group string="Media">
+                        <field name="media_ids" widget="many2many_binary"
+                            required="1" nolabel="1"
+                            options="{'accepted_file_extensions': 'image/*,video/*'}"/>
                     </group>
                 </sheet>
                 <footer>
