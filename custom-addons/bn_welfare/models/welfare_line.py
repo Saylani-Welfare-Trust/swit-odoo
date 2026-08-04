@@ -275,7 +275,6 @@ class WelfareLine(models.Model):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_welfare.view_welfare_line_disbursement_popup_form').id,
             'target': 'new',
-            'context': {'form_view_initial_mode': 'view'},
         }
 
     @api.model

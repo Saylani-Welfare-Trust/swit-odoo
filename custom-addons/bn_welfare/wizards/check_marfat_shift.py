@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 
@@ -26,14 +26,24 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     collection_date = fields.Date(related='line_id.collection_date', readonly=True)
     assigned_officer_id = fields.Many2one('hr.employee', related='line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='line_id.state', readonly=True)
+
     media_ids = fields.Many2many(
         'ir.attachment',
-        related='line_id.media_ids',
+        'welfare_line_popup_media_rel',
+        'popup_id',
+        'attachment_id',
         string='Media (Images/Videos)',
-        readonly=False,
     )
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if res.get('line_id'):
+            line = self.env['welfare.line'].browse(res['line_id'])
+            res['media_ids'] = [(6, 0, line.media_ids.ids)]
+        return res
+
     def _reopen_wizard_action(self):
-        """Reopen this same wizard instead of just reloading the page."""
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
@@ -43,23 +53,10 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         }
 
     def action_mark_pending(self):
-        # Create return line
-        # self.env['welfare.return.line'].create({
-        #     'welfare_line_id': self.line_id.id,
-        #     'welfare_id': self.line_id.welfare_id.id,
-        #     'donee_id': self.line_id.welfare_id.donee_id.id,
-        #     'product_id': self.line_id.product_id.id,
-        #     'quantity': self.line_id.quantity,
-        #     'total_amount': self.line_id.total_amount,
-        #     'return_date': fields.Date.today(),
-        #     'state': 'pending',
-        # })
-        self.line_id.write({'state': 'pending'})
-
-        # Create new welfare + copy all form data + copy line
-        # Pass create_return_line=False to avoid creating return line twice
-        # self.line_id.action_set_pending(create_return_line=False)
-
+        self.line_id.write({
+            'media_ids': [(6, 0, self.media_ids.ids)],
+            'state': 'pending',
+        })
         return self._reopen_wizard_action()
 
     def action_disbursed(self):
@@ -68,15 +65,16 @@ class WelfareLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
+        self.line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
+
 
 class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     _name = 'welfare.recurring.line.disbursement.popup'
     _description = 'Welfare Recurring Line Disbursement Popup'
 
-    line_id = fields.Many2one('welfare.line', string='Disbursement Line', required=True)
     recurring_line_id = fields.Many2one('welfare.recurring.line', string='Recurring Line', required=True)
     welfare_id = fields.Many2one('welfare', related='recurring_line_id.welfare_id', readonly=True)
     donee_id = fields.Many2one('res.partner', related='recurring_line_id.welfare_id.donee_id', readonly=True)
@@ -98,14 +96,24 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     collection_date = fields.Date(related='recurring_line_id.collection_date', readonly=True)
     assigned_officer_id = fields.Many2one('hr.employee', related='recurring_line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='recurring_line_id.state', readonly=True)
+
     media_ids = fields.Many2many(
         'ir.attachment',
-        related='line_id.media_ids',
+        'welfare_recurring_line_popup_media_rel',
+        'popup_id',
+        'attachment_id',
         string='Media (Images/Videos)',
-        readonly=False,
     )
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if res.get('recurring_line_id'):
+            rline = self.env['welfare.recurring.line'].browse(res['recurring_line_id'])
+            res['media_ids'] = [(6, 0, rline.media_ids.ids)]
+        return res
+
     def _reopen_wizard_action(self):
-        """Reopen this same wizard instead of just reloading the page."""
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
@@ -120,25 +128,17 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
+        self.recurring_line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.recurring_line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
 
     def action_mark_pending(self):
-        # self.env['welfare.return.line'].create({
-        #     'recurring_line_id': self.recurring_line_id.id,
-        #     'welfare_id': self.recurring_line_id.welfare_id.id,
-        #     'donee_id': self.recurring_line_id.welfare_id.donee_id.id,
-        #     'product_id': self.recurring_line_id.product_id.id,
-        #     'quantity': self.recurring_line_id.quantity,
-        #     'total_amount': self.recurring_line_id.amount,
-        #     'return_date': fields.Date.today(),
-        #     'state': 'pending',
-        # })
-
-        self.recurring_line_id.write({'state': 'pending'})
+        self.recurring_line_id.write({
+            'media_ids': [(6, 0, self.media_ids.ids)],
+            'state': 'pending',
+        })
         return self._reopen_wizard_action()
-
 
 class CheckMarfatShift(models.TransientModel):
     _name = 'check.marfat.shift'
