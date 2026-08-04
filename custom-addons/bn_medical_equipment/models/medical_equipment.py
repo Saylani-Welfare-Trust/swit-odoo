@@ -402,19 +402,19 @@ class MedicalEquipment(models.Model):
 
     def write(self, vals):
         # Handle the scenario where mobile is being set but donee is already registered
-        if vals.get('donee_id') or self.donee_id:
-            donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
-            if donee_id:
-                donee = self.env['res.partner'].browse(donee_id)
-                if donee and donee.state == 'register':
-                    # Remove related fields that would cause duplicate validation
-                    fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-                    for field in fields_to_remove:
-                        if field in vals:
-                            _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-                            del vals[field]
-                    if not vals:
-                        return True
+        # if vals.get('donee_id') or self.donee_id:
+        #     donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
+        #     if donee_id:
+        #         donee = self.env['res.partner'].browse(donee_id)
+        #         if donee and donee.state == 'register':
+        #             # Remove related fields that would cause duplicate validation
+        #             fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+        #             for field in fields_to_remove:
+        #                 if field in vals:
+        #                     _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+        #                     del vals[field]
+        #             if not vals:
+        #                 return True
 
         # Handle medical equipment reference logic
         if vals.get('medical_equipment_reference_id'):
@@ -508,16 +508,16 @@ class MedicalEquipment(models.Model):
     @api.model
     def create(self, vals):
         # Handle the scenario where mobile is being set but donee is already registered
-        if vals.get('donee_id'):
-            donee = self.env['res.partner'].browse(vals.get('donee_id'))
-            if donee and donee.state == 'register':
-                # Remove mobile from vals to prevent duplicate validation
-                # The mobile is already in the donee record
-                fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-                for field in fields_to_remove:
-                    if field in vals:
-                        _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-                        del vals[field]
+        # if vals.get('donee_id'):
+        #     donee = self.env['res.partner'].browse(vals.get('donee_id'))
+        #     if donee and donee.state == 'register':
+        #         # Remove mobile from vals to prevent duplicate validation
+        #         # The mobile is already in the donee record
+        #         fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+        #         for field in fields_to_remove:
+        #             if field in vals:
+        #                 _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+        #                 del vals[field]
 
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
