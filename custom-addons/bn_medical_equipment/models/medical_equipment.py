@@ -177,7 +177,7 @@ class MedicalEquipment(models.Model):
 
     def _inverse_mobile(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id :
                 rec.donee_id.mobile = rec.mobile
             elif rec.donee_id:
                 # If registered, keep the mobile from donee
