@@ -125,7 +125,19 @@ class WelfareLine(models.Model):
 
 
     manual_total = fields.Boolean(default=False)
+    media_ids = fields.Many2many(
+        'ir.attachment',
+        'welfare_line_media_rel',
+        'line_id',
+        'attachment_id',
+        string='Media (Images/Videos)',
+    )
+    media_count = fields.Integer(compute='_compute_media_count', string='Media Count')
 
+    @api.depends('media_ids')
+    def _compute_media_count(self):
+        for rec in self:
+            rec.media_count = len(rec.media_ids)
     def action_set_pending(self, create_return_line=True):
         """
         Create a new welfare record with only the pending disbursement line.

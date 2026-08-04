@@ -26,7 +26,12 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     collection_date = fields.Date(related='line_id.collection_date', readonly=True)
     assigned_officer_id = fields.Many2one('hr.employee', related='line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='line_id.state', readonly=True)
-
+    media_ids = fields.Many2many(
+        'ir.attachment',
+        related='line_id.media_ids',
+        string='Media (Images/Videos)',
+        readonly=False,
+    )
     def _reopen_wizard_action(self):
         """Reopen this same wizard instead of just reloading the page."""
         return {
@@ -58,16 +63,20 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         return self._reopen_wizard_action()
 
     def action_disbursed(self):
+        if not self.media_ids:
+            raise UserError(_(
+                "Please upload at least one image or video in the Media field "
+                "before marking this line as Done."
+            ))
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.line_id.write({'state': 'disbursed'})
-
         return self._reopen_wizard_action()
-
 
 class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     _name = 'welfare.recurring.line.disbursement.popup'
     _description = 'Welfare Recurring Line Disbursement Popup'
 
+    line_id = fields.Many2one('welfare.line', string='Disbursement Line', required=True)
     recurring_line_id = fields.Many2one('welfare.recurring.line', string='Recurring Line', required=True)
     welfare_id = fields.Many2one('welfare', related='recurring_line_id.welfare_id', readonly=True)
     donee_id = fields.Many2one('res.partner', related='recurring_line_id.welfare_id.donee_id', readonly=True)
@@ -89,7 +98,12 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     collection_date = fields.Date(related='recurring_line_id.collection_date', readonly=True)
     assigned_officer_id = fields.Many2one('hr.employee', related='recurring_line_id.assigned_officer_id', readonly=True)
     state = fields.Selection(related='recurring_line_id.state', readonly=True)
-
+    media_ids = fields.Many2many(
+        'ir.attachment',
+        related='line_id.media_ids',
+        string='Media (Images/Videos)',
+        readonly=False,
+    )
     def _reopen_wizard_action(self):
         """Reopen this same wizard instead of just reloading the page."""
         return {
@@ -101,6 +115,11 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
         }
 
     def action_disbursed(self):
+        if not self.media_ids:
+            raise UserError(_(
+                "Please upload at least one image or video in the Media field "
+                "before marking this line as Done."
+            ))
         self.welfare_id._auto_disburse_if_all_lines_delivered()
         self.recurring_line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
