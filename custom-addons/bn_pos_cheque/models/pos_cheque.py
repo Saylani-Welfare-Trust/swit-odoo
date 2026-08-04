@@ -33,16 +33,16 @@ class POSCheque(models.Model):
 
     welfare_line_ids = fields.Many2many(
         'welfare.line',
-        'pos_cheque_welfare_line_rel',
-        'cheque_id',
-        'line_id',
+        'pos_cheque_welfare_line_rel_v2',
+        'pos_cheque_id',
+        'welfare_line_id',
         string="Welfare Lines",
     )
     welfare_recurring_line_ids = fields.Many2many(
         'welfare.recurring.line',
-        'pos_cheque_welfare_recurring_line_rel',
-        'cheque_id',
-        'recurring_line_id',
+        'pos_cheque_welfare_recurring_line_rel_v2',
+        'pos_cheque_id',
+        'welfare_recurring_line_id',
         string="Welfare Recurring Lines",
     )
     medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")    # ---------- WELFARE ----------
