@@ -89,11 +89,6 @@ class DonationBoxComplain(models.Model):
                     "Complain Officer Remark is required before resolving Missing or Robbery cases."
                 )
 
-            registration = self.donation_box_registration_installation_id
-            if registration:
-
-                 registration.status = 'close'
-
             # If box is recovered
             if self.box_recovered:
 
@@ -120,6 +115,10 @@ class DonationBoxComplain(models.Model):
         if self.box_status == 'broken':
             self.action_scrap()
             self.status = 'resolved'
+
+        registration = self.donation_box_registration_installation_id
+        if registration:
+            registration.status = 'close'
 
     def action_return(self):
         """Return ONLY the selected serial (lot) from a multi-line picking."""
