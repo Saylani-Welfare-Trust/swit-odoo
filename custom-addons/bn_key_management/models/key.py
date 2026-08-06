@@ -31,11 +31,11 @@ class Key(models.Model):
     reason = fields.Text('Reason')
 
 
-    # @api.onchange('key_bunch_id')
-    # def _onchange_key_bunch_id(self):
-    #     if self.key_bunch_id:
-    #         if len(self.key_bunch_id.key_ids) > 50:
-    #             raise ValidationError(str(f'Key Bunch Limit Exceeded {len(self.key_bunch_id)}/50'))
+    @api.onchange('key_bunch_id')
+    def _onchange_key_bunch_id(self):
+        if self.key_bunch_id:
+            if len(self.key_bunch_id.key_ids) > 50:
+                raise ValidationError(str(f'Key Bunch Limit Exceeded {len(self.key_bunch_id)}/50'))
             
 
     def action_available(self):
