@@ -177,60 +177,43 @@ class MedicalEquipment(models.Model):
 
     def _inverse_mobile(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.mobile = rec.mobile
-            elif rec.donee_id:
-                # If registered, keep the mobile from donee
-                rec.mobile = rec.donee_id.mobile
+
     def _inverse_area(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.area = rec.area
-            elif rec.donee_id:
-                # If registered, keep the mobile from donee
-                rec.area = rec.donee_id.area
 
     def _inverse_city(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.city = rec.city
-            elif rec.donee_id:
-                rec.city = rec.donee_id.city
 
     def _inverse_street(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.street = rec.street
-            elif rec.donee_id:
-                rec.street = rec.donee_id.street
 
     def _inverse_cnic_no(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.cnic_no = rec.cnic_no
-            elif rec.donee_id:
-                rec.cnic_no = rec.donee_id.cnic_no
 
     def _inverse_gender(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.gender = rec.gender
-            elif rec.donee_id:
-                rec.gender = rec.donee_id.gender
 
     def _inverse_date_of_birth(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.date_of_birth = rec.date_of_birth
-            elif rec.donee_id:
-                rec.date_of_birth = rec.donee_id.date_of_birth
 
     def _inverse_country_code_id(self):
         for rec in self:
-            if rec.donee_id and rec.donee_id.state != 'register':
+            if rec.donee_id:
                 rec.donee_id.country_code_id = rec.country_code_id.id
-            elif rec.donee_id:
-                rec.country_code_id = rec.donee_id.country_code_id
 
     @api.depends('employee_category_id', 'donee_id')
     def _compute_employee_domain(self):
@@ -419,19 +402,19 @@ class MedicalEquipment(models.Model):
 
     def write(self, vals):
         # Handle the scenario where mobile is being set but donee is already registered
-        if vals.get('donee_id') or self.donee_id:
-            donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
-            if donee_id:
-                donee = self.env['res.partner'].browse(donee_id)
-                if donee and donee.state == 'register':
-                    # Remove related fields that would cause duplicate validation
-                    fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-                    for field in fields_to_remove:
-                        if field in vals:
-                            _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-                            del vals[field]
-                    if not vals:
-                        return True
+        # if vals.get('donee_id') or self.donee_id:
+        #     donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
+        #     if donee_id:
+        #         donee = self.env['res.partner'].browse(donee_id)
+        #         if donee and donee.state == 'register':
+        #             # Remove related fields that would cause duplicate validation
+        #             fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+        #             for field in fields_to_remove:
+        #                 if field in vals:
+        #                     _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+        #                     del vals[field]
+        #             if not vals:
+        #                 return True
 
         # Handle medical equipment reference logic
         if vals.get('medical_equipment_reference_id'):
@@ -525,16 +508,16 @@ class MedicalEquipment(models.Model):
     @api.model
     def create(self, vals):
         # Handle the scenario where mobile is being set but donee is already registered
-        if vals.get('donee_id'):
-            donee = self.env['res.partner'].browse(vals.get('donee_id'))
-            if donee and donee.state == 'register':
-                # Remove mobile from vals to prevent duplicate validation
-                # The mobile is already in the donee record
-                fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-                for field in fields_to_remove:
-                    if field in vals:
-                        _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-                        del vals[field]
+        # if vals.get('donee_id'):
+        #     donee = self.env['res.partner'].browse(vals.get('donee_id'))
+        #     if donee and donee.state == 'register':
+        #         # Remove mobile from vals to prevent duplicate validation
+        #         # The mobile is already in the donee record
+        #         fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
+        #         for field in fields_to_remove:
+        #             if field in vals:
+        #                 _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
+        #                 del vals[field]
 
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
