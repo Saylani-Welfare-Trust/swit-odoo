@@ -58,6 +58,7 @@
         'views/web_qurbani_distribution.xml',
         'views/web_qurbani_slaughter.xml',
         'views/qurbani_city.xml',
+        'views/res_partner.xml',
         
         'wizards/qurbani_schedule.xml',
         'wizards/generate_qurbani_demand.xml',
