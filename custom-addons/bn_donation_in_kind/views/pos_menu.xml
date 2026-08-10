@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_donation_in_kind_tree_view" model="ir.ui.view">
+        <field name="name">pos.donation.in.kind.tree.view</field>
+        <field name="model">donation.in.kind</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree create="0" delete="0">
+                <header>
+                    <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight"/>
+                </header>
+                <field name="name" readonly="1"/>
+                <field name="donor_id"/>
+                <field name="truk_number"/>
+                <field name="product_id"/>
+                <field name="location_id"/>
+                <field name="quantity"/>
+                <field name="state" invisible="1"/>
+                <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" invisible="state not in ['draft']"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="pos_donation_in_kind_action" model="ir.actions.act_window">
+        <field name="name">Donation In Kind</field>
+        <field name="res_model">donation.in.kind</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="pos_donation_in_kind_tree_view"/>
+        <field name="context">{
+            'create': 0,
+            'edit': 0,
+            'delete': 0
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a new donation in kind...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="pos_donation_in_kind_menu"
+        name="Donation In Kind"
+        action="pos_donation_in_kind_action"
+        parent="point_of_sale.menu_point_rep"
+        sequence="10"/>
+
+</odoo>

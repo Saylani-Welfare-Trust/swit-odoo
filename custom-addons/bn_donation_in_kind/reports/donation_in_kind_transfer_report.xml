@@ -1,0 +1,100 @@
+<odoo>
+    <template id="donation_in_kind_transfer_report">
+        <t t-call="web.html_container">
+            <t t-if="len(docs) > 1">
+                <div class="page">
+                    <h2>Donation In Kind Transfer Report</h2>
+                    <p><strong>Saylani Welfare International Trust</strong></p>
+                    <p><strong>Transferred Records:</strong></p>
+                    <table class="table table-sm table-bordered" style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">#</th>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">Donation In Kind Name</th>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">Truck Number</th>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">Location</th>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">Warehouse</th>
+                                <th style="padding:6px; text-align:left; border:1px solid #ddd;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="counter" t-value="1"/>
+                            <t t-foreach="docs" t-as="o">
+                                <tr>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="counter"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.name or '-'"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.truk_number or '-'"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.location_id.display_name or '-'"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.warehouse_name or '-'"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/></td>
+                                </tr>
+                                <t t-set="counter" t-value="counter + 1"/>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+            <t t-else="">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page">
+                        <h2>Donation In Kind Transfer Report</h2>
+                        <p><strong>DIK #:</strong> <span t-esc="o.name"/></p>
+                        <p><strong>Register Name:</strong> <span t-esc="o.donor_id.name"/></p>
+                        <p><strong>Location:</strong> <span t-esc="o.location_id.display_name"/></p>
+                        <p><strong>Warehouse:</strong> <span t-esc="o.warehouse_name"/></p>
+                        <p><strong>Truck Number:</strong> <span t-esc="o.truk_number"/></p>
+                        <p><strong>Date:</strong> <span t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/></p>
+                        <p><strong>Contact No.:</strong> <span t-esc="o.donor_id.mobile"/></p>
+                        <p><strong>Status:</strong> <span t-esc="dict(o.fields_get(allfields=['state'])['state']['selection'])[o.state]"/></p>
+
+                        <br/>
+                        <h4>Donation Details</h4>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.donation_in_kind_line_ids" t-as="line">
+                                    <tr>
+                                        <td><span t-esc="line.product_id.display_name"/></td>
+                                        <td><span t-esc="'{:,}'.format(int(line.quantity) or 0)"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <br/>
+                        <p><strong>Entered by:</strong> <span t-esc="o.create_uid.name"/></p>
+
+                        <hr/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="report_donation_in_kind_transfer_paperformat" model="report.paperformat">
+        <field name="name">A5 - Donation In Kind Report</field>
+        <field name="format">A5</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+    <record id="action_report_donation_in_kind_transfer" model="ir.actions.report">
+        <field name="name">Donation In Kind Transfer Report</field>
+        <field name="model">donation.in.kind</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_donation_in_kind.donation_in_kind_transfer_report</field>
+        <field name="report_file">bn_donation_in_kind.donation_in_kind_transfer_report</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Donation In Kind Transfer - %s' % (object.name)</field>
+    </record>
+</odoo>
