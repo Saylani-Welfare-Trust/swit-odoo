@@ -930,7 +930,7 @@ class Microfinance(models.Model):
             else:
                 rec.compute_recovery_installment()
 
-            rec.delivery_confirmed = True   # or rec.delivery_state = 'confirmed'
+            # rec.delivery_confirmed = True   # or rec.delivery_state = 'confirmed'
             rec.state = 'done'
 
     def action_move_to_done(self):
