@@ -11,6 +11,7 @@ patch(PaymentScreen.prototype, {
 
         console.log(this);
         
+        
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
             const medicalData = currentOrder.extra_data.medical_equipment;
