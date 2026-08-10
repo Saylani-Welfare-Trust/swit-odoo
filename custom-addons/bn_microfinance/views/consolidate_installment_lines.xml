@@ -35,7 +35,7 @@
 
     <!-- Menu Items -->
     <menuitem id="menu_microfinance_consolidated_lines" 
-              name="Post-Dated Cheques" 
+              name="Installment Lines" 
               action="action_microfinance_consolidated_lines"
               parent="microfinance_menu" 
               sequence="10"/>
