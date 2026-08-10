@@ -664,6 +664,8 @@ class Microfinance(models.Model):
         self.sale_order_id = sale_order.id
 
         return sale_order
+
+
     
     def _validate_picking(self):
         """Confirm/assign, mark lines picked, and validate delivery picking(s) to 'done'."""
