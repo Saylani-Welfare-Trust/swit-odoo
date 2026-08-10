@@ -919,6 +919,9 @@ class Microfinance(models.Model):
         self.state = 'fully_recover'
     def action_move_to_done_serveraction(self):
         for rec in self:
+            if self.asset_type == 'movable_asset':
+                self._create_microfinance_sale_order()
+        
             if rec.asset_type != 'cash' and not rec.delivery_date:
                 raise ValidationError('Please select a Delivery Date.')
 
@@ -929,7 +932,7 @@ class Microfinance(models.Model):
 
             rec.delivery_confirmed = True   # or rec.delivery_state = 'confirmed'
             rec.state = 'done'
-            
+
     def action_move_to_done(self):
 
         if self.asset_type != 'cash' and not self.delivery_date:
