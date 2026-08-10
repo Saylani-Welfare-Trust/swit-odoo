@@ -666,27 +666,32 @@ class Microfinance(models.Model):
         return sale_order
     
     def _validate_picking(self):
-        """Validate all linked delivery pickings — set quantities, confirm/assign,
-        and force them to 'done'."""
+        """Odoo 17: confirm/assign, mark lines picked, and validate to 'done'."""
         for rec in self:
             pickings = rec.picking_ids.filtered(lambda p: p.state not in ('done', 'cancel'))
+
+            if not pickings:
+                raise ValidationError(f'{rec.name}: No open delivery picking found to validate.')
+
             for picking in pickings:
                 if picking.state == 'draft':
                     picking.action_confirm()
 
                 picking.action_assign()
 
-                for move in picking.move_ids:
-                    if 'quantity' in move._fields:
-                        move.quantity = move.product_uom_qty
-                    elif 'quantity_done' in move._fields:
-                        move.quantity_done = move.product_uom_qty
+                if not picking.move_ids:
+                    raise ValidationError(f'{rec.name}: Picking {picking.name} has no stock moves.')
 
+                for move in picking.move_ids:
+                    move.quantity = move.product_uom_qty
+                    if not move.move_line_ids:
+                        raise ValidationError(
+                            f'{rec.name}: Move {move.name} could not reserve any quantity '
+                            f'(no move lines). Check stock availability at the source location.'
+                        )
                     for move_line in move.move_line_ids:
-                        if 'quantity' in move_line._fields:
-                            move_line.quantity = move_line.reserved_uom_qty or move.product_uom_qty
-                        elif 'qty_done' in move_line._fields:
-                            move_line.qty_done = move_line.product_uom_qty
+                        move_line.quantity = move_line.reserved_uom_qty or move.product_uom_qty
+                        move_line.picked = True
 
                 result = picking.button_validate()
                 if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
@@ -695,9 +700,12 @@ class Microfinance(models.Model):
                     ).create({})
                     wizard.process()
 
-                # Safety net: if for some reason button_validate didn't flip it, force it
                 if picking.state != 'done':
-                    picking.write({'state': 'done', 'date_done': fields.Datetime.now()})
+                    raise ValidationError(
+                        f'{rec.name}: Picking {picking.name} is still in state "{picking.state}" '
+                        f'after button_validate() — validation did not complete.'
+                    )
+                
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
@@ -954,6 +962,17 @@ class Microfinance(models.Model):
     def action_move_to_done_serveraction(self):
         for rec in self:
             if rec.asset_type == 'movable_asset':
+                # Create SO + delivery if somehow not created yet
+                if not rec.sale_order_id:
+                    rec._create_microfinance_sale_order()
+
+                if not rec.picking_ids:
+                    raise ValidationError(
+                        f'{rec.name}: Sale Order {rec.sale_order_id.name if rec.sale_order_id else ""} '
+                        'did not generate a delivery picking. Check that the product type is '
+                        '"Storable Product" and that a delivery route/warehouse is configured.'
+                    )
+
                 rec._validate_picking()
 
             if rec.asset_type != 'cash' and not rec.delivery_date:
@@ -965,6 +984,7 @@ class Microfinance(models.Model):
                 rec.compute_recovery_installment()
 
             rec.state = 'done'
+
     def action_move_to_done(self):
 
         if self.asset_type != 'cash' and not self.delivery_date:
