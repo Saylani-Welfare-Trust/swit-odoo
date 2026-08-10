@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="bn_profile_management_profile_management_view_form_inherit_bn_qurbani" model="ir.ui.view">
+    <record id="bn_profile_management_view_form_inherit_bn_qurbani" model="ir.ui.view">
         <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.qurbani</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="bn_qurbani.bn_profile_management_profile_management_view_form_inherit_bn_qurbani"/>
+        <field name="inherit_id" ref="bn_qurbani.bn_profile_management_view_form_inherit_bn_qurbani"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='custom_pos_order_line_ids']//field[@name='partner_id']" position="after">
                 <field name="favor"/>
