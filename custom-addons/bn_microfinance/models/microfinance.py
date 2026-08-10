@@ -640,7 +640,7 @@ class Microfinance(models.Model):
         })
 
         # Confirm SO — this auto-generates the delivery picking
-        # sale_order.action_confirm()
+        sale_order.action_confirm()
 
         # ← Write origin back AFTER confirm as action_confirm() overwrites it
         sale_order.write({'origin': self.name})
@@ -664,6 +664,31 @@ class Microfinance(models.Model):
         self.sale_order_id = sale_order.id
 
         return sale_order
+    def _validate_picking(self, picking):
+        """Confirm/assign the picking, set quantities done, and validate it
+        (moves stock and marks the delivery as 'Done')."""
+        # Make sure the picking is in a confirmable/assignable state
+        if picking.state not in ('done', 'cancel'):
+            if picking.state == 'draft':
+                picking.action_confirm()
+            picking.action_assign()
+
+            for move in picking.move_ids:
+                # Odoo 17+: 'quantity'; Odoo <=16: 'quantity_done'
+                if 'quantity' in move._fields:
+                    move.quantity = move.product_uom_qty
+                elif 'quantity_done' in move._fields:
+                    move.quantity_done = move.product_uom_qty
+
+            # Skip backorder wizard so it validates straight through
+            result = picking.button_validate()
+            if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
+                backorder_wizard = self.env['stock.backorder.confirmation'].with_context(
+                    result.get('context', {})
+                ).create({})
+                backorder_wizard.process()
+
+        return picking
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
@@ -920,7 +945,7 @@ class Microfinance(models.Model):
     def action_move_to_done_serveraction(self):
         for rec in self:
             if self.asset_type == 'movable_asset':
-                self._create_microfinance_sale_order()
+                self._validate_picking()
         
             if rec.asset_type != 'cash' and not rec.delivery_date:
                 raise ValidationError('Please select a Delivery Date.')
