@@ -664,31 +664,40 @@ class Microfinance(models.Model):
         self.sale_order_id = sale_order.id
 
         return sale_order
-    def _validate_picking(self, picking):
-        """Confirm/assign the picking, set quantities done, and validate it
-        (moves stock and marks the delivery as 'Done')."""
-        # Make sure the picking is in a confirmable/assignable state
-        if picking.state not in ('done', 'cancel'):
-            if picking.state == 'draft':
-                picking.action_confirm()
-            picking.action_assign()
+    
+    def _validate_picking(self):
+        """Validate all linked delivery pickings — set quantities, confirm/assign,
+        and force them to 'done'."""
+        for rec in self:
+            pickings = rec.picking_ids.filtered(lambda p: p.state not in ('done', 'cancel'))
+            for picking in pickings:
+                if picking.state == 'draft':
+                    picking.action_confirm()
 
-            for move in picking.move_ids:
-                # Odoo 17+: 'quantity'; Odoo <=16: 'quantity_done'
-                if 'quantity' in move._fields:
-                    move.quantity = move.product_uom_qty
-                elif 'quantity_done' in move._fields:
-                    move.quantity_done = move.product_uom_qty
+                picking.action_assign()
 
-            # Skip backorder wizard so it validates straight through
-            result = picking.button_validate()
-            if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
-                backorder_wizard = self.env['stock.backorder.confirmation'].with_context(
-                    result.get('context', {})
-                ).create({})
-                backorder_wizard.process()
+                for move in picking.move_ids:
+                    if 'quantity' in move._fields:
+                        move.quantity = move.product_uom_qty
+                    elif 'quantity_done' in move._fields:
+                        move.quantity_done = move.product_uom_qty
 
-        return picking
+                    for move_line in move.move_line_ids:
+                        if 'quantity' in move_line._fields:
+                            move_line.quantity = move_line.reserved_uom_qty or move.product_uom_qty
+                        elif 'qty_done' in move_line._fields:
+                            move_line.qty_done = move_line.product_uom_qty
+
+                result = picking.button_validate()
+                if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
+                    wizard = self.env['stock.backorder.confirmation'].with_context(
+                        result.get('context', {})
+                    ).create({})
+                    wizard.process()
+
+                # Safety net: if for some reason button_validate didn't flip it, force it
+                if picking.state != 'done':
+                    picking.write({'state': 'done', 'date_done': fields.Datetime.now()})
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
@@ -944,9 +953,9 @@ class Microfinance(models.Model):
         self.state = 'fully_recover'
     def action_move_to_done_serveraction(self):
         for rec in self:
-            if self.asset_type == 'movable_asset':
-                self._validate_picking()
-        
+            if rec.asset_type == 'movable_asset':
+                rec._validate_picking()
+
             if rec.asset_type != 'cash' and not rec.delivery_date:
                 raise ValidationError('Please select a Delivery Date.')
 
@@ -955,9 +964,7 @@ class Microfinance(models.Model):
             else:
                 rec.compute_recovery_installment()
 
-            # rec.delivery_confirmed = True   # or rec.delivery_state = 'confirmed'
             rec.state = 'done'
-
     def action_move_to_done(self):
 
         if self.asset_type != 'cash' and not self.delivery_date:
