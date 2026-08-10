@@ -683,14 +683,16 @@ class Microfinance(models.Model):
                     raise ValidationError(f'{rec.name}: Picking {picking.name} has no stock moves.')
 
                 for move in picking.move_ids:
-                    move.quantity = move.product_uom_qty
                     if not move.move_line_ids:
                         raise ValidationError(
                             f'{rec.name}: Move {move.name} could not reserve any quantity '
                             f'(no move lines). Check stock availability at the source location.'
                         )
                     for move_line in move.move_line_ids:
-                        move_line.quantity = move_line.reserved_uom_qty or move.product_uom_qty
+                        # After action_assign(), move_line.quantity is already the reserved qty.
+                        # Only fall back to product_uom_qty if it's somehow zero.
+                        if not move_line.quantity:
+                            move_line.quantity = move.product_uom_qty
                         move_line.picked = True
 
                 result = picking.button_validate()
