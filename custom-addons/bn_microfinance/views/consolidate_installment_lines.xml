@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View for Consolidated Cheque List -->
+    <record id="view_microfinance_line_tree" model="ir.ui.view">
+        <field name="name">microfinance.line.tree</field>
+        <field name="model">microfinance.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="installment_no" />
+                <field name="payment_type" string = "Payment Type"/>
+                <field name="due_date" />
+                <field name="amount" />
+                <field name="paid_amount" />
+                <field name="remaining_amount" />
+                <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+            </tree>
+        </field>
+    </record>
+
+
+    <!-- Action Window -->
+    <record id="action_microfinance_consolidated_lines" model="ir.actions.act_window">
+        <field name="name">Microfinance Consolidated Lines</field>
+        <field name="res_model">microfinance.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Post-Dated Cheques found.
+            </p>
+            <p>
+                Post-Dated Cheques will appear here once they are added to microfinance records.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_microfinance_consolidated_lines" 
+              name="Post-Dated Cheques" 
+              action="action_microfinance_consolidated_lines"
+              parent="microfinance_menu" 
+              sequence="10"/>
+</odoo>
