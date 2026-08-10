@@ -3,3 +3,4 @@ access_donation_in_kind,donation.in.kind,bn_donation_in_kind.model_donation_in_k
 access_donation_in_kind_line,donation.in.kind.line,bn_donation_in_kind.model_donation_in_kind_line,,1,1,1,1
 access_valuation_committee_line,valuation.committee.line,bn_donation_in_kind.model_valuation_committee_line,,1,1,1,1
 access_donation_in_kind_config,access.donation.in.kind.config,bn_donation_in_kind.model_donation_in_kind_config,,1,1,1,1
+access_din_transfer_wizard,donation.in.kind.transfer.wizard,bn_donation_in_kind.model_donation_in_kind_transfer_wizard,,1,1,1,1
