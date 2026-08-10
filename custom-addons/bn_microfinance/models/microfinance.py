@@ -917,7 +917,19 @@ class Microfinance(models.Model):
 
     def action_fully_recovered(self):
         self.state = 'fully_recover'
+    def action_move_to_done_serveraction(self):
+        for rec in self:
+            if rec.asset_type != 'cash' and not rec.delivery_date:
+                raise ValidationError('Please select a Delivery Date.')
 
+            if not rec.in_recovery:
+                rec.compute_installment()
+            else:
+                rec.compute_recovery_installment()
+
+            rec.delivery_confirmed = True   # or rec.delivery_state = 'confirmed'
+            rec.state = 'done'
+            
     def action_move_to_done(self):
 
         if self.asset_type != 'cash' and not self.delivery_date:
