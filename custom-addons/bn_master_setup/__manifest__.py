@@ -13,10 +13,10 @@
         'account',
     ],
     'data': [
-        'security/ir.model.access.csv',
-        'security/group.xml',
         'data/disbursement_category.xml',
         'data/ir_module_category.xml',
+        'security/ir.model.access.csv',
+        'security/group.xml',
         'views/menu.xml',
         'views/installation_category.xml',
         'views/microfinance_scheme.xml',
