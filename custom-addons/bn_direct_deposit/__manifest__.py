@@ -26,7 +26,7 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_direct_deposit/static/src/app/**/*',
-            'bn_direct_deposit/static/src/screens/*',
+            # 'bn_direct_deposit/static/src/screens/*',
         ],
     },
 } # type: ignore
