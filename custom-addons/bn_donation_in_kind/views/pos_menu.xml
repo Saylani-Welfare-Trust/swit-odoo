@@ -16,7 +16,7 @@
                 <field name="product_id"/>
                 <field name="location_id"/>
                 <field name="quantity"/>
-                <field name="state" invisible="1"/>
+                <field name="state" column_invisible="1"/>
                 <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" invisible="state not in ['draft']"/>
             </tree>
         </field>
