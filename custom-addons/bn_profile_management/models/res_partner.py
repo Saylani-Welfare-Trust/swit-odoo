@@ -334,9 +334,10 @@ class ResPartner(models.Model):
                     '|', ('cnic_no', '=', rec.cnic_no),
                         ('mobile', '=', rec.mobile),
                 ]
-                if Partner.search(domain, limit=1):
+                found = Partner.search(domain, limit=1)
+                if found:
                     raise ValidationError(
-                        'A Donee with same CNIC or Mobile No. already exist in the System.'
+                        f"Found partner: {found.name}, Categories: {found.category_id.mapped('name')}, State: {found.state}"
                     )
 
                 # Link Donor
