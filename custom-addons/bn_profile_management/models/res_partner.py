@@ -334,11 +334,28 @@ class ResPartner(models.Model):
                     '|', ('cnic_no', '=', rec.cnic_no),
                         ('mobile', '=', rec.mobile),
                 ]
-                found = Partner.search(domain, limit=1)
-                if found:
-                    raise ValidationError(
-                        f"Found partner: {found.name}, Categories: {found.category_id.mapped('name')}, State: {found.state}"
-                    )
+                if Partner.search(domain, limit=1):
+                    # Find which field is causing the match
+                    cnic_match = Partner.search([
+                        ('state', '=', 'register'),
+                        ('category_id.name', '=', 'Donee'),
+                        ('country_code_id', '=', rec.country_code_id.id),
+                        ('cnic_no', '=', rec.cnic_no),
+                    ], limit=1)
+                    
+                    mobile_match = Partner.search([
+                        ('state', '=', 'register'),
+                        ('category_id.name', '=', 'Donee'),
+                        ('country_code_id', '=', rec.country_code_id.id),
+                        ('mobile', '=', rec.mobile),
+                    ], limit=1)
+                    
+                    if cnic_match:
+                        raise ValidationError(f"Found partner with SAME CNIC: {cnic_match.name}, CNIC: {cnic_match.cnic_no}")
+                    if mobile_match:
+                        raise ValidationError(f"Found partner with SAME MOBILE: {mobile_match.name}, Mobile: {mobile_match.mobile}")
+                    
+                    raise ValidationError('A Donee with same CNIC or Mobile No. already exist in the System.')
 
                 # Link Donor
                 donor = Partner.search([
