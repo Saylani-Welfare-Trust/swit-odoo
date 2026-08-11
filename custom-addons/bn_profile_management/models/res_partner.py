@@ -89,26 +89,13 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
-
     @api.model_create_multi
     def create(self, vals_list):
         pakistan_id = self.env.ref('base.pk').id
-
         for vals in vals_list:
             if not vals.get('country_code_id'):
                 vals['country_code_id'] = pakistan_id
-
-            if vals.get('name'):
-                name = vals['name'].strip()
-
-                if not re.match(r'^[A-Za-z\s]+$', name):
-                    raise ValidationError(
-                        "Name can only contain alphabets and spaces."
-                    )
-
-                vals['name'] = name
-
-        return super().create(vals_list)
+        return super().create(vals_list)  
         
     def write(self, vals):
         if 'mobile' in vals and vals.get('mobile'):
@@ -136,15 +123,6 @@ class ResPartner(models.Model):
                     raise ValidationError(
                         "A Partner with the same Mobile No. already exists in the System."
                     )
-        if vals.get('name'):
-            name = vals['name'].strip()
-
-            if not re.match(r'^[A-Za-z\s]+$', name):
-                raise ValidationError(
-                    "Name can only contain alphabets and spaces."
-                )
-
-            vals['name'] = name
         return super(ResPartner, self).write(vals)
 
     @api.onchange('category_id')
