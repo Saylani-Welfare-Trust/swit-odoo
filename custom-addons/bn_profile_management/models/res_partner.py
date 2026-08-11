@@ -100,17 +100,29 @@ class ResPartner(models.Model):
     def write(self, vals):
         if 'mobile' in vals and vals.get('mobile'):
             mobile = vals['mobile']
-            domain = [
-                ('mobile', '=', mobile),
-                ('state', '=', 'register'),
-            ]
-            if self:
-                domain.append(('id', 'not in', self.ids))
-            existing = self.search(domain)
-            if existing:
-                raise ValidationError(
-                    "A Partner with the same Mobile No. already exists in the System."
-                )
+            for rec in self:
+                category_names = set(rec.category_id.mapped('name'))
+                is_donee = 'Donee' in category_names
+                is_donor = 'Donor' in category_names
+
+                domain = [
+                    ('mobile', '=', mobile),
+                    ('state', '=', 'register'),
+                    ('id', '!=', rec.id),
+                ]
+
+                # Only compare within the same category so Donor/Donee
+                # can legitimately share a mobile number
+                if is_donee and not is_donor:
+                    domain.append(('category_id.name', '=', 'Donee'))
+                elif is_donor and not is_donee:
+                    domain.append(('category_id.name', '=', 'Donor'))
+
+                existing = self.search(domain)
+                if existing:
+                    raise ValidationError(
+                        "A Partner with the same Mobile No. already exists in the System."
+                    )
         return super(ResPartner, self).write(vals)
 
     @api.onchange('category_id')
