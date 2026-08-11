@@ -89,17 +89,40 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
-    
-    
+    @api.model_create_multi
+    def create(self, vals_list):
+        pakistan_id = self.env.ref('base.pk').id
+        for vals in vals_list:
+            if not vals.get('country_code_id'):
+                vals['country_code_id'] = pakistan_id
+        return super().create(vals_list)  
+        
     def write(self, vals):
-        if 'mobile' in vals:
-            mobile = vals.get('mobile')
+        if 'mobile' in vals and vals.get('mobile'):
+            mobile = vals['mobile']
+            for rec in self:
+                category_names = set(rec.category_id.mapped('name'))
+                is_donee = 'Donee' in category_names
+                is_donor = 'Donor' in category_names
 
-            if mobile and self.search([('mobile', '=', mobile)]):
-                raise ValidationError(
-                    "A Partner with the same Mobile No. already exists in the System."
-                )
+                domain = [
+                    ('mobile', '=', mobile),
+                    ('state', '=', 'register'),
+                    ('id', '!=', rec.id),
+                ]
 
+                # Only compare within the same category so Donor/Donee
+                # can legitimately share a mobile number
+                if is_donee and not is_donor:
+                    domain.append(('category_id.name', '=', 'Donee'))
+                elif is_donor and not is_donee:
+                    domain.append(('category_id.name', '=', 'Donor'))
+
+                existing = self.search(domain)
+                if existing:
+                    raise ValidationError(
+                        "A Partner with the same Mobile No. already exists in the System."
+                    )
         return super(ResPartner, self).write(vals)
 
     @api.onchange('category_id')
