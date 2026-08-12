@@ -664,6 +664,51 @@ class Microfinance(models.Model):
         self.sale_order_id = sale_order.id
 
         return sale_order
+
+
+    
+    def _validate_picking(self):
+        """Confirm/assign, mark lines picked, and validate delivery picking(s) to 'done'."""
+        for rec in self:
+            pickings = rec.picking_ids.filtered(lambda p: p.state not in ('done', 'cancel'))
+
+            if not pickings:
+                raise ValidationError(f'{rec.name}: No open delivery picking found to validate.')
+
+            for picking in pickings:
+                if picking.state == 'draft':
+                    picking.action_confirm()
+
+                picking.action_assign()
+
+                if not picking.move_ids:
+                    raise ValidationError(f'{rec.name}: Picking {picking.name} has no stock moves.')
+
+                for move in picking.move_ids:
+                    if not move.move_line_ids:
+                        raise ValidationError(
+                            f'{rec.name}: Move {move.name} could not reserve any quantity '
+                            f'(no move lines). Check stock availability at the source location.'
+                        )
+                    for move_line in move.move_line_ids:
+                        # After action_assign(), move_line.quantity is already the reserved qty.
+                        # Only fall back to product_uom_qty if it's somehow zero.
+                        if not move_line.quantity:
+                            move_line.quantity = move.product_uom_qty
+                        move_line.picked = True
+
+                result = picking.button_validate()
+                if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
+                    wizard = self.env['stock.backorder.confirmation'].with_context(
+                        result.get('context', {})
+                    ).create({})
+                    wizard.process()
+
+                if picking.state != 'done':
+                    raise ValidationError(
+                        f'{rec.name}: Picking {picking.name} is still in state "{picking.state}" '
+                        f'after button_validate() — validation did not complete.'
+                    )
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
@@ -917,6 +962,25 @@ class Microfinance(models.Model):
 
     def action_fully_recovered(self):
         self.state = 'fully_recover'
+    def action_move_to_done_serveraction(self):
+        for rec in self:
+            if rec.asset_type == 'movable_asset':
+                # Create SO + delivery picking only if not already created
+                if not rec.sale_order_id or not rec.picking_ids:
+                    rec._create_microfinance_sale_order()
+
+                # Now validate the delivery to 'done'
+                rec._validate_picking()
+
+            if rec.asset_type != 'cash' and not rec.delivery_date:
+                raise ValidationError('Please select a Delivery Date.')
+
+            if not rec.in_recovery:
+                rec.compute_installment()
+            else:
+                rec.compute_recovery_installment()
+
+            rec.state = 'done'
 
     def action_move_to_done(self):
 
