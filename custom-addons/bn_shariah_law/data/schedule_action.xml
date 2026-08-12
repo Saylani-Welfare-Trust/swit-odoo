@@ -1,273 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <record id="shariah_law_cron" model="ir.cron">
-        <field name="name">Shariah Law</field>
+    
+    <!-- DAILY RESET CRON - Run at midnight to reset daily balances -->
+    <record id="cron_reset_shariah_law_balances" model="ir.cron">
+        <field name="name">Reset Shariah Law Daily Balances</field>
         <field name="model_id" ref="model_shariah_law"/>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
         <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
         <field name="state">code</field>
-        <field name="code">
+        <field name="code">model._reset_daily_balances_cron()</field>
+        <field name="nextcall" eval="(datetime.now().replace(hour=0, minute=0, second=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
 
-shariah_record = {}
+    <!-- POS Orders Sync -->
+    <record id="cron_sync_pos_orders" model="ir.cron">
+        <field name="name">Sync POS Orders - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_pos_orders()</field>
+    </record>
 
-for rec in env['pos.order'].search([('is_sync_shariah_law', '=', False), ('state', 'in', ['cfo_approval', 'paid'])]):
-    for line in rec.lines:
-        if not line.product_id:
-            continue
+    <!-- Donations Sync -->
+    <record id="cron_sync_donations" model="ir.cron">
+        <field name="name">Sync Donations - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_donations()</field>
+    </record>
 
-        analytical_lines = env['analytical.product.line'].search(
-            [('product_id', '=', line.product_id.id)]
-        )
-        
-        for analytical_line in analytical_lines:
-            categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
-            if not categ_name:
-                continue
+    <!-- API Donations Sync -->
+    <record id="cron_sync_api_donations" model="ir.cron">
+        <field name="name">Sync API Donations - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_api_donations()</field>
+    </record>
 
-            analytic_id = analytical_line.analytic_account_id.id
-            if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
+    <!-- Expenses Sync -->
+    <record id="cron_sync_expenses" model="ir.cron">
+        <field name="name">Sync Expenses - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_expenses()</field>
+    </record>
 
-            if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['inflow_restricted'] += line.price_subtotal_incl
+    <!-- Purchase Orders Sync -->
+    <record id="cron_sync_purchase_orders" model="ir.cron">
+        <field name="name">Sync Purchase Orders - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_purchase_orders()</field>
+    </record>
 
-            if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['inflow_unrestricted'] += line.price_subtotal_incl
+    <!-- Transfers Sync -->
+    <record id="cron_sync_transfers" model="ir.cron">
+        <field name="name">Sync Transfers - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_transfers()</field>
+    </record>
 
-    rec['is_sync_shariah_law'] = True
+    <!-- Welfare Sync -->
+    <record id="cron_sync_welfare" model="ir.cron">
+        <field name="name">Sync Welfare - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_welfare()</field>
+    </record>
 
-for rec in env['donation'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'posted')]):
-    if not rec.product_id:
-        continue
+    <!-- Microfinance Sync -->
+    <record id="cron_sync_microfinance" model="ir.cron">
+        <field name="name">Sync Microfinance - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_microfinance()</field>
+    </record>
 
-    analytical_lines = env['analytical.product.line'].search(
-        [('product_id', '=', rec.product_id.id)]
-    )
-    
-    for analytical_line in analytical_lines:
-        categ_name = rec.product_id.categ_id.complete_name.lower() if rec.product_id.categ_id else ''
-        if not categ_name:
-            continue
-
-        analytic_id = analytical_line.analytic_account_id.id
-        if analytic_id not in shariah_record:
-            shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
-
-        if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
-            shariah_record[analytic_id]['inflow_restricted'] += rec.amount
-
-        if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
-            shariah_record[analytic_id]['inflow_unrestricted'] += rec.amount
-
-    rec['is_sync_shariah_law'] = True
-
-for rec in env['api.donation'].search([('is_sync_shariah_law', '=', False)]):
-    for line in rec.donation_item_ids:
-        product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
-        
-        if not product_name:
-            continue
-        
-        found = env['gateway.config.line'].search([('name', '=', product_name)], limit=1)
-    
-        analytical_lines = env['analytical.product.line'].search(
-            [('product_id', '=', found.product_id.id)]
-        )
-        
-        for analytical_line in analytical_lines:
-            categ_name = found.product_id.categ_id.complete_name.lower() if found.product_id.categ_id else ''
-            if not categ_name:
-                continue
-    
-            analytic_id = analytical_line.analytic_account_id.id
-            if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'inflow_restricted': 0, 'inflow_unrestricted': 0}
-    
-            if env.company.restricted_category and env.company.restricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['inflow_restricted'] += line.total
-    
-            if env.company.unrestricted_category and env.company.unrestricted_category.lower() in categ_name:
-                shariah_record[analytic_id]['inflow_unrestricted'] += line.total
-
-    rec['is_sync_shariah_law'] = True
-
-# Create or update Shariah Law records
-for analytic_id, values in shariah_record.items():
-    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
-    
-    parent_id = analytic_account_id.parent_id
-    
-    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
-    
-    if shariah_law:
-        # Update existing amounts
-        shariah_law.write({
-            'inflow_restricted_amount': shariah_law.inflow_restricted + values['inflow_restricted'],
-            'inflow_unrestricted_amount': shariah_law.inflow_unrestricted + values['inflow_unrestricted']
-        })
-    else:
-        # Create new record
-        env['shariah.law'].create({
-            'parent_id': parent_id.id,
-            'analytic_account_id': analytic_id,
-            'inflow_restricted_amount': values['inflow_restricted'],
-            'inflow_unrestricted_amount': values['inflow_unrestricted']
-        })
-        
-    while parent_id:
-        sub_parent_id = parent_id.parent_id or None
-        
-        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
-        
-        if shariah_law:
-            # Update existing amounts
-            shariah_law.write({
-                'inflow_restricted_amount': shariah_law.inflow_restricted + values['inflow_restricted'],
-                'inflow_unrestricted_amount': shariah_law.inflow_unrestricted + values['inflow_unrestricted']
-            })
-        else:
-            # Create new record
-            env['shariah.law'].create({
-                'parent_id': sub_parent_id.id if sub_parent_id else None,
-                'analytic_account_id': parent_id.id,
-                'inflow_restricted_amount': values['inflow_restricted'],
-                'inflow_unrestricted_amount': values['inflow_unrestricted']
-            })
-            
-        parent_id = parent_id.parent_id
-
-shariah_record = {}
-
-for rec in env['hr.expense'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'done')]):
-    if not rec.product_id:
-        continue
-
-    analytical_lines = env['analytical.product.line'].search(
-        [('product_id', '=', rec.product_id.id)]
-    )
-    
-    for analytical_line in analytical_lines:
-        categ_name = rec.product_id.categ_id.complete_name.lower() if rec.product_id.categ_id else ''
-        if not categ_name:
-            continue
-
-        analytic_id = analytical_line.analytic_account_id.id
-        if analytic_id not in shariah_record:
-            shariah_record[analytic_id] = {'expense': 0}
-
-        shariah_record[analytic_id]['expense'] += rec.total_amount_currency
-
-    rec['is_sync_shariah_law'] = True
-
-# Create or update Shariah Law records
-for analytic_id, values in shariah_record.items():
-    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
-    
-    parent_id = analytic_account_id.parent_id
-    
-    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
-    
-    if shariah_law:
-        # Update existing amounts
-        shariah_law.write({
-            'expense_amount': shariah_law.inflow_restricted + values['expense'],
-        })
-    else:
-        # Create new record
-        env['shariah.law'].create({
-            'parent_id': parent_id.id,
-            'analytic_account_id': analytic_id,
-            'expense_amount': values['expense'],
-        })
-        
-    while parent_id:
-        sub_parent_id = parent_id.parent_id or None
-        
-        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
-        
-        if shariah_law:
-            # Update existing amounts
-            shariah_law.write({
-                'expense_amount': shariah_law.inflow_unrestricted + values['expense']
-            })
-        else:
-            # Create new record
-            env['shariah.law'].create({
-                'parent_id': sub_parent_id.id if sub_parent_id else None,
-                'analytic_account_id': parent_id.id,
-                'expense_amount': values['expense']
-            })
-            
-        parent_id = parent_id.parent_id
-
-shariah_record = {}
-
-for rec in env['purchase.order'].search([('is_sync_shariah_law', '=', False), ('state', '=', 'purchase')]):
-    for line in rec.order_line:
-        if not line.product_id:
-            continue
-    
-        analytical_lines = env['analytical.product.line'].search(
-            [('product_id', '=', line.product_id.id)]
-        )
-        
-        for analytical_line in analytical_lines:
-            categ_name = line.product_id.categ_id.complete_name.lower() if line.product_id.categ_id else ''
-            if not categ_name:
-                continue
-    
-            analytic_id = analytical_line.analytic_account_id.id
-            if analytic_id not in shariah_record:
-                shariah_record[analytic_id] = {'purchase': 0}
-    
-            shariah_record[analytic_id]['purchase'] += line.price_subtotal
-
-    rec['is_sync_shariah_law'] = True
-
-# Create or update Shariah Law records
-for analytic_id, values in shariah_record.items():
-    analytic_account_id = env['account.analytic.account'].search([('id', '=', analytic_id)])
-    
-    parent_id = analytic_account_id.parent_id
-    
-    shariah_law = env['shariah.law'].search([('analytic_account_id', '=', analytic_id)], limit=1)
-    
-    if shariah_law:
-        # Update existing amounts
-        shariah_law.write({
-            'purchase_amount': shariah_law.purchase_amount + values['purchase'],
-        })
-    else:
-        # Create new record
-        env['shariah.law'].create({
-            'parent_id': parent_id.id,
-            'analytic_account_id': analytic_id,
-            'purchase_amount': values['purchase'],
-        })
-        
-    while parent_id:
-        sub_parent_id = parent_id.parent_id or None
-        
-        shariah_law = env['shariah.law'].search([('analytic_account_id', '=', parent_id.id)], limit=1)
-        
-        if shariah_law:
-            # Update existing amounts
-            shariah_law.write({
-                'purchase_amount': shariah_law.purchase_amount + values['purchase']
-            })
-        else:
-            # Create new record
-            env['shariah.law'].create({
-                'parent_id': sub_parent_id.id if sub_parent_id else None,
-                'analytic_account_id': parent_id.id,
-                'purchase_amount': values['purchase']
-            })
-            
-        parent_id = parent_id.parent_id
-        
-        </field>
+    <!-- Donation In Kind (DIK) Sync -->
+    <record id="cron_sync_donation_in_kind" model="ir.cron">
+        <field name="name">Sync Donation In Kind - Shariah Law</field>
+        <field name="model_id" ref="model_shariah_law"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_donation_in_kind()</field>
     </record>
 
 </odoo>

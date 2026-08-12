@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sequence for transfers -->
+    <record id="seq_shariah_transfer" model="ir.sequence">
+        <field name="name">Shariah Transfer</field>
+        <field name="code">shariah.transfer</field>
+        <field name="prefix">TRF</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

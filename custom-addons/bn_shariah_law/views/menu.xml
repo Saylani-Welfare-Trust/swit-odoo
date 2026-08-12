@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="shariah_law_menu"
+        name="Shariah Law"
+        web_icon="bn_shariah_law,static/description/icon.png"
+        groups="bn_shariah_law.shariah_law_menu_group"
+        sequence="6"/>
+
+    <menuitem
+        id="shariah_law_overview_menu"
+        name="Totals"
+        action="shariah_law_action"
+        parent="shariah_law_menu"
+        sequence="10"/>
+
+    <menuitem
+        id="shariah_law_daily_balance_menu"
+        name="Daily Balances"
+        action="action_shariah_daily_balance"
+        parent="shariah_law_menu"
+        sequence="20"/>
+
+    <menuitem
+        id="shariah_law_transfer_menu"
+        name="Transfers"
+        action="action_shariah_transfer"
+        parent="shariah_law_menu"
+        sequence="30"/>
+
+    <menuitem
+        id="shariah_law_config_menu"
+        name="Shariah Law"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="40"/>
+
+    <menuitem
+        id="shariah_law_sync_config_menu"
+        name="Sync Config."
+        action="shariah_law_config_action"
+        parent="shariah_law_config_menu"
+        sequence="40"/>
+    
+    <menuitem
+        id="segment_transfer_rules_menu"
+        name="Segment Transfer Rules"
+        action="segment_transfer_rule_action"
+        parent="shariah_law_config_menu"
+        sequence="41"/>
+    
+    <menuitem
+        id="shariah_law_blocker_menu"
+        name="Blocker"
+        action="shariah_law_blocker_action"
+        parent="shariah_law_config_menu"
+        sequence="42"/>
+    
+    <menuitem
+        id="shariah_law_person_menu"
+        name="Authorized Persons"
+        action="shariah_law_person_action"
+        parent="shariah_law_config_menu"
+        sequence="43"/>
+
+    <menuitem
+        id="shariah_law_sync_log_menu"
+        name="Sync Logs"
+        action="shariah_law_sync_log_action"
+        parent="shariah_law_menu"
+        sequence="50"/>
+
+</odoo>
