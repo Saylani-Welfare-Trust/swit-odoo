@@ -28,6 +28,7 @@ class JournalTransfer(models.TransientModel):
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
 
     pos_move_id = fields.Many2one('account.move', string="Account Move")
+    analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
 
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
