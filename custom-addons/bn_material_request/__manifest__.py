@@ -19,6 +19,7 @@
         'base_account_budget',
         'mail',
         'purchase_requisition',
+        'bn_stock_location',
     ],
     'data': [
         'security/groups.xml',
@@ -28,8 +29,10 @@
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
         'views/wizard_views.xml',
+        'views/purchase_order.xml',
     ],
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
 } # type: ignore
+
