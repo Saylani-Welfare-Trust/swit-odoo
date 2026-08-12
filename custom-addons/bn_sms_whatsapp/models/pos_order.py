@@ -25,8 +25,10 @@ class PosOrder(models.Model):
         if not order.partner_id:
             return {'status': 'error', 'message': 'No customer selected'}
 
-        sms_message = ""
-        pdf_url = ""
+        whatsapp_ok = False
+        sms_ok = False
+        whatsapp_error = None
+        sms_error = None
 
         try:
             _logger.info("Processing order: %s", order.name)
@@ -37,70 +39,79 @@ class PosOrder(models.Model):
             pdf_data = self._generate_pdf_from_report(order)
 
             if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                raise Exception("Invalid PDF generated")
+                raise UserError("Invalid PDF generated")
 
             # ---------------------------------
             # Save attachment and generate URL
             # ---------------------------------
             attachment, pdf_url = self._save_as_attachment(order, pdf_data)
-
             _logger.info("PDF URL: %s", pdf_url)
 
             # ---------------------------------
-            # SMS Message
+            # Build SMS message
             # ---------------------------------
             sms_message = (
-                f"Thank you for donation of Rs. {order.amount_total}. {order.user_id.branch_code}-{order.date_order.year if order.date_order else ''}-{order.pos_order_seq} to Saylani Welfare Trust. Your generosity will make an immediate difference in the lives of needy families."
+                f"Thank you for donation of Rs. {order.amount_total}. "
+                f"{order.user_id.branch_code}-"
+                f"{order.date_order.year if order.date_order else ''}-"
+                f"{order.pos_order_seq} to Saylani Welfare Trust. "
+                f"Your generosity will make an immediate difference in the lives of needy families."
                 f"\n\nReceipt: {pdf_url.split('?')[0]}"
             )
 
-            # ---------------------------------
-            # WhatsApp
-            # ---------------------------------
-            if not order.partner_id.whatsapp:
-                raise Exception("Customer does not have a WhatsApp number.")
-
-            self.env['whatsapp.service'].send_template_message(
-                order.partner_id.whatsapp,
-                pdf_url,
-                "Donation Receipt.pdf"
-            )
-
-            _logger.info("WhatsApp sent successfully")
-
-            return {
-                'status': 'success',
-                'message': 'WhatsApp sent successfully'
-            }
-
         except Exception as e:
-            _logger.exception("WhatsApp sending failed")
+            _logger.exception("PDF/attachment generation failed")
+            raise UserError(f"Failed to prepare receipt: {str(e)}")
 
-            # ---------------------------------
-            # SMS Fallback
-            # ---------------------------------
-            mobile = order.partner_id.mobile or order.partner_id.phone
+        # ---------------------------------
+        # Send WhatsApp
+        # ---------------------------------
+        if order.partner_id.whatsapp:
+            try:
+                self.env['whatsapp.service'].send_template_message(
+                    order.partner_id.whatsapp,
+                    pdf_url,
+                    "Donation Receipt.pdf"
+                )
+                whatsapp_ok = True
+                _logger.info("WhatsApp sent successfully")
+            except Exception as e:
+                whatsapp_error = str(e)
+                _logger.exception("WhatsApp sending failed")
+        else:
+            whatsapp_error = "Customer has no WhatsApp number."
 
-            if mobile:
-                try:
-                    self.env['sms.service'].send_sms(mobile, sms_message)
+        # ---------------------------------
+        # Send SMS
+        # ---------------------------------
+        mobile = order.partner_id.mobile or order.partner_id.phone
+        if mobile:
+            try:
+                self.env['sms.service'].send_sms(mobile, sms_message)
+                sms_ok = True
+                _logger.info("SMS sent successfully")
+            except Exception as e:
+                sms_error = str(e)
+                _logger.exception("SMS sending failed")
+        else:
+            sms_error = "Customer has no mobile number."
 
-                    return {
-                        'status': 'warning',
-                        'message': f'WhatsApp failed ({str(e)}). SMS sent successfully.'
-                    }
+        # ---------------------------------
+        # Build final result
+        # ---------------------------------
+        if whatsapp_ok and sms_ok:
+            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
 
-                except Exception as sms_error:
-                    raise UserError(
-                        f"WhatsApp failed: {str(e)}\n"
-                        f"SMS also failed: {str(sms_error)}"
-                    )
+        if whatsapp_ok and not sms_ok:
+            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
 
-            raise UserError(
-                f"WhatsApp failed: {str(e)}\n"
-                "Customer has no mobile number for SMS fallback."
-            )
+        if sms_ok and not whatsapp_ok:
+            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
 
+        raise UserError(
+            f"WhatsApp failed: {whatsapp_error}\n"
+            f"SMS failed: {sms_error}"
+        )
     # -----------------------------------
     # Generate PDF
     # -----------------------------------

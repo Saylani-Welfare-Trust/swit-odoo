@@ -43,7 +43,7 @@ patch(ProductScreen.prototype, {
                 text: _t("Price"),
                 disabled: !this.pos.cashierHasPriceControlRights(),
             },
-            { value: "-", text: "+/-" },
+            { value: "-", text: "+/-" ,disabled: !this.pos.config.allow_negative_quantity},
             { value: "0" },
             { value: this.env.services.localization.decimalPoint },
             { value: "Backspace", text: "⌫" },
