@@ -30,7 +30,7 @@ class JournalTransfer(models.Model):
     pos_move_id = fields.Many2one('account.move', string="Account Move")
 
     analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
-
+    reference = fields.Char('Reference')
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     amount = fields.Monetary('Amount', currency_field='currency_id')
@@ -137,7 +137,8 @@ class JournalTransfer(models.Model):
                 records.append({
                     'pos_move_id': move.id,
                     'accounting_date': move.date,
-                    'descripiton': line.name or move.ref or move.name,
+                    'descripiton': line.name or move.ref,
+                    'reference': move.name,
                     'source_journal_id': move.journal_id.id,
                     'dest_journal_id': line.bank_journal_id.id,
                     'date': line.date,
