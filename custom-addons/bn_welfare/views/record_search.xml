@@ -25,6 +25,7 @@
     <menuitem
         id="welfare_profile_management_menu"
         name="Profile"
+        groups="bn_welfare.group_welfare_profile"
         parent="bn_welfare.welfare_menu"
         sequence="2"/>
 
@@ -32,12 +33,14 @@
         id="record_search_menu"
         name="Record Search"
         action="bn_profile_management.record_search_welfare_action"
+        groups="bn_welfare.group_welfare_profile"        
         parent="welfare_profile_management_menu"
         sequence="0"/>
 
     <menuitem
         id="welfare_donee_menu"
         name="Donee"
+        groups="bn_welfare.group_welfare_profile"
         action="welfare_donee_action"
         parent="welfare_profile_management_menu"
         sequence="1"/>

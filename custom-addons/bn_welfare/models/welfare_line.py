@@ -51,8 +51,13 @@ class WelfareLine(models.Model):
     pos_return_order_id = fields.Many2one('pos.order', string='POS Return Order', readonly=True)
     return_reason = fields.Text('Return Reason')
     returned_by = fields.Many2one('res.users', string='Returned By', default=lambda self: self.env.user)
-
-
+    #welfare related field name order_type put in welfare line
+    order_type = fields.Selection(
+        related='welfare_id.order_type',
+        string='Order Type',
+        store=True,
+        readonly=True,
+    )    
     product_domain = fields.Char('Product Domain', compute='_compute_product_domain', default="[]", store=True)
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     employee_category_id_officer = fields.Many2one(
@@ -120,7 +125,19 @@ class WelfareLine(models.Model):
 
 
     manual_total = fields.Boolean(default=False)
+    media_ids = fields.Many2many(
+        'ir.attachment',
+        'welfare_line_media_rel',
+        'line_id',
+        'attachment_id',
+        string='Media (Images/Videos)',
+    )
+    media_count = fields.Integer(compute='_compute_media_count', string='Media Count')
 
+    @api.depends('media_ids')
+    def _compute_media_count(self):
+        for rec in self:
+            rec.media_count = len(rec.media_ids)
     def action_set_pending(self, create_return_line=True):
         """
         Create a new welfare record with only the pending disbursement line.
@@ -258,7 +275,6 @@ class WelfareLine(models.Model):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_welfare.view_welfare_line_disbursement_popup_form').id,
             'target': 'new',
-            'context': {'form_view_initial_mode': 'view'},
         }
 
     @api.model
@@ -497,16 +513,35 @@ class WelfareLine(models.Model):
                     "This welfare line cannot be paid again. "
                     "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
-        
-            # Mark as disbursed or collected based on payment type
+
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
-            
-            if getattr(line, 'advance_donation_line_id', False):
-                line.advance_donation_line_id.write({'disbursed_amount': line.advance_donation_amount})
-            
+
+            if getattr(line, 'advance_donation_line_id', False) and line.advance_donation_line_id:
+                donation_line = line.advance_donation_line_id
+                advance_donation = donation_line.advance_donation_id
+                amount_to_disburse = line.advance_donation_amount
+
+                # Update disbursed_amount so is_disbursed becomes True
+                donation_line.write({'disbursed_amount': amount_to_disburse})
+                donation_line._compute_disbursement_and_disbursed()
+
+                # Create disbursement line with all fields populated
+                self.env['advance.donation.disbursement.line'].create({
+                    'advance_donation_id': advance_donation.id,
+                    'advance_donation_line_id': donation_line.id,
+                    'product_id': donation_line.product_id.id if donation_line.product_id else False,
+                    'date': fields.Date.today(),
+                    'total_amount': line.total_amount,
+                    'advance_amount': amount_to_disburse,
+                    'disbursed_amount': amount_to_disburse,
+                    'welfare_id': line.welfare_id.id if line.welfare_id else False,
+                    'welfare_line_id': line.id,
+                    'disbursed_record': line.welfare_id.name if line.welfare_id else '',
+                })
+
             if line.welfare_id:
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
-        
+
         return True
                             
     def action_delivered(self):

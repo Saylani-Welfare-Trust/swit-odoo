@@ -57,7 +57,19 @@ class WelfareRecurringLine(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
-    
+    media_ids = fields.Many2many(
+        'ir.attachment',
+        'welfare_recurring_line_media_rel',
+        'recurring_line_id',
+        'attachment_id',
+        string='Media (Images/Videos)',
+    )
+    media_count = fields.Integer(compute='_compute_media_count', string='Media Count')
+
+    @api.depends('media_ids')
+    def _compute_media_count(self):
+        for rec in self:
+            rec.media_count = len(rec.media_ids)    
     def write(self, vals):
         return super().write(vals)
     
@@ -163,7 +175,6 @@ class WelfareRecurringLine(models.Model):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_welfare.view_welfare_recurring_line_disbursement_popup_form').id,
             'target': 'new',
-            'context': {'form_view_initial_mode': 'view'},
         }
 
     def action_disbursed(self):

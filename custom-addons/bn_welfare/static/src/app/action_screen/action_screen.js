@@ -126,14 +126,15 @@ patch(ActionScreen.prototype, {
                 'welfare.line',
                 'search_read',
                 [[
+                    '|',
                     ['welfare_id.name', '=', welfareNumber],
+                    ['welfare_id.old_system_id', '=', welfareNumber],
                     ['payment_type', '=', 'assigned_officer'],
                     ['state', '=', 'pending'],
                     ['welfare_id.order_type', '=', 'one_time']
                 ]],
                 { fields: ['id', 'product_id', 'total_amount', 'quantity', 'welfare_id'] }
             );
-
             if (lines.length === 0) {
                 await this.popup.add(SelectionPopup, {
                     title: _t("No Eligible Lines"),
@@ -145,7 +146,7 @@ patch(ActionScreen.prototype, {
             // Get the welfare record to fetch donee
             const welfareRecord = await this.env.services.orm.searchRead(
                 'welfare',
-                [['name', '=', welfareNumber]],
+                ['|', ['name', '=', welfareNumber], ['old_system_id', '=', welfareNumber]],
                 ['donee_id'],
                 { limit: 1 }
             );
@@ -260,7 +261,9 @@ patch(ActionScreen.prototype, {
                 'welfare.recurring.line',
                 'search_read',
                 [[
+                    '|',
                     ['welfare_id.name', '=', welfareNumber],
+                    ['welfare_id.old_system_id', '=', welfareNumber],
                     ['payment_type', '=', 'assigned_officer'],
                     ['state', '=', 'pending'],
                     ['welfare_id.order_type', '=', 'recurring']
@@ -279,7 +282,7 @@ patch(ActionScreen.prototype, {
             // ========== ADD DONOR/CUSTOMER TO ORDER ==========
             const welfareRecord = await this.env.services.orm.searchRead(
                 'welfare',
-                [['name', '=', welfareNumber]],
+                ['|', ['name', '=', welfareNumber], ['old_system_id', '=', welfareNumber]],
                 ['donee_id'],
                 { limit: 1 }
             );
@@ -290,10 +293,10 @@ patch(ActionScreen.prototype, {
                 let partner = this.pos.db.get_partner_by_id(donorId);
 
                 if (!partner) {
-                    const partnerData = await this.env.services.orm.searchRead(
-                        'res.partner',
-                        [['id', '=', donorId]],
-                        ['id', 'name', 'phone', 'email'],
+                    const welfareRecord = await this.env.services.orm.searchRead(
+                        'welfare',
+                        ['|', ['name', '=', welfareNumber], ['old_system_id', '=', welfareNumber]],
+                        ['donee_id'],
                         { limit: 1 }
                     );
 

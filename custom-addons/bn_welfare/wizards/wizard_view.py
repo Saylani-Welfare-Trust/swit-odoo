@@ -322,20 +322,20 @@ class WelfareFieldsWizard(models.TransientModel):
             welfare.write(update_vals)
         
         # Handle approval based on current state
-        if welfare.state == 'inquiry':
+        if welfare.state == 'committee_approval':
             # Check committee remarks
             if not self.committee_remarks:
                 raise ValidationError('Please enter Committee Remarks before approval.')
             welfare.write({'committee_remarks': self.committee_remarks})
-            welfare.action_committee_approval()  # This moves to hod_approve
+            welfare.action_move_to_hod()  # This moves to hod_approve
             message = 'Application approved by Committee and sent to HOD'
             
-        elif welfare.state == 'committee_approval':
+        elif welfare.state == 'hod_approve':
             # Check HOD remarks
             if not self.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks before approval.')
             welfare.write({'hod_remarks': self.hod_remarks})
-            welfare.action_move_to_hod()  # This moves to mem_approve
+            welfare.action_move_to_member()  # This moves to mem_approve
             message = 'Application approved by HOD and sent to Member'
             
             
