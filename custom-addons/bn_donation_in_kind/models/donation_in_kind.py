@@ -34,8 +34,7 @@ class DonationInKind(models.Model):
             field_map = {
                 'location_id': product_stock_move_config.location_id.id,
                 'picking_type_id': product_stock_move_config.picking_type_id.id,
-                'journal_id': product_stock_move_config.journal_id.id,
-                'debit_account_id': product_stock_move_config.debit_account_id.id
+                'journal_id': product_stock_move_config.journal_id.id
             }
             return field_map.get(name, False)
         return False
@@ -46,16 +45,14 @@ class DonationInKind(models.Model):
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
     previous_location_id = fields.Many2one('stock.location', string='Previous Location', readonly=True, copy=False)
     journal_id = fields.Many2one('account.journal', string='Journal', default=lambda self: self.default_set_value('journal_id'))
-    debit_account_id = fields.Many2one('account.account', string='Account (Dr)', required=True, domain="[('account_type', 'in', ['asset_receivable', 'asset_cash', 'asset_current', 'asset_non_current', 'asset_prepayments', 'asset_fixed'])]", default=lambda self: self.default_set_value('debit_account_id'))
     account_move_id = fields.Many2one('account.move', string='Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
-    picking_list_id = fields.Many2one('stock.picking', string='Picking List', domain="[('picking_type_id', '=', picking_type_id)]")
-    account_move_list_id = fields.Many2one('account.move', string='Account Move List')
+    reversal_picking_id = fields.Many2one('stock.picking', string='Reversal Picking', domain="[('picking_type_id', '=', picking_type_id)]")
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     name = fields.Char('Name', default="New")
 
-    state = fields.Selection(selection=status_selection, string='Status', default='draft')
+    state = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True)
     check_bool = fields.Selection(selection=type_selection, string='Check Bool', default='default')
 
     quantity = fields.Float('Quantity')
@@ -83,7 +80,7 @@ class DonationInKind(models.Model):
     analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytic_account_id', string='Analytic Account', store=True)
 
     donation_in_kind_line_ids = fields.One2many('donation.in.kind.line', 'donation_in_kind_id', string="Donation In Kind Lines")
-    product_valuation_committee_line_ids = fields.One2many('product.valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")
+    valuation_committee_line_ids = fields.One2many('valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")
 
 
     @api.model
@@ -148,46 +145,6 @@ class DonationInKind(models.Model):
                         'picking_id': picking_id.id,
                     })
                     picking_id.button_validate()
-            
-            if not record.journal_id:
-                raise ValidationError('Please Select Journal')
-            
-            box_lines = [
-                {
-                    'account_id': record.product_id.property_account_income_id.id,
-                    'partner_id': record.donor_id.id,
-                    'journal_id': record.journal_id.id,
-                    'name': 'Box',
-                    'debit': 1.0,
-                    'credit': 0.0,
-                },
-                {
-                    'account_id': record.debit_account_id.id,
-                    'partner_id': record.donor_id.id,
-                    'journal_id': record.journal_id.id,
-                    'name': 'Box',
-                    'debit': 0.0,
-                    'credit': 1.0,
-                }
-            ]
-            
-            box_lines_tuples = [(0, 0, line) for line in box_lines]
-            
-            vals = {
-                'ref': record.name,
-                'partner_id': record.donor_id.id,
-                'date': fields.Date.today(),
-                'journal_id': record.journal_id.id,
-                'line_ids': box_lines_tuples,
-            }
-            
-            account_move = self.env['account.move'].sudo().create(vals)
-            
-            if account_move:
-                account_move.action_post()
-                record.write({
-                    'account_move_id': account_move.id
-                })
             
             record.state = 'validate'
     def action_cancel(self):
@@ -296,7 +253,7 @@ class DonationInKind(models.Model):
                     self.message_notify_to_product_stock_move(lines)
             
             for donation_in_kind_lines in record.donation_in_kind_line_ids.filtered(lambda rec: rec.check_price_bool == True):
-                product_valuation_lines = self.env['product.valuation.committee.line'].sudo().search([('donation_in_kind_id', '=', donation_in_kind_lines.donation_in_kind_id.id), ('product_id', '=', donation_in_kind_lines.product_id.id), ('location_id', '=', donation_in_kind_lines.location_id.id)])
+                product_valuation_lines = self.env['valuation.committee.line'].sudo().search([('donation_in_kind_id', '=', donation_in_kind_lines.donation_in_kind_id.id), ('product_id', '=', donation_in_kind_lines.product_id.id), ('location_id', '=', donation_in_kind_lines.location_id.id)])
             
                 if product_valuation_lines:
                     for lines in product_valuation_lines:
@@ -311,7 +268,7 @@ class DonationInKind(models.Model):
                             'donation_in_kind_line_id': donation_in_kind_lines.id,
                         })
                 else:
-                    self.env['product.valuation.committee.line'].sudo().create({
+                    self.env['valuation.committee.line'].sudo().create({
                         'product_id': donation_in_kind_lines.product_id.id,
                         'location_id': donation_in_kind_lines.location_id.id,
                         'quantity': donation_in_kind_lines.quantity,
@@ -328,10 +285,10 @@ class DonationInKind(models.Model):
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
-            if not record.product_valuation_committee_line_ids:
+            if not record.valuation_committee_line_ids:
                 raise ValidationError("No product valuation lines to process.")
             
-            for lines in record.product_valuation_committee_line_ids:
+            for lines in record.valuation_committee_line_ids:
                 if lines.avg_price == 0.0:
                     raise ValidationError("The average price cannot be 0. Please check the valuation lines.")
                     break
@@ -372,7 +329,7 @@ class DonationInKind(models.Model):
             quantity_list = []
             avg_price_list = []
             move_ids = []
-            stock_picking = self.env['stock.picking'].sudo().search([('id', '=', record.picking_list_id.id), ('picking_type_id', '=', record.picking_type_id.id)])
+            stock_picking = self.env['stock.picking'].sudo().search([('id', '=', record.reversal_picking_id.id), ('picking_type_id', '=', record.picking_type_id.id)])
             
             if not stock_picking:
                 for lines in record.donation_in_kind_line_ids:
@@ -401,7 +358,7 @@ class DonationInKind(models.Model):
                 
                 if picking_id:
                     record.write({
-                        'picking_list_id': picking_id.id,
+                        'reversal_picking_id': picking_id.id,
                     })
                     picking_id.button_validate()
             
@@ -413,18 +370,18 @@ class DonationInKind(models.Model):
             amount = (quantity * avg_price)
             box_lines = [
                 {
-                    'account_id': record.debit_account_id.id,
+                    'account_id': record.product_id.categ_id.property_stock_valuation_account_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
-                    'name': f'Item {record.name}',
+                    'name': f'Donation In Kind {record.name}',
                     'debit': amount,
                     'credit': 0.0,
                 },
                 {
-                    'account_id': record.product_id.property_account_income_id.id,
+                    'account_id': record.product_id.property_account_income_id.id or record.product_id.categ_id.property_account_income_categ_id.id,
                     'partner_id': record.donor_id.id,
                     'journal_id': record.journal_id.id,
-                    'name': f'Item {record.name}',
+                    'name': f'Donation In Kind {record.name}',
                     'debit': 0.0,
                     'credit': amount,
                 }
@@ -443,19 +400,10 @@ class DonationInKind(models.Model):
             if account_move:
                 account_move.action_post()
                 record.write({
-                    'account_move_list_id': account_move.id
+                    'account_move_id': account_move.id
                 })
             
             record.state = 'box_validate'
-
-    def action_product_box(self):
-        for record in self:
-            return {
-                'name': _('Product Variants'),
-                'view_mode': 'form',
-                'type': 'ir.actions.act_window',
-                'res_id': record.product_id.id,
-            }
 
     def action_operations_type_receipts(self):
         for record in self:
@@ -465,6 +413,16 @@ class DonationInKind(models.Model):
                 'res_model': 'stock.picking',
                 'type': 'ir.actions.act_window',
                 'res_id': record.picking_id.id,
+            }
+
+    def action_reversal_operations_type_receipts(self):
+        for record in self:
+            return {
+                'name': _('Receipts'),
+                'view_mode': 'form',
+                'res_model': 'stock.picking',
+                'type': 'ir.actions.act_window',
+                'res_id': record.reversal_picking_id.id,
             }
 
     def action_journal_entries(self):
@@ -505,6 +463,8 @@ class DonationInKind(models.Model):
 
     @api.model
     def create_din_record(self, data):
+        din = None
+        
         if not data:
             return {
                 "status": "error",
@@ -512,11 +472,19 @@ class DonationInKind(models.Model):
             }
         
         for line in data['order_lines']:
-            self.create({
+            din = self.create({
                 'donor_id': data['donor_id'],
                 'product_id': line['product_id'],
-                'quantity': line['quantity']
+                'quantity': line['quantity'],
+                'donation_in_kind_line_ids': [(0, 0, {
+                    'product_id': line['product_id'],
+                    'quantity': line['quantity'],
+                    'avg_price': line['quantity'],
+                    'remarks': line['remarks'],
+                })]
             })
+
+        din.set_remarks()
 
         return {
             "status": "success",

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="donation_in_kind_master_config" model="donation.in.kind.config">
+        <field name="picking_type_id"></field>
+        <field name="location_id"></field>
+        <field name="journal_id"></field>
+    </record>
+
+</odoo>
