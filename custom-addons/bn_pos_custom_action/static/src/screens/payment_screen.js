@@ -83,11 +83,10 @@ patch(PaymentScreen.prototype, {
                 "pos.order",
                 "set_new_pos_order_seq",
                 [
-                    [currentOrder.uid],
-                    {
+                    [currentOrder.uid],[{
                         pos_order_seq: invoiceNumber,
                         config_id: this.pos.config.id,
-                    }
+                    }]
                 ]
             );
 
