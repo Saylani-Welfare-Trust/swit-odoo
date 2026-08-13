@@ -5,6 +5,9 @@
         <xpath expr="//div[@name='custom-donor']" position="replace">
             <div name="custom-favor"><strong>Donor Name:</strong> <t t-esc="order.favor or order.partner_id.name"/></div>
         </xpath>
+        <xpath expr="//div[@name='footer-custom-donor']" position="replace">
+            <div name="footer-custom-favor"><strong>Donor Name:</strong> <t t-esc="order.favor or order.partner_id.name"/></div>
+        </xpath>
     </template>
 
 </odoo>

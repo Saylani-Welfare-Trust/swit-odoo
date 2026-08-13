@@ -2,8 +2,11 @@
 <odoo>
 
     <template id="bn_qurbani.donation_home_service_receipt_template" inherit_id="bn_donation_home_service.donation_home_service_receipt_template">
-        <xpath expr="//div[@name='donor_name']" position="after">
+        <xpath expr="//div[@name='donor_name']" position="replace">
             <div name="favor"><strong>Donor Name:</strong> <t t-esc="o.favor or o.donor_id.name or '-'"/></div>
+        </xpath>
+        <xpath expr="//div[@name='footer_donor_name']" position="replace">
+            <div name="footer_favor"><strong>Donor Name:</strong> <t t-esc="o.favor or o.donor_id.name or '-'"/></div>
         </xpath>
     </template>
 
