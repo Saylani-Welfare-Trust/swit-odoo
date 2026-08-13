@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="favor" readonly="1" />
+                <field name="favor" string="Donor" readonly="1" />
             </xpath>
         </field>
     </record>
@@ -18,7 +18,7 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_order_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="favor" readonly="1" />
+                <field name="favor" string="Donor" readonly="1" />
             </xpath>
         </field>
     </record>
