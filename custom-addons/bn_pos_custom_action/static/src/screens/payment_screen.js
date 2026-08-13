@@ -58,6 +58,8 @@ patch(PaymentScreen.prototype, {
 
         order.set_pos_order_seq(String(counterData.counter).padStart(4, "0"));
 
+        const invoiceNumber = counterData.counter;
+
         /*
             Increment for next order
         */
@@ -67,12 +69,14 @@ patch(PaymentScreen.prototype, {
             key,
             JSON.stringify(counterData)
         );
+
+        return invoiceNumber;
     },
 
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        this._generateReceiptNumber(currentOrder);
+        const invoiceNumber = this._generateReceiptNumber(currentOrder);
 
         try {
             new_pos_seq = currentOrder.get_pos_order_seq()
@@ -81,7 +85,7 @@ patch(PaymentScreen.prototype, {
                 "pos.order",
                 "set_new_pos_order_seq",
                 [[currentOrder.uid], [{
-                    pos_order_seq: new_pos_seq,
+                    pos_order_seq: invoiceNumber,
                     config_id: currentOrder.config_id.id
                 }]]
             );
