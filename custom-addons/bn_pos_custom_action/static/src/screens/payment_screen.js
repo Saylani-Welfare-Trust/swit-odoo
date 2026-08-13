@@ -73,6 +73,24 @@ patch(PaymentScreen.prototype, {
         const currentOrder = this.currentOrder;
 
         this._generateReceiptNumber(currentOrder);
+
+        try {
+            new_pos_seq = currentOrder.get_pos_order_seq()
+
+            const data = await this.env.services.orm.call(
+                "pos.order",
+                "set_new_pos_order_seq",
+                [[currentOrder.uid], [{
+                    pos_order_seq: new_pos_seq,
+                    config_id: currentOrder.config_id.id
+                }]]
+            );
+
+            // Continue with normal POS flow
+            return super.validateOrder(isForceValidate);
+        } catch (error) {
+            console.error("Error updating pos_order_seq:", error);
+        }
         
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
@@ -801,25 +819,6 @@ patch(PaymentScreen.prototype, {
             if (!hasWelfareReturn) {
                 console.log("Return order without welfare lines, skipping welfare return processing");
             }
-        }
-
-        try {
-            new_pos_seq = currentOrder.get_pos_order_seq()
-
-            const data = await this.env.services.orm.call(
-                "pos.order",
-                "set_new_pos_order_seq",
-                [[currentOrder.uid], [{
-                    pos_order_seq: new_pos_seq,
-                    config_id: currentOrder.config_id.id
-                }]]
-            );
-
-            // Continue with normal POS flow
-            return super.validateOrder(isForceValidate);
-        } catch (error) {
-            // Continue with normal POS flow
-            return super.validateOrder(isForceValidate);
         }
 
 
