@@ -23,45 +23,58 @@ class PosOrder(models.Model):
 
         _logger.info('Processing order: %s', order.name)
 
-        # -------------------------------
-        # Build SMS message
-        # -------------------------------
-        donation_items = ""
-        for line in order.lines:
-            donation_items += f"{line.qty} x {line.product_id.name} = {line.price_subtotal} PKR\n"
-
-        sms_message = (
-            f"Thank you for donation of Rs. {order.amount_total}. {order.user_id.branch_code}-{order.date_order.year if order.date_order else ''}-{order.pos_order_seq} to Saylani Welfare Trust. Your generosity will make an immediate difference in the lives of needy families."
-            f"\n\nReceipt: {pdf_url.split('?')[0]}"
-        )
-
         whatsapp_ok = False
         sms_ok = False
         whatsapp_error = None
         sms_error = None
+        pdf_url = None
+
+        # -------------------------------
+        # Generate PDF + attachment (needed for both SMS link and WhatsApp)
+        # -------------------------------
+        try:
+            pdf_data = self._generate_pdf_from_report(order)
+
+            if not pdf_data or not pdf_data.startswith(b'%PDF'):
+                raise Exception("Invalid PDF generated")
+
+            attachment, pdf_url = self._save_as_attachment(order, pdf_data)
+            _logger.info('PDF URL: %s', pdf_url)
+
+        except Exception as e:
+            pdf_error = str(e)
+            _logger.error('PDF/attachment generation failed: %s', pdf_error)
+            whatsapp_error = f"PDF generation failed: {pdf_error}"
+            sms_error = f"PDF generation failed: {pdf_error}"
+            return {
+                'status': 'error',
+                'message': f'Could not generate receipt: {pdf_error}'
+            }
+
+        # -------------------------------
+        # Build SMS message (now pdf_url is guaranteed to exist)
+        # -------------------------------
+        sms_message = (
+            f"Thank you for donation of Rs. {order.amount_total}. "
+            f"{order.user_id.branch_code}-"
+            f"{order.date_order.year if order.date_order else ''}-"
+            f"{order.pos_order_seq} to Saylani Welfare Trust. "
+            f"Your generosity will make an immediate difference in the lives of needy families."
+            f"\n\nReceipt: {pdf_url.split('?')[0]}"
+        )
 
         # -------------------------------
         # WhatsApp Flow
         # -------------------------------
         if order.partner_id.whatsapp:
             try:
-                pdf_data = self._generate_pdf_from_report(order)
-
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                attachment, pdf_url = self._save_as_attachment(order, pdf_data)
-                _logger.info('PDF URL: %s', pdf_url)
-
                 self.env['whatsapp.service'].send_template_message(
                     order.partner_id.whatsapp,
                     pdf_url,
                     f"Receipt_{order.name}.pdf"
                 )
-
                 whatsapp_ok = True
                 _logger.info('WhatsApp sent successfully')
-
             except Exception as e:
                 whatsapp_error = str(e)
                 _logger.error('WhatsApp failed: %s', whatsapp_error)
@@ -69,7 +82,7 @@ class PosOrder(models.Model):
             whatsapp_error = "No WhatsApp number"
 
         # -------------------------------
-        # SMS Flow (always attempted, not just fallback)
+        # SMS Flow
         # -------------------------------
         mobile = order.partner_id.mobile or order.partner_id.phone
         if mobile:
@@ -97,9 +110,6 @@ class PosOrder(models.Model):
             'status': 'error',
             'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
         }
-
-
-
 
     # -----------------------------------
     # Generate PDF
