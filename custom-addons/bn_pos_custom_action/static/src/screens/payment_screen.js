@@ -56,7 +56,7 @@ patch(PaymentScreen.prototype, {
 
         let counterData = this._getCounter();
 
-        order.set_pos_order_seq(counterData.counter);
+        order.set_pos_order_seq(String(counterData.counter).padStart(4, "0"));
 
         /*
             Increment for next order
