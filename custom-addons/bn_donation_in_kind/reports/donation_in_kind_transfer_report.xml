@@ -39,7 +39,7 @@
                     <div class="page">
                         <h2>Donation In Kind Transfer Report</h2>
                         <p><strong>DIK #:</strong> <span t-esc="o.name"/></p>
-                        <p><strong>Register Name:</strong> <span t-esc="o.donor_id.name"/></p>
+                        <p><strong>Donor Name:</strong> <span t-esc="o.donor_id.name"/></p>
                         <p><strong>Location:</strong> <span t-esc="o.location_id.display_name"/></p>
                         <p><strong>Warehouse:</strong> <span t-esc="o.warehouse_name"/></p>
                         <p><strong>Truck Number:</strong> <span t-esc="o.truk_number"/></p>

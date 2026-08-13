@@ -14,7 +14,7 @@
             </div>
         </xpath>
         
-        <xpath expr="//div[@name='custom-donor']" position="after">
+        <xpath expr="//div[@name='custom-donor']" position="replace">
             <div name="custom-favor">
                 <strong>Donor Name:</strong>
                 <t t-if="order.favor"><t t-esc="order.favor"/></t>
