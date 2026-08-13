@@ -173,7 +173,7 @@
                             <t t-set="random_no" t-value="order.name and order.name.slice(-4) or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="branch_code"/>-<t t-esc="current_year"/>-<t t-esc="random_no"/></span>
                         </div>
-                        <div><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
+                        <div name="footer-custom-donor"><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>
