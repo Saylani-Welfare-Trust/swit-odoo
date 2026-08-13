@@ -827,6 +827,8 @@ patch(PaymentScreen.prototype, {
             }
         }
 
+        // Continue with normal POS flow
+        return super.validateOrder(isForceValidate);
 
     //     // --- WELFARE ---
         // if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
