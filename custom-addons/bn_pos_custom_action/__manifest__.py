@@ -13,6 +13,7 @@
         'views/pos_order.xml',
         'views/res_company.xml',
         'views/res_config_setting.xml',
+        
     ],
     'auto_install': False,
     'application': False,
