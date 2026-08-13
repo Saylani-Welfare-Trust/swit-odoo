@@ -79,19 +79,23 @@ patch(PaymentScreen.prototype, {
         const invoiceNumber = this._generateReceiptNumber(currentOrder);
 
         try {
-            const data = await this.env.services.orm.call(
+            await this.env.services.orm.call(
                 "pos.order",
                 "set_new_pos_order_seq",
-                [[currentOrder.uid], [{
-                    pos_order_seq: invoiceNumber,
-                    config_id: currentOrder.pos.config.id
-                }]]
+                [
+                    [currentOrder.uid],
+                    {
+                        pos_order_seq: invoiceNumber,
+                        config_id: this.pos.config.id,
+                    }
+                ]
             );
 
-            // Continue with normal POS flow
-            return super.validateOrder(isForceValidate);
         } catch (error) {
-            console.error("Error updating pos_order_seq:", error);
+            console.error(
+                "Error updating pos_order_seq:",
+                error
+            );
         }
         
         // Only process medical equipment if order has extra_data with medical_equipment
