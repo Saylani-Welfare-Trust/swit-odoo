@@ -79,8 +79,6 @@ patch(PaymentScreen.prototype, {
         const invoiceNumber = this._generateReceiptNumber(currentOrder);
 
         try {
-            new_pos_seq = currentOrder.get_pos_order_seq()
-
             const data = await this.env.services.orm.call(
                 "pos.order",
                 "set_new_pos_order_seq",
