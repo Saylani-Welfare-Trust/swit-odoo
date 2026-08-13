@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="bn_pos_order.bn_profile_management_profile_management_view_form_inherit_bn_pos_order"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='custom_pos_order_line_ids']//field[@name='partner_id']" position="after">
-                <field name="favor"/>
+                <field name="favor" string="Donor"/>
             </xpath>
         </field>
     </record>
