@@ -76,6 +76,8 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
+        console.log(currentOrder);
+
         const invoiceNumber = this._generateReceiptNumber(currentOrder);
 
         try {
