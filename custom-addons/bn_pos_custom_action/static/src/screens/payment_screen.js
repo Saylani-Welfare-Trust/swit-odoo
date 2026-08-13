@@ -76,8 +76,6 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        console.log(currentOrder);
-
         const invoiceNumber = this._generateReceiptNumber(currentOrder);
 
         try {
@@ -86,7 +84,7 @@ patch(PaymentScreen.prototype, {
                 "set_new_pos_order_seq",
                 [[currentOrder.uid], [{
                     pos_order_seq: invoiceNumber,
-                    config_id: currentOrder.config_id.id
+                    config_id: currentOrder.pos.config.id
                 }]]
             );
 
