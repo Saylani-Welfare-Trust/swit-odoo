@@ -29,7 +29,7 @@
                                 <span>QOL No.</span> <spna><t t-esc="o.qurbani_order_line_no"/></spna>
                             </div>
                             <div class="col-6">
-                                <span>Product</span> <spna><t t-esc="o.product_id.name"/></spna>
+                                <span>Product</span> <spna><t t-esc="o.product_id.display_name"/></spna>
                             </div>
                         </div>
                         <div class="row">

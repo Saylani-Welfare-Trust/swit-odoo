@@ -91,6 +91,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
             slot_demand_id: slot.slot_demand_id,
             product: slot.product,
             day: slot.day,
+            day_id: slot.day_id,
         };
     }
 
@@ -103,7 +104,7 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
         this.state.name = ev.target.value;
     }
 
-    confirmSelection() {
+    async confirmSelection() {
         const slot = this.state.selectedSlot;
         const name = this.state.name?.trim();
 
@@ -114,6 +115,19 @@ export class QurbaniSchedule extends AbstractAwaitablePopup {
                 "Name must be at least 3 characters and contain only letters.",
                 { type: "warning" }
             );
+            return;
+        }
+
+        const result = await this.orm.call(
+            "qurbani.day",
+            "validate_qurbani_day",
+            [slot.day_id] // adjust according to your slot structure
+        );
+
+        if (!result.valid) {
+            this.notification.add(result.message, {
+                type: "warning",
+            });
             return;
         }
 

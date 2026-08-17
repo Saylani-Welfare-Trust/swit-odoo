@@ -39,7 +39,7 @@
                         </group>
                     </group>
                 </sheet>
-                 <footer>
+                <footer>
                     <button string="Transfer" type="object" name="action_tranfer" class="btn-primary"/>
                     <button string="Close" class="btn-secondary" special="cancel"/>
                 </footer>

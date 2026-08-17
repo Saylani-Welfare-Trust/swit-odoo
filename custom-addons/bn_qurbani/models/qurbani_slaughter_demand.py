@@ -8,7 +8,7 @@ class QurbaniSlaughterDemand(models.Model):
     _description = "Qurbani Slaughter Demand"
 
     day_id = fields.Many2one("qurbani.day", string="Day", tracking=True)
-    hijri_id = fields.Many2one("hijri", string="Hijri Date", tracking=True)
+    hijri_id = fields.Many2one("hijri", string="Hijri Date", tracking=True, domain=[('approved', '=', True)])
 
     city_location_id = fields.Many2one('stock.location', string="City Location", tracking=True)
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True)

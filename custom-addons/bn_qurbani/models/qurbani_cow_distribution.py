@@ -15,7 +15,7 @@ class QurbaniCowDistribution(models.Model):
     _description = "Qurbani Cow Distribution"
 
 
-    hijri_id = fields.Many2one('hijri', string="Hijri")
+    hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
     day_id = fields.Many2one('qurbani.day', string="Day")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
     distribution_location_id = fields.Many2one('stock.location', string="Distribution Location")
@@ -38,6 +38,8 @@ class QurbaniCowDistribution(models.Model):
 
     remarks = fields.Text('Remarks')
 
+    max_distribution = fields.Integer('Max Distribution', default=1)
+
 
     @api.model
     def create(self, vals):
@@ -57,6 +59,12 @@ class QurbaniCowDistribution(models.Model):
         records_to_print = self.env[self._name]
 
         for rec in self:
+            if rec.max_distribution > 2:
+                raise ValidationError(
+                    f'Max distribution limit exceeded for record {rec.name}.'
+                )
+
+            rec.max_distribution += 1
 
             # STOP invalid records
             if rec.state not in ['pending', 'approved']:
