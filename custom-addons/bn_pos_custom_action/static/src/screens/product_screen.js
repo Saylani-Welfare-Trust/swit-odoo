@@ -61,21 +61,20 @@ patch(ProductScreen.prototype, {
             });
         }
 
-        // Disable all numpad buttons if Qurbani product exists (except Backspace)
-        if (this.hasQurbaniProduct) {
-            return buttons.map(btn => {
-                if (btn.value === "Backspace") {
-                    return { ...btn, disabled: false };
-                }
-                return { ...btn, disabled: true };
-            });
-        }
-        
-        // Return buttons with active class for numpad mode
-        return buttons.map((button) => ({
-            ...button,
-            class: this.pos.numpadMode === button.value ? "active border-primary" : "",
-        }));
+        // 🔥 DISABLE MINUS BUTTON FOR ALL PRODUCTS
+        // Disable the minus button regardless of product type
+        return buttons.map(button => {
+            if (button.value === "-") {
+                // Always disable the minus button for all products
+                return { ...button, disabled: true };
+            }
+            
+            // Apply active class for numpad mode
+            return {
+                ...button,
+                class: this.pos.numpadMode === button.value ? "active border-primary" : "",
+            };
+        });
     },
 
     // Initialize component and setup keyboard event handling
@@ -114,10 +113,9 @@ patch(ProductScreen.prototype, {
     _handleKeyboardEvent(event) {
         // Check if minus key is pressed (both main keyboard and numpad)
         if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
-            // Determine if negative entries should be blocked
-            const shouldBlockNegative = this.hasQurbaniProduct || 
-                                       this.isWelfareOrder || 
-                                       !this.pos?.config?.allow_negative_quantity;
+            // 🔥 BLOCK NEGATIVE ENTRIES FOR ALL PRODUCTS
+            // Always block negative entries regardless of product type
+            const shouldBlockNegative = true; // Always block for all products
             
             if (shouldBlockNegative) {
                 // Prevent default behavior and stop propagation
@@ -134,7 +132,7 @@ patch(ProductScreen.prototype, {
 
     // Show notification message when negative is not allowed
     _showNegativeNotAllowedMessage() {
-        const message = _t("Negative quantity is not allowed for this order.");
+        const message = _t("Negative quantity is not allowed. Please use positive quantities only.");
         
         // Try different notification methods based on what's available
         try {
@@ -176,10 +174,8 @@ patch(ProductScreen.prototype, {
         }
     },
 
-    // Optional: Additional helper to check if minus button should be disabled
+    // Helper to check if minus button should be disabled (always true now)
     get isMinusDisabled() {
-        return this.hasQurbaniProduct || 
-               this.isWelfareOrder || 
-               !this.pos?.config?.allow_negative_quantity;
+        return true; // Always disabled for all products
     }
 });
