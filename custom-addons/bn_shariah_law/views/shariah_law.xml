@@ -37,7 +37,7 @@
         </field>
     </record>
 
-    <!-- <record id="shariah_law_view_search" model="ir.ui.view">
+    <record id="shariah_law_view_search" model="ir.ui.view">
         <field name="name">shariah.law.view.search</field>
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
@@ -56,7 +56,7 @@
                 </group>
             </search>
         </field>
-    </record> -->
+    </record>
 
     <record id="shariah_law_action" model="ir.actions.act_window">
         <field name="name">Shariah Law Totals</field>
