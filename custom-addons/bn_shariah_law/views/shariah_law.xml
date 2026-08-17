@@ -37,14 +37,14 @@
         </field>
     </record>
 
-    <record id="shariah_law_view_search" model="ir.ui.view">
+    <!-- <record id="shariah_law_view_search" model="ir.ui.view">
         <field name="name">shariah.law.view.search</field>
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
             <search>
                 <field name="analytic_account_id" string="Segment"/>
                 <field name="parent_id" string="Parent Segment"/>
-                <!-- <filter name="today" string="Today" domain="[('date', '=', context_today())]"/> -->
+                <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
                 <separator/>
                 <filter name="positive_balance" string="Positive Balance" domain="[('closing_balance', '&lt;', 0)]"/>
                 <filter name="negative_balance" string="Negative Balance" domain="[('closing_balance', '&gt;', 0)]"/>
@@ -56,7 +56,7 @@
                 </group>
             </search>
         </field>
-    </record>
+    </record> -->
 
     <record id="shariah_law_action" model="ir.actions.act_window">
         <field name="name">Shariah Law Totals</field>
