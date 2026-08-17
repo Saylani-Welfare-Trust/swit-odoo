@@ -159,9 +159,9 @@
                                     <field name="advance_amount"/>
                                     <field name="disbursed_record"/>
                                     <field name="disbursed_amount"/>
-                                    <field name="welfare_id" invisible="1"/>
+                                    <field name="welfare_id"/>
                                     <!-- <field name="recurring_line_id"/> -->
-                                    <field name="microfinance_id" invisible="1"/>
+                                    <field name="microfinance_id" />
                                     <button name="action_print_line_non_cash_disbursement_report" string="Print Non-Cash Report" type="object" class="btn-link" icon="fa-print"/>
 
                                 </tree>

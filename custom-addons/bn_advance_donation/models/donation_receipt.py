@@ -9,6 +9,7 @@ class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
 
 
+    category_id = fields.Many2one('product.category', string='Category')    
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     payment_type = fields.Selection([('cash', 'Cash'), ('cheque', 'Cheque')], string='Payment Method', default='cash')
     is_donation_id = fields.Boolean('Donation ID?')
@@ -25,6 +26,12 @@ class DonationReceipt(models.Model):
     cheque_number = fields.Char(string='Cheque Number')
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
+    mobile_number = fields.Char(string='Mobile Number')
+       # POS related fields
+    pos_session_id = fields.Many2one('pos.session', string='POS Session')
+    pos_order_id = fields.Many2one('pos.order', string='POS Order')
+    remarks = fields.Text(string='Remarks') 
+    product_name = fields.Char(string='Product Name')  # If you want a separate text field
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending', 'Pending'),
@@ -300,28 +307,9 @@ class DonationReceipt(models.Model):
     @api.model
     def register_pos_payment(self, data):
         _logger.info(f"Registering POS payment with data: {data}")
-        
-        try:
-            # # Find POS order by order_name
-            pos_order = None
-            # if data.get('order_name'):
-            #     _logger.info(f"Searching for POS order: {data['order_name']}")
-            #     pos_order = self.env['pos.order'].sudo().search([('pos_reference', '=', data['order_name'])], limit=1)
-                
-            #     if not pos_order:
-            #         _logger.error(f"POS Order not found: {data['order_name']}")
-            #         return {
-            #             "status": "error",
-            #             "body": "POS Order not found",
-            #         }
-                
-            #     _logger.info(f"Found POS order: {pos_order.id} - {pos_order.name}")
 
-            # if not data['amount']:
-            #     return {
-            #         "status": "error",
-            #         "body": "Please enter amount",
-            #     }
+        try:
+            pos_order = None
 
             # Convert amount to float and get absolute value
             try:
@@ -333,38 +321,46 @@ class DonationReceipt(models.Model):
                     "body": "Invalid amount format",
                 }
 
-            # if data['payment_type'] == 'cheque':
-            #     if not data['bank_id']:
-            #         return {
-            #             "status": "error",
-            #             "body": "Please select bank",
-            #         }
-                if not data['cheque_number']:
+            # -------------------------------------------------------------
+            # CHEQUE: do NOT create the advance.donation.receipt here.
+            # The receipt only gets created later, when the matching
+            # pos.cheque record is cleared (pos.cheque.action_clear()),
+            # based on the 'Donor A/c' line(s) on the linked POS order.
+            # -------------------------------------------------------------
+            if data['payment_type'] == 'cheque':
+                if not data.get('cheque_number'):
                     return {
                         "status": "error",
                         "body": "Please enter cheque number",
                     }
-                if not data['cheque_date']:
+                if not data.get('cheque_date'):
                     return {
                         "status": "error",
                         "body": "Please enter cheque date",
                     }
-            
+
+                _logger.info("Cheque payment - skipping receipt creation, will be created on cheque clear")
+                return {
+                    "status": "success",
+                    "receipt_name": False,
+                    "receipt_id": False,
+                }
+
+            # -------------------------------------------------------------
+            # CASH: unchanged - create and mark paid immediately
+            # -------------------------------------------------------------
             _logger.info("Creating donation receipt...")
-            
-            # Create payment with positive amount
+
             payment_vals = {
                 'payment_type': data['payment_type'],
                 'is_donation_id': data.get('is_donation_id', False),
                 'amount': amount,
                 'product_id': data.get('product_id'),
-                # 'order_id': pos_order.id if pos_order else False,
             }
-            
+
             payment = self.env['advance.donation.receipt'].create(payment_vals)
             _logger.info(f"Created receipt: {payment.name} with ID: {payment.id}")
-            
-            # Set donor from POS order partner or provided donor_id
+
             if pos_order and pos_order.partner_id:
                 _logger.info(f"Setting donor from POS order partner: {pos_order.partner_id.id}")
                 payment.write({'donor_id': pos_order.partner_id.id})
@@ -374,22 +370,12 @@ class DonationReceipt(models.Model):
             else:
                 _logger.warning("No donor information available")
 
-            if data['payment_type'] == 'cheque':
-                payment.write({
-                    # 'bank_id': int(data['bank_id']),
-                    'cheque_number': data['cheque_number'],
-                    'cheque_date': data['cheque_date'],
-                })
-                _logger.info("Processing cheque payment...")
-                payment.action_paid()
-                _logger.info("Cheque payment completed")
-            else:
-                _logger.info("Processing cash payment...")
-                payment.action_paid()
-                _logger.info("Cash payment completed")
+            _logger.info("Processing cash payment...")
+            payment.action_paid()
+            _logger.info("Cash payment completed")
 
             _logger.info(f"Successfully created donation receipt: {payment.name}")
-            
+
             return {
                 "status": "success",
                 "receipt_name": payment.name,
