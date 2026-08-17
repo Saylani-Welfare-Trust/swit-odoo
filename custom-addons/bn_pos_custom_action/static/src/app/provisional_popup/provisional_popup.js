@@ -17,9 +17,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
-        this.report = useService("report");
+        this.report = useService("report");    this.fetchCaseNumber();
         this.notification = useService("notification");
-        
+        this.fetchCaseNumber();
         this.title = this.props.title || "Provisional Order Details";
         
         this.donor_id = this.props.donor_id;
@@ -34,6 +34,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state = useState({
             microfinance_request_no: '',
             medical_equipment_request_no: '',
+            welfare_request_no: '',        // NEW
+            wf_request_type: 'one_time',   // NEW
             amount: parseFloat(this.props.amount) || 0,
             service_charges: 0,
             total: parseFloat(this.props.amount) || 0,
@@ -41,7 +43,56 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             transaction_ref: this.props.transaction_ref || "",
             transfer_to_dhs: false,
             selected_bank_id: false,
+            case_no: "",  
         });
+
+        // NEW: for Direct Deposit, pull the request no automatically from the order
+        // that was set earlier by the Microfinance ('mf') or Medical Equipment ('me') flow.
+        if (this.action_type === 'dd') {
+            this.populateSourceRequestFromOrder();
+        }
+    }
+
+    /**
+     * NEW: Reads selectedOrder.extra_data (set earlier by the mf/me flows)
+     * and fills the readonly source_request_type / source_request_no fields
+     * shown on the Direct Deposit popup.
+     */
+    populateSourceRequestFromOrder() {
+        const selectedOrder = this.pos.get_order();
+        const extraData = selectedOrder && selectedOrder.extra_data;
+        if (!extraData) return;
+
+        const mf = extraData.microfinance;
+        const me = extraData.medical_equipment;
+        const wf = extraData.welfare;   // NEW
+
+        const mfRequestNo = mf && (mf.record_number || mf.microfinance_request_no);
+        const meRequestNo = me && (me.record_number || me.medical_equipment_request_no);
+        const wfRequestNo = wf && wf.record_number;   // NEW
+
+        if (mfRequestNo) {
+            this.state.source_request_type = 'Microfinance';
+            this.state.source_request_no = mfRequestNo;
+            if (mf.amount) {
+                this.state.amount = parseFloat(mf.amount) || this.state.amount;
+                this.state.total = this.state.amount + this.state.service_charges;
+            }
+        } else if (meRequestNo) {
+            this.state.source_request_type = 'Medical Equipment';
+            this.state.source_request_no = meRequestNo;
+            if (me.amount) {
+                this.state.amount = parseFloat(me.amount) || this.state.amount;
+                this.state.total = this.state.amount + this.state.service_charges;
+            }
+        } else if (wfRequestNo) {   // NEW
+            this.state.source_request_type = 'Welfare';
+            this.state.source_request_no = wfRequestNo;
+            this.state.source_welfare_line_ids = wf.welfare_line_ids || [];
+            this.state.source_welfare_recurring_line_ids = wf.recurring_line_ids || [];
+        }else {
+            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
+        }
     }
 
     saveServiceCharger(event) {
@@ -49,7 +100,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
+    updateWelfareRequestNo(event) {
+        this.state.welfare_request_no = event.target.value;
+    }
 
+    updateWfRequestType(event) {
+        this.state.wf_request_type = event.target.value;
+    }
     updateMicrofinanceRequestNo(event) {
         this.state.microfinance_request_no = event.target.value;
     }
@@ -98,6 +155,62 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         }
     }
 
+    async fetchCaseNumber() {
+        // Only fetch for Direct Deposit
+        if (this.action_type !== 'dd') {
+            return;
+        }
+
+        try {
+            let caseNo = "";
+            
+            // If we have donor_id, try to fetch from donor
+            if (this.donor_id) {
+                const result = await this.orm.searchRead(
+                    'res.partner',
+                    [['id', '=', this.donor_id]],
+                    ['name', 'ref', 'display_name'],
+                    { limit: 1 }
+                );
+                
+                if (result && result.length > 0) {
+                    // Priority: display_name > name > ref
+                    caseNo = result[0].display_name || 
+                            result[0].name || 
+                            result[0].ref || 
+                            "";
+                }
+            }
+            
+            // If no donor_id, try to get from props
+            if (!caseNo && this.props.case_no) {
+                caseNo = this.props.case_no;
+            }
+            
+            // If still no case number, try from favor or other fields
+            if (!caseNo && this.favor) {
+                // You might want to fetch from favor record
+                const favorResult = await this.orm.searchRead(
+                    'donation.favor',  // or whatever your favor model is
+                    [['name', '=', this.favor]],
+                    ['name', 'display_name'],
+                    { limit: 1 }
+                );
+                
+                if (favorResult && favorResult.length > 0) {
+                    caseNo = favorResult[0].display_name || favorResult[0].name;
+                }
+            }
+            
+            // Set the case number
+            this.state.case_no = caseNo;
+            
+        } catch (error) {
+            console.error("Error fetching case number:", error);
+            // Don't show error to user for this non-critical field
+            this.state.case_no = this.props.case_no || "N/A";
+        }
+    }
     async confirm(){
         const selectedOrder = this.pos.get_order();
 
@@ -166,10 +279,36 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             
             if (data.status === 'success') {
                 record = data;
-                payload.security_deposit_id = data.deposit_id || null;  // Will be null if deposit doesn't exist
-                payload.medical_equipment_id = data.id;  // Store microfinance_id for creating record if needed
-                payload.amount = data.amount;  // Store amount from microfinance request
+                payload.security_deposit_id = data.deposit_id || null;  
+                payload.medical_equipment_id = data.id; 
+                payload.amount = data.amount; 
+                      // ----- FETCH REQUEST STATE -----
+                // Fetch the full request record to get its state
+                const requestRecords = await this.orm.searchRead(
+                    'medical.equipment',   // adjust model name if different
+                    [['id', '=', data.id]],
+                    ['state'],                     // only need the state
+                    { limit: 1 }
+                );
 
+                if (!requestRecords || requestRecords.length === 0) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t("Medical Equipment Request not found."),
+                    });
+                    return;
+                }
+
+                const requestState = requestRecords[0].state;
+
+                // Validate state
+                if (requestState !== 'cfo_approval') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
+                    });
+                    return;
+                }
                 if (data.state === 'paid') {
                     this.notification.add(_t("Security deposit already paid"), {
                         type: "info",
@@ -357,10 +496,18 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
                 'address': this.state.address,
-                'service_charges': this.state.service_charges,
+                // NEW: carry the linked request info through to the backend record
+                'source_request_type': this.state.source_request_type,
+                'source_request_no': this.state.source_request_no,
+                'source_welfare_line_ids': this.state.source_welfare_line_ids || [],           // NEW
+                'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
             }
     
+            console.log("DD popup - payload sent:", payload); // TEMP DEBUG
+
             await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
+                console.log("DD popup - response received:", data); // TEMP DEBUG
+
                 if (data.status === 'success') {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",

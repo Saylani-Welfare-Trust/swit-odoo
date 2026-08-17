@@ -828,26 +828,21 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
      */
     async handleRecordFound(record, selectedOrder) {
         if (this.action_type === 'dhs') {
-            // Process all record components
             await this.processDHSLines(record, selectedOrder);
             this.addExtraOrderData(selectedOrder, record);
             await this.processPartner(record, selectedOrder);
-
             super.confirm();
         }
-        
-        if (this.action_type === 'me' ) {
-            // Process all record components
-            await this.processEquipmentLines(record, selectedOrder);
-            this.addExtraOrderData(selectedOrder, record);
-            await this.processPartner(record, selectedOrder);
 
+        if (this.action_type === 'me') {
+            const equipmentLineIds = await this.processEquipmentLines(record, selectedOrder);
+            this.addExtraOrderData(selectedOrder, record, equipmentLineIds);   // <-- pass line ids through
+            await this.processPartner(record, selectedOrder);
             super.confirm();
         }
 
         return record.state;
     }
-
     /**
      * Handle record not found scenario
      */
@@ -924,22 +919,36 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.notifyProductAdditionResult(addedProductsCount);
     }
 
+
     /**
      * Process equipment lines and add products to POS order
      */
     async processEquipmentLines(record, selectedOrder) {
         if (!this.hasEquipmentLines(record)) {
-            return;
+            return [];
         }
 
         const equipmentLines = await this.fetchEquipmentLines(record);
-        console.log("Fetched equipment lines:", equipmentLines);
-        const addedProductsCount = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
-        console.log("Added products count:", addedProductsCount);
-        
-        this.notifyProductAdditionResult(addedProductsCount);
-    }
+        const addedLineIds = [];
+        let addedProductsCount = 0;
 
+        if (record.state !== 'donate') {
+            for (let line of equipmentLines) {
+                if (await this.addProductLine(line, record, selectedOrder)) {
+                    addedProductsCount++;
+                    addedLineIds.push({ id: line.id });
+                }
+            }
+        } else {
+            // donate-state path adds a single security-deposit product not tied to individual lines
+            const result = await this.addProductsToOrder(equipmentLines, record, selectedOrder);
+            addedProductsCount = result;
+            // no per-line ids to track here since it's a lump-sum deposit product
+        }
+
+        this.notifyProductAdditionResult(addedProductsCount);
+        return addedLineIds;
+    }
     /**
      * Check if dhs has lines
      */
@@ -1199,6 +1208,153 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
             }
             
         }
+        // Welfare
+        if (this.action_type == 'wf') {
+            if (!this.state.welfare_request_no) {
+                this.notification.add(
+                    "Please enter a Welfare Request No.",
+                    { type: 'warning' }
+                );
+                return;
+            }
+
+            const isRecurring = this.state.wf_request_type === 'recurring';
+
+            const record = await this.orm.searchRead(
+                'welfare',
+                ['|', ['name', '=', this.state.welfare_request_no], ['old_system_id', '=', this.state.welfare_request_no]],
+                ['id', 'name', 'state', 'donee_id', 'welfare_line_ids', 'welfare_recurring_line_ids', 'order_type'],
+                { limit: 1 }
+            );
+
+            if (!record.length) {
+                this.notification.add("Record not found", { type: 'warning' });
+                return;
+            }
+
+            const welfareRecord = record[0];
+
+            if (!isRecurring && welfareRecord.state !== 'approve') {
+                this.notification.add(
+                    `Unauthorized Request State: ${welfareRecord.state}. Expected 'approve' for one-time disbursement.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+            if (isRecurring && welfareRecord.state !== 'recurring') {
+                this.notification.add(
+                    `Unauthorized Request State: ${welfareRecord.state}. Expected 'recurring' for recurring disbursement.`,
+                    { type: 'warning' }
+                );
+                return;
+            }
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let lineIds = [];
+            let totalAmount = 0;
+
+            if (!isRecurring) {
+                const lines = await this.orm.searchRead(
+                    'welfare.line',
+                    [
+                        ['id', 'in', welfareRecord.welfare_line_ids],
+                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['collection_point', '=', 'branch'],
+                        ['state', '=', 'draft'],
+                    ],
+                    ['id', 'total_amount', 'collection_date', 'state'],
+                    {}
+                );
+                const dueThisMonth = lines.filter(l => {
+                    if (!l.collection_date) return false;
+                    const [year, month] = l.collection_date.split("-").map(Number);
+                    return month - 1 === currentMonth && year === currentYear;
+                });
+                lineIds = dueThisMonth.map(l => ({ id: l.id, amount: l.total_amount || 0 }));
+                totalAmount = lineIds.reduce((sum, l) => sum + l.amount, 0);
+            } else {
+                const lines = await this.orm.searchRead(
+                    'welfare.recurring.line',
+                    [
+                        ['welfare_id', '=', welfareRecord.id],
+                        ['state', '=', 'draft'],
+                        ['disbursement_category_id.name', '=', 'Cash'],
+                        ['collection_point', '=', 'branch'],
+                    ],
+                    ['id', 'amount', 'collection_date', 'state'],
+                    {}
+                );
+                const dueThisMonth = lines.filter(l => {
+                    if (!l.collection_date) return false;
+                    const [year, month] = l.collection_date.split("-").map(Number);
+                    return month - 1 === currentMonth && year === currentYear;
+                });
+                lineIds = dueThisMonth.map(l => ({ id: l.id, amount: l.amount || 0 }));
+                totalAmount = lineIds.reduce((sum, l) => sum + l.amount, 0);
+            }
+
+            if (!lineIds.length) {
+                this.notification.add("No welfare lines due this month", { type: 'warning' });
+                return;
+            }
+
+            if (!selectedOrder.extra_data) {
+                selectedOrder.extra_data = {};
+            }
+            selectedOrder.extra_data.welfare = {
+                record_number: welfareRecord.name,
+                welfare_id: welfareRecord.id,
+                is_recurring: isRecurring,
+                welfare_line_ids: !isRecurring ? lineIds : [],
+                recurring_line_ids: isRecurring ? lineIds : [],
+                amount: totalAmount,
+            };
+
+            if (welfareRecord.donee_id && welfareRecord.donee_id[0]) {
+                const partner = await this.getOrLoadPartner(welfareRecord.donee_id[0]);
+                if (partner) this.assignPartnerToOrder(partner, selectedOrder);
+            }
+
+            const wfProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.welfare_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+
+            if (!wfProduct.length) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: `${this.pos.company.welfare_product} product not found or not available in POS.`
+                });
+                return;
+            }
+
+            const product = this.pos.db.get_product_by_id(wfProduct[0].id);
+            if (!product) {
+                await this.popup.add(ErrorPopup, {
+                    title: "Error",
+                    body: "Welfare product not loaded in POS session."
+                });
+                return;
+            }
+
+            selectedOrder.add_product(product, {
+                quantity: 1,
+                price_extra: totalAmount,
+            });
+
+            selectedOrder.set_receive_voucher(true);
+
+            this.cancel();
+        }
         if (this.action_type == 'me') {
             if (!record.donee_id || !record.donee_id[0]) {
                 return;
@@ -1289,6 +1445,7 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 record_number: record.name,
                 equipment_state: record.state,
                 equipment_id: record.id,
+                equipment_line_ids: lineIds || [],   // <-- NEW
                 scan_timestamp: new Date().toISOString(),
             };
         }
