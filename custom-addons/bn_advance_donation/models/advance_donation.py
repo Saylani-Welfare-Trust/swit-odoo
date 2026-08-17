@@ -75,7 +75,16 @@ class AdvanceDonation(models.Model):
         'advance_donation_id',
         string="Disbursement Lines"
     )
-    
+    service_charges = fields.Boolean(string="Service Charges", default=False)
+    service_charge_product_id = fields.Many2one(
+        'product.product',
+        string='Service Charge Product',
+        domain=[('is_service_charge', '=', True)]
+    )
+    service_charge_amount = fields.Monetary(
+        string='Service Charge Amount',
+        currency_field='currency_id'
+    )
 
     @api.model
     def create(self, vals):
@@ -141,12 +150,29 @@ class AdvanceDonation(models.Model):
             self.total_no_of_product = 1
             self.no_of_product = 1   # also for consistency
             self.amount_percentage = 100.00
+    @api.onchange('service_charges')
+    def _onchange_service_charges(self):
+        if not self.service_charges:
+            self.service_charge_product_id = False
+            self.service_charge_amount = 0.0
+
+    @api.onchange('service_charge_product_id')
+    def _onchange_service_charge_product_id(self):
+        self.service_charge_amount = (
+            self.service_charge_product_id.lst_price
+            if self.service_charge_product_id else 0.0
+        )
 
     def compute_donation(self):
         self.advance_donation_lines.unlink()
         amount = (self.product_id.lst_price / 100) * self.amount_percentage
+        unit_service_charge = 0.0
+        if self.service_charges:
+            if self.service_charge_product_id:
+                unit_service_charge = self.service_charge_product_id.lst_price
+            else:
+                unit_service_charge = self.service_charge_amount or 0.0
 
-        # Prepare dates if frequency based
         dates = []
         if self.contract_type == 'frequency' and self.contract_start_date and self.contract_end_date:
             start_date = fields.Date.from_string(self.contract_start_date)
@@ -160,6 +186,9 @@ class AdvanceDonation(models.Model):
                 dates = [start_date + timedelta(days=7 * i) for i in range(weeks)]
 
         serial = 1
+        line_service_charge = unit_service_charge if self.service_charges else 0.0
+        total_lines = 0
+
         if self.contract_type == 'frequency' and dates:
             for date in dates:
                 for _ in range(self.no_of_product):
@@ -167,32 +196,38 @@ class AdvanceDonation(models.Model):
                         'serial_no': serial,
                         'product_id': self.product_id.id,
                         'amount': amount,
-                        'remaining_amount': amount,
+                        'service_charge_amount': line_service_charge,
+                        'remaining_amount': amount + line_service_charge,
                         'advance_donation_id': self.id,
                         'date': date,
                     })
                     serial += 1
+                    total_lines += 1
         else:
-            if not self.contract_type == 'open_contract':
+            if self.contract_type != 'open_contract':
                 for i in range(self.total_no_of_product):
                     self.advance_donation_lines.create({
                         'serial_no': i + 1,
                         'product_id': self.product_id.id,
                         'amount': amount,
-                        'remaining_amount': amount,
+                        'service_charge_amount': line_service_charge,
+                        'remaining_amount': amount + line_service_charge,
                         'advance_donation_id': self.id,
                     })
+                    total_lines += 1
             else:
                 self.advance_donation_lines.create({
                     'serial_no': 1,
                     'product_id': self.product_id.id,
                     'amount': self.total_product_amount,
-                    'remaining_amount': self.total_product_amount,
+                    'service_charge_amount': line_service_charge,
+                    'remaining_amount': self.total_product_amount + line_service_charge,
                     'advance_donation_id': self.id,
                 })
+                total_lines = 1
 
         self.total_product_amount = sum(line.amount for line in self.advance_donation_lines)
-
+        self.service_charge_amount = line_service_charge * total_lines
 
     @api.onchange('category_id')
     def compute_product_domain(self):
@@ -343,7 +378,7 @@ class AdvanceDonation(models.Model):
         for line in non_disbursed_lines:
             line.write({
                 'paid_amount': 0.0,
-                'remaining_amount': line.amount,
+                'remaining_amount': line.amount + line.service_charge_amount,
                 'state': 'unpaid'
             })
         
@@ -428,7 +463,7 @@ class AdvanceDonation(models.Model):
         # Reset all donation lines to unpaid state
         for rec in self.advance_donation_lines:
             rec.paid_amount = 0
-            rec.remaining_amount = rec.amount
+            rec.remaining_amount = rec.amount + rec.service_charge_amount
 
         # Use manual_payment_amount instead of total from all slips
         payment_to_distribute = amount
