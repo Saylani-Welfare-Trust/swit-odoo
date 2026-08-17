@@ -19,6 +19,7 @@ class Donation(models.Model):
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config", tracking=True)
     company_id = fields.Many2one('res.company', string="Company", default=lambda self: self.env.user.company_id.id)
     currency_id = fields.Many2one(related='company_id.currency_id', string="Currency")
+    import_donation_id = fields.Many2one('import.donation', string="Import Donation")
 
     name = fields.Char('Name', default="New", tracking=True)
     transaction_id = fields.Char('Transaction ID', tracking=True)

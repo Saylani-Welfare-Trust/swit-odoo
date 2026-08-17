@@ -11,14 +11,9 @@ class ApiQurbaniOrderLine(models.Model):
 
 
     qurbani_order_id = fields.Many2one('api.donation', string="Qurbani Order")
-    product_id = fields.Many2one('product.product', string="Product")
-    # city_id = fields.Many2one('stock.location', string="City")
-    city = fields.Char(string="City Name")
+    city = fields.Char('City Name')
     branch = fields.Char('Branch')
-    # distribution_id = fields.Many2one('stock.location', string="Distribution")
-    # day_id = fields.Many2one('qurbani.day', string="Day")
-    day = fields.Char( string="Day")
-    # hijri_id = fields.Many2one('hijri', string="Hijri")
+    day = fields.Char('Day')
 
     qurbani_fullfilment = fields.Char('Qurbani Fullfilment')
     name = fields.Char('Name', default="New")
@@ -27,6 +22,13 @@ class ApiQurbaniOrderLine(models.Model):
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
 
-    quantity = fields.Integer('Quantity', default=1)
-
-    amount = fields.Float('Amount')
+    donation_type = fields.Char('Donation Type')
+    donation_no = fields.Char('Donation No')
+    price_id = fields.Char('Price Id')
+    price = fields.Float('Price')
+    total = fields.Float('Total')
+    type = fields.Char('Type')
+    item = fields.Char('Item')
+    qty = fields.Float('QTY')
+    
+    is_priced_item = fields.Boolean('Is Priced Item')
