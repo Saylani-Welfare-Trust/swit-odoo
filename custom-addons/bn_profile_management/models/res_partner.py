@@ -89,17 +89,62 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
-    
-    
-    def write(self, vals):
-        if 'mobile' in vals:
-            mobile = vals.get('mobile')
 
-            if mobile and self.search([('mobile', '=', mobile)]):
+    @api.model_create_multi
+    def create(self, vals_list):
+        pakistan_id = self.env.ref('base.pk').id
+
+        for vals in vals_list:
+            if not vals.get('country_code_id'):
+                vals['country_code_id'] = pakistan_id
+
+            if vals.get('name'):
+                name = vals['name'].strip()
+
+                if not re.match(r'^[A-Za-z\s]+$', name):
+                    raise ValidationError(
+                        "Name can only contain alphabets and spaces."
+                    )
+
+                vals['name'] = name
+
+        return super().create(vals_list)
+        
+    def write(self, vals):
+        if 'mobile' in vals and vals.get('mobile'):
+            mobile = vals['mobile']
+            for rec in self:
+                category_names = set(rec.category_id.mapped('name'))
+                is_donee = 'Donee' in category_names
+                is_donor = 'Donor' in category_names
+
+                domain = [
+                    ('mobile', '=', mobile),
+                    ('state', '=', 'register'),
+                    ('id', '!=', rec.id),
+                ]
+
+                # Only compare within the same category so Donor/Donee
+                # can legitimately share a mobile number
+                if is_donee and not is_donor:
+                    domain.append(('category_id.name', '=', 'Donee'))
+                elif is_donor and not is_donee:
+                    domain.append(('category_id.name', '=', 'Donor'))
+
+                existing = self.search(domain)
+                if existing:
+                    raise ValidationError(
+                        "A Partner with the same Mobile No. already exists in the System."
+                    )
+        if vals.get('name'):
+            name = vals['name'].strip()
+
+            if not re.match(r'^[A-Za-z\s]+$', name):
                 raise ValidationError(
-                    "A Partner with the same Mobile No. already exists in the System."
+                    "Name can only contain alphabets and spaces."
                 )
 
+            vals['name'] = name
         return super(ResPartner, self).write(vals)
 
     @api.onchange('category_id')
@@ -143,12 +188,16 @@ class ResPartner(models.Model):
             # (overrides the welfare exclusion)
             rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
 
-    @api.depends('name', 'category_id')
+    @api.depends('category_id')
     def _set_donee_required_fields(self):
         for rec in self:
             rec.donee_required_fields = False
+            category_names = rec.category_id.mapped('name')
 
-            if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
+            # if 'Donee' in category_names and 'Individual' in category_names:
+            #     rec.donee_required_fields = True
+
+            if 'Welfare' in category_names or 'Medical' in category_names:
                 rec.donee_required_fields = True
     
     @api.depends('name', 'category_id')
