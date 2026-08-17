@@ -42,7 +42,7 @@
         <field name="model">shariah.law</field>
         <field name="arch" type="xml">
             <search>
-                <!-- <field name="analytic_account_id" string="Segment"/>
+                <field name="analytic_account_id" string="Segment"/>
                 <field name="parent_id" string="Parent Segment"/>
                 <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
                 <separator/>
@@ -53,7 +53,7 @@
                     <filter name="group_by_date" string="Date" domain="[]" context="{'group_by': 'date'}"/>
                     <filter name="group_by_analytic" string="Segment" domain="[]" context="{'group_by': 'analytic_account_id'}"/>
                     <filter name="group_by_parent" string="Parent Segment" domain="[]" context="{'group_by': 'parent_id'}"/>
-                </group> -->
+                </group>
             </search>
         </field>
     </record>
