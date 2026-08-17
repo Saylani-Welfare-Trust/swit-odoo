@@ -26,7 +26,3 @@ class POSOrder(models.Model):
         res['qurbani'] = ui_order.get('qurbani') or False
 
         return res
-
-    def set_new_pos_order_seq(self, pos_order_data):
-        config_id = self.env['pos.config'].browse(pos_order_data[0].get('config_id'))
-        config_id.sequence = pos_order_data[0].get('pos_order_seq') if pos_order_data[0].get('pos_order_seq') != 0 else config_id.counter

@@ -6,96 +6,10 @@ import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
-    _getCounterKey(config_id) {
-        return `counter_${config_id}`;
-    },
-
-    _getCounter() {
-        const config_id = this.pos.config.id;
-        const key = this._getCounterKey(config_id);
-
-        const currentYear = new Date().getFullYear();
-
-        let counterData = JSON.parse(
-            localStorage.getItem(key) || "null"
-        );
-
-        // First POS opening
-        if (!counterData) {
-            counterData = {
-                year: currentYear,
-                counter: this.pos.config.sequence || 1,
-            };
-
-            localStorage.setItem(
-                key,
-                JSON.stringify(counterData)
-            );
-        }
-
-        // New year reset
-        if (counterData.year !== currentYear) {
-            counterData = {
-                year: currentYear,
-                counter: this.pos.config.sequence || 1,
-            };
-
-            localStorage.setItem(
-                key,
-                JSON.stringify(counterData)
-            );
-        }
-
-        return counterData;
-    },
-
-    _generateReceiptNumber(order) {
-        const config_id = this.pos.config.id;
-
-        const key = this._getCounterKey(config_id);
-
-        let counterData = this._getCounter();
-
-        order.set_pos_order_seq(String(counterData.counter).padStart(4, "0"));
-
-        const invoiceNumber = counterData.counter;
-
-        /*
-            Increment for next order
-        */
-        counterData.counter += 1;
-
-        localStorage.setItem(
-            key,
-            JSON.stringify(counterData)
-        );
-
-        return invoiceNumber;
-    },
-
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        const invoiceNumber = this._generateReceiptNumber(currentOrder);
-
-        try {
-            await this.env.services.orm.call(
-                "pos.order",
-                "set_new_pos_order_seq",
-                [
-                    [currentOrder.uid],[{
-                        pos_order_seq: invoiceNumber,
-                        config_id: this.pos.config.id,
-                    }]
-                ]
-            );
-
-        } catch (error) {
-            console.error(
-                "Error updating pos_order_seq:",
-                error
-            );
-        }
+        console.log(this);
         
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
@@ -385,18 +299,69 @@ patch(PaymentScreen.prototype, {
                         }
                         
                         const newPaidAmount = (line.paid_amount || 0) + paymentForThisLine;
-                        
-                        await this.env.services.orm.write(
-                            'microfinance.line',
-                            [line.id],
-                            {
-                                paid_amount: newPaidAmount,
-                                state: newState,
-                                state_cheque: newState === 'paid' ? 'deposited' : line.state_cheque,
-                            }
+
+                        // Check Shariah Law Blocker before processing microfinance payment
+                        const blockerConfig = await this.env.services.orm.call(
+                            'shariah.law.blocker',
+                            'get_blocker_config',
+                            []
                         );
-                        
-                        processedLines++;
+
+                        if (blockerConfig && blockerConfig.enable_microfinance === true) {
+                            // Get the analytic account for this microfinance line
+                            const analyticAccount = await this.env.services.orm.search(
+                                'account.analytic.account',
+                                [
+                                    ['product_ids', 'in', [line.product_id || line.product_id[0]]],
+                                ],
+                                1
+                            );
+
+                            if (analyticAccount && analyticAccount.length > 0) {
+                                const accountId = analyticAccount[0].id;
+                                
+                                // Get current Shariah Law closing balance
+                                const shariahBalance = await this.env.services.orm.call(
+                                    'shariah.law',
+                                    'get_closing_balance',
+                                    [accountId]
+                                );
+                                
+                                // Get total paid amount for this microfinance line
+                                const totalPaidAfter = newPaidAmount;
+                                
+                                // Check if payment exceeds Shariah balance
+                                if (totalPaidAfter > shariahBalance) {
+                                    this.env.services.notification.add(
+                                        `Microfinance Line can not be disburse the closing balance.`,
+                                        { type: 'error' }
+                                    );
+                                }
+                            } else {
+                                await this.env.services.orm.write(
+                                    'microfinance.line',
+                                    [line.id],
+                                    {
+                                        paid_amount: newPaidAmount,
+                                        state: newState,
+                                    }
+                                );
+                                
+                                processedLines++;
+                            }
+                        }
+                        else {
+                            await this.env.services.orm.write(
+                                'microfinance.line',
+                                [line.id],
+                                {
+                                    paid_amount: newPaidAmount,
+                                    state: newState,
+                                }
+                            );
+                            
+                            processedLines++;
+                        }
                     }
                     
                     // Create microfinance.installment record for tracking the installment payment
@@ -520,35 +485,123 @@ patch(PaymentScreen.prototype, {
             if (welfareData.is_welfare_order === true && welfareData.disbursement_status !== 'completed') {
                 try {
                     const welfareLineIds = welfareData.is_recurring
-                        ? (welfareData.recurring_line_ids || [])
-                        : (welfareData.welfare_line_ids || []);
+                    ? (welfareData.recurring_line_ids || [])
+                    : (welfareData.welfare_line_ids || []);
                     const lineModel = welfareData.is_recurring ? 'welfare.recurring.line' : 'welfare.line';
                     
-                    for (let i = 0; i < welfareLineIds.length; i++) {
-                        const line = welfareLineIds[i];
-                        await this.env.services.orm.call(
-                            lineModel,
-                            'action_disbursed',
-                            [[line.id]]
-                        );
-                        
-                        // Update tracking info
-                        if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i]) {
-                            welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
-                            welfareData.disbursed_line_ids[i].status = 'disbursed';
-                            welfareData.total_disbursed_amount += line.amount || 0;
-                        }
-                    }
-                    
-                    welfareData.disbursement_status = 'completed';
-                    welfareData.payment_status = 'completed';
-                    welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
-                    
-                    currentOrder.set_source_document(welfareData.record_number);
-                    this.env.services.notification.add(
-                        `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
-                        { type: 'success' }
+                    // Check Shariah Law Blocker before processing microfinance payment
+                    const blockerConfig = await this.env.services.orm.call(
+                        'shariah.law.blocker',
+                        'get_blocker_config',
+                        []
                     );
+
+                    if (blockerConfig && blockerConfig.enable_welfare === true) {
+                        // Get the analytic account for this microfinance line
+                        const analyticAccount = await this.env.services.orm.search(
+                            'account.analytic.account',
+                            [
+                                ['product_ids', 'in', [line.product_id || line.product_id[0]]],
+                            ],
+                            1
+                        );
+
+                        if (analyticAccount && analyticAccount.length > 0) {
+                            const accountId = analyticAccount[0].id;
+                            
+                            // Get current Shariah Law closing balance
+                            const shariahBalance = await this.env.services.orm.call(
+                                'shariah.law',
+                                'get_closing_balance',
+                                [accountId]
+                            );
+
+                            for (let i = 0; i < welfareLineIds.length; i++) {
+                                const line = welfareLineIds[i];
+                                await this.env.services.orm.call(
+                                    lineModel,
+                                    'action_disbursed',
+                                    [[line.id]]
+                                );
+                                
+                                // Update tracking info
+                                if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i] && line.amount < shariahBalance) {
+                                    welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
+                                    welfareData.disbursed_line_ids[i].status = 'disbursed';
+                                    welfareData.total_disbursed_amount += line.amount || 0;
+                                } else {
+                                    this.env.services.notification.add(
+                                        `Welfare line cannot be disbursed due to sharah law.`,
+                                        { type: 'error' }
+                                    );
+
+                                    return
+                                }
+                            }
+                            
+                            welfareData.disbursement_status = 'completed';
+                            welfareData.payment_status = 'completed';
+                            welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
+                            
+                            currentOrder.set_source_document(welfareData.record_number);
+                            this.env.services.notification.add(
+                                `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
+                                { type: 'success' }
+                            );
+                        } else {
+                            for (let i = 0; i < welfareLineIds.length; i++) {
+                                const line = welfareLineIds[i];
+                                await this.env.services.orm.call(
+                                    lineModel,
+                                    'action_disbursed',
+                                    [[line.id]]
+                                );
+                                
+                                // Update tracking info
+                                if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i]) {
+                                    welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
+                                    welfareData.disbursed_line_ids[i].status = 'disbursed';
+                                    welfareData.total_disbursed_amount += line.amount || 0;
+                                }
+                            }
+                            
+                            welfareData.disbursement_status = 'completed';
+                            welfareData.payment_status = 'completed';
+                            welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
+                            
+                            currentOrder.set_source_document(welfareData.record_number);
+                            this.env.services.notification.add(
+                                `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
+                                { type: 'success' }
+                            );
+                        }
+                    } else {
+                        for (let i = 0; i < welfareLineIds.length; i++) {
+                            const line = welfareLineIds[i];
+                            await this.env.services.orm.call(
+                                lineModel,
+                                'action_disbursed',
+                                [[line.id]]
+                            );
+                            
+                            // Update tracking info
+                            if (welfareData.disbursed_line_ids && welfareData.disbursed_line_ids[i]) {
+                                welfareData.disbursed_line_ids[i].disbursed_at = new Date().toISOString();
+                                welfareData.disbursed_line_ids[i].status = 'disbursed';
+                                welfareData.total_disbursed_amount += line.amount || 0;
+                            }
+                        }
+                        
+                        welfareData.disbursement_status = 'completed';
+                        welfareData.payment_status = 'completed';
+                        welfareData.net_amount = welfareData.total_disbursed_amount - welfareData.total_returned_amount;
+                        
+                        currentOrder.set_source_document(welfareData.record_number);
+                        this.env.services.notification.add(
+                            `Welfare ${welfareData.record_number} disbursement completed. Amount: ${welfareData.total_disbursed_amount}`,
+                            { type: 'success' }
+                        );
+                    }
                 } catch (error) {
                     console.error("Welfare Error:", error);
                     welfareData.disbursement_status = 'failed';

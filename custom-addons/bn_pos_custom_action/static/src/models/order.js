@@ -15,7 +15,7 @@ patch(Order.prototype, {
         json.receive_voucher = this.receive_voucher || false;
         json.pos_order_seq = this.pos_order_seq || false;
         json.qurbani = this.qurbani || false;
-
+        json.extra_data = this.extra_data || false;   // <-- NEW: welfare/medical_equipment/microfinance payloads
         return json;
     },
 

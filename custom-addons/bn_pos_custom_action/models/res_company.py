@@ -12,3 +12,4 @@ class ResCompany(models.Model):
     microfinance_security_depsoit_product = fields.Char('Microfinance Security Deposit', tracking=True)
     
     medical_equipment_security_depsoit_product = fields.Char('Medical Equipment Security Deposit', tracking=True)
+    welfare_product = fields.Char('Welfare Product', tracking=True)
