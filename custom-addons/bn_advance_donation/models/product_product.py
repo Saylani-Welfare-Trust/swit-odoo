@@ -6,3 +6,9 @@ class ProductProduct(models.Model):
 
 
     is_advance_donation = fields.Boolean(related='product_tmpl_id.is_advance_donation', string="Is Advance Donation")
+
+    is_service_charge = fields.Boolean(
+        related='product_tmpl_id.is_service_charge',
+        store=True,
+        readonly=False,
+    )

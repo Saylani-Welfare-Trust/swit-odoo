@@ -48,6 +48,7 @@ class AdvanceDonationLine(models.Model):
         help='Controls the visibility of the date field in the tree view. It is set to True if the contract type is frequency based, otherwise False.',
         compute='_compute_date_visibility'
     )
+    service_charge_amount = fields.Monetary('Service Charges', currency_field='currency_id')
 
     @api.depends('disbursed_amount', 'paid_amount')
     def _compute_disbursement_and_disbursed(self):
@@ -66,12 +67,13 @@ class AdvanceDonationLine(models.Model):
                 rec.date_visibility = True
             else: rec.date_visibility = False
     
-    @api.depends('paid_amount', 'amount')
+    @api.depends('paid_amount', 'amount', 'service_charge_amount')
     def _compute_installment_state(self):
         for rec in self:
-            if rec.paid_amount < rec.amount and rec.paid_amount != 0:
+            total_due = rec.amount + rec.service_charge_amount
+            if rec.paid_amount < total_due and rec.paid_amount != 0:
                 rec.state = 'partial'
-            elif rec.paid_amount == rec.amount:
+            elif total_due and rec.paid_amount == total_due:
                 rec.state = 'paid'
             else:
                 rec.state = 'unpaid'
