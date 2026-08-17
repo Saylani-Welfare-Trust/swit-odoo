@@ -260,16 +260,7 @@ class DirectDeposit(models.Model):
 
         dd.calculate_amount()
         dd.set_remarks()
-        pos_order_id = data.get('pos_order_id')
-        if pos_order_id:
-            try:
-                order = self.env['pos.order'].browse(pos_order_id)
-                if order:
-                    # Call the existing method to send WhatsApp and SMS
-                    result = order.sms_or_whatsapp_send_receipt(order.id)
-                    _logger.info(f"Receipt sending result for order {pos_order_id}: {result}")
-            except Exception as e:
-                _logger.error(f"Failed to send receipt for order {pos_order_id}: {str(e)}")
+
         return {
             "status": "success",
             "id": dd.id,
