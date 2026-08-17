@@ -1,11 +1,12 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 from markupsafe import Markup
 
 
 status_selection = [
     ('draft', 'Draft'),
+    ('delivered', 'Delivered'),
     ('validate', 'Validate'),
     ('box_open', 'Open Box'),
     ('valuation_committee', 'Valuation Committee'),
@@ -42,6 +43,7 @@ class DonationInKind(models.Model):
     product_id = fields.Many2one('product.product', string="Product", tracking=True)
     picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'))
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
+    previous_location_id = fields.Many2one('stock.location', string='Previous Location', readonly=True, copy=False)
     journal_id = fields.Many2one('account.journal', string='Journal', default=lambda self: self.default_set_value('journal_id'))
     account_move_id = fields.Many2one('account.move', string='Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
@@ -54,10 +56,26 @@ class DonationInKind(models.Model):
     check_bool = fields.Selection(selection=type_selection, string='Check Bool', default='default')
 
     quantity = fields.Float('Quantity')
-
+    truk_number = fields.Char('Truck Number')
+    warehouse_name = fields.Char(string='Warehouse', compute='_compute_warehouse_name')
     is_sync = fields.Boolean('Is Sync', default=False)
 
     remarks = fields.Text('Remarks')
+
+    @api.depends('location_id')
+    def _compute_warehouse_name(self):
+        for record in self:
+            record.warehouse_name = False
+            if record.location_id:
+                warehouse = getattr(record.location_id, 'warehouse_id', False)
+                if warehouse:
+                    record.warehouse_name = warehouse.name
+                else:
+                    get_wh = getattr(record.location_id, 'get_warehouse_id', None)
+                    if callable(get_wh):
+                        warehouse_obj = get_wh()
+                        if warehouse_obj:
+                            record.warehouse_name = warehouse_obj.name
 
     analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytic_account_id', string='Analytic Account', store=True)
 
@@ -67,7 +85,7 @@ class DonationInKind(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
+        if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('donation_in_kind') or ('New')
 
         return super(DonationInKind, self).create(vals)
@@ -129,10 +147,13 @@ class DonationInKind(models.Model):
                     picking_id.button_validate()
             
             record.state = 'validate'
-
     def action_cancel(self):
         for record in self:
-            record.state = 'cancel'
+            previous_location = record.previous_location_id or False
+            record.state = 'draft'
+            record.truk_number = False
+            record.location_id = previous_location
+            record.previous_location_id = False
 
     def action_box_open(self):
         for record in self:
@@ -274,7 +295,6 @@ class DonationInKind(models.Model):
                 elif not lines.avg_price:
                     raise ValidationError("The average price is missing. Please ensure all valuation have a price.")
                     break
-            
             for valuation_lines in record.valuation_committee_line_ids:
                 valuation_lines.product_id.write({
                     'lst_price': valuation_lines.avg_price
@@ -415,9 +435,22 @@ class DonationInKind(models.Model):
                 'res_id': record.account_move_id.id,
             }
 
-    def action_draft(self):
-        for record in self:
-            record.state = 'draft'
+    def action_open_transfer_wizard(self):
+        records = self.filtered(lambda rec: rec.state != 'delivered')
+        if not records:
+            raise ValidationError(_('Please select at least one record that is not already delivered.'))
+        return {
+            'name': _('Donation In Kind Transfer'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'donation.in.kind.transfer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_ids': records.ids,
+                'default_location_id': records[0].location_id.id if records else False,
+                'default_truk_number': records[0].truk_number or False,
+            },
+        }
 
     def set_remarks(self):
         remarks = []
@@ -478,3 +511,55 @@ class DonationInKind(models.Model):
                     })
                 
                 record.is_sync = True
+
+
+
+class DonationInKindTransferWizard(models.TransientModel):
+    _name = 'donation.in.kind.transfer.wizard'
+    _description = 'Donation In Kind Transfer Wizard'
+
+    # helper alias field named `user` so view domain can reference it safely
+    user = fields.Many2one('res.users', string='User', default=lambda self: self.env.user, readonly=True)
+
+    user_id = fields.Many2one('res.users', string='User (alias)', default=lambda self: self.env.user, readonly=True)
+
+    # expose user's allowed locations as a related field so the client can evaluate domains safely
+    user_allowed_location_ids = fields.Many2many(
+        'stock.location',
+        related='user.allowed_location_ids',
+        string='User Allowed Locations',
+        readonly=True,
+    )
+
+    truk_number = fields.Char(string='Truck Number', required=True)
+    location_id = fields.Many2one(
+        'stock.location',
+        string='Location',
+        required=True,
+        # Guard against undefined `user`/`user_id` on the client side when evaluating the domain
+        # use the related m2m directly; client typically receives it as an id list
+        # guard with `or []` so evaluation won't fail if the field is absent
+        domain="[('id', 'in', user_allowed_location_ids or [])]",
+    )
+
+    def action_confirm_transfer(self):
+        records = self.env['donation.in.kind'].browse(self.env.context.get('active_ids', []))
+        if not records:
+            raise UserError(_('No donation records selected for transfer.'))
+        records = records.filtered(lambda rec: rec.state != 'delivered')
+        if not records:
+            raise UserError(_('Selected records are already delivered.'))
+
+        for record in records:
+            record.write({
+                'previous_location_id': record.location_id.id,
+                'truk_number': self.truk_number,
+                'location_id': self.location_id.id,
+                'state': 'delivered',
+            })
+
+        report_action = self.env.ref(
+            'bn_donation_in_kind.action_report_donation_in_kind_transfer'
+        ).report_action(records)
+        report_action['close_on_report_download'] = True
+        return report_action

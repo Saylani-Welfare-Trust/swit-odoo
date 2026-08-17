@@ -77,7 +77,7 @@
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
-                                    <div name="donor_name"><strong>Register Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div name="donor_name"/>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div>
                                         <strong>Remarks:</strong>
@@ -141,7 +141,7 @@
 
                                 <div class="col-6">
                                     <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
-                                    <div><strong>Register Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div>
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>

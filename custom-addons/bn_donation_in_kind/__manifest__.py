@@ -17,6 +17,7 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'reports/donation_in_kind_report.xml',
+        'reports/donation_in_kind_transfer_report.xml',
         'views/donation_in_kind.xml',
         'views/res_partner.xml',
         'views/product_template.xml',
