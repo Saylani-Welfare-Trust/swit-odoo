@@ -1,11 +1,13 @@
-from odoo import models, fields, _, api
+from odoo import models, fields, _, api, tools
 from odoo.exceptions import ValidationError, UserError
 
 import requests
 
+import base64
 import logging
 from dateutil.relativedelta import relativedelta
 import json
+from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
@@ -40,11 +42,12 @@ state_selection = [
     ('inquiry', 'Inquiry Officer'),
     ('committee_approval', 'Committee Approval'),
     ('hod_approve', 'HOD Approval'),
-    ('mem_approve', 'Member Approval'),
+    ('mem_approve', 'Final Approval'),
     ('approve', 'Approved'),
     ('recurring', 'Recurring'),
     ('disbursed', 'Disbursed'),
     ('reject', 'Rejected'),
+    ('return', 'Returned'),
 ]
 
 portal_sync_selection = [
@@ -71,7 +74,16 @@ class Welfare(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     is_individual = fields.Boolean('Is Individual', default=False) 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
-    
+    employee_category_id_officer = fields.Many2one(
+        'hr.employee.category', 
+        string="Employee Category", 
+        default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
+    )
+    document_image_ids = fields.One2many(
+    'welfare.document.image',
+    'welfare_id',
+    string='Document Images'
+)
     name = fields.Char('Name', default="NEW")
     cnic_no = fields.Char(related='donee_id.cnic_no', string="CNIC No.", store=True, size=15)
     father_name = fields.Char(related='donee_id.father_name', string="Father Name", store=True)
@@ -101,9 +113,104 @@ class Welfare(models.Model):
     
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
+        # Separate document image fields for each document type
+    application_form_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Application Forms',
+        domain=[('document_type', '=', 'application_form')]
+    )
     
+    frc_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id', 
+        string='FRC Documents',
+        domain=[('document_type', '=', 'frc')]
+    )
+    
+    electricity_bill_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Electricity Bills',
+        domain=[('document_type', '=', 'electricity_bill')]
+    )
+    
+    gas_bill_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Gas Bills',
+        domain=[('document_type', '=', 'gas_bill')]
+    )
+    
+    family_cnic_ids = fields.One2many(
+        'welfare.document.image',
+        'welfare_id',
+        string='Family CNICs',
+        domain=[('document_type', '=', 'family_cnic')]
+    )
+
+
+    
+
+    app_form_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Application Forms', 
+                                domain=[('document_type', '=', 'application_form')])
+    frc_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                            string='FRC', 
+                            domain=[('document_type', '=', 'frc')])
+    elec_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Electricity Bill', 
+                                    domain=[('document_type', '=', 'electricity_bill')])
+    gas_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Gas Bill', 
+                                domain=[('document_type', '=', 'gas_bill')])
+    family_cnic_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Family CNIC', 
+                                    domain=[('document_type', '=', 'family_cnic')])
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
+    # Store raw URLs (never touched by sanitizer)
+    application_form_urls  = fields.Text('Application Form URLs')
+    frc_urls               = fields.Text('FRC URLs')
+    electricity_bill_urls  = fields.Text('Electricity Bill URLs')
+    gas_bill_urls          = fields.Text('Gas Bill URLs')
+    family_cnic_urls       = fields.Text('Family CNIC URLs')
+    # Computed fields for filtered document images
+    application_form_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Application Forms',
+        readonly=True
+    )
+    
+    frc_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='FRC Documents',
+        readonly=True
+    )
+    
+    electricity_bill_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Electricity Bills',
+        readonly=True
+    )
+    
+    gas_bill_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Gas Bills',
+        readonly=True
+    )
+    
+    family_cnic_images = fields.One2many(
+        'welfare.document.image',
+        compute='_compute_filtered_images',
+        string='Family CNICs',
+        readonly=True
+    )
+    # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
@@ -125,8 +232,16 @@ class Welfare(models.Model):
         string="Inquiry Media",
         sanitize=False,   # IMPORTANT
     )
-
-
+    required_approval_for_limit = fields.Selection([
+        ('hod', 'HOD Approval Required'),
+        ('member', 'Member Approval Required')
+    ], string="Required Approval Based on Amount", compute="_compute_required_approval", store=False)
+    previous_welfare_source_id = fields.Many2one(
+        'welfare', 
+        string="Previous Welfare Source",
+        help="Used internally to copy document images on save",
+        store=True  # Must be stored so it survives the create()
+    )
 
     # Employee Informaiton Fields
     designation = fields.Char('Designation') 
@@ -180,7 +295,82 @@ class Welfare(models.Model):
     driving_license = fields.Selection(selection=general_selection, string="Driving License")
 
     # Request Details
-    loan_request_amount = fields.Float('Loan Request Amount')
+    # loan_request_amount = fields.Float('Loan Request Amount')
+
+    # loan_request_amount = fields.Float(
+    #     'Loan Request Amount',
+    #     required=True
+    # )
+    employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
+    def _save_portal_images_to_document_model(self):
+        field_config = {
+            'application_form_urls': 'application_form',
+            'frc_urls': 'frc',
+            'electricity_bill_urls': 'electricity_bill',
+            'gas_bill_urls': 'gas_bill',
+            'family_cnic_urls': 'family_cnic',
+        }
+
+        for url_field, doc_type in field_config.items():
+            raw_urls = getattr(self, url_field, '') or ''
+            urls = [u.strip() for u in raw_urls.splitlines() if u.strip()]
+
+            # Delete existing images for this document type
+            existing_images = self.document_image_ids.filtered(lambda img: img.document_type == doc_type)
+            existing_images.unlink()
+
+            for url in urls:
+                try:
+                    response = requests.get(url, timeout=15)
+                    response.raise_for_status()
+
+                    filename = urlparse(url).path.rsplit('/', 1)[-1] or f"{doc_type}.jpg"
+
+                    # Create using document_image_ids (the main field)
+                    self.env['welfare.document.image'].create({
+                        'welfare_id': self.id,
+                        'document_type': doc_type,
+                        'image_data': base64.b64encode(response.content).decode('utf-8'),
+                        'image_filename': filename,
+                        'source_url': url,
+                    })
+
+                    _logger.info("Saved image %s for welfare %s type %s", filename, self.id, doc_type)
+
+                except Exception as e:
+                    _logger.error("Failed saving image from %s: %s", url, str(e))
+    
+    @api.depends('document_image_ids')
+    def _compute_filtered_images(self):
+        for record in self:
+            record.application_form_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'application_form'
+            )
+            record.frc_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'frc'
+            )
+            record.electricity_bill_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'electricity_bill'
+            )
+            record.gas_bill_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'gas_bill'
+            )
+            record.family_cnic_images = record.document_image_ids.filtered(
+                lambda img: img.document_type == 'family_cnic'
+            )                    
+    @api.depends('employee_category_id', 'donee_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            if record.employee_category_id:
+                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
+            else:
+                record.employee_domain = "[]"
+
+    loan_request_amount = fields.Float(
+        string='Loan Request Amount',
+        default=0.0
+    )
+
     
     loan_tenure_expected = fields.Selection(selection=loan_tenure_selection, string='Loan Tenure Expected')
 
@@ -257,12 +447,52 @@ class Welfare(models.Model):
         store=False
     )
     
+    previous_disbursement_id = fields.Many2one(
+        compute='_compute_previous_disbursement_id',
+        comodel_name='welfare',
+        string='Most Recent Previous Disbursement',
+        store=False,
+        help='Link to the most recent previous disbursement for this donee'
+    )
+    
     show_disburse_button = fields.Boolean(
         compute="_compute_show_disburse_button",
         store=False
     )
-    employee_domain = fields.Char(compute="_compute_employee_domain")
+    # employee_domain = fields.Char(compute="_compute_employee_domain")
+        # Inquiry Committee Questions Fields
+    donee_house_status = fields.Char(
+        string="Residential Status", 
+        help="Does he own the house or live in a rented house?"
+    )
 
+    num_of_children = fields.Char(
+        string="Number of Children"
+    )
+
+    num_of_sons = fields.Char(
+        string="Number of Sons"
+    )
+
+    num_of_daughters = fields.Char(
+        string="Number of Daughters"
+    )
+
+    children_education = fields.Char(
+        string="Children's Education", 
+        help="Where do the children study? (School, College, or University)"
+    )
+
+    donee_issues = fields.Text(
+        string="Donee Issues", 
+        help="What are the issues/concerns related to the donee?"
+    )
+    def _compute_required_approval(self):
+        for rec in self:
+            if rec._check_amount_within_hod_limit():
+                rec.required_approval_for_limit = 'hod'
+            else:
+                rec.required_approval_for_limit = 'member'
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -292,26 +522,40 @@ class Welfare(models.Model):
             else:
                 rec.previous_welfare_ids = False
 
+    @api.depends('donee_id')
+    def _compute_previous_disbursement_id(self):
+        """Compute the most recent previous disbursement for the same donee"""
+        for rec in self:
+            if rec.donee_id:
+                domain = [
+                    ('donee_id', '=', rec.donee_id.id),
+                    ('state', 'in', ['disbursed', 'recurring'])
+                ]
+                # Only exclude current record if it has a real integer ID (saved record)
+                if rec.id and isinstance(rec.id, int) and rec.id > 0:
+                    domain.append(('id', '!=', rec.id))
+                previous = self.search(domain, order='date desc', limit=1)
+                rec.previous_disbursement_id = previous[0] if previous else False
+            else:
+                rec.previous_disbursement_id = False
+
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
         if not self.donee_id:
             return
 
-        # Build domain for previous welfare records
         domain = [
             ('donee_id', '=', self.donee_id.id),
             ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
         ]
         
-        # Exclude current record only if it is already saved (has a real integer ID)
         if self.id and isinstance(self.id, int) and self.id > 0:
             domain.append(('id', '!=', self.id))
         
         previous_welfare = self.search(domain, order='date desc', limit=1)
 
         if previous_welfare:
-            # Auto-populate all fields (same as your original code)
             self.applicant_occupation = previous_welfare.applicant_occupation
             self.residence_ownership = previous_welfare.residence_ownership
             self.total_children = previous_welfare.total_children
@@ -319,9 +563,6 @@ class Welfare(models.Model):
             self.girls_count = previous_welfare.girls_count
             self.children_education_status = previous_welfare.children_education_status
             self.main_issue = previous_welfare.main_issue
-            
-             # Auto-populate residence/house info
-
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -332,9 +573,6 @@ class Welfare(models.Model):
             self.gas_bill = previous_welfare.gas_bill
             self.electricity_bill = previous_welfare.electricity_bill
             self.home_other_info = previous_welfare.home_other_info
-                      
-             # Auto-populate financial info
-
             self.monthly_income = previous_welfare.monthly_income
             self.outstanding_amount = previous_welfare.outstanding_amount
             self.monthly_household_expense = previous_welfare.monthly_household_expense
@@ -343,32 +581,38 @@ class Welfare(models.Model):
             self.account_no = previous_welfare.account_no
             self.other_loan = previous_welfare.other_loan
             self.institute_name = previous_welfare.institute_name
-            
-            # Auto-populate employment info
-
             self.designation = previous_welfare.designation
             self.company_name = previous_welfare.company_name
             self.company_phone = previous_welfare.company_phone
             self.company_address = previous_welfare.company_address
             self.service_duration = previous_welfare.service_duration
             self.monthly_salary = previous_welfare.monthly_salary
-            # Auto-populate document fields
-            self.frc = previous_welfare.frc
-            self.application_form = previous_welfare.application_form
-            self.electricity_bill_file = previous_welfare.electricity_bill_file
-            self.gas_bill_file = previous_welfare.gas_bill_file
-            self.family_cnic = previous_welfare.family_cnic
-            
-            # Auto-populate family info
             self.dependent_person = previous_welfare.dependent_person
             self.household_member = previous_welfare.household_member
-            
-            # Show notification about auto-population
+
+            if previous_welfare.application_form_urls:
+                self.application_form_urls = previous_welfare.application_form_urls
+            if previous_welfare.frc_urls:
+                self.frc_urls = previous_welfare.frc_urls
+            if previous_welfare.electricity_bill_urls:
+                self.electricity_bill_urls = previous_welfare.electricity_bill_urls
+            if previous_welfare.gas_bill_urls:
+                self.gas_bill_urls = previous_welfare.gas_bill_urls
+            if previous_welfare.family_cnic_urls:
+                self.family_cnic_urls = previous_welfare.family_cnic_urls
+
+            # ✅ This is the only change — replaces the broken self.with_context() line
+            self.previous_welfare_source_id = previous_welfare.id
 
             return {
                 'warning': {
                     'title': 'Data Auto-Populated',
-                    'message': f'Form has been automatically populated with data from previous application dated {previous_welfare.date}.\n\nPrevious Disbursements can be viewed in the "Previous Disbursements" tab.'
+                    'message': (
+                        f'Form has been automatically populated with data from previous application '
+                        f'dated {previous_welfare.date}.\n\n'
+                        f'Document images will be copied when you save the record.\n\n'
+                        f'Previous Disbursements can be viewed in the "Previous Disbursements" tab.'
+                    )
                 }
             }
     @api.model
@@ -465,10 +709,30 @@ class Welfare(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('welfare') or _('New')
-        
-        return super(Welfare, self).create(vals)
+        if not vals.get('name') or vals.get('name') == 'New':
+            seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
+            vals['name'] = seq if seq else _('New')
+
+        record = super().create(vals)
+
+        # ✅ Read from the stored field, not from lost context
+        previous_welfare_id = record.previous_welfare_source_id.id
+
+        if previous_welfare_id:
+            previous_welfare = self.browse(previous_welfare_id)
+            for img in previous_welfare.document_image_ids:
+                self.env['welfare.document.image'].sudo().create({
+                    'welfare_id':     record.id,
+                    'document_type':  img.document_type,
+                    'image_data':     img.image_data,
+                    'image_filename': img.image_filename,
+                    'source_url':     img.source_url,
+                })
+            
+            # ✅ Clear the helper field after copying so it doesn't linger
+            record.previous_welfare_source_id = False
+
+        return record
     
     def clean_url(self, url) :
         return (
@@ -548,49 +812,199 @@ class Welfare(models.Model):
             _logger.info(f"Donee not found in portal: {str(e)}")
             return None
 
+    def _get_portal_document_value(self, payload, portal_fields):
+        """Find a document value anywhere in a nested portal payload."""
+        if not payload:
+            return None
+
+        field_names = set(portal_fields)
+        stack = [payload]
+        while stack:
+            value = stack.pop()
+            if isinstance(value, dict):
+                for field_name in field_names:
+                    field_value = value.get(field_name)
+                    if field_value:
+                        return field_value
+
+                document_key = value.get('field') or value.get('key') or value.get('name')
+                if document_key in field_names:
+                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
+                        if value.get(url_key):
+                            return value.get(url_key)
+
+                stack.extend(value.values())
+            elif isinstance(value, list):
+                stack.extend(value)
+
+        return None
+
+
+
+
+    def _iter_portal_document_values(self, value):
+        if isinstance(value, str):
+            cleaned_value = value.strip()
+            if cleaned_value:
+                yield cleaned_value
+        elif isinstance(value, list):
+            for item in value:
+                yield from self._iter_portal_document_values(item)
+        elif isinstance(value, dict):
+            for key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data', 'base64'):
+                if value.get(key):
+                    yield from self._iter_portal_document_values(value.get(key))
+
+    def _portal_document_filename(self, portal_field, value):
+        if isinstance(value, str) and value.startswith('http'):
+            filename = urlparse(value).path.rsplit('/', 1)[-1]
+            if filename:
+                return filename
+        return f"{portal_field}.jpg"
+
+    def _download_portal_document(self, portal_field, document_value):
+        """Return a base64 string and filename for portal document payloads."""
+        for value in self._iter_portal_document_values(document_value):
+            try:
+                if value.startswith('data:') and ',' in value:
+                    return value.split(',', 1)[1], self._portal_document_filename(portal_field, value)
+
+                if value.startswith('http'):
+                    response = requests.get(value, timeout=10)
+                    if response.status_code == 200:
+                        return base64.b64encode(response.content).decode('utf-8'), self._portal_document_filename(portal_field, value)
+                    _logger.warning(
+                        f"Failed to download {portal_field}: HTTP {response.status_code}"
+                    )
+                    continue
+
+                # Some portal payloads already contain plain base64 without a data URL prefix.
+                base64.b64decode(value, validate=True)
+                return value, self._portal_document_filename(portal_field, value)
+            except Exception as e:
+                _logger.error(
+                    f"Error processing {portal_field} document value {value}: {str(e)}"
+                )
+
+        return None, None
+
     def action_check_portal_status(self):
-        """Check current status in portal"""
         self.ensure_one()
-        
-        # try:
-            # Check if donee exists
+
         donee_data = self._check_donee_exists_in_portal()
-        # _logger.info(f"Donee data: {donee_data}")
-
-        # raise exceptions.ValidationError(donee_data)
-
-            
         if donee_data:
-                message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-
+            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
-            donee_in_portal = self._create_donee_in_portal()
-        # Check for applications
-        application = self._search_portal_applications()
-        # _logger.info(f"Applications found: {application}")    
-        app_state = application.get('status') if application else None
+            self._create_donee_in_portal()
+
+        application     = self._search_portal_applications()
+        app_state       = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
-        all_media = []
+
+        all_media   = []
         all_remarks = []
+
+        portal_to_html_field = {
+            'applicationFormImages': 'application_form_urls',
+            'frcImages':             'frc_urls',
+            'electricityBillImages': 'electricity_bill_urls',
+            'gasBillImages':         'gas_bill_urls',
+            'familyCnicImages':      'family_cnic_urls',
+        }
+
+        document_labels = {
+            'applicationFormImages': 'Application Form',
+            'frcImages':             'FRC',
+            'electricityBillImages': 'Electricity Bill',
+            'gasBillImages':         'Gas Bill',
+            'familyCnicImages':      'Family CNIC',
+        }
+
+        document_aliases = {
+            'applicationFormImages': (
+                'applicationFormImages', 'applicationFormImage',
+                'applicationForm', 'application_form_image',
+            ),
+            'frcImages': (
+                'frcImages', 'frcImage', 'frc', 'frc_image',
+            ),
+            'electricityBillImages': (
+                'electricityBillImages', 'electricityBillImage',
+                'electricityBill', 'electricity_bill_image',
+            ),
+            'gasBillImages': (
+                'gasBillImages', 'gasBillImage',
+                'gasBill', 'gas_bill_image',
+            ),
+            'familyCnicImages': (
+                'familyCnicImages', 'familyCnicImage',
+                'familyCnic', 'family_cnic_image',
+            ),
+        }
+
+        document_sources = [application]
+
         if isinstance(inquiry_reports, list):
             for report in inquiry_reports:
-                media = report.get('media') if isinstance(report, dict) else None
-                remarks = report.get('remarks') if isinstance(report, dict) else None
+                if not isinstance(report, dict):
+                    continue
+                media   = report.get('media')
+                remarks = report.get('remarks')
                 if media:
                     for url in media:
                         all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
                 if remarks:
                     all_remarks.append(remarks)
-        # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
-        if app_state == 'inquiry_complete': # type: ignore
-            self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
-            self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
-            self.write({"state":"inquiry"})
-            result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
-            message += f" | 📋 {result['message']} "
+                document_sources.append(report)
+
+        if app_state == 'inquiry_complete':
+            write_vals = {
+                'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
+                'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
+                'state':               'inquiry',
+            }
+
+            for portal_field, html_field in portal_to_html_field.items():
+                label      = document_labels[portal_field]
+                raw_values = []
+
+                for source in document_sources:
+                    if not isinstance(source, dict):
+                        continue
+                    for alias in document_aliases.get(portal_field, (portal_field,)):
+                        candidate = source.get(alias)
+                        if candidate is None:
+                            continue
+                        if isinstance(candidate, list):
+                            raw_values.extend(candidate)
+                        else:
+                            raw_values.append(candidate)
+
+                valid_urls = [
+                    r for r in raw_values
+                    if r and isinstance(r, str) and (
+                        r.startswith('http') or r.startswith('/web/content')
+                    )
+                ]
+
+                if valid_urls:
+                    write_vals[html_field] = '\n'.join(valid_urls)
+                else:
+                    write_vals[html_field] = ''
+
+            # ── 1. Write URLs first ────────────────────────────────
+            self.sudo().write(write_vals)
+
+            # ── 2. Then download and save images ──────────────────
+            self.sudo()._save_portal_images_to_document_model()
+
+            result  = self._handle_existing_application(application)
+            message = f" | 📋 application status: {app_state}"
+            message += f" | 📋 {result['message']}"
+
         else:
-            message += f" | 📋 No applications found"     # type: ignore
+            message = " | 📋 No applications found"
+
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _find_matching_application(self, applications):
@@ -809,16 +1223,18 @@ class Welfare(models.Model):
         }
 
     def action_send_for_inquiry(self):
+        """Send for Inquiry - No automatic routing"""
         if not self:
             raise UserError("Please select at least one record.")
-
+        
         invalid = self.filtered(lambda r: r.state != 'completed')
         if invalid:
             raise UserError("Some selected records are not completed and cannot be processed.")
-
+        
+        # Your existing portal sync code...
         success_msgs = []
         error_msgs = []
-
+        
         for rec in self:
             if not rec.name:
                 error_msgs.append(f"[{rec.display_name}] Donee name is required.")
@@ -829,13 +1245,14 @@ class Welfare(models.Model):
             try:
                 rec.write({
                     'portal_sync_status': 'syncing',
-                    'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}"
+                    'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}",
+                    'state': 'send_for_inquiry'  # Just move to send_for_inquiry
                 })
+                # Your existing sync logic...
                 existing_donee = rec._check_donee_exists_in_portal()
                 result = rec._handle_new_application(existing_donee)
                 rec._update_sync_status_success(result)
                 rec._create_sync_chatter_message(result)
-                rec.state = 'send_for_inquiry'
                 success_msgs.append(f"[{rec.display_name}] {result['message']}")
             except Exception as e:
                 error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
@@ -846,7 +1263,8 @@ class Welfare(models.Model):
                 })
                 rec.message_post(body=f"❌ {error_message}")
                 error_msgs.append(error_message)
-
+        
+        # Show results
         summary = ""
         if success_msgs:
             summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
@@ -854,35 +1272,77 @@ class Welfare(models.Model):
             summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
         if not summary:
             summary = "No records processed."
-
+        
         return self._show_notification('Send for Inquiry Results', summary, 'info')
-    
     def action_move_to_hod(self):
+        """HOD Approval - Check required fields and documents"""
+        for record in self:
+            # Check for required documents
+            missing_fields = []
 
-        if not self.hod_remarks:
-            raise ValidationError('Please enter HOD Remarks!')
-        
-        self.state = 'hod_approve'
-    
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'application_form'):
+                missing_fields.append("Application Form")
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'frc'):
+                missing_fields.append("FRC")
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'electricity_bill'):
+                missing_fields.append("Electricity Bill")
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'gas_bill'):
+                missing_fields.append("Gas Bill")
+            if not record.document_image_ids.filtered(lambda i: i.document_type == 'family_cnic'):
+                missing_fields.append("Family CNIC")
+
+            if missing_fields:
+                raise ValidationError(_(
+                    "Please upload the following documents before HOD approval:\n- %s"
+                ) % ("\n- ".join(missing_fields)))
+
+            # Check committee remarks
+            if not record.committee_remarks:
+                raise ValidationError('Please enter Committee Remarks before moving to HOD approval!')
+            
+            # Check welfare lines exist
+            if not record.welfare_line_ids:
+                raise ValidationError('Please add at least one Welfare Line before HOD approval!')
+
+            # Move to HOD approval state
+            record.state = 'hod_approve'
+            
+            # Add chatter message
+            record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
     def action_move_to_member(self):
-        if not self.member_remarks:
-            raise ValidationError('Please enter Member Remarks!')
-        
-        self.state = 'mem_approve'
-    
-    def action_approve(self):
-        if self.order_type == 'recurring':
-            for line in self.welfare_line_ids:
-                if self.env['welfare.recurring.line'].search_count([
-                    ('donee_id', '=', self.donee_id.id),
-                    ('disbursement_category_id', '=', line.disbursement_category_id.id),
-                    ('state', '=', 'draft')
-                ]):
-                    pass
-        self.state = 'approve'
+        for record in self:
+            current_user = self.env.user
+            is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
+            if not record.hod_remarks:
+                raise ValidationError('Please enter HOD Remarks!')
 
-        # Trigger the welfare collection report for printing/giving to the person
+            if is_hod:
+                within_limit = record._check_amount_within_hod_limit()
+                # raise UserError(str(within_limit))
+                if within_limit == False:
+                    record.state = 'mem_approve'  # Move back to committee approval
+                    # raise ValidationError(error_message)
+                else:
+                    record.state = 'approve'
+    def action_approve(self):
+        """Final approval logic"""
+        for record in self:
+            if record.order_type == 'recurring':
+                for line in record.welfare_line_ids:
+                    if self.env['welfare.recurring.line'].search_count([
+                        ('donee_id', '=', record.donee_id.id),
+                        ('disbursement_category_id', '=', line.disbursement_category_id.id),
+                        ('state', '=', 'draft')
+                    ]):
+                        pass
+            
+            if not record.member_remarks:
+                raise ValidationError('Please enter Member Remarks!')
+            record.state = 'approve'
+        
+        # Print report
         return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
+    
 
     def action_reject(self):
         if not self.rejection_remarks:
@@ -913,6 +1373,8 @@ class Welfare(models.Model):
                         'disbursement_application_type_id': line.disbursement_application_type_id.id,
                         'quantity': line.quantity,
                         'collection_point': line.collection_point,
+                        'payment_type': line.payment_type,
+                        'assigned_officer_id': line.assigned_officer_id.id,
                         'amount': line.total_amount,
                         # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
                     }
@@ -921,33 +1383,13 @@ class Welfare(models.Model):
                     month += 1
 
         self.state = 'recurring'
-        
+
+    
     def action_committee_approval(self):
-        for record in self:
 
-            # Remarks check
-            if not record.committee_remarks:
-                raise ValidationError(_('Please enter Committee Remarks before approval.'))
+            self.state = 'committee_approval'
+        
 
-            # Document validation
-            missing_fields = []
-
-            if not record.application_form:
-                missing_fields.append("Application Form")
-            if not record.electricity_bill_file:
-                missing_fields.append("Electricity Bill")
-            if not record.gas_bill_file:
-                missing_fields.append("Gas Bill")
-            if not record.family_cnic:
-                missing_fields.append("Family CNIC")
-
-            if missing_fields:
-                raise ValidationError(_(
-                    "Please upload the following documents before approval:\n- %s"
-                ) % ("\n- ".join(missing_fields)))
-
-            # If everything is valid
-            record.state = 'committee_approval'
     def action_complete(self):
         if not self.welfare_line_ids:
             raise ValidationError(_('You must add Welfare Line before completing.'))
@@ -955,6 +1397,19 @@ class Welfare(models.Model):
     
     def action_disburse(self):
         self.state = 'disbursed'
+    
+    def action_view_previous_disbursement(self):
+        """Open the form view of the most recent previous disbursement"""
+        self.ensure_one()
+        if self.previous_disbursement_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'welfare',
+                'res_id': self.previous_disbursement_id.id,
+                'target': 'current',
+            }
+        return {}
         
     def action_reverse_state(self):
         state_flow = [
@@ -1003,3 +1458,96 @@ class Welfare(models.Model):
             }
         }
         
+
+    def _check_amount_within_hod_limit(self):
+        """Check if request amount is within HOD limit"""
+        self.ensure_one()
+
+        hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
+        if not hod_group:
+            return True, None
+
+        limit = self.env['welfare.approval.limit'].search([
+            ('group_id', '=', hod_group.id),
+            ('active', '=', True)
+        ], limit=1)
+
+        if not limit:
+            return True, None
+
+        for line in self.welfare_line_ids:
+            # Check amount limit
+            if line.total_amount > limit.max_amount_limit:
+                # self.state = 'mem_approve'
+                return False
+                # , _(
+                #     "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
+                #     "This request cannot be approved by HOD."
+                # ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
+
+            # Check product limit only if allowed products are set
+            if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
+                # self.state = 'mem_approve'
+
+                return False
+                # , _(
+                #     "Product '%s' is not in the allowed products list for HOD approval. "
+                #     "Please contact your administrator."
+                # ) % line.product_id.name
+
+        return True, None
+
+
+    def action_return_to_pos(self):
+        """
+        Return all collected Assigned Officer (Marfat) lines for this welfare
+        This method is called from the welfare form view button
+        """
+        self.ensure_one()
+        
+        # Find all eligible lines
+        eligible_lines = self.welfare_line_ids.filtered(
+            lambda l: l.payment_type == 'assigned_officer' and l.state == 'pending'
+        )
+        
+        if not eligible_lines:
+            raise ValidationError(_(
+                "No eligible lines found to return.\n\n"
+                "Requirements:\n"
+                "• Payment Type: Assigned Officer (Marfat)\n"
+                "• Current State: Pending"
+            ))
+        
+        # Process returns
+        success_count = 0
+        total_amount = 0
+        errors = []
+        
+        for line in eligible_lines:
+            try:
+                line.action_return_to_pos()
+                success_count += 1
+                total_amount += line.total_amount
+            except Exception as e:
+                errors.append(f"{line.product_id.name}: {str(e)}")
+        
+        # Show results
+        if errors:
+            error_message = "\n".join(errors)
+            raise ValidationError(_(
+                "Partial return completed.\n\n"
+                "Successfully returned: %s line(s) totaling %s\n\n"
+                "Errors:\n%s"
+            ) % (success_count, total_amount, error_message))
+        
+        # Show success notification
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Return Successful'),
+                'message': _('Successfully returned %s line(s) totaling %s') % (success_count, total_amount),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
