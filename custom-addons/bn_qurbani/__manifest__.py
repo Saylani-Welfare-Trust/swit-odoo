@@ -60,8 +60,8 @@
         'views/qurbani_city.xml',
         'views/res_partner.xml',
         
+        'wizards/generate_qurbani_demand.xml', 
         'wizards/qurbani_schedule.xml',
-        'wizards/generate_qurbani_demand.xml',
         'wizards/generate_qurbani_slaughter_and_distribution.xml',
         'wizards/api_order_wizard.xml',
         'wizards/transfer_slaughter.xml',
