@@ -3,6 +3,46 @@ import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 
+// 🔥 GLOBAL KEYBOARD EVENT LISTENER - WORKS AT THE TOP LEVEL
+// This will capture the minus key press before any other handlers
+document.addEventListener('keydown', function(e) {
+    // Check for minus key (both regular keyboard and numpad)
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'Subtract') {
+        console.log('Minus key detected globally!');
+        
+        // Check if we should block based on context
+        // You can modify this condition if needed
+        const shouldBlock = true; // Block for all products
+        
+        if (shouldBlock) {
+            // Prevent the minus key from doing anything
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Show alert to user
+            alert('Negative quantities are not allowed!');
+            
+            // Also try to clear any negative input
+            setTimeout(() => {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.tagName === 'INPUT') {
+                    const value = activeElement.value;
+                    if (value && value.startsWith('-')) {
+                        activeElement.value = value.substring(1);
+                        // Trigger input event to update the model
+                        const inputEvent = new Event('input', { bubbles: true });
+                        activeElement.dispatchEvent(inputEvent);
+                    }
+                }
+            }, 10);
+            
+            return false;
+        }
+    }
+}, true); // Use capture phase to intercept before any other handlers
+
+// Now patch the ProductScreen
 patch(ProductScreen.prototype, {
     // Getter to check if order has Qurbani product
     get hasQurbaniProduct() {
@@ -62,14 +102,11 @@ patch(ProductScreen.prototype, {
         }
 
         // 🔥 DISABLE MINUS BUTTON FOR ALL PRODUCTS
-        // Disable the minus button regardless of product type
         return buttons.map(button => {
             if (button.value === "-") {
-                // Always disable the minus button for all products
                 return { ...button, disabled: true };
             }
             
-            // Apply active class for numpad mode
             return {
                 ...button,
                 class: this.pos.numpadMode === button.value ? "active border-primary" : "",
@@ -77,15 +114,31 @@ patch(ProductScreen.prototype, {
         });
     },
 
-    // Initialize component and setup keyboard event handling
-    init() {
-        // Call parent init if it exists
-        if (super.init) {
-            super.init();
+    // Override the mounted lifecycle method to ensure event listeners are attached
+    mounted() {
+        // Call parent mounted if it exists
+        if (super.mounted) {
+            super.mounted();
+        }
+        
+        // Setup keyboard event handler with multiple approaches
+        this._setupKeyboardHandler();
+        
+        // Also intercept keydown at the document level with capture phase
+        this._setupGlobalKeyHandler();
+    },
+
+    // Setup keyboard event listener with capture phase
+    _setupGlobalKeyHandler() {
+        // Remove existing global handler if any
+        if (this._globalKeyHandler) {
+            document.removeEventListener('keydown', this._globalKeyHandler, true);
         }
 
-        // Setup keyboard event handler
-        this._setupKeyboardHandler();
+        this._globalKeyHandler = this._handleGlobalKeyEvent.bind(this);
+        // Use capture phase (true) to intercept before other handlers
+        document.addEventListener('keydown', this._globalKeyHandler, true);
+        this._globalKeyBound = true;
     },
 
     // Setup keyboard event listener
@@ -101,40 +154,87 @@ patch(ProductScreen.prototype, {
         this._keyboardBound = true;
     },
 
-    // Remove keyboard event listener
+    // Remove keyboard event listeners
     _removeKeyboardHandler() {
         if (this._keyboardHandler && this._keyboardBound) {
             document.removeEventListener('keydown', this._keyboardHandler);
             this._keyboardBound = false;
         }
+        if (this._globalKeyHandler && this._globalKeyBound) {
+            document.removeEventListener('keydown', this._globalKeyHandler, true);
+            this._globalKeyBound = false;
+        }
     },
 
-    // Handle keyboard events
+    // Handle keyboard events at component level
     _handleKeyboardEvent(event) {
-        // Check if minus key is pressed (both main keyboard and numpad)
+        // Check if minus key is pressed
         if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
-            // 🔥 BLOCK NEGATIVE ENTRIES FOR ALL PRODUCTS
-            // Always block negative entries regardless of product type
-            const shouldBlockNegative = true; // Always block for all products
-            
-            if (shouldBlockNegative) {
-                // Prevent default behavior and stop propagation
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Show notification to user
-                this._showNegativeNotAllowedMessage();
-                return false;
-            }
+            // Always block negative entries for all products
+            this._blockNegativeEntry(event);
         }
         return true;
+    },
+
+    // Handle keyboard events at global level with capture phase
+    _handleGlobalKeyEvent(event) {
+        // Check if minus key is pressed
+        if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
+            // Always block negative entries for all products
+            this._blockNegativeEntry(event);
+        }
+        return true;
+    },
+
+    // Block negative entry and show notification
+    _blockNegativeEntry(event) {
+        // Prevent default behavior
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        // Show notification to user
+        this._showNegativeNotAllowedMessage();
+        
+        // Also try to clear any negative input
+        this._clearNegativeInput();
+        
+        return false;
+    },
+
+    // Clear any negative input from the quantity field
+    _clearNegativeInput() {
+        try {
+            // Check if there's an active input field
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'INPUT') {
+                const value = activeElement.value;
+                // If the value starts with '-', clear it or remove the minus sign
+                if (value && value.startsWith('-')) {
+                    activeElement.value = value.substring(1);
+                    // Trigger input event to update the model
+                    const inputEvent = new Event('input', { bubbles: true });
+                    activeElement.dispatchEvent(inputEvent);
+                }
+            }
+            
+            // Also check for quantity input in the product screen
+            const quantityInput = this.el?.querySelector?.('input[data-field="quantity"]');
+            if (quantityInput && quantityInput.value && quantityInput.value.startsWith('-')) {
+                quantityInput.value = quantityInput.value.substring(1);
+                const inputEvent = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(inputEvent);
+            }
+        } catch (error) {
+            console.debug('Error clearing negative input:', error);
+        }
     },
 
     // Show notification message when negative is not allowed
     _showNegativeNotAllowedMessage() {
         const message = _t("Negative quantity is not allowed. Please use positive quantities only.");
         
-        // Try different notification methods based on what's available
+        // Try different notification methods
         try {
             if (this.notification) {
                 this.notification.add(message, { type: 'warning' });
@@ -145,27 +245,19 @@ patch(ProductScreen.prototype, {
             } else if (this.env?.services?.alert) {
                 this.env.services.alert(message);
             } else {
-                // Fallback to console warning
-                console.warn('Negative quantity blocked:', message);
-                // Also try to show in UI if possible
-                const display = this.el?.querySelector?.('.pos-screen');
-                if (display) {
-                    const notification = document.createElement('div');
-                    notification.className = 'alert alert-warning';
-                    notification.textContent = message;
-                    notification.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; padding: 20px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.3);';
-                    document.body.appendChild(notification);
-                    setTimeout(() => notification.remove(), 3000);
-                }
+                // Use the global alert as fallback (already handled by top-level listener)
+                console.log('Negative quantity blocked:', message);
             }
         } catch (error) {
             console.error('Error showing notification:', error);
+            // Fallback to alert
+            alert(message);
         }
     },
 
     // Clean up event listeners when component is destroyed
     destroy() {
-        // Remove keyboard event listener
+        // Remove keyboard event listeners
         this._removeKeyboardHandler();
         
         // Call parent destroy if it exists
