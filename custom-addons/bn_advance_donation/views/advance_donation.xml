@@ -81,6 +81,13 @@
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
                             <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
+                            <field name="service_charges" widget="boolean_toggle"/>
+                            <field name="service_charge_product_id"
+                                invisible="not service_charges"
+                                required="service_charges"/>
+                            <field name="service_charge_amount"
+                                invisible="not service_charges"
+                                readonly="1"/>
                             <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
                             <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
@@ -93,6 +100,7 @@
                                     <field name="serial_no"/>
                                     <field name="product_id"/>
                                     <field name="amount"/>
+                                    <field name="service_charge_amount"/>
                                     <field name="paid_amount" />
                                     <field name="remaining_amount"/>
                                     <field name="date"  />
