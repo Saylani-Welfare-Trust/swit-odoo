@@ -136,8 +136,8 @@ class JournalTransfer(models.TransientModel):
                 records.append({
                     'pos_move_id': move.id,
                     'accounting_date': move.date,
-                    'descripiton': line.name or move.ref,
-                    'reference': move.name,
+                    'descripiton': line.name or move.ref or move.name,
+                    'reference': move.ref,
                     'source_journal_id': move.journal_id.id,
                     'dest_journal_id': line.bank_journal_id.id,
                     'date': line.date,
