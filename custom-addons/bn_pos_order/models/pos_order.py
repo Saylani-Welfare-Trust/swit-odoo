@@ -16,29 +16,6 @@ class POSOrder(models.Model):
     
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
     
-    local_time_str = fields.Char(
-        string='Local Time',
-        compute='_compute_local_time_str',
-        store=False  # Store it if you want to persist the value
-    )
-    
-
-    @api.depends('create_date')
-    def _compute_local_time_str(self):
-        for order in self:
-            if not order.create_date:
-                order.local_time_str = '--'
-                continue
-
-            # Get the user's timezone
-            user_tz = self.env.user.tz or 'UTC'
-            local_tz = pytz.timezone(user_tz)
-
-            # Make the UTC timezone-aware and convert to local
-            utc_time = pytz.UTC.localize(order.create_date)
-            local_time = utc_time.astimezone(local_tz)
-
-            order.local_time_str = local_time.strftime('%d-%m-%Y %H:%M')
 
     @api.constrains('mobile')
     def _check_mobile_number(self):
