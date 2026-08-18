@@ -89,6 +89,8 @@ class ResPartner(models.Model):
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
+    
+
     @api.model_create_multi
     def create(self, vals_list):
         pakistan_id = self.env.ref('base.pk').id
