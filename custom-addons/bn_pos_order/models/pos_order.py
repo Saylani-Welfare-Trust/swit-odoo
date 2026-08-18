@@ -22,6 +22,7 @@ class POSOrder(models.Model):
         store=False  # Store it if you want to persist the value
     )
     
+
     @api.depends('create_date')
     def _compute_local_time_str(self):
         for order in self:
