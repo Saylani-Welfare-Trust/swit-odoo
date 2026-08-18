@@ -6,73 +6,10 @@ import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
-    _getCounterKey(config_id) {
-        return `counter_${config_id}`;
-    },
-
-    _getCounter() {
-        const config_id = this.pos.config.id;
-        const key = this._getCounterKey(config_id);
-
-        const currentYear = new Date().getFullYear();
-
-        let counterData = JSON.parse(
-            localStorage.getItem(key) || "null"
-        );
-
-        // First POS opening
-        if (!counterData) {
-            counterData = {
-                year: currentYear,
-                counter: this.pos.config.sequence || 1,
-            };
-
-            localStorage.setItem(
-                key,
-                JSON.stringify(counterData)
-            );
-        }
-
-        // New year reset
-        if (counterData.year !== currentYear) {
-            counterData = {
-                year: currentYear,
-                counter: this.pos.config.sequence || 1,
-            };
-
-            localStorage.setItem(
-                key,
-                JSON.stringify(counterData)
-            );
-        }
-
-        return counterData;
-    },
-
-    _generateReceiptNumber(order) {
-        const config_id = this.pos.config.id;
-
-        const key = this._getCounterKey(config_id);
-
-        let counterData = this._getCounter();
-
-        order.set_pos_order_seq(counterData.counter);
-
-        /*
-            Increment for next order
-        */
-        counterData.counter += 1;
-
-        localStorage.setItem(
-            key,
-            JSON.stringify(counterData)
-        );
-    },
-
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        this._generateReceiptNumber(currentOrder);
+        console.log(this);
         
         // Only process medical equipment if order has extra_data with medical_equipment
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.medical_equipment) {
