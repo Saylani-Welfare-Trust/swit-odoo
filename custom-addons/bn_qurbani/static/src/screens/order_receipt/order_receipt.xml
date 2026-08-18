@@ -118,9 +118,10 @@
                         <div>
                             <strong>DN #:</strong>
                             <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
+                             <t t-set="counter" t-value="order.counter or '0'"/>
                             <t t-set="current_year" t-value="new Date().getFullYear()"/>
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
-                            <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
+                            <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
                         <div><strong>Register Name:</strong> <t t-esc="partner.name || '-'"/></div>
                         <div>
