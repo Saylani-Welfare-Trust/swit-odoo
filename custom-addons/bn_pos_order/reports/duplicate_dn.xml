@@ -108,7 +108,8 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
-                                        <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
+                                        <t t-esc="order.local_time_str"/>
+
                                     </div>
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Cheque Date:</strong>
