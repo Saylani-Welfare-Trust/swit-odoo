@@ -7,6 +7,7 @@
             <tree default_order="create_date desc">
                 <field name="name"/>
                 <field name="donee_id"/>
+                <field name="total_amount"/>
                 <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['payment_received', 'payment_return', 'validate']" decoration-success="state == 'return'" decoration-danger="state == 'closed'"/>
             </tree>
         </field>
