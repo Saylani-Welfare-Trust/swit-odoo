@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 import re
+import base64
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -29,7 +30,6 @@ class DirectDeposit(models.Model):
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
-
     address = fields.Char('Address')
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')
@@ -61,6 +61,127 @@ class DirectDeposit(models.Model):
     welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
     welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
     medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")
+
+    # ---------- CLEAR NOTIFICATION ----------
+    def _build_dd_receipt_message(self):
+        self.ensure_one()
+        donation_items = ""
+        for line in self.direct_deposit_line_ids:
+            donation_items += f"{line.quantity} x {line.product_id.name} = {line.amount * line.quantity} PKR\n"
+
+        return f"""Dear {self.donor_id.name},
+
+Thank you for your donation!
+
+Reference: {self.name}
+Amount: {self.amount} PKR
+Items:
+{donation_items}
+
+May Allah bless you!
+
+- SWIT"""
+
+    def _generate_dd_receipt_pdf(self):
+        try:
+            pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
+                'bn_direct_deposit.report_direct_deposit_dn',
+                [self.id]
+            )
+            return pdf_data
+        except Exception as e:
+            _logger.error('DD receipt PDF error: %s', str(e))
+            return None
+
+    def _save_dd_receipt_attachment(self, pdf_data):
+        self.ensure_one()
+        safe_name = self.name.replace('/', '_')
+        filename = f"Receipt_{safe_name}.pdf"
+
+        old = self.env['ir.attachment'].search([
+            ('res_model', '=', 'direct.deposit'),
+            ('res_id', '=', self.id),
+            ('name', '=', filename)
+        ])
+        old.unlink()
+
+        attachment = self.env['ir.attachment'].sudo().create({
+            'name': filename,
+            'type': 'binary',
+            'datas': base64.b64encode(pdf_data),
+            'res_model': 'direct.deposit',
+            'res_id': self.id,
+            'mimetype': 'application/pdf',
+            'public': True,
+        })
+        attachment.generate_access_token()
+
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
+
+        return attachment, pdf_url
+
+    def _send_clear_notification(self):
+        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when a
+        direct deposit is cleared. Mirrors pos.order.send_whatsapp_after_payment
+        but is driven off this record's own donor/lines instead of a POS order."""
+        self.ensure_one()
+        donor = self.donor_id
+        if not donor:
+            _logger.warning('DD %s cleared with no donor_id set - skipping notification', self.name)
+            return {'status': 'error', 'message': 'No donor on this deposit'}
+
+        message = self._build_dd_receipt_message()
+
+        whatsapp_ok = False
+        sms_ok = False
+        whatsapp_error = None
+        sms_error = None
+
+        if donor.whatsapp:
+            try:
+                pdf_data = self._generate_dd_receipt_pdf()
+                if not pdf_data or not pdf_data.startswith(b'%PDF'):
+                    raise Exception("Invalid PDF generated")
+
+                attachment, pdf_url = self._save_dd_receipt_attachment(pdf_data)
+                _logger.info('DD receipt PDF URL: %s', pdf_url)
+
+                self.env['whatsapp.service'].send_template_message(
+                    donor.whatsapp,
+                    pdf_url,
+                    f"Receipt_{self.name}.pdf"
+                )
+                whatsapp_ok = True
+                _logger.info('DD WhatsApp sent successfully for %s', self.name)
+            except Exception as e:
+                whatsapp_error = str(e)
+                _logger.error('DD WhatsApp failed for %s: %s', self.name, whatsapp_error)
+        else:
+            whatsapp_error = "No WhatsApp number"
+
+        mobile = donor.mobile or donor.phone
+        if mobile:
+            try:
+                self.env['sms.service'].send_sms(mobile, message)
+                sms_ok = True
+                _logger.info('DD SMS sent successfully for %s', self.name)
+            except Exception as e:
+                sms_error = str(e)
+                _logger.error('DD SMS failed for %s: %s', self.name, sms_error)
+        else:
+            sms_error = "No contact number"
+
+        if whatsapp_ok and sms_ok:
+            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
+        if whatsapp_ok:
+            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
+        if sms_ok:
+            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
+        return {
+            'status': 'error',
+            'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
+        }
 
     def _find_welfare_from_source(self, source_request_type, source_request_no):
         _logger.info("DD create - welfare lookup type=%r no=%r", source_request_type, source_request_no)
@@ -260,17 +381,6 @@ class DirectDeposit(models.Model):
 
         dd.calculate_amount()
         dd.set_remarks()
-        pos_order_id = data.get('pos_order_id')
-        if pos_order_id:
-            try:
-                order = self.env['pos.order'].browse(pos_order_id)
-                if order:
-                    # Call the existing method to send WhatsApp and SMS
-                    result = order.sms_or_whatsapp_send_receipt(order.id)
-                    _logger.info(f"Receipt sending result for order {pos_order_id}: {result}")
-            except Exception as e:
-                _logger.error(f"Failed to send receipt for order {pos_order_id}: {str(e)}")
-                
         return {
             "status": "success",
             "id": dd.id,
@@ -596,32 +706,30 @@ class DirectDeposit(models.Model):
 
 
     # ---------- LIFECYCLE ----------
+    # ---------- LIFECYCLE ----------
     def action_clear(self):
         self._create_advance_donation_receipts()
 
         if self._apply_microfinance_payment():
-            self.state = 'clear'
-            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-
-        if self.source_model == 'welfare':
+            pass
+        elif self.source_model == 'welfare':
             self._clear_welfare()
-            self.state = 'clear'
-            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-
-        if self.source_model == 'medical_equipment':
+        elif self.source_model == 'medical_equipment':
             self._clear_medical_equipment()
-            self.state = 'clear'
-            return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
-
-        if self.transfer_to_dhs:
+        elif self.transfer_to_dhs:
             self.action_transfer_to_dhs()
         else:
             self._create_invoice()
             self._create_stock_picking()
 
         self.state = 'clear'
-        return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
 
+        try:
+            self._send_clear_notification()
+        except Exception as e:
+            _logger.error('DD %s: notification step failed: %s', self.name, str(e))
+
+        return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
     def action_not_clear(self):
         if self.source_model == 'welfare':
             self._bounce_welfare()

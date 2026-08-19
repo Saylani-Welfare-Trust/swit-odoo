@@ -9,6 +9,7 @@
         'bn_pos_cheque',
         'bn_donation_home_service',
         'bn_microfinance',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'data/server_action.xml',
