@@ -16,6 +16,8 @@ class LivestockSlaughter(models.Model):
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
+    pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
+    pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -36,6 +38,13 @@ class LivestockSlaughter(models.Model):
     cutting_hide = fields.Boolean('Cutting Hide')
     transfer_bool = fields.Boolean('Cutting Hide')
 
+    _sql_constraints = [
+        (
+            'unique_pos_order_line_id',
+            'unique(pos_order_line_id)',
+            'A livestock slaughter record already exists for this POS order line.',
+        ),
+    ]
 
     @api.model
     def create(self, vals):

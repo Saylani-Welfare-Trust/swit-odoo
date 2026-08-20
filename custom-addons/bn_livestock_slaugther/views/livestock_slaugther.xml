@@ -17,6 +17,7 @@
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
+                <field name="pos_order_id" optional="show" />
                 <field name="source_location_id" />
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" readonly="1" />
@@ -57,6 +58,7 @@
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" />
                             <field name="code" />
                             <field name="ref" />
+                            <field name="pos_order_id" readonly="1" />
                         </group>
                         <group name="livestock_slaugther_col_2">
                             <field name="quantity" />

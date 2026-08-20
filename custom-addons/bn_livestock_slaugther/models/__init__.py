@@ -1,4 +1,5 @@
 from . import livestock_slaugther
+from . import pos_order
 from . import livestock_cutting
 from . import livestock_requistion
 from . import livestock_requisition_line
