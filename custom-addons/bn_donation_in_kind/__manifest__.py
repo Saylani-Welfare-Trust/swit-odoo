@@ -16,6 +16,7 @@
         'data/server_action.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        'security/access_right.xml',
         'reports/donation_in_kind_report.xml',
         'reports/donation_in_kind_transfer_report.xml',
         'views/donation_in_kind.xml',
