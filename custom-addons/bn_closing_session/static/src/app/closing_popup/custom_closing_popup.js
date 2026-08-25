@@ -55,9 +55,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             if (!pm?.id) return;
             this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
             this.state.newLines[pm.id] = {
-                restricted: { bank: "0", amount: "0", ref: "", record_id: 0 },
-                unrestricted: { bank: "0", amount: "0", ref: "", record_id: 0 },
-                neutral: { bank: "0", amount: "0", ref: "", record_id: 0 },
+                restricted: { bank: "0", ref: "", record_id: 0 },
+                unrestricted: { bank: "0", ref: "", record_id: 0 },
+                neutral: { bank: "0", ref: "", record_id: 0 },
             };
             this.state.payments[pm.id] = this.state.payments[pm.id] || { counted: "0" };
         };
@@ -140,17 +140,31 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return this.env.utils.formatCurrency(Number.isFinite(num) ? num : 0);
     }
 
+    /**
+     * The slip amount is no longer typed in by the user — it is always the
+     * expected breakdown amount for that payment method / type, so that
+     * exactly one line covers the whole expected amount.
+     */
+    getAutoAmount(pm, type) {
+        return pm?.breakdown?.[type] || 0;
+    }
+
     async handleAddLine(paymentId, type = "restricted") {
         const pm = this._getPaymentMethod(paymentId);
-        const { amount, ref, bank } = this.state.newLines[paymentId][type];
-        const numAmount = parseFloat(amount);
-        const isBankInvalid = !bank || bank === "0";
-        const isAmountInvalid = isNaN(numAmount);
 
-        if (this.shouldShowSlipInput(pm) && (!ref || isAmountInvalid || isBankInvalid)) {
+        // Only one line is allowed per payment method / type.
+        if ((this.state.lines[paymentId][type] || []).length > 0) {
+            return;
+        }
+
+        const { ref, bank } = this.state.newLines[paymentId][type];
+        const isBankInvalid = !bank || bank === "0";
+        const numAmount = this.getAutoAmount(pm, type);
+
+        if (this.shouldShowSlipInput(pm) && (!ref || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
                 title: _t("Invalid Input"),
-                body: _t("Bank, Slip No. and Amount are required."),
+                body: _t("Bank and Slip No. are required."),
             });
             return;
         }
@@ -179,7 +193,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             record_id: slip.id,
         });
 
-        this.state.newLines[paymentId][type] = { bank: "0", amount: "0", ref: "", record_id: 0 };
+        this.state.newLines[paymentId][type] = { bank: "0", ref: "", record_id: 0 };
     }
 
     async handleRemoveLine(paymentId, lineId, recordId, type) {

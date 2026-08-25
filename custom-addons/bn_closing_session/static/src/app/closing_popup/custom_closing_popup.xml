@@ -71,31 +71,40 @@
                                             <t t-else="">
                                                 <td/>
                                             </t>
-                                            <td>
-                                                <select class="form-select form-select-sm"
-                                                    t-model="state.newLines[props.default_cash_details.id][type].bank">
-                                                    <option value="0">Select Bank</option>
-                                                    <t t-foreach="props.bank_list" t-as="bank" t-key="bank.id">
-                                                        <option t-att-value="bank.id"><t t-esc="bank.name"/></option>
-                                                    </t>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input class="form-control form-control-sm" placeholder="Slip No."
-                                                    t-model="state.newLines[props.default_cash_details.id][type].ref"/>
-                                            </td>
-                                            <t t-if="shouldShowSlipHeaders()">
+
+                                            <!-- Only allow ONE line per type: show inputs while empty, hide once a line exists -->
+                                            <t t-if="!(state.lines[props.default_cash_details.id][type]||[]).length">
                                                 <td>
-                                                    <t t-if="shouldShowSlipInput(props.default_cash_details)">
-                                                        <input class="form-control form-control-sm" placeholder="Amount"
-                                                            t-model="state.newLines[props.default_cash_details.id][type].amount"/>
-                                                    </t>
+                                                    <select class="form-select form-select-sm"
+                                                        t-model="state.newLines[props.default_cash_details.id][type].bank">
+                                                        <option value="0">Select Bank</option>
+                                                        <t t-foreach="props.bank_list" t-as="bank" t-key="bank.id">
+                                                            <option t-att-value="bank.id"><t t-esc="bank.name"/></option>
+                                                        </t>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" placeholder="Slip No."
+                                                        t-model="state.newLines[props.default_cash_details.id][type].ref"/>
+                                                </td>
+                                                <t t-if="shouldShowSlipHeaders()">
+                                                    <td>
+                                                        <t t-if="shouldShowSlipInput(props.default_cash_details)">
+                                                            <span t-esc="env.utils.formatCurrency(getAutoAmount(props.default_cash_details, type))"/>
+                                                        </t>
+                                                    </td>
+                                                </t>
+                                                <td class="text-center">
+                                                    <button class="btn btn-secondary btn-sm"
+                                                        t-on-click="() => handleAddLine(props.default_cash_details.id,type)">➕</button>
                                                 </td>
                                             </t>
-                                            <td class="text-center">
-                                                <button class="btn btn-secondary btn-sm"
-                                                    t-on-click="() => handleAddLine(props.default_cash_details.id,type)">➕</button>
-                                            </td>
+                                            <t t-else="">
+                                                <td/>
+                                                <td/>
+                                                <t t-if="shouldShowSlipHeaders()"><td/></t>
+                                                <td/>
+                                            </t>
                                         </tr>
 
                                         <tr t-foreach="state.lines[props.default_cash_details.id][type]||[]" t-as="line" t-key="line.id">
@@ -161,31 +170,40 @@
                                             <t t-else="">
                                                 <td/>
                                             </t>
-                                            <td>
-                                                <select class="form-select form-select-sm"
-                                                    t-model="state.newLines[pm.id][type].bank">
-                                                    <option value="0">Select Bank</option>
-                                                    <t t-foreach="props.bank_list" t-as="bank" t-key="bank.id">
-                                                        <option t-att-value="bank.id"><t t-esc="bank.name"/></option>
-                                                    </t>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input class="form-control form-control-sm" placeholder="Slip No."
-                                                    t-model="state.newLines[pm.id][type].ref"/>
-                                            </td>
-                                            <t t-if="shouldShowSlipHeaders()">
+
+                                            <!-- Only allow ONE line per type: show inputs while empty, hide once a line exists -->
+                                            <t t-if="!(state.lines[pm.id][type]||[]).length">
                                                 <td>
-                                                    <t t-if="shouldShowSlipInput(pm)">
-                                                        <input class="form-control form-control-sm" placeholder="Amount"
-                                                            t-model="state.newLines[pm.id][type].amount"/>
-                                                    </t>
+                                                    <select class="form-select form-select-sm"
+                                                        t-model="state.newLines[pm.id][type].bank">
+                                                        <option value="0">Select Bank</option>
+                                                        <t t-foreach="props.bank_list" t-as="bank" t-key="bank.id">
+                                                            <option t-att-value="bank.id"><t t-esc="bank.name"/></option>
+                                                        </t>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" placeholder="Slip No."
+                                                        t-model="state.newLines[pm.id][type].ref"/>
+                                                </td>
+                                                <t t-if="shouldShowSlipHeaders()">
+                                                    <td>
+                                                        <t t-if="shouldShowSlipInput(pm)">
+                                                            <span t-esc="env.utils.formatCurrency(getAutoAmount(pm, type))"/>
+                                                        </t>
+                                                    </td>
+                                                </t>
+                                                <td class="text-center">
+                                                    <button class="btn btn-secondary btn-sm"
+                                                        t-on-click="() => handleAddLine(pm.id,type)">➕</button>
                                                 </td>
                                             </t>
-                                            <td class="text-center">
-                                                <button class="btn btn-secondary btn-sm"
-                                                    t-on-click="() => handleAddLine(pm.id,type)">➕</button>
-                                            </td>
+                                            <t t-else="">
+                                                <td/>
+                                                <td/>
+                                                <t t-if="shouldShowSlipHeaders()"><td/></t>
+                                                <td/>
+                                            </t>
                                         </tr>
 
                                         <tr t-foreach="state.lines[pm.id][type]||[]" t-as="line" t-key="line.id">
