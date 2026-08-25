@@ -119,7 +119,17 @@ class DirectDeposit(models.Model):
     
         return created
     
+    def _check_duplicate_transaction_ref(self, transaction_ref):
+        """Return the existing direct.deposit record (if any) that already
+        uses this transaction reference. Used to block a second Direct
+        Deposit payment from being made with the same transaction_ref."""
+        transaction_ref = (transaction_ref or '').strip()
+        if not transaction_ref:
+            return self.env['direct.deposit']
 
+        return self.search([
+            ('transaction_ref', '=', transaction_ref),
+        ], limit=1)
 
 
 
@@ -195,7 +205,16 @@ class DirectDeposit(models.Model):
         mf = self._find_microfinance_from_source(source_request_type, source_request_no)
         welfare = self._find_welfare_from_source(source_request_type, source_request_no)
         equipment = self._find_medical_equipment_from_source(source_request_type, source_request_no)
-
+        duplicate = self._check_duplicate_transaction_ref(transaction_ref)
+        if duplicate:
+            return {
+                'status': 'error',
+                'body': _(
+                    'This Transaction Reference (%s) has already been used '
+                    'in Direct Deposit record %s. Please use a different '
+                    'transaction reference.'
+                ) % (transaction_ref, duplicate.name),
+            }
         product_lines = []
         for line in data['order_lines']:
             product_lines.append((0, 0, {
