@@ -76,7 +76,6 @@ patch(PartnerDetailsEdit.prototype, {
 
     async saveChanges() {
         const processedChanges = {};
-
         for (const [key, value] of Object.entries(this.changes)) {
             if (this.intFields.includes(key)) {
                 processedChanges[key] = parseInt(value) || false;
@@ -86,43 +85,27 @@ patch(PartnerDetailsEdit.prototype, {
         }
 
         // Mobile number length validation
-        const mobile_no = processedChanges.mobile
-            ? processedChanges.mobile.toString()
-            : '';
-
+        const mobile_no = processedChanges.mobile ? processedChanges.mobile.toString() : '';
         if (mobile_no && mobile_no.length !== 10) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
                 body: _t("Mobile number must be exactly 10 digits."),
             });
         }
-
-        // Validate state/country
-        if (processedChanges.state_id) {
-            const state = this.pos.states.find(
-                (state) => state.id === processedChanges.state_id
-            );
-
-            if (
-                state &&
-                state.country_id &&
-                state.country_id[0] !== processedChanges.country_id
-            ) {
-                processedChanges.state_id = false;
-            }
+        if (
+            processedChanges.state_id &&
+            this.pos.states.find((state) => state.id === processedChanges.state_id)
+                .country_id[0] !== processedChanges.country_id
+        ) {
+            processedChanges.state_id = false;
         }
 
-        // Donor name validation
-        if (
-            (!this.props.partner.name && !processedChanges.name) ||
-            processedChanges.name === ""
-        ) {
+        if ((!this.props.partner.name && !processedChanges.name) || processedChanges.name === "") {
             return this.popup.add(ErrorPopup, {
                 title: _t("A Donor Name Is Required"),
             });
         }
 
-        // Donor type validation
         if (processedChanges.donor_type == null) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
@@ -130,124 +113,36 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
+        const domain = [];
         const donor_type = processedChanges.donor_type;
+        const mobile = processedChanges.mobile;
+        const cnic_no = processedChanges.cnic_no;
 
-        const mobile = processedChanges.mobile
-            ? processedChanges.mobile.toString().trim()
-            : '';
-
-        const cnic_no = processedChanges.cnic_no
-            ? processedChanges.cnic_no.toString().trim()
-            : '';
-
-        /*
-        * OFFLINE DUPLICATE VALIDATION
-        *
-        * Do NOT use:
-        * this.orm.call(...)
-        *
-        * Do NOT use:
-        * this.pos.models
-        *
-        * Use the records already loaded into the POS.
-        */
-        const partnerModel = this.pos.data?.models?.["res.partner"];
-
-        const partners = partnerModel
-            ? partnerModel.getAll()
-            : [];
-
-        /**
-         * Helper to get category names.
-         *
-         * Depending on the POS model definition, category_id can contain:
-         *
-         * [categoryId, categoryName]
-         *
-         * or relational records.
-         */
-        const getCategoryNames = (partner) => {
-            const categories = partner.category_id || [];
-
-            return categories.map((category) => {
-                if (Array.isArray(category)) {
-                    return category[1];
-                }
-
-                return category.name || "";
-            });
-        };
-
-        let duplicatePartner = false;
-
-        if (donor_type === "individual") {
-
-            duplicatePartner = partners.find((partner) => {
-                const partnerMobile = partner.mobile
-                    ? partner.mobile.toString().trim()
-                    : '';
-
-                const categoryNames = getCategoryNames(partner);
-
-                const isDonor = categoryNames.includes("Donor");
-                const isIndividual = categoryNames.includes("Individual");
-
-                return (
-                    mobile &&
-                    partnerMobile === mobile &&
-                    isDonor &&
-                    isIndividual &&
-                    partner.id !== this.props.partner.id
-                );
-            });
-
-        } else if (donor_type === "coorporate") {
-
-            duplicatePartner = partners.find((partner) => {
-                const partnerMobile = partner.mobile
-                    ? partner.mobile.toString().trim()
-                    : '';
-
-                const partnerCnic = partner.cnic_no
-                    ? partner.cnic_no.toString().trim()
-                    : '';
-
-                const categoryNames = getCategoryNames(partner);
-
-                const isDonor = categoryNames.includes("Donor");
-                const isCorporate = categoryNames.includes(
-                    "Coorporate / Institute"
-                );
-
-                return (
-                    isDonor &&
-                    isCorporate &&
-                    (
-                        (mobile && partnerMobile === mobile) ||
-                        (cnic_no && partnerCnic === cnic_no)
-                    ) &&
-                    partner.id !== this.props.partner.id
-                );
-            });
+        // Correct domain structure
+        if (donor_type === 'individual') {
+            domain.push(
+                ['mobile', '=', mobile], 
+                ['category_id.name', 'in', ['Donor']],
+                ['category_id.name', 'in', ['Individual']],
+                );  // Use array with correct structure
+        } else if (donor_type === 'coorporate') {
+            domain.push('|', 
+                ['mobile', '=', mobile], 
+                ['cnic_no', '=', cnic_no], 
+                ['category_id.name', 'in', ['Donor']],
+                ['category_id.name', 'in', ['Coorporate / Institute']],
+                ); 
         }
-
-        // Duplicate donor found
-        if (duplicatePartner) {
+        
+        const res_partner = await this.orm.call('res.partner', 'search', [domain]);
+        if (res_partner && res_partner.length > 0) {
             return this.popup.add(ErrorPopup, {
-                title: _t("Validation Error"),
-                body: _t(
-                    `A Donor with the same ${
-                        donor_type === "coorporate"
-                            ? "CNIC / Mobile No."
-                            : "Mobile No."
-                    } already exists in the System`
-                ),
+                title: _t(`Validation Error`),
+                body: _t(`A Donor with the same ${donor_type === 'coorporate' ? 'CNIC / Mobile No.' : 'Mobile No.'} already exists in the System`),
             });
         }
 
-        // Save changes
         processedChanges.id = this.props.partner.id || false;
-
         this.props.saveChanges(processedChanges);
     }
 })
