@@ -35,7 +35,7 @@ class EhBoardDrill(models.Model):
     propagate_domain = fields.Boolean(default=True)
 
     def _chart_type_selection(self):
-        from ..lib.registry import item_type_selection
+        from ..libs.registry import item_type_selection
         return [("", "Keep current")] + item_type_selection()
 
     def spec(self):

@@ -13,7 +13,7 @@ import json
 from odoo import api, fields, models, SUPERUSER_ID
 from odoo.exceptions import UserError, ValidationError
 
-from ..lib.registry import datasource_selection, get_datasource
+from ..libs.registry import datasource_selection, get_datasource
 from ..lib import tabular
 
 

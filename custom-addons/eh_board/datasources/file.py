@@ -17,7 +17,7 @@ The spec contract is unchanged: the item resolves its group-by and measures to
 plain column-name strings (see ``eh.board.item._resolve_spec`` tabular branch),
 exactly as the ORM provider resolves field names.
 """
-from ..lib.registry import BoardDataSource, register_datasource
+from ..libs.registry import BoardDataSource, register_datasource
 from ..lib import aggregation, tabular
 
 

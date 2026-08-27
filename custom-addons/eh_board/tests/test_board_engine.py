@@ -8,7 +8,7 @@
 from odoo.tests import TransactionCase, tagged
 
 from ..lib import aggregation
-from ..lib.registry import (
+from ..libs.registry import (
     ITEM_TYPES, DATASOURCES, item_type_selection, get_item_type, get_datasource,
 )
 

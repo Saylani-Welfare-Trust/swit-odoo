@@ -107,7 +107,7 @@ class TestBoardSecurity(TransactionCase):
     def test_sql_results_admin_only(self):
         # A non-admin must not receive SQL-source data (a raw cursor bypasses
         # field-level ACLs, so the provider itself gates on the admin group).
-        from ..lib.registry import get_datasource
+        from ..libs.registry import get_datasource
         src = self.env["eh.board.datasource"].with_user(self.env.ref("base.user_root")).create({
             "name": "SQL src", "provider_type": "sql",
             "sql_query": "SELECT name, id FROM res_country"})

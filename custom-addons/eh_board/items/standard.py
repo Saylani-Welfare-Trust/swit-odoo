@@ -19,7 +19,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from odoo import fields
 
-from ..lib.registry import (
+from ..libs.registry import (
     BoardItemType, register_item_type, get_datasource,
 )
 from ..lib import aggregation

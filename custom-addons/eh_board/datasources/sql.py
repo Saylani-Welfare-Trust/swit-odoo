@@ -23,7 +23,7 @@ the remaining numeric columns become the measures.
 """
 import re
 
-from ..lib.registry import BoardDataSource, register_datasource
+from ..libs.registry import BoardDataSource, register_datasource
 from ..lib import aggregation
 
 # Write / DDL / control verbs.

@@ -23,7 +23,7 @@ Config (stored on ``eh.board.datasource.config``)::
       "left_label": "Ordered", "right_label": "Invoiced"
     }
 """
-from ..lib.registry import BoardDataSource, register_datasource
+from ..libs.registry import BoardDataSource, register_datasource
 from ..lib import aggregation
 from odoo.exceptions import UserError
 

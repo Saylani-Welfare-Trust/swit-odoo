@@ -18,7 +18,7 @@ export keep working unchanged; the matrix structure below is what the OWL pivot
 widget renders.
 """
 
-from ..lib.registry import BoardItemType, register_item_type, get_datasource
+from ..libs.registry import BoardItemType, register_item_type, get_datasource
 from .standard import apply_formulas
 
 

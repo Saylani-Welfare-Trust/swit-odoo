@@ -16,7 +16,7 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import html_sanitize
 
-from ..lib.registry import item_type_selection, get_item_type, get_datasource
+from ..libs.registry import item_type_selection, get_item_type, get_datasource
 
 
 class EhBoardItem(models.Model):
