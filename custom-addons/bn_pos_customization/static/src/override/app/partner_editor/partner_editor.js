@@ -97,20 +97,32 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
-        if (
-            processedChanges.state_id &&
-            this.pos.states.find((state) => state.id === processedChanges.state_id)
-                .country_id[0] !== processedChanges.country_id
-        ) {
-            processedChanges.state_id = false;
+        // Validate state/country
+        if (processedChanges.state_id) {
+            const state = this.pos.states.find(
+                (state) => state.id === processedChanges.state_id
+            );
+
+            if (
+                state &&
+                state.country_id &&
+                state.country_id[0] !== processedChanges.country_id
+            ) {
+                processedChanges.state_id = false;
+            }
         }
 
-        if ((!this.props.partner.name && !processedChanges.name) || processedChanges.name === "") {
+        // Donor name validation
+        if (
+            (!this.props.partner.name && !processedChanges.name) ||
+            processedChanges.name === ""
+        ) {
             return this.popup.add(ErrorPopup, {
                 title: _t("A Donor Name Is Required"),
             });
         }
 
+        // Donor type validation
         if (processedChanges.donor_type == null) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
@@ -119,40 +131,68 @@ patch(PartnerDetailsEdit.prototype, {
         }
 
         const donor_type = processedChanges.donor_type;
+
         const mobile = processedChanges.mobile
-            ? processedChanges.mobile.toString()
+            ? processedChanges.mobile.toString().trim()
             : '';
+
         const cnic_no = processedChanges.cnic_no
-            ? processedChanges.cnic_no.toString()
+            ? processedChanges.cnic_no.toString().trim()
             : '';
 
         /*
-        * Offline duplicate donor validation
+        * OFFLINE DUPLICATE VALIDATION
         *
-        * Use partners already loaded in POS instead of ORM/RPC.
+        * Do NOT use:
+        * this.orm.call(...)
+        *
+        * Do NOT use:
+        * this.pos.models
+        *
+        * Use the records already loaded into the POS.
         */
-        const partners = this.pos.models["res.partner"]?.getAll
-            ? this.pos.models["res.partner"].getAll()
+        const partnerModel = this.pos.data?.models?.["res.partner"];
+
+        const partners = partnerModel
+            ? partnerModel.getAll()
             : [];
+
+        /**
+         * Helper to get category names.
+         *
+         * Depending on the POS model definition, category_id can contain:
+         *
+         * [categoryId, categoryName]
+         *
+         * or relational records.
+         */
+        const getCategoryNames = (partner) => {
+            const categories = partner.category_id || [];
+
+            return categories.map((category) => {
+                if (Array.isArray(category)) {
+                    return category[1];
+                }
+
+                return category.name || "";
+            });
+        };
 
         let duplicatePartner = false;
 
         if (donor_type === "individual") {
+
             duplicatePartner = partners.find((partner) => {
                 const partnerMobile = partner.mobile
-                    ? partner.mobile.toString()
+                    ? partner.mobile.toString().trim()
                     : '';
 
-                const isDonor = partner.category_id?.some(
-                    (category) => category.name === "Donor"
-                );
+                const categoryNames = getCategoryNames(partner);
 
-                const isIndividual = partner.category_id?.some(
-                    (category) => category.name === "Individual"
-                );
+                const isDonor = categoryNames.includes("Donor");
+                const isIndividual = categoryNames.includes("Individual");
 
                 return (
-                    partnerMobile &&
                     mobile &&
                     partnerMobile === mobile &&
                     isDonor &&
@@ -160,22 +200,23 @@ patch(PartnerDetailsEdit.prototype, {
                     partner.id !== this.props.partner.id
                 );
             });
+
         } else if (donor_type === "coorporate") {
+
             duplicatePartner = partners.find((partner) => {
                 const partnerMobile = partner.mobile
-                    ? partner.mobile.toString()
+                    ? partner.mobile.toString().trim()
                     : '';
 
                 const partnerCnic = partner.cnic_no
-                    ? partner.cnic_no.toString()
+                    ? partner.cnic_no.toString().trim()
                     : '';
 
-                const isDonor = partner.category_id?.some(
-                    (category) => category.name === "Donor"
-                );
+                const categoryNames = getCategoryNames(partner);
 
-                const isCorporate = partner.category_id?.some(
-                    (category) => category.name === "Coorporate / Institute"
+                const isDonor = categoryNames.includes("Donor");
+                const isCorporate = categoryNames.includes(
+                    "Coorporate / Institute"
                 );
 
                 return (
@@ -190,6 +231,7 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
+        // Duplicate donor found
         if (duplicatePartner) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
@@ -203,6 +245,7 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
+        // Save changes
         processedChanges.id = this.props.partner.id || false;
 
         this.props.saveChanges(processedChanges);
