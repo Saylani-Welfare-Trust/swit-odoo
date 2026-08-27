@@ -76,6 +76,7 @@ patch(PartnerDetailsEdit.prototype, {
 
     async saveChanges() {
         const processedChanges = {};
+
         for (const [key, value] of Object.entries(this.changes)) {
             if (this.intFields.includes(key)) {
                 processedChanges[key] = parseInt(value) || false;
@@ -85,13 +86,17 @@ patch(PartnerDetailsEdit.prototype, {
         }
 
         // Mobile number length validation
-        const mobile_no = processedChanges.mobile ? processedChanges.mobile.toString() : '';
+        const mobile_no = processedChanges.mobile
+            ? processedChanges.mobile.toString()
+            : '';
+
         if (mobile_no && mobile_no.length !== 10) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
                 body: _t("Mobile number must be exactly 10 digits."),
             });
         }
+
         if (
             processedChanges.state_id &&
             this.pos.states.find((state) => state.id === processedChanges.state_id)
@@ -113,36 +118,93 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
-        const domain = [];
         const donor_type = processedChanges.donor_type;
-        const mobile = processedChanges.mobile;
-        const cnic_no = processedChanges.cnic_no;
+        const mobile = processedChanges.mobile
+            ? processedChanges.mobile.toString()
+            : '';
+        const cnic_no = processedChanges.cnic_no
+            ? processedChanges.cnic_no.toString()
+            : '';
 
-        // Correct domain structure
-        if (donor_type === 'individual') {
-            domain.push(
-                ['mobile', '=', mobile], 
-                ['category_id.name', 'in', ['Donor']],
-                ['category_id.name', 'in', ['Individual']],
-                );  // Use array with correct structure
-        } else if (donor_type === 'coorporate') {
-            domain.push('|', 
-                ['mobile', '=', mobile], 
-                ['cnic_no', '=', cnic_no], 
-                ['category_id.name', 'in', ['Donor']],
-                ['category_id.name', 'in', ['Coorporate / Institute']],
-                ); 
+        /*
+        * Offline duplicate donor validation
+        *
+        * Use partners already loaded in POS instead of ORM/RPC.
+        */
+        const partners = this.pos.models["res.partner"]?.getAll
+            ? this.pos.models["res.partner"].getAll()
+            : [];
+
+        let duplicatePartner = false;
+
+        if (donor_type === "individual") {
+            duplicatePartner = partners.find((partner) => {
+                const partnerMobile = partner.mobile
+                    ? partner.mobile.toString()
+                    : '';
+
+                const isDonor = partner.category_id?.some(
+                    (category) => category.name === "Donor"
+                );
+
+                const isIndividual = partner.category_id?.some(
+                    (category) => category.name === "Individual"
+                );
+
+                return (
+                    partnerMobile &&
+                    mobile &&
+                    partnerMobile === mobile &&
+                    isDonor &&
+                    isIndividual &&
+                    partner.id !== this.props.partner.id
+                );
+            });
+        } else if (donor_type === "coorporate") {
+            duplicatePartner = partners.find((partner) => {
+                const partnerMobile = partner.mobile
+                    ? partner.mobile.toString()
+                    : '';
+
+                const partnerCnic = partner.cnic_no
+                    ? partner.cnic_no.toString()
+                    : '';
+
+                const isDonor = partner.category_id?.some(
+                    (category) => category.name === "Donor"
+                );
+
+                const isCorporate = partner.category_id?.some(
+                    (category) => category.name === "Coorporate / Institute"
+                );
+
+                return (
+                    isDonor &&
+                    isCorporate &&
+                    (
+                        (mobile && partnerMobile === mobile) ||
+                        (cnic_no && partnerCnic === cnic_no)
+                    ) &&
+                    partner.id !== this.props.partner.id
+                );
+            });
         }
-        
-        const res_partner = await this.orm.call('res.partner', 'search', [domain]);
-        if (res_partner && res_partner.length > 0) {
+
+        if (duplicatePartner) {
             return this.popup.add(ErrorPopup, {
-                title: _t(`Validation Error`),
-                body: _t(`A Donor with the same ${donor_type === 'coorporate' ? 'CNIC / Mobile No.' : 'Mobile No.'} already exists in the System`),
+                title: _t("Validation Error"),
+                body: _t(
+                    `A Donor with the same ${
+                        donor_type === "coorporate"
+                            ? "CNIC / Mobile No."
+                            : "Mobile No."
+                    } already exists in the System`
+                ),
             });
         }
 
         processedChanges.id = this.props.partner.id || false;
+
         this.props.saveChanges(processedChanges);
     }
 })
