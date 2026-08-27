@@ -1,0 +1,3484 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* eh_board
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-14 10:49+0000\n"
+"PO-Revision-Date: 2026-07-14 10:49+0000\n"
+"Last-Translator: ERP Heritage <info@erpheritage.com.au>\n"
+"Language-Team: Thai\n"
+"Language: th\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "% of"
+msgstr "% ของ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(auto)"
+msgstr "(อัตโนมัติ)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(none)"
+msgstr "(ไม่มี)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "0 = all"
+msgstr "0 = ทั้งหมด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "1.2K"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "A blank canvas"
+msgstr "พื้นที่ว่างเปล่า"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_date_filter
+msgid ""
+"A built-in date range applied to this widget when the board's own date "
+"filter is off."
+msgstr ""
+"ช่วงวันที่ในตัวที่นำมาใช้กับวิดเจ็ตนี้เมื่อปิดตัวกรองวันที่ของบอร์ดเอง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A goal for this KPI. Target 100 with a value of 72 shows 72% of target on "
+"the bar."
+msgstr ""
+"เป้าหมายสำหรับ KPI นี้ เป้าหมาย 100 ที่มีค่า 72 จะแสดง 72% ของเป้าหมายบนแถบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A short note explaining what this widget measures. Appears as an info "
+"tooltip on the card."
+msgstr "บันทึกสั้น ๆ อธิบายว่าวิดเจ็ตนี้วัดอะไร แสดงเป็นทูลทิปข้อมูลบนการ์ด"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__sql_query
+msgid ""
+"A single read-only SELECT. First column is the category label; the remaining"
+" numeric columns become measures."
+msgstr ""
+"SELECT แบบอ่านอย่างเดียวรายการเดียว คอลัมน์แรกคือป้ายกำกับหมวดหมู่ "
+"ส่วนคอลัมน์ตัวเลขที่เหลือจะกลายเป็นค่าที่วัดได้"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__domain
+msgid ""
+"A static filter applied before any runtime dashboard filter. A plain domain "
+"literal - never an evaluated expression."
+msgstr ""
+"ตัวกรองแบบคงที่ที่นำมาใช้ก่อนตัวกรองแดชบอร์ดในรันไทม์ใด ๆ เป็นค่า domain "
+"literal ล้วน ๆ ไม่ใช่นิพจน์ที่ถูกประเมินผล"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__domain
+msgid "A static filter for this item, on top of the data source filter."
+msgstr "ตัวกรองแบบคงที่สำหรับรายการนี้ เพิ่มเติมจากตัวกรองแหล่งข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__credential_id
+msgid "A vaulted credential for an external source (never inlined)."
+msgstr ""
+"ข้อมูลรับรองที่จัดเก็บในวอลต์สำหรับแหล่งข้อมูลภายนอก "
+"(ไม่มีการฝังในโค้ดโดยตรง)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__api_key
+msgid "API key"
+msgstr "คีย์ API"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__accent
+msgid "Accent"
+msgstr "สีเน้น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Accent colour"
+msgstr "สีเน้น"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__accent
+msgid "Accent colour for the widget (tiles use it as the fill)."
+msgstr "สีเน้นสำหรับวิดเจ็ต (ไทล์ใช้เป็นสีเติม)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__account
+msgid "Accounting"
+msgstr "การบัญชี"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction
+msgid "Action Needed"
+msgstr "จำเป็นต้องดำเนินการ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Actions"
+msgstr "การดำเนินการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__active
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__active
+msgid "Active"
+msgstr "เปิดใช้งาน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__active_layout_id
+msgid "Active layout"
+msgstr "เลย์เอาต์ที่ใช้งานอยู่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add"
+msgstr "เพิ่ม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget"
+msgstr "เพิ่มวิดเจ็ต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget, then press Play to present."
+msgstr "เพิ่มวิดเจ็ต แล้วกดเล่นเพื่อนำเสนอ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add filter"
+msgstr "เพิ่มตัวกรอง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add some data widgets to get insights."
+msgstr "เพิ่มวิดเจ็ตข้อมูลเพื่อรับข้อมูลเชิงลึก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add widget"
+msgstr "เพิ่มวิดเจ็ต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Adds an up/down trend badge. Previous period compares this month vs last "
+"month."
+msgstr ""
+"เพิ่มป้ายแนวโน้มขึ้น/ลง ช่วงก่อนหน้าจะเปรียบเทียบเดือนนี้กับเดือนที่แล้ว"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_admin
+msgid "Administrator"
+msgstr "ผู้ดูแลระบบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Advanced"
+msgstr "ระดับสูง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__aggregate
+msgid "Aggregate"
+msgstr "รวมข้อมูล"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_form
+msgid "Alert"
+msgstr "การแจ้งเตือน"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_alert
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_alerts
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_list
+msgid "Alerts"
+msgstr "การเตือน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All"
+msgstr "ทั้งหมด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All Odoo apps"
+msgstr "แอป Odoo ทั้งหมด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Also count inactive / archived records. Off by default, so a chart of leads "
+"ignores archived ones."
+msgstr ""
+"นับระเบียนที่ไม่ใช้งาน/เก็บถาวรด้วย ปิดไว้ตามค่าเริ่มต้น "
+"ดังนั้นแผนภูมิของลูกค้าเป้าหมายจะไม่รวมรายการที่เก็บถาวร"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__amber
+msgid "Amber"
+msgstr "สีเหลืองอำพัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Arithmetic over other measures as a, b, c ..."
+msgstr "การคำนวณทางคณิตศาสตร์บนค่าที่วัดได้อื่น ๆ ในรูปแบบ a, b, c ..."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__armed
+msgid "Armed"
+msgstr "เปิดใช้งานแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Asc"
+msgstr "น้อยไปมาก"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__asc
+msgid "Ascending"
+msgstr "จากน้อยไปมาก"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_attachment_count
+msgid "Attachment Count"
+msgstr "จำนวนสิ่งที่แนบมา"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__interval
+msgid "Auto (interval)"
+msgstr "อัตโนมัติ (ช่วงเวลา)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Auto refresh"
+msgstr "รีเฟรชอัตโนมัติ"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__avg
+msgid "Average"
+msgstr "ค่าเฉลี่ย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "B"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__token
+msgid "Bearer token"
+msgstr "โทเคน Bearer"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__blue
+msgid "Blue"
+msgstr "สีน้ำเงิน"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_open
+msgid "Board"
+msgstr "กระดาน"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__content
+msgid "Body for text / to-do items."
+msgstr "เนื้อหาสำหรับรายการข้อความ/สิ่งที่ต้องทำ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bold"
+msgstr "ตัวหนา"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_granularity
+msgid "Bucket size when grouping by a date field."
+msgstr "ขนาดของช่วงเมื่อจัดกลุ่มตามฟิลด์วันที่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bucket size when you group by a date. Month gives one point per month."
+msgstr "ขนาดของช่วงเมื่อจัดกลุ่มตามวันที่ เดือนจะให้หนึ่งจุดต่อเดือน"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid ""
+"Build a live BI workspace: drag tiles onto a snapping grid, group any\n"
+"               model's data database side, and drill anywhere."
+msgstr ""
+"สร้างพื้นที่ทำงาน BI แบบเรียลไทม์: ลากไทล์ไปยังกริดที่จัดตำแหน่งอัตโนมัติ จัดกลุ่มข้อมูลของ\n"
+"               โมเดลใดก็ได้ที่ฝั่งฐานข้อมูล และเจาะลึกได้ทุกที่"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_builder
+msgid "Builder"
+msgstr "ตัวสร้าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bulleted list"
+msgstr "รายการแบบสัญลักษณ์แสดงหัวข้อย่อย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__field
+msgid "By a specific field"
+msgstr "ตามฟิลด์ที่ระบุ"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__category
+msgid "By category"
+msgstr "ตามหมวดหมู่"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__measure
+msgid "By measure"
+msgstr "ตามหน่วยวัด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "CSV"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__formula
+msgid "Calculated (formula)"
+msgstr "คำนวณ (สูตร)"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_builder
+msgid "Can design dashboards, items, measures, data sources and filters."
+msgstr "สามารถออกแบบแดชบอร์ด รายการ หน่วยวัด แหล่งข้อมูล และตัวกรองได้"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_viewer
+msgid "Can open and read dashboards shared with them."
+msgstr "สามารถเปิดและอ่านแดชบอร์ดที่แชร์ให้ได้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cap click-through to the row limit"
+msgstr "จำกัดการคลิกเข้าถึงตามขีดจำกัดแถว"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit
+msgid "Cap the number of groups (0 = no cap)."
+msgstr "จำกัดจำนวนกลุ่ม (0 = ไม่จำกัด)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__captured_on
+msgid "Captured On"
+msgstr "จับภาพเมื่อวันที่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__category
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Category"
+msgstr "หมวดหมู่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__chart_options
+msgid "Chart Options"
+msgstr "ตัวเลือกแผนภูมิ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__chart_type
+msgid "Chart Type"
+msgstr "ประเภทแผนภูมิ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__palette
+msgid "Chart colour palette for this dashboard."
+msgstr "จานสีแผนภูมิสำหรับแดชบอร์ดนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Chart palette"
+msgstr "จานสีแผนภูมิ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_drill__chart_type
+msgid "Chart type to switch to at this level (blank keeps the current)."
+msgstr "ประเภทแผนภูมิที่จะสลับไปในระดับนี้ (เว้นว่างไว้เพื่อคงประเภทปัจจุบัน)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear all"
+msgstr "ล้างทั้งหมด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear formatting"
+msgstr "ล้างการจัดรูปแบบ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__click_action
+msgid "Click Action"
+msgstr "การกระทำเมื่อคลิก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Click a field to add it fast: names become Group by, numbers become a Sum "
+"measure."
+msgstr ""
+"คลิกที่ฟิลด์เพื่อเพิ่มอย่างรวดเร็ว: ชื่อจะกลายเป็นจัดกลุ่มตาม "
+"ตัวเลขจะกลายเป็นหน่วยวัดผลรวม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Clicking a tile, bar, slice or point opens the exact records behind it -\n"
+"                            scoped to what was clicked, respecting record rules."
+msgstr ""
+"การคลิกที่ไทล์ แท่ง ส่วน หรือจุด จะเปิดระเบียนที่อยู่เบื้องหลังพอดี -\n"
+"                            จำกัดขอบเขตตามสิ่งที่คลิก โดยเคารพกฎของระเบียน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Close"
+msgstr "ปิด"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__color_mode
+msgid "Color Mode"
+msgstr "โหมดสี"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Colour palette"
+msgstr "จานสี"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__conditional_rules
+msgid ""
+"Colour rules applied to values on tiles / lists / pivots: an ordered list of"
+" {measure, op, v1, v2, color, style} - first match wins."
+msgstr ""
+"กฎสีที่ใช้กับค่าบนไทล์ / รายการ / พิวอต: รายการที่เรียงลำดับของ {measure, "
+"op, v1, v2, color, style} - การจับคู่แรกชนะ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__combo_line
+msgid "Combo Line"
+msgstr "เส้นแบบผสม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__comfortable
+msgid "Comfortable"
+msgstr "สบายตา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__compact
+msgid "Compact"
+msgstr "กะทัดรัด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact (1.2K / 3.4M)"
+msgstr "กะทัดรัด (1.2K / 3.4M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__compact
+msgid "Compact (K/M/B)"
+msgstr "กะทัดรัด (K/M/B)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact packs more widgets on screen; Comfortable gives them room."
+msgstr ""
+"โหมดกะทัดรัดจะจัดวิดเจ็ตบนหน้าจอได้มากขึ้น "
+"ส่วนโหมดสบายตาจะให้พื้นที่แก่วิดเจ็ต"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__company_ids
+msgid "Companies"
+msgstr "บริษัท"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__company_id
+msgid "Company"
+msgstr "บริษัท"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__compare_mode
+msgid "Compare Mode"
+msgstr "โหมดเปรียบเทียบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compare to"
+msgstr "เปรียบเทียบกับ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__conditional_rules
+msgid "Conditional Rules"
+msgstr "กฎแบบมีเงื่อนไข"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Conditional formatting"
+msgstr "การจัดรูปแบบตามเงื่อนไข"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__config
+msgid "Config"
+msgstr "กำหนดค่า"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_config
+msgid "Configuration"
+msgstr "การกำหนดค่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Configure"
+msgstr "กำหนดค่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__content
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Content"
+msgstr "เนื้อหา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Could not open records for this widget."
+msgstr "ไม่สามารถเปิดระเบียนสำหรับวิดเจ็ตนี้ได้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count
+msgid "Count"
+msgstr "จำนวน"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid "Create your first dashboard"
+msgstr "สร้างแดชบอร์ดแรกของคุณ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_uid
+msgid "Created by"
+msgstr "สร้างโดย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_date
+msgid "Created on"
+msgstr "สร้างเมื่อ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__credential_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_form
+msgid "Credential"
+msgstr "ข้อมูลรับรอง"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_credential
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_credentials
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_list
+msgid "Credentials"
+msgstr "ข้อมูลประจำตัว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cross-filter: click a chart to filter the whole board"
+msgstr "ตัวกรองไขว้: คลิกที่แผนภูมิเพื่อกรองทั้งบอร์ด"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__cumulative
+msgid "Cumulative"
+msgstr "สะสม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cumulative line"
+msgstr "เส้นสะสม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__currency_id
+msgid "Currency"
+msgstr "สกุลเงิน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__custom
+msgid "Custom Range"
+msgstr "ช่วงที่กำหนดเอง"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_dashboard
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__dashboard_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard"
+msgstr "แดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_alert
+msgid "Dashboard Alert"
+msgstr "การแจ้งเตือนแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.module.category,name:eh_board.module_category_eh_board
+#: model:res.groups.privilege,name:eh_board.res_groups_privilege_eh_board
+msgid "Dashboard Builder"
+msgstr "เครื่องมือสร้างแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_credential
+msgid "Dashboard Credential"
+msgstr "ข้อมูลรับรองแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_datasource
+msgid "Dashboard Data Source"
+msgstr "แหล่งข้อมูลแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_drill
+msgid "Dashboard Drill Step"
+msgstr "ขั้นตอนการเจาะลึกแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_filter
+msgid "Dashboard Filter"
+msgstr "ตัวกรองแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_item
+msgid "Dashboard Item"
+msgstr "รายการแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_layout_version
+msgid "Dashboard Layout Version"
+msgstr "เวอร์ชันเค้าโครงแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_measure
+msgid "Dashboard Measure"
+msgstr "หน่วยวัดแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.actions.report,name:eh_board.action_report_eh_board_dashboard
+msgid "Dashboard PDF"
+msgstr "PDF แดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_snapshot
+msgid "Dashboard Snapshot"
+msgstr "สแนปช็อตแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_template
+msgid "Dashboard Template"
+msgstr "เทมเพลตแดชบอร์ด"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard name"
+msgstr "ชื่อแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Dashboard settings"
+msgstr "การตั้งค่าแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Dashboard settings saved."
+msgstr "บันทึกการตั้งค่าแดชบอร์ดแล้ว"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_capture_snapshots_ir_actions_server
+msgid "Dashboard: capture snapshots"
+msgstr "แดชบอร์ด: จับภาพสแนปช็อต"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_evaluate_alerts_ir_actions_server
+msgid "Dashboard: evaluate alerts"
+msgstr "แดชบอร์ด: ประเมินการแจ้งเตือน"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_send_digests_ir_actions_server
+msgid "Dashboard: send email digests"
+msgstr "แดชบอร์ด: ส่งสรุปทางอีเมล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_dashboard
+#: model:ir.actions.client,name:eh_board.action_eh_board_open
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_root
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_list
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Dashboards"
+msgstr "แดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Data"
+msgstr "ข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__data_label_type
+msgid "Data Label Type"
+msgstr "ประเภทป้ายกำกับข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__datasource_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__datasource_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Data Source"
+msgstr "แหล่งข้อมูล"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_datasource
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_datasources
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_list
+msgid "Data Sources"
+msgstr "แหล่งข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__date
+msgid "Date"
+msgstr "วันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_granularity
+msgid "Date Granularity"
+msgstr "ความละเอียดของวันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__date_preset
+msgid "Date Preset"
+msgstr "ค่าตั้งต้นวันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field"
+msgstr "ฟิลด์วันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field the dashboard date filter applies to for this widget."
+msgstr "ฟิลด์วันที่ที่ตัวกรองวันที่ของแดชบอร์ดใช้กับวิดเจ็ตนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Date filter field"
+msgstr "ฟิลด์ตัวกรองวันที่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__day
+msgid "Day"
+msgstr "วัน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_date_filter
+msgid "Default Date Filter"
+msgstr "ตัวกรองวันที่เริ่มต้น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__default_date_preset
+msgid "Default Date Preset"
+msgstr "ค่าตั้งต้นวันที่เริ่มต้น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_geometry
+msgid "Default Geometry"
+msgstr "รูปทรงเรขาคณิตเริ่มต้น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__default_value
+msgid "Default Value"
+msgstr "ตั้งค่าเริ่มต้น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Default date filter"
+msgstr "ตัวกรองวันที่เริ่มต้น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__default
+msgid "Default order"
+msgstr "ลำดับเริ่มต้น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__density
+msgid "Density"
+msgstr "ความหนาแน่น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Desc"
+msgstr "จากมากไปน้อย"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__desc
+msgid "Descending"
+msgstr "จากมากไปน้อย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__description
+msgid "Description"
+msgstr "คำอธิบาย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_user_ids
+msgid "Digest recipients"
+msgstr "ผู้รับสรุปข้อมูล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Display"
+msgstr "การแสดงผล"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__display_name
+msgid "Display Name"
+msgstr "แสดงชื่อ"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count_distinct
+msgid "Distinct count"
+msgstr "จำนวนค่าที่ไม่ซ้ำ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Do nothing"
+msgstr "ไม่ทำอะไร"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__domain
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__domain
+msgid "Domain"
+msgstr "โดเมน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__draft
+msgid "Draft"
+msgstr "ร่าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to move"
+msgstr "ลากเพื่อย้าย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to resize"
+msgstr "ลากเพื่อปรับขนาด"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__goal_value
+msgid "Draw a horizontal goal line on a bar / line chart at this value."
+msgstr "วาดเส้นเป้าหมายแนวนอนบนแผนภูมิแท่ง / เส้นที่ค่านี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Draws a dashed reference line across the chart. Goal 100 marks where the "
+"target sits."
+msgstr ""
+"วาดเส้นอ้างอิงแบบเส้นประขวางแผนภูมิ เป้าหมาย 100 "
+"ทำเครื่องหมายตำแหน่งของเป้าหมาย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__drill
+msgid "Drill down a level"
+msgstr "เจาะลึกลงหนึ่งระดับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_field_id
+msgid "Drill into"
+msgstr "เจาะลึกเข้าไปใน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_ids
+msgid "Drill steps"
+msgstr "ขั้นตอนการเจาะลึก"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Drill-down"
+msgstr "การเจาะลึก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Drill-down needs a data source on this widget."
+msgstr "การเจาะลึกต้องใช้แหล่งข้อมูลบนวิดเจ็ตนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Duplicate"
+msgstr "ทำซ้ำ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Each group adds to the ones before it - a climbing cumulative curve."
+msgstr ""
+"แต่ละกลุ่มจะบวกเพิ่มจากกลุ่มก่อนหน้า เกิดเป็นเส้นโค้งสะสมที่ไต่ระดับสูงขึ้น"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Email a PDF digest on a schedule"
+msgstr "ส่งอีเมลสรุป PDF ตามกำหนดการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email digest"
+msgstr "สรุปข้อมูลทางอีเมล"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email this dashboard as a PDF on a schedule."
+msgstr "ส่งอีเมลแดชบอร์ดนี้เป็น PDF ตามกำหนดการ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Every"
+msgstr "ทุก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Excel workbook"
+msgstr "สมุดงาน Excel"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit"
+msgstr "ออก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit presentation (Esc)"
+msgstr "ออกจากการนำเสนอ (Esc)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export CSV"
+msgstr "ส่งออก CSV"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export PNG"
+msgstr "ส่งออก PNG"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export dashboard"
+msgstr "ส่งออกแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Extra conditions on the data, on top of the model. Only customers: Customer "
+"Rank greater than 0. The count shows how many records match right now."
+msgstr ""
+"เงื่อนไขเพิ่มเติมบนข้อมูล นอกเหนือจากโมเดล เฉพาะลูกค้า: อันดับลูกค้ามากกว่า "
+"0 จำนวนแสดงว่ามีกี่ระเบียนที่ตรงในขณะนี้"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_geometry
+msgid "Fallback grid position when no layout is active."
+msgstr "ตำแหน่งกริดสำรองเมื่อไม่มีเลย์เอาต์ที่ใช้งานอยู่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_id
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__field
+msgid "Field"
+msgstr "ฟิลด์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_name
+msgid "Field Name"
+msgstr "ชื่อฟิลด์"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_key
+msgid "Field to group the left model by; its value is the join key."
+msgstr "ฟิลด์สำหรับจัดกลุ่มโมเดลด้านซ้าย ค่าของฟิลด์นี้คือคีย์สำหรับ join"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__drill_field_id
+msgid "Field to regroup by when drilling down."
+msgstr "ฟิลด์สำหรับจัดกลุ่มใหม่เมื่อเจาะลึกลงไป"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Field..."
+msgstr "ฟิลด์..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fields"
+msgstr "ฟิลด์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__fill_gaps
+msgid "Fill Gaps"
+msgstr "เติมช่องว่าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fill empty periods"
+msgstr "เติมช่วงเวลาที่ว่างเปล่า"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__fill_gaps
+msgid ""
+"Fill empty periods in a date series with zero so lines never jump across "
+"missing months."
+msgstr ""
+"เติมช่วงเวลาที่ว่างเปล่าในชุดข้อมูลวันที่ด้วยศูนย์ "
+"เพื่อไม่ให้เส้นกระโดดข้ามเดือนที่หายไป"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter"
+msgstr "ตัวกรอง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__filter_type
+msgid "Filter Type"
+msgstr "ประเภทตัวกรอง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Filter added."
+msgstr "เพิ่มตัวกรองแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter records"
+msgstr "กรองระเบียน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filtered by"
+msgstr "กรองตาม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__filter_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Filters"
+msgstr "ตัวกรอง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_follower_ids
+msgid "Followers"
+msgstr "ผู้ติดตาม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "ผู้ติดตาม (พาร์ทเนอร์)"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__icon
+msgid "Font Awesome icon name for tiles/KPIs, e.g. fa-line-chart."
+msgstr "ชื่อไอคอน Font Awesome สำหรับไทล์/KPIs เช่น fa-line-chart"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__formula
+msgid ""
+"For a Calculated measure: arithmetic over the item's other measures as a, b,"
+" c ... in order. E.g. 'a / b * 100' for a margin."
+msgstr ""
+"สำหรับหน่วยวัดที่คำนวณ: การคำนวณเลขคณิตกับหน่วยวัดอื่นของรายการเป็น a, b, c "
+"... ตามลำดับ เช่น 'a / b * 100' สำหรับอัตรากำไร"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__forest
+msgid "Forest"
+msgstr "ป่า"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__formula
+msgid "Formula"
+msgstr "สูตร"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__description
+msgid "Free notes for this widget, shown on its info tooltip."
+msgstr "บันทึกอิสระสำหรับวิดเจ็ตนี้ แสดงในคำแนะนำข้อมูลของวิดเจ็ต"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_admin
+msgid "Full control over every dashboard and the template library."
+msgstr "ควบคุมทุกแดชบอร์ดและคลังเทมเพลตได้อย่างเต็มที่"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__general
+msgid "General"
+msgstr "ทั่วไป"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Generated by Dashboard Builder"
+msgstr "สร้างโดย Dashboard Builder"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__goal_value
+msgid "Goal Value"
+msgstr "ค่าเป้าหมาย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal line (0 = none)"
+msgstr "เส้นเป้าหมาย (0 = ไม่มี)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal, e.g. 100"
+msgstr "เป้าหมาย เช่น 100"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__grid
+msgid "Grid"
+msgstr "ตาราง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Grid lines"
+msgstr "เส้นตาราง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__group_others
+msgid "Group Others"
+msgstr "จัดกลุ่มอื่น ๆ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__primary_dimension_id
+msgid "Group by"
+msgstr "จัดกลุ่มตาม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Group the rest as \"Others\""
+msgstr "จัดกลุ่มส่วนที่เหลือเป็น \"อื่น ๆ\""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H2"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H3"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__has_message
+msgid "Has Message"
+msgstr "มีข้อความ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Heading"
+msgstr "หัวข้อ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__default
+msgid "Heritage"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__none
+msgid "Hidden"
+msgstr "ซ่อนแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"How numbers read. Compact turns 3,400,000 into 3.4M; Plain keeps every "
+"digit."
+msgstr ""
+"รูปแบบการแสดงตัวเลข โหมดกระชับจะเปลี่ยน 3,400,000 เป็น 3.4M "
+"ส่วนโหมดปกติจะคงทุกหลักไว้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__hr
+msgid "Human Resources"
+msgstr "ทรัพยากรบุคคล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "I"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__id
+msgid "ID"
+msgstr "ไอดี"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__icon
+msgid "Icon"
+msgstr "ไอคอน"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "ถ้าเลือก ข้อความใหม่จะต้องการความสนใจจากคุณ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "ถ้าเลือก ข้อความบางข้อความมีข้อผิดพลาดในการส่ง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__include_archived
+msgid "Include Archived"
+msgstr "รวมรายการที่เก็บถาวร"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__include_archived
+msgid "Include archived (inactive) records in this widget's data."
+msgstr "รวมระเบียนที่เก็บถาวร (ไม่ใช้งาน) ในข้อมูลของวิดเจ็ตนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Include archived records"
+msgstr "รวมระเบียนที่เก็บถาวร"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__indigo
+msgid "Indigo"
+msgstr "คราม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Insert link"
+msgstr "แทรกลิงก์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Insert zero rows for missing days/months so a time line never jumps a gap."
+msgstr ""
+"แทรกแถวค่าศูนย์สำหรับวัน/เดือนที่ขาดหายไป "
+"เพื่อไม่ให้เส้นเวลากระโดดข้ามช่องว่าง"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__stock
+msgid "Inventory"
+msgstr "สินค้าคงคลัง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_active
+msgid "Is Active"
+msgstr "มีการใช้งานอยู่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_default
+msgid "Is Default"
+msgstr "เป็นค่าเริ่มต้นหรือไม่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_is_follower
+msgid "Is Follower"
+msgstr "เป็นผู้ติดตาม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__is_predefined
+msgid "Is Predefined"
+msgstr "ถูกกำหนดไว้ล่วงหน้า"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_template
+msgid "Is Template"
+msgstr "เป็นเทมเพลต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Italic"
+msgstr "ตัวเอียง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__item_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Item"
+msgstr "รายการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_count
+msgid "Item Count"
+msgstr "จำนวนรายการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__item_type
+msgid "Item Type"
+msgstr "ประเภทรายการ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Item description"
+msgstr "คำอธิบายรายการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_list
+msgid "Items"
+msgstr "รายการ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "JSON spec"
+msgstr "ข้อกำหนด JSON"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Join two models"
+msgstr "เชื่อมสองโมเดล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "K"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__kind
+msgid "Kind"
+msgstr "ชนิด"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_kiosk
+msgid "Kiosk-ready"
+msgstr "พร้อมใช้งานคีออสก์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__label
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__label
+msgid "Label"
+msgstr "ป้าย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__label
+msgid "Label A to Z"
+msgstr "ป้ายกำกับ A ถึง Z"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_30
+msgid "Last 30 Days"
+msgstr "30 วันที่ผ่านมา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_30
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_30
+msgid "Last 30 days"
+msgstr "30 วันล่าสุด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_365
+msgid "Last 365 Days"
+msgstr "365 วันที่ผ่านมา"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_7
+msgid "Last 7 Days"
+msgstr "7 วันล่าสุด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_7
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_7
+msgid "Last 7 days"
+msgstr "7 วันล่าสุด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_90
+msgid "Last 90 Days"
+msgstr "90 วันที่ผ่านมา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_90
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_90
+msgid "Last 90 days"
+msgstr "90 วันล่าสุด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_month
+msgid "Last Month"
+msgstr "เดือนที่แล้ว"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_quarter
+msgid "Last Quarter"
+msgstr "ไตรมาสที่แล้ว"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_triggered_on
+msgid "Last Triggered On"
+msgstr "ทริกเกอร์ล่าสุดเมื่อ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_uid
+msgid "Last Updated by"
+msgstr "อัปเดตครั้งล่าสุดโดย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_date
+msgid "Last Updated on"
+msgstr "อัปเดตครั้งล่าสุดเมื่อ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_value
+msgid "Last Value"
+msgstr "ค่าล่าสุด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_week
+msgid "Last Week"
+msgstr "สัปดาห์ที่แล้ว"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_year
+msgid "Last Year"
+msgstr "ปีที่แล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_month
+msgid "Last month"
+msgstr "เดือนที่แล้ว"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__layout_version_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Layouts"
+msgstr "เค้าโครง"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_filter__item_id
+msgid "Leave empty for a global filter shown on the dashboard bar."
+msgstr "เว้นว่างไว้เพื่อใช้ตัวกรองส่วนกลางที่แสดงบนแถบแดชบอร์ด"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__group_ids
+msgid "Leave empty to let every internal user with dashboard access see it."
+msgstr ""
+"เว้นว่างไว้เพื่อให้ผู้ใช้ภายในทุกคนที่มีสิทธิ์เข้าถึงแดชบอร์ดสามารถเห็นได้"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_key
+msgid "Left group field"
+msgstr "ฟิลด์กลุ่มด้านซ้าย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_label
+msgid "Left label"
+msgstr "ป้ายกำกับด้านซ้าย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_agg
+msgid "Left measure"
+msgstr "การวัดด้านซ้าย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_model_id
+msgid "Left model"
+msgstr "โมเดลด้านซ้าย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_value
+msgid "Left value field"
+msgstr "ฟิลด์ค่าด้านซ้าย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Legend"
+msgstr "คำอธิบายสัญลักษณ์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__limit
+msgid "Limit"
+msgstr "ขีดจำกัด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__live
+msgid "Live"
+msgstr "ไลฟ์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Live preview"
+msgstr "แสดงตัวอย่างแบบสด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading settings..."
+msgstr "กำลังโหลดการตั้งค่า..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading templates..."
+msgstr "กำลังโหลดเทมเพลต..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "M"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_dashboards
+msgid "Manage Dashboards"
+msgstr "จัดการแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__off
+msgid "Manual"
+msgstr "ด้วยตัวเอง"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_layout_version__grid
+msgid "Map of item id -> {x, y, w, h, minW, minH} on the 12-column grid."
+msgstr "การแมปของ id รายการ -> {x, y, w, h, minW, minH} บนกริด 12 คอลัมน์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Match"
+msgstr "จับคู่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Max groups shown. 0 shows all; 5 keeps the top 5 (bucket the rest as "
+"\"Others\" in Advanced)."
+msgstr ""
+"จำนวนกลุ่มสูงสุดที่แสดง 0 แสดงทั้งหมด; 5 เก็บ 5 อันดับแรก "
+"(จัดกลุ่มที่เหลือเป็น \"Others\" ในขั้นสูง)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__max
+msgid "Maximum"
+msgstr "สูงสุด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__measure_ids
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__measure_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Measures"
+msgstr "การวัด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Menu"
+msgstr "เมนู"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error
+msgid "Message Delivery error"
+msgstr "เกิดข้อผิดพลาดในการส่งข้อความ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_ids
+msgid "Messages"
+msgstr "ข้อความ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__millions
+msgid "Millions (M)"
+msgstr "ล้าน (M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__min
+msgid "Minimum"
+msgstr "ต่ำสุด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__mint
+msgid "Mint"
+msgstr "สีมินต์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__model_id
+msgid "Model"
+msgstr "โมเดล"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_name
+msgid "Model Technical Name"
+msgstr "ชื่อทางเทคนิคของโมเดล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Mono"
+msgstr "โมโน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__mono
+msgid "Monochrome"
+msgstr "โมโนโครม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__month
+msgid "Month"
+msgstr "เดือน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__mtd
+msgid "Month to Date"
+msgstr "ตั้งแต่ต้นเดือนถึงปัจจุบัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__mtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__mtd
+msgid "Month to date"
+msgstr "ตั้งแต่ต้นเดือนถึงปัจจุบัน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__multiplier
+msgid "Multiplier"
+msgstr "ตัวคูณ"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "My Dashboards"
+msgstr "แดชบอร์ดของฉัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__name
+msgid "Name"
+msgstr "ชื่อ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Needs the"
+msgstr "ต้องมี"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "New dashboard"
+msgstr "แดชบอร์ดใหม่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Next (Right arrow)"
+msgstr "ถัดไป (ลูกศรขวา)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__none
+msgid "No comparison"
+msgstr "ไม่มีการเปรียบเทียบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "No dashboard yet. Create one from the Dashboards menu."
+msgstr "ยังไม่มีแดชบอร์ด สร้างจากเมนูแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No data for the current filters"
+msgstr "ไม่มีข้อมูลสำหรับตัวกรองปัจจุบัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No more people to add."
+msgstr "ไม่มีบุคคลอื่นให้เพิ่มแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No templates yet. Build a board and use \"Save template\"."
+msgstr "ยังไม่มีเทมเพลต สร้างบอร์ดแล้วใช้ \"บันทึกเทมเพลต\""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__all
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__none
+msgid "None"
+msgstr "ไม่มี"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__note
+msgid "Note"
+msgstr "โน้ต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Notes about this widget - shown on its info tooltip."
+msgstr "หมายเหตุเกี่ยวกับวิดเจ็ตนี้ - แสดงในคำแนะนำข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__none
+msgid "Nothing"
+msgstr "ไม่มี"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__user_id
+msgid "Notify"
+msgstr "แจ้งเตือน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__number_format
+msgid "Number Format"
+msgstr "รูปแบบตัวเลข"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Number format"
+msgstr "รูปแบบตัวเลข"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of Actions"
+msgstr "จํานวนการดําเนินการ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of errors"
+msgstr "จํานวนข้อผิดพลาด"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "จำนวนข้อความที่ต้องดำเนินการ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "จํานวนข้อความที่มีข้อผิดพลาดในการส่ง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Numbered list"
+msgstr "รายการแบบมีหมายเลข"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_value
+msgid "Numeric field to aggregate (blank for a record count)."
+msgstr "ฟิลด์ตัวเลขที่จะรวม (เว้นว่างไว้สำหรับการนับระเบียน)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__ocean
+msgid "Ocean"
+msgstr "ทางทะเล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Off = a private draft only you see. On = shared per the list below and any "
+"assigned groups."
+msgstr ""
+"ปิด = ฉบับร่างส่วนตัวที่คุณเห็นเท่านั้น เปิด = "
+"แชร์ตามรายการด้านล่างและกลุ่มที่กำหนดใดๆ"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "Open Board"
+msgstr "เปิดบอร์ด"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__records
+msgid "Open matching records"
+msgstr "เปิดระเบียนที่ตรงกัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Open the matching records"
+msgstr "เปิดระเบียนที่ตรงกัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Opening records from this widget shows at most the row-limit count, matching"
+" what the chart displays."
+msgstr ""
+"การเปิดระเบียนจากวิดเจ็ตนี้จะแสดงไม่เกินจำนวนขีดจำกัดแถว "
+"ซึ่งตรงกับที่แผนภูมิแสดง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Opens with date range"
+msgstr "เปิดพร้อมช่วงวันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__operator
+msgid "Operator"
+msgstr "ผู้ปฏิบัติการ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__target_value
+msgid "Optional goal used by KPI and gauge items."
+msgstr "เป้าหมายที่ไม่บังคับซึ่งใช้โดยรายการ KPI และเกจ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Optional label"
+msgstr "ป้ายกำกับที่ไม่บังคับ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__options
+msgid "Options"
+msgstr "ตัวเลือก"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__sort_field_id
+msgid "Order groups by this field (used when sort is 'By a specific field')."
+msgstr ""
+"จัดลำดับกลุ่มตามฟิลด์นี้ (ใช้เมื่อการเรียงลำดับเป็น 'ตามฟิลด์ที่ระบุ')"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Order the groups by any field. E.g. sort countries by Created on, newest "
+"first."
+msgstr ""
+"จัดลำดับกลุ่มตามฟิลด์ใดก็ได้ เช่น เรียงประเทศตามวันที่สร้าง ใหม่สุดก่อน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Orders the groups. Value high to low puts the biggest bar first."
+msgstr "จัดลำดับกลุ่ม ค่าจากมากไปน้อยจะวางแท่งที่ใหญ่ที่สุดไว้ก่อน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__outline
+msgid "Outline"
+msgstr "เค้าโครง"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__combo_line
+msgid "Overlay a cumulative running-total line (Pareto) on a bar chart."
+msgstr "ซ้อนเส้นยอดรวมสะสม (พาเรโต) บนแผนภูมิแท่ง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__owner_id
+msgid "Owner"
+msgstr "เจ้าของ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "P"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF / Print (charts)"
+msgstr "PDF / พิมพ์ (แผนภูมิ)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF document"
+msgstr "เอกสาร PDF"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Paint a value by its size. Example: if Revenue is less than 0, colour the "
+"number red; the first matching rule wins."
+msgstr ""
+"ระบายสีค่าตามขนาดของค่า ตัวอย่าง: หากรายได้น้อยกว่า 0 "
+"ให้ระบายตัวเลขเป็นสีแดง กฎแรกที่ตรงกันจะมีผล"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__palette
+msgid "Palette"
+msgstr "จานสี"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Paragraph"
+msgstr "ย่อหน้า"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__payload
+msgid "Payload"
+msgstr "เพย์โหลด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__percent
+msgid "Percentage"
+msgstr "เปอร์เซ็นต์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Period"
+msgstr "ช่วงเวลา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Pick a field to slice by."
+msgstr "เลือกฟิลด์ที่จะใช้แบ่งส่วน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__plain
+msgid "Plain"
+msgstr "ธรรมดา"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Plain (1,234)"
+msgstr "ธรรมดา (1,234)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Play"
+msgstr "เล่น"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__pos
+msgid "Point of Sale"
+msgstr "จุดขาย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Pre-scopes this widget to a range even when the board filter is off. This "
+"year always shows the current year."
+msgstr ""
+"กำหนดขอบเขตของวิดเจ็ตนี้ไว้ล่วงหน้าเป็นช่วงหนึ่ง "
+"แม้ว่าตัวกรองบอร์ดจะปิดอยู่ก็ตาม ปีนี้จะแสดงปีปัจจุบันเสมอ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Present: fullscreen, auto-rotate (Esc to exit)"
+msgstr "นำเสนอ: เต็มจอ หมุนอัตโนมัติ (กด Esc เพื่อออก)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Previous (Left arrow)"
+msgstr "ก่อนหน้า (ลูกศรซ้าย)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_period
+msgid "Previous period"
+msgstr "ช่วงก่อนหน้า"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__propagate_domain
+msgid "Propagate Domain"
+msgstr "เผยแพร่โดเมน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__provider_type
+msgid "Provider Type"
+msgstr "ประเภทผู้ให้บริการ"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__published
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Published"
+msgstr "เผยแพร่แล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Published (visible to the people below and to your groups)"
+msgstr "เผยแพร่แล้ว (มองเห็นได้โดยบุคคลด้านล่างและกลุ่มของคุณ)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__quarter
+msgid "Quarter"
+msgstr "ไตรมาส"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__qtd
+msgid "Quarter to Date"
+msgstr "ไตรมาสถึงปัจจุบัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__qtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__qtd
+msgid "Quarter to date"
+msgstr "ไตรมาสจนถึงปัจจุบัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Re-query every widget on a timer. \"Every 5 minutes\" keeps a wall board "
+"live without a reload. Manual = refresh only when you reopen."
+msgstr ""
+"สอบถามข้อมูลของทุกวิดเจ็ตใหม่ตามตัวจับเวลา \"ทุก 5 นาที\" "
+"ช่วยให้บอร์ดติดผนังแสดงข้อมูลสดโดยไม่ต้องโหลดใหม่ ด้วยตนเอง = "
+"รีเฟรชเฉพาะเมื่อคุณเปิดใหม่เท่านั้น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__read_only
+msgid "Read Only"
+msgstr "อ่านอย่างเดียว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Reading the board..."
+msgstr "กำลังอ่านบอร์ด..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit
+msgid "Record Limit"
+msgstr "ขีดจำกัดระเบียน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit_visibility
+msgid "Record Limit Visibility"
+msgstr "การมองเห็นขีดจำกัดระเบียน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Records"
+msgstr "ระเบียน"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Refresh Interval"
+msgstr "ช่วงเวลารีเฟรช"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_mode
+msgid "Refresh Mode"
+msgstr "โหมดรีเฟรช"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Remove"
+msgstr "นำออก"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__semi_circle
+msgid "Render pie / doughnut as a half circle."
+msgstr "แสดงแผนภูมิวงกลม / โดนัทเป็นครึ่งวงกลม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__required_module
+msgid "Required Module"
+msgstr "โมดูลที่จำเป็น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__group_ids
+msgid "Restricted to groups"
+msgstr "จำกัดเฉพาะกลุ่ม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_key
+msgid "Right group field"
+msgstr "ฟิลด์การจัดกลุ่มด้านขวา"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_label
+msgid "Right label"
+msgstr "ป้ายกำกับด้านขวา"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_agg
+msgid "Right measure"
+msgstr "การวัดด้านขวา"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_model_id
+msgid "Right model"
+msgstr "โมเดลด้านขวา"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_value
+msgid "Right value field"
+msgstr "ฟิลด์ค่าด้านขวา"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__parent_id
+msgid "Rolled back from"
+msgstr "ย้อนกลับจาก"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__rose
+msgid "Rose"
+msgstr "สีกุหลาบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Row limit"
+msgstr "ขีดจำกัดแถว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Rule"
+msgstr "กฎ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Running total"
+msgstr "ยอดสะสม"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "SELECT name AS label, count(*) AS n FROM res_partner GROUP BY name"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__sql_query
+msgid "SQL query"
+msgstr "คิวรี SQL"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Safe SQL (read-only)"
+msgstr "SQL ปลอดภัย (อ่านอย่างเดียว)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__crm
+msgid "Sales & CRM"
+msgstr "การขายและ CRM"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_year
+msgid "Same period last year"
+msgstr "ช่วงเวลาเดียวกันปีที่แล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save settings"
+msgstr "บันทึกการตั้งค่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save template"
+msgstr "บันทึกเทมเพลต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save this board as a reusable template"
+msgstr "บันทึกบอร์ดนี้เป็นเทมเพลตที่ใช้ซ้ำได้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Saved as a reusable template."
+msgstr "บันทึกเป็นเทมเพลตที่ใช้ซ้ำได้แล้ว"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__multiplier
+msgid "Scale the raw value, e.g. 0.001 to show thousands."
+msgstr "ปรับสเกลค่าดิบ เช่น 0.001 เพื่อแสดงเป็นหลักพัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search fields..."
+msgstr "ค้นหาฟิลด์..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search people to add..."
+msgstr "ค้นหาบุคคลที่จะเพิ่ม..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Seconds between refreshes when auto-refresh is on."
+msgstr "จำนวนวินาทีระหว่างการรีเฟรชเมื่อเปิดใช้งานการรีเฟรชอัตโนมัติ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__secret
+msgid "Secret"
+msgstr "ความลับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a field..."
+msgstr "เลือกฟิลด์..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a model..."
+msgstr "เลือกโมเดล..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select..."
+msgstr "เลือก..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__semi_circle
+msgid "Semi Circle"
+msgstr "ครึ่งวงกลม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Semi circle"
+msgstr "ครึ่งวงกลม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__sequence
+msgid "Sequence"
+msgstr "ลำดับ"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Share a draft with specific users"
+msgstr "แชร์ฉบับร่างกับผู้ใช้ที่ระบุ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Share with people"
+msgstr "แชร์กับผู้อื่น"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Shared with"
+msgstr "แชร์กับ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_grid
+msgid "Show Grid"
+msgstr "แสดงเส้นตาราง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_legend
+msgid "Show Legend"
+msgstr "แสดงคำอธิบายสัญลักษณ์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_trend
+msgid "Show Trend"
+msgstr "แสดงแนวโน้ม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_values
+msgid "Show Values"
+msgstr "แสดงค่า"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__show_trend
+msgid ""
+"Show a period-over-period trend badge on KPIs when a date field is "
+"available."
+msgstr "แสดงป้ายแนวโน้มแบบเทียบช่วงต่อช่วงบน KPI เมื่อมีฟิลด์วันที่"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__cumulative
+msgid "Show a running total: each group adds to the ones before it."
+msgstr "แสดงยอดรวมสะสม: แต่ละกลุ่มจะบวกเพิ่มจากกลุ่มก่อนหน้า"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__slate
+msgid "Slate"
+msgstr "สีเทาหินชนวน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Slice labels"
+msgstr "ป้ายกำกับส่วนแบ่ง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights"
+msgstr "ข้อมูลเชิงลึกอัจฉริยะ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights: read this board in plain language"
+msgstr "ข้อมูลเชิงลึกอัจฉริยะ: อ่านบอร์ดนี้ด้วยภาษาที่เข้าใจง่าย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__smooth
+msgid "Smooth"
+msgstr "เรียบเนียน"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__smooth
+msgid "Smooth (curved) lines."
+msgstr "เส้นเรียบเนียน (โค้ง)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__soft
+msgid "Soft"
+msgstr "นุ่มนวล"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__solid
+msgid "Solid"
+msgstr "ทึบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sort
+msgid "Sort"
+msgstr "จัดเรียง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_mode
+msgid "Sort Mode"
+msgstr "โหมดการจัดเรียง"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_order
+msgid "Sort Order"
+msgstr "ลำดับการจัดเรียง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_field_id
+msgid "Sort by field"
+msgstr "จัดเรียงตามฟิลด์"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Specific users who may open this dashboard even while it is a draft."
+msgstr "ผู้ใช้ที่ระบุซึ่งสามารถเปิดแดชบอร์ดนี้ได้แม้ในขณะที่ยังเป็นฉบับร่าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Splits each group into a second series. Country plus Stage stacks every "
+"country bar by stage."
+msgstr ""
+"แบ่งแต่ละกลุ่มออกเป็นชุดข้อมูลที่สอง "
+"ประเทศบวกกับขั้นตอนจะซ้อนแท่งของแต่ละประเทศตามขั้นตอน"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__stacked
+msgid "Stack series in a bar chart."
+msgstr "ซ้อนชุดข้อมูลในแผนภูมิแท่ง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__stacked
+msgid "Stacked"
+msgstr "แบบซ้อน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Start from a template"
+msgstr "เริ่มจากเทมเพลต"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__state
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__state
+msgid "State"
+msgstr "รัฐ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Sub group by"
+msgstr "จัดกลุ่มย่อยตาม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Subheading"
+msgstr "หัวข้อย่อย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__subtitle
+msgid "Subtitle"
+msgstr "คำบรรยาย"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__unit
+msgid "Suffix shown after the value, e.g. %, kg, orders."
+msgstr "คำต่อท้ายที่แสดงหลังค่า เช่น %, kg, คำสั่งซื้อ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Suffix, e.g. % or kg"
+msgstr "คำต่อท้าย เช่น % หรือ kg"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__sum
+msgid "Sum"
+msgstr "ผลรวม"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__sunset
+msgid "Sunset"
+msgstr "พระอาทิตย์ตก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Switch dashboard"
+msgstr "สลับแดชบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Switch to Edit and add your first widget - group any model's\n"
+"                               data database side and drill anywhere."
+msgstr ""
+"สลับไปที่โหมดแก้ไขและเพิ่มวิดเจ็ตแรกของคุณ - "
+"จัดกลุ่มข้อมูลของโมเดลใดก็ได้ที่ฝั่งฐานข้อมูลและเจาะลึกได้ทุกที่"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Target"
+msgstr "เป้าหมาย"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__target_value
+msgid "Target Value"
+msgstr "ค่าเป้าหมาย"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Target:"
+msgstr "เป้าหมาย:"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__teal
+msgid "Teal"
+msgstr "สีเขียวอมฟ้า"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_template__required_module
+msgid ""
+"Technical name of the base app a vertical template needs (e.g. account). "
+"Blank for a general template."
+msgstr ""
+"ชื่อทางเทคนิคของแอปพื้นฐานที่เทมเพลตเฉพาะทางต้องการ (เช่น account) "
+"เว้นว่างไว้สำหรับเทมเพลตทั่วไป"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Templates"
+msgstr "เทมเพลต"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__model_id
+msgid "The Odoo model to aggregate (for the Odoo-model provider)."
+msgstr "โมเดล Odoo ที่จะรวม (สำหรับผู้ให้บริการโมเดล Odoo)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The card's highlight colour. Tiles use it as their fill; charts use it for "
+"the first series."
+msgstr "สีไฮไลต์ของการ์ด ไทล์ใช้เป็นสีเติม ส่วนแผนภูมิใช้สำหรับชุดข้อมูลแรก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The colour ramp every chart on this board uses."
+msgstr "ไล่เฉดสีที่ทุกแผนภูมิบนบอร์ดนี้ใช้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The dashboard's title, shown in the header and the switcher."
+msgstr "ชื่อของแดชบอร์ด แสดงในส่วนหัวและตัวสลับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The date filter the board starts on. This month means it always opens scoped"
+" to the current month."
+msgstr ""
+"ตัวกรองวันที่ที่บอร์ดเริ่มต้น "
+"เดือนนี้หมายความว่าจะเปิดโดยจำกัดขอบเขตเฉพาะเดือนปัจจุบันเสมอ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__default_date_preset
+msgid ""
+"The date range this dashboard opens with (the board date filter's start "
+"value)."
+msgstr ""
+"ช่วงวันที่ที่แดชบอร์ดนี้เปิดใช้งาน (ค่าเริ่มต้นของตัวกรองวันที่ของบอร์ด)"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__field_id
+msgid "The field to aggregate. Leave empty for a record count."
+msgstr "ฟิลด์ที่จะรวม เว้นว่างไว้เพื่อนับจำนวนระเบียน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The field whose values become your bars, slices or rows. Group by Country "
+"gives one bar per country."
+msgstr ""
+"ฟิลด์ที่ค่าจะกลายเป็นแท่ง ชิ้นส่วน หรือแถวของคุณ "
+"การจัดกลุ่มตามประเทศจะให้หนึ่งแท่งต่อหนึ่งประเทศ"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__item_type
+msgid ""
+"The kind of widget. Every type is a registered strategy - adding one never "
+"edits this model."
+msgstr ""
+"ประเภทของวิดเจ็ต ทุกประเภทเป็นกลยุทธ์ที่ลงทะเบียนไว้ - "
+"การเพิ่มประเภทจะไม่แก้ไขโมเดลนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The records to chart. Example: Contact for customers, Sales Order for "
+"revenue."
+msgstr ""
+"ระเบียนที่จะแสดงในแผนภูมิ ตัวอย่าง: ผู้ติดต่อสำหรับลูกค้า "
+"ใบสั่งขายสำหรับรายได้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The rich text shown in this block, e.g. a section title, notes, or "
+"instructions for the board."
+msgstr ""
+"ข้อความแบบ Rich Text ที่แสดงในบล็อกนี้ เช่น หัวข้อส่วน บันทึก "
+"หรือคำแนะนำสำหรับบอร์ด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The title shown on the card. Example: \"Revenue by month\"."
+msgstr "ชื่อที่แสดงบนการ์ด ตัวอย่าง: \"รายได้แยกตามเดือน\""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__theme
+msgid "Theme palette"
+msgstr "จานสีธีม"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__secondary_dimension_id
+msgid "Then by"
+msgstr "จากนั้นตาม"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_month
+msgid "This Month"
+msgstr "เดือนนี้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_quarter
+msgid "This Quarter"
+msgstr "ไตรมาสนี้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_week
+msgid "This Week"
+msgstr "สัปดาห์นี้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_year
+msgid "This Year"
+msgstr "ปีนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_month
+msgid "This month"
+msgstr "เดือนนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_quarter
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_quarter
+msgid "This quarter"
+msgstr "ไตรมาสนี้"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_template.py:0
+msgid "This template needs the %s app. Install it first."
+msgstr "เทมเพลตนี้ต้องใช้แอป %s กรุณาติดตั้งก่อน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_week
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_week
+msgid "This week"
+msgstr "สัปดาห์นี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "This widget"
+msgstr "วิดเจ็ตนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_year
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_year
+msgid "This year"
+msgstr "ปีนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__thousands
+msgid "Thousands (K)"
+msgstr "พัน (K)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__threshold
+msgid "Threshold"
+msgstr "เกณฑ์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__thumbnail
+msgid "Thumbnail"
+msgstr "ภาพขนาดย่อ"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__tile_style
+msgid "Tile Style"
+msgstr "รูปแบบไทล์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile look: Soft tint, Solid fill, or Outline. Soft suits most boards."
+msgstr "ลักษณะไทล์: สีอ่อน เติมสีทึบ หรือเส้นขอบ สีอ่อนเหมาะกับบอร์ดส่วนใหญ่"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__tile_style
+msgid "Tile look: soft tint, solid fill, or outline."
+msgstr "ลักษณะไทล์: สีอ่อน เติมสีทึบ หรือเส้นขอบ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile style"
+msgstr "รูปแบบไทล์"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__title
+msgid "Title"
+msgstr "คำนำหน้าชื่อ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__today
+msgid "Today"
+msgstr "วันนี้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle comfortable / compact density"
+msgstr "สลับความหนาแน่นแบบสบายตา / กะทัดรัด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle light / dark"
+msgstr "สลับสว่าง / มืด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Toggles specific to this chart type. Semi circle turns a pie into a half "
+"gauge; Stacked piles a bar's series on top of each other."
+msgstr ""
+"ตัวสลับเฉพาะสำหรับแผนภูมิประเภทนี้ "
+"ครึ่งวงกลมเปลี่ยนแผนภูมิวงกลมเป็นเกจครึ่งหนึ่ง "
+"แบบซ้อนจะซ้อนชุดข้อมูลของแท่งทับกัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Total"
+msgstr "รวม"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__triggered
+msgid "Triggered"
+msgstr "ทริกเกอร์แล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Type a name and click to add. These people can open this dashboard even "
+"while it is a draft."
+msgstr ""
+"พิมพ์ชื่อแล้วคลิกเพื่อเพิ่ม "
+"บุคคลเหล่านี้สามารถเปิดแดชบอร์ดนี้ได้แม้ในขณะที่ยังเป็นฉบับร่าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "U"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Underline"
+msgstr "ขีดเส้นใต้"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__unit
+msgid "Unit"
+msgstr "หน่วย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Unknown widget type"
+msgstr "ประเภทวิดเจ็ตที่ไม่รู้จัก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Use this"
+msgstr "ใช้รายการนี้"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__username
+msgid "Username"
+msgstr "ชื่อผู้ใช้"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__basic
+msgid "Username / password"
+msgstr "ชื่อผู้ใช้ / รหัสผ่าน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__value
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__value
+msgid "Value"
+msgstr "ค่า"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_desc
+msgid "Value (high to low)"
+msgstr "ค่า (มากไปน้อย)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_asc
+msgid "Value (low to high)"
+msgstr "ค่า (น้อยไปมาก)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value format"
+msgstr "รูปแบบค่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value labels"
+msgstr "ป้ายกำกับค่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_desc
+msgid "Value: high to low"
+msgstr "ค่า: มากไปน้อย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_asc
+msgid "Value: low to high"
+msgstr "ค่า: น้อยไปมาก"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_viewer
+msgid "Viewer"
+msgstr "ผู้ดู"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__violet
+msgid "Violet"
+msgstr "สีม่วง"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__web
+msgid "Website"
+msgstr "เว็บไซต์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__week
+msgid "Week"
+msgstr "สัปดาห์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__wtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__wtd
+msgid "Week to date"
+msgstr "สัปดาห์นี้จนถึงปัจจุบัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each bar or slice measures. Count = number of records; Sum of Amount = "
+"total revenue. Add a second measure to compare two numbers side by side."
+msgstr ""
+"สิ่งที่แต่ละแท่งหรือส่วนวัด Count = จำนวนระเบียน; Sum of Amount = รายได้รวม "
+"เพิ่มการวัดที่สองเพื่อเปรียบเทียบตัวเลขสองค่าเคียงข้างกัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each pie slice shows: the raw Value (e.g. 39), its Percentage (e.g. "
+"28%), or nothing."
+msgstr ""
+"สิ่งที่แต่ละส่วนของแผนภูมิวงกลมแสดง: ค่าดิบ (เช่น 39) เปอร์เซ็นต์ (เช่น 28%)"
+" หรือไม่แสดงอะไรเลย"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__click_action
+msgid "What happens when a data point is clicked."
+msgstr "สิ่งที่เกิดขึ้นเมื่อคลิกจุดข้อมูล"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__data_label_type
+msgid ""
+"What pie / doughnut slice labels show: the value, its share, or nothing."
+msgstr ""
+"สิ่งที่ป้ายกำกับส่วนของแผนภูมิวงกลม / โดนัทแสดง: ค่า สัดส่วน "
+"หรือไม่แสดงอะไรเลย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "What this dashboard is for."
+msgstr "แดชบอร์ดนี้มีไว้เพื่ออะไร"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "What this dashboard is for..."
+msgstr "แดชบอร์ดนี้มีไว้เพื่ออะไร..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__group_others
+msgid ""
+"When a row cap is set, sum everything past it into a single 'Others' group "
+"instead of dropping it."
+msgstr ""
+"เมื่อกำหนดขีดจำกัดแถว ให้รวมทุกอย่างที่เกินเข้าเป็นกลุ่ม 'Others' "
+"กลุ่มเดียวแทนที่จะตัดทิ้ง"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit_visibility
+msgid ""
+"When a row limit is set, also cap the record-count shown on click-through to"
+" that limit instead of the full match."
+msgstr ""
+"เมื่อกำหนดขีดจำกัดแถว "
+"ให้จำกัดจำนวนระเบียนที่แสดงเมื่อคลิกทะลุไว้ที่ขีดจำกัดนั้นด้วย "
+"แทนที่จะเป็นผลลัพธ์ที่ตรงกันทั้งหมด"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "When clicked"
+msgstr "เมื่อคลิก"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__provider_type
+msgid ""
+"Where the numbers come from. The free engine ships the Odoo-model provider; "
+"joins, safe SQL and external feeds register alongside it."
+msgstr ""
+"ตัวเลขมาจากไหน เอนจินฟรีมาพร้อมกับผู้ให้บริการโมเดล Odoo; การจอยน์ SQL "
+"ที่ปลอดภัย และฟีดภายนอกลงทะเบียนควบคู่ไปกับมัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Which date the board date filter narrows for this widget. Auto picks a "
+"sensible one (e.g. Order Date)."
+msgstr ""
+"ตัวกรองวันที่ของบอร์ดจำกัดวันที่ใดสำหรับวิดเจ็ตนี้ "
+"โหมดอัตโนมัติเลือกวันที่ที่เหมาะสม (เช่น Order Date)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Who gets the scheduled PDF. Example: email the sales board to the team every"
+" Monday."
+msgstr ""
+"ใครได้รับ PDF ตามกำหนดเวลา ตัวอย่าง: ส่งอีเมลบอร์ดการขายให้ทีมทุกวันจันทร์"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget added."
+msgstr "เพิ่มวิดเจ็ตแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget duplicated."
+msgstr "ทำสำเนาวิดเจ็ตแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget name"
+msgstr "ชื่อวิดเจ็ต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget type"
+msgstr "ประเภทวิดเจ็ต"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget updated."
+msgstr "อัปเดตวิดเจ็ตแล้ว"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"With a row limit set, everything past it is summed into one honest Others "
+"slice instead of dropped."
+msgstr ""
+"เมื่อกำหนดขีดจำกัดแถว ทุกอย่างที่เกินจะถูกรวมเข้าเป็นส่วน Others "
+"เดียวอย่างตรงไปตรงมาแทนที่จะถูกตัดทิ้ง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__year
+msgid "Year"
+msgstr "ปี"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__ytd
+msgid "Year to Date"
+msgstr "ปีถึงวัน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__ytd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__ytd
+msgid "Year to date"
+msgstr "ตั้งแต่ต้นปีถึงปัจจุบัน"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__yesterday
+msgid "Yesterday"
+msgstr "เมื่อวาน"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"You can view these settings but only the owner or a dashboard builder can "
+"change them."
+msgstr ""
+"คุณสามารถดูการตั้งค่าเหล่านี้ได้ "
+"แต่มีเพียงเจ้าของหรือผู้สร้างแดชบอร์ดเท่านั้นที่เปลี่ยนแปลงได้"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_dashboard.py:0
+msgid "You may not change this dashboard's settings."
+msgstr "คุณไม่สามารถเปลี่ยนแปลงการตั้งค่าของแดชบอร์ดนี้ได้"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "a / b * 100"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "app"
+msgstr "แอป"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gte
+msgid "at least"
+msgstr "อย่างน้อย"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lte
+msgid "at most"
+msgstr "อย่างมาก"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "colour text"
+msgstr "ข้อความสี"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "data bar"
+msgstr "แถบข้อมูล"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "e.g. 100"
+msgstr "เช่น 100"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "equals"
+msgstr "เท่ากับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "fill"
+msgstr "เติม"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gt
+msgid "greater than"
+msgstr "มากกว่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "hours"
+msgstr "ชั่วโมง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at least"
+msgstr "อย่างน้อยเท่ากับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at most"
+msgstr "อย่างมากเท่ากับ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is between"
+msgstr "อยู่ระหว่าง"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is greater than"
+msgstr "มากกว่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is less than"
+msgstr "น้อยกว่า"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "items"
+msgstr "รายการ"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lt
+msgid "less than"
+msgstr "น้อยกว่า"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "minutes"
+msgstr "นาที"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "record(s)"
+msgstr "รายการ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "seconds"
+msgstr "วินาที"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "target"
+msgstr "เป้าหมาย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "unit"
+msgstr "หน่วย"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "• List"
+msgstr "• รายการ"

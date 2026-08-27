@@ -1,0 +1,3397 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* eh_board
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-14 10:49+0000\n"
+"PO-Revision-Date: 2026-07-14 10:49+0000\n"
+"Last-Translator: ERP Heritage <info@erpheritage.com.au>\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "% of"
+msgstr "占比 %"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(auto)"
+msgstr "(自动)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(none)"
+msgstr "(无)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "0 = all"
+msgstr "0 = 全部"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "1.2K"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "A blank canvas"
+msgstr "空白画布"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_date_filter
+msgid ""
+"A built-in date range applied to this widget when the board's own date "
+"filter is off."
+msgstr "当看板自身的日期筛选器关闭时，应用于此小组件的内置日期范围。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A goal for this KPI. Target 100 with a value of 72 shows 72% of target on "
+"the bar."
+msgstr "此 KPI 的目标值。目标为 100、数值为 72 时，进度条显示达成目标的 72%。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A short note explaining what this widget measures. Appears as an info "
+"tooltip on the card."
+msgstr "一段简短说明，解释此小组件所衡量的内容。以信息提示形式显示在卡片上。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__sql_query
+msgid ""
+"A single read-only SELECT. First column is the category label; the remaining"
+" numeric columns become measures."
+msgstr "单个只读 SELECT。第一列为类别标签；其余数值列将作为度量值。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__domain
+msgid ""
+"A static filter applied before any runtime dashboard filter. A plain domain "
+"literal - never an evaluated expression."
+msgstr "在任何运行时仪表板筛选器之前应用的静态筛选器。为纯 domain 字面量，绝不是需要求值的表达式。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__domain
+msgid "A static filter for this item, on top of the data source filter."
+msgstr "针对此项目的静态筛选器，叠加在数据源筛选器之上。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__credential_id
+msgid "A vaulted credential for an external source (never inlined)."
+msgstr "用于外部数据源的保险库凭据（绝不内联）。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__api_key
+msgid "API key"
+msgstr "API 密钥"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__accent
+msgid "Accent"
+msgstr "强调色"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Accent colour"
+msgstr "强调色"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__accent
+msgid "Accent colour for the widget (tiles use it as the fill)."
+msgstr "小组件的强调色（磁贴以其作为填充色）。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__account
+msgid "Accounting"
+msgstr "会计"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction
+msgid "Action Needed"
+msgstr "所需操作"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Actions"
+msgstr "操作"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__active
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__active
+msgid "Active"
+msgstr "有效"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__active_layout_id
+msgid "Active layout"
+msgstr "活动布局"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add"
+msgstr "添加"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget"
+msgstr "添加小组件"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget, then press Play to present."
+msgstr "添加一个小组件，然后按“播放”开始演示。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add filter"
+msgstr "添加筛选器"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add some data widgets to get insights."
+msgstr "添加一些数据小组件以获取洞察。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add widget"
+msgstr "添加小组件"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Adds an up/down trend badge. Previous period compares this month vs last "
+"month."
+msgstr "添加上升/下降趋势徽章。上一周期将本月与上月进行比较。"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_admin
+msgid "Administrator"
+msgstr "管理员"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Advanced"
+msgstr "高级"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__aggregate
+msgid "Aggregate"
+msgstr "聚合"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_form
+msgid "Alert"
+msgstr "警报"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_alert
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_alerts
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_list
+msgid "Alerts"
+msgstr "提醒"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All"
+msgstr "全部"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All Odoo apps"
+msgstr "所有 Odoo 应用"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Also count inactive / archived records. Off by default, so a chart of leads "
+"ignores archived ones."
+msgstr "同时统计非活动/已归档的记录。默认关闭，因此潜在客户图表会忽略已归档的记录。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__amber
+msgid "Amber"
+msgstr "琥珀色"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Arithmetic over other measures as a, b, c ..."
+msgstr "以 a、b、c ... 形式对其他度量值进行算术运算。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__armed
+msgid "Armed"
+msgstr "已启用"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Asc"
+msgstr "升序"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__asc
+msgid "Ascending"
+msgstr "升序"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_attachment_count
+msgid "Attachment Count"
+msgstr "附件数量"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__interval
+msgid "Auto (interval)"
+msgstr "自动（间隔）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Auto refresh"
+msgstr "自动刷新"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__avg
+msgid "Average"
+msgstr "平均值"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "B"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__token
+msgid "Bearer token"
+msgstr "Bearer 令牌"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__blue
+msgid "Blue"
+msgstr "蓝色"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_open
+msgid "Board"
+msgstr "仪表板"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__content
+msgid "Body for text / to-do items."
+msgstr "文本/待办事项的正文内容。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bold"
+msgstr "加粗"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_granularity
+msgid "Bucket size when grouping by a date field."
+msgstr "按日期字段分组时的分组间隔大小。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bucket size when you group by a date. Month gives one point per month."
+msgstr "按日期分组时的分组间隔大小。“月”表示每月一个数据点。"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid ""
+"Build a live BI workspace: drag tiles onto a snapping grid, group any\n"
+"               model's data database side, and drill anywhere."
+msgstr ""
+"构建实时 BI 工作区：将磁贴拖到自动对齐网格上，在数据库端对任意\n"
+"               模型的数据进行分组，并可随处下钻。"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_builder
+msgid "Builder"
+msgstr "构建器"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bulleted list"
+msgstr "项目符号列表"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__field
+msgid "By a specific field"
+msgstr "按特定字段"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__category
+msgid "By category"
+msgstr "按类别"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__measure
+msgid "By measure"
+msgstr "按度量"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "CSV"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__formula
+msgid "Calculated (formula)"
+msgstr "计算值（公式）"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_builder
+msgid "Can design dashboards, items, measures, data sources and filters."
+msgstr "可以设计仪表板、项目、度量、数据源和筛选器。"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_viewer
+msgid "Can open and read dashboards shared with them."
+msgstr "可以打开并查看与其共享的仪表板。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cancel"
+msgstr "取消"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cap click-through to the row limit"
+msgstr "将点击穿透限制为行数上限"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit
+msgid "Cap the number of groups (0 = no cap)."
+msgstr "限制分组数量（0 = 不限制）。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__captured_on
+msgid "Captured On"
+msgstr "捕获日期"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__category
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Category"
+msgstr "类别"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__chart_options
+msgid "Chart Options"
+msgstr "图表选项"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__chart_type
+msgid "Chart Type"
+msgstr "图表类型"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__palette
+msgid "Chart colour palette for this dashboard."
+msgstr "此仪表板的图表配色方案。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Chart palette"
+msgstr "图表配色"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_drill__chart_type
+msgid "Chart type to switch to at this level (blank keeps the current)."
+msgstr "在此层级切换到的图表类型（留空则保持当前类型）。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear all"
+msgstr "全部清除"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear formatting"
+msgstr "清除格式"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__click_action
+msgid "Click Action"
+msgstr "点击操作"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Click a field to add it fast: names become Group by, numbers become a Sum "
+"measure."
+msgstr "点击字段可快速添加：名称变为“分组依据”，数字变为“求和”度量。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Clicking a tile, bar, slice or point opens the exact records behind it -\n"
+"                            scoped to what was clicked, respecting record rules."
+msgstr ""
+"点击磁贴、柱形、扇区或数据点会打开其背后的确切记录 -\n"
+"                            范围限定为所点击的内容，并遵循记录规则。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Close"
+msgstr "关闭"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__color_mode
+msgid "Color Mode"
+msgstr "颜色模式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Colour palette"
+msgstr "配色方案"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__conditional_rules
+msgid ""
+"Colour rules applied to values on tiles / lists / pivots: an ordered list of"
+" {measure, op, v1, v2, color, style} - first match wins."
+msgstr ""
+"应用于磁贴/列表/透视表上数值的颜色规则：{measure, op, v1, v2, color, style} 的有序列表 - 首个匹配项优先。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__combo_line
+msgid "Combo Line"
+msgstr "组合折线"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__comfortable
+msgid "Comfortable"
+msgstr "宽松"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__compact
+msgid "Compact"
+msgstr "紧凑"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact (1.2K / 3.4M)"
+msgstr "紧凑 (1.2K / 3.4M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__compact
+msgid "Compact (K/M/B)"
+msgstr "紧凑 (K/M/B)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact packs more widgets on screen; Comfortable gives them room."
+msgstr "紧凑模式在屏幕上容纳更多小组件；宽松模式则给它们更多空间。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__company_ids
+msgid "Companies"
+msgstr "公司"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__company_id
+msgid "Company"
+msgstr "公司"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__compare_mode
+msgid "Compare Mode"
+msgstr "对比模式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compare to"
+msgstr "对比对象"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__conditional_rules
+msgid "Conditional Rules"
+msgstr "条件规则"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Conditional formatting"
+msgstr "条件格式"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__config
+msgid "Config"
+msgstr "配置"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_config
+msgid "Configuration"
+msgstr "配置"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Configure"
+msgstr "配置"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__content
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Content"
+msgstr "内容"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Could not open records for this widget."
+msgstr "无法打开此小组件的记录。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count
+msgid "Count"
+msgstr "计数"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid "Create your first dashboard"
+msgstr "创建您的第一个仪表板"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_uid
+msgid "Created by"
+msgstr "创建人"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_date
+msgid "Created on"
+msgstr "创建日期"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__credential_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_form
+msgid "Credential"
+msgstr "凭据"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_credential
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_credentials
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_list
+msgid "Credentials"
+msgstr "授权认证"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cross-filter: click a chart to filter the whole board"
+msgstr "交叉筛选：点击图表以筛选整个看板"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__cumulative
+msgid "Cumulative"
+msgstr "累加"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cumulative line"
+msgstr "累计折线"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__currency_id
+msgid "Currency"
+msgstr "币别"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__custom
+msgid "Custom Range"
+msgstr "自定义范围"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_dashboard
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__dashboard_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard"
+msgstr "仪表板"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_alert
+msgid "Dashboard Alert"
+msgstr "仪表板警报"
+
+#. module: eh_board
+#: model:ir.module.category,name:eh_board.module_category_eh_board
+#: model:res.groups.privilege,name:eh_board.res_groups_privilege_eh_board
+msgid "Dashboard Builder"
+msgstr "仪表板生成器"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_credential
+msgid "Dashboard Credential"
+msgstr "仪表板凭据"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_datasource
+msgid "Dashboard Data Source"
+msgstr "仪表板数据源"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_drill
+msgid "Dashboard Drill Step"
+msgstr "仪表板下钻步骤"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_filter
+msgid "Dashboard Filter"
+msgstr "仪表板筛选器"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_item
+msgid "Dashboard Item"
+msgstr "仪表板项目"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_layout_version
+msgid "Dashboard Layout Version"
+msgstr "仪表板布局版本"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_measure
+msgid "Dashboard Measure"
+msgstr "仪表板度量"
+
+#. module: eh_board
+#: model:ir.actions.report,name:eh_board.action_report_eh_board_dashboard
+msgid "Dashboard PDF"
+msgstr "仪表板 PDF"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_snapshot
+msgid "Dashboard Snapshot"
+msgstr "仪表板快照"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_template
+msgid "Dashboard Template"
+msgstr "仪表板模板"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard name"
+msgstr "仪表板名称"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Dashboard settings"
+msgstr "仪表板设置"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Dashboard settings saved."
+msgstr "仪表板设置已保存。"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_capture_snapshots_ir_actions_server
+msgid "Dashboard: capture snapshots"
+msgstr "仪表板：捕获快照"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_evaluate_alerts_ir_actions_server
+msgid "Dashboard: evaluate alerts"
+msgstr "仪表板：评估警报"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_send_digests_ir_actions_server
+msgid "Dashboard: send email digests"
+msgstr "仪表板：发送电子邮件摘要"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_dashboard
+#: model:ir.actions.client,name:eh_board.action_eh_board_open
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_root
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_list
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Dashboards"
+msgstr "仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Data"
+msgstr "数据"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__data_label_type
+msgid "Data Label Type"
+msgstr "数据标签类型"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__datasource_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__datasource_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Data Source"
+msgstr "数据源"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_datasource
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_datasources
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_list
+msgid "Data Sources"
+msgstr "数据源"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__date
+msgid "Date"
+msgstr "日期"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_granularity
+msgid "Date Granularity"
+msgstr "日期粒度"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__date_preset
+msgid "Date Preset"
+msgstr "日期预设"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field"
+msgstr "日期字段"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field the dashboard date filter applies to for this widget."
+msgstr "仪表板日期筛选器对此小组件应用的日期字段。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Date filter field"
+msgstr "日期筛选字段"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__day
+msgid "Day"
+msgstr "天"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_date_filter
+msgid "Default Date Filter"
+msgstr "默认日期筛选器"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__default_date_preset
+msgid "Default Date Preset"
+msgstr "默认日期预设"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_geometry
+msgid "Default Geometry"
+msgstr "默认几何形状"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__default_value
+msgid "Default Value"
+msgstr "默认值"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Default date filter"
+msgstr "默认日期筛选器"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__default
+msgid "Default order"
+msgstr "默认排序"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__density
+msgid "Density"
+msgstr "密度"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Desc"
+msgstr "降序"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__desc
+msgid "Descending"
+msgstr "降序"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__description
+msgid "Description"
+msgstr "描述"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_user_ids
+msgid "Digest recipients"
+msgstr "摘要收件人"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Display"
+msgstr "显示"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__display_name
+msgid "Display Name"
+msgstr "显示名称"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count_distinct
+msgid "Distinct count"
+msgstr "去重计数"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Do nothing"
+msgstr "不执行任何操作"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__domain
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__domain
+msgid "Domain"
+msgstr "域"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__draft
+msgid "Draft"
+msgstr "草稿"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to move"
+msgstr "拖动以移动"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to resize"
+msgstr "拖动以调整大小"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__goal_value
+msgid "Draw a horizontal goal line on a bar / line chart at this value."
+msgstr "在此值处的柱状图/折线图上绘制一条水平目标线。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Draws a dashed reference line across the chart. Goal 100 marks where the "
+"target sits."
+msgstr "在图表上绘制一条虚线参考线。目标值 100 标记目标所在位置。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__drill
+msgid "Drill down a level"
+msgstr "下钻一个层级"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_field_id
+msgid "Drill into"
+msgstr "下钻至"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_ids
+msgid "Drill steps"
+msgstr "下钻步骤"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Drill-down"
+msgstr "下钻"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Drill-down needs a data source on this widget."
+msgstr "下钻功能需要此小部件上有一个数据源。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Duplicate"
+msgstr "复制"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Each group adds to the ones before it - a climbing cumulative curve."
+msgstr "每个分组都会累加到前面的分组上——形成一条不断上升的累积曲线。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Email a PDF digest on a schedule"
+msgstr "按计划通过电子邮件发送 PDF 摘要"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email digest"
+msgstr "电子邮件摘要"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email this dashboard as a PDF on a schedule."
+msgstr "按计划以 PDF 形式通过电子邮件发送此仪表板。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Every"
+msgstr "每一个"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Excel workbook"
+msgstr "Excel 工作簿"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit"
+msgstr "退出"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit presentation (Esc)"
+msgstr "退出演示 (Esc)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export CSV"
+msgstr "导出 CSV"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export PNG"
+msgstr "导出 PNG"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export dashboard"
+msgstr "导出仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Extra conditions on the data, on top of the model. Only customers: Customer "
+"Rank greater than 0. The count shows how many records match right now."
+msgstr "在模型之上对数据设置的额外条件。仅客户：客户等级大于 0。计数显示当前有多少条记录匹配。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_geometry
+msgid "Fallback grid position when no layout is active."
+msgstr "无活动布局时的后备网格位置。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_id
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__field
+msgid "Field"
+msgstr "字段"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_name
+msgid "Field Name"
+msgstr "字段名称"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_key
+msgid "Field to group the left model by; its value is the join key."
+msgstr "用于对左侧模型进行分组的字段；其值即为连接键。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__drill_field_id
+msgid "Field to regroup by when drilling down."
+msgstr "下钻时用于重新分组的字段。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Field..."
+msgstr "字段..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fields"
+msgstr "字段"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__fill_gaps
+msgid "Fill Gaps"
+msgstr "填补空缺"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fill empty periods"
+msgstr "填充空白周期"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__fill_gaps
+msgid ""
+"Fill empty periods in a date series with zero so lines never jump across "
+"missing months."
+msgstr "用零填充日期序列中的空白周期，使折线不会跨越缺失的月份跳跃。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter"
+msgstr "筛选"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__filter_type
+msgid "Filter Type"
+msgstr "筛选类型"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Filter added."
+msgstr "已添加筛选。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter records"
+msgstr "筛选记录"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filtered by"
+msgstr "筛选依据"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__filter_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Filters"
+msgstr "筛选"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_follower_ids
+msgid "Followers"
+msgstr "关注者"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "关注者（合作伙伴）"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__icon
+msgid "Font Awesome icon name for tiles/KPIs, e.g. fa-line-chart."
+msgstr "用于磁贴/KPI 的 Font Awesome 图标名称，例如 fa-line-chart。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__formula
+msgid ""
+"For a Calculated measure: arithmetic over the item's other measures as a, b,"
+" c ... in order. E.g. 'a / b * 100' for a margin."
+msgstr "对于计算度量：按顺序对该项的其他度量以 a、b、c … 进行算术运算。例如 'a / b * 100' 用于计算利润率。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__forest
+msgid "Forest"
+msgstr "森林"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__formula
+msgid "Formula"
+msgstr "公式"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__description
+msgid "Free notes for this widget, shown on its info tooltip."
+msgstr "此小组件的自由备注，显示在其信息提示中。"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_admin
+msgid "Full control over every dashboard and the template library."
+msgstr "完全控制每个仪表板和模板库。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__general
+msgid "General"
+msgstr "通用"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Generated by Dashboard Builder"
+msgstr "由 Dashboard Builder 生成"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__goal_value
+msgid "Goal Value"
+msgstr "目标值"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal line (0 = none)"
+msgstr "目标线（0 = 无）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal, e.g. 100"
+msgstr "目标，例如 100"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__grid
+msgid "Grid"
+msgstr "网格"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Grid lines"
+msgstr "网格线"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__group_others
+msgid "Group Others"
+msgstr "归为其他"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__primary_dimension_id
+msgid "Group by"
+msgstr "分组依据"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Group the rest as \"Others\""
+msgstr "将其余部分归为“其他”"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H2"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H3"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__has_message
+msgid "Has Message"
+msgstr "有消息"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Heading"
+msgstr "标题"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__default
+msgid "Heritage"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__none
+msgid "Hidden"
+msgstr "隐藏"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"How numbers read. Compact turns 3,400,000 into 3.4M; Plain keeps every "
+"digit."
+msgstr "数字的显示方式。紧凑模式将 3,400,000 显示为 3.4M；普通模式保留每一位数字。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__hr
+msgid "Human Resources"
+msgstr "人力资源"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "I"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__id
+msgid "ID"
+msgstr "识别号"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__icon
+msgid "Icon"
+msgstr "图标"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "如果勾选此项，则需要查看新消息。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "如果勾选此项， 某些消息将出现发送错误。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__include_archived
+msgid "Include Archived"
+msgstr "包含已归档"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__include_archived
+msgid "Include archived (inactive) records in this widget's data."
+msgstr "在此小组件的数据中包含已归档（非活动）记录。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Include archived records"
+msgstr "包含已归档记录"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__indigo
+msgid "Indigo"
+msgstr "靛蓝"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Insert link"
+msgstr "插入链接"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Insert zero rows for missing days/months so a time line never jumps a gap."
+msgstr "为缺失的日/月插入零值行，使时间线不会跳过任何间隙。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__stock
+msgid "Inventory"
+msgstr "库存"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_active
+msgid "Is Active"
+msgstr "处于有效状态"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_default
+msgid "Is Default"
+msgstr "是否为默认值"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_is_follower
+msgid "Is Follower"
+msgstr "是关注者"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__is_predefined
+msgid "Is Predefined"
+msgstr "是否预定义"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_template
+msgid "Is Template"
+msgstr "是否为模板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Italic"
+msgstr "斜体"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__item_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Item"
+msgstr "项目"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_count
+msgid "Item Count"
+msgstr "项目数量"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__item_type
+msgid "Item Type"
+msgstr "项目类型"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Item description"
+msgstr "项目描述"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_list
+msgid "Items"
+msgstr "项目"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "JSON spec"
+msgstr "JSON 规格"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Join two models"
+msgstr "连接两个模型"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "K"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__kind
+msgid "Kind"
+msgstr "类型"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_kiosk
+msgid "Kiosk-ready"
+msgstr "自助终端就绪"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__label
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__label
+msgid "Label"
+msgstr "标签"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__label
+msgid "Label A to Z"
+msgstr "标签 A 到 Z"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_30
+msgid "Last 30 Days"
+msgstr "最近30天"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_30
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_30
+msgid "Last 30 days"
+msgstr "最近30天"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_365
+msgid "Last 365 Days"
+msgstr "最近 365 天"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_7
+msgid "Last 7 Days"
+msgstr "最近7天"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_7
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_7
+msgid "Last 7 days"
+msgstr "最近7天"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_90
+msgid "Last 90 Days"
+msgstr "最近 90 天"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_90
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_90
+msgid "Last 90 days"
+msgstr "最近 90 天"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_month
+msgid "Last Month"
+msgstr "上个月"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_quarter
+msgid "Last Quarter"
+msgstr "上季度"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_triggered_on
+msgid "Last Triggered On"
+msgstr "上次触发时间"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_uid
+msgid "Last Updated by"
+msgstr "最后更新人"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_date
+msgid "Last Updated on"
+msgstr "上次更新日期"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_value
+msgid "Last Value"
+msgstr "最新值"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_week
+msgid "Last Week"
+msgstr "上周"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_year
+msgid "Last Year"
+msgstr "去年"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_month
+msgid "Last month"
+msgstr "上月"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__layout_version_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Layouts"
+msgstr "布局"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_filter__item_id
+msgid "Leave empty for a global filter shown on the dashboard bar."
+msgstr "留空则显示在仪表板栏上的全局筛选器。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__group_ids
+msgid "Leave empty to let every internal user with dashboard access see it."
+msgstr "留空则允许每个具有仪表板访问权限的内部用户查看。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_key
+msgid "Left group field"
+msgstr "左侧分组字段"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_label
+msgid "Left label"
+msgstr "左侧标签"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_agg
+msgid "Left measure"
+msgstr "左侧度量"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_model_id
+msgid "Left model"
+msgstr "左侧模型"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_value
+msgid "Left value field"
+msgstr "左侧值字段"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Legend"
+msgstr "图例"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__limit
+msgid "Limit"
+msgstr "限制"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__live
+msgid "Live"
+msgstr "现场直播"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Live preview"
+msgstr "实时预览"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading settings..."
+msgstr "正在加载设置..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading templates..."
+msgstr "正在加载模板..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "M"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_dashboards
+msgid "Manage Dashboards"
+msgstr "管理仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__off
+msgid "Manual"
+msgstr "手动"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_layout_version__grid
+msgid "Map of item id -> {x, y, w, h, minW, minH} on the 12-column grid."
+msgstr "在 12 列网格上，项目 id -> {x, y, w, h, minW, minH} 的映射。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Match"
+msgstr "匹配"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Max groups shown. 0 shows all; 5 keeps the top 5 (bucket the rest as "
+"\"Others\" in Advanced)."
+msgstr "显示的最大分组数。0 表示显示全部；5 保留前 5 个（在“高级”中将其余归入“Others”）。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__max
+msgid "Maximum"
+msgstr "最大值"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__measure_ids
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__measure_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Measures"
+msgstr "度量"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Menu"
+msgstr "菜单"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error
+msgid "Message Delivery error"
+msgstr "消息发送错误"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_ids
+msgid "Messages"
+msgstr "消息"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__millions
+msgid "Millions (M)"
+msgstr "百万 (M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__min
+msgid "Minimum"
+msgstr "最小值"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__mint
+msgid "Mint"
+msgstr "薄荷绿"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__model_id
+msgid "Model"
+msgstr "模型"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_name
+msgid "Model Technical Name"
+msgstr "模型技术名称"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Mono"
+msgstr "等宽"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__mono
+msgid "Monochrome"
+msgstr "单色"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__month
+msgid "Month"
+msgstr "月"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__mtd
+msgid "Month to Date"
+msgstr "月初至今"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__mtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__mtd
+msgid "Month to date"
+msgstr "本月至今"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__multiplier
+msgid "Multiplier"
+msgstr "乘数"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "My Dashboards"
+msgstr "我的仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__name
+msgid "Name"
+msgstr "名称"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Needs the"
+msgstr "需要"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "New dashboard"
+msgstr "新建仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Next (Right arrow)"
+msgstr "下一个（右箭头）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__none
+msgid "No comparison"
+msgstr "无对比"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "No dashboard yet. Create one from the Dashboards menu."
+msgstr "尚无仪表板。从“仪表板”菜单创建一个。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No data for the current filters"
+msgstr "当前筛选条件下无数据"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No more people to add."
+msgstr "没有更多可添加的人员。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No templates yet. Build a board and use \"Save template\"."
+msgstr "尚无模板。创建一个看板并使用“保存模板”。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__all
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__none
+msgid "None"
+msgstr "无"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__note
+msgid "Note"
+msgstr "备注"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Notes about this widget - shown on its info tooltip."
+msgstr "关于此小组件的备注 - 显示在其信息提示框中。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__none
+msgid "Nothing"
+msgstr "无"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__user_id
+msgid "Notify"
+msgstr "通知"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__number_format
+msgid "Number Format"
+msgstr "数字格式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Number format"
+msgstr "数字格式"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of Actions"
+msgstr "操作数量"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of errors"
+msgstr "错误数量"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "需要采取行动的消息数量"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "发送错误的消息的数量"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Numbered list"
+msgstr "编号列表"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_value
+msgid "Numeric field to aggregate (blank for a record count)."
+msgstr "要聚合的数值字段（留空则统计记录数）。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__ocean
+msgid "Ocean"
+msgstr "海运"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Off = a private draft only you see. On = shared per the list below and any "
+"assigned groups."
+msgstr "关闭 = 仅您可见的私人草稿。开启 = 按下方列表及任何指定群组共享。"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "Open Board"
+msgstr "打开看板"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__records
+msgid "Open matching records"
+msgstr "打开匹配的记录"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Open the matching records"
+msgstr "打开匹配的记录"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Opening records from this widget shows at most the row-limit count, matching"
+" what the chart displays."
+msgstr "从此小组件打开记录时，最多显示行数上限数量，与图表所显示的一致。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Opens with date range"
+msgstr "打开时带日期范围"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__operator
+msgid "Operator"
+msgstr "操作员"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__target_value
+msgid "Optional goal used by KPI and gauge items."
+msgstr "由 KPI 和仪表项使用的可选目标。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Optional label"
+msgstr "可选标签"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__options
+msgid "Options"
+msgstr "选项"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__sort_field_id
+msgid "Order groups by this field (used when sort is 'By a specific field')."
+msgstr "按此字段对分组排序（当排序为“按特定字段”时使用）。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Order the groups by any field. E.g. sort countries by Created on, newest "
+"first."
+msgstr "按任意字段对分组排序。例如：按创建日期对国家/地区排序，最新的在前。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Orders the groups. Value high to low puts the biggest bar first."
+msgstr "对分组进行排序。数值从高到低将最大的条形放在最前面。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__outline
+msgid "Outline"
+msgstr "轮廓"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__combo_line
+msgid "Overlay a cumulative running-total line (Pareto) on a bar chart."
+msgstr "在条形图上叠加累计运行总计线（帕累托）。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__owner_id
+msgid "Owner"
+msgstr "所有者"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "P"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF / Print (charts)"
+msgstr "PDF / 打印（图表）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF document"
+msgstr "PDF 文档"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Paint a value by its size. Example: if Revenue is less than 0, colour the "
+"number red; the first matching rule wins."
+msgstr "根据数值大小为其上色。示例：如果收入小于 0，则将数字标为红色；第一条匹配的规则生效。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__palette
+msgid "Palette"
+msgstr "调色板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Paragraph"
+msgstr "段落"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__payload
+msgid "Payload"
+msgstr "负载"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__percent
+msgid "Percentage"
+msgstr "百分比"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Period"
+msgstr "期间"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Pick a field to slice by."
+msgstr "选择一个用于切分的字段。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__plain
+msgid "Plain"
+msgstr "纯文本"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Plain (1,234)"
+msgstr "纯文本 (1,234)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Play"
+msgstr "播放"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__pos
+msgid "Point of Sale"
+msgstr "销售点"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Pre-scopes this widget to a range even when the board filter is off. This "
+"year always shows the current year."
+msgstr "即使看板筛选器关闭，也会预先将此小组件限定在某个范围内。“本年”始终显示当前年份。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Present: fullscreen, auto-rotate (Esc to exit)"
+msgstr "演示：全屏、自动轮播（按 Esc 退出）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Previous (Left arrow)"
+msgstr "上一个（左箭头）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_period
+msgid "Previous period"
+msgstr "上期"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__propagate_domain
+msgid "Propagate Domain"
+msgstr "传播域"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__provider_type
+msgid "Provider Type"
+msgstr "提供商类型"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__published
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Published"
+msgstr "已发布"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Published (visible to the people below and to your groups)"
+msgstr "已发布（对下方的人员和您的群组可见）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__quarter
+msgid "Quarter"
+msgstr "季"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__qtd
+msgid "Quarter to Date"
+msgstr "本季度至今"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__qtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__qtd
+msgid "Quarter to date"
+msgstr "本季度至今"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Re-query every widget on a timer. \"Every 5 minutes\" keeps a wall board "
+"live without a reload. Manual = refresh only when you reopen."
+msgstr "按计时器重新查询每个小组件。“每 5 分钟”可让墙面看板保持实时更新而无需重新加载。手动 = 仅在重新打开时刷新。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__read_only
+msgid "Read Only"
+msgstr "只读"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Reading the board..."
+msgstr "正在读取看板..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit
+msgid "Record Limit"
+msgstr "记录上限"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit_visibility
+msgid "Record Limit Visibility"
+msgstr "记录上限可见性"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Records"
+msgstr "记录"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Refresh Interval"
+msgstr "刷新间隔"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_mode
+msgid "Refresh Mode"
+msgstr "刷新模式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Remove"
+msgstr "移除"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__semi_circle
+msgid "Render pie / doughnut as a half circle."
+msgstr "将饼图/环形图渲染为半圆。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__required_module
+msgid "Required Module"
+msgstr "所需模块"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__group_ids
+msgid "Restricted to groups"
+msgstr "限于群组"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_key
+msgid "Right group field"
+msgstr "右侧分组字段"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_label
+msgid "Right label"
+msgstr "右侧标签"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_agg
+msgid "Right measure"
+msgstr "右侧度量"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_model_id
+msgid "Right model"
+msgstr "右侧模型"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_value
+msgid "Right value field"
+msgstr "右侧值字段"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__parent_id
+msgid "Rolled back from"
+msgstr "回滚自"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__rose
+msgid "Rose"
+msgstr "玫红色"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Row limit"
+msgstr "行数上限"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Rule"
+msgstr "规则"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Running total"
+msgstr "累计合计"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "SELECT name AS label, count(*) AS n FROM res_partner GROUP BY name"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__sql_query
+msgid "SQL query"
+msgstr "SQL 查询"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Safe SQL (read-only)"
+msgstr "安全 SQL（只读）"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__crm
+msgid "Sales & CRM"
+msgstr "销售与 CRM"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_year
+msgid "Same period last year"
+msgstr "去年同期"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save settings"
+msgstr "保存设置"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save template"
+msgstr "保存模板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save this board as a reusable template"
+msgstr "将此看板保存为可重复使用的模板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Saved as a reusable template."
+msgstr "已保存为可重复使用的模板。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__multiplier
+msgid "Scale the raw value, e.g. 0.001 to show thousands."
+msgstr "缩放原始值，例如用 0.001 以千为单位显示。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search fields..."
+msgstr "搜索字段..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search people to add..."
+msgstr "搜索要添加的人员..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Seconds between refreshes when auto-refresh is on."
+msgstr "启用自动刷新时两次刷新之间的秒数。"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__secret
+msgid "Secret"
+msgstr "密匙"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a field..."
+msgstr "选择一个字段…"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a model..."
+msgstr "选择一个模型…"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select..."
+msgstr "选择…"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__semi_circle
+msgid "Semi Circle"
+msgstr "半圆"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Semi circle"
+msgstr "半圆"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__sequence
+msgid "Sequence"
+msgstr "序列"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Share a draft with specific users"
+msgstr "与特定用户共享草稿"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Share with people"
+msgstr "与他人共享"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Shared with"
+msgstr "共享给"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_grid
+msgid "Show Grid"
+msgstr "显示网格"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_legend
+msgid "Show Legend"
+msgstr "显示图例"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_trend
+msgid "Show Trend"
+msgstr "显示趋势"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_values
+msgid "Show Values"
+msgstr "显示数值"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__show_trend
+msgid ""
+"Show a period-over-period trend badge on KPIs when a date field is "
+"available."
+msgstr "当有日期字段可用时,在 KPI 上显示环比趋势徽章。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__cumulative
+msgid "Show a running total: each group adds to the ones before it."
+msgstr "显示累计总额:每个分组都会累加到之前的分组上。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__slate
+msgid "Slate"
+msgstr "石板灰"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Slice labels"
+msgstr "扇区标签"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights"
+msgstr "智能洞察"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights: read this board in plain language"
+msgstr "智能洞察:用通俗语言解读此看板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__smooth
+msgid "Smooth"
+msgstr "平滑"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__smooth
+msgid "Smooth (curved) lines."
+msgstr "平滑(曲线)线条。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__soft
+msgid "Soft"
+msgstr "柔和"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__solid
+msgid "Solid"
+msgstr "实线"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sort
+msgid "Sort"
+msgstr "排序"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_mode
+msgid "Sort Mode"
+msgstr "排序模式"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_order
+msgid "Sort Order"
+msgstr "排序顺序"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_field_id
+msgid "Sort by field"
+msgstr "按字段排序"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Specific users who may open this dashboard even while it is a draft."
+msgstr "即使在草稿状态下也可打开此仪表板的特定用户。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Splits each group into a second series. Country plus Stage stacks every "
+"country bar by stage."
+msgstr "将每个分组拆分为第二个系列。国家加阶段会按阶段堆叠每个国家的柱形。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__stacked
+msgid "Stack series in a bar chart."
+msgstr "在柱状图中堆叠系列。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__stacked
+msgid "Stacked"
+msgstr "堆叠"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Start from a template"
+msgstr "从模板开始"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__state
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__state
+msgid "State"
+msgstr "状态"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Sub group by"
+msgstr "子分组依据"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Subheading"
+msgstr "副标题"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__subtitle
+msgid "Subtitle"
+msgstr "小标题"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__unit
+msgid "Suffix shown after the value, e.g. %, kg, orders."
+msgstr "显示在数值之后的后缀,例如 %、kg、订单。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Suffix, e.g. % or kg"
+msgstr "后缀,例如 % 或 kg"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__sum
+msgid "Sum"
+msgstr "求和"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__sunset
+msgid "Sunset"
+msgstr "日落"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Switch dashboard"
+msgstr "切换仪表板"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Switch to Edit and add your first widget - group any model's\n"
+"                               data database side and drill anywhere."
+msgstr "切换到编辑模式并添加您的第一个小部件 - 在数据库端对任意模型的数据进行分组，并可深入到任意层级。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Target"
+msgstr "目标"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__target_value
+msgid "Target Value"
+msgstr "目标值"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Target:"
+msgstr "目标："
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__teal
+msgid "Teal"
+msgstr "青色"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_template__required_module
+msgid ""
+"Technical name of the base app a vertical template needs (e.g. account). "
+"Blank for a general template."
+msgstr "垂直模板所需的基础应用的技术名称（例如 account）。常规模板留空。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Templates"
+msgstr "模板"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__model_id
+msgid "The Odoo model to aggregate (for the Odoo-model provider)."
+msgstr "要聚合的 Odoo 模型（用于 Odoo 模型提供者）。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The card's highlight colour. Tiles use it as their fill; charts use it for "
+"the first series."
+msgstr "卡片的高亮颜色。磁贴用它作为填充色；图表用它表示第一个系列。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The colour ramp every chart on this board uses."
+msgstr "此看板上每个图表使用的配色渐变。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The dashboard's title, shown in the header and the switcher."
+msgstr "仪表板的标题，显示在标题栏和切换器中。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The date filter the board starts on. This month means it always opens scoped"
+" to the current month."
+msgstr "看板启动时的日期筛选器。“本月”表示它始终以当前月份为范围打开。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__default_date_preset
+msgid ""
+"The date range this dashboard opens with (the board date filter's start "
+"value)."
+msgstr "此仪表板打开时使用的日期范围（看板日期筛选器的起始值）。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__field_id
+msgid "The field to aggregate. Leave empty for a record count."
+msgstr "要聚合的字段。留空则统计记录数。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The field whose values become your bars, slices or rows. Group by Country "
+"gives one bar per country."
+msgstr "其值将成为您的条形、扇区或行的字段。按国家/地区分组时每个国家/地区显示一个条形。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__item_type
+msgid ""
+"The kind of widget. Every type is a registered strategy - adding one never "
+"edits this model."
+msgstr "小部件的类型。每种类型都是已注册的策略 - 添加类型绝不会修改此模型。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The records to chart. Example: Contact for customers, Sales Order for "
+"revenue."
+msgstr "要绘制图表的记录。例如：客户用联系人，收入用销售订单。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The rich text shown in this block, e.g. a section title, notes, or "
+"instructions for the board."
+msgstr "此区块中显示的富文本，例如板块标题、备注或看板说明。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The title shown on the card. Example: \"Revenue by month\"."
+msgstr "卡片上显示的标题。例如：“按月划分的收入”。"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__theme
+msgid "Theme palette"
+msgstr "主题调色板"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__secondary_dimension_id
+msgid "Then by"
+msgstr "然后按"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_month
+msgid "This Month"
+msgstr "本月"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_quarter
+msgid "This Quarter"
+msgstr "本季度"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_week
+msgid "This Week"
+msgstr "本周"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_year
+msgid "This Year"
+msgstr "本年"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_month
+msgid "This month"
+msgstr "本月"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_quarter
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_quarter
+msgid "This quarter"
+msgstr "本季度"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_template.py:0
+msgid "This template needs the %s app. Install it first."
+msgstr "此模板需要 %s 应用。请先安装它。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_week
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_week
+msgid "This week"
+msgstr "本周"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "This widget"
+msgstr "此小部件"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_year
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_year
+msgid "This year"
+msgstr "今年"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__thousands
+msgid "Thousands (K)"
+msgstr "千 (K)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__threshold
+msgid "Threshold"
+msgstr "阈值"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__thumbnail
+msgid "Thumbnail"
+msgstr "缩略图"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__tile_style
+msgid "Tile Style"
+msgstr "磁贴样式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile look: Soft tint, Solid fill, or Outline. Soft suits most boards."
+msgstr "磁贴外观：柔和色调、纯色填充或轮廓。柔和色调适合大多数看板。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__tile_style
+msgid "Tile look: soft tint, solid fill, or outline."
+msgstr "磁贴外观：柔和色调、纯色填充或轮廓。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile style"
+msgstr "磁贴样式"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__title
+msgid "Title"
+msgstr "标题"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__today
+msgid "Today"
+msgstr "今天"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle comfortable / compact density"
+msgstr "切换宽松 / 紧凑密度"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle light / dark"
+msgstr "切换浅色 / 深色"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Toggles specific to this chart type. Semi circle turns a pie into a half "
+"gauge; Stacked piles a bar's series on top of each other."
+msgstr "特定于此图表类型的开关。半圆将饼图变为半仪表；堆叠将条形的各系列叠加在一起。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Total"
+msgstr "总计"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__triggered
+msgid "Triggered"
+msgstr "已触发"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Type a name and click to add. These people can open this dashboard even "
+"while it is a draft."
+msgstr "输入名称并单击以添加。即使此仪表板处于草稿状态，这些人也可以打开它。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "U"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Underline"
+msgstr "下划线"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__unit
+msgid "Unit"
+msgstr "单元"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Unknown widget type"
+msgstr "未知的小部件类型"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Use this"
+msgstr "使用此项"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__username
+msgid "Username"
+msgstr "用户名"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__basic
+msgid "Username / password"
+msgstr "用户名 / 密码"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__value
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__value
+msgid "Value"
+msgstr "值"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_desc
+msgid "Value (high to low)"
+msgstr "值（从高到低）"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_asc
+msgid "Value (low to high)"
+msgstr "值（从低到高）"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value format"
+msgstr "值格式"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value labels"
+msgstr "值标签"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_desc
+msgid "Value: high to low"
+msgstr "值：从高到低"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_asc
+msgid "Value: low to high"
+msgstr "值：从低到高"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_viewer
+msgid "Viewer"
+msgstr "查看者"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__violet
+msgid "Violet"
+msgstr "紫罗兰色"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__web
+msgid "Website"
+msgstr "网站"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__week
+msgid "Week"
+msgstr "周"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__wtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__wtd
+msgid "Week to date"
+msgstr "本周至今"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each bar or slice measures. Count = number of records; Sum of Amount = "
+"total revenue. Add a second measure to compare two numbers side by side."
+msgstr "每个条形或扇区所度量的内容。Count = 记录数量；Sum of Amount = 总收入。添加第二个度量以并排比较两个数字。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each pie slice shows: the raw Value (e.g. 39), its Percentage (e.g. "
+"28%), or nothing."
+msgstr "每个饼图扇区显示的内容：原始值（例如 39）、其百分比（例如 28%）或不显示。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__click_action
+msgid "What happens when a data point is clicked."
+msgstr "点击数据点时会发生什么。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__data_label_type
+msgid ""
+"What pie / doughnut slice labels show: the value, its share, or nothing."
+msgstr "饼图 / 环形图扇区标签显示的内容：值、其占比或不显示。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "What this dashboard is for."
+msgstr "此仪表板的用途。"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "What this dashboard is for..."
+msgstr "此仪表板的用途……"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__group_others
+msgid ""
+"When a row cap is set, sum everything past it into a single 'Others' group "
+"instead of dropping it."
+msgstr "设置行数上限后，将超出部分全部合计到单个 'Others' 分组中，而不是丢弃。"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit_visibility
+msgid ""
+"When a row limit is set, also cap the record-count shown on click-through to"
+" that limit instead of the full match."
+msgstr "设置行数限制后，点击穿透时显示的记录数也限制为该上限，而非完整匹配。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "When clicked"
+msgstr "点击时"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__provider_type
+msgid ""
+"Where the numbers come from. The free engine ships the Odoo-model provider; "
+"joins, safe SQL and external feeds register alongside it."
+msgstr "数字的来源。免费引擎附带 Odoo 模型提供程序；联接、安全 SQL 和外部数据源可与之一同注册。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Which date the board date filter narrows for this widget. Auto picks a "
+"sensible one (e.g. Order Date)."
+msgstr "看板日期筛选器为此小部件缩小的日期。自动模式会选择一个合适的日期（例如 Order Date）。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Who gets the scheduled PDF. Example: email the sales board to the team every"
+" Monday."
+msgstr "谁接收定期发送的 PDF。例如：每周一将销售看板通过电子邮件发送给团队。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget added."
+msgstr "已添加小部件。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget duplicated."
+msgstr "已复制小部件。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget name"
+msgstr "小部件名称"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget type"
+msgstr "小部件类型"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget updated."
+msgstr "已更新小部件。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"With a row limit set, everything past it is summed into one honest Others "
+"slice instead of dropped."
+msgstr "设置行数限制后，超出部分会全部合计到一个真实的 Others 扇区中，而不是被丢弃。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__year
+msgid "Year"
+msgstr "年"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__ytd
+msgid "Year to Date"
+msgstr "本年至今"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__ytd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__ytd
+msgid "Year to date"
+msgstr "年初至今"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__yesterday
+msgid "Yesterday"
+msgstr "昨天"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"You can view these settings but only the owner or a dashboard builder can "
+"change them."
+msgstr "您可以查看这些设置，但只有所有者或仪表板构建者才能更改它们。"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_dashboard.py:0
+msgid "You may not change this dashboard's settings."
+msgstr "您无权更改此仪表板的设置。"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "a / b * 100"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "app"
+msgstr "应用"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gte
+msgid "at least"
+msgstr "至少"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lte
+msgid "at most"
+msgstr "至多"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "colour text"
+msgstr "彩色文本"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "data bar"
+msgstr "数据条"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "e.g. 100"
+msgstr "例如 100"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "equals"
+msgstr "等于"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "fill"
+msgstr "填充"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gt
+msgid "greater than"
+msgstr "大于"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "hours"
+msgstr "小时"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at least"
+msgstr "至少为"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at most"
+msgstr "至多为"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is between"
+msgstr "介于"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is greater than"
+msgstr "大于"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is less than"
+msgstr "小于"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "items"
+msgstr "项目"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lt
+msgid "less than"
+msgstr "小于"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "minutes"
+msgstr "分钟"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "record(s)"
+msgstr "条记录"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "seconds"
+msgstr "秒"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "target"
+msgstr "目标"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "unit"
+msgstr "单位"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "• List"
+msgstr "• 列表"
