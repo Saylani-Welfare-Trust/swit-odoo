@@ -125,6 +125,7 @@
     <menuitem
         id="livestock_menu"
         name="Livestock"
+        groups="bn_livestock_slaugther.livestock_group"
         web_icon="bn_livestock_slaugther,static/description/icon.png"
         sequence="7"/>
 

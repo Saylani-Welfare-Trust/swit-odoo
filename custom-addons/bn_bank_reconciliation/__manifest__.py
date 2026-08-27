@@ -12,6 +12,7 @@
         'bn_master_setup',
     ],
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
         'views/bank_reconciliation_master.xml',

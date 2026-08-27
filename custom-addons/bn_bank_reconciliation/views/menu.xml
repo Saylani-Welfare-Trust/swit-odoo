@@ -3,6 +3,7 @@
     <menuitem id="menu_bank_reconciliation_root"
               name="Bank Reconciliation"
               sequence="10"
+              groups="bn_bank_reconciliation.bank_reconciliation_group"
               web_icon="bn_bank_reconciliation,static/description/icon.png"/>
 
     <menuitem id="menu_bank_reconciliation_master"
