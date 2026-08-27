@@ -402,6 +402,8 @@ class MemberApproval(models.Model):
                     'material_request_id': self.id,   # <-- autopopulate here
             })
 
+            purchase_request.action_in_progress()
+
             self.auto_purchase_request_id = purchase_request.id
 
             shortage_picking = self.env['stock.picking'].create({
