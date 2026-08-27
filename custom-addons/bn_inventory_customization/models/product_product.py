@@ -33,4 +33,4 @@ class ProductProduct(models.Model):
         readonly=False
     )
 
-    analytic_account_id = fields.Many2one(related='product_tmpl_id.analytic_account_id', string="Analytic Account", tracking=True)
+    analytic_account_id = fields.Many2one(related='product_tmpl_id.analytic_account_id', string="Analytic Account", store=True, tracking=True)
