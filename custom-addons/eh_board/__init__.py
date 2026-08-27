@@ -7,7 +7,7 @@
 ##############################################################################
 # Import the pure-Python engine first so the item-type and datasource
 # registries are populated before any model resolves its selections.
-from . import lib
+from . import libs
 from . import datasources
 from . import items
 from . import models
