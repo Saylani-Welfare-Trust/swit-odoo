@@ -8,6 +8,7 @@
     'depends': [
         'bn_import_donation',
         'bn_pos_custom_action'
+        'bn_sms_whatsapp',
     ],
     'data': [
         'data/data.xml',
