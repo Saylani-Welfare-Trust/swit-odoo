@@ -27,6 +27,10 @@
                     </group>
                 </group>
             </xpath>
+
+            <xpath expr="//field[@name='detailed_type']" position="after">
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+            </xpath>
         </field>
     </record>
 
