@@ -1,0 +1,3509 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* eh_board
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-14 10:49+0000\n"
+"PO-Revision-Date: 2026-07-14 10:49+0000\n"
+"Last-Translator: ERP Heritage <info@erpheritage.com.au>\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "% of"
+msgstr "% şu değerin"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(auto)"
+msgstr "(otomatik)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(none)"
+msgstr "(yok)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "0 = all"
+msgstr "0 = tümü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "1.2K"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "A blank canvas"
+msgstr "Boş bir tuval"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_date_filter
+msgid ""
+"A built-in date range applied to this widget when the board's own date "
+"filter is off."
+msgstr ""
+"Panonun kendi tarih filtresi kapalıyken bu widget'a uygulanan yerleşik bir "
+"tarih aralığı."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A goal for this KPI. Target 100 with a value of 72 shows 72% of target on "
+"the bar."
+msgstr ""
+"Bu KPI için bir hedef. Hedefin 100, değerin 72 olması çubukta hedefin "
+"%72'sini gösterir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A short note explaining what this widget measures. Appears as an info "
+"tooltip on the card."
+msgstr ""
+"Bu widget'ın neyi ölçtüğünü açıklayan kısa bir not. Kartta bilgi ipucu "
+"olarak görünür."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__sql_query
+msgid ""
+"A single read-only SELECT. First column is the category label; the remaining"
+" numeric columns become measures."
+msgstr ""
+"Salt okunur tek bir SELECT. İlk sütun kategori etiketidir; kalan sayısal "
+"sütunlar ölçümlere dönüşür."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__domain
+msgid ""
+"A static filter applied before any runtime dashboard filter. A plain domain "
+"literal - never an evaluated expression."
+msgstr ""
+"Herhangi bir çalışma zamanı gösterge panosu filtresinden önce uygulanan "
+"statik bir filtre. Değerlendirilen bir ifade değil, düz bir domain sabit "
+"değeridir."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__domain
+msgid "A static filter for this item, on top of the data source filter."
+msgstr "Veri kaynağı filtresine ek olarak bu öğe için statik bir filtre."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__credential_id
+msgid "A vaulted credential for an external source (never inlined)."
+msgstr ""
+"Harici bir kaynak için kasada saklanan bir kimlik bilgisi (asla satır içine "
+"yazılmaz)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__api_key
+msgid "API key"
+msgstr "API anahtarı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__accent
+msgid "Accent"
+msgstr "Vurgu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Accent colour"
+msgstr "Vurgu rengi"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__accent
+msgid "Accent colour for the widget (tiles use it as the fill)."
+msgstr "Widget için vurgu rengi (kutucuklar bunu dolgu olarak kullanır)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__account
+msgid "Accounting"
+msgstr "Muhasebe"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction
+msgid "Action Needed"
+msgstr "Aksiyon Gerekiyor"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Actions"
+msgstr "Aksiyonlar"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__active
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__active
+msgid "Active"
+msgstr "Etkin"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__active_layout_id
+msgid "Active layout"
+msgstr "Etkin düzen"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add"
+msgstr "Ekle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget"
+msgstr "Widget ekle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget, then press Play to present."
+msgstr "Bir widget ekleyin, ardından sunmak için Oynat'a basın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add filter"
+msgstr "Filtre ekle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add some data widgets to get insights."
+msgstr "Öngörüler elde etmek için birkaç veri widget'ı ekleyin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add widget"
+msgstr "Widget ekle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Adds an up/down trend badge. Previous period compares this month vs last "
+"month."
+msgstr ""
+"Yukarı/aşağı trend rozeti ekler. Önceki dönem bu ayı geçen ayla "
+"karşılaştırır."
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_admin
+msgid "Administrator"
+msgstr "Yönetici"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Advanced"
+msgstr "Gelişmiş"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__aggregate
+msgid "Aggregate"
+msgstr "Topla"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_form
+msgid "Alert"
+msgstr "Uyarı"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_alert
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_alerts
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_list
+msgid "Alerts"
+msgstr "İkazlar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All"
+msgstr "Tümü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All Odoo apps"
+msgstr "Tüm Odoo uygulamaları"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Also count inactive / archived records. Off by default, so a chart of leads "
+"ignores archived ones."
+msgstr ""
+"Etkin olmayan/arşivlenmiş kayıtları da say. Varsayılan olarak kapalıdır, bu "
+"nedenle bir müşteri adayı grafiği arşivlenmiş olanları yok sayar."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__amber
+msgid "Amber"
+msgstr "Sarı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Arithmetic over other measures as a, b, c ..."
+msgstr "Diğer ölçümler üzerinde a, b, c ... olarak aritmetik işlem."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__armed
+msgid "Armed"
+msgstr "Etkinleştirildi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Asc"
+msgstr "Artan"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__asc
+msgid "Ascending"
+msgstr "Artan"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_attachment_count
+msgid "Attachment Count"
+msgstr "Ek Sayısı"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__interval
+msgid "Auto (interval)"
+msgstr "Otomatik (aralık)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Auto refresh"
+msgstr "Otomatik yenileme"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__avg
+msgid "Average"
+msgstr "Ortalama"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "B"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__token
+msgid "Bearer token"
+msgstr "Bearer belirteci"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__blue
+msgid "Blue"
+msgstr "Mavi"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_open
+msgid "Board"
+msgstr "Yönetim Paneli"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__content
+msgid "Body for text / to-do items."
+msgstr "Metin / yapılacak öğeleri için gövde."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bold"
+msgstr "Kalın"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_granularity
+msgid "Bucket size when grouping by a date field."
+msgstr "Bir tarih alanına göre gruplandırırken kullanılacak grup boyutu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bucket size when you group by a date. Month gives one point per month."
+msgstr ""
+"Tarihe göre gruplandırdığınızda kullanılacak grup boyutu. Ay, her ay için "
+"bir nokta verir."
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid ""
+"Build a live BI workspace: drag tiles onto a snapping grid, group any\n"
+"               model's data database side, and drill anywhere."
+msgstr ""
+"Canlı bir BI çalışma alanı oluşturun: kutucukları hizalanan bir ızgaraya sürükleyin, herhangi bir\n"
+"               modelin verilerini veritabanı tarafında gruplandırın ve her yerde ayrıntıya inin."
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_builder
+msgid "Builder"
+msgstr "Oluşturucu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bulleted list"
+msgstr "Madde işaretli liste"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__field
+msgid "By a specific field"
+msgstr "Belirli bir alana göre"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__category
+msgid "By category"
+msgstr "Kategoriye göre"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__measure
+msgid "By measure"
+msgstr "Ölçüye göre"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "CSV"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__formula
+msgid "Calculated (formula)"
+msgstr "Hesaplanmış (formül)"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_builder
+msgid "Can design dashboards, items, measures, data sources and filters."
+msgstr ""
+"Panolar, öğeler, ölçüler, veri kaynakları ve filtreler tasarlayabilir."
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_viewer
+msgid "Can open and read dashboards shared with them."
+msgstr "Kendisiyle paylaşılan panoları açıp okuyabilir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cancel"
+msgstr "İptal"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cap click-through to the row limit"
+msgstr "Tıklama geçişini satır sınırıyla sınırla"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit
+msgid "Cap the number of groups (0 = no cap)."
+msgstr "Grup sayısını sınırla (0 = sınır yok)."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__captured_on
+msgid "Captured On"
+msgstr "Yakalanma tarihi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__category
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Category"
+msgstr "Kategori"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__chart_options
+msgid "Chart Options"
+msgstr "Grafik Seçenekleri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__chart_type
+msgid "Chart Type"
+msgstr "Grafik Türü"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__palette
+msgid "Chart colour palette for this dashboard."
+msgstr "Bu pano için grafik renk paleti."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Chart palette"
+msgstr "Grafik paleti"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_drill__chart_type
+msgid "Chart type to switch to at this level (blank keeps the current)."
+msgstr ""
+"Bu düzeyde geçilecek grafik türü (boş bırakılırsa mevcut tür korunur)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear all"
+msgstr "Tümünü temizle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear formatting"
+msgstr "Biçimlendirmeyi temizle"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__click_action
+msgid "Click Action"
+msgstr "Tıklama Eylemi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Click a field to add it fast: names become Group by, numbers become a Sum "
+"measure."
+msgstr ""
+"Bir alanı hızlıca eklemek için tıklayın: adlar Gruplandırma ölçütü, sayılar "
+"Toplam ölçüsü olur."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Clicking a tile, bar, slice or point opens the exact records behind it -\n"
+"                            scoped to what was clicked, respecting record rules."
+msgstr ""
+"Bir kutucuğa, çubuğa, dilime veya noktaya tıklamak, arkasındaki tam kayıtları açar -\n"
+"                            tıklanan öğeyle sınırlıdır ve kayıt kurallarına uyar."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Close"
+msgstr "Kapat"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__color_mode
+msgid "Color Mode"
+msgstr "Renk Modu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Colour palette"
+msgstr "Renk paleti"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__conditional_rules
+msgid ""
+"Colour rules applied to values on tiles / lists / pivots: an ordered list of"
+" {measure, op, v1, v2, color, style} - first match wins."
+msgstr ""
+"Kutucuklardaki / listelerdeki / pivotlardaki değerlere uygulanan renk "
+"kuralları: {measure, op, v1, v2, color, style} öğelerinden oluşan sıralı bir"
+" liste - ilk eşleşme kazanır."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__combo_line
+msgid "Combo Line"
+msgstr "Bileşik Çizgi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__comfortable
+msgid "Comfortable"
+msgstr "Ferah"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__compact
+msgid "Compact"
+msgstr "Kompakt"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact (1.2K / 3.4M)"
+msgstr "Kompakt (1.2K / 3.4M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__compact
+msgid "Compact (K/M/B)"
+msgstr "Kompakt (K/M/B)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact packs more widgets on screen; Comfortable gives them room."
+msgstr ""
+"Kompakt, ekrana daha fazla widget sığdırır; Ferah ise onlara alan tanır."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__company_ids
+msgid "Companies"
+msgstr "Şirketler"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__company_id
+msgid "Company"
+msgstr "Firma"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__compare_mode
+msgid "Compare Mode"
+msgstr "Karşılaştırma Modu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compare to"
+msgstr "Karşılaştır"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__conditional_rules
+msgid "Conditional Rules"
+msgstr "Koşullu Kurallar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Conditional formatting"
+msgstr "Koşullu biçimlendirme"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__config
+msgid "Config"
+msgstr "Yapılandır"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_config
+msgid "Configuration"
+msgstr "Ayarlar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Configure"
+msgstr "Yapılandır"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__content
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Content"
+msgstr "İçerik"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Could not open records for this widget."
+msgstr "Bu widget için kayıtlar açılamadı."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count
+msgid "Count"
+msgstr "Sayı"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid "Create your first dashboard"
+msgstr "İlk panonuzu oluşturun"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_uid
+msgid "Created by"
+msgstr "Tarafından oluşturuldu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_date
+msgid "Created on"
+msgstr "Oluşturuldu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__credential_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_form
+msgid "Credential"
+msgstr "Kimlik bilgisi"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_credential
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_credentials
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_list
+msgid "Credentials"
+msgstr "Kimlik bilgileri"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cross-filter: click a chart to filter the whole board"
+msgstr "Çapraz filtre: tüm panoyu filtrelemek için bir grafiğe tıklayın"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__cumulative
+msgid "Cumulative"
+msgstr "Kümülatif"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cumulative line"
+msgstr "Kümülatif çizgi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__currency_id
+msgid "Currency"
+msgstr "Kur"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__custom
+msgid "Custom Range"
+msgstr "Özel aralık"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_dashboard
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__dashboard_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard"
+msgstr "Kontrol Paneli"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_alert
+msgid "Dashboard Alert"
+msgstr "Pano uyarısı"
+
+#. module: eh_board
+#: model:ir.module.category,name:eh_board.module_category_eh_board
+#: model:res.groups.privilege,name:eh_board.res_groups_privilege_eh_board
+msgid "Dashboard Builder"
+msgstr "Pano oluşturucu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_credential
+msgid "Dashboard Credential"
+msgstr "Pano kimlik bilgisi"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_datasource
+msgid "Dashboard Data Source"
+msgstr "Pano veri kaynağı"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_drill
+msgid "Dashboard Drill Step"
+msgstr "Pano detay adımı"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_filter
+msgid "Dashboard Filter"
+msgstr "Pano filtresi"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_item
+msgid "Dashboard Item"
+msgstr "Pano öğesi"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_layout_version
+msgid "Dashboard Layout Version"
+msgstr "Pano düzeni sürümü"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_measure
+msgid "Dashboard Measure"
+msgstr "Pano ölçüsü"
+
+#. module: eh_board
+#: model:ir.actions.report,name:eh_board.action_report_eh_board_dashboard
+msgid "Dashboard PDF"
+msgstr "Pano PDF"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_snapshot
+msgid "Dashboard Snapshot"
+msgstr "Pano anlık görüntüsü"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_template
+msgid "Dashboard Template"
+msgstr "Pano şablonu"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard name"
+msgstr "Pano adı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Dashboard settings"
+msgstr "Gösterge paneli ayarları"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Dashboard settings saved."
+msgstr "Pano ayarları kaydedildi."
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_capture_snapshots_ir_actions_server
+msgid "Dashboard: capture snapshots"
+msgstr "Pano: anlık görüntüleri yakala"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_evaluate_alerts_ir_actions_server
+msgid "Dashboard: evaluate alerts"
+msgstr "Pano: uyarıları değerlendir"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_send_digests_ir_actions_server
+msgid "Dashboard: send email digests"
+msgstr "Pano: e-posta özetleri gönder"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_dashboard
+#: model:ir.actions.client,name:eh_board.action_eh_board_open
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_root
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_list
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Dashboards"
+msgstr "Panolar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Data"
+msgstr "Veri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__data_label_type
+msgid "Data Label Type"
+msgstr "Veri etiketi türü"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__datasource_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__datasource_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Data Source"
+msgstr "Veri kaynağı"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_datasource
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_datasources
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_list
+msgid "Data Sources"
+msgstr "Veri kaynakları"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__date
+msgid "Date"
+msgstr "Tarih"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_granularity
+msgid "Date Granularity"
+msgstr "Tarih ayrıntı düzeyi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__date_preset
+msgid "Date Preset"
+msgstr "Tarih ön ayarı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field"
+msgstr "Tarih alanı"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field the dashboard date filter applies to for this widget."
+msgstr "Bu widget için pano tarih filtresinin uygulandığı tarih alanı."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Date filter field"
+msgstr "Tarih filtresi alanı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__day
+msgid "Day"
+msgstr "Gün"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_date_filter
+msgid "Default Date Filter"
+msgstr "Varsayılan tarih filtresi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__default_date_preset
+msgid "Default Date Preset"
+msgstr "Varsayılan tarih ön ayarı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_geometry
+msgid "Default Geometry"
+msgstr "Varsayılan geometri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__default_value
+msgid "Default Value"
+msgstr "Öntanımlı Değer"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Default date filter"
+msgstr "Varsayılan tarih filtresi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__default
+msgid "Default order"
+msgstr "Varsayılan sıralama"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__density
+msgid "Density"
+msgstr "Yoğunluk"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Desc"
+msgstr "Azalan"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__desc
+msgid "Descending"
+msgstr "Azalan"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__description
+msgid "Description"
+msgstr "Açıklama"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_user_ids
+msgid "Digest recipients"
+msgstr "Özet alıcıları"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Display"
+msgstr "Görüntüleme"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__display_name
+msgid "Display Name"
+msgstr "İsim Göster"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count_distinct
+msgid "Distinct count"
+msgstr "Benzersiz sayı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Do nothing"
+msgstr "Hiçbir şey yapma"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__domain
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__domain
+msgid "Domain"
+msgstr "Etki alanı"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__draft
+msgid "Draft"
+msgstr "Taslak"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to move"
+msgstr "Taşımak için sürükleyin"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to resize"
+msgstr "Yeniden boyutlandırmak için sürükleyin"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__goal_value
+msgid "Draw a horizontal goal line on a bar / line chart at this value."
+msgstr "Bu değerde bir çubuk / çizgi grafiğine yatay bir hedef çizgisi çizin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Draws a dashed reference line across the chart. Goal 100 marks where the "
+"target sits."
+msgstr ""
+"Grafiğin üzerine kesikli bir referans çizgisi çizer. Hedef 100, hedefin "
+"bulunduğu yeri işaretler."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__drill
+msgid "Drill down a level"
+msgstr "Bir seviye ayrıntıya in"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_field_id
+msgid "Drill into"
+msgstr "Ayrıntıya in"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_ids
+msgid "Drill steps"
+msgstr "Ayrıntı adımları"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Drill-down"
+msgstr "Ayrıntıya inme"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Drill-down needs a data source on this widget."
+msgstr "Ayrıntıya inme, bu widget'ta bir veri kaynağı gerektirir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Duplicate"
+msgstr "Kopyala"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Each group adds to the ones before it - a climbing cumulative curve."
+msgstr "Her grup, kendinden öncekilere eklenir - yükselen bir kümülatif eğri."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Email a PDF digest on a schedule"
+msgstr "Bir programa göre e-postayla PDF özeti gönderin"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email digest"
+msgstr "E-posta özeti"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email this dashboard as a PDF on a schedule."
+msgstr "Bu panoyu bir programa göre PDF olarak e-postayla gönderin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Every"
+msgstr "Her"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Excel workbook"
+msgstr "Excel çalışma kitabı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit"
+msgstr "Çıkış"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit presentation (Esc)"
+msgstr "Sunumdan çık (Esc)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export CSV"
+msgstr "CSV Dışa Aktar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export PNG"
+msgstr "PNG Dışa Aktar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export dashboard"
+msgstr "Panoyu dışa aktar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Extra conditions on the data, on top of the model. Only customers: Customer "
+"Rank greater than 0. The count shows how many records match right now."
+msgstr ""
+"Modelin üzerine, verilere ilişkin ek koşullar. Yalnızca müşteriler: Müşteri "
+"Sıralaması 0'dan büyük. Sayı, şu anda kaç kaydın eşleştiğini gösterir."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_geometry
+msgid "Fallback grid position when no layout is active."
+msgstr "Hiçbir düzen etkin olmadığında yedek ızgara konumu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_id
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__field
+msgid "Field"
+msgstr "Alan"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_name
+msgid "Field Name"
+msgstr "Alan Adı"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_key
+msgid "Field to group the left model by; its value is the join key."
+msgstr ""
+"Sol modeli gruplandırmak için kullanılan alan; değeri join anahtarıdır."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__drill_field_id
+msgid "Field to regroup by when drilling down."
+msgstr "Ayrıntıya inerken yeniden gruplandırılacak alan."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Field..."
+msgstr "Alan..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fields"
+msgstr "Alanlar"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__fill_gaps
+msgid "Fill Gaps"
+msgstr "Boşlukları doldur"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fill empty periods"
+msgstr "Boş dönemleri doldur"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__fill_gaps
+msgid ""
+"Fill empty periods in a date series with zero so lines never jump across "
+"missing months."
+msgstr ""
+"Bir tarih serisindeki boş dönemleri sıfırla doldurun; böylece çizgiler eksik"
+" ayları asla atlamaz."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter"
+msgstr "Filtre"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__filter_type
+msgid "Filter Type"
+msgstr "Filtre türü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Filter added."
+msgstr "Filtre eklendi."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter records"
+msgstr "Kayıtları filtrele"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filtered by"
+msgstr "Şuna göre filtrelendi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__filter_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Filters"
+msgstr "Filtreler"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_follower_ids
+msgid "Followers"
+msgstr "Takipçiler"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Takipçiler (İş ortakları)"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__icon
+msgid "Font Awesome icon name for tiles/KPIs, e.g. fa-line-chart."
+msgstr "Kutucuklar/KPI'ler için Font Awesome simge adı, ör. fa-line-chart."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__formula
+msgid ""
+"For a Calculated measure: arithmetic over the item's other measures as a, b,"
+" c ... in order. E.g. 'a / b * 100' for a margin."
+msgstr ""
+"Hesaplanan bir ölçüt için: öğenin diğer ölçütleri üzerinde sırayla a, b, c "
+"... olarak aritmetik. Ör. bir marj için 'a / b * 100'."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__forest
+msgid "Forest"
+msgstr "Orman"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__formula
+msgid "Formula"
+msgstr "Formül"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__description
+msgid "Free notes for this widget, shown on its info tooltip."
+msgstr "Bu bileşen için serbest notlar, bilgi ipucunda gösterilir."
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_admin
+msgid "Full control over every dashboard and the template library."
+msgstr "Her panel ve şablon kitaplığı üzerinde tam kontrol."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__general
+msgid "General"
+msgstr "Genel"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Generated by Dashboard Builder"
+msgstr "Dashboard Builder tarafından oluşturuldu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__goal_value
+msgid "Goal Value"
+msgstr "Hedef Değer"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal line (0 = none)"
+msgstr "Hedef çizgisi (0 = yok)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal, e.g. 100"
+msgstr "Hedef, örn. 100"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__grid
+msgid "Grid"
+msgstr "Izgara"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Grid lines"
+msgstr "Izgara çizgileri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__group_others
+msgid "Group Others"
+msgstr "Diğerlerini Grupla"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__primary_dimension_id
+msgid "Group by"
+msgstr "Şuna göre grupla"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Group the rest as \"Others\""
+msgstr "Geri kalanı \"Diğerleri\" olarak grupla"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H2"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H3"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__has_message
+msgid "Has Message"
+msgstr "Mesaj Var"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Heading"
+msgstr "Başlık"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__default
+msgid "Heritage"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__none
+msgid "Hidden"
+msgstr "Gizli"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"How numbers read. Compact turns 3,400,000 into 3.4M; Plain keeps every "
+"digit."
+msgstr ""
+"Sayıların nasıl gösterileceği. Kompakt, 3,400,000 sayısını 3.4M'ye "
+"dönüştürür; Düz her basamağı korur."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__hr
+msgid "Human Resources"
+msgstr "İnsan Kaynakları"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "I"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__id
+msgid "ID"
+msgstr "İD"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__icon
+msgid "Icon"
+msgstr "Simge"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "İşaretliyse, yeni mesajlar dikkatinize sunulacak."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "İşaretliyse, bazı mesajlar gönderi hatası içermektedir."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__include_archived
+msgid "Include Archived"
+msgstr "Arşivlenmişleri Dahil Et"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__include_archived
+msgid "Include archived (inactive) records in this widget's data."
+msgstr ""
+"Bu bileşenin verilerine arşivlenmiş (etkin olmayan) kayıtları dahil edin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Include archived records"
+msgstr "Arşivlenmiş kayıtları dahil et"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__indigo
+msgid "Indigo"
+msgstr "Çivit mavisi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Insert link"
+msgstr "Bağlantı ekle"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Insert zero rows for missing days/months so a time line never jumps a gap."
+msgstr ""
+"Eksik günler/aylar için sıfır satırları ekleyerek bir zaman çizgisinin asla "
+"bir boşluğu atlamamasını sağlayın."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__stock
+msgid "Inventory"
+msgstr "Envanter"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_active
+msgid "Is Active"
+msgstr "Etkin"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_default
+msgid "Is Default"
+msgstr "Varsayılan mı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_is_follower
+msgid "Is Follower"
+msgstr "Takipçi mi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__is_predefined
+msgid "Is Predefined"
+msgstr "Önceden Tanımlı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_template
+msgid "Is Template"
+msgstr "Şablon mu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Italic"
+msgstr "İtalik"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__item_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Item"
+msgstr "Öğe"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_count
+msgid "Item Count"
+msgstr "Öğe Sayısı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__item_type
+msgid "Item Type"
+msgstr "Öğe Türü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Item description"
+msgstr "Öğe açıklaması"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_list
+msgid "Items"
+msgstr "Öğeler"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "JSON spec"
+msgstr "JSON belirtimi"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Join two models"
+msgstr "İki modeli birleştir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "K"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__kind
+msgid "Kind"
+msgstr "Tür"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_kiosk
+msgid "Kiosk-ready"
+msgstr "Kiosk'a hazır"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__label
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__label
+msgid "Label"
+msgstr "Açıklama"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__label
+msgid "Label A to Z"
+msgstr "Etiket A'dan Z'ye"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_30
+msgid "Last 30 Days"
+msgstr "Son 30 Gün"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_30
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_30
+msgid "Last 30 days"
+msgstr "Son 30 gün"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_365
+msgid "Last 365 Days"
+msgstr "Son 365 Gün"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_7
+msgid "Last 7 Days"
+msgstr "Son 7 Gün"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_7
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_7
+msgid "Last 7 days"
+msgstr "Son 7 gün"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_90
+msgid "Last 90 Days"
+msgstr "Son 90 Gün"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_90
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_90
+msgid "Last 90 days"
+msgstr "Son 90 gün"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_month
+msgid "Last Month"
+msgstr "Geçen Ay"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_quarter
+msgid "Last Quarter"
+msgstr "Geçen Çeyrek"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_triggered_on
+msgid "Last Triggered On"
+msgstr "Son Tetiklenme"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_uid
+msgid "Last Updated by"
+msgstr "Son Güncelleyen"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_date
+msgid "Last Updated on"
+msgstr "Son Güncelleme"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_value
+msgid "Last Value"
+msgstr "Son Değer"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_week
+msgid "Last Week"
+msgstr "Geçen Hafta"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_year
+msgid "Last Year"
+msgstr "Geçen Yıl"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_month
+msgid "Last month"
+msgstr "Geçen Ay"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__layout_version_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Layouts"
+msgstr "Düzenler"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_filter__item_id
+msgid "Leave empty for a global filter shown on the dashboard bar."
+msgstr ""
+"Gösterge panosu çubuğunda gösterilen genel bir filtre için boş bırakın."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__group_ids
+msgid "Leave empty to let every internal user with dashboard access see it."
+msgstr ""
+"Gösterge panosu erişimi olan her iç kullanıcının görebilmesi için boş "
+"bırakın."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_key
+msgid "Left group field"
+msgstr "Sol grup alanı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_label
+msgid "Left label"
+msgstr "Sol etiket"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_agg
+msgid "Left measure"
+msgstr "Sol ölçü"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_model_id
+msgid "Left model"
+msgstr "Sol model"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_value
+msgid "Left value field"
+msgstr "Sol değer alanı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Legend"
+msgstr "Gösterge"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__limit
+msgid "Limit"
+msgstr "Sınır"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__live
+msgid "Live"
+msgstr "Canlı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Live preview"
+msgstr "Canlı önizleme"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading settings..."
+msgstr "Ayarlar yükleniyor..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading templates..."
+msgstr "Şablonlar yükleniyor..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "M"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_dashboards
+msgid "Manage Dashboards"
+msgstr "Gösterge Panolarını Yönet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__off
+msgid "Manual"
+msgstr "Manuel"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_layout_version__grid
+msgid "Map of item id -> {x, y, w, h, minW, minH} on the 12-column grid."
+msgstr "12 sütunlu ızgarada öğe id -> {x, y, w, h, minW, minH} eşlemesi."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Match"
+msgstr "Eşleştir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Max groups shown. 0 shows all; 5 keeps the top 5 (bucket the rest as "
+"\"Others\" in Advanced)."
+msgstr ""
+"Gösterilen en fazla grup sayısı. 0 tümünü gösterir; 5 ilk 5'i tutar "
+"(kalanları Gelişmiş bölümünde \"Others\" olarak toplar)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__max
+msgid "Maximum"
+msgstr "Maksimum"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__measure_ids
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__measure_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Measures"
+msgstr "Ölçüler"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Menu"
+msgstr "Menü"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error
+msgid "Message Delivery error"
+msgstr "Mesaj Teslim hatası"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_ids
+msgid "Messages"
+msgstr "Mesajlar"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__millions
+msgid "Millions (M)"
+msgstr "Milyon (M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__min
+msgid "Minimum"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__mint
+msgid "Mint"
+msgstr "Nane Yeşili"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__model_id
+msgid "Model"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_name
+msgid "Model Technical Name"
+msgstr "Modelin Teknik Adı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Mono"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__mono
+msgid "Monochrome"
+msgstr "Tek Renkli"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__month
+msgid "Month"
+msgstr "Ay"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__mtd
+msgid "Month to Date"
+msgstr "Aydan Bugüne"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__mtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__mtd
+msgid "Month to date"
+msgstr "Bugüne kadarki ay"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__multiplier
+msgid "Multiplier"
+msgstr "Çarpan"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "My Dashboards"
+msgstr "Gösterge Panolarım"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__name
+msgid "Name"
+msgstr "Adı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Needs the"
+msgstr "Şunu gerektirir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "New dashboard"
+msgstr "Yeni gösterge panosu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Next (Right arrow)"
+msgstr "İleri (sağ ok)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__none
+msgid "No comparison"
+msgstr "Karşılaştırma yok"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "No dashboard yet. Create one from the Dashboards menu."
+msgstr "Henüz pano yok. Panolar menüsünden bir tane oluşturun."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No data for the current filters"
+msgstr "Geçerli filtreler için veri yok"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No more people to add."
+msgstr "Eklenecek başka kişi yok."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No templates yet. Build a board and use \"Save template\"."
+msgstr ""
+"Henüz şablon yok. Bir pano oluşturun ve \"Şablonu kaydet\" seçeneğini "
+"kullanın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__all
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__none
+msgid "None"
+msgstr "Hiçbiri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__note
+msgid "Note"
+msgstr "Not"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Notes about this widget - shown on its info tooltip."
+msgstr "Bu widget hakkında notlar - bilgi araç ipucunda gösterilir."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__none
+msgid "Nothing"
+msgstr "Hiçbiri"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__user_id
+msgid "Notify"
+msgstr "Bildir"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__number_format
+msgid "Number Format"
+msgstr "Sayı Biçimi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Number format"
+msgstr "Sayı biçimi"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Aksiyon Sayısı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of errors"
+msgstr "Hata adedi"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "İşlem gerektiren mesaj sayısı"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Teslimat hatası olan mesaj adedi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Numbered list"
+msgstr "Numaralı liste"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_value
+msgid "Numeric field to aggregate (blank for a record count)."
+msgstr "Toplanacak sayısal alan (kayıt sayısı için boş bırakın)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__ocean
+msgid "Ocean"
+msgstr "Deniz"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Off = a private draft only you see. On = shared per the list below and any "
+"assigned groups."
+msgstr ""
+"Kapalı = yalnızca sizin gördüğünüz özel bir taslak. Açık = aşağıdaki listeye"
+" ve atanan gruplara göre paylaşılır."
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "Open Board"
+msgstr "Panoyu aç"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__records
+msgid "Open matching records"
+msgstr "Eşleşen kayıtları aç"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Open the matching records"
+msgstr "Eşleşen kayıtları aç"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Opening records from this widget shows at most the row-limit count, matching"
+" what the chart displays."
+msgstr ""
+"Bu widget'tan kayıtları açmak, grafiğin gösterdiğiyle eşleşecek şekilde en "
+"fazla satır sınırı sayısını gösterir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Opens with date range"
+msgstr "Tarih aralığıyla açılır"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__operator
+msgid "Operator"
+msgstr "Operatör"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__target_value
+msgid "Optional goal used by KPI and gauge items."
+msgstr "KPI ve gösterge öğeleri tarafından kullanılan isteğe bağlı hedef."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Optional label"
+msgstr "İsteğe bağlı etiket"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__options
+msgid "Options"
+msgstr "Seçenekler"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__sort_field_id
+msgid "Order groups by this field (used when sort is 'By a specific field')."
+msgstr ""
+"Grupları bu alana göre sırala ('Belirli bir alana göre' sıralamada "
+"kullanılır)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Order the groups by any field. E.g. sort countries by Created on, newest "
+"first."
+msgstr ""
+"Grupları herhangi bir alana göre sıralayın. Örn. ülkeleri Oluşturulma "
+"tarihine göre, en yeniden başlayarak sıralayın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Orders the groups. Value high to low puts the biggest bar first."
+msgstr "Grupları sıralar. Değer yüksekten düşüğe en büyük çubuğu başa koyar."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__outline
+msgid "Outline"
+msgstr "Anahat"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__combo_line
+msgid "Overlay a cumulative running-total line (Pareto) on a bar chart."
+msgstr ""
+"Bir çubuk grafiğin üzerine kümülatif çalışan toplam çizgisi (Pareto) "
+"bindirin."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__owner_id
+msgid "Owner"
+msgstr "Sahibi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "P"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF / Print (charts)"
+msgstr "PDF / Yazdır (grafikler)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF document"
+msgstr "PDF belgesi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Paint a value by its size. Example: if Revenue is less than 0, colour the "
+"number red; the first matching rule wins."
+msgstr ""
+"Bir değeri büyüklüğüne göre boyayın. Örnek: Gelir 0'dan küçükse sayıyı "
+"kırmızıya boyayın; eşleşen ilk kural geçerlidir."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__palette
+msgid "Palette"
+msgstr "Palet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Paragraph"
+msgstr "Paragraf"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__payload
+msgid "Payload"
+msgstr "Yük"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__percent
+msgid "Percentage"
+msgstr "Yüzde"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Period"
+msgstr "Dönem"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Pick a field to slice by."
+msgstr "Bölümlemek için bir alan seçin."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__plain
+msgid "Plain"
+msgstr "Düz"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Plain (1,234)"
+msgstr "Düz (1,234)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Play"
+msgstr "Oynat"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__pos
+msgid "Point of Sale"
+msgstr "Satış Noktası"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Pre-scopes this widget to a range even when the board filter is off. This "
+"year always shows the current year."
+msgstr ""
+"Pano filtresi kapalı olsa bile bu widget'ı önceden bir aralıkla sınırlar. Bu"
+" yıl her zaman geçerli yılı gösterir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Present: fullscreen, auto-rotate (Esc to exit)"
+msgstr "Sunum: tam ekran, otomatik döndürme (çıkmak için Esc)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Previous (Left arrow)"
+msgstr "Önceki (Sol ok)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_period
+msgid "Previous period"
+msgstr "Önceki dönem"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__propagate_domain
+msgid "Propagate Domain"
+msgstr "Etki Alanını Yay"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__provider_type
+msgid "Provider Type"
+msgstr "Sağlayıcı Türü"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__published
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Published"
+msgstr "Yayınlandı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Published (visible to the people below and to your groups)"
+msgstr "Yayınlandı (aşağıdaki kişiler ve gruplarınız tarafından görülebilir)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__quarter
+msgid "Quarter"
+msgstr "Çeyrek"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__qtd
+msgid "Quarter to Date"
+msgstr "Çeyrek Başından Bugüne"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__qtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__qtd
+msgid "Quarter to date"
+msgstr "Çeyrek başından bugüne"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Re-query every widget on a timer. \"Every 5 minutes\" keeps a wall board "
+"live without a reload. Manual = refresh only when you reopen."
+msgstr ""
+"Her widget'ı bir zamanlayıcıya göre yeniden sorgular. \"Her 5 dakikada "
+"bir\", bir duvar panosunu yeniden yükleme olmadan canlı tutar. Manuel = "
+"yalnızca yeniden açtığınızda yenile."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__read_only
+msgid "Read Only"
+msgstr "Salt Okunur"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Reading the board..."
+msgstr "Pano okunuyor..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit
+msgid "Record Limit"
+msgstr "Kayıt Sınırı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit_visibility
+msgid "Record Limit Visibility"
+msgstr "Kayıt Sınırı Görünürlüğü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Records"
+msgstr "Kayıtlar"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Refresh Interval"
+msgstr "Yenileme Aralığı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_mode
+msgid "Refresh Mode"
+msgstr "Yenileme Modu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Remove"
+msgstr "Kaldır"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__semi_circle
+msgid "Render pie / doughnut as a half circle."
+msgstr "Pasta / halka grafiği yarım daire olarak göster."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__required_module
+msgid "Required Module"
+msgstr "Gerekli Modül"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__group_ids
+msgid "Restricted to groups"
+msgstr "Gruplarla sınırlı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_key
+msgid "Right group field"
+msgstr "Sağ gruplama alanı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_label
+msgid "Right label"
+msgstr "Sağ etiket"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_agg
+msgid "Right measure"
+msgstr "Sağ ölçü"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_model_id
+msgid "Right model"
+msgstr "Sağ model"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_value
+msgid "Right value field"
+msgstr "Sağ değer alanı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__parent_id
+msgid "Rolled back from"
+msgstr "Şuradan geri alındı"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__rose
+msgid "Rose"
+msgstr "Gül"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Row limit"
+msgstr "Satır sınırı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Rule"
+msgstr "Kural"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Running total"
+msgstr "Yürüyen toplam"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "SELECT name AS label, count(*) AS n FROM res_partner GROUP BY name"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__sql_query
+msgid "SQL query"
+msgstr "SQL sorgusu"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Safe SQL (read-only)"
+msgstr "Güvenli SQL (salt okunur)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__crm
+msgid "Sales & CRM"
+msgstr "Satış & CRM"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_year
+msgid "Same period last year"
+msgstr "Geçen yılın aynı dönemi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save settings"
+msgstr "Ayarları kaydet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save template"
+msgstr "Şablonu kaydet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save this board as a reusable template"
+msgstr "Bu panoyu yeniden kullanılabilir bir şablon olarak kaydet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Saved as a reusable template."
+msgstr "Yeniden kullanılabilir bir şablon olarak kaydedildi."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__multiplier
+msgid "Scale the raw value, e.g. 0.001 to show thousands."
+msgstr "Ham değeri ölçeklendirin, örn. binleri göstermek için 0,001."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search fields..."
+msgstr "Alanlarda ara..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search people to add..."
+msgstr "Eklenecek kişileri ara..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Seconds between refreshes when auto-refresh is on."
+msgstr "Otomatik yenileme açıkken yenilemeler arasındaki saniye sayısı."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__secret
+msgid "Secret"
+msgstr "Gizli"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a field..."
+msgstr "Bir alan seçin..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a model..."
+msgstr "Bir model seçin..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select..."
+msgstr "Seçin..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__semi_circle
+msgid "Semi Circle"
+msgstr "Yarım Daire"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Semi circle"
+msgstr "Yarım daire"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__sequence
+msgid "Sequence"
+msgstr "Sıralama"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Share a draft with specific users"
+msgstr "Bir taslağı belirli kullanıcılarla paylaşın"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Share with people"
+msgstr "Kişilerle paylaş"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Shared with"
+msgstr "Şununla paylaşıldı"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_grid
+msgid "Show Grid"
+msgstr "Izgarayı Göster"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_legend
+msgid "Show Legend"
+msgstr "Göstergeyi Göster"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_trend
+msgid "Show Trend"
+msgstr "Eğilimi Göster"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_values
+msgid "Show Values"
+msgstr "Değerleri Göster"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__show_trend
+msgid ""
+"Show a period-over-period trend badge on KPIs when a date field is "
+"available."
+msgstr ""
+"Bir tarih alanı mevcut olduğunda KPI'larda dönemden döneme eğilim rozeti "
+"gösterin."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__cumulative
+msgid "Show a running total: each group adds to the ones before it."
+msgstr "Yürüyen toplam gösterin: her grup kendinden öncekilere eklenir."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__slate
+msgid "Slate"
+msgstr "Arduvaz"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Slice labels"
+msgstr "Dilim etiketleri"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights"
+msgstr "Akıllı içgörüler"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights: read this board in plain language"
+msgstr "Akıllı içgörüler: bu panoyu sade bir dille okuyun"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__smooth
+msgid "Smooth"
+msgstr "Yumuşak"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__smooth
+msgid "Smooth (curved) lines."
+msgstr "Yumuşak (eğri) çizgiler."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__soft
+msgid "Soft"
+msgstr "Yumuşak"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__solid
+msgid "Solid"
+msgstr "Düz"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sort
+msgid "Sort"
+msgstr "Sırala"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_mode
+msgid "Sort Mode"
+msgstr "Sıralama Modu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_order
+msgid "Sort Order"
+msgstr "Sıralama Düzeni"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_field_id
+msgid "Sort by field"
+msgstr "Alana göre sırala"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Specific users who may open this dashboard even while it is a draft."
+msgstr "Bu panoyu taslak durumundayken bile açabilecek belirli kullanıcılar."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Splits each group into a second series. Country plus Stage stacks every "
+"country bar by stage."
+msgstr ""
+"Her grubu ikinci bir seriye böler. Ülke artı Aşama, her ülke çubuğunu "
+"aşamaya göre yığar."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__stacked
+msgid "Stack series in a bar chart."
+msgstr "Bir çubuk grafikte serileri yığın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__stacked
+msgid "Stacked"
+msgstr "Yığılmış"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Start from a template"
+msgstr "Bir şablondan başlayın"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__state
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__state
+msgid "State"
+msgstr "İl/Eyalet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Sub group by"
+msgstr "Alt gruplama ölçütü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Subheading"
+msgstr "Alt başlık"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__subtitle
+msgid "Subtitle"
+msgstr "Alt Başlık"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__unit
+msgid "Suffix shown after the value, e.g. %, kg, orders."
+msgstr "Değerin ardından gösterilen sonek, örneğin %, kg, sipariş."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Suffix, e.g. % or kg"
+msgstr "Sonek, örneğin % veya kg"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__sum
+msgid "Sum"
+msgstr "Toplam"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__sunset
+msgid "Sunset"
+msgstr "Gün Batımı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Switch dashboard"
+msgstr "Pano değiştir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Switch to Edit and add your first widget - group any model's\n"
+"                               data database side and drill anywhere."
+msgstr ""
+"Düzenle moduna geçin ve ilk widget'ınızı ekleyin - herhangi bir modelin "
+"verilerini veritabanı tarafında gruplayın ve istediğiniz yere ayrıntıya "
+"inin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Target"
+msgstr "Hedef"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__target_value
+msgid "Target Value"
+msgstr "Hedef Değer"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Target:"
+msgstr "Hedef:"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__teal
+msgid "Teal"
+msgstr "Deniz mavisi"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_template__required_module
+msgid ""
+"Technical name of the base app a vertical template needs (e.g. account). "
+"Blank for a general template."
+msgstr ""
+"Dikey bir şablonun ihtiyaç duyduğu temel uygulamanın teknik adı (ör. "
+"account). Genel şablon için boş bırakın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Templates"
+msgstr "Şablonlar"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__model_id
+msgid "The Odoo model to aggregate (for the Odoo-model provider)."
+msgstr "Toplanacak Odoo modeli (Odoo model sağlayıcısı için)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The card's highlight colour. Tiles use it as their fill; charts use it for "
+"the first series."
+msgstr ""
+"Kartın vurgu rengi. Kutucuklar bunu dolgu olarak kullanır; grafikler ilk "
+"seri için kullanır."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The colour ramp every chart on this board uses."
+msgstr "Bu panodaki her grafiğin kullandığı renk skalası."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The dashboard's title, shown in the header and the switcher."
+msgstr "Panonun başlığı, üst bilgide ve değiştiricide gösterilir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The date filter the board starts on. This month means it always opens scoped"
+" to the current month."
+msgstr ""
+"Panonun başladığı tarih filtresi. Bu ay, panonun her zaman geçerli aya "
+"kapsamlanmış olarak açılacağı anlamına gelir."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__default_date_preset
+msgid ""
+"The date range this dashboard opens with (the board date filter's start "
+"value)."
+msgstr ""
+"Bu panonun açıldığı tarih aralığı (pano tarih filtresinin başlangıç değeri)."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__field_id
+msgid "The field to aggregate. Leave empty for a record count."
+msgstr "Toplanacak alan. Kayıt sayısı için boş bırakın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The field whose values become your bars, slices or rows. Group by Country "
+"gives one bar per country."
+msgstr ""
+"Değerleri çubuklarınız, dilimleriniz veya satırlarınız haline gelen alan. "
+"Ülkeye göre grupla, her ülke için bir çubuk verir."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__item_type
+msgid ""
+"The kind of widget. Every type is a registered strategy - adding one never "
+"edits this model."
+msgstr ""
+"Widget türü. Her tür kayıtlı bir stratejidir - bir tane eklemek bu modeli "
+"asla değiştirmez."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The records to chart. Example: Contact for customers, Sales Order for "
+"revenue."
+msgstr ""
+"Grafiğe dökülecek kayıtlar. Örnek: Müşteriler için Kişi, gelir için Satış "
+"Siparişi."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The rich text shown in this block, e.g. a section title, notes, or "
+"instructions for the board."
+msgstr ""
+"Bu blokta gösterilen zengin metin, ör. bir bölüm başlığı, notlar veya pano "
+"için talimatlar."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The title shown on the card. Example: \"Revenue by month\"."
+msgstr "Kartta gösterilen başlık. Örnek: \"Aya göre gelir\"."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__theme
+msgid "Theme palette"
+msgstr "Tema paleti"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__secondary_dimension_id
+msgid "Then by"
+msgstr "Sonra şuna göre"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_month
+msgid "This Month"
+msgstr "Bu Ay"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_quarter
+msgid "This Quarter"
+msgstr "Bu çeyrek"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_week
+msgid "This Week"
+msgstr "Bu Hafta"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_year
+msgid "This Year"
+msgstr "Bu Yıl"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_month
+msgid "This month"
+msgstr "Bu Ay"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_quarter
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_quarter
+msgid "This quarter"
+msgstr "Bu çeyrek"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_template.py:0
+msgid "This template needs the %s app. Install it first."
+msgstr "Bu şablon %s uygulamasını gerektirir. Önce onu yükleyin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_week
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_week
+msgid "This week"
+msgstr "Bu hafta"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "This widget"
+msgstr "Bu widget"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_year
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_year
+msgid "This year"
+msgstr "Bu Yıl"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__thousands
+msgid "Thousands (K)"
+msgstr "Binler (K)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__threshold
+msgid "Threshold"
+msgstr "Eşik"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__thumbnail
+msgid "Thumbnail"
+msgstr "Küçük resim"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__tile_style
+msgid "Tile Style"
+msgstr "Kutucuk Stili"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile look: Soft tint, Solid fill, or Outline. Soft suits most boards."
+msgstr ""
+"Kutucuk görünümü: Yumuşak ton, Dolgu veya Anahat. Yumuşak, çoğu pano için "
+"uygundur."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__tile_style
+msgid "Tile look: soft tint, solid fill, or outline."
+msgstr "Kutucuk görünümü: yumuşak ton, dolgu veya anahat."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile style"
+msgstr "Kutucuk stili"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__title
+msgid "Title"
+msgstr "Başlık"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__today
+msgid "Today"
+msgstr "Bugün"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle comfortable / compact density"
+msgstr "Rahat / kompakt yoğunluğu değiştir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle light / dark"
+msgstr "Açık / koyu geçiş yap"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Toggles specific to this chart type. Semi circle turns a pie into a half "
+"gauge; Stacked piles a bar's series on top of each other."
+msgstr ""
+"Bu grafik türüne özgü geçişler. Yarım daire, bir pastayı yarım göstergeye "
+"dönüştürür; Yığılmış, bir çubuğun serilerini üst üste yığar."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Total"
+msgstr "Toplam"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__triggered
+msgid "Triggered"
+msgstr "Tetiklendi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Type a name and click to add. These people can open this dashboard even "
+"while it is a draft."
+msgstr ""
+"Bir ad yazın ve eklemek için tıklayın. Bu kişiler bu panoyu taslak "
+"halindeyken bile açabilir."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "U"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Underline"
+msgstr "Altı çizili"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__unit
+msgid "Unit"
+msgstr "Birim"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Unknown widget type"
+msgstr "Bilinmeyen widget türü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Use this"
+msgstr "Bunu kullan"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__username
+msgid "Username"
+msgstr "Kullanıcı Adı"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__basic
+msgid "Username / password"
+msgstr "Kullanıcı adı / parola"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__value
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__value
+msgid "Value"
+msgstr "Değer"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_desc
+msgid "Value (high to low)"
+msgstr "Değer (yüksekten düşüğe)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_asc
+msgid "Value (low to high)"
+msgstr "Değer (düşükten yükseğe)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value format"
+msgstr "Değer biçimi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value labels"
+msgstr "Değer etiketleri"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_desc
+msgid "Value: high to low"
+msgstr "Değer: yüksekten düşüğe"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_asc
+msgid "Value: low to high"
+msgstr "Değer: düşükten yükseğe"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_viewer
+msgid "Viewer"
+msgstr "Görüntüleyici"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__violet
+msgid "Violet"
+msgstr "Menekşe"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__web
+msgid "Website"
+msgstr "Websitesi"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__week
+msgid "Week"
+msgstr "Hafta"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__wtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__wtd
+msgid "Week to date"
+msgstr "Hafta başından bugüne"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each bar or slice measures. Count = number of records; Sum of Amount = "
+"total revenue. Add a second measure to compare two numbers side by side."
+msgstr ""
+"Her çubuğun veya dilimin neyi ölçtüğü. Count = kayıt sayısı; Sum of Amount ="
+" toplam gelir. İki sayıyı yan yana karşılaştırmak için ikinci bir ölçüt "
+"ekleyin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each pie slice shows: the raw Value (e.g. 39), its Percentage (e.g. "
+"28%), or nothing."
+msgstr ""
+"Her pasta diliminin gösterdiği: ham değer (ör. 39), yüzdesi (ör. 28%) veya "
+"hiçbir şey."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__click_action
+msgid "What happens when a data point is clicked."
+msgstr "Bir veri noktasına tıklandığında ne olur."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__data_label_type
+msgid ""
+"What pie / doughnut slice labels show: the value, its share, or nothing."
+msgstr ""
+"Pasta / halka dilim etiketlerinin gösterdiği: değer, payı veya hiçbir şey."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "What this dashboard is for."
+msgstr "Bu panonun ne için olduğu."
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "What this dashboard is for..."
+msgstr "Bu panonun ne için olduğu..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__group_others
+msgid ""
+"When a row cap is set, sum everything past it into a single 'Others' group "
+"instead of dropping it."
+msgstr ""
+"Bir satır üst sınırı ayarlandığında, bunu aşan her şeyi atmak yerine tek bir"
+" 'Others' grubunda toplayın."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit_visibility
+msgid ""
+"When a row limit is set, also cap the record-count shown on click-through to"
+" that limit instead of the full match."
+msgstr ""
+"Bir satır sınırı ayarlandığında, tıklama ile açılan görünümde gösterilen "
+"kayıt sayısını da tam eşleşme yerine bu sınırla sınırlayın."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "When clicked"
+msgstr "Tıklandığında"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__provider_type
+msgid ""
+"Where the numbers come from. The free engine ships the Odoo-model provider; "
+"joins, safe SQL and external feeds register alongside it."
+msgstr ""
+"Sayıların nereden geldiği. Ücretsiz motor Odoo model sağlayıcısıyla gelir; "
+"join'ler, güvenli SQL ve harici beslemeler bunun yanında kaydolur."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Which date the board date filter narrows for this widget. Auto picks a "
+"sensible one (e.g. Order Date)."
+msgstr ""
+"Pano tarih filtresinin bu widget için hangi tarihi daralttığı. Otomatik, "
+"uygun bir tarih seçer (ör. Order Date)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Who gets the scheduled PDF. Example: email the sales board to the team every"
+" Monday."
+msgstr ""
+"Zamanlanmış PDF'yi kimin alacağı. Örnek: satış panosunu her Pazartesi ekibe "
+"e-postayla gönderin."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget added."
+msgstr "Widget eklendi."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget duplicated."
+msgstr "Widget çoğaltıldı."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget name"
+msgstr "Widget adı"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget type"
+msgstr "Widget türü"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget updated."
+msgstr "Widget güncellendi."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"With a row limit set, everything past it is summed into one honest Others "
+"slice instead of dropped."
+msgstr ""
+"Bir satır sınırı ayarlandığında, bunu aşan her şey atılmak yerine tek bir "
+"dürüst Others diliminde toplanır."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__year
+msgid "Year"
+msgstr "Yıl"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__ytd
+msgid "Year to Date"
+msgstr "Yılbaşından bugüne"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__ytd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__ytd
+msgid "Year to date"
+msgstr "Bugüne kadar geçen yıl"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__yesterday
+msgid "Yesterday"
+msgstr "Dün"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"You can view these settings but only the owner or a dashboard builder can "
+"change them."
+msgstr ""
+"Bu ayarları görüntüleyebilirsiniz ancak yalnızca sahibi veya bir pano "
+"oluşturucu bunları değiştirebilir."
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_dashboard.py:0
+msgid "You may not change this dashboard's settings."
+msgstr "Bu panonun ayarlarını değiştiremezsiniz."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "a / b * 100"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "app"
+msgstr "uygulama"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gte
+msgid "at least"
+msgstr "en az"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lte
+msgid "at most"
+msgstr "en fazla"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "colour text"
+msgstr "renkli metin"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "data bar"
+msgstr "veri çubuğu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "e.g. 100"
+msgstr "örn. 100"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "equals"
+msgstr "eşittir"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "fill"
+msgstr "doldur"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gt
+msgid "greater than"
+msgstr "büyüktür"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "hours"
+msgstr "saat"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at least"
+msgstr "en az"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at most"
+msgstr "en fazla"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is between"
+msgstr "arasında"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is greater than"
+msgstr "büyüktür"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is less than"
+msgstr "küçüktür"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "items"
+msgstr "öğeler"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lt
+msgid "less than"
+msgstr "küçüktür"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "minutes"
+msgstr "dakika"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "record(s)"
+msgstr "kayıt"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "seconds"
+msgstr "saniye"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "target"
+msgstr "hedef"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "unit"
+msgstr "birim"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "• List"
+msgstr "• Liste"

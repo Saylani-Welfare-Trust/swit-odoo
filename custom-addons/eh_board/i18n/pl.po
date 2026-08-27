@@ -1,0 +1,3523 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* eh_board
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-14 10:49+0000\n"
+"PO-Revision-Date: 2026-07-14 10:49+0000\n"
+"Last-Translator: ERP Heritage <info@erpheritage.com.au>\n"
+"Language-Team: Polish\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "% of"
+msgstr "% z"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(auto)"
+msgstr "(automatycznie)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "(none)"
+msgstr "(brak)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "0 = all"
+msgstr "0 = wszystko"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "1.2K"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "A blank canvas"
+msgstr "Pusty obszar roboczy"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_date_filter
+msgid ""
+"A built-in date range applied to this widget when the board's own date "
+"filter is off."
+msgstr ""
+"Wbudowany zakres dat stosowany do tego widżetu, gdy własny filtr dat tablicy"
+" jest wyłączony."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A goal for this KPI. Target 100 with a value of 72 shows 72% of target on "
+"the bar."
+msgstr "Cel dla tego KPI. Cel 100 z wartością 72 pokazuje na pasku 72% celu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"A short note explaining what this widget measures. Appears as an info "
+"tooltip on the card."
+msgstr ""
+"Krótka notatka wyjaśniająca, co mierzy ten widżet. Pojawia się jako "
+"podpowiedź informacyjna na karcie."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__sql_query
+msgid ""
+"A single read-only SELECT. First column is the category label; the remaining"
+" numeric columns become measures."
+msgstr ""
+"Pojedyncze zapytanie SELECT tylko do odczytu. Pierwsza kolumna to etykieta "
+"kategorii; pozostałe kolumny liczbowe stają się miarami."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__domain
+msgid ""
+"A static filter applied before any runtime dashboard filter. A plain domain "
+"literal - never an evaluated expression."
+msgstr ""
+"Filtr statyczny stosowany przed jakimkolwiek filtrem pulpitu w czasie "
+"wykonywania. Zwykły literał domeny - nigdy wyrażenie podlegające ewaluacji."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__domain
+msgid "A static filter for this item, on top of the data source filter."
+msgstr "Filtr statyczny dla tego elementu, oprócz filtra źródła danych."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__credential_id
+msgid "A vaulted credential for an external source (never inlined)."
+msgstr ""
+"Poświadczenie przechowywane w sejfie dla źródła zewnętrznego (nigdy nie "
+"osadzane w treści)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__api_key
+msgid "API key"
+msgstr "Klucz API"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__accent
+msgid "Accent"
+msgstr "Akcent"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Accent colour"
+msgstr "Kolor akcentu"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__accent
+msgid "Accent colour for the widget (tiles use it as the fill)."
+msgstr "Kolor akcentu widżetu (kafelki używają go jako wypełnienia)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__account
+msgid "Accounting"
+msgstr "Księgowość"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction
+msgid "Action Needed"
+msgstr "Wymagane działanie"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Actions"
+msgstr "Akcje"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__active
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__active
+msgid "Active"
+msgstr "Aktywne"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__active_layout_id
+msgid "Active layout"
+msgstr "Aktywny układ"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add"
+msgstr "Dodaj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget"
+msgstr "Dodaj widżet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add a widget, then press Play to present."
+msgstr "Dodaj widżet, a następnie naciśnij Odtwórz, aby zaprezentować."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add filter"
+msgstr "Dodaj filtr"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add some data widgets to get insights."
+msgstr "Dodaj kilka widżetów danych, aby uzyskać wgląd w informacje."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Add widget"
+msgstr "Dodaj widżet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Adds an up/down trend badge. Previous period compares this month vs last "
+"month."
+msgstr ""
+"Dodaje odznakę trendu wzrostowego/spadkowego. Poprzedni okres porównuje "
+"bieżący miesiąc z ubiegłym."
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_admin
+msgid "Administrator"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Advanced"
+msgstr "Zaawansowane"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__aggregate
+msgid "Aggregate"
+msgstr "Agreguj"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_form
+msgid "Alert"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_alert
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_alerts
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_alert_list
+msgid "Alerts"
+msgstr "Ostrzeżenia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All"
+msgstr "Wszystko"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "All Odoo apps"
+msgstr "Wszystkie aplikacje Odoo"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Also count inactive / archived records. Off by default, so a chart of leads "
+"ignores archived ones."
+msgstr ""
+"Uwzględniaj również nieaktywne/zarchiwizowane rekordy. Domyślnie wyłączone, "
+"więc wykres leadów pomija zarchiwizowane."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__amber
+msgid "Amber"
+msgstr "Bursztynowy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Arithmetic over other measures as a, b, c ..."
+msgstr "Działania arytmetyczne na innych miarach oznaczonych jako a, b, c ..."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__armed
+msgid "Armed"
+msgstr "Uzbrojony"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Asc"
+msgstr "Rosnąco"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__asc
+msgid "Ascending"
+msgstr "Rosnąco"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_attachment_count
+msgid "Attachment Count"
+msgstr "Liczba załączników"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__interval
+msgid "Auto (interval)"
+msgstr "Automatycznie (interwał)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Auto refresh"
+msgstr "Automatyczne odświeżanie"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__avg
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__avg
+msgid "Average"
+msgstr "Średnia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "B"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__token
+msgid "Bearer token"
+msgstr "Token Bearer"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__blue
+msgid "Blue"
+msgstr "Niebieski"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_open
+msgid "Board"
+msgstr "Konsola"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__content
+msgid "Body for text / to-do items."
+msgstr "Treść dla elementów tekstowych / zadań do wykonania."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bold"
+msgstr "Pogrubienie"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_granularity
+msgid "Bucket size when grouping by a date field."
+msgstr "Rozmiar przedziału podczas grupowania według pola daty."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bucket size when you group by a date. Month gives one point per month."
+msgstr ""
+"Rozmiar przedziału podczas grupowania według daty. Miesiąc daje jeden punkt "
+"na miesiąc."
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid ""
+"Build a live BI workspace: drag tiles onto a snapping grid, group any\n"
+"               model's data database side, and drill anywhere."
+msgstr ""
+"Zbuduj interaktywne środowisko BI: przeciągaj kafelki na przyciągającą siatkę, grupuj dane dowolnego\n"
+"               modelu po stronie bazy danych i drąż wszędzie."
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_builder
+msgid "Builder"
+msgstr "Kreator"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Bulleted list"
+msgstr "Lista punktowana"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__field
+msgid "By a specific field"
+msgstr "Według określonego pola"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__category
+msgid "By category"
+msgstr "Według kategorii"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__measure
+msgid "By measure"
+msgstr "Według miary"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "CSV"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__formula
+msgid "Calculated (formula)"
+msgstr "Obliczone (formuła)"
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_builder
+msgid "Can design dashboards, items, measures, data sources and filters."
+msgstr "Może projektować pulpity, elementy, miary, źródła danych i filtry."
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_viewer
+msgid "Can open and read dashboards shared with them."
+msgstr "Może otwierać i przeglądać udostępnione mu pulpity."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cancel"
+msgstr "Anuluj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cap click-through to the row limit"
+msgstr "Ogranicz przejście po kliknięciu do limitu wierszy"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit
+msgid "Cap the number of groups (0 = no cap)."
+msgstr "Ogranicz liczbę grup (0 = brak limitu)."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__captured_on
+msgid "Captured On"
+msgstr "Data przechwycenia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__category
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Category"
+msgstr "Kategoria"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__chart_options
+msgid "Chart Options"
+msgstr "Opcje wykresu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__chart_type
+msgid "Chart Type"
+msgstr "Typ wykresu"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__palette
+msgid "Chart colour palette for this dashboard."
+msgstr "Paleta kolorów wykresu dla tego pulpitu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Chart palette"
+msgstr "Paleta wykresu"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_drill__chart_type
+msgid "Chart type to switch to at this level (blank keeps the current)."
+msgstr ""
+"Typ wykresu, na który należy przełączyć na tym poziomie (puste zachowuje "
+"bieżący)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear all"
+msgstr "Wyczyść wszystko"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Clear formatting"
+msgstr "Wyczyść formatowanie"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__click_action
+msgid "Click Action"
+msgstr "Akcja kliknięcia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Click a field to add it fast: names become Group by, numbers become a Sum "
+"measure."
+msgstr ""
+"Kliknij pole, aby szybko je dodać: nazwy stają się Grupuj według, liczby "
+"stają się miarą Suma."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Clicking a tile, bar, slice or point opens the exact records behind it -\n"
+"                            scoped to what was clicked, respecting record rules."
+msgstr ""
+"Kliknięcie kafelka, słupka, wycinka lub punktu otwiera dokładne rekordy za nim -\n"
+"                            ograniczone do tego, co kliknięto, z poszanowaniem reguł rekordów."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Close"
+msgstr "Zamknij"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__color_mode
+msgid "Color Mode"
+msgstr "Tryb koloru"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Colour palette"
+msgstr "Paleta kolorów"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__conditional_rules
+msgid ""
+"Colour rules applied to values on tiles / lists / pivots: an ordered list of"
+" {measure, op, v1, v2, color, style} - first match wins."
+msgstr ""
+"Reguły kolorów stosowane do wartości na kafelkach / listach / tabelach "
+"przestawnych: uporządkowana lista {measure, op, v1, v2, color, style} - "
+"wygrywa pierwsze dopasowanie."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__combo_line
+msgid "Combo Line"
+msgstr "Linia kombinowana"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__comfortable
+msgid "Comfortable"
+msgstr "Komfortowy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_layout_version__density__compact
+msgid "Compact"
+msgstr "Kompaktowy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact (1.2K / 3.4M)"
+msgstr "Kompaktowy (1.2K / 3.4M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__compact
+msgid "Compact (K/M/B)"
+msgstr "Kompaktowy (K/M/B)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compact packs more widgets on screen; Comfortable gives them room."
+msgstr ""
+"Kompaktowy mieści więcej widżetów na ekranie; Komfortowy daje im przestrzeń."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__company_ids
+msgid "Companies"
+msgstr "Firmy"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__company_id
+msgid "Company"
+msgstr "Firma"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__compare_mode
+msgid "Compare Mode"
+msgstr "Tryb porównania"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Compare to"
+msgstr "Porównaj z"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__conditional_rules
+msgid "Conditional Rules"
+msgstr "Reguły warunkowe"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Conditional formatting"
+msgstr "Formatowanie warunkowe"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__config
+msgid "Config"
+msgstr "Konfiguracja"
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_config
+msgid "Configuration"
+msgstr "Konfiguracja"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Configure"
+msgstr "Konfiguruj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__content
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Content"
+msgstr "Zawartość"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Could not open records for this widget."
+msgstr "Nie można otworzyć rekordów dla tego widżetu."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__count
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count
+msgid "Count"
+msgstr "Liczba"
+
+#. module: eh_board
+#: model_terms:ir.actions.act_window,help:eh_board.action_eh_board_dashboard
+msgid "Create your first dashboard"
+msgstr "Utwórz swój pierwszy pulpit"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_uid
+msgid "Created by"
+msgstr "Utworzył(a)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__create_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__create_date
+msgid "Created on"
+msgstr "Data utworzenia"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__credential_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_form
+msgid "Credential"
+msgstr "Poświadczenie"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_credential
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_credentials
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_credential_list
+msgid "Credentials"
+msgstr "Uwierzytelnienia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cross-filter: click a chart to filter the whole board"
+msgstr "Filtr krzyżowy: kliknij wykres, aby przefiltrować całą tablicę"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__cumulative
+msgid "Cumulative"
+msgstr "Łącznie"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Cumulative line"
+msgstr "Linia skumulowana"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__currency_id
+msgid "Currency"
+msgstr "Waluta"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__custom
+msgid "Custom Range"
+msgstr "Zakres niestandardowy"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_dashboard
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__dashboard_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__dashboard_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard"
+msgstr "Konsola"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_alert
+msgid "Dashboard Alert"
+msgstr "Alert pulpitu"
+
+#. module: eh_board
+#: model:ir.module.category,name:eh_board.module_category_eh_board
+#: model:res.groups.privilege,name:eh_board.res_groups_privilege_eh_board
+msgid "Dashboard Builder"
+msgstr "Kreator pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_credential
+msgid "Dashboard Credential"
+msgstr "Poświadczenie pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_datasource
+msgid "Dashboard Data Source"
+msgstr "Źródło danych pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_drill
+msgid "Dashboard Drill Step"
+msgstr "Krok drążenia pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_filter
+msgid "Dashboard Filter"
+msgstr "Filtr pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_item
+msgid "Dashboard Item"
+msgstr "Element pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_layout_version
+msgid "Dashboard Layout Version"
+msgstr "Wersja układu pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_measure
+msgid "Dashboard Measure"
+msgstr "Miara pulpitu"
+
+#. module: eh_board
+#: model:ir.actions.report,name:eh_board.action_report_eh_board_dashboard
+msgid "Dashboard PDF"
+msgstr "PDF pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_snapshot
+msgid "Dashboard Snapshot"
+msgstr "Migawka pulpitu"
+
+#. module: eh_board
+#: model:ir.model,name:eh_board.model_eh_board_template
+msgid "Dashboard Template"
+msgstr "Szablon pulpitu"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Dashboard name"
+msgstr "Nazwa pulpitu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Dashboard settings"
+msgstr "Ustawienia pulpitu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Dashboard settings saved."
+msgstr "Ustawienia pulpitu zostały zapisane."
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_capture_snapshots_ir_actions_server
+msgid "Dashboard: capture snapshots"
+msgstr "Pulpit: przechwytuj migawki"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_evaluate_alerts_ir_actions_server
+msgid "Dashboard: evaluate alerts"
+msgstr "Pulpit: oceniaj alerty"
+
+#. module: eh_board
+#: model:ir.actions.server,name:eh_board.cron_send_digests_ir_actions_server
+msgid "Dashboard: send email digests"
+msgstr "Pulpit: wysyłaj podsumowania e-mail"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_dashboard
+#: model:ir.actions.client,name:eh_board.action_eh_board_open
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_root
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_list
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Dashboards"
+msgstr "Pulpity"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Data"
+msgstr "Dane"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__data_label_type
+msgid "Data Label Type"
+msgstr "Typ etykiety danych"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__datasource_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__datasource_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Data Source"
+msgstr "Źródło danych"
+
+#. module: eh_board
+#: model:ir.actions.act_window,name:eh_board.action_eh_board_datasource
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_datasources
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_list
+msgid "Data Sources"
+msgstr "Źródła danych"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__date
+msgid "Date"
+msgstr "Data"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_granularity
+msgid "Date Granularity"
+msgstr "Ziarnistość daty"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__date_preset
+msgid "Date Preset"
+msgstr "Ustawienie wstępne daty"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field"
+msgstr "Pole daty"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__date_filter_field_id
+msgid "Date field the dashboard date filter applies to for this widget."
+msgstr ""
+"Pole daty, do którego stosowany jest filtr daty pulpitu dla tego widżetu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Date filter field"
+msgstr "Pole filtra daty"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__day
+msgid "Day"
+msgstr "Dzień"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_date_filter
+msgid "Default Date Filter"
+msgstr "Domyślny filtr daty"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__default_date_preset
+msgid "Default Date Preset"
+msgstr "Domyślne ustawienie wstępne daty"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__default_geometry
+msgid "Default Geometry"
+msgstr "Domyślna geometria"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__default_value
+msgid "Default Value"
+msgstr "Domyślna wartość"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Default date filter"
+msgstr "Domyślny filtr daty"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__default
+msgid "Default order"
+msgstr "Domyślna kolejność"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__density
+msgid "Density"
+msgstr "Gęstość"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Desc"
+msgstr "Malejąco"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_order__desc
+msgid "Descending"
+msgstr "Malejąco"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__description
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__description
+msgid "Description"
+msgstr "Opis"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_user_ids
+msgid "Digest recipients"
+msgstr "Odbiorcy podsumowania"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Display"
+msgstr "Wyświetlanie"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__display_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__display_name
+msgid "Display Name"
+msgstr "Nazwa wyświetlana"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__count_distinct
+msgid "Distinct count"
+msgstr "Liczba unikalnych"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Do nothing"
+msgstr "Nic nie rób"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__domain
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__domain
+msgid "Domain"
+msgstr "Domena"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__draft
+msgid "Draft"
+msgstr "Wersja robocza"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to move"
+msgstr "Przeciągnij, aby przenieść"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Drag to resize"
+msgstr "Przeciągnij, aby zmienić rozmiar"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__goal_value
+msgid "Draw a horizontal goal line on a bar / line chart at this value."
+msgstr ""
+"Rysuje poziomą linię celu na wykresie słupkowym / liniowym przy tej "
+"wartości."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Draws a dashed reference line across the chart. Goal 100 marks where the "
+"target sits."
+msgstr ""
+"Rysuje przerywaną linię odniesienia w poprzek wykresu. Cel 100 oznacza "
+"położenie wartości docelowej."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__drill
+msgid "Drill down a level"
+msgstr "Przejdź o poziom niżej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_field_id
+msgid "Drill into"
+msgstr "Szczegóły według"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__drill_ids
+msgid "Drill steps"
+msgstr "Kroki drążenia"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Drill-down"
+msgstr "Drążenie danych"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Drill-down needs a data source on this widget."
+msgstr "Drążenie danych wymaga źródła danych w tym widżecie."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Duplicate"
+msgstr "Duplikuj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Each group adds to the ones before it - a climbing cumulative curve."
+msgstr ""
+"Każda grupa dodaje się do poprzednich, tworząc rosnącą krzywą skumulowaną."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Email a PDF digest on a schedule"
+msgstr "Wysyłaj podsumowanie PDF e-mailem według harmonogramu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email digest"
+msgstr "Podsumowanie e-mail"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__digest_enabled
+msgid "Email this dashboard as a PDF on a schedule."
+msgstr "Wysyłaj ten pulpit jako PDF e-mailem według harmonogramu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Every"
+msgstr "Każdy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Excel workbook"
+msgstr "Skoroszyt Excel"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit"
+msgstr "Zamknij"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Exit presentation (Esc)"
+msgstr "Zamknij prezentację (Esc)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export CSV"
+msgstr "Eksportuj CSV"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export PNG"
+msgstr "Eksportuj PNG"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Export dashboard"
+msgstr "Eksportuj pulpit"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Extra conditions on the data, on top of the model. Only customers: Customer "
+"Rank greater than 0. The count shows how many records match right now."
+msgstr ""
+"Dodatkowe warunki dotyczące danych, ponad model. Tylko klienci: ranga "
+"klienta większa niż 0. Licznik pokazuje, ile rekordów pasuje w tej chwili."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__default_geometry
+msgid "Fallback grid position when no layout is active."
+msgstr "Zapasowa pozycja w siatce, gdy żaden układ nie jest aktywny."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_id
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__filter_type__field
+msgid "Field"
+msgstr "Pole"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__field_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__field_name
+msgid "Field Name"
+msgstr "Nazwa pola"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_key
+msgid "Field to group the left model by; its value is the join key."
+msgstr ""
+"Pole, według którego grupowany jest lewy model; jego wartość jest kluczem "
+"złączenia."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__drill_field_id
+msgid "Field to regroup by when drilling down."
+msgstr "Pole do ponownego grupowania podczas drążenia danych."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Field..."
+msgstr "Pole..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fields"
+msgstr "Pola"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__fill_gaps
+msgid "Fill Gaps"
+msgstr "Wypełnij luki"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Fill empty periods"
+msgstr "Wypełnij puste okresy"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__fill_gaps
+msgid ""
+"Fill empty periods in a date series with zero so lines never jump across "
+"missing months."
+msgstr ""
+"Wypełnij puste okresy w serii dat zerem, aby linie nigdy nie przeskakiwały "
+"przez brakujące miesiące."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter"
+msgstr "Filtr"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__filter_type
+msgid "Filter Type"
+msgstr "Typ filtra"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Filter added."
+msgstr "Dodano filtr."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filter records"
+msgstr "Filtruj rekordy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Filtered by"
+msgstr "Filtrowane według"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__filter_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Filters"
+msgstr "Filtry"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_follower_ids
+msgid "Followers"
+msgstr "Obserwujący"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Obserwujący (partnerzy)"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__icon
+msgid "Font Awesome icon name for tiles/KPIs, e.g. fa-line-chart."
+msgstr "Nazwa ikony Font Awesome dla kafelków/KPI, np. fa-line-chart."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__formula
+msgid ""
+"For a Calculated measure: arithmetic over the item's other measures as a, b,"
+" c ... in order. E.g. 'a / b * 100' for a margin."
+msgstr ""
+"Dla miary obliczanej: działania arytmetyczne na pozostałych miarach elementu"
+" jako a, b, c ... w kolejności. Np. 'a / b * 100' dla marży."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__forest
+msgid "Forest"
+msgstr "Las"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__formula
+msgid "Formula"
+msgstr "Formuła"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__description
+msgid "Free notes for this widget, shown on its info tooltip."
+msgstr ""
+"Dowolne notatki dla tego widżetu, wyświetlane w jego podpowiedzi "
+"informacyjnej."
+
+#. module: eh_board
+#: model:res.groups,comment:eh_board.group_board_admin
+msgid "Full control over every dashboard and the template library."
+msgstr ""
+"Pełna kontrola nad każdym pulpitem nawigacyjnym i biblioteką szablonów."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__general
+msgid "General"
+msgstr "Ogólne"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Generated by Dashboard Builder"
+msgstr "Wygenerowano przez Dashboard Builder"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__goal_value
+msgid "Goal Value"
+msgstr "Wartość docelowa"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal line (0 = none)"
+msgstr "Linia celu (0 = brak)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Goal, e.g. 100"
+msgstr "Cel, np. 100"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__grid
+msgid "Grid"
+msgstr "Siatka"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Grid lines"
+msgstr "Linie siatki"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__group_others
+msgid "Group Others"
+msgstr "Grupuj pozostałe"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__field_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__primary_dimension_id
+msgid "Group by"
+msgstr "Grupuj według"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Group the rest as \"Others\""
+msgstr "Grupuj resztę jako „Pozostałe”"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H2"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "H3"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__has_message
+msgid "Has Message"
+msgstr "Ma wiadomość"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Heading"
+msgstr "Nagłówek"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__default
+msgid "Heritage"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__none
+msgid "Hidden"
+msgstr "Ukryte"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"How numbers read. Compact turns 3,400,000 into 3.4M; Plain keeps every "
+"digit."
+msgstr ""
+"Sposób wyświetlania liczb. Tryb kompaktowy zamienia 3,400,000 na 3.4M; tryb "
+"zwykły zachowuje każdą cyfrę."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__hr
+msgid "Human Resources"
+msgstr "Zasoby ludzkie"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "I"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__id
+msgid "ID"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__icon
+msgid "Icon"
+msgstr "Ikona"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Jeśli zaznaczone, nowe wiadomości wymagają twojej uwagi."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+"Jeśli zaznaczone, niektóre wiadomości napotkały błędy podczas doręczenia."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__include_archived
+msgid "Include Archived"
+msgstr "Uwzględnij zarchiwizowane"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__include_archived
+msgid "Include archived (inactive) records in this widget's data."
+msgstr "Uwzględnij zarchiwizowane (nieaktywne) rekordy w danych tego widżetu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Include archived records"
+msgstr "Uwzględnij zarchiwizowane rekordy"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__indigo
+msgid "Indigo"
+msgstr "Indygo"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Insert link"
+msgstr "Wstaw link"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Insert zero rows for missing days/months so a time line never jumps a gap."
+msgstr ""
+"Wstawia wiersze zerowe dla brakujących dni/miesięcy, aby oś czasu nigdy nie "
+"pomijała luki."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__stock
+msgid "Inventory"
+msgstr "Zapasy"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_active
+msgid "Is Active"
+msgstr "Jest Aktywny"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__is_default
+msgid "Is Default"
+msgstr "Czy domyślny"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_is_follower
+msgid "Is Follower"
+msgstr "Jest obserwatorem"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__is_predefined
+msgid "Is Predefined"
+msgstr "Jest predefiniowany"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_template
+msgid "Is Template"
+msgstr "Jest szablonem"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Italic"
+msgstr "Kursywa"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__item_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__item_id
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_form
+msgid "Item"
+msgstr "Pozycja"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_count
+msgid "Item Count"
+msgstr "Liczba elementów"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__item_type
+msgid "Item Type"
+msgstr "Typ elementu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Item description"
+msgstr "Opis elementu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__item_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_item_list
+msgid "Items"
+msgstr "Pozycje"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "JSON spec"
+msgstr "Specyfikacja JSON"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Join two models"
+msgstr "Połącz dwa modele"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "K"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__kind
+msgid "Kind"
+msgstr "Rodzaj"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__is_kiosk
+msgid "Kiosk-ready"
+msgstr "Gotowy do trybu kiosku"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__label
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__label
+msgid "Label"
+msgstr "Etykieta"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__label
+msgid "Label A to Z"
+msgstr "Etykieta od A do Z"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_30
+msgid "Last 30 Days"
+msgstr "Ostatnie 30 dni"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_30
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_30
+msgid "Last 30 days"
+msgstr "Ostatnie 30 dni"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_365
+msgid "Last 365 Days"
+msgstr "Ostatnie 365 dni"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_7
+msgid "Last 7 Days"
+msgstr "Ostatnie 7 dni"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_7
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_7
+msgid "Last 7 days"
+msgstr "Ostatnie 7 dni"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_90
+msgid "Last 90 Days"
+msgstr "Ostatnie 90 dni"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_90
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_90
+msgid "Last 90 days"
+msgstr "Ostatnie 90 dni"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_month
+msgid "Last Month"
+msgstr "Ostatni miesiąc"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_quarter
+msgid "Last Quarter"
+msgstr "Ostatni kwartał"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_triggered_on
+msgid "Last Triggered On"
+msgstr "Ostatnio wyzwolono"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_uid
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_uid
+msgid "Last Updated by"
+msgstr "Ostatnio aktualizowane przez"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__write_date
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__write_date
+msgid "Last Updated on"
+msgstr "Data ostatniej aktualizacji"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__last_value
+msgid "Last Value"
+msgstr "Ostatnia wartość"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_week
+msgid "Last Week"
+msgstr "Ostatni tydzień"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__last_year
+msgid "Last Year"
+msgstr "Ostatni rok"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__last_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__last_month
+msgid "Last month"
+msgstr "Ostatni miesiąc"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__layout_version_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Layouts"
+msgstr "Układy"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_filter__item_id
+msgid "Leave empty for a global filter shown on the dashboard bar."
+msgstr ""
+"Pozostaw puste, aby użyć filtra globalnego wyświetlanego na pasku pulpitu."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__group_ids
+msgid "Leave empty to let every internal user with dashboard access see it."
+msgstr ""
+"Pozostaw puste, aby każdy użytkownik wewnętrzny z dostępem do pulpitu mógł "
+"to zobaczyć."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_key
+msgid "Left group field"
+msgstr "Lewe pole grupy"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_label
+msgid "Left label"
+msgstr "Lewa etykieta"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_agg
+msgid "Left measure"
+msgstr "Lewa miara"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_model_id
+msgid "Left model"
+msgstr "Lewy model"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_left_value
+msgid "Left value field"
+msgstr "Lewe pole wartości"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Legend"
+msgstr "Legenda"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__limit
+msgid "Limit"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__live
+msgid "Live"
+msgstr "Na żywo"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Live preview"
+msgstr "Podgląd na żywo"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading settings..."
+msgstr "Ładowanie ustawień..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Loading templates..."
+msgstr "Ładowanie szablonów..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "M"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.ui.menu,name:eh_board.menu_eh_board_dashboards
+msgid "Manage Dashboards"
+msgstr "Zarządzaj pulpitami"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__refresh_mode__off
+msgid "Manual"
+msgstr "Manualna"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_layout_version__grid
+msgid "Map of item id -> {x, y, w, h, minW, minH} on the 12-column grid."
+msgstr ""
+"Mapowanie id elementu -> {x, y, w, h, minW, minH} na siatce 12-kolumnowej."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Match"
+msgstr "Dopasuj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Max groups shown. 0 shows all; 5 keeps the top 5 (bucket the rest as "
+"\"Others\" in Advanced)."
+msgstr ""
+"Maksymalna liczba wyświetlanych grup. 0 pokazuje wszystkie; 5 zachowuje 5 "
+"najlepszych (resztę grupuje jako \"Others\" w Zaawansowanych)."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__max
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__max
+msgid "Maximum"
+msgstr "Maksimum"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__measure_ids
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__measure_ids
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Measures"
+msgstr "Miary"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Menu"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error
+msgid "Message Delivery error"
+msgstr "Błąd doręczenia wiadomości"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_ids
+msgid "Messages"
+msgstr "Wiadomości"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__millions
+msgid "Millions (M)"
+msgstr "Miliony (M)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__min
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__min
+msgid "Minimum"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__mint
+msgid "Mint"
+msgstr "Miętowy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__model_id
+msgid "Model"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__model_name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__model_name
+msgid "Model Technical Name"
+msgstr "Techniczna nazwa modelu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Mono"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__mono
+msgid "Monochrome"
+msgstr "Monochromatyczny"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__month
+msgid "Month"
+msgstr "Miesiąc"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__mtd
+msgid "Month to Date"
+msgstr "Miesiąc do chwili obecnej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__mtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__mtd
+msgid "Month to date"
+msgstr "Miesiąc do chwili obecnej"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__multiplier
+msgid "Multiplier"
+msgstr "Mnożnik"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "My Dashboards"
+msgstr "Moje pulpity"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__name
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__name
+msgid "Name"
+msgstr "Nazwa"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Needs the"
+msgstr "Wymaga"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "New dashboard"
+msgstr "Nowy pulpit"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Next (Right arrow)"
+msgstr "Dalej (strzałka w prawo)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__none
+msgid "No comparison"
+msgstr "Brak porównania"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "No dashboard yet. Create one from the Dashboards menu."
+msgstr "Brak pulpitu. Utwórz go z menu Pulpity."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No data for the current filters"
+msgstr "Brak danych dla bieżących filtrów"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No more people to add."
+msgstr "Brak kolejnych osób do dodania."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "No templates yet. Build a board and use \"Save template\"."
+msgstr "Brak szablonów. Utwórz tablicę i użyj opcji „Zapisz szablon”."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__all
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__none
+msgid "None"
+msgstr "Brak"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__note
+msgid "Note"
+msgstr "Notatka"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Notes about this widget - shown on its info tooltip."
+msgstr ""
+"Notatki dotyczące tego widżetu - wyświetlane w jego podpowiedzi "
+"informacyjnej."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__none
+msgid "Nothing"
+msgstr "Nic"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__user_id
+msgid "Notify"
+msgstr "Powiadom"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__number_format
+msgid "Number Format"
+msgstr "Format liczb"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Number format"
+msgstr "Format liczb"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Liczba akcji"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of errors"
+msgstr "Liczba błędów"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Liczba wiadomości wymagających akcji"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_alert__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Liczba wiadomości z błędami przy doręczeniu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Numbered list"
+msgstr "Lista numerowana"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__join_left_value
+msgid "Numeric field to aggregate (blank for a record count)."
+msgstr "Pole numeryczne do agregacji (puste dla liczby rekordów)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__ocean
+msgid "Ocean"
+msgstr "Morski"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Off = a private draft only you see. On = shared per the list below and any "
+"assigned groups."
+msgstr ""
+"Wyłączone = prywatny szkic widoczny tylko dla Ciebie. Włączone = "
+"udostępniane zgodnie z poniższą listą i przypisanymi grupami."
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "Open Board"
+msgstr "Otwórz tablicę"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__click_action__records
+msgid "Open matching records"
+msgstr "Otwórz pasujące rekordy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Open the matching records"
+msgstr "Otwórz pasujące rekordy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Opening records from this widget shows at most the row-limit count, matching"
+" what the chart displays."
+msgstr ""
+"Otwarcie rekordów z tego widżetu pokazuje najwyżej liczbę limitu wierszy, "
+"zgodnie z tym, co wyświetla wykres."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Opens with date range"
+msgstr "Otwiera się z zakresem dat"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__operator
+msgid "Operator"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__target_value
+msgid "Optional goal used by KPI and gauge items."
+msgstr "Opcjonalny cel używany przez elementy KPI i wskaźnik."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Optional label"
+msgstr "Opcjonalna etykieta"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__options
+msgid "Options"
+msgstr "Opcje"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__sort_field_id
+msgid "Order groups by this field (used when sort is 'By a specific field')."
+msgstr ""
+"Sortuj grupy według tego pola (używane, gdy sortowanie to „Według "
+"określonego pola”)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Order the groups by any field. E.g. sort countries by Created on, newest "
+"first."
+msgstr ""
+"Sortuj grupy według dowolnego pola. Np. sortuj kraje według daty utworzenia,"
+" od najnowszych."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Orders the groups. Value high to low puts the biggest bar first."
+msgstr ""
+"Sortuje grupy. Wartość od najwyższej do najniższej umieszcza największy "
+"słupek na początku."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__outline
+msgid "Outline"
+msgstr "Kontur"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__combo_line
+msgid "Overlay a cumulative running-total line (Pareto) on a bar chart."
+msgstr ""
+"Nałóż skumulowaną linię sumy narastającej (Pareto) na wykres słupkowy."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__owner_id
+msgid "Owner"
+msgstr "Właściciel"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "P"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF / Print (charts)"
+msgstr "PDF / Drukuj (wykresy)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "PDF document"
+msgstr "Dokument PDF"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Paint a value by its size. Example: if Revenue is less than 0, colour the "
+"number red; the first matching rule wins."
+msgstr ""
+"Pokoloruj wartość według jej wielkości. Przykład: jeśli przychód jest "
+"mniejszy niż 0, pokoloruj liczbę na czerwono; obowiązuje pierwsza pasująca "
+"reguła."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__palette
+msgid "Palette"
+msgstr "Paleta"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Paragraph"
+msgstr "Akapit"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__payload
+msgid "Payload"
+msgstr "Ładunek"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__percent
+msgid "Percentage"
+msgstr "Procent"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Period"
+msgstr "Okres"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Pick a field to slice by."
+msgstr "Wybierz pole, według którego chcesz podzielić."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__plain
+msgid "Plain"
+msgstr "Zwykły"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Plain (1,234)"
+msgstr "Zwykły (1,234)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Play"
+msgstr "Odtwórz"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__pos
+msgid "Point of Sale"
+msgstr "Punkt sprzedaży"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Pre-scopes this widget to a range even when the board filter is off. This "
+"year always shows the current year."
+msgstr ""
+"Wstępnie ogranicza ten widżet do zakresu, nawet gdy filtr tablicy jest "
+"wyłączony. Ten rok zawsze pokazuje bieżący rok."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Present: fullscreen, auto-rotate (Esc to exit)"
+msgstr "Prezentuj: pełny ekran, automatyczne przełączanie (Esc, aby wyjść)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Previous (Left arrow)"
+msgstr "Poprzedni (strzałka w lewo)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_period
+msgid "Previous period"
+msgstr "Poprzedni okres"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__propagate_domain
+msgid "Propagate Domain"
+msgstr "Propaguj domenę"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__provider_type
+msgid "Provider Type"
+msgstr "Typ dostawcy"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__state__published
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Published"
+msgstr "Opublikowano"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Published (visible to the people below and to your groups)"
+msgstr "Opublikowano (widoczne dla osób poniżej i dla Twoich grup)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__quarter
+msgid "Quarter"
+msgstr "Kwartał"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__qtd
+msgid "Quarter to Date"
+msgstr "Kwartał do dziś"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__qtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__qtd
+msgid "Quarter to date"
+msgstr "Kwartał do bieżącej daty"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Re-query every widget on a timer. \"Every 5 minutes\" keeps a wall board "
+"live without a reload. Manual = refresh only when you reopen."
+msgstr ""
+"Ponownie odpytuje każdy widżet według czasomierza. „Co 5 minut” utrzymuje "
+"tablicę ścienną na żywo bez przeładowania. Ręcznie = odświeżanie tylko po "
+"ponownym otwarciu."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__read_only
+msgid "Read Only"
+msgstr "Tylko do odczytu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Reading the board..."
+msgstr "Odczytywanie tablicy..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit
+msgid "Record Limit"
+msgstr "Limit rekordów"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__record_limit_visibility
+msgid "Record Limit Visibility"
+msgstr "Widoczność limitu rekordów"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Records"
+msgstr "Rekordy"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Refresh Interval"
+msgstr "Interwał odświeżania"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__refresh_mode
+msgid "Refresh Mode"
+msgstr "Tryb odświeżania"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Remove"
+msgstr "Usuń"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__semi_circle
+msgid "Render pie / doughnut as a half circle."
+msgstr "Renderuj wykres kołowy / pierścieniowy jako półkole."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__required_module
+msgid "Required Module"
+msgstr "Wymagany moduł"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__group_ids
+msgid "Restricted to groups"
+msgstr "Ograniczone do grup"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_key
+msgid "Right group field"
+msgstr "Prawe pole grupowania"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_label
+msgid "Right label"
+msgstr "Prawa etykieta"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_agg
+msgid "Right measure"
+msgstr "Prawa miara"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_model_id
+msgid "Right model"
+msgstr "Prawy model"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__join_right_value
+msgid "Right value field"
+msgstr "Prawe pole wartości"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_layout_version__parent_id
+msgid "Rolled back from"
+msgstr "Wycofano z"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__rose
+msgid "Rose"
+msgstr "Różany"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Row limit"
+msgstr "Limit wierszy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Rule"
+msgstr "Reguła"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Running total"
+msgstr "Suma bieżąca"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "SELECT name AS label, count(*) AS n FROM res_partner GROUP BY name"
+msgstr ""
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_datasource__sql_query
+msgid "SQL query"
+msgstr "Zapytanie SQL"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_datasource_form
+msgid "Safe SQL (read-only)"
+msgstr "Bezpieczny SQL (tylko do odczytu)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__crm
+msgid "Sales & CRM"
+msgstr "Sprzedaż i CRM"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__compare_mode__prev_year
+msgid "Same period last year"
+msgstr "Ten sam okres w zeszłym roku"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save settings"
+msgstr "Zapisz ustawienia"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save template"
+msgstr "Zapisz szablon"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Save this board as a reusable template"
+msgstr "Zapisz tę tablicę jako szablon wielokrotnego użytku"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Saved as a reusable template."
+msgstr "Zapisano jako szablon wielokrotnego użytku."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__multiplier
+msgid "Scale the raw value, e.g. 0.001 to show thousands."
+msgstr "Przeskaluj wartość surową, np. 0,001, aby wyświetlić tysiące."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search fields..."
+msgstr "Szukaj pól..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Search people to add..."
+msgstr "Szukaj osób do dodania..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__refresh_interval
+msgid "Seconds between refreshes when auto-refresh is on."
+msgstr ""
+"Liczba sekund między odświeżeniami, gdy automatyczne odświeżanie jest "
+"włączone."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__secret
+msgid "Secret"
+msgstr "Hasło"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a field..."
+msgstr "Wybierz pole..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select a model..."
+msgstr "Wybierz model..."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Select..."
+msgstr "Wybierz..."
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__semi_circle
+msgid "Semi Circle"
+msgstr "Półokrąg"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Semi circle"
+msgstr "Półokrąg"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_filter__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__sequence
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_template__sequence
+msgid "Sequence"
+msgstr "Sekwencja"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "Share a draft with specific users"
+msgstr "Udostępnij wersję roboczą określonym użytkownikom"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Share with people"
+msgstr "Udostępnij osobom"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Shared with"
+msgstr "Udostępniono"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_grid
+msgid "Show Grid"
+msgstr "Pokaż siatkę"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_legend
+msgid "Show Legend"
+msgstr "Pokaż legendę"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_trend
+msgid "Show Trend"
+msgstr "Pokaż trend"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__show_values
+msgid "Show Values"
+msgstr "Pokaż wartości"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__show_trend
+msgid ""
+"Show a period-over-period trend badge on KPIs when a date field is "
+"available."
+msgstr ""
+"Pokaż plakietkę trendu okres do okresu na wskaźnikach KPI, gdy dostępne jest"
+" pole daty."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__cumulative
+msgid "Show a running total: each group adds to the ones before it."
+msgstr "Pokaż sumę bieżącą: każda grupa dodaje się do poprzednich."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__slate
+msgid "Slate"
+msgstr "Łupkowy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Slice labels"
+msgstr "Etykiety wycinków"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights"
+msgstr "Inteligentne wnioski"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Smart insights: read this board in plain language"
+msgstr "Inteligentne wnioski: przeczytaj tę tablicę prostym językiem"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__smooth
+msgid "Smooth"
+msgstr "Wygładzony"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__smooth
+msgid "Smooth (curved) lines."
+msgstr "Wygładzone (zakrzywione) linie."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__soft
+msgid "Soft"
+msgstr "Miękki"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__tile_style__solid
+msgid "Solid"
+msgstr "Pełny"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_drill__sort
+msgid "Sort"
+msgstr "Sortuj"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_mode
+msgid "Sort Mode"
+msgstr "Tryb sortowania"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_order
+msgid "Sort Order"
+msgstr "Kolejność sortowania"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__sort_field_id
+msgid "Sort by field"
+msgstr "Sortuj według pola"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__shared_user_ids
+msgid "Specific users who may open this dashboard even while it is a draft."
+msgstr ""
+"Określeni użytkownicy, którzy mogą otwierać ten pulpit nawet gdy jest wersją"
+" roboczą."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Splits each group into a second series. Country plus Stage stacks every "
+"country bar by stage."
+msgstr ""
+"Dzieli każdą grupę na drugą serię. Kraj plus Etap układa każdy słupek kraju "
+"według etapu."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__stacked
+msgid "Stack series in a bar chart."
+msgstr "Układaj serie w wykresie słupkowym."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__stacked
+msgid "Stacked"
+msgstr "Skumulowany"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Start from a template"
+msgstr "Zacznij od szablonu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__state
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__state
+msgid "State"
+msgstr "Stan"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Sub group by"
+msgstr "Podgrupuj według"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Subheading"
+msgstr "Podtytuł"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__subtitle
+msgid "Subtitle"
+msgstr "Podtytuł"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__unit
+msgid "Suffix shown after the value, e.g. %, kg, orders."
+msgstr "Sufiks wyświetlany po wartości, np. %, kg, zamówienia."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Suffix, e.g. % or kg"
+msgstr "Sufiks, np. % lub kg"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_left_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_datasource__join_right_agg__sum
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__aggregate__sum
+msgid "Sum"
+msgstr "Suma"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__palette__sunset
+msgid "Sunset"
+msgstr "Zachód słońca"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Switch dashboard"
+msgstr "Przełącz pulpit"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Switch to Edit and add your first widget - group any model's\n"
+"                               data database side and drill anywhere."
+msgstr ""
+"Przełącz na tryb Edycji i dodaj swój pierwszy widżet - grupuj dane dowolnego"
+" modelu po stronie bazy danych i drąż w dowolnym miejscu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Target"
+msgstr "Cel"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__target_value
+msgid "Target Value"
+msgstr "Wartość docelowa"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.report_eh_board_dashboard
+msgid "Target:"
+msgstr "Cel:"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__teal
+msgid "Teal"
+msgstr "Morski"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_template__required_module
+msgid ""
+"Technical name of the base app a vertical template needs (e.g. account). "
+"Blank for a general template."
+msgstr ""
+"Techniczna nazwa aplikacji bazowej wymaganej przez szablon branżowy (np. "
+"account). Pozostaw puste dla szablonu ogólnego."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_search
+msgid "Templates"
+msgstr "Szablony"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__model_id
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__model_id
+msgid "The Odoo model to aggregate (for the Odoo-model provider)."
+msgstr "Model Odoo do agregacji (dla dostawcy modelu Odoo)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The card's highlight colour. Tiles use it as their fill; charts use it for "
+"the first series."
+msgstr ""
+"Kolor wyróżnienia karty. Kafelki używają go jako wypełnienia; wykresy "
+"używają go dla pierwszej serii."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The colour ramp every chart on this board uses."
+msgstr "Gradient kolorów używany przez każdy wykres na tej tablicy."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The dashboard's title, shown in the header and the switcher."
+msgstr "Tytuł pulpitu nawigacyjnego, wyświetlany w nagłówku i przełączniku."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The date filter the board starts on. This month means it always opens scoped"
+" to the current month."
+msgstr ""
+"Filtr daty, od którego uruchamia się tablica. Ten miesiąc oznacza, że zawsze"
+" otwiera się zawężona do bieżącego miesiąca."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_dashboard__default_date_preset
+msgid ""
+"The date range this dashboard opens with (the board date filter's start "
+"value)."
+msgstr ""
+"Zakres dat, z którym otwiera się ten pulpit nawigacyjny (wartość początkowa "
+"filtra daty tablicy)."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_measure__field_id
+msgid "The field to aggregate. Leave empty for a record count."
+msgstr "Pole do agregacji. Pozostaw puste, aby zliczyć rekordy."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The field whose values become your bars, slices or rows. Group by Country "
+"gives one bar per country."
+msgstr ""
+"Pole, którego wartości stają się słupkami, wycinkami lub wierszami. "
+"Grupowanie według Kraju daje jeden słupek na kraj."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__item_type
+msgid ""
+"The kind of widget. Every type is a registered strategy - adding one never "
+"edits this model."
+msgstr ""
+"Rodzaj widżetu. Każdy typ to zarejestrowana strategia - dodanie go nigdy nie"
+" edytuje tego modelu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The records to chart. Example: Contact for customers, Sales Order for "
+"revenue."
+msgstr ""
+"Rekordy do przedstawienia na wykresie. Przykład: Kontakt dla klientów, "
+"Zamówienie sprzedaży dla przychodów."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"The rich text shown in this block, e.g. a section title, notes, or "
+"instructions for the board."
+msgstr ""
+"Tekst sformatowany wyświetlany w tym bloku, np. tytuł sekcji, notatki lub "
+"instrukcje dla tablicy."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "The title shown on the card. Example: \"Revenue by month\"."
+msgstr "Tytuł wyświetlany na karcie. Przykład: \"Przychód według miesiąca\"."
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__color_mode__theme
+msgid "Theme palette"
+msgstr "Paleta motywu"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__secondary_dimension_id
+msgid "Then by"
+msgstr "Następnie według"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_month
+msgid "This Month"
+msgstr "Bieżący miesiąc"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_quarter
+msgid "This Quarter"
+msgstr "Ten kwartał"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_week
+msgid "This Week"
+msgstr "Ten tydzień"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__this_year
+msgid "This Year"
+msgstr "W tym roku"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_month
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_month
+msgid "This month"
+msgstr "Ten miesiąc"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_quarter
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_quarter
+msgid "This quarter"
+msgstr "Ten kwartał"
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_template.py:0
+msgid "This template needs the %s app. Install it first."
+msgstr "Ten szablon wymaga aplikacji %s. Najpierw ją zainstaluj."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_week
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_week
+msgid "This week"
+msgstr "Ten tydzień"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "This widget"
+msgstr "Ten widżet"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__this_year
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__this_year
+msgid "This year"
+msgstr "Ten rok"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_measure__number_format__thousands
+msgid "Thousands (K)"
+msgstr "Tysiące (K)"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_alert__threshold
+msgid "Threshold"
+msgstr "Próg"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_dashboard__thumbnail
+msgid "Thumbnail"
+msgstr "Miniatura"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__tile_style
+msgid "Tile Style"
+msgstr "Styl kafelka"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile look: Soft tint, Solid fill, or Outline. Soft suits most boards."
+msgstr ""
+"Wygląd kafelka: Delikatny odcień, Pełne wypełnienie lub Kontur. Delikatny "
+"pasuje do większości tablic."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__tile_style
+msgid "Tile look: soft tint, solid fill, or outline."
+msgstr "Wygląd kafelka: delikatny odcień, pełne wypełnienie lub kontur."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Tile style"
+msgstr "Styl kafelka"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_item__title
+msgid "Title"
+msgstr "Tytuł"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__today
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__today
+msgid "Today"
+msgstr "Dzisiaj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle comfortable / compact density"
+msgstr "Przełącz gęstość komfortową / kompaktową"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Toggle light / dark"
+msgstr "Przełącz jasny / ciemny"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Toggles specific to this chart type. Semi circle turns a pie into a half "
+"gauge; Stacked piles a bar's series on top of each other."
+msgstr ""
+"Przełączniki specyficzne dla tego typu wykresu. Półkole zmienia wykres "
+"kołowy w połowiczny wskaźnik; Skumulowany układa serie słupka jedna na "
+"drugiej."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "Total"
+msgstr "Suma"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__state__triggered
+msgid "Triggered"
+msgstr "Wyzwolono"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Type a name and click to add. These people can open this dashboard even "
+"while it is a draft."
+msgstr ""
+"Wpisz nazwę i kliknij, aby dodać. Te osoby mogą otwierać ten pulpit "
+"nawigacyjny nawet wtedy, gdy jest w wersji roboczej."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "U"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Underline"
+msgstr "Podkreślenie"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_measure__unit
+msgid "Unit"
+msgstr "Jednostka"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Unknown widget type"
+msgstr "Nieznany typ widżetu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Use this"
+msgstr "Użyj tego"
+
+#. module: eh_board
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_credential__username
+msgid "Username"
+msgstr "Nazwa użytkownika"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_credential__kind__basic
+msgid "Username / password"
+msgstr "Nazwa użytkownika / hasło"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields,field_description:eh_board.field_eh_board_snapshot__value
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__data_label_type__value
+msgid "Value"
+msgstr "Wartość"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_desc
+msgid "Value (high to low)"
+msgstr "Wartość (od najwyższej do najniższej)"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_drill__sort__value_asc
+msgid "Value (low to high)"
+msgstr "Wartość (od najniższej do najwyższej)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value format"
+msgstr "Format wartości"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Value labels"
+msgstr "Etykiety wartości"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_desc
+msgid "Value: high to low"
+msgstr "Wartość: od najwyższej do najniższej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__sort_mode__value_asc
+msgid "Value: low to high"
+msgstr "Wartość: od najniższej do najwyższej"
+
+#. module: eh_board
+#: model:res.groups,name:eh_board.group_board_viewer
+msgid "Viewer"
+msgstr "Przeglądający"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__accent__violet
+msgid "Violet"
+msgstr "Fioletowy"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_template__category__web
+msgid "Website"
+msgstr "Strona internetowa"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__week
+msgid "Week"
+msgstr "Tydzień"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__wtd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__wtd
+msgid "Week to date"
+msgstr "Tydzień do dziś"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each bar or slice measures. Count = number of records; Sum of Amount = "
+"total revenue. Add a second measure to compare two numbers side by side."
+msgstr ""
+"Co mierzy każdy słupek lub wycinek. Count = liczba rekordów; Sum of Amount ="
+" całkowity przychód. Dodaj drugą miarę, aby porównać dwie liczby obok "
+"siebie."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"What each pie slice shows: the raw Value (e.g. 39), its Percentage (e.g. "
+"28%), or nothing."
+msgstr ""
+"Co pokazuje każdy wycinek koła: surową wartość (np. 39), jej procent (np. "
+"28%) lub nic."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__click_action
+msgid "What happens when a data point is clicked."
+msgstr "Co się dzieje po kliknięciu punktu danych."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__data_label_type
+msgid ""
+"What pie / doughnut slice labels show: the value, its share, or nothing."
+msgstr ""
+"Co pokazują etykiety wycinków koła / pierścienia: wartość, jej udział lub "
+"nic."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "What this dashboard is for."
+msgstr "Do czego służy ten pulpit."
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_form
+msgid "What this dashboard is for..."
+msgstr "Do czego służy ten pulpit..."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__group_others
+msgid ""
+"When a row cap is set, sum everything past it into a single 'Others' group "
+"instead of dropping it."
+msgstr ""
+"Gdy ustawiono limit wierszy, zsumuj wszystko powyżej niego w jedną grupę "
+"'Others' zamiast to pomijać."
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_item__record_limit_visibility
+msgid ""
+"When a row limit is set, also cap the record-count shown on click-through to"
+" that limit instead of the full match."
+msgstr ""
+"Gdy ustawiono limit wierszy, ogranicz również liczbę rekordów pokazywaną po "
+"kliknięciu do tego limitu zamiast pełnego dopasowania."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "When clicked"
+msgstr "Po kliknięciu"
+
+#. module: eh_board
+#: model:ir.model.fields,help:eh_board.field_eh_board_datasource__provider_type
+msgid ""
+"Where the numbers come from. The free engine ships the Odoo-model provider; "
+"joins, safe SQL and external feeds register alongside it."
+msgstr ""
+"Skąd pochodzą liczby. Darmowy silnik zawiera dostawcę modelu Odoo; "
+"złączenia, bezpieczny SQL i zewnętrzne kanały rejestrują się obok niego."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Which date the board date filter narrows for this widget. Auto picks a "
+"sensible one (e.g. Order Date)."
+msgstr ""
+"Którą datę filtr daty tablicy zawęża dla tego widżetu. Auto wybiera rozsądną"
+" (np. Order Date)."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"Who gets the scheduled PDF. Example: email the sales board to the team every"
+" Monday."
+msgstr ""
+"Kto otrzymuje zaplanowany PDF. Przykład: wysyłaj tablicę sprzedaży e-mailem "
+"do zespołu w każdy poniedziałek."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget added."
+msgstr "Dodano widżet."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget duplicated."
+msgstr "Zduplikowano widżet."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget name"
+msgstr "Nazwa widżetu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "Widget type"
+msgstr "Typ widżetu"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board_action.js:0
+msgid "Widget updated."
+msgstr "Zaktualizowano widżet."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"With a row limit set, everything past it is summed into one honest Others "
+"slice instead of dropped."
+msgstr ""
+"Przy ustawionym limicie wierszy wszystko powyżej niego jest sumowane w jeden"
+" uczciwy wycinek Others zamiast pomijane."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__date_granularity__year
+msgid "Year"
+msgstr "Rok"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__ytd
+msgid "Year to Date"
+msgstr "Od początku roku"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_dashboard__default_date_preset__ytd
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_item__default_date_filter__ytd
+msgid "Year to date"
+msgstr "Rok do chwili obecnej"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_filter__date_preset__yesterday
+msgid "Yesterday"
+msgstr "Wczoraj"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid ""
+"You can view these settings but only the owner or a dashboard builder can "
+"change them."
+msgstr ""
+"Możesz przeglądać te ustawienia, ale zmieniać je może tylko właściciel lub "
+"twórca pulpitu."
+
+#. module: eh_board
+#. odoo-python
+#: code:addons/eh_board/models/eh_board_dashboard.py:0
+msgid "You may not change this dashboard's settings."
+msgstr "Nie możesz zmieniać ustawień tego pulpitu."
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "a / b * 100"
+msgstr ""
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "app"
+msgstr "aplikacja"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gte
+msgid "at least"
+msgstr "co najmniej"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lte
+msgid "at most"
+msgstr "co najwyżej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "colour text"
+msgstr "kolorowy tekst"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "data bar"
+msgstr "pasek danych"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "e.g. 100"
+msgstr "np. 100"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "equals"
+msgstr "równe"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "fill"
+msgstr "wypełnij"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__gt
+msgid "greater than"
+msgstr "większe niż"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "hours"
+msgstr "godziny"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at least"
+msgstr "jest co najmniej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is at most"
+msgstr "jest co najwyżej"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is between"
+msgstr "jest pomiędzy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is greater than"
+msgstr "jest większe niż"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "is less than"
+msgstr "jest mniejsze niż"
+
+#. module: eh_board
+#: model_terms:ir.ui.view,arch_db:eh_board.view_eh_board_dashboard_kanban
+msgid "items"
+msgstr "pozycje"
+
+#. module: eh_board
+#: model:ir.model.fields.selection,name:eh_board.selection__eh_board_alert__operator__lt
+msgid "less than"
+msgstr "mniejsze niż"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "minutes"
+msgstr "minuty"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "record(s)"
+msgstr "rekord(y)"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "seconds"
+msgstr "sekundy"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/charts/charts.xml:0
+msgid "target"
+msgstr "cel"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "unit"
+msgstr "jednostka"
+
+#. module: eh_board
+#. odoo-javascript
+#: code:addons/eh_board/static/src/board.xml:0
+msgid "• List"
+msgstr "• Lista"
