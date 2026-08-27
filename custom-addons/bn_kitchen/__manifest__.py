@@ -11,6 +11,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'views/ration_packing.xml',
         'views/issuance_request.xml',

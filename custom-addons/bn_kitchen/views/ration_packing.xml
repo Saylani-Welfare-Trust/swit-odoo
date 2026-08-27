@@ -18,6 +18,7 @@
     <menuitem
         id="kitchen_menu"
         name="Kitchen"
+        groups="bn_kitchen.kitchen_group"
         web_icon="bn_kitchen,static/description/icon.png"
         sequence="6"/>
 
