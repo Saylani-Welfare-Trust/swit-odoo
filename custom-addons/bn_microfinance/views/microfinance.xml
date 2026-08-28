@@ -99,6 +99,7 @@
                             <field name="donee_id" domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance'), ('state', '=', 'register')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state != 'draft'" />
                             <field name="product_id" domain="[('is_microfinance', '=', True), ('id', 'in', product_domain)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="state != 'draft'" />
                             <field name="product_amount" readonly="1" />
+                            <field name="on_hand_qty"/>
                             <field name="security_deposit" readonly="1" />
                             <field name="advance_donation_id" readonly="1"  />
                             <!-- <field name="used_advance_donation_line_id" readonly="1" invisible="1" /> -->
