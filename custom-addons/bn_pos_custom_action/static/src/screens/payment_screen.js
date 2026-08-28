@@ -446,6 +446,9 @@ patch(PaymentScreen.prototype, {
 
                     // Use the first payment method (you might want to handle multiple payments differently)
                     const paymentMethod = paymentLines[0].payment_method;
+                    console.log("🔍 paymentMethod:", paymentMethod);
+                    console.log("🔍 paymentMethod.type:", paymentMethod.type);
+                    console.log("🔍 paymentLines.length:", paymentLines.length, paymentLines);
                     const data = {
                         'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
                         'order_name': currentOrder.name,  // Use order name as donation identifier
