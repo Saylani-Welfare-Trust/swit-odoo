@@ -231,7 +231,7 @@ May Allah bless you!
                 'donor_id': self.donor_id.id,
                 'amount': amount,
                 'product_id': line.product_id.id,
-                'payment_type': 'cheque',
+                'payment_type': 'directdeposit',
                 'date': fields.Date.today(),
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',

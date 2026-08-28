@@ -11,7 +11,7 @@ class DonationReceipt(models.Model):
 
     category_id = fields.Many2one('product.category', string='Category')    
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
-    payment_type = fields.Selection([('cash', 'Cash'), ('cheque', 'Cheque')], string='Payment Method', default='cash')
+    payment_type = fields.Selection([('cash', 'Cash'), ('cheque', 'Cheque'),('directdeposit','Direct Deposit')], string='Payment Method', default='cash')
     is_donation_id = fields.Boolean('Donation ID?')
     donation_id = fields.Many2one('advance.donation', string='Donation ID')
     order_id = fields.Many2one('pos.order', string='POS Order')
