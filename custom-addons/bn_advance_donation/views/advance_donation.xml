@@ -87,7 +87,8 @@
                                 required="service_charges"/>
                             <field name="service_charge_amount"
                                 invisible="not service_charges"
-                                readonly="1"/>
+                                readonly="state != 'draft'"
+                                force_save="1"/>
                             <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
                             <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
