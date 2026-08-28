@@ -16,6 +16,7 @@
                 <field name="disbursement_category_id" />
                 <field name="disbursement_application_type_id"  />
                 <field name="product_id" />
+                <field name="on_hand_qty"/>
                 <field name="payment_type" />
                 <field name="assigned_officer_id"  />
                 <field name="collection_point" />
