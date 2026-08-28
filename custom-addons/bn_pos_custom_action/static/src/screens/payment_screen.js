@@ -445,10 +445,9 @@ patch(PaymentScreen.prototype, {
                     }
 
                     // Use the first payment method (you might want to handle multiple payments differently)
-                    const payment_method = resolvePaymentType({ payment_method: currentOrder.paymentlines[0]?.payment_method });
-                    // Prepare data for register_pos_payment
+                    const paymentMethod = paymentLines[0].payment_method;
                     const data = {
-                        'payment_type': resolvePaymentType(paymentLines[0]),
+                        'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
                         'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
                         'donor_id': partner ? partner.id : null,
