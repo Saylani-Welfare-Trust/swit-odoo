@@ -37,25 +37,13 @@ class MemberApprovalLine(models.Model):
     )
 
     @api.onchange('product_id')
-    def _onchange_product_id_analytic(self):
-        """Set analytic account from product when product changes."""
-        for line in self:
-            line.analytic_account_id = line.product_id.analytic_account_id
-            
-            
-    @api.onchange('product_id')
     def _onchange_product_id(self):
         """Set analytic account and default budget from product's analytic account."""
         for line in self:
             product = line.product_id
             if product:
-                # Analytic account from product
                 line.analytic_account_id = product.analytic_account_id
-                # Default budget from that analytic account (if any)
-                if product.analytic_account_id:
-                    line.budget_id = product.analytic_account_id.default_budget_id
-                else:
-                    line.budget_id = False
+                line.budget_id = product.analytic_account_id.default_budget_id if product.analytic_account_id else False
             else:
                 line.analytic_account_id = False
                 line.budget_id = False
