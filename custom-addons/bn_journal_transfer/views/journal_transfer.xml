@@ -17,6 +17,7 @@
                 <field name="source_journal_id" />
                 <field name="dest_journal_id" />
                 <field name="date" />
+                <field name="remarks"/>
                 <field name="user_id" string="POS Owner" readonly="1" />
                 <field name="amount" readonly="1" />
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
