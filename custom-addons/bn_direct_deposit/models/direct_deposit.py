@@ -33,7 +33,11 @@ class DirectDeposit(models.Model):
     address = fields.Char('Address')
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')
-    
+    payment_type = fields.Selection([
+    ('cash', 'Cash'),
+    ('cheque', 'Cheque'),
+    ('directdeposit', 'Direct Deposit'),
+], string="Payment Type", default='directdeposit')
     remarks = fields.Text('Remarks')
 
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
@@ -231,7 +235,7 @@ May Allah bless you!
                 'donor_id': self.donor_id.id,
                 'amount': amount,
                 'product_id': line.product_id.id,
-                'payment_type': 'directdeposit',
+                'payment_type': self.payment_type or 'directdeposit',
                 'date': fields.Date.today(),
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',
@@ -319,6 +323,7 @@ May Allah bless you!
         service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
+        payment_type = data.get('payment_type') or 'directdeposit'   # <-- NEW: 'cash' | 'cheque' | 'directdeposit'
 
         source_request_type = data.get('source_request_type')
         source_request_no = data.get('source_request_no')
@@ -352,6 +357,7 @@ May Allah bless you!
             'address': address,
             'service_charges': service_charges,
             'transaction_ref': transaction_ref,
+            'payment_type': payment_type,   # <-- NEW
             'microfinance_id': mf.id if mf else False,
             'transfer_to_dhs': data.get('transfer_to_dhs', False),
             'direct_deposit_line_ids': product_lines,
