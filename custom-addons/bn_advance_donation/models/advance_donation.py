@@ -166,12 +166,7 @@ class AdvanceDonation(models.Model):
     def compute_donation(self):
         self.advance_donation_lines.unlink()
         amount = (self.product_id.lst_price / 100) * self.amount_percentage
-        unit_service_charge = 0.0
-        if self.service_charges:
-            if self.service_charge_product_id:
-                unit_service_charge = self.service_charge_product_id.lst_price
-            else:
-                unit_service_charge = self.service_charge_amount or 0.0
+        unit_service_charge = self.service_charge_amount or 0.0 if self.service_charges else 0.0
 
         dates = []
         if self.contract_type == 'frequency' and self.contract_start_date and self.contract_end_date:
@@ -227,7 +222,6 @@ class AdvanceDonation(models.Model):
                 total_lines = 1
 
         self.total_product_amount = sum(line.amount for line in self.advance_donation_lines)
-        self.service_charge_amount = line_service_charge * total_lines
 
     @api.onchange('category_id')
     def compute_product_domain(self):
