@@ -417,7 +417,13 @@ patch(PaymentScreen.prototype, {
             }
 
         }
-
+        // Helper — put this near the top of the patch or as a module-level function
+        function resolvePaymentType(paymentLine) {
+            const pmType = paymentLine?.payment_method?.type; // 'cash', 'bank', 'pay_later', etc.
+            if (pmType === 'cash') return 'cash';
+            if (pmType === 'bank') return 'cheque'; // adjust if 'bank' isn't actually your cheque method
+            return pmType || 'cash'; // fallback
+        }
         // ---------- Advance Donation Processing ----------
         // Check for products with is_advance_donation field set to true
         const donationLines = currentOrder.get_orderlines().filter(line =>
@@ -439,12 +445,10 @@ patch(PaymentScreen.prototype, {
                     }
 
                     // Use the first payment method (you might want to handle multiple payments differently)
-                    const paymentMethod = paymentLines[0].payment_method;
-
+                    const payment_method = resolvePaymentType({ payment_method: currentOrder.paymentlines[0]?.payment_method });
                     // Prepare data for register_pos_payment
                     const data = {
-                        'payment_type': paymentMethod.type === 'Cash' ? 'cash' : 'cheque',
-                        'is_donation_id': false,
+                        'payment_type': resolvePaymentType(paymentLines[0]),
                         'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
                         'donor_id': partner ? partner.id : null,
