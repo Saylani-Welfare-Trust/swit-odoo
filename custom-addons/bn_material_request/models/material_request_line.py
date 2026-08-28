@@ -32,9 +32,10 @@ class MemberApprovalLine(models.Model):
         related='product_id.analytic_account_id',   # follows product
         string='Analytic Account',
         store=True,                                 # stored in DB
-        readonly=False,                             # allow manual override if needed (optional)
+        readonly=False,                              # allow manual override if needed (optional)
         domain=[('plan_id.name', '=', 'Segment')],
     )
+    
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
