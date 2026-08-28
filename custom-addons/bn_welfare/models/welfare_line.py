@@ -87,6 +87,7 @@ class WelfareLine(models.Model):
     #     store=True
     # )
     
+
     on_hand_qty = fields.Float(
         string='On Hand Quantity',
         compute='_compute_on_hand_qty'
