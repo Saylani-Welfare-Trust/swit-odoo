@@ -30,7 +30,7 @@
         'views/purchase_requisition_views.xml',
         'views/wizard_views.xml',
         'views/purchase_order.xml',
-        'views/stock_move.xml',
+        'views/stock_move_view.xml',
     ],
     'installable': True,
     'application': True,
