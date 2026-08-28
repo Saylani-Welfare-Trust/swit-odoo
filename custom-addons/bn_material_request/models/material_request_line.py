@@ -29,7 +29,6 @@ class MemberApprovalLine(models.Model):
     
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
-        related='product_id.analytic_account_id',   # follows product
         string='Analytic Account',
         store=True,                                 # stored in DB
         readonly=False,                              # allow manual override if needed (optional)
