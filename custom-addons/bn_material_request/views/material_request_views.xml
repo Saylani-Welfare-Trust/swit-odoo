@@ -112,7 +112,7 @@
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="budget_id"/>
                                     <field name="product_uom_id" />
-                                    <!-- <field name="quantity" readonly="0"/> -->
+                                    <field name="quantity" readonly="0"/>
                                     <field name="unit_price" readonly="0"/>
                                     <field name="subtotal"/>
                                 </tree>
