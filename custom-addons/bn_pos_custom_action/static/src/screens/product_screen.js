@@ -101,8 +101,15 @@ patch(ProductScreen.prototype, {
             });
         }
 
-        // 🔥 DISABLE MINUS BUTTON FOR ALL PRODUCTS
+        const order = this.pos.get_order();
+        const selectedLine = order?.get_selected_orderline?.() || order?.get_orderlines?.().slice(-1)[0] || null;
+        const isSelectedDonationInKind = !!selectedLine && !!selectedLine.product && !!selectedLine.product.is_donation_in_kind;
+
+        //  DISABLE MINUS BUTTON FOR ALL PRODUCTS
         return buttons.map(button => {
+            if (button.value === "price" && isSelectedDonationInKind) {
+                return { ...button, disabled: true };
+            }
             if (button.value === "-") {
                 return { ...button, disabled: true };
             }
