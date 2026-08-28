@@ -30,8 +30,8 @@ class MemberApprovalLine(models.Model):
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
         string='Analytic Account',
-        store=True,                                 # stored in DB
-        readonly=False,                              # allow manual override if needed (optional)
+        store=True, 
+        readonly=False,
         domain=[('plan_id.name', '=', 'Segment')],
     )
     
