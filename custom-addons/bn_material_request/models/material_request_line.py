@@ -29,17 +29,36 @@ class MemberApprovalLine(models.Model):
     
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
-        related='product_id.analytic_account_id',   # follows product
+        related='product_id.analytic_account_id',
         string='Analytic Account',
-        store=True,                                 # stored in DB
-        readonly=False,                             # allow manual override if needed (optional)
+        store=True,
+        readonly=False,
         domain=[('plan_id.name', '=', 'Segment')],
     )
 
     @api.onchange('product_id')
-    def _onchange_product_id_analytic(self):
-        """Set analytic account from product when product changes."""
+    def _onchange_product_id(self):
         for line in self:
-            line.analytic_account_id = line.product_id.analytic_account_id
+            product = line.product_id
+            if product:
+                # Set analytic account
+                line.analytic_account_id = product.analytic_account_id
+                # Set default budget from the analytic account
+                if product.analytic_account_id:
+                    line.budget_id = product.analytic_account_id.default_budget_id
+                else:
+                    line.budget_id = False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'product_id' in vals:
+                product = self.env['product.product'].browse(vals['product_id'])
+                if product:
+                    if not vals.get('analytic_account_id'):
+                        vals['analytic_account_id'] = product.analytic_account_id.id
+                    if not vals.get('budget_id') and product.analytic_account_id:
+                        vals['budget_id'] = product.analytic_account_id.default_budget_id.id
+        return super().create(vals_list)
             
     # Abdul Hai
