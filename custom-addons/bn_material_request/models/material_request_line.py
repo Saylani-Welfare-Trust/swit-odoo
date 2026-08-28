@@ -24,3 +24,20 @@ class MemberApprovalLine(models.Model):
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.unit_price
+            
+    # Abdul Hai
+    
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Analytic Account',
+        domain=[('plan_id.name', '=', 'Segment')],
+        help="Analytic account derived from the product. Can be changed manually if needed."
+    )
+
+    @api.onchange('product_id')
+    def _onchange_product_id_analytic(self):
+        """Set analytic account from product when product changes."""
+        for line in self:
+            line.analytic_account_id = line.product_id.analytic_account_id
+            
+    # Abdul Hai
