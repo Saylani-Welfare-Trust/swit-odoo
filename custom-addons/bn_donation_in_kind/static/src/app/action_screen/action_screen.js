@@ -20,12 +20,12 @@
 
             const donor = order.partner ? order.partner : null;
 
-            if (!donor) {
-                return this.popup.add(ErrorPopup, {
-                    title: _t("Error"),
-                    body: "Please select a donor first..."
-                });
-            }
+        if (!donor) {
+            return this.popup.add(ErrorPopup, {
+                title: _t("Error"),
+                body: "Please select a donor first..."
+            });
+        }
 
             if (!this.hasDonationInKind) {
                 return this.popup.add(ErrorPopup, {
@@ -36,6 +36,31 @@
 
             const donor_id = order.partner.id;
             const orderLines = order.get_orderlines();
+        const donor_id = order.partner.id;
+        const orderLines = order.get_orderlines();
+
+        const donationInKindLines = orderLines.filter(
+            (line) => line.product.is_donation_in_kind
+        );
+
+        if (donationInKindLines.length > 0) {
+            const missingNoteLine = donationInKindLines.find(
+                (line) =>
+                    !line.customerNote ||
+                    !line.customerNote.trim()
+            );
+
+            if (missingNoteLine) {
+                await this.popup.add(ErrorPopup, {
+                    title: _t("Customer Note Required"),
+                    body: _t(
+                        "Please enter a customer note for every Donation In Kind product."
+                    ),
+                });
+
+                return;
+            }
+        }
 
             const payload = {
                 'donor_id': donor_id,
