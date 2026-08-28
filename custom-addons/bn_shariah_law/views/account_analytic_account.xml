@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='address']" position="after">
                 <field name="member_approval"/>
+                <field name="default_budget_id" options="{'no_create': True}"/>
                 <!-- <field name="product_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" /> -->
             </xpath>
         </field>
