@@ -59,14 +59,94 @@ patch(ProductScreen.prototype, {
             });
         }
 
-        // 🔥 DISABLE ALL NUMPAD IF QURBANI PRODUCT EXISTS
-        if (this.hasQurbaniProduct) {
-            return buttons.map(btn => {
-                if (btn.value === "Backspace") {
-                    return { ...btn, disabled: false };
-                }
-                return { ...btn, disabled: true };
-            });
+        const order = this.pos.get_order();
+        const selectedLine = order?.get_selected_orderline?.() || order?.get_orderlines?.().slice(-1)[0] || null;
+        const isSelectedDonationInKind = !!selectedLine && !!selectedLine.product && !!selectedLine.product.is_donation_in_kind;
+
+        //  DISABLE MINUS BUTTON FOR ALL PRODUCTS
+        return buttons.map(button => {
+            if (button.value === "price" && isSelectedDonationInKind) {
+                return { ...button, disabled: true };
+            }
+            if (button.value === "-") {
+                return { ...button, disabled: true };
+            }
+            
+            return {
+                ...button,
+                class: this.pos.numpadMode === button.value ? "active border-primary" : "",
+            };
+        });
+    },
+
+    // Override the mounted lifecycle method to ensure event listeners are attached
+    mounted() {
+        // Call parent mounted if it exists
+        if (super.mounted) {
+            super.mounted();
+        }
+        
+        // Setup keyboard event handler with multiple approaches
+        this._setupKeyboardHandler();
+        
+        // Also intercept keydown at the document level with capture phase
+        this._setupGlobalKeyHandler();
+    },
+
+    // Setup keyboard event listener with capture phase
+    _setupGlobalKeyHandler() {
+        // Remove existing global handler if any
+        if (this._globalKeyHandler) {
+            document.removeEventListener('keydown', this._globalKeyHandler, true);
+        }
+
+        this._globalKeyHandler = this._handleGlobalKeyEvent.bind(this);
+        // Use capture phase (true) to intercept before other handlers
+        document.addEventListener('keydown', this._globalKeyHandler, true);
+        this._globalKeyBound = true;
+    },
+
+    // Setup keyboard event listener
+    _setupKeyboardHandler() {
+        // Remove any existing listener to prevent duplicates
+        if (this._keyboardBound) {
+            document.removeEventListener('keydown', this._keyboardHandler);
+        }
+
+        // Bind the keyboard event handler
+        this._keyboardHandler = this._handleKeyboardEvent.bind(this);
+        document.addEventListener('keydown', this._keyboardHandler);
+        this._keyboardBound = true;
+    },
+
+    // Remove keyboard event listeners
+    _removeKeyboardHandler() {
+        if (this._keyboardHandler && this._keyboardBound) {
+            document.removeEventListener('keydown', this._keyboardHandler);
+            this._keyboardBound = false;
+        }
+        if (this._globalKeyHandler && this._globalKeyBound) {
+            document.removeEventListener('keydown', this._globalKeyHandler, true);
+            this._globalKeyBound = false;
+        }
+    },
+
+    // Handle keyboard events at component level
+    _handleKeyboardEvent(event) {
+        // Check if minus key is pressed
+        if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
+            // Always block negative entries for all products
+            this._blockNegativeEntry(event);
+        }
+        return true;
+    },
+
+    // Handle keyboard events at global level with capture phase
+    _handleGlobalKeyEvent(event) {
+        // Check if minus key is pressed
+        if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
+            // Always block negative entries for all products
+            this._blockNegativeEntry(event);
         }
         
         return buttons.map((button) => ({
