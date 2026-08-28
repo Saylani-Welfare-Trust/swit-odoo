@@ -29,7 +29,8 @@ class DonationHomeServiceLine(models.Model):
     def _compute_on_hand_qty(self):
         for rec in self:    
             rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
-        # Abdul Hai
+            
+     # Abdul Hai
     actual_deposit_percentage = fields.Float(
         string='Actual Deposit Percentage (%)',
         related='medical_equipment_id.actual_deposit_percentage',
