@@ -71,6 +71,27 @@ class MicrofinanceLine(models.Model):
         for rec in self:
             rec.remaining_amount = rec.amount - rec.paid_amount
 
+    def _apply_direct_deposit_payment(self, amount, payment_date=None):
+        self.ensure_one()
+        if amount <= 0:
+            return 0
+
+        outstanding_amount = max(self.amount - self.paid_amount, 0)
+        if outstanding_amount <= 0:
+            return 0
+
+        applied_amount = min(outstanding_amount, amount)
+        new_paid_amount = self.paid_amount + applied_amount
+        new_state = 'paid' if new_paid_amount >= self.amount else 'partial'
+
+        self.write({
+            'paid_amount': new_paid_amount,
+            'payment_date': payment_date or fields.Date.today(),
+            'state': new_state,
+        })
+
+        return applied_amount
+
     def action_cheque_deposit(self):
         if not self.is_cheque_deposit:
             self.is_cheque_deposit = True
