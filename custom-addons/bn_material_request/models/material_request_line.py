@@ -43,23 +43,24 @@ class MemberApprovalLine(models.Model):
             product = line.product_id
             if product:
                 line.analytic_account_id = product.analytic_account_id
-                line.budget_id = product.analytic_account_id.default_budget_id if product.analytic_account_id else False
+                if product.analytic_account_id:
+                    line.budget_id = product.analytic_account_id.default_budget_id
+                else:
+                    line.budget_id = False
             else:
                 line.analytic_account_id = False
                 line.budget_id = False
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Ensure budget and analytic are set even when created programmatically."""
         for vals in vals_list:
-            if 'product_id' in vals and not vals.get('budget_id'):
+            if 'product_id' in vals:
                 product = self.env['product.product'].browse(vals['product_id'])
                 if product and product.analytic_account_id:
-                    # If budget not provided, use default from analytic account
-                    vals['budget_id'] = product.analytic_account_id.default_budget_id.id
-                    # Also set analytic if not provided
                     if not vals.get('analytic_account_id'):
                         vals['analytic_account_id'] = product.analytic_account_id.id
+                    if not vals.get('budget_id'):
+                        vals['budget_id'] = product.analytic_account_id.default_budget_id.id
         return super().create(vals_list)
             
     # Abdul Hai
