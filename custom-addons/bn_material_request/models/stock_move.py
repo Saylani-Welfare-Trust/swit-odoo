@@ -1,7 +1,7 @@
 from odoo import models, fields, api
 
-class StockMoveLine(models.Model):
-    _inherit = 'stock.move.line'
+class StockMove(models.Model):
+    _inherit = 'stock.move'
 
     on_hand_qty = fields.Float(
         string='On Hand',
@@ -10,10 +10,10 @@ class StockMoveLine(models.Model):
 
     @api.depends('product_id', 'location_id')
     def _compute_on_hand_qty(self):
-        for line in self:
-            if line.product_id and line.location_id:
-                line.on_hand_qty = line.product_id.with_context(
-                    location=line.location_id.id
+        for move in self:
+            if move.product_id and move.location_id:
+                move.on_hand_qty = move.product_id.with_context(
+                    location=move.location_id.id
                 ).qty_available
             else:
-                line.on_hand_qty = 0.0
+                move.on_hand_qty = 0.0
