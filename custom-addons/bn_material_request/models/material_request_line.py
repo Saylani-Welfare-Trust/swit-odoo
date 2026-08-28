@@ -35,6 +35,21 @@ class MemberApprovalLine(models.Model):
         domain=[('plan_id.name', '=', 'Segment')],
     )
     
+    on_hand_qty = fields.Float(
+        string='On Hand',
+        compute='_compute_on_hand_qty'
+    )
+    
+    @api.depends('product_id', 'approval_id.source_location_id')
+    def _compute_on_hand_qty(self):
+        for line in self:
+            if line.product_id and line.approval_id.source_location_id:
+                line.on_hand_qty = line.product_id.with_context(
+                    location=line.approval_id.source_location_id.id
+                ).qty_available
+            else:
+                line.on_hand_qty = 0.0
+    
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
