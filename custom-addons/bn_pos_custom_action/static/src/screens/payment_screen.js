@@ -417,13 +417,14 @@ patch(PaymentScreen.prototype, {
             }
 
         }
+        const CASH_PAYMENT_METHOD_NAMES = ['Cash', 'Cash1'];
+
         // Helper — put this near the top of the patch or as a module-level function
         function resolvePaymentType(paymentLine) {
-            const pmType = paymentLine?.payment_method?.type; // 'cash', 'bank', 'pay_later', etc.
-            if (pmType === 'cash') return 'cash';
-            if (pmType === 'bank') return 'cheque'; // adjust if 'bank' isn't actually your cheque method
-            return pmType || 'cash'; // fallback
+            const pmName = paymentLine?.payment_method?.name || '';
+            return CASH_PAYMENT_METHOD_NAMES.includes(pmName) ? 'cash' : 'cheque';
         }
+
         // ---------- Advance Donation Processing ----------
         // Check for products with is_advance_donation field set to true
         const donationLines = currentOrder.get_orderlines().filter(line =>
@@ -431,57 +432,54 @@ patch(PaymentScreen.prototype, {
         );
 
         if (donationLines && donationLines.length > 0) {
-            // try {
-                
-                for (const donationLine of donationLines) {
-                    
-                    const donationAmount = Math.abs(donationLine.get_display_price());
-                    const partner = currentOrder.get_partner();
+            for (const donationLine of donationLines) {
+                const donationAmount = Math.abs(donationLine.get_display_price());
+                const partner = currentOrder.get_partner();
 
-                    // Get payment method from order
-                    const paymentLines = currentOrder.get_paymentlines();
-                    if (paymentLines.length === 0) {
-                        throw new Error("No payment method found");
-                    }
-
-                    // Use the first payment method (you might want to handle multiple payments differently)
-                    const paymentMethod = paymentLines[0].payment_method;
-                    console.log("🔍 paymentMethod:", paymentMethod);
-                    console.log("🔍 paymentMethod.type:", paymentMethod.type);
-                    console.log("🔍 paymentLines.length:", paymentLines.length, paymentLines);
-                    const data = {
-                        'payment_type': paymentMethod.type === 'cash' ? 'cash' : 'cheque',
-                        'order_name': currentOrder.name,  // Use order name as donation identifier
-                        'amount': donationAmount,
-                        'donor_id': partner ? partner.id : null,
-                        'product_id': donationLine.product.id,
-                    };
-                    
-                    // // Only add cheque fields if payment type is cheque
-                    if (data.payment_type === 'cheque') {
-                        // data.bank_id = currentOrder.bank_id ? parseInt(currentOrder.bank_id) : 1; // Use POS value or fallback                        
-                        data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
-                        data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
-                    }
-
-                    const result = await     this.env.services.orm.call(
-                        'advance.donation.receipt',
-                        'register_pos_payment',
-                        [data]
-                    );
-                    console.log("📤 Data sent for donation receipt creation:", data);
-                    console.log("📥 Result from donation receipt creation:", result);
-                    if (result.status === 'success') {
-                        currentOrder.set_source_document(result.receipt_name);
-
-                        this.env.services.notification.add(
-                            `Donation receipt created for ${donationLine.product.display_name}`,
-                            { type: 'success' }
-                        );
-                    } else {
-                        throw new Error(result.body || 'Failed to create donation receipt');
-                    }
+                // Get payment method from order
+                const paymentLines = currentOrder.get_paymentlines();
+                if (paymentLines.length === 0) {
+                    throw new Error("No payment method found");
                 }
+
+                // Use the first payment method (you might want to handle multiple payments differently)
+                const paymentMethod = paymentLines[0].payment_method;
+                console.log("🔍 paymentMethod:", paymentMethod);
+                console.log("🔍 resolved payment_type:", resolvePaymentType(paymentLines[0]));
+                console.log("🔍 paymentLines.length:", paymentLines.length, paymentLines);
+
+                const data = {
+                    'payment_type': resolvePaymentType(paymentLines[0]),
+                    'order_name': currentOrder.name,
+                    'amount': donationAmount,
+                    'donor_id': partner ? partner.id : null,
+                    'product_id': donationLine.product.id,
+                };
+
+                // Only add cheque fields if payment type is cheque
+                if (data.payment_type === 'cheque') {
+                    data.cheque_number = currentOrder.cheque_number || `POS-${currentOrder.name}`;
+                    data.cheque_date = currentOrder.cheque_date || new Date().toISOString().split('T')[0];
+                }
+
+                const result = await this.env.services.orm.call(
+                    'advance.donation.receipt',
+                    'register_pos_payment',
+                    [data]
+                );
+                console.log("📤 Data sent for donation receipt creation:", data);
+                console.log("📥 Result from donation receipt creation:", result);
+
+                if (result.status === 'success') {
+                    currentOrder.set_source_document(result.receipt_name);
+                    this.env.services.notification.add(
+                        `Donation receipt created for ${donationLine.product.display_name}`,
+                        { type: 'success' }
+                    );
+                } else {
+                    throw new Error(result.body || 'Failed to create donation receipt');
+                }
+            }
         }
         // ========== WELFARE DISBURSEMENT ==========
         if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
