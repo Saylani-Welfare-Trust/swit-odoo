@@ -20,17 +20,39 @@ class POSOrder(models.Model):
         return {}
     
     def _get_dn_number(self):
-        """Generate the DN number using the same logic as the receipt."""
+        """Generate a DN number using available fields, mimicking the receipt format."""
         self.ensure_one()
-        # Get values – these fields must exist on pos.order.
-        # If any is missing, use a default fallback.
-        city_code = self.branch_code or 'UNK'
-        counter = self.counter or '0'
-        # Use the order's date or today's year.
-        year = self.date_order.year if self.date_order else odoo_fields.Date.today().year
-        # pos_order_seq is the sequential number from the receipt (e.g., last 4 digits of order name)
-        pos_order_seq = self.pos_order_seq or '0000'
-        return f"{city_code}-C{counter}-{year}-{pos_order_seq}"
+
+        # 1. Branch code: try from company or a related branch field, else 'UNK'
+        branch_code = 'UNK'
+        if hasattr(self, 'branch_code') and self.branch_code:
+            branch_code = self.branch_code
+        elif self.company_id and self.company_id.name:
+            # Use first 3 letters of company name as a code (like the receipt's 'branch_code')
+            branch_code = self.company_id.name[:3].upper()
+
+        # 2. Counter: may come from session or a custom field; fallback to 0
+        counter = '0'
+        if hasattr(self, 'counter') and self.counter:
+            counter = str(self.counter)
+        elif self.session_id and hasattr(self.session_id, 'counter'):
+            counter = str(self.session_id.counter or 0)   # if session has a counter field
+
+        # 3. Year: use order's date or today
+        year = self.date_order.year if self.date_order else fields.Date.today().year
+
+        # 4. POS order sequence: use last 4 digits of the order name (or pos_reference)
+        pos_order_seq = '0000'
+        order_name = self.name or self.pos_reference or ''
+        # Extract numbers from the end of the name (e.g., 'POS-001234' -> '1234')
+        import re
+        numbers = re.search(r'(\d+)$', order_name)
+        if numbers:
+            seq = numbers.group(1)
+            # Pad to 4 digits (or use as is)
+            pos_order_seq = seq[-4:].zfill(4)  # take last 4, pad with zeros if shorter
+
+        return f"{branch_code}-C{counter}-{year}-{pos_order_seq}"
 
     def _create_livestock_slaughter_records(self):
         slaughter_obj = self.env['livestock.slaugther'].sudo()
