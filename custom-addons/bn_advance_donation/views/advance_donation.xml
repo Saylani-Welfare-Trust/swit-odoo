@@ -96,24 +96,24 @@
                     </group>
                     <notebook>
                         <page string="Donation Lines">
-                            <field name="advance_donation_lines" readonly="1" force_save="1">
+                            <field name="advance_donation_lines"  force_save="1">
                                 <tree editable="bottom">
-                                    <field name="serial_no"/>
-                                    <field name="product_id"/>
-                                    <field name="amount"/>
-                                    <field name="service_charge_amount"/>
-                                    <field name="paid_amount" />
-                                    <field name="remaining_amount"/>
-                                    <field name="date"  />
-                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
-                                    <field name="disbursed_amount"/>
+                                    <field name="serial_no" readonly="1"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="amount" readonly="1"/>
+                                    <field name="service_charge_amount" readonly="1"/>
+                                    <field name="paid_amount" readonly="1" />
+                                    <field name="remaining_amount" readonly="1"/>
+                                    <field name="date" readonly="1" />
+                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" readonly="1"/>
+                                    <field name="disbursed_amount" readonly="1"/>
                                     <field name="is_disbursed" readonly="0" force_save="1"/>
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
 
-                                    <field name="disbursement_date"/> 
-                                    <field name="donation_state" column_invisible="1"/>
-                                    <field name="approved_date" column_invisible="1"/>
-                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="disbursement_date" readonly="1"/> 
+                                    <field name="donation_state" column_invisible="1" readonly="1"/>
+                                    <field name="approved_date" column_invisible="1" readonly="1"/>
+                                    <field name="currency_id" column_invisible="1" readonly="1"/>
                                     <!-- <field name="reserved_welfare_line_id" column_invisible="1"/> -->
                                     <!-- <field name="reserved_welfare_recurring_line_id" column_invisible="1"/> -->
                                 </tree>
