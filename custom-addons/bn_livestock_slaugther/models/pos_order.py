@@ -1,4 +1,5 @@
 from odoo import api, models
+from odoo import fields as odoo_fields
 
 
 class POSOrder(models.Model):
@@ -17,6 +18,19 @@ class POSOrder(models.Model):
         if 'cow' in product_markers:
             return {'is_meat_depart': True}
         return {}
+    
+    def _get_dn_number(self):
+        """Generate the DN number using the same logic as the receipt."""
+        self.ensure_one()
+        # Get values – these fields must exist on pos.order.
+        # If any is missing, use a default fallback.
+        city_code = self.branch_code or 'UNK'
+        counter = self.counter or '0'
+        # Use the order's date or today's year.
+        year = self.date_order.year if self.date_order else odoo_fields.Date.today().year
+        # pos_order_seq is the sequential number from the receipt (e.g., last 4 digits of order name)
+        pos_order_seq = self.pos_order_seq or '0000'
+        return f"{city_code}-C{counter}-{year}-{pos_order_seq}"
 
     def _create_livestock_slaughter_records(self):
         slaughter_obj = self.env['livestock.slaugther'].sudo()
@@ -36,7 +50,9 @@ class POSOrder(models.Model):
                 if existing_record:
                     continue
 
-                reference = order.source_document or order.pos_reference or order.name
+                # --- NEW: use generated DN number as reference ---
+                reference = order._get_dn_number()
+
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
 
                 slaughter_vals = {
@@ -46,7 +62,7 @@ class POSOrder(models.Model):
                     'pos_order_line_id': line.id,
                     'quantity': int(line.qty),
                     'price': price,
-                    'ref': reference,
+                    'ref': reference,   # now it's the DN number
                 }
                 slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
