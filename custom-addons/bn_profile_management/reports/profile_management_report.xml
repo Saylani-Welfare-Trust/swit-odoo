@@ -1,177 +1,255 @@
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
     <template id="user_profile_report" name="Donee Form">
         <t t-call="web.html_container">
-           <t t-call="web.external_layout">
-                <section name="Title">
+            <t t-call="web.external_layout">
+
+                <style>
+                    .profile_detail {
+                        width: 90%;
+                        margin: 0 auto;
+                        border: 1px solid #000;
+                        border-collapse: collapse;
+                    }
+
+                    .profile_detail .row {
+                        margin: 0;
+                        border-bottom: 1px solid #000;
+                    }
+
+                    .profile_detail .row:last-child {
+                        border-bottom: none;
+                    }
+
+                    .profile_detail .label {
+                        border-right: 1px solid #000;
+                        padding: 8px;
+                        font-weight: bold;
+                    }
+
+                    .profile_detail .value {
+                        border-right: 1px solid #000;
+                        padding: 8px;
+                    }
+
+                    .profile_detail .value:last-child {
+                        border-right: none;
+                    }
+
+                    .profile_title {
+                        text-align: center;
+                        margin-bottom: 25px;
+                    }
+
+                    .profile_title h1 {
+                        border: 1px solid #000;
+                        padding: 10px;
+                        font-size: 24px;
+                    }
+                </style>
+
+                <section name="Title" class="profile_title">
+
                     <t t-if="'Microfinance' in docs.category_id.mapped('name')">
-                        <center>
-                            <h1>Microfinance Application</h1>
-                        </center>
+                        <h1>Microfinance Application</h1>
                     </t>
+
                     <t t-elif="'Welfare' in docs.category_id.mapped('name')">
-                        <center>
-                            <h1>Welfare Application</h1>
-                        </center>
+                        <h1>Welfare Application</h1>
                     </t>
+
                     <t t-else="">
-                        <center>
-                            <h1>User Profile</h1>
-                        </center>
+                        <h1>User Profile</h1>
                     </t>
+
                 </section>
-                <br/><br/>
-                <section name="print_detail" style="width: 80%;">
+
+                <section name="print_detail" class="profile_detail">
+
+                    <!-- Date / Master Donee -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Date : </span>
+                        <div class="col-2 label">
+                            <span>Date :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="datetime.date.today()"/>
                         </div>
-                        <div class="col-2">
-                            <span>Master Donee No. : </span>
+
+                        <div class="col-2 label">
+                            <span>Master Donee No. :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.primary_registration_id"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Name / Mobile -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Name : </span>
+                        <div class="col-2 label">
+                            <span>Name :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.name"/>
                         </div>
-                        <div class="col-2">
-                            <span>Mobile : </span>
+
+                        <div class="col-2 label">
+                            <span>Mobile :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.mobile"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- CNIC / City -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>CNIC No. : </span>
+                        <div class="col-2 label">
+                            <span>CNIC No. :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.cnic_no"/>
                         </div>
-                        <div class="col-2">
-                            <span>City : </span>
+
+                        <div class="col-2 label">
+                            <span>City :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.city"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Branch -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Branch : </span>
+                        <div class="col-2 label">
+                            <span>Branch :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.analytic_account_id.name"/>
                         </div>
+
+                        <div class="col-2 label"></div>
+                        <div class="col-4 value"></div>
                     </div>
-                    <br/>
+
+                    <!-- Gender / DOB -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Gender : </span>
+                        <div class="col-2 label">
+                            <span>Gender :</span>
                         </div>
-                        <div class="col-4">
-                            <t t-if="docs.gender" t-esc="docs.gender.title()"/>
+                        <div class="col-4 value">
+                            <t t-if="docs.gender"
+                               t-esc="docs.gender.title()"/>
                         </div>
-                        <div class="col-2">
-                            <span>DOB : </span>
+
+                        <div class="col-2 label">
+                            <span>DOB :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.date_of_birth"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Religion / Next Kin -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Religion : </span>
+                        <div class="col-2 label">
+                            <span>Religion :</span>
                         </div>
-                        <div class="col-4">
-                            <t t-if="docs.religion" t-esc="docs.religion.title()"/>
+                        <div class="col-4 value">
+                            <t t-if="docs.religion"
+                               t-esc="docs.religion.title()"/>
                         </div>
-                        <div class="col-2">
-                            <span>Next Kin : </span>
+
+                        <div class="col-2 label">
+                            <span>Next Kin :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.next_kin"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Address / Landmark -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Address : </span>
+                        <div class="col-2 label">
+                            <span>Address :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.street"/>
                         </div>
-                        <div class="col-2">
-                            <span>Nearest Land Mark : </span>
+
+                        <div class="col-2 label">
+                            <span>Nearest Land Mark :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.nearest_land_mark"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Father / Surname -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Father Name : </span>
+                        <div class="col-2 label">
+                            <span>Father Name :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.father_name"/>
                         </div>
-                        <div class="col-2">
-                            <span>Surname : </span>
+
+                        <div class="col-2 label">
+                            <span>Surname :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.surname"/>
                         </div>
                     </div>
-                    <br/>
+
+                    <!-- Marital Status / Spouse -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Married Status : </span>
+                        <div class="col-2 label">
+                            <span>Married Status :</span>
                         </div>
-                        <div class="col-4">
-                            <t t-if="docs.martial_status" t-esc="docs.martial_status.title()"/>
+                        <div class="col-4 value">
+                            <t t-if="docs.martial_status"
+                               t-esc="docs.martial_status.title()"/>
                         </div>
+
                         <t t-if="docs.martial_status == 'married'">
-                            <div class="col-2">
-                                <span>Spouse Name : </span>
+                            <div class="col-2 label">
+                                <span>Spouse Name :</span>
                             </div>
-                            <div class="col-4">
+                            <div class="col-4 value">
                                 <t t-esc="docs.spouse_name"/>
                             </div>
                         </t>
+
+                        <t t-else="">
+                            <div class="col-2 label"></div>
+                            <div class="col-4 value"></div>
+                        </t>
                     </div>
-                    <br/>
+
+                    <!-- Bank / Details -->
                     <div class="row">
-                        <div class="col-2">
-                            <span>Bank / Wallet Account : </span>
+                        <div class="col-2 label">
+                            <span>Bank / Wallet Account :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.bank_wallet_account"/>
                         </div>
-                        <div class="col-2">
-                            <span>Details : </span>
+
+                        <div class="col-2 label">
+                            <span>Details :</span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-4 value">
                             <t t-esc="docs.details"/>
                         </div>
                     </div>
+
                 </section>
-           </t>
+
+            </t>
         </t>
     </template>
+
 
     <record id="action_profile_management_report" model="ir.actions.report">
         <field name="name">User Profile Report</field>
@@ -185,3 +263,4 @@
     </record>
 
 </odoo>
+```
