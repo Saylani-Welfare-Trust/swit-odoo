@@ -13,7 +13,8 @@
                 <field name="transfer_bool" column_invisible="1" />
 
                 <field name="product_id" />
-                <field name="code" />
+                <field name="on_hand_qty"/>
+                <!-- <field name="code" /> -->
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
