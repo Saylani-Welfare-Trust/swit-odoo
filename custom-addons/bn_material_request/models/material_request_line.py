@@ -25,7 +25,6 @@ class MemberApprovalLine(models.Model):
         for line in self:
             line.subtotal = line.quantity * line.unit_price
             
-    # Abdul Hai
     
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
@@ -90,4 +89,3 @@ class MemberApprovalLine(models.Model):
                 # If you want to always override:
                 # line.analytic_account_id.default_budget_id = line.budget_id.id
             
-    # Abdul Hai

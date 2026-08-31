@@ -145,10 +145,6 @@ class MemberApproval(models.Model):
     #             )
     #         else:
     #             rec.source_location_domain = "[('usage','=','internal')]"
-
- 
-
-    # Abdul Hai
     
 
     def action_check_budget(self):
@@ -215,8 +211,6 @@ class MemberApproval(models.Model):
             'state': 'hod_approval',
         })
         return True
-
-    # Abdul Hai
 
     def action_hod_approve(self):
         """HOD approves the request - next step depends on budget status"""

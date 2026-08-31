@@ -87,7 +87,6 @@ class WelfareLine(models.Model):
     #     store=True
     # )
     
-    # Abdul Hai
     on_hand_qty = fields.Float(
         string='On Hand Quantity',
         compute='_compute_on_hand_qty'
@@ -97,7 +96,6 @@ class WelfareLine(models.Model):
     def _compute_on_hand_qty(self):
         for rec in self:
             rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
-    # Abdul Hai
     
     # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
