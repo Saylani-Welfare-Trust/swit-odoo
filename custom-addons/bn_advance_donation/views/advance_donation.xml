@@ -107,7 +107,7 @@
                                     <field name="date"  />
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                     <field name="disbursed_amount"/>
-                                    <field name="is_disbursed"/>
+                                    <field name="is_disbursed" readonly="0" force_save="1"/>
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
 
                                     <field name="disbursement_date"/> 

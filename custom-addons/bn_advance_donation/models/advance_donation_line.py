@@ -30,7 +30,12 @@ class AdvanceDonationLine(models.Model):
         default='draft',
         string='Donation State', related='advance_donation_id.state')
     approved_date = fields.Datetime('Approved Date', related='advance_donation_id.approved_date')
-    is_disbursed = fields.Boolean('Is Disbursed?', compute='_compute_disbursement_and_disbursed')
+    is_disbursed = fields.Boolean(
+    string='Is Disbursed?',
+    compute='_compute_disbursement_and_disbursed',
+    inverse='_inverse_is_disbursed',
+    store=True,)
+
     currency_id = fields.Many2one('res.currency', 'Currency', related='advance_donation_id.currency_id', readonly=True)
 
     date = fields.Date(
@@ -50,6 +55,15 @@ class AdvanceDonationLine(models.Model):
     )
     service_charge_amount = fields.Monetary('Service Charges', currency_field='currency_id')
 
+    def _inverse_is_disbursed(self):
+        for line in self:
+            if line.is_disbursed:
+                line.disbursement_date = fields.Date.context_today(line)
+                # set disbursed_amount / other side-effects here if needed
+            else:
+                line.disbursement_date = False
+                line.disbursed_amount = 0
+                
     @api.depends('disbursed_amount', 'paid_amount')
     def _compute_disbursement_and_disbursed(self):
         for rec in self:
