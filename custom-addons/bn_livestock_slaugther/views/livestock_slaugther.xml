@@ -14,7 +14,7 @@
 
                 <field name="product_id" />
                 <field name="on_hand_qty"/>
-                <!-- <field name="code" /> -->
+                <field name="code" />
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />

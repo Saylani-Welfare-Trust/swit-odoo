@@ -145,8 +145,7 @@ class MemberApproval(models.Model):
     #             )
     #         else:
     #             rec.source_location_domain = "[('usage','=','internal')]"
-
- 
+    
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
