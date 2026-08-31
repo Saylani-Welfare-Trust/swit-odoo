@@ -1,9 +1,28 @@
-from odoo import api, models
+from odoo import api, models, fields
 from odoo import fields as odoo_fields
 
 
 class POSOrder(models.Model):
     _inherit = 'pos.order'
+    
+    branch_code = fields.Char(string='Branch Code', help="Short code for the branch")
+    counter = fields.Char(string='Counter Number', help="POS session counter number")
+    pos_order_seq = fields.Char(string='POS Order Sequence', help="Sequential number from POS")
+    dn_number = fields.Char(string='DN Number', copy=False)
+    
+    @api.model
+    def _process_order(self, order_data, draft=False, existing_order=False):
+        # Extract custom fields from the frontend data
+        if order_data.get('data'):
+            data = order_data['data']
+            if data.get('branch_code'):
+                self.branch_code = data['branch_code']
+            if data.get('counter'):
+                self.counter = data['counter']
+            if data.get('pos_order_seq'):
+                self.pos_order_seq = data['pos_order_seq']
+        # Call the original method to create/update the order
+        return super()._process_order(order_data, draft=draft, existing_order=existing_order)
 
     def _get_livestock_department_vals(self, product):
         product_markers = ' '.join(filter(None, [
@@ -20,39 +39,13 @@ class POSOrder(models.Model):
         return {}
     
     def _get_dn_number(self):
-        """Generate a DN number using available fields, mimicking the receipt format."""
         self.ensure_one()
-
-        # 1. Branch code: try from company or a related branch field, else 'UNK'
-        branch_code = 'UNK'
-        if hasattr(self, 'branch_code') and self.branch_code:
-            branch_code = self.branch_code
-        elif self.company_id and self.company_id.name:
-            # Use first 3 letters of company name as a code (like the receipt's 'branch_code')
-            branch_code = self.company_id.name[:3].upper()
-
-        # 2. Counter: may come from session or a custom field; fallback to 0
-        counter = '0'
-        if hasattr(self, 'counter') and self.counter:
-            counter = str(self.counter)
-        elif self.session_id and hasattr(self.session_id, 'counter'):
-            counter = str(self.session_id.counter or 0)   # if session has a counter field
-
-        # 3. Year: use order's date or today
+        # These fields are now stored; provide fallbacks just in case
+        city_code = self.branch_code or 'UNK'
+        counter = self.counter or '0'
         year = self.date_order.year if self.date_order else fields.Date.today().year
-
-        # 4. POS order sequence: use last 4 digits of the order name (or pos_reference)
-        pos_order_seq = '0000'
-        order_name = self.name or self.pos_reference or ''
-        # Extract numbers from the end of the name (e.g., 'POS-001234' -> '1234')
-        import re
-        numbers = re.search(r'(\d+)$', order_name)
-        if numbers:
-            seq = numbers.group(1)
-            # Pad to 4 digits (or use as is)
-            pos_order_seq = seq[-4:].zfill(4)  # take last 4, pad with zeros if shorter
-
-        return f"{branch_code}-C{counter}-{year}-{pos_order_seq}"
+        pos_order_seq = self.pos_order_seq or '0000'
+        return f"{city_code}-C{counter}-{year}-{pos_order_seq}"
 
     def _create_livestock_slaughter_records(self):
         slaughter_obj = self.env['livestock.slaugther'].sudo()
