@@ -42,6 +42,10 @@
             <xpath expr="//field[@name='state_blanket_order']" position="attributes">
                 <attribute name="invisible">type_id.name == 'Purchase Request' or is_quantity_copy != 'none'</attribute>
             </xpath>
+
+            <xpath expr="//field[@name='line_ids']//field[@name='product_qty']" position="before">
+                <field name="on_hand_qty" readonly="1"/>
+            </xpath>
         </field>
     </record>
 

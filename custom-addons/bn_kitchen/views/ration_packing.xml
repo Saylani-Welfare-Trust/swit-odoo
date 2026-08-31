@@ -29,4 +29,19 @@
         parent="bn_kitchen.kitchen_menu"
         sequence="0"/>
 
+    <record id="view_mrp_bom_form_inherit_on_hand" model="ir.ui.view">
+        <field name="name">mrp.bom.form.on.hand</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='bom_line_ids']//field[@name='product_qty']" position="before">
+                <field name="on_hand_qty" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='byproduct_ids']//field[@name='product_qty']" position="before">
+                <field name="on_hand_qty" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
