@@ -1083,7 +1083,7 @@ class Welfare(models.Model):
                 "odooId": self.donee_id.id
             }
         }
-        # raise UserError(str(data))
+        raise UserError(str(data))
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
