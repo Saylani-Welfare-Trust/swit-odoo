@@ -34,7 +34,14 @@ class LivestockSlaughter(models.Model):
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
+    start_time = fields.Datetime('Start Time')
+    end_time = fields.Datetime('End Time')
     material_request_lines = fields.Text('Material Request Lines', readonly=True)
+    material_request_line_ids = fields.One2many(
+        'livestock.cutting.material.line',
+        'livestock_slaughter_id',
+        string='Material Request Lines'
+    )
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
@@ -182,16 +189,40 @@ class LivestockSlaughter(models.Model):
             ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
         ], limit=1)
 
-        lines = []
+        self.material_request_line_ids = [(5, 0, 0)]
+        if not self.start_time:
+            self.start_time = fields.Datetime.now()
+
         if bom and bom.bom_line_ids:
+            material_lines = []
             for line in bom.bom_line_ids:
                 if line.product_id:
-                    qty = line.product_qty or 1
-                    lines.append(f"{line.product_id.display_name} - Qty: {qty}")
+                    material_lines.append((0, 0, {
+                        'product_id': line.product_id.id,
+                        'quantity': line.product_qty or 1,
+                        'livestock_slaughter_id': self.id,
+                    }))
+            self.material_request_line_ids = material_lines
 
-        self.material_request_lines = '\n'.join(lines) if lines else 'No BOM material found for this product.'
+        self.material_request_lines = '\n'.join(
+            f"{record.product_id.display_name} - Qty: {record.quantity or 1}"
+            for record in self.material_request_line_ids
+        ) if self.material_request_line_ids else 'No BOM material found for this product.'
+
         self.state = 'material_request'
 
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_end_cutting(self):
+        self.ensure_one()
+        self.end_time = fields.Datetime.now()
+        self.state = 'done'
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther',
@@ -211,12 +242,23 @@ class LivestockSlaughter(models.Model):
             ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
         ], limit=1)
 
+        self.material_request_line_ids = [(5, 0, 0)]
+
         if bom and bom.bom_line_ids:
-            lines = []
+            material_lines = []
             for line in bom.bom_line_ids:
                 if line.product_id:
-                    lines.append(f"{line.product_id.display_name} - Qty: {line.product_qty or 1}")
-            self.material_request_lines = '\n'.join(lines)
+                    material_lines.append((0, 0, {
+                        'product_id': line.product_id.id,
+                        'quantity': line.product_qty or 1,
+                        'livestock_slaughter_id': self.id,
+                    }))
+            self.material_request_line_ids = material_lines
+
+            self.material_request_lines = '\n'.join(
+                f"{item.product_id.display_name} - Qty: {item.quantity or 1}"
+                for item in self.material_request_line_ids
+            )
         else:
             self.material_request_lines = 'No BOM material found for this product.'
     
