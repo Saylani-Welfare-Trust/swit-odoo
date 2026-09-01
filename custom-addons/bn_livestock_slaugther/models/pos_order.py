@@ -1,13 +1,10 @@
 from psycopg2 import IntegrityError
 from odoo import api, models, fields
-from odoo import fields as odoo_fields
 
 
 class POSOrder(models.Model):
     _inherit = 'pos.order'
 
-    branch_code = fields.Char(string='Branch Code', help="Short code for the branch")
-    counter = fields.Char(string='Counter Number', help="POS session counter number")
     pos_order_seq = fields.Char(string='POS Order Sequence', help="Sequential number from POS")
     dn_number = fields.Char(string='DN Number', copy=False)
 
@@ -15,19 +12,12 @@ class POSOrder(models.Model):
     def _process_order(self, order_data, draft=False, existing_order=False):
         if order_data.get('data'):
             data = order_data['data']
-            if data.get('branch_code'):
-                self.branch_code = data['branch_code']
-            if data.get('counter'):
-                self.counter = data['counter']
             if data.get('pos_order_seq'):
                 self.pos_order_seq = data['pos_order_seq']
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
         order = self.browse(order_id)
         if order and not order.dn_number:
             dn_number = order._compute_dn_number()
-            # Store DN # once, then recall it into source_document so the
-            # rest of the system (receipt, slaughter ref, etc.) can keep
-            # reading from the standard field.
             order.write({
                 'dn_number': dn_number,
                 'source_document': dn_number,
@@ -35,9 +25,15 @@ class POSOrder(models.Model):
         return order_id
 
     def _compute_dn_number(self):
+        """DN # = {branch_code}-C{counter}-{year}-{pos_order_seq}
+
+        - branch_code: stored on the cashier (res.users)
+        - counter:     stored on pos.config (via the session)
+        - pos_order_seq: stored on this pos.order record
+        """
         self.ensure_one()
-        city_code = self.branch_code or 'UNK'
-        counter = self.counter or '0'
+        city_code = self.user_id.branch_code or 'UNK'
+        counter = self.session_id.config_id.counter or '0'
         current_year = fields.Date.context_today(self).year
         pos_order_seq = self.pos_order_seq or '0000'
         return f"{city_code}-C{counter}-{current_year}-{pos_order_seq}"
@@ -73,8 +69,6 @@ class POSOrder(models.Model):
                 ('pos_order_line_id', 'in', livestock_lines.ids),
             ]).mapped('pos_order_line_id').ids)
 
-            # Ensure dn_number / source_document are populated even if this
-            # order was created through a path that skipped _process_order.
             if not order.dn_number:
                 dn_number = order._compute_dn_number()
                 order.write({
@@ -132,3 +126,15 @@ class POSOrderLine(models.Model):
         result = super().write(vals)
         self.mapped('order_id')._create_livestock_slaughter_records()
         return result
+
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    branch_code = fields.Char(string='Branch Code', help="Short code identifying this cashier's branch")
+
+
+class POSConfig(models.Model):
+    _inherit = 'pos.config'
+
+    counter = fields.Char(string='Counter Number', help="Counter number for this POS terminal/session")
