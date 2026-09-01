@@ -4,7 +4,9 @@ from odoo.exceptions import ValidationError
 
 state_selection = [
     ('not_received', 'Not Received'),
-    ('received', 'Received')
+    ('received', 'Received'),
+    ('cutting', 'Cutting'),
+    ('done', 'Done')
 ]
 
 
@@ -118,14 +120,13 @@ class LivestockSlaughter(models.Model):
         self.state = 'received'
 
     def action_cutting(self):
-        # Retrieve the 'Slaughter Stock' location
-        cutting_obj = self.env['livestock.cutting']
+        if not self.product_id:
+            raise ValidationError("Please select a product before starting cutting.")
 
         location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        # Retrieve the internal transfer operation type
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
             ('warehouse_id.company_id', '=', self.env.company.id)
@@ -133,11 +134,8 @@ class LivestockSlaughter(models.Model):
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
-        # Retrieve the product based on the product code
         product = self.product_id
 
-
-        # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
@@ -145,7 +143,6 @@ class LivestockSlaughter(models.Model):
             'origin': self.product_id.id or '',
         })
 
-        # Create the stock move
         self.env['stock.move'].create({
             'name': product.display_name,
             'product_id': product.id,
@@ -157,30 +154,13 @@ class LivestockSlaughter(models.Model):
             'location_dest_id': picking.location_dest_id.id,
         })
 
-        # Confirm and assign the picking
         picking.action_confirm()
         picking.action_assign()
-
-        # Set the done quantities and validate the picking
         picking.button_validate()
-        cutting_record = cutting_obj.create({
-            'product_id': self.product_id.id,
-            'quantity': self.quantity,
-            'price': self.price,
-            'code': self.code,
-            'picking_id': picking.id,
-        })
 
+        self.state = 'cutting'
         self.cutting_hide = True
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Cutting Record',
-            'res_model': 'livestock.cutting',
-            'res_id': cutting_record.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        return True
     
     def action_open_wizard(self):
         """Open a transient wizard to choose destination location"""
