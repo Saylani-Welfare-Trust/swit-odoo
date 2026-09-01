@@ -21,19 +21,7 @@ patch(ProductsWidget.prototype, {
                 list = [];
             }
         }
-        const order = this.pos.get_order();
-        if (order) {
-            const returnedProductIds = new Set(
-                order
-                    .get_orderlines()
-                    .filter((line) => line.refunded_orderline_id)
-                    .map((line) => line.product.id)
-            );
-            if (returnedProductIds.size) {
-                list = list.filter((product) => !returnedProductIds.has(product.id));
-            }
-        }
-
+        
         return list.sort(function (a, b) {
             return a.display_name.localeCompare(b.display_name);
         });
