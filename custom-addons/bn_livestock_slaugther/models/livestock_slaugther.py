@@ -64,6 +64,9 @@ class LivestockSlaughter(models.Model):
         return super(LivestockSlaughter, self).create(vals)
 
     def action_confirm(self):
+        picking_type = self.env.ref('your_module.livestock_slaughter_operation_type')
+        if not picking_type:
+            raise ValidationError("Livestock Slaughter operation type not found. Please install the module data.")
         # Retrieve the 'Slaughter Stock' location
         location = None
 

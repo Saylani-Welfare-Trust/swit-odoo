@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Operation type for Livestock Slaughter (no warehouse) -->
+        <record id="livestock_slaughter_operation_type" model="stock.picking.type">
+            <field name="name">Livestock Slaughter Transfer</field>
+            <field name="code">internal</field>                    <!-- internal transfer -->
+            <field name="sequence_code">LST</field>               <!-- prefix for pickings -->
+            <!-- No warehouse_id field - this makes it global -->
+            <field name="default_location_src_id" ref="stock.stock_location_stock"/>
+            <field name="default_location_dest_id" ref="livestock_slaughter_stock_location"/>
+            <field name="use_create_lots">False</field>
+            <field name="use_existing_lots">True</field>
+        </record>
+
+        <!-- (Optional) Keep your Slaughter Stock location if not already present -->
+        <record id="livestock_slaughter_stock_location" model="stock.location">
+            <field name="name">Slaughter Stock</field>
+            <field name="location_id" ref="stock.stock_location_locations"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="usage">internal</field>
+        </record>
+
+    </data>
+</odoo>
