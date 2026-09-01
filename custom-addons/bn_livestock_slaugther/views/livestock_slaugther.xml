@@ -89,8 +89,7 @@
     <record id="livestock_slaugther_action" model="ir.actions.act_window">
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
-        <!-- <field name="view_mode">tree,form</field> -->
-        <field name="view_mode">tree</field>
+        <field name="view_mode">tree,form</field>
         <field name="domain">[]</field>
         <field name="context">{
             'create': 0,

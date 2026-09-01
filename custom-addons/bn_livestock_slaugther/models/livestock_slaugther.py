@@ -162,7 +162,14 @@ class LivestockSlaughter(models.Model):
 
         self.state = 'cutting'
         self.cutting_hide = True
-        return True
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_material_request(self):
         self.ensure_one()
@@ -184,7 +191,14 @@ class LivestockSlaughter(models.Model):
 
         self.material_request_lines = '\n'.join(lines) if lines else 'No BOM material found for this product.'
         self.state = 'material_request'
-        return True
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     @api.onchange('product_id')
     def _onchange_product_id_material_request(self):
