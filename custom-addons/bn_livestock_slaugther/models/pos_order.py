@@ -24,7 +24,14 @@ class POSOrder(models.Model):
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
         order = self.browse(order_id)
         if order and not order.dn_number:
-            order.dn_number = order._compute_dn_number()
+            dn_number = order._compute_dn_number()
+            # Store DN # once, then recall it into source_document so the
+            # rest of the system (receipt, slaughter ref, etc.) can keep
+            # reading from the standard field.
+            order.write({
+                'dn_number': dn_number,
+                'source_document': dn_number,
+            })
         return order_id
 
     def _compute_dn_number(self):
@@ -62,14 +69,20 @@ class POSOrder(models.Model):
             if not livestock_lines:
                 continue
 
-            # Single query for all lines on this order instead of one search per line
             existing_line_ids = set(slaughter_obj.search([
                 ('pos_order_line_id', 'in', livestock_lines.ids),
             ]).mapped('pos_order_line_id').ids)
 
+            # Ensure dn_number / source_document are populated even if this
+            # order was created through a path that skipped _process_order.
             if not order.dn_number:
-                order.dn_number = order._compute_dn_number()
-            reference = order.dn_number
+                dn_number = order._compute_dn_number()
+                order.write({
+                    'dn_number': dn_number,
+                    'source_document': dn_number,
+                })
+
+            reference = order.source_document or order.dn_number
 
             for line in livestock_lines:
                 if line.id in existing_line_ids:
@@ -88,14 +101,10 @@ class POSOrder(models.Model):
                 }
                 slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
-                # Savepoint isolates a duplicate-key race so it can't abort
-                # the whole order-processing transaction.
                 try:
                     with self.env.cr.savepoint():
                         slaughter_obj.create(slaughter_vals)
                 except IntegrityError:
-                    # Another concurrent write already created this record
-                    # (e.g. a retried/duplicate order sync) - safe to skip.
                     continue
 
     @api.model_create_multi
@@ -105,21 +114,3 @@ class POSOrder(models.Model):
         return orders
 
     def write(self, vals):
-        result = super().write(vals)
-        self._create_livestock_slaughter_records()
-        return result
-
-
-class POSOrderLine(models.Model):
-    _inherit = 'pos.order.line'
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        lines = super().create(vals_list)
-        lines.mapped('order_id')._create_livestock_slaughter_records()
-        return lines
-
-    def write(self, vals):
-        result = super().write(vals)
-        self.mapped('order_id')._create_livestock_slaughter_records()
-        return result
