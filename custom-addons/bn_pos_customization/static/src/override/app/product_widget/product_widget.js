@@ -5,6 +5,7 @@ import { ProductsWidget } from "@point_of_sale/app/screens/product_screen/produc
 
 patch(ProductsWidget.prototype, {
     get productsToDisplay() {
+        console.log('>>> PATCH RUNNING, order:', this.pos.get_order()?.get_orderlines().length);
         const { db } = this.pos;
         let list = [];
         var parent_check = db.get_category_by_id(this.selectedCategoryId)
