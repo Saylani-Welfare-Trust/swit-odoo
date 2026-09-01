@@ -6,6 +6,7 @@ state_selection = [
     ('not_received', 'Not Received'),
     ('received', 'Received'),
     ('cutting', 'Cutting'),
+    ('material_request', 'Material Request'),
     ('done', 'Done')
 ]
 
@@ -33,6 +34,7 @@ class LivestockSlaughter(models.Model):
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
+    material_request_lines = fields.Text('Material Request Lines', readonly=True)
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
@@ -161,6 +163,48 @@ class LivestockSlaughter(models.Model):
         self.state = 'cutting'
         self.cutting_hide = True
         return True
+
+    def action_material_request(self):
+        self.ensure_one()
+        if not self.product_id:
+            raise ValidationError("Please select a product before opening the material request.")
+
+        bom = self.env['mrp.bom'].search([
+            '|',
+            ('product_id', '=', self.product_id.id),
+            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+        ], limit=1)
+
+        lines = []
+        if bom and bom.bom_line_ids:
+            for line in bom.bom_line_ids:
+                if line.product_id:
+                    qty = line.product_qty or 1
+                    lines.append(f"{line.product_id.display_name} - Qty: {qty}")
+
+        self.material_request_lines = '\n'.join(lines) if lines else 'No BOM material found for this product.'
+        self.state = 'material_request'
+        return True
+
+    @api.onchange('product_id')
+    def _onchange_product_id_material_request(self):
+        if not self.product_id:
+            return
+
+        bom = self.env['mrp.bom'].search([
+            '|',
+            ('product_id', '=', self.product_id.id),
+            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+        ], limit=1)
+
+        if bom and bom.bom_line_ids:
+            lines = []
+            for line in bom.bom_line_ids:
+                if line.product_id:
+                    lines.append(f"{line.product_id.display_name} - Qty: {line.product_qty or 1}")
+            self.material_request_lines = '\n'.join(lines)
+        else:
+            self.material_request_lines = 'No BOM material found for this product.'
     
     def action_open_wizard(self):
         """Open a transient wizard to choose destination location"""
