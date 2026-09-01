@@ -193,29 +193,34 @@ class LivestockSlaughter(models.Model):
             ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
         ], limit=1)
 
-        material_request = self.env['material.request'].create({
-            'user_id': self.env.user.id,
-            'request_type': 'internal',
-            'source_location_id': self.source_location_id.id if self.source_location_id else False,
-            'dest_location_id': self.transfer_location.id if self.transfer_location else False,
-            'state': 'draft',
+        material_request = self.env['livestock.cutting.material'].create({
+            'product_id': self.product_id.id,
+            'quantity': self.quantity,
+            'price': self.price,
+            'code': self.code,
+            'state': 'not_received',
+            'start_time': fields.Datetime.now(),
         })
 
         if bom and bom.bom_line_ids:
+            lines = []
             for line in bom.bom_line_ids:
                 if line.product_id:
-                    self.env['material.request.line'].create({
-                        'approval_id': material_request.id,
+                    lines.append((0, 0, {
+                        'livestock_cutting_material_id': material_request.id,
+                        'livestock_slaughter_id': self.id,
                         'product_id': line.product_id.id,
                         'quantity': line.product_qty or 1,
-                    })
+                    }))
+            if lines:
+                material_request.write({'livestock_cutting_material_line_ids': lines})
 
         self.start_time = fields.Datetime.now()
         self.state = 'material_request'
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'material.request',
+            'res_model': 'livestock.cutting.material',
             'res_id': material_request.id,
             'view_mode': 'form',
             'target': 'current',
