@@ -114,3 +114,21 @@ class POSOrder(models.Model):
         return orders
 
     def write(self, vals):
+        result = super().write(vals)
+        self._create_livestock_slaughter_records()
+        return result
+
+
+class POSOrderLine(models.Model):
+    _inherit = 'pos.order.line'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines.mapped('order_id')._create_livestock_slaughter_records()
+        return lines
+
+    def write(self, vals):
+        result = super().write(vals)
+        self.mapped('order_id')._create_livestock_slaughter_records()
+        return result
