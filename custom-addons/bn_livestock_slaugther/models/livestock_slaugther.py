@@ -4,7 +4,10 @@ from odoo.exceptions import ValidationError
 
 state_selection = [
     ('not_received', 'Not Received'),
-    ('received', 'Received')
+    ('received', 'Received'),
+    ('cutting', 'Cutting'),
+    ('material_request', 'Material Request'),
+    ('done', 'Done')
 ]
 
 
@@ -16,6 +19,8 @@ class LivestockSlaughter(models.Model):
 
     donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
+    pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
+    pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -29,6 +34,8 @@ class LivestockSlaughter(models.Model):
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
+    start_time = fields.Datetime('Start Time')
+    end_time = fields.Datetime('End Time')
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
@@ -36,6 +43,13 @@ class LivestockSlaughter(models.Model):
     cutting_hide = fields.Boolean('Cutting Hide')
     transfer_bool = fields.Boolean('Cutting Hide')
 
+    _sql_constraints = [
+        (
+            'unique_pos_order_line_id',
+            'unique(pos_order_line_id)',
+            'A livestock slaughter record already exists for this POS order line.',
+        ),
+    ]
 
     @api.model
     def create(self, vals):
@@ -109,14 +123,13 @@ class LivestockSlaughter(models.Model):
         self.state = 'received'
 
     def action_cutting(self):
-        # Retrieve the 'Slaughter Stock' location
-        cutting_obj = self.env['livestock.cutting']
+        if not self.product_id:
+            raise ValidationError("Please select a product before starting cutting.")
 
         location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        # Retrieve the internal transfer operation type
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
             ('warehouse_id.company_id', '=', self.env.company.id)
@@ -124,11 +137,8 @@ class LivestockSlaughter(models.Model):
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
-        # Retrieve the product based on the product code
         product = self.product_id
 
-
-        # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
@@ -136,7 +146,6 @@ class LivestockSlaughter(models.Model):
             'origin': self.product_id.id or '',
         })
 
-        # Create the stock move
         self.env['stock.move'].create({
             'name': product.display_name,
             'product_id': product.id,
@@ -148,30 +157,87 @@ class LivestockSlaughter(models.Model):
             'location_dest_id': picking.location_dest_id.id,
         })
 
-        # Confirm and assign the picking
         picking.action_confirm()
         picking.action_assign()
-
-        # Set the done quantities and validate the picking
         picking.button_validate()
-        cutting_record = cutting_obj.create({
+
+        self.start_time = fields.Datetime.now()
+        self.state = 'cutting'
+        self.cutting_hide = True
+
+        cutting_record = self.env['livestock.cutting.material'].create({
             'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
             'code': self.code,
-            'picking_id': picking.id,
+            'state': 'received',
+            'start_time': self.start_time,
         })
-
-        self.cutting_hide = True
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Cutting Record',
-            'res_model': 'livestock.cutting',
+            'res_model': 'livestock.cutting.material',
             'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_material_request(self):
+        self.ensure_one()
+        if not self.product_id:
+            raise ValidationError("Please select a product before opening the material request.")
+
+        bom = self.env['mrp.bom'].search([
+            '|',
+            ('product_id', '=', self.product_id.id),
+            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+        ], limit=1)
+
+        material_request = self.env['livestock.cutting.material'].create({
+            'product_id': self.product_id.id,
+            'quantity': self.quantity,
+            'price': self.price,
+            'code': self.code,
+            'state': 'not_received',
+            'start_time': fields.Datetime.now(),
+        })
+
+        if bom and bom.bom_line_ids:
+            lines = []
+            for line in bom.bom_line_ids:
+                if line.product_id:
+                    lines.append((0, 0, {
+                        'livestock_cutting_material_id': material_request.id,
+                        'livestock_slaughter_id': self.id,
+                        'product_id': line.product_id.id,
+                        'quantity': line.product_qty or 1,
+                    }))
+            if lines:
+                material_request.write({'livestock_cutting_material_line_ids': lines})
+
+        self.start_time = fields.Datetime.now()
+        self.state = 'material_request'
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.cutting.material',
+            'res_id': material_request.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_end_cutting(self):
+        self.ensure_one()
+        self.end_time = fields.Datetime.now()
+        self.state = 'done'
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     
     def action_open_wizard(self):
         """Open a transient wizard to choose destination location"""
