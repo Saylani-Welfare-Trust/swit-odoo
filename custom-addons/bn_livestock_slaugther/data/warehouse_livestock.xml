@@ -11,31 +11,29 @@
         </record>
 
         <!-- Custom Picking Type for Livestock Internal Transfers -->
-        <record id="livestock_internal_picking_type" model="stock.picking.type">
+        <!-- <record id="livestock_internal_picking_type" model="stock.picking.type">
             <field name="name">Livestock Internal Transfer</field>
             <field name="code">internal</field>                    <!-- internal transfer -->
             <field name="sequence_code">LIT</field>               <!-- prefix for pickings -->
             <field name="warehouse_id" ref="warehouse_livestock_slaughter"/>
-            <!-- Default source: the warehouse's stock location (auto-created) -->
             <field name="default_location_src_id" eval="ref('warehouse_livestock_slaughter').lot_stock_id.id"/>
-            <!-- Default destination: we'll use the warehouse's output location, or a custom one -->
             <field name="default_location_dest_id" ref="stock.stock_location_stock"/>
             <field name="use_create_lots">False</field>
             <field name="use_existing_lots">True</field>
-        </record>
+        </record> -->
 
         <!-- Optionally, create a dedicated destination location for "Slaughter Stock" if not already -->
-        <record id="livestock_slaughter_stock_location" model="stock.location">
+        <!-- <record id="livestock_slaughter_stock_location" model="stock.location">
             <field name="name">Slaughter Stock</field>
             <field name="location_id" ref="stock.stock_location_locations"/>
             <field name="company_id" ref="base.main_company"/>
             <field name="usage">internal</field>
-        </record>
+        </record> -->
 
         <!-- If you want the picking type to use the new "Slaughter Stock" location as destination -->
-        <record id="livestock_internal_picking_type" model="stock.picking.type">
+        <!-- <record id="livestock_internal_picking_type" model="stock.picking.type">
             <field name="default_location_dest_id" ref="livestock_slaughter_stock_location"/>
-        </record>
+        </record> -->
 
     </data>
 </odoo>
