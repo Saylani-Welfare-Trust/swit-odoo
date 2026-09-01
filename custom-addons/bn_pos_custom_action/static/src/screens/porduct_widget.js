@@ -5,9 +5,11 @@ import { ProductsWidget } from "@point_of_sale/app/screens/product_screen/produc
 
 patch(ProductsWidget.prototype, {
     get productsToDisplay() {
+        console.log('PATCH FIRED');
         const products = super.productsToDisplay;
         const order = this.pos.get_order();
         if (!order) {
+            console.log('NO ORDER');
             return products;
         }
 
@@ -17,6 +19,8 @@ patch(ProductsWidget.prototype, {
                 .filter((line) => line.refunded_orderline_id)
                 .map((line) => line.product.id)
         );
+
+        console.log('Returned IDs:', [...returnedProductIds]);
 
         if (!returnedProductIds.size) {
             return products;
