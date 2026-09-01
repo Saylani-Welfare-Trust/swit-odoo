@@ -9,20 +9,20 @@ document.addEventListener('keydown', function(e) {
     // Check for minus key (both regular keyboard and numpad)
     if (e.key === '-' || e.key === 'Minus' || e.key === 'Subtract') {
         console.log('Minus key detected globally!');
-        
+
         // Check if we should block based on context
         // You can modify this condition if needed
         const shouldBlock = true; // Block for all products
-        
+
         if (shouldBlock) {
             // Prevent the minus key from doing anything
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            
+
             // Show alert to user
             alert('Negative quantities are not allowed!');
-            
+
             // Also try to clear any negative input
             setTimeout(() => {
                 const activeElement = document.activeElement;
@@ -36,7 +36,7 @@ document.addEventListener('keydown', function(e) {
                     }
                 }
             }, 10);
-            
+
             return false;
         }
     }
@@ -59,11 +59,34 @@ patch(ProductScreen.prototype, {
             );
         });
     },
-    
+
     // Getter to check if order is welfare order
     get isWelfareOrder() {
         const order = this.pos.get_order();
         return order && order.extra_data && order.extra_data.welfare;
+    },
+
+    // Hide returned product(s) from the product grid during a refund flow
+    get productsToDisplay() {
+        const products = super.productsToDisplay;
+        const order = this.pos.get_order();
+        if (!order) {
+            return products;
+        }
+
+        // Collect product IDs that are part of a return (refund) line
+        const returnedProductIds = new Set(
+            order
+                .get_orderlines()
+                .filter((line) => line.refunded_orderline_id)
+                .map((line) => line.product.id)
+        );
+
+        if (!returnedProductIds.size) {
+            return products;
+        }
+
+        return products.filter((product) => !returnedProductIds.has(product.id));
     },
 
     // Override numpad buttons to disable based on conditions
@@ -85,7 +108,7 @@ patch(ProductScreen.prototype, {
                 text: _t("Price"),
                 disabled: !this.pos.cashierHasPriceControlRights(),
             },
-            { value: "-", text: "+/-" ,disabled: !this.pos.config.allow_negative_quantity},
+            { value: "-", text: "+/-", disabled: !this.pos.config.allow_negative_quantity },
             { value: "0" },
             { value: this.env.services.localization.decimalPoint },
             { value: "Backspace", text: "⌫" },
@@ -105,7 +128,7 @@ patch(ProductScreen.prototype, {
         const selectedLine = order?.get_selected_orderline?.() || order?.get_orderlines?.().slice(-1)[0] || null;
         const isSelectedDonationInKind = !!selectedLine && !!selectedLine.product && !!selectedLine.product.is_donation_in_kind;
 
-        //  DISABLE MINUS BUTTON FOR ALL PRODUCTS
+        // DISABLE MINUS BUTTON FOR ALL PRODUCTS
         return buttons.map(button => {
             if (button.value === "price" && isSelectedDonationInKind) {
                 return { ...button, disabled: true };
@@ -113,7 +136,7 @@ patch(ProductScreen.prototype, {
             if (button.value === "-") {
                 return { ...button, disabled: true };
             }
-            
+
             return {
                 ...button,
                 class: this.pos.numpadMode === button.value ? "active border-primary" : "",
@@ -127,10 +150,10 @@ patch(ProductScreen.prototype, {
         if (super.mounted) {
             super.mounted();
         }
-        
+
         // Setup keyboard event handler with multiple approaches
         this._setupKeyboardHandler();
-        
+
         // Also intercept keydown at the document level with capture phase
         this._setupGlobalKeyHandler();
     },
@@ -199,13 +222,13 @@ patch(ProductScreen.prototype, {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        
+
         // Show notification to user
         this._showNegativeNotAllowedMessage();
-        
+
         // Also try to clear any negative input
         this._clearNegativeInput();
-        
+
         return false;
     },
 
@@ -224,7 +247,7 @@ patch(ProductScreen.prototype, {
                     activeElement.dispatchEvent(inputEvent);
                 }
             }
-            
+
             // Also check for quantity input in the product screen
             const quantityInput = this.el?.querySelector?.('input[data-field="quantity"]');
             if (quantityInput && quantityInput.value && quantityInput.value.startsWith('-')) {
@@ -240,7 +263,7 @@ patch(ProductScreen.prototype, {
     // Show notification message when negative is not allowed
     _showNegativeNotAllowedMessage() {
         const message = _t("Negative quantity is not allowed. Please use positive quantities only.");
-        
+
         // Try different notification methods
         try {
             if (this.notification) {
@@ -266,7 +289,7 @@ patch(ProductScreen.prototype, {
     destroy() {
         // Remove keyboard event listeners
         this._removeKeyboardHandler();
-        
+
         // Call parent destroy if it exists
         if (super.destroy) {
             super.destroy();
