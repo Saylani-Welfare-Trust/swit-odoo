@@ -189,11 +189,14 @@ class LivestockSlaughter(models.Model):
         if not self.product_id:
             raise ValidationError("Please select a product before opening the material request.")
 
-        bom = self.env['mrp.bom'].search([
-            '|',
-            ('product_id', '=', self.product_id.id),
-            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
-        ], limit=1)
+        bom = self.env['mrp.bom']._bom_find(
+            product=self.product_id,
+            company_id=self.env.company.id,
+            bom_type='normal',
+        )
+
+        if not bom:
+            raise ValidationError(f"No manufacturing BOM found for {self.product_id.display_name}.")
 
         material_request = self.env['livestock.cutting.material'].create({
             'product_id': self.product_id.id,
@@ -204,18 +207,18 @@ class LivestockSlaughter(models.Model):
             'start_time': fields.Datetime.now(),
         })
 
-        if bom and bom.bom_line_ids:
-            lines = []
-            for line in bom.bom_line_ids:
-                if line.product_id:
-                    lines.append((0, 0, {
-                        'livestock_cutting_material_id': material_request.id,
-                        'livestock_slaughter_id': self.id,
-                        'product_id': line.product_id.id,
-                        'quantity': line.product_qty or 1,
-                    }))
-            if lines:
-                material_request.write({'livestock_cutting_material_line_ids': lines})
+        lines = []
+        for line in bom.bom_line_ids:
+            if line.product_id:
+                lines.append((0, 0, {
+                    'livestock_cutting_material_id': material_request.id,
+                    'livestock_slaughter_id': self.id,
+                    'product_id': line.product_id.id,
+                    'quantity': line.product_qty or 1,
+                }))
+
+        if lines:
+            material_request.write({'livestock_cutting_material_line_ids': lines})
 
         self.start_time = fields.Datetime.now()
         self.state = 'material_request'
