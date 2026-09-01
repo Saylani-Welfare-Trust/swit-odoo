@@ -13,8 +13,8 @@
         <!-- Custom Picking Type for Livestock Internal Transfers -->
         <!-- <record id="livestock_internal_picking_type" model="stock.picking.type">
             <field name="name">Livestock Internal Transfer</field>
-            <field name="code">internal</field>                    <!-- internal transfer -->
-            <field name="sequence_code">LIT</field>               <!-- prefix for pickings -->
+            <field name="code">internal</field>  
+            <field name="sequence_code">LIT</field> 
             <field name="warehouse_id" ref="warehouse_livestock_slaughter"/>
             <field name="default_location_src_id" eval="ref('warehouse_livestock_slaughter').lot_stock_id.id"/>
             <field name="default_location_dest_id" ref="stock.stock_location_stock"/>
