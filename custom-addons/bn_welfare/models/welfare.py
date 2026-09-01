@@ -1095,7 +1095,7 @@ class Welfare(models.Model):
                 "applicationData": {
                     "odooId": self.id,
                     "doneeOdooId": self.donee_id.id,
-                    "inquiryOfficerEmployeeId": self.employee_id.barcode,
+                    "inquiryOfficerEmployeeId": self.employee_id.user_id.barcode,
                     "department": "welfare",
                     "form": {
                         "category": "welfare",  # fix
