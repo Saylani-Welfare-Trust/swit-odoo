@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="donee_profile_management_sequence" model="ir.sequence">
+            <field name="name">Donee Profile Management</field>
+            <field name="code">donee_profile_management</field>
+            <field name="padding">5</field>
+        </record>
+        
+        <record id="donor_profile_management_sequence" model="ir.sequence">
+            <field name="name">Donor Profile Management</field>
+            <field name="code">donor_profile_management</field>
+            <field name="padding">5</field>
+        </record>
+    
+    </data>
+
+</odoo>
