@@ -80,10 +80,11 @@ class LivestockSlaughter(models.Model):
         # Retrieve the internal transfer operation type
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
+            ('warehouse_id.code', '=', 'LVS'),
+            ('company_id', '=', self.env.company.id)
         ], limit=1)
         if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+            raise ValidationError("Internal Transfer operation type for Livestock Slaughter not found. Please create it.")
 
         # Retrieve the product based on the product code
         product = self.product_id
@@ -132,11 +133,11 @@ class LivestockSlaughter(models.Model):
 
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
+            ('warehouse_id.code', '=', 'LVS'),
+            ('company_id', '=', self.env.company.id)
         ], limit=1)
         if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
-
+            raise ValidationError("Internal Transfer operation type for Livestock Slaughter not found. Please create it.")
         product = self.product_id
 
         picking = self.env['stock.picking'].create({

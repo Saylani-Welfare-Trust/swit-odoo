@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Create the Livestock Slaughter warehouse -->
+    <record id="warehouse_livestock_slaughter" model="stock.warehouse">
+        <field name="name">Livestock Slaughter</field>
+        <field name="code">LVS</field>
+        <field name="company_id" ref="base.main_company"/>
+        <!-- Optionally set the partner for address, defaults to company -->
+        <field name="partner_id" ref="base.main_partner"/>
+        <!-- The following fields are automatically populated on create,
+             but we can set them explicitly for clarity -->
+        <field name="lot_stock_id" ref="stock.stock_location_stock" /> <!-- will be replaced by auto-created -->
+        <field name="view_location_id" ref="stock.stock_location_stock" />
+    </record>
+
+    <!-- If you need to customise locations, you can add them after creation,
+         but Odoo auto-creates them with default names based on warehouse name.
+         For example, the stock location will be named "Livestock Slaughter: Stock".
+         You can find it via the warehouse's lot_stock_id field later. -->
+
+</odoo>
