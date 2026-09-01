@@ -36,12 +36,6 @@ class LivestockSlaughter(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
     start_time = fields.Datetime('Start Time')
     end_time = fields.Datetime('End Time')
-    material_request_lines = fields.Text('Material Request Lines', readonly=True)
-    material_request_line_ids = fields.One2many(
-        'livestock.cutting.material.line',
-        'livestock_slaughter_id',
-        string='Material Request Lines'
-    )
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
@@ -167,13 +161,23 @@ class LivestockSlaughter(models.Model):
         picking.action_assign()
         picking.button_validate()
 
+        self.start_time = fields.Datetime.now()
         self.state = 'cutting'
         self.cutting_hide = True
 
+        cutting_record = self.env['livestock.cutting.material'].create({
+            'product_id': self.product_id.id,
+            'quantity': self.quantity,
+            'price': self.price,
+            'code': self.code,
+            'state': 'received',
+            'start_time': self.start_time,
+        })
+
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'livestock.slaugther',
-            'res_id': self.id,
+            'res_model': 'livestock.cutting.material',
+            'res_id': cutting_record.id,
             'view_mode': 'form',
             'target': 'current',
         }
@@ -189,32 +193,30 @@ class LivestockSlaughter(models.Model):
             ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
         ], limit=1)
 
-        self.material_request_line_ids = [(5, 0, 0)]
-        if not self.start_time:
-            self.start_time = fields.Datetime.now()
+        material_request = self.env['material.request'].create({
+            'user_id': self.env.user.id,
+            'request_type': 'internal',
+            'source_location_id': self.source_location_id.id if self.source_location_id else False,
+            'dest_location_id': self.transfer_location.id if self.transfer_location else False,
+            'state': 'draft',
+        })
 
         if bom and bom.bom_line_ids:
-            material_lines = []
             for line in bom.bom_line_ids:
                 if line.product_id:
-                    material_lines.append((0, 0, {
+                    self.env['material.request.line'].create({
+                        'approval_id': material_request.id,
                         'product_id': line.product_id.id,
                         'quantity': line.product_qty or 1,
-                        'livestock_slaughter_id': self.id,
-                    }))
-            self.material_request_line_ids = material_lines
+                    })
 
-        self.material_request_lines = '\n'.join(
-            f"{record.product_id.display_name} - Qty: {record.quantity or 1}"
-            for record in self.material_request_line_ids
-        ) if self.material_request_line_ids else 'No BOM material found for this product.'
-
+        self.start_time = fields.Datetime.now()
         self.state = 'material_request'
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'livestock.slaugther',
-            'res_id': self.id,
+            'res_model': 'material.request',
+            'res_id': material_request.id,
             'view_mode': 'form',
             'target': 'current',
         }
@@ -231,36 +233,6 @@ class LivestockSlaughter(models.Model):
             'target': 'current',
         }
 
-    @api.onchange('product_id')
-    def _onchange_product_id_material_request(self):
-        if not self.product_id:
-            return
-
-        bom = self.env['mrp.bom'].search([
-            '|',
-            ('product_id', '=', self.product_id.id),
-            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
-        ], limit=1)
-
-        self.material_request_line_ids = [(5, 0, 0)]
-
-        if bom and bom.bom_line_ids:
-            material_lines = []
-            for line in bom.bom_line_ids:
-                if line.product_id:
-                    material_lines.append((0, 0, {
-                        'product_id': line.product_id.id,
-                        'quantity': line.product_qty or 1,
-                        'livestock_slaughter_id': self.id,
-                    }))
-            self.material_request_line_ids = material_lines
-
-            self.material_request_lines = '\n'.join(
-                f"{item.product_id.display_name} - Qty: {item.quantity or 1}"
-                for item in self.material_request_line_ids
-            )
-        else:
-            self.material_request_lines = 'No BOM material found for this product.'
     
     def action_open_wizard(self):
         """Open a transient wizard to choose destination location"""

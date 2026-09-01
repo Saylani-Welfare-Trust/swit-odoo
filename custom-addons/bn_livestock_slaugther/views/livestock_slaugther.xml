@@ -76,17 +76,9 @@
                     <notebook>
                         <page name="cutting_details" string="Cutting Details" invisible="state not in ['cutting', 'material_request', 'done']">
                             <group>
-                                <field name="material_request_lines" readonly="1" nolabel="1"/>
+                                <field name="start_time"/>
+                                <field name="end_time"/>
                             </group>
-                        </page>
-
-                        <page name="material_request" string="Material Request" invisible="state not in ['material_request', 'done']">
-                            <field name="material_request_line_ids" nolabel="1">
-                                <tree editable="bottom">
-                                    <field name="product_id"/>
-                                    <field name="quantity"/>
-                                </tree>
-                            </field>
                         </page>
                     </notebook>
                 </sheet>
