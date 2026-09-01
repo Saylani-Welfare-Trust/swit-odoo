@@ -64,7 +64,7 @@ This is one module. Everything is included:
         "views/eh_board_menus.xml",
         "views/eh_board_alert_views.xml",
         "views/eh_board_credential_views.xml",
-        "views/res_config_settings_views.xml",
+        # "views/res_config_settings_views.xml",
         "report/eh_board_report_templates.xml",
         "report/eh_board_reports.xml",
         "data/eh_board_crons.xml",
