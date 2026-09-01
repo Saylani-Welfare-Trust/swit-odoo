@@ -1,3 +1,4 @@
+from psycopg2 import IntegrityError
 from odoo import api, models, fields
 from odoo import fields as odoo_fields
 
@@ -12,7 +13,6 @@ class POSOrder(models.Model):
 
     @api.model
     def _process_order(self, order_data, draft=False, existing_order=False):
-        # Extract custom fields from the frontend data
         if order_data.get('data'):
             data = order_data['data']
             if data.get('branch_code'):
@@ -21,18 +21,13 @@ class POSOrder(models.Model):
                 self.counter = data['counter']
             if data.get('pos_order_seq'):
                 self.pos_order_seq = data['pos_order_seq']
-        # Call the original method to create/update the order
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
-        # Ensure DN # is generated/stored once the order exists
-        order = self.browse(order_id) if isinstance(order_id, int) else self.env['pos.order'].browse(order_id)
+        order = self.browse(order_id)
         if order and not order.dn_number:
             order.dn_number = order._compute_dn_number()
         return order_id
 
     def _compute_dn_number(self):
-        """Builds the DN # exactly as shown on the receipt header:
-        {branch_code}-C{counter}-{year}-{pos_order_seq}
-        """
         self.ensure_one()
         city_code = self.branch_code or 'UNK'
         counter = self.counter or '0'
@@ -64,18 +59,21 @@ class POSOrder(models.Model):
             livestock_lines = order.lines.filtered(
                 lambda line: line.product_id.is_livestock and line.qty > 0
             )
+            if not livestock_lines:
+                continue
+
+            # Single query for all lines on this order instead of one search per line
+            existing_line_ids = set(slaughter_obj.search([
+                ('pos_order_line_id', 'in', livestock_lines.ids),
+            ]).mapped('pos_order_line_id').ids)
+
+            if not order.dn_number:
+                order.dn_number = order._compute_dn_number()
+            reference = order.dn_number
 
             for line in livestock_lines:
-                existing_record = slaughter_obj.search([
-                    ('pos_order_line_id', '=', line.id),
-                ], limit=1)
-                if existing_record:
+                if line.id in existing_line_ids:
                     continue
-
-                # --- Use DN # as reference instead of source_document ---
-                if not order.dn_number:
-                    order.dn_number = order._compute_dn_number()
-                reference = order.dn_number
 
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
 
@@ -90,7 +88,15 @@ class POSOrder(models.Model):
                 }
                 slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
-                slaughter_obj.create(slaughter_vals)
+                # Savepoint isolates a duplicate-key race so it can't abort
+                # the whole order-processing transaction.
+                try:
+                    with self.env.cr.savepoint():
+                        slaughter_obj.create(slaughter_vals)
+                except IntegrityError:
+                    # Another concurrent write already created this record
+                    # (e.g. a retried/duplicate order sync) - safe to skip.
+                    continue
 
     @api.model_create_multi
     def create(self, vals_list):
