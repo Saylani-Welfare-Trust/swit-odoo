@@ -5,7 +5,6 @@ import { ProductsWidget } from "@point_of_sale/app/screens/product_screen/produc
 
 patch(ProductsWidget.prototype, {
     get productsToDisplay() {
-        console.log('>>> PATCH RUNNING, order:', this.pos.get_order()?.get_orderlines().length);
         const { db } = this.pos;
         let list = [];
         var parent_check = db.get_category_by_id(this.selectedCategoryId)
@@ -22,9 +21,6 @@ patch(ProductsWidget.prototype, {
                 list = [];
             }
         }
-
-         console.log('>>> LIST BEFORE FILTER:', list.length, list.map(p => p.id));
-
         const order = this.pos.get_order();
         if (order) {
             const returnedProductIds = new Set(
@@ -33,15 +29,11 @@ patch(ProductsWidget.prototype, {
                     .filter((line) => line.refunded_orderline_id)
                     .map((line) => line.product.id)
             );
-            console.log('>>> RETURNED PRODUCT IDS:', [...returnedProductIds]);
             if (returnedProductIds.size) {
                 list = list.filter((product) => !returnedProductIds.has(product.id));
             }
         }
 
-        console.log('>>> LIST AFTER FILTER:', list.length, list.map(p => p.id));
-
-        
         return list.sort(function (a, b) {
             return a.display_name.localeCompare(b.display_name);
         });
