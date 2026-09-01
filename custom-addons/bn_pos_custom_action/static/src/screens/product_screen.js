@@ -68,19 +68,21 @@ patch(ProductScreen.prototype, {
 
     // Hide returned product(s) from the product grid during a refund flow
     get productsToDisplay() {
+        console.log('MY PATCH productsToDisplay CALLED', arguments);
         const products = super.productsToDisplay;
         const order = this.pos.get_order();
         if (!order) {
             return products;
         }
 
-        // Collect product IDs that are part of a return (refund) line
         const returnedProductIds = new Set(
             order
                 .get_orderlines()
                 .filter((line) => line.refunded_orderline_id)
                 .map((line) => line.product.id)
         );
+
+        console.log('Returned product IDs to hide:', [...returnedProductIds]);
 
         if (!returnedProductIds.size) {
             return products;
