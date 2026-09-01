@@ -1,1 +1,0 @@
-from . import livestock_slaugther
