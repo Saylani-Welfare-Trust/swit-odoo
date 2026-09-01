@@ -10,7 +10,7 @@ import math
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
-from ..lib.formula import compile_formula, FormulaError, ALLOWED_VARIABLES
+from ..libs.formula import compile_formula, FormulaError, ALLOWED_VARIABLES
 
 
 class EhBoardMeasure(models.Model):

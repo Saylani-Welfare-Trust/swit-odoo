@@ -24,7 +24,7 @@ the remaining numeric columns become the measures.
 import re
 
 from ..libs.registry import BoardDataSource, register_datasource
-from ..lib import aggregation
+from ..libs import aggregation
 
 # Write / DDL / control verbs.
 _FORBIDDEN = re.compile(

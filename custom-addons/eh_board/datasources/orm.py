@@ -17,7 +17,7 @@ their own files without touching this code.
 import logging
 
 from ..libs.registry import BoardDataSource, register_datasource
-from ..lib import aggregation
+from ..libs import aggregation
 
 _logger = logging.getLogger(__name__)
 

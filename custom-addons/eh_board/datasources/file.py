@@ -18,7 +18,7 @@ plain column-name strings (see ``eh.board.item._resolve_spec`` tabular branch),
 exactly as the ORM provider resolves field names.
 """
 from ..libs.registry import BoardDataSource, register_datasource
-from ..lib import aggregation, tabular
+from ..libs import aggregation, tabular
 
 
 @register_datasource

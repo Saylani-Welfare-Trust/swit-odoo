@@ -13,8 +13,8 @@ re-introduces it fails loudly here. Grouped by subsystem.
 from odoo.tests import TransactionCase, tagged
 from odoo.exceptions import ValidationError
 
-from ..lib import tabular, aggregation
-from ..lib.formula import compile_formula, FormulaError
+from ..libs import tabular, aggregation
+from ..libs.formula import compile_formula, FormulaError
 from ..datasources.sql import SqlDataSource
 
 

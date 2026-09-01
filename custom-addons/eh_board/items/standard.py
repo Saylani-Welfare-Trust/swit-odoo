@@ -22,8 +22,8 @@ from odoo import fields
 from ..libs.registry import (
     BoardItemType, register_item_type, get_datasource,
 )
-from ..lib import aggregation
-from ..lib.formula import compile_formula, FormulaError
+from ..libs import aggregation
+from ..libs.formula import compile_formula, FormulaError
 
 # Calculated measures address the item's base measures as a, b, c ... in order.
 _FORMULA_VARS = ("a", "b", "c", "d", "e", "f")

@@ -919,7 +919,7 @@ class EhBoardItem(models.Model):
                 # order term must reference that exact spec, not the bare field, or
                 # _read_group raises ValueError on Odoo 17+ and the widget errors.
                 if fld.ttype in ("date", "datetime"):
-                    from ..lib.aggregation import _safe_granularity
+                    from ..libs.aggregation import _safe_granularity
                     gran = _safe_granularity(self.date_granularity or "month")
                     return "%s:%s %s" % (name, gran, direction)
                 return "%s %s" % (name, direction)
@@ -1005,7 +1005,7 @@ class EhBoardItem(models.Model):
         spec["dimensions"] = [{"field": field, "granularity": gran}]
         provider = get_datasource(self.datasource_id.provider_type)
         result = provider.aggregate(self.datasource_id, spec)
-        from ..lib import aggregation
+        from ..libs import aggregation
         rows = aggregation.fill_time_gaps(result.get("rows", []), gran)
         keys = result.get("measures", [])
         if not keys:

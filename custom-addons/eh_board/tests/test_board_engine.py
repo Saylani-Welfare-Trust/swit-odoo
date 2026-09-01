@@ -7,7 +7,7 @@
 ##############################################################################
 from odoo.tests import TransactionCase, tagged
 
-from ..lib import aggregation
+from ..libs import aggregation
 from ..libs.registry import (
     ITEM_TYPES, DATASOURCES, item_type_selection, get_item_type, get_datasource,
 )
@@ -715,7 +715,7 @@ class TestBoardEngine(TransactionCase):
 
     # -- calculated (formula) measures --------------------------------------
     def test_formula_evaluator_safe(self):
-        from ..lib.formula import compile_formula, FormulaError
+        from ..libs.formula import compile_formula, FormulaError
         self.assertAlmostEqual(compile_formula("a / b * 100")({"a": 3, "b": 4}), 75.0)
         self.assertEqual(compile_formula("a / b")({"a": 5, "b": 0}), 0.0)  # no ZeroDivision
         for bad in ("__import__('os')", "a.b", "open('x')", "a if b else c", "[a]"):

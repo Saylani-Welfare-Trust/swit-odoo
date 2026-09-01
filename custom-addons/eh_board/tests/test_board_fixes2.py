@@ -17,7 +17,7 @@ from odoo.tests import TransactionCase, tagged
 from odoo.exceptions import UserError, ValidationError
 from odoo import fields
 
-from ..lib import tabular, aggregation
+from ..libs import tabular, aggregation
 from ..datasources.sql import SqlDataSource
 
 

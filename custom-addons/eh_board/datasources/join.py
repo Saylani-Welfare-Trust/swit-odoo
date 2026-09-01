@@ -24,7 +24,7 @@ Config (stored on ``eh.board.datasource.config``)::
     }
 """
 from ..libs.registry import BoardDataSource, register_datasource
-from ..lib import aggregation
+from ..libs import aggregation
 from odoo.exceptions import UserError
 
 

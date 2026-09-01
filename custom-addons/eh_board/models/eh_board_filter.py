@@ -93,7 +93,7 @@ class EhBoardFilter(models.Model):
             return [{"value": True, "label": "Yes"}, {"value": False, "label": "No"}]
         # distinct stored values (char / integer) - bounded so a high-cardinality
         # field cannot pull the whole table into a filter.
-        from ..lib import aggregation
+        from ..libs import aggregation
         rows = aggregation.grouped_read(Model, [], [field.name], [], limit=limit)
         out = []
         for row in rows:

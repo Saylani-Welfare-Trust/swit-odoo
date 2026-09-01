@@ -18,7 +18,7 @@ from odoo import _, api, fields, models, SUPERUSER_ID
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.safe_eval import safe_eval
 
-from ..lib.aggregation import grouped_read
+from ..libs.aggregation import grouped_read
 
 if not hasattr(fields, "Domain"):  # Odoo 16-18
     from odoo.osv import expression as _legacy_expression
