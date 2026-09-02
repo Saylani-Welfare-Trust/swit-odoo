@@ -15,6 +15,7 @@
         'views/pos_config.xml',
         'views/pos_session.xml',
         'views/pos_assets_index.xml',
+        'report/external_layout_standard.xml'
     ],
     'auto_install': False,
     'application': False,
