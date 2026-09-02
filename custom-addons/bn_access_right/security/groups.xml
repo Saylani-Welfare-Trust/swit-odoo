@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Custom Roles -->
     <record id="custom_administrator_group" model="res.groups">
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_access_right"/>
