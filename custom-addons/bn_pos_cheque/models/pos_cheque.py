@@ -24,6 +24,7 @@ class POSCheque(models.Model):
     bank_name = fields.Char('Bank Name')
     date = fields.Date('Date')
     bounce_count = fields.Integer('Bounce Count')
+    remarks = fields.Text('Remarks')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     source_model = fields.Selection([
         ('welfare', 'Welfare'),
