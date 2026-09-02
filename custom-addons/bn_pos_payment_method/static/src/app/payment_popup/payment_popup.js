@@ -51,17 +51,29 @@ export class PaymentPopup extends AbstractAwaitablePopup {
 
     async loadBanks() {
         try {
-            const banks = await this.orm.call(
-                "bank",
-                "get_banks",
-                []
-            );
+            const banks = await this.orm.call("bank", "get_banks", []);
             this.state.banks = banks;
+            // Save a local copy for offline use
+            try {
+                localStorage.setItem("pos_bank_list", JSON.stringify(banks));
+            } catch (e) {
+                // ignore storage quota errors
+            }
         } catch (error) {
-            this.notification.add(
-                _t("Failed to load banks"),
-                { type: "danger" }
-            );
+            // Offline or request failed — fall back to the last saved list
+            const cached = localStorage.getItem("pos_bank_list");
+            if (cached) {
+                this.state.banks = JSON.parse(cached);
+                this.notification.add(
+                    _t("You're offline — showing the last saved bank list."),
+                    { type: "warning" }
+                );
+            } else {
+                this.notification.add(
+                    _t("Failed to load banks and no offline copy is available."),
+                    { type: "danger" }
+                );
+            }
         }
     }
 
