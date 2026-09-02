@@ -57,7 +57,7 @@ class DirectDeposit(models.Model):
         ('medical_equipment', 'Medical Equipment'),
     ], string="Source Type")
     source_record_id = fields.Integer(string="Source Record ID")
-
+    remarks = fields.Char('Remarks')
     welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
     welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
     medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")

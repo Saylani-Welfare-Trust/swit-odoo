@@ -11,7 +11,6 @@
                 <field name="amount" />
                 <field name="analytic_account_id" string="Branch" />
                 <field name="bank_id" string="Deposit to Bank" readonly="state == 'clear'" />
-                <field name="remarks" readonly="0"/>
                 <field name="create_uid" />
                 <field name="create_date" />
                 <field name="name" string="Cheque No." />
