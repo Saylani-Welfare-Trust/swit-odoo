@@ -153,6 +153,16 @@ class GeneralLedger extends owl.Component {
             error: (error) => self.call('crash_manager', 'rpc_error', error),
         });
     }
+    getAccountTotals(account) {
+        if (!this.state.account_total || !this.state.account_total[account]) {
+            return {};
+        }
+        return this.state.account_total[account];
+    }
+    getAccountTotalValue(account, key, fallback = 0) {
+        const totals = this.getAccountTotals(account);
+        return totals && totals[key] !== undefined && totals[key] !== null ? totals[key] : fallback;
+    }
     gotoJournalEntry(ev) {
         return this.action.doAction({
             type: "ir.actions.act_window",
