@@ -374,51 +374,50 @@
                                                                    t-esc="valuelist[0]['partner_id'][1]"/>
                                                             </span>
                                                         </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-if="valuelist[0]['debit']"
-                                                               t-esc="state.account_total[account]['currency_id']"/>
-                                                            <t t-if="valuelist[0]['debit']"
-                                                               t-esc="valuelist[0]['debit']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-if="valuelist[0]['credit']"
-                                                               t-esc="state.account_total[account]['currency_id']"/>
-                                                            <t t-if="valuelist[0]['credit']"
-                                                               t-esc="valuelist[0]['credit']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th/>
-                                                </tr>
+                                                        <th>
+                                                            <span>
+                                                                <t t-if="valuelist[0]['debit']"
+                                                                   t-esc="state.account_total[account]['currency_id']"/>
+                                                                <t t-if="valuelist[0]['debit']"
+                                                                   t-esc="valuelist[0]['debit']"/>
+                                                            </span>
+                                                        </th>
+                                                        <th>
+                                                            <span>
+                                                                <t t-if="valuelist[0]['credit']"
+                                                                   t-esc="state.account_total[account]['currency_id']"/>
+                                                                <t t-if="valuelist[0]['credit']"
+                                                                   t-esc="valuelist[0]['credit']"/>
+                                                            </span>
+                                                        </th>
+                                                        <th/>
+                                                    </tr>
+                                                </t>
                                             </t>
-                                        </t>
-                                    </t>
-                                    <tr>
-                                        <th/>
-                                        <th colspan="8" class="o_heading">
-                                            Total
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="state.total_debit"/>
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="state.total_credit"/>
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="(state.total_debit - state.total_credit).toFixed(2)"/>
-                                        </th>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                            <tr>
+                                                <th/>
+                                                <th colspan="8" class="o_heading">
+                                                    Total
+                                                </th>
+                                                <th class="o_heading">
+                                                    <t t-esc="state.currency"/>
+                                                    <t t-out="state.total_debit"/>
+                                                </th>
+                                                <th class="o_heading">
+                                                    <t t-esc="state.currency"/>
+                                                    <t t-out="state.total_credit"/>
+                                                </th>
+                                                <th class="o_heading">
+                                                    <t t-esc="state.currency"/>
+                                                    <t t-out="(state.total_debit - state.total_credit).toFixed(2)"/>
+                                                </th>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </t>
-</templates>
+            </t>
+        </templates>
