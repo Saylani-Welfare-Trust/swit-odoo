@@ -17,6 +17,7 @@
         'views/pos_assets_index.xml',
         # 'report/external_layout_standard.xml'
     ],
+    
     'auto_install': False,
     'application': False,
     'assets': {
