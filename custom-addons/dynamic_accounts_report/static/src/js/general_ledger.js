@@ -31,7 +31,7 @@ class GeneralLedger extends owl.Component {
             filter_applied: null,
             account_list: null,
             account_total_list: null,
-            date_range: null,
+            date_range: 'month',
             options: null,
             method: {
                         'accural': true
@@ -49,7 +49,8 @@ class GeneralLedger extends owl.Component {
         var action_title = self.props.action.display_name;
         try {
             var self = this;
-            self.state.account_data = await self.orm.call("account.general.ledger", "view_report", [[this.wizard_id], action_title,]);
+            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+            self.state.account_data = filtered_data;
             $.each(self.state.account_data, function (index, value) {
                 if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
                     account_list.push(index)
