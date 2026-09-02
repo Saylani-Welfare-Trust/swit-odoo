@@ -340,7 +340,7 @@
                                                                    data-bs-toggle="dropdown">
                                                                 </a>
                                                                 <div class="dropdown-menu  journals">
-                                                                    <button t-att-data-id="valuelist[0].get('move_id', [0])[0] if valuelist[0].get('move_id') else ''"
+                                                                    <button t-att-data-id="valuelist[0].get('move_id') ? valuelist[0].get('move_id')[0] : ''"
                                                                             type="button"
                                                                             t-on-click="gotoJournalEntry"
                                                                             style="border: none; background-color: inherit; padding: 4px 8px; font-size: 16px; cursor: pointer; display: inline-block;">
