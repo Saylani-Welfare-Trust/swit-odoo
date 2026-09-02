@@ -7,11 +7,6 @@
         <field name="category_id" ref="module_access_right"/>
     </record>
     
-    <record id="custom_director_group" model="res.groups">
-        <field name="name">Director</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
     <record id="custom_hod_group" model="res.groups">
         <field name="name">HOD</field>
         <field name="category_id" ref="module_access_right"/>
