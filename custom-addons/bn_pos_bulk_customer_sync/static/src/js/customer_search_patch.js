@@ -1,59 +1,43 @@
 /** @odoo-module **/
-import { useState } from "@odoo/owl";
-import { useService } from "@web/core/utils/hooks";
+
 import { patch } from "@web/core/utils/patch";
-import { PartnerListScreen } from "@point_of_sale/app/screens/partner_list/partner_list_screen";
 import { CustomerCache } from "./customer_indexeddb";
 
-function debounce(fn, ms) {
-    let t;
-    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
+/**
+ * IMPORTANT - this file is the one part of the module you will definitely
+ * need to hand-adjust before deploying.
+ *
+ * Odoo's POS customer/partner search lives in the partner list screen
+ * component (in 17.0 this is generally PartnerListScreen, under
+ * addons/point_of_sale/static/src/app/screens/partner_list/). The exact
+ * class name and method that runs the search can differ by 17.0.x point
+ * release. Find the method that currently does something like:
+ *
+ *     this.state.query.trim() -> partners.filter(p => p.name.includes(...))
+ *
+ * in YOUR installed source, and replace its body with a call into
+ * CustomerCache below, keyed off what the cashier is typing. Because your
+ * cashiers search by phone, route digit-only queries through the phone
+ * index; keep a name-based fallback only for the rare non-digit search
+ * (it can stay slower since it won't be the common path).
+ *
+ * Sketch (adapt names to your actual component):
+ *
+ * import { PartnerListScreen } from "@point_of_sale/app/screens/partner_list/partner_list_screen";
+ *
+ * patch(PartnerListScreen.prototype, {
+ *     async searchPartner(query) {
+ *         const digitsOnly = /^[0-9+\s-]+$/.test(query);
+ *         if (digitsOnly && query.length >= 4) {
+ *             return await CustomerCache.findByPhonePrefix(query.replace(/\s|-/g, ""));
+ *         }
+ *         // fall back to whatever name-search behavior already exists,
+ *         // or add a "name" index lookup similarly to findByPhonePrefix.
+ *         return super.searchPartner(query);
+ *     },
+ * });
+ */
 
-patch(PartnerListScreen.prototype, "pos_bulk_customer_sync/partner_list", {
-    setup() {
-        super.setup();
-        this.orm = useService("orm");
-        this.bulk = useState({ results: [], busy: false });
-        this._bulkSearch = debounce((q) => this._doBulkSearch(q), 200);
-    },
-
-    // Patch whatever your build's template iterates (getter `partners` in
-    // most 17.0 builds; a method like getPartners() in others — check yours).
-    get partners() {
-        const query = (this.state.query || "").trim();
-        if (query) {
-            this._bulkSearch(query);        // async; re-renders when results land
-            return this.bulk.results;
-        }
-        return super.partners;
-    },
-
-    async _doBulkSearch(query) {
-        const digits = query.replace(/[^0-9+]/g, "");
-        let matches = digits.length >= 3
-            ? await CustomerCache.findByPhonePrefix(digits)
-            : query.length >= 2
-                ? await CustomerCache.findByNamePrefix(query.toLowerCase())
-                : [];
-        if ((this.state.query || "").trim() !== query) return; // stale response
-        if (navigator.onLine && matches.length) {
-            matches = await this._materialize(matches.slice(0, 30));
-        }
-        this.bulk.results = matches;
-    },
-
-    async _materialize(slim) {
-        const ids = slim.map((r) => r.id);
-        try {
-            const full = await this.orm.call("res.partner", "read", [ids]);
-            // ⚠ verify this against YOUR 17.0.x source: check how the partner
-            // edit screen's save handler (or data_store.js) inserts a new
-            // res.partner into the store, and use the same call, e.g.:
-            this.pos.models["res.partner"].add(full);
-            return this.pos.getRecords("res.partner", [["id", "in", ids]]);
-        } catch {
-            return slim; // offline fallback: slim objects (selection may be limited)
-        }
-    },
-});
+export const patchNotes =
+    "See comments in this file - wire CustomerCache.findByPhonePrefix() into " +
+    "your installed PartnerListScreen's search method.";
