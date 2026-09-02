@@ -139,38 +139,38 @@
                                         </th>
                                     </tr>
                                     <t t-foreach="data.get(accounts, [])" t-as="valuelist" t-key="valuelist_index">
-                                        <t t-if="valuelist and valuelist[0]">
+                                        <t t-if="valuelist">
                                             <tr class="border-bottom">
                                                 <th colspan="6" style="width:10%">
                                                     <span>
-                                                        <t t-esc="valuelist[0].get('move_name', '')"/>
+                                                        <t t-esc="valuelist.get('move_name', '')"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-esc="valuelist[0].get('date', '')"/>
+                                                        <t t-esc="valuelist.get('date', '')"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-esc="valuelist[0].get('name', '')"/>
+                                                        <t t-esc="valuelist.get('name', '')"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-if="valuelist[0].get('partner_id')" t-esc="valuelist[0]['partner_id'][1]"/>
+                                                        <t t-if="valuelist.get('partner_id')" t-esc="valuelist['partner_id'][1]"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-if="valuelist[0].get('debit')" t-esc="total[accounts].get('currency_id', '')"/>
-                                                        <t t-if="valuelist[0].get('debit')" t-esc="valuelist[0].get('debit', 0)"/>
+                                                        <t t-if="valuelist.get('debit')" t-esc="total[accounts].get('currency_id', '')"/>
+                                                        <t t-if="valuelist.get('debit')" t-esc="valuelist.get('debit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-if="valuelist[0].get('credit')" t-esc="total[accounts].get('currency_id', '')"/>
-                                                        <t t-if="valuelist[0].get('credit')" t-esc="valuelist[0].get('credit', 0)"/>
+                                                        <t t-if="valuelist.get('credit')" t-esc="total[accounts].get('currency_id', '')"/>
+                                                        <t t-if="valuelist.get('credit')" t-esc="valuelist.get('credit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%"/>
