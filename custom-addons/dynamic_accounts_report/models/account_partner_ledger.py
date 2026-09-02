@@ -48,53 +48,59 @@ class AccountPartnerLedger(models.TransientModel):
         :rtype: dict
         """
         fiscal_year = self.env['res.company'].search([]).mapped('account_opening_date')[0].strftime('%Y-%m-%d')
-        fiscal_year_start = datetime.strptime(fiscal_year,
-                                              '%Y-%m-%d').date()
+        fiscal_year_start = datetime.strptime(fiscal_year, '%Y-%m-%d').date()
+
         partner_dict = {}
         partner_totals = {}
-        move_line_ids = self.env['account.move.line'].search(
-            [('account_type', 'in',
-              ['liability_payable', 'asset_receivable']),
-             ('parent_state', '=', 'posted')])
-        partner_ids = move_line_ids.mapped('partner_id')
-        for partner in partner_ids:
-            total_debit_balance = 0
-            total_credit_balance = 0
-            balance = 0
-            move_line_id = move_line_ids.filtered(
-                lambda x: x.partner_id == partner)
-            move_line_list = []
-            for move_line in move_line_id:
-                if move_line.invoice_date:
-                    if move_line.invoice_date < fiscal_year_start:
-                        total_debit_balance += move_line.debit
-                        total_credit_balance += move_line.credit
-                        balance = total_debit_balance - total_credit_balance
-                move_line_data = move_line.read(
-                    ['date', 'move_name', 'account_type', 'debit', 'credit',
-                     'date_maturity', 'account_id', 'journal_id', 'move_id',
-                     'matching_number', 'amount_currency'])
-                account_code = self.env['account.account'].browse(
-                    move_line.account_id.id).code
-                journal_code = self.env['account.journal'].browse(
-                    move_line.journal_id.id).code
-                if account_code:
-                    move_line_data[0]['jrnl'] = journal_code
-                    move_line_data[0]['code'] = account_code
-                move_line_list.append(move_line_data)
-            partner_dict[partner.name] = move_line_list
-            currency_id = self.env.company.currency_id.symbol
-            partner_totals[partner.name] = {
-                'total_debit': round(sum(move_line_id.mapped('debit')), 2),
-                'total_credit': round(sum(move_line_id.mapped('credit')), 2),
-                'currency_id': currency_id,
+        move_lines = self.env['account.move.line'].search_read(
+            [('account_type', 'in', ['liability_payable', 'asset_receivable']), ('parent_state', '=', 'posted')],
+            ['date', 'move_name', 'account_type', 'debit', 'credit', 'date_maturity', 'account_id', 'journal_id', 'move_id', 'matching_number', 'amount_currency', 'invoice_date', 'partner_id']
+        )
+
+        account_map = {account.id: account.code for account in self.env['account.account'].browse({line['account_id'][0] for line in move_lines if line.get('account_id')})}
+        journal_map = {journal.id: journal.code for journal in self.env['account.journal'].browse({line['journal_id'][0] for line in move_lines if line.get('journal_id')})}
+        entries_by_partner = defaultdict(list)
+
+        for line in move_lines:
+            partner_id = line.get('partner_id')
+            if not partner_id:
+                continue
+            partner_key = self.env['res.partner'].browse(partner_id[0]).name
+            entries_by_partner[partner_key].append(line)
+
+        for partner_key, lines in entries_by_partner.items():
+            partner = self.env['res.partner'].search([('name', '=', partner_key)], limit=1)
+            total_debit_balance = 0.0
+            total_credit_balance = 0.0
+            balance = 0.0
+            enriched_lines = []
+
+            for line in lines:
+                if line.get('invoice_date') and line['invoice_date'] < fiscal_year_start:
+                    total_debit_balance += line.get('debit') or 0.0
+                    total_credit_balance += line.get('credit') or 0.0
+                    balance = total_debit_balance - total_credit_balance
+
+                item = dict(line)
+                if line.get('account_id'):
+                    item['code'] = account_map.get(line['account_id'][0])
+                if line.get('journal_id'):
+                    item['jrnl'] = journal_map.get(line['journal_id'][0])
+                enriched_lines.append(item)
+
+            partner_dict[partner_key] = enriched_lines
+            partner_totals[partner_key] = {
+                'total_debit': round(sum(line.get('debit') or 0.0 for line in lines), 2),
+                'total_credit': round(sum(line.get('credit') or 0.0 for line in lines), 2),
+                'currency_id': self.env.company.currency_id.symbol,
                 'initial_balance': balance,
-                'partner_id': partner.id,
+                'partner_id': partner.id if partner else False,
                 'move_name': 'Initial Balance',
                 'initial_debit': total_debit_balance,
                 'initial_credit': total_credit_balance,
             }
-            partner_dict['partner_totals'] = partner_totals
+
+        partner_dict['partner_totals'] = partner_totals
         return partner_dict
 
     @api.model
