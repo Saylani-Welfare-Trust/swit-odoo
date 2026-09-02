@@ -2,7 +2,7 @@
 <odoo>
 
     <menuitem
-        id="model_name_menu"
+        id="hr.menu_hr_root"
         groups="hr.group_hr_manager,hr.group_hr_user"/>
 
 </odoo>
