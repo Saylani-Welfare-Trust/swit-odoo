@@ -131,9 +131,7 @@ class AccountGeneralLedger(models.TransientModel):
             domain += [('journal_id', 'in',
                         self.env.company.tax_cash_basis_journal_id.ids), ]
         if analytic:
-            analytic_line = self.env['account.analytic.line'].search(
-                [('account_id', 'in', analytic)]).mapped('id')
-            domain += [('analytic_line_ids', 'in', analytic_line)]
+            domain += [('analytic_line_ids.account_id', 'in', analytic)]
         if date_range:
             if date_range == 'month':
                 domain += [('date', '>=', today.replace(day=1)),
