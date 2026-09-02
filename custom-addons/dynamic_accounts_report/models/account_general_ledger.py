@@ -22,6 +22,7 @@
 import io
 import json
 import calendar
+from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 import xlsxwriter
 from odoo import api, fields, models
@@ -49,33 +50,40 @@ class AccountGeneralLedger(models.TransientModel):
         :rtype: dict
         """
         account_dict = {}
+        move_lines = self.env['account.move.line'].search_read(
+            [('parent_state', '=', 'posted')],
+            ['date', 'name', 'move_name', 'debit', 'credit',
+             'partner_id', 'account_id', 'journal_id', 'move_id',
+             'analytic_line_ids']
+        )
+
+        account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+        account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+
+        entries_by_account = defaultdict(list)
         account_totals = {}
-        move_line_ids = self.env['account.move.line'].search(
-            [('parent_state', '=', 'posted')])
-        account_ids = move_line_ids.mapped('account_id')
-        account_dict['journal_ids'] = self.env['account.journal'].search_read(
-            [], ['name'])
-        account_dict['analytic_ids'] = self.env[
-            'account.analytic.account'].search_read(
-            [], ['name'])
-        for account in account_ids:
-            move_line_id = move_line_ids.filtered(
-                lambda x: x.account_id == account)
-            move_line_list = []
-            for move_line in move_line_id:
-                move_line_data = move_line.read(
-                    ['date', 'name', 'move_name', 'debit', 'credit',
-                     'partner_id', 'account_id', 'journal_id', 'move_id',
-                     'analytic_line_ids'])
-                move_line_list.append(move_line_data)
-            account_dict[account.display_name] = move_line_list
-            currency_id = self.env.company.currency_id.symbol
-            account_totals[account.display_name] = {
-                'total_debit': round(sum(move_line_id.mapped('debit')), 2),
-                'total_credit': round(sum(move_line_id.mapped('credit')), 2),
-                'currency_id': currency_id,
-                'account_id': account.id}
-            account_dict['account_totals'] = account_totals
+        account_map = {}
+        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        if account_ids:
+            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
+
+        for line in move_lines:
+            account_id = line.get('account_id')
+            if not account_id:
+                continue
+            account_key = account_map.get(account_id[0], account_id[1])
+            entries_by_account[account_key].append(line)
+            totals = account_totals.setdefault(
+                account_key,
+                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
+            )
+            totals['total_debit'] += line.get('debit') or 0.0
+            totals['total_credit'] += line.get('credit') or 0.0
+
+        for account_key, lines in entries_by_account.items():
+            account_dict[account_key] = lines
+
+        account_dict['account_totals'] = account_totals
         return account_dict
 
     @api.model
@@ -170,31 +178,39 @@ class AccountGeneralLedger(models.TransientModel):
                 end_date = datetime.strptime(date_range['end_date'],
                                              '%Y-%m-%d').date()
                 domain += [('date', '<=', end_date)]
-        move_line_ids = self.env['account.move.line'].search(domain)
-        account_ids = move_line_ids.mapped('account_id')
-        account_dict['journal_ids'] = self.env['account.journal'].search_read(
-            [], ['name'])
-        account_dict['analytic_ids'] = self.env[
-            'account.analytic.account'].search_read(
-            [], ['name'])
-        for account in account_ids:
-            move_line_id = move_line_ids.filtered(
-                lambda x: x.account_id == account)
-            move_line_list = []
-            for move_line in move_line_id:
-                move_line_data = move_line.read(
-                    ['date', 'name', 'move_name', 'debit', 'credit',
-                     'partner_id', 'account_id', 'journal_id', 'move_id',
-                     'analytic_line_ids'])
-                move_line_list.append(move_line_data)
-            account_dict[account.display_name] = move_line_list
-            currency_id = self.env.company.currency_id.symbol
-            account_totals[account.display_name] = {
-                'total_debit': round(sum(move_line_id.mapped('debit')), 2),
-                'total_credit': round(sum(move_line_id.mapped('credit')), 2),
-                'currency_id': currency_id,
-                'account_id': account.id}
-            account_dict['account_totals'] = account_totals
+        move_lines = self.env['account.move.line'].search_read(
+            domain,
+            ['date', 'name', 'move_name', 'debit', 'credit',
+             'partner_id', 'account_id', 'journal_id', 'move_id',
+             'analytic_line_ids']
+        )
+
+        account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+        account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+
+        entries_by_account = defaultdict(list)
+        account_map = {}
+        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        if account_ids:
+            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
+
+        for line in move_lines:
+            account_id = line.get('account_id')
+            if not account_id:
+                continue
+            account_key = account_map.get(account_id[0], account_id[1])
+            entries_by_account[account_key].append(line)
+            totals = account_totals.setdefault(
+                account_key,
+                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
+            )
+            totals['total_debit'] += line.get('debit') or 0.0
+            totals['total_credit'] += line.get('credit') or 0.0
+
+        for account_key, lines in entries_by_account.items():
+            account_dict[account_key] = lines
+
+        account_dict['account_totals'] = account_totals
         return account_dict
 
     @api.model
