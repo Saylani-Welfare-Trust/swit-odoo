@@ -53,8 +53,7 @@ class AccountGeneralLedger(models.TransientModel):
         move_lines = self.env['account.move.line'].search_read(
             [('parent_state', '=', 'posted')],
             ['date', 'name', 'move_name', 'debit', 'credit',
-             'partner_id', 'account_id', 'journal_id', 'move_id',
-             'analytic_line_ids']
+             'partner_id', 'account_id']
         )
 
         account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
@@ -181,8 +180,7 @@ class AccountGeneralLedger(models.TransientModel):
         move_lines = self.env['account.move.line'].search_read(
             domain,
             ['date', 'name', 'move_name', 'debit', 'credit',
-             'partner_id', 'account_id', 'journal_id', 'move_id',
-             'analytic_line_ids']
+               'partner_id', 'account_id']
         )
 
         account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
