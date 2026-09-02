@@ -87,7 +87,7 @@ class AccountGeneralLedger(models.TransientModel):
 
     @api.model
     def get_filter_values(self, journal_id, date_range, options, analytic,
-                          method):
+                          method, include_filter_values=True):
         """
         Retrieve filtered values for the partner ledger report.
 
@@ -183,8 +183,9 @@ class AccountGeneralLedger(models.TransientModel):
                'partner_id', 'account_id']
         )
 
-        account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
-        account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+        if include_filter_values:
+            account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+            account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
 
         entries_by_account = defaultdict(list)
         account_map = {}

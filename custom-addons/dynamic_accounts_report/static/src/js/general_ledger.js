@@ -97,11 +97,6 @@ class GeneralLedger extends owl.Component {
     async printPdf(ev) {
         ev.preventDefault();
         var self = this;
-        const reportData = {};
-        (self.state.account || []).forEach((account) => {
-            reportData[account] = (self.state.account_data || {})[account] || [];
-        });
-        reportData.account_totals = self.state.account_total || {};
         let totals = {
             'total_debit':this.state.total_debit,
             'total_credit':this.state.total_credit,
@@ -114,9 +109,13 @@ class GeneralLedger extends owl.Component {
             'report_name': 'dynamic_accounts_report.general_ledger',
             'report_file': 'dynamic_accounts_report.general_ledger',
             'data': {
-                'account': self.state.account,
-                'data': reportData,
-                'total': self.state.account_total,
+                'report_options': {
+                    'journal_ids': self.state.selected_journal_list || [],
+                    'date_range': self.state.date_range || 'month',
+                    'options': self.state.options || {},
+                    'analytic_ids': self.state.selected_analytic_list || [],
+                    'method': self.state.method || {'accrual': true},
+                },
                 'title': action_title,
                 'filters': this.filter(),
                 'grand_total': totals,
