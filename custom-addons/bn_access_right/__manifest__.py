@@ -11,6 +11,7 @@
     'data': [
         'data/ir_module_category.xml',
         'security/groups.xml',
+        'views/menu.xml',
     ],
     'auto_install': False,
     'application': False,

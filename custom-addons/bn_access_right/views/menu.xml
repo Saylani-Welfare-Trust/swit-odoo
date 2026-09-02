@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="model_name_menu"
+        groups="hr.group_hr_manager,hr.group_hr_user"/>
+
+</odoo>
