@@ -10,5 +10,10 @@
         <field name="name">User</field>
         <field name="category_id" ref="module_access_right"/>
     </record>
+    
+    <!-- HR Attendance -->
+    <record id="hr_attendance.group_hr_attendance_officer" model="res.groups">
+        <field name="category_id" ref="base.module_category_human_resources_attendances"/>
+    </record>
 
 </odoo>

@@ -5,7 +5,9 @@
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Access Right',
-    'depends': [],
+    'depends': [
+        'hr_attendance',
+    ],
     'data': [
         'data/ir_module_category.xml',
         'security/groups.xml',
