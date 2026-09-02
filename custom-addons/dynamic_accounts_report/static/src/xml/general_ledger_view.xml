@@ -326,7 +326,7 @@
                                                     </span>
                                                 </th>
                                             </tr>
-                                            <t t-foreach="state.account_data.get(account, [])"
+                                                          <t t-foreach="this.getAccountData(account)"
                                                t-as="valuelist"
                                                t-key="valuelist_index">
                                                 <t t-if="valuelist and valuelist[0]">

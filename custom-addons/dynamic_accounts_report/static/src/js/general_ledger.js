@@ -163,6 +163,12 @@ class GeneralLedger extends owl.Component {
         const totals = this.getAccountTotals(account);
         return totals && totals[key] !== undefined && totals[key] !== null ? totals[key] : fallback;
     }
+    getAccountData(account) {
+        if (!this.state.account_data || !this.state.account_data[account]) {
+            return [];
+        }
+        return this.state.account_data[account];
+    }
     gotoJournalEntry(ev) {
         return this.action.doAction({
             type: "ir.actions.act_window",
