@@ -148,28 +148,29 @@
                                     <t t-foreach="data[accounts]"
                                        t-as="valuelist"
                                        t-key="valuelist_index">
-                                        <tr class="border-bottom">
-                                            <th colspan="6" style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['move_name']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['date']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['name']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-if="valuelist[0]['partner_id']"
-                                                       t-esc="valuelist[0]['partner_id'][1]"/>
-                                                </span>
-                                            </th>
+                                        <t t-if="valuelist and valuelist[0]">
+                                            <tr class="border-bottom">
+                                                <th colspan="6" style="width:10%">
+                                                    <span>
+                                                        <t t-esc="valuelist[0].get('move_name', '')"/>
+                                                    </span>
+                                                </th>
+                                                <th style="width:10%">
+                                                    <span>
+                                                        <t t-esc="valuelist[0].get('date', '')"/>
+                                                    </span>
+                                                </th>
+                                                <th style="width:10%">
+                                                    <span>
+                                                        <t t-esc="valuelist[0].get('name', '')"/>
+                                                    </span>
+                                                </th>
+                                                <th style="width:10%">
+                                                    <span>
+                                                        <t t-if="valuelist[0].get('partner_id')"
+                                                           t-esc="valuelist[0]['partner_id'][1]"/>
+                                                    </span>
+                                                </th>
                                             <th style="width:10%">
                                                 <span>
                                                     <t t-if="valuelist[0]['debit']"
