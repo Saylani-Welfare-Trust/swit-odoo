@@ -293,7 +293,7 @@
                                                     </div>
                                                 </th>
                                                 <th colspan="5">
-                                                    <button t-att-data-id="state.account_total.get(account, {}).get('account_id', 0)"
+                                                    <button t-att-data-id="state.account_total && state.account_total[account] ? state.account_total[account]['account_id'] : 0"
                                                             class="o_journal"
                                                             t-on-click="gotoJournalItem">
                                                         <i class="fa fa-arrow-right"/>
@@ -305,24 +305,24 @@
                                                 <th/>
                                                 <th>
                                                     <span>
-                                                        <t t-if="state.account_total.get(account, {}).get('total_debit')"
-                                                           t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
-                                                        <t t-if="state.account_total.get(account, {}).get('total_debit')"
-                                                           t-esc="state.account_total.get(account, {}).get('total_debit', 0)"/>
+                                                        <t t-if="state.account_total && state.account_total[account] && state.account_total[account]['total_debit']"
+                                                           t-esc="state.account_total[account]['currency_id'] || ''"/>
+                                                        <t t-if="state.account_total && state.account_total[account] && state.account_total[account]['total_debit']"
+                                                           t-esc="state.account_total[account]['total_debit'] || 0"/>
                                                     </span>
                                                 </th>
                                                 <th>
                                                     <span>
-                                                        <t t-if="state.account_total.get(account, {}).get('total_credit')"
-                                                           t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
-                                                        <t t-if="state.account_total.get(account, {}).get('total_credit')"
-                                                           t-esc="state.account_total.get(account, {}).get('total_credit', 0)"/>
+                                                        <t t-if="state.account_total && state.account_total[account] && state.account_total[account]['total_credit']"
+                                                           t-esc="state.account_total[account]['currency_id'] || ''"/>
+                                                        <t t-if="state.account_total && state.account_total[account] && state.account_total[account]['total_credit']"
+                                                           t-esc="state.account_total[account]['total_credit'] || 0"/>
                                                     </span>
                                                 </th>
                                                 <th>
                                                     <span class="fw-bolder">
-                                                        <t t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
-                                                        <t t-esc="(state.account_total.get(account, {}).get('total_debit', 0) - state.account_total.get(account, {}).get('total_credit', 0)).toFixed(2)"/>
+                                                        <t t-esc="state.account_total && state.account_total[account] ? state.account_total[account]['currency_id'] || '' : ''"/>
+                                                        <t t-esc="state.account_total && state.account_total[account] ? ((state.account_total[account]['total_debit'] || 0) - (state.account_total[account]['total_credit'] || 0)).toFixed(2) : '0.00'"/>
                                                     </span>
                                                 </th>
                                             </tr>
@@ -368,7 +368,7 @@
                                                         <th>
                                                             <span>
                                                                 <t t-if="valuelist[0].get('debit')"
-                                                                   t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
+                                                                   t-esc="state.account_total && state.account_total[account] ? state.account_total[account]['currency_id'] || '' : ''"/>
                                                                 <t t-if="valuelist[0].get('debit')"
                                                                    t-esc="valuelist[0].get('debit', 0)"/>
                                                             </span>
@@ -376,7 +376,7 @@
                                                         <th>
                                                             <span>
                                                                 <t t-if="valuelist[0].get('credit')"
-                                                                   t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
+                                                                   t-esc="state.account_total && state.account_total[account] ? state.account_total[account]['currency_id'] || '' : ''"/>
                                                                 <t t-if="valuelist[0].get('credit')"
                                                                    t-esc="valuelist[0].get('credit', 0)"/>
                                                             </span>
