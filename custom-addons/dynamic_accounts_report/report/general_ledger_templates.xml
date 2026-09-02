@@ -138,7 +138,7 @@
                                             </strong>
                                         </th>
                                     </tr>
-                                    <t t-foreach="data[accounts]" t-as="valuelist" t-key="valuelist_index">
+                                    <t t-foreach="data.get(accounts, [])" t-as="valuelist" t-key="valuelist_index">
                                         <t t-if="valuelist and valuelist[0]">
                                             <tr class="border-bottom">
                                                 <th colspan="6" style="width:10%">
@@ -163,14 +163,14 @@
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-if="valuelist[0]['debit']" t-esc="total[accounts]['currency_id']"/>
-                                                        <t t-if="valuelist[0]['debit']" t-esc="valuelist[0]['debit']"/>
+                                                        <t t-if="valuelist[0].get('debit')" t-esc="total[accounts].get('currency_id', '')"/>
+                                                        <t t-if="valuelist[0].get('debit')" t-esc="valuelist[0].get('debit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%">
                                                     <span>
-                                                        <t t-if="valuelist[0]['credit']" t-esc="total[accounts]['currency_id']"/>
-                                                        <t t-if="valuelist[0]['credit']" t-esc="valuelist[0]['credit']"/>
+                                                        <t t-if="valuelist[0].get('credit')" t-esc="total[accounts].get('currency_id', '')"/>
+                                                        <t t-if="valuelist[0].get('credit')" t-esc="valuelist[0].get('credit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th style="width:10%"/>

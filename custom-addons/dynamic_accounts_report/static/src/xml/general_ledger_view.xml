@@ -328,7 +328,7 @@
                                                     </span>
                                                 </th>
                                             </tr>
-                                            <t t-foreach="state.account_data[account]"
+                                            <t t-foreach="state.account_data.get(account, [])"
                                                t-as="valuelist"
                                                t-key="valuelist_index">
                                                 <t t-if="valuelist and valuelist[0]">
@@ -376,18 +376,18 @@
                                                         </th>
                                                         <th>
                                                             <span>
-                                                                <t t-if="valuelist[0]['debit']"
-                                                                   t-esc="state.account_total[account]['currency_id']"/>
-                                                                <t t-if="valuelist[0]['debit']"
-                                                                   t-esc="valuelist[0]['debit']"/>
+                                                                <t t-if="valuelist[0].get('debit')"
+                                                                   t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
+                                                                <t t-if="valuelist[0].get('debit')"
+                                                                   t-esc="valuelist[0].get('debit', 0)"/>
                                                             </span>
                                                         </th>
                                                         <th>
                                                             <span>
-                                                                <t t-if="valuelist[0]['credit']"
-                                                                   t-esc="state.account_total[account]['currency_id']"/>
-                                                                <t t-if="valuelist[0]['credit']"
-                                                                   t-esc="valuelist[0]['credit']"/>
+                                                                <t t-if="valuelist[0].get('credit')"
+                                                                   t-esc="state.account_total.get(account, {}).get('currency_id', '')"/>
+                                                                <t t-if="valuelist[0].get('credit')"
+                                                                   t-esc="valuelist[0].get('credit', 0)"/>
                                                             </span>
                                                         </th>
                                                         <th/>

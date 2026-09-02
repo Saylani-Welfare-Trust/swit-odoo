@@ -50,22 +50,27 @@ class GeneralLedger extends owl.Component {
         var action_title = self.props.action.display_name;
         try {
             const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
-            self.state.account_data = filtered_data || {};
-            $.each(self.state.account_data, function (index, value) {
+            const raw_data = filtered_data || {};
+            self.state.account_data = raw_data;
+            $.each(raw_data, function (index, value) {
                 if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                    account_list.push(index)
-                } else if (index == 'journal_ids') {
+                    if (Array.isArray(value) || value && typeof value === 'object') {
+                        account_list.push(index);
+                    }
+                } else if (index === 'journal_ids') {
                     self.state.journals = value || []
                 }
-                else if (index == 'analytic_ids') {
+                else if (index === 'analytic_ids') {
                     self.state.analytics = value || []
                 }
                 else {
                     account_totals = value || {}
                     Object.values(account_totals).forEach(account_list => {
-                        currency = account_list.currency_id || currency
-                        totalDebitSum += account_list.total_debit || 0;
-                        totalCreditSum += account_list.total_credit || 0;
+                        if (account_list && typeof account_list === 'object') {
+                            currency = account_list.currency_id || currency
+                            totalDebitSum += Number(account_list.total_debit || 0);
+                            totalCreditSum += Number(account_list.total_credit || 0);
+                        }
                     });
                 }
             })
@@ -75,8 +80,8 @@ class GeneralLedger extends owl.Component {
             self.state.account_total_list = account_totals
             self.state.account_total = account_totals
             self.state.currency = currency
-            self.state.total_debit = totalDebitSum.toFixed(2)
-            self.state.total_credit = totalCreditSum.toFixed(2)
+            self.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
+            self.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
             self.state.title = action_title
         }
         catch (el) {
@@ -291,21 +296,25 @@ class GeneralLedger extends owl.Component {
         filtered_data = filtered_data || {};
         $.each(filtered_data, function (index, value) {
             if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                account_list.push(index)
+                if (Array.isArray(value) || value && typeof value === 'object') {
+                    account_list.push(index)
+                }
             }
             else {
                 account_totals = value || {}
                 Object.values(account_totals).forEach(account_list => {
-                        totalDebitSum += account_list.total_debit || 0;
-                        totalCreditSum += account_list.total_credit || 0;
+                        if (account_list && typeof account_list === 'object') {
+                            totalDebitSum += Number(account_list.total_debit || 0);
+                            totalCreditSum += Number(account_list.total_credit || 0);
+                        }
                     });
             }
         })
         this.state.account = account_list
         this.state.account_data = filtered_data
         this.state.account_total = account_totals
-        this.state.total_debit = totalDebitSum.toFixed(2)
-        this.state.total_credit = totalCreditSum.toFixed(2)
+        this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
+        this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
         if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
             this.unfoldButton.el.classList.remove("selected-filter")
         }
