@@ -1,32 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Custom Roles -->
-    <record id="custom_administrator_group" model="res.groups">
-        <field name="name">Administrator</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
-    <record id="custom_hod_group" model="res.groups">
-        <field name="name">HOD</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
-    <record id="custom_manager_group" model="res.groups">
-        <field name="name">Manager</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
-    <record id="custom_officer_group" model="res.groups">
-        <field name="name">Officer</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
-    <record id="custom_user_group" model="res.groups">
-        <field name="name">User</field>
-        <field name="category_id" ref="module_access_right"/>
-    </record>
-    
     <!-- HR Attendance -->
     <record id="hr_attendance.group_hr_attendance_officer" model="res.groups">
         <field name="category_id" ref="base.module_category_human_resources_attendances"/>

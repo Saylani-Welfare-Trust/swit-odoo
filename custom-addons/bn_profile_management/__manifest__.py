@@ -7,9 +7,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Profile Management',
     'depends': [
-        'bn_analytic_account_customization',
-        # 'contacts',
-        'bn_pos_customization',
+        'contacts',
+        'hr'
     ],
     'data': [
         'data/sequence.xml',
