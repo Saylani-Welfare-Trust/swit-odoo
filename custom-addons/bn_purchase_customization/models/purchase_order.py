@@ -58,11 +58,14 @@ class PurchaseOrderLine(models.Model):
             if not line.product_id:
                 continue
 
-            previous_line = self.env['purchase.order.line'].search([
-                ('product_id', '=', line.product_id.id),
-                ('order_id.state', '=', 'purchase'),
-                ('order_id.id', '!=', line.order_id.id),
+            previous_po = self.env['purchase.order'].search([
+                ('state', '=', 'purchase'),
+                ('id', '!=', line.order_id.id),
+                ('order_line.product_id', '=', line.product_id.id),
             ], order='order_id.date_approve desc', limit=1)
 
-            if previous_line:
+            if previous_po:
+                previous_line = previous_po.order_line.filtered(
+                    lambda l: l.product_id == line.product_id
+                )[:1]
                 line.last_purchase_amount = previous_line.price_unit
