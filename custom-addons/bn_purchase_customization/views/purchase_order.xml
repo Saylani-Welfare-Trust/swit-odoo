@@ -14,7 +14,6 @@
             <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
                 <field name="on_hand_qty" readonly="1"/>
             </xpath>
-            <field name="last_purchase_amount" readonly="1"/>
         </field>
     </record>
 
