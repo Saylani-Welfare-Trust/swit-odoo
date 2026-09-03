@@ -60,7 +60,6 @@ class PurchaseOrderLine(models.Model):
 
             previous_po = self.env['purchase.order'].search([
                 ('state', '=', 'purchase'),
-                ('id', '!=', line.order_id.id),
                 ('order_line.product_id', '=', line.product_id.id),
             ], order='date_approve desc', limit=1)
 
