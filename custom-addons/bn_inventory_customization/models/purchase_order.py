@@ -71,8 +71,6 @@ class PurchaseOrderLine(models.Model):
 
             # --- 3) Apply final unit price ---
             line.price_unit = float(line.x_base_price) * float(line.to_kg_multiplier)
-            if line.price:
-                raise UserError(line.price_unit)
 
     @api.onchange('product_qty')
     def _onchange_product_qty_reapply_multiplier(self):
