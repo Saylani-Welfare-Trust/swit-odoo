@@ -40,7 +40,28 @@ class PurchaseOrderLine(models.Model):
         compute='_compute_on_hand_qty'
     )
 
+    last_purchase_amount = fields.float(
+        string="Last Purchase Amount",
+        compute='_compute_last_purchase_amount'
+        )
+
     @api.depends('product_id')
     def _compute_on_hand_qty(self):
         for line in self:
             line.on_hand_qty = line.product_id.qty_available if line.product_id else 0.0
+
+    def _compute_last_purchase_amount(self):
+        for line in self:
+            line.last_purchase_amount = 0.0
+
+            if not line.product_id:
+                continue
+
+            previous_line = self.env['purchase.order.line'].search([
+                ('product_id', '=', line.product_id),
+                ('order_id.state', '=', 'purchase'),
+                ('order_id.id', '!=', line.order_id.id),
+            ], order='order_id.date_approve desc', limit=1)
+
+            if previous_line:
+                line.last_purcahse_amount = previous_line.price_unit
