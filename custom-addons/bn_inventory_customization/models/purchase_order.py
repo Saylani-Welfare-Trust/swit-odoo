@@ -69,16 +69,6 @@ class PurchaseOrderLine(models.Model):
                 max_to_kg = 1.0
             line.to_kg_multiplier = float(max_to_kg or 1.0)
 
-            raise UserError(
-                "PRICE DEBUG\n\n"
-                f"Product: {line.product_id.display_name}\n"
-                f"Vendor: {line.order_id.partner_id.display_name}\n"
-                f"Price after super: {line.price_unit}\n"
-                f"Base Price: {line.x_base_price}\n"
-                f"KG Multiplier: {line.to_kg_multiplier}\n"
-                f"Calculated Price: {line.x_base_price * line.to_kg_multiplier}"
-            )
-
             # --- 3) Apply final unit price ---
             line.price_unit = float(line.x_base_price) * float(line.to_kg_multiplier)
 
