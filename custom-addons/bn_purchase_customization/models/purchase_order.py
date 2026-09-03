@@ -62,7 +62,7 @@ class PurchaseOrderLine(models.Model):
                 ('state', '=', 'purchase'),
                 ('id', '!=', line.order_id.id),
                 ('order_line.product_id', '=', line.product_id.id),
-            ], order='order_id.date_approve desc', limit=1)
+            ], order='date_approve desc', limit=1)
 
             if previous_po:
                 previous_line = previous_po.order_line.filtered(
