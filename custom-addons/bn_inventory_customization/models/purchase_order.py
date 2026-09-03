@@ -25,13 +25,6 @@ class PurchaseOrderLine(models.Model):
         super().onchange_product_id()
 
         for line in self:
-            raise UserError(
-                "onchange_product_id CALLED\n\n"
-                f"Product: {line.product_id.display_name if line.product_id else 'No Product'}\n"
-                f"Product ID: {line.product_id.id if line.product_id else False}\n"
-                f"Price after super: {line.price_unit}"
-            )
-
             if not line.product_id:
                 line.x_base_price = 0.0
                 line.to_kg_multiplier = 1.0
