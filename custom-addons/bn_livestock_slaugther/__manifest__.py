@@ -8,7 +8,6 @@
     'depends': [
         'bn_donation_home_service',
         'mail',
-        'product',
     ],
     'data': [
         'data/sequence.xml',
