@@ -58,10 +58,19 @@ class PurchaseOrderLine(models.Model):
             if not line.product_id:
                 continue
 
-            previous_po = self.env['purchase.order'].search([
+            domain = [
                 ('state', '=', 'purchase'),
                 ('order_line.product_id', '=', line.product_id.id),
-            ], order='date_approve desc', limit=1)
+            ]
+
+            if line.order_id.id:
+                domain.append(('id', '!=', line.order_id.id))
+
+            previous_po = self.env['purchase.order'].search(
+                domain,
+                order='date_approve desc',
+                limit=1
+            )
 
             if previous_po:
                 previous_line = previous_po.order_line.filtered(
