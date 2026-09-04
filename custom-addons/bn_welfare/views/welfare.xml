@@ -64,7 +64,7 @@
                     <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
                     <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1' groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
-
+                    <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>   
 
