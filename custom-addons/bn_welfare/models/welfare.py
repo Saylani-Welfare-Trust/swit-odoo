@@ -1555,9 +1555,7 @@ class Welfare(models.Model):
     is_change_request = fields.Boolean('Is Change Request', default=False)
     
     def action_print_info(self):
-        if self.is_change_request:
-            self.state = 'draft'
-        
-        self.is_change_request = False
-
-        return self.env.ref('bn_profile_management.action_profile_management_report').report_action(self)
+        # Print the donee profile and pass the welfare record ID for extra context
+        return self.env.ref(
+            'bn_profile_management.action_profile_management_report'
+        ).with_context(active_welfare_id=self.id).report_action(self.donee_id)
