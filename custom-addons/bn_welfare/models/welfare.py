@@ -1551,7 +1551,9 @@ class Welfare(models.Model):
                 'sticky': False,
             }
         }
-
+    
+    is_change_request = fields.Boolean('Is Change Request', default=False)
+    
     def action_print_info(self):
         if self.is_change_request:
             self.state = 'draft'
