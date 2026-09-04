@@ -26,7 +26,7 @@ class DirectDeposit(models.Model):
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
-
+    remark = fields.Char('Remarks')
     address = fields.Char('Address')
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')

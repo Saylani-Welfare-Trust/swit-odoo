@@ -12,6 +12,7 @@
                 <field name="amount" readonly="state in ['clear']" />
                 <field name="analytic_account_id" string="Branch" readonly="1" />
                 <field name="bank_id" string="Bank Deposit" readonly="state in ['clear']" />
+                <field name="remark" readonly="0"/>
                 <field name="user_id" string="Created By" readonly="1" />
                 <field name="create_date" string="Created On" readonly="1"  />
                 <field name="transaction_ref" readonly="1"  />
