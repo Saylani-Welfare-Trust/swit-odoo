@@ -183,7 +183,7 @@
                                     <span>Officer Phone : </span>
                                 </div>
                                 <div class="col-4">
-                                    <t t-esc="welfare.employee_id.mobile_phone if welfare.employee_id else ''"/>
+                                    <t t-esc="(welfare.employee_id.mobile_phone or welfare.employee_id.work_phone) if welfare.employee_id else ''"/>
                                 </div>
                             </div>
                         </t>
