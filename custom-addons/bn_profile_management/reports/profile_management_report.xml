@@ -168,6 +168,25 @@
                             <t t-esc="docs.details"/>
                         </div>
                     </div>
+                    <!-- Inquiry Officer Information (only when printed from Welfare) -->
+                        <t t-if="context.get('active_welfare_id')">
+                            <t t-set="welfare" t-value="env['welfare'].browse(context.get('active_welfare_id'))"/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-2">
+                                    <span>Inquiry Officer : </span>
+                                </div>
+                                <div class="col-4">
+                                    <t t-esc="welfare.employee_id.name if welfare.employee_id else ''"/>
+                                </div>
+                                <div class="col-2">
+                                    <span>Officer Phone : </span>
+                                </div>
+                                <div class="col-4">
+                                    <t t-esc="welfare.employee_id.mobile_phone if welfare.employee_id else ''"/>
+                                </div>
+                            </div>
+                        </t>
                 </section>
            </t>
         </t>
