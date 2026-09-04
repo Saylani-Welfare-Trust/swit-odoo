@@ -1551,3 +1551,19 @@ class Welfare(models.Model):
                 'sticky': False,
             }
         }
+
+
+    def action_print_info(self):
+        self.ensure_one()
+        if not self.donee_id:
+            raise UserError(_("No Donee is set on this Welfare record."))
+        if not self.donee_id.exists():
+            raise UserError(_("The linked Donee (partner) record does not exist or has been deleted."))
+        
+        # Use sudo to bypass potential access restrictions on the partner (e.g., inactive record)
+        partner = self.donee_id.sudo()
+        
+        # Pass the welfare record ID in the context so the report can show welfare‑specific data
+        return self.env.ref(
+            'bn_profile_management.action_profile_management_report'
+        ).with_context(active_welfare_id=self.id).report_action(partner)
