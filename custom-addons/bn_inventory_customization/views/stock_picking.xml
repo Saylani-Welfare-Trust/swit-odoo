@@ -28,6 +28,7 @@
                         class="btn-primary"
                         invisible="show_receive_by_weight != True"/>
             </xpath>
+            <xpath expr="//button[@name='action_create_invoice']" position="replace"/>
         </field>
     </record>
 

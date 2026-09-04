@@ -73,3 +73,51 @@ class StockPicking(models.Model):
             'target': 'new',
             'res_id': wizard.id,
         }
+        
+    def button_validate(self):
+        """Standard validation, then auto-create the vendor bill for
+        incoming receipts that are linked to a purchase order.
+
+        NOTE: button_validate() can return an action dict instead of True
+        when Odoo needs to show an intermediate wizard (backorder
+        confirmation, immediate transfer confirmation, etc). In that case
+        the picking is NOT yet in state 'done', so we simply skip bill
+        creation here - checking picking.state == 'done' below already
+        guards against that automatically.
+        """
+        res = super().button_validate()
+
+        for picking in self:
+            if (
+                picking.state == 'done'
+                and picking.picking_type_id.code == 'incoming'
+                and picking.purchase_id
+            ):
+                picking._roq_create_vendor_bill_from_purchase()
+
+        return res
+
+    def _roq_create_vendor_bill_from_purchase(self):
+        """Create the vendor bill for this receipt's purchase order,
+        reusing the standard purchase.order.action_create_invoice() flow.
+        """
+        self.ensure_one()
+        purchase = self.purchase_id
+
+        if not purchase or purchase.state not in ('purchase', 'done'):
+            return
+
+        # Nothing left to bill (e.g. fully invoiced already, or invoicing
+        # policy is "ordered quantity" and it was already billed at
+        # confirmation) - nothing to do.
+        if purchase.invoice_status != 'to invoice':
+            return
+
+        try:
+            purchase.action_create_invoice()
+        except UserError:
+            # Don't block/undo the receipt validation if a bill can't be
+            # generated (e.g. missing vendor bill reference requirements).
+            # The user can still create it manually from the PO afterwards.
+            pass
+
