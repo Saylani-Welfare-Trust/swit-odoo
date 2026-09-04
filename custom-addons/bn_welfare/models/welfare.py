@@ -1551,3 +1551,11 @@ class Welfare(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_print_info(self):
+        if self.is_change_request:
+            self.state = 'draft'
+        
+        self.is_change_request = False
+
+        return self.env.ref('bn_profile_management.action_profile_management_report').report_action(self)
