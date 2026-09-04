@@ -7,6 +7,7 @@ key_status = [
     ('available', 'Available'),
     ('issued', 'Issued'),
     ('pending', 'Pending'),
+    ('closed', 'Closed'),
 ]
 
 
