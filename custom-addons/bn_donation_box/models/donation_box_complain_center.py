@@ -258,7 +258,7 @@ class DonationBoxComplain(models.Model):
                 "company_id": picking.company_id.id,
                 "origin": picking.name,
             })
-
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write({'state': 'closed'})
             # 5. Confirm / Validate the scrap
             scrap.action_validate()
 
