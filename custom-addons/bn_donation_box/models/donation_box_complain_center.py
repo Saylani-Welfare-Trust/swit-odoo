@@ -101,7 +101,7 @@ class DonationBoxComplain(models.Model):
                     self.lot_id.lot_consume = False
 
                 if self.lot_id:
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write({'state': 'closed'})
 
                 self.status = 'resolved'
 
@@ -114,7 +114,7 @@ class DonationBoxComplain(models.Model):
                     self.lot_id.is_not_return = True
 
                 if self.lot_id:
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write({'state': 'closed'})
 
                 self.status = 'not_recovered'
 
@@ -199,7 +199,7 @@ class DonationBoxComplain(models.Model):
             rec.status = 'resolved'
             rec.return_picking_id = return_picking.id
 
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write({'state': 'closed'})
 
             # 🔟 Reset lot flags
             rec.lot_id.write({
@@ -408,7 +408,7 @@ class DonationBoxComplain(models.Model):
                 rec.donation_box_registration_installation_id.status = 'close'
             
             # 5. Delete the key record as a result it will be unlink from the bunch too
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write({'state': 'closed'})
 
             # 6. Update complain status to resolved
             rec.status = 'resolved'
