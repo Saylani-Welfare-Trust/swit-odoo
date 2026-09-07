@@ -26,7 +26,6 @@
                 <field name="main_attribute_id" column_invisible="1"/>
             </xpath>
 
-            <xpath expr="//button[@name='action_create_invoice']" position="replace"/>
         </field>
     </record>
 
