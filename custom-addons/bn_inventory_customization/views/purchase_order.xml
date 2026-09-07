@@ -27,7 +27,7 @@
             </xpath>
 
             <xpath expr="//button[@name='action_create_invoice']" position="attributes">
-                <attribute name="invisible">state in ['draft', 'sent']</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
         </field>
     </record>
