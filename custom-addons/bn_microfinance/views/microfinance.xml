@@ -153,6 +153,7 @@
                                     <field name="due_date" />
                                     <field name="amount" />
                                     <field name="paid_amount" />
+                                    <field name="paid_date" />
                                     <field name="remaining_amount" />
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                 </tree>
