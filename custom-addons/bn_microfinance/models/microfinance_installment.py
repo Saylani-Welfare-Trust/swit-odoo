@@ -148,7 +148,7 @@ class MicrofinanceInstallment(models.Model):
                 'paid_amount': data['amount'],
                 'remaining_amount': 0,
                 'state': 'paid',  # This line's state changes to paid
-                'payment_date': fields.Date.today()
+                'payment_date': fields.Date.today(),
             })
             
             return {
