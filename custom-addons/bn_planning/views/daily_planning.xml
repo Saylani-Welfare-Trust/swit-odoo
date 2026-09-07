@@ -6,10 +6,47 @@
         <field name="model">daily.planning</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="date" />
+                <field name="name"/>
                 <field name="type" />
-                <field name="partner_id" />
+                <field name="monthly_planning_id" />
+                <field name="date" />
+                <field name="source_tab" />
+                <field name="day" />
             </tree>
+        </field>
+    </record>
+
+    <record id="daily_planning_view_search" model="ir.ui.view">
+        <field name="name">daily.planning.search</field>
+        <field name="model">daily.planning</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Quick search fields -->
+                <field name="name" string="Reference" />
+                <field name="monthly_planning_id" />
+                <field name="source_tab" />
+                <field name="date" />
+                <field name="day" />
+                <field name="type" />
+
+                <!-- <separator/> -->
+
+                <!-- Filters -->
+                <!-- <filter string="Draft" name="draft" domain="[('state','=','draft')]" />
+                <filter string="Issued" name="issued" domain="[('state','=','issued')]" /> -->
+                <!-- <filter string="This Month" name="this_month" domain="[('date', '&gt;=', context_today().replace(day=1)), ('date', '&lt;=', context_today())]" /> -->
+
+                <separator/>
+
+                <!-- Group by -->
+                <group expand="0" string="Group By">
+                    <filter string="Month" name="group_month" context="{'group_by':'monthly_planning_id'}" />
+                    <filter string="Source Tab" name="group_tab" context="{'group_by':'source_tab'}" />
+                    <filter string="Type" name="group_type" context="{'group_by':'type'}" />
+                    <filter string="Date" name="group_date" context="{'group_by':'date'}" />
+                    <!-- <filter string="State" name="group_state" context="{'group_by':'state'}" /> -->
+                </group>
+            </search>
         </field>
     </record>
 
@@ -23,22 +60,34 @@
                 </header>
 
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" class="oe_inline" readonly="1"/>
+                            <label for="name" />
+                        </h1>
+                    </div>
                     <group>
                         <group>
-                            <field name="date" />
-                            <field name="type" />
+                            <field name="monthly_planning_id" options="{'no_create': True}" />
+                            <field name="source_tab" />
+                            <field name="day" />
                         </group>
                         <group>
-                            <field name="partner_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  
+                            <field name="type" />
                         </group>
                     </group>
+                    <!-- Show the computed date for reference (readonly) -->
+                    <div class="text-muted" style="margin-bottom: 8px;">
+                        <label for="date"/> <field name="date" readonly="1" nolabel="1" class="oe_inline"/>
+                    </div>
                     <notebook>
                         <page name="product" string="Product">
                             <field name="daily_planning_line_ids">
                                 <tree editable="bottom">
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="on_hand_qty"/>
+                                    <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity" />
+                                    <field name="monthly_line_ref" readonly="1" invisible="1"/>
                                 </tree>
                             </field>
                         </page>
@@ -48,6 +97,7 @@
         </field>
     </record>
 
+    <!-- Action & Menus (unchanged) -->
     <record id="daily_planning_action" model="ir.actions.act_window">
         <field name="name">Daily Planning</field>
         <field name="res_model">daily.planning</field>

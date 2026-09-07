@@ -1,0 +1,132 @@
+<odoo>
+
+    <record id="view_monthly_planning_tree" model="ir.ui.view">
+        <field name="name">monthly.planning.tree</field>
+        <field name="model">monthly.planning</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="month"/>
+                <field name="year"/>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_monthly_planning_form" model="ir.ui.view">
+        <field name="name">monthly.planning.form</field>
+        <field name="model">monthly.planning</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Generate Days" name="action_generate_days" type="object"
+                            class="oe_highlight" help="Clear and regenerate all daily lines for this month"/>
+                    <button string="Generate Daily Planning" name="action_generate_daily_planning" type="object"
+                            class="oe_highlight" help="Create/update Daily Planning records for every day that has products"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="month"/>
+                        <h1>
+                            <field name="month" class="oe_inline" required="1"/>
+                            <field name="year" class="oe_inline" required="1" options="{'width': 80}"/>
+                        </h1>
+                    </div>
+                    <notebook>
+                        <!-- Existing pages -->
+                        <page name="kitchen" string="Kitchen Planning">
+                            <field name="kitchen_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="madaris" string="Madaris Planning">
+                            <field name="madaris_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="medical" string="Medical Planning">
+                            <field name="medical_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="livestock" string="Livestock Planning">
+                            <field name="livestock_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="location_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <!-- NEW pages -->
+                        <page name="food" string="Food Planning">
+                            <field name="food_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="ration" string="Ration Planning">
+                            <field name="ration_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="meat" string="Meat Planning">
+                            <field name="meat_line_ids">
+                                <tree editable="bottom">
+                                    <field name="date" readonly="1"/>
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="on_hand_qty" readonly="1"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action & Menu (unchanged) -->
+    <record id="action_monthly_planning" model="ir.actions.act_window">
+        <field name="name">Monthly Planning</field>
+        <field name="res_model">monthly.planning</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a new monthly plan.</p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_monthly_planning"
+        name="Monthly Planning"
+        action="action_monthly_planning"
+        parent="planning_root_menu"
+        sequence="1"/>
+
+</odoo>

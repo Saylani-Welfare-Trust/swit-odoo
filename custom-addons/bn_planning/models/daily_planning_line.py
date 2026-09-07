@@ -1,20 +1,26 @@
 from odoo import models, fields, api
 
-
 class DailyPlanningLine(models.Model):
     _name = 'daily.planning.line'
     _description = 'Daily Planning Line'
 
-
     daily_planning_id = fields.Many2one('daily.planning', string='Daily Planning')
-
     product_id = fields.Many2one('product.product', string='Product')
-
     quantity = fields.Float(string='Quantity')
-    
-    on_hand_qty = fields.Float(
-        string='On Hand Quantity',
-        compute='_compute_on_hand_qty'
+    on_hand_qty = fields.Float(string='On Hand Quantity', compute='_compute_on_hand_qty')
+
+    # Optional reference to source monthly line
+    monthly_line_ref = fields.Reference(
+        selection=[(model, model) for model in [
+            'monthly.planning.kitchen',
+            'monthly.planning.madaris',
+            'monthly.planning.medical',
+            'monthly.planning.livestock',
+            'monthly.planning.food',
+            'monthly.planning.ration',
+            'monthly.planning.meat',
+        ]],
+        string='Source Monthly Line'
     )
 
     @api.depends('product_id')

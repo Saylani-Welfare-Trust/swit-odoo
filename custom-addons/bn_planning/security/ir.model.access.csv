@@ -1,3 +1,13 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_daily_planning,access.daily.planning,model_daily_planning,,1,1,1,1
 access_daily_planning_line,access.daily.planning.line,model_daily_planning_line,,1,1,1,1
+
+access_monthly_planning_user,monthly.planning.user,model_monthly_planning,,1,1,1,1
+access_monthly_planning_kitchen_user,monthly.planning.kitchen.user,model_monthly_planning_kitchen,,1,1,1,1
+access_monthly_planning_madaris_user,monthly.planning.madaris.user,model_monthly_planning_madaris,,1,1,1,1
+access_monthly_planning_medical_user,monthly.planning.medical.user,model_monthly_planning_medical,,1,1,1,1
+access_monthly_planning_livestock_user,monthly.planning.livestock.user,model_monthly_planning_livestock,,1,1,1,1
+
+access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,base.group_user,1,1,1,1
+access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,base.group_user,1,1,1,1
+access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,base.group_user,1,1,1,1
