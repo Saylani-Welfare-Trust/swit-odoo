@@ -8,6 +8,6 @@ access_monthly_planning_madaris_user,monthly.planning.madaris.user,model_monthly
 access_monthly_planning_medical_user,monthly.planning.medical.user,model_monthly_planning_medical,,1,1,1,1
 access_monthly_planning_livestock_user,monthly.planning.livestock.user,model_monthly_planning_livestock,,1,1,1,1
 
-access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,base.group_user,1,1,1,1
-access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,base.group_user,1,1,1,1
-access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,base.group_user,1,1,1,1
+access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,,1,1,1,1
+access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,,1,1,1,1
+access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,,1,1,1,1
