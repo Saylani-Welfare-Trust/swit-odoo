@@ -13,16 +13,19 @@
                 <field name="transfer_bool" column_invisible="1" />
 
                 <field name="product_id" />
-                <field name="code" />
+                <field name="on_hand_qty"/>
+                <!-- <field name="code" /> -->
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
+                <field name="pos_order_id" optional="show" />
                 <field name="source_location_id" />
                 <field name="ref" />
-                <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" readonly="1" />
-                
-                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide" />
-                <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide" />
+                <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
+
+                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
                 <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
             </tree>
         </field>
@@ -40,11 +43,13 @@
                 <field name="transfer_bool" invisible="1" />
 
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide" />
-                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide" />
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                    <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
+                    <button string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
                     <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
+                    <field name="state" widget="statusbar" statusbar_visible="not_received, received, cutting, material_request, done"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -57,12 +62,25 @@
                             <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" />
                             <field name="code" />
                             <field name="ref" />
+                            <field name="pos_order_id" readonly="1" />
                         </group>
                         <group name="livestock_slaugther_col_2">
                             <field name="quantity" />
                             <field name="price" />
+                            <field name="source_location_id" />
+                            <field name="start_time" />
+                            <field name="end_time" />
                         </group>
                     </group>
+
+                    <notebook>
+                        <page name="cutting_details" string="Cutting Details" invisible="state not in ['cutting', 'material_request', 'done']">
+                            <group>
+                                <field name="start_time"/>
+                                <field name="end_time"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers"/>
@@ -76,9 +94,8 @@
     <record id="livestock_slaugther_action" model="ir.actions.act_window">
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
-        <!-- <field name="view_mode">tree,form</field> -->
-        <field name="view_mode">tree</field>
-        <field name="domain">[('is_meat_depart', '=', False), ('is_goat_depart', '=', False)]</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
         <field name="context">{
             'create': 0,
             'edit': 0,

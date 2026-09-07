@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class LivestockCuttingMaterialLine(models.Model):
@@ -7,6 +7,7 @@ class LivestockCuttingMaterialLine(models.Model):
 
 
     livestock_cutting_material_id = fields.Many2one('livestock.cutting.material', string='Livestock Cutting Material')
+    livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaughter')
 
     product_id = fields.Many2one('product.product', string='Product')
 
