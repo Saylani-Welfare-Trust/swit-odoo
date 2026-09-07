@@ -32,6 +32,20 @@ class PurchaseOrder(models.Model):
             }
         }
         
+    @api.model
+    def create(self, vals):
+        # Don't assign the PO sequence when creating an RFQ
+        vals['name'] = '/'
+        return super().create(vals)
+
+    def button_confirm(self):
+        for order in self:
+            if order.name == '/':
+                order.name = self.env['ir.sequence'].next_by_code(
+                    'purchase.order'
+                ) or '/'
+        return super().button_confirm()
+        
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
