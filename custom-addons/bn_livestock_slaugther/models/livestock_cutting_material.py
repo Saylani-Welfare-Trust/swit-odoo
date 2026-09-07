@@ -17,6 +17,7 @@ class LivestockCuttingMaterial(models.Model):
 
 
     product_id = fields.Many2one('product.product', string="Product")
+    livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaughter', copy=False)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
     name = fields.Char(related='product_id.name', string="Product Name", store=True)
@@ -98,7 +99,11 @@ class LivestockCuttingMaterial(models.Model):
 
 
     def action_confirm(self):
-        self.state = 'received'
+        for record in self:
+            if record.state == 'not_received':
+                record.state = 'received'
+                if record.livestock_slaughter_id and record.livestock_slaughter_id.state == 'cutting':
+                    record.livestock_slaughter_id.state = 'material_request'
 
     def action_update_inventory(self):
         # 1) find the Cutting location record
@@ -178,26 +183,19 @@ class LivestockCuttingMaterial(models.Model):
                 })
 
     def action_start_cutting(self):
-        product_master = self.env['product.master']
-        needed_parents = product_master.search([('product_id', '=', self.product_id.id)], limit=1)
-
-        self.state = 'in_progress'
-        self.start_time = fields.Datetime.now()
-
-        material_vals = []
-
-        # Add main parent product(s)
-        for parent in needed_parents:
-            for line in parent.line_ids:
-                material_vals.append((0, 0, {
-                    'product': line.product_id.id,
-                    'quantity': line.quantity,
-                }))
-
-        self.livestock_cutting_material_line_ids = material_vals
+        for record in self:
+            if record.state != 'received':
+                raise ValidationError("Cutting can only be started after the material request is confirmed.")
+            record.state = 'in_progress'
+            record.start_time = record.start_time or fields.Datetime.now()
+            if record.livestock_slaughter_id:
+                record.livestock_slaughter_id.state = 'material_request'
+                record.livestock_slaughter_id.start_time = record.start_time
 
     def action_end_cutting(self):
         self.ensure_one()
+        if self.state != 'in_progress':
+            raise ValidationError("End Cutting is available only after cutting has started.")
         if not self.product_id:
             raise ValidationError("Please select a product before ending cutting.")
         if not self.livestock_cutting_material_line_ids:
@@ -236,3 +234,6 @@ class LivestockCuttingMaterial(models.Model):
         quant.quantity -= used_qty
         self.state = 'done'
         self.end_time = fields.Datetime.now()
+        if self.livestock_slaughter_id:
+            self.livestock_slaughter_id.end_time = self.end_time
+            self.livestock_slaughter_id.state = 'done'

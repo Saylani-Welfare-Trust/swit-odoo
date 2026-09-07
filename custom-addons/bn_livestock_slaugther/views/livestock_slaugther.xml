@@ -46,7 +46,6 @@
                     <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
                     <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
                     <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
-                    <button string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
                     <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received, cutting, material_request, done"/>
@@ -74,11 +73,29 @@
                     </group>
 
                     <notebook>
-                        <page name="cutting_details" string="Cutting Details" invisible="state not in ['cutting', 'material_request', 'done']">
+                        <page name="cutting" string="Cutting" invisible="state not in ['received', 'cutting', 'material_request', 'done']">
                             <group>
-                                <field name="start_time"/>
-                                <field name="end_time"/>
+                                <field name="cutting_material_id" readonly="1"/>
+                                <field name="start_time" readonly="1"/>
+                                <field name="end_time" readonly="1"/>
                             </group>
+                            <field name="cutting_line_ids" readonly="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="material_request" string="Material Request" invisible="state not in ['material_request', 'done']">
+                            <group>
+                                <field name="material_request_id" readonly="1"/>
+                            </group>
+                            <field name="material_request_line_ids" readonly="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
