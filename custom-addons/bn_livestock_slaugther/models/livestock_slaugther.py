@@ -21,6 +21,7 @@ class LivestockSlaughter(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
     pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
+    material_request_id = fields.Many2one('livestock.cutting.material', string='Material Request', copy=False)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -187,12 +188,6 @@ class LivestockSlaughter(models.Model):
         if not self.product_id:
             raise ValidationError("Please select a product before opening the material request.")
 
-        bom = self.env['mrp.bom'].search([
-            '|',
-            ('product_id', '=', self.product_id.id),
-            ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
-        ], limit=1)
-
         material_request = self.env['livestock.cutting.material'].create({
             'product_id': self.product_id.id,
             'quantity': self.quantity,
@@ -201,19 +196,22 @@ class LivestockSlaughter(models.Model):
             'state': 'not_received',
             'start_time': fields.Datetime.now(),
         })
+        self.material_request_id = material_request.id
+        bom = material_request._get_product_bom()
+        if not bom:
+            material_request.unlink()
+            raise ValidationError(
+                "No BOM found for %s. Create the BOM for this exact product or its product template."
+                % self.product_id.display_name
+            )
 
-        if bom and bom.bom_line_ids:
-            lines = []
-            for line in bom.bom_line_ids:
-                if line.product_id:
-                    lines.append((0, 0, {
-                        'livestock_cutting_material_id': material_request.id,
-                        'livestock_slaughter_id': self.id,
-                        'product_id': line.product_id.id,
-                        'quantity': line.product_qty or 1,
-                    }))
-            if lines:
-                material_request.write({'livestock_cutting_material_line_ids': lines})
+        material_request._populate_bom_lines(self)
+        if not material_request.livestock_cutting_material_line_ids:
+            material_request.unlink()
+            raise ValidationError(
+                "The BOM for %s has no component products. Add BOM lines first."
+                % self.product_id.display_name
+            )
 
         self.start_time = fields.Datetime.now()
         self.state = 'material_request'
@@ -228,12 +226,20 @@ class LivestockSlaughter(models.Model):
 
     def action_end_cutting(self):
         self.ensure_one()
+        if not self.product_id:
+            raise ValidationError("Please select a product before ending cutting.")
+        if not self.material_request_id:
+            self.action_material_request()
+        elif not self.material_request_id.livestock_cutting_material_line_ids:
+            self.material_request_id._populate_bom_lines(self)
+            if not self.material_request_id.livestock_cutting_material_line_ids:
+                raise ValidationError("The selected product BOM has no component products.")
         self.end_time = fields.Datetime.now()
         self.state = 'done'
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'livestock.slaugther',
-            'res_id': self.id,
+            'res_model': 'livestock.cutting.material',
+            'res_id': self.material_request_id.id,
             'view_mode': 'form',
             'target': 'current',
         }

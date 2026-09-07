@@ -46,6 +46,42 @@ class LivestockCuttingMaterial(models.Model):
         for line in self:
             line.on_hand_qty = line.product_id.qty_available if line.product_id else 0.0
 
+    def _get_product_bom(self):
+        self.ensure_one()
+        if not self.product_id:
+            return self.env['mrp.bom']
+        bom_model = self.env['mrp.bom']
+        bom = bom_model.search([
+            ('product_id', '=', self.product_id.id),
+        ], order='sequence, id', limit=1)
+        if not bom:
+            bom = bom_model.search([
+                ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+                ('product_id', '=', False),
+            ], order='sequence, id', limit=1)
+        return bom
+
+    def _populate_bom_lines(self, livestock_slaughter=False):
+        for material in self:
+            bom = material._get_product_bom()
+            lines = [(5, 0, 0)]
+            if bom:
+                for bom_line in bom.bom_line_ids.filtered('product_id'):
+                    lines.append((0, 0, {
+                        'livestock_slaughter_id': livestock_slaughter.id if livestock_slaughter else False,
+                        'product_id': bom_line.product_id.id,
+                        'quantity': (bom_line.product_qty / bom.product_qty) * material.quantity
+                        if bom.product_qty else bom_line.product_qty,
+                    }))
+            if material.id:
+                material.write({'livestock_cutting_material_line_ids': lines})
+            else:
+                material.livestock_cutting_material_line_ids = lines
+
+    @api.onchange('product_id', 'quantity')
+    def _onchange_product_id(self):
+        self._populate_bom_lines()
+
     @api.depends('start_time', 'end_time')
     def _compute_total_time(self):
         for rec in self:
@@ -161,8 +197,15 @@ class LivestockCuttingMaterial(models.Model):
         self.livestock_cutting_material_line_ids = material_vals
 
     def action_end_cutting(self):
-        self.state = 'done'
-        self.end_time = fields.Datetime.now()
+        self.ensure_one()
+        if not self.product_id:
+            raise ValidationError("Please select a product before ending cutting.")
+        if not self.livestock_cutting_material_line_ids:
+            self._populate_bom_lines()
+        if not self.livestock_cutting_material_line_ids:
+            raise ValidationError(
+                "No BOM component products found for %s." % self.product_id.display_name
+            )
 
         # 1) find the Cutting location
         cutting_loc = self.env['stock.location'].search([
@@ -182,12 +225,14 @@ class LivestockCuttingMaterial(models.Model):
         ], limit=1)
 
         if not quant:
-            raise ValidationError(f"No stock.quant for {self.product.name} in Livestock Cutting location to deduct from.")
+            raise ValidationError(f"No stock.quant for {product.display_name} in Livestock Cutting location to deduct from.")
         if quant.quantity < used_qty:
             raise ValidationError(
-                f"Not enough {self.product.name} in Livestock Cutting location "
+                f"Not enough {product.display_name} in Livestock Cutting location "
                 f"({quant.quantity} available, need {used_qty})."
             )
 
         # subtract the used quantity
         quant.quantity -= used_qty
+        self.state = 'done'
+        self.end_time = fields.Datetime.now()
