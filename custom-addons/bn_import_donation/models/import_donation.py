@@ -180,6 +180,9 @@ class ImportDonation(models.Model):
             raise ValidationError("No valid records.")
 
         Donation = self.env['donation']
+        Partner = self.env['res.partner']
+        cats = self._get_category_refs()
+        partner_cache = {}
 
         donation_vals = []
 
@@ -191,10 +194,35 @@ class ImportDonation(models.Model):
 
             product = config_line.product_id if config_line else False
 
+            partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
+            partner = partner_cache.get(partner_key)
+            if not partner:
+                partner = False
+                if line.mobile:
+                    partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                if not partner and line.cnic_no:
+                    partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
+                if not partner and line.email:
+                    partner = Partner.search([('email', '=', line.email)], limit=1)
+                if not partner and line.donor_student_name:
+                    partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
+                if not partner:
+                    partner = Partner.create({
+                        'name': line.donor_student_name or f"Undefined {line.mobile}",
+                        'mobile': line.mobile,
+                        'cnic_no': line.cnic_no,
+                        'email': line.email,
+                        'category_id': [(6, 0, [
+                            cats['donee'] if line.is_student else cats['donor'],
+                            cats['individual'],
+                        )],
+                    })
+                partner_cache[partner_key] = partner
+
             donation_vals.append({
                 'import_donation_id': self.id,
                 'transaction_id': line.transaction_id,
-                'donor_id': False,  # NOT LINKED HERE
+                'donor_id': partner.id,
                 'product_id': product.id if product else False,
                 'date': line.date,
                 'amount': line.amount,
