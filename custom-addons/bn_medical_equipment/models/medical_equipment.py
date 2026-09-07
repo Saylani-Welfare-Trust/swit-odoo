@@ -504,8 +504,6 @@ class MedicalEquipment(models.Model):
         for record in self:
             if record.total_amount:
                 record.actual_deposit_percentage = (record.amount / record.total_amount) * 100
-            else:
-                record.actual_deposit_percentage = 0.0
     
     @api.depends('donee_id')
     def _set_is_donee_register(self):
