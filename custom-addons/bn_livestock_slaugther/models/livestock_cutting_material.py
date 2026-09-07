@@ -79,10 +79,6 @@ class LivestockCuttingMaterial(models.Model):
             else:
                 material.livestock_cutting_material_line_ids = lines
 
-    @api.onchange('product_id', 'quantity')
-    def _onchange_product_id(self):
-        self._populate_bom_lines()
-
     @api.depends('start_time', 'end_time')
     def _compute_total_time(self):
         for rec in self:

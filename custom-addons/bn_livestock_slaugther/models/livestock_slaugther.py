@@ -195,6 +195,10 @@ class LivestockSlaughter(models.Model):
                 'livestock_slaughter_id': self.id,
             })
             self.cutting_material_id = cutting_record.id
+        else:
+            cutting_record.write({
+                'livestock_cutting_material_line_ids': [(5, 0, 0)],
+            })
 
         return {
             'type': 'ir.actions.act_window',
@@ -212,6 +216,8 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Please select a product before opening the material request.")
 
         material_request = self.material_request_id
+        if material_request == self.cutting_material_id:
+            material_request = self.env['livestock.cutting.material']
         if not material_request:
             material_request = self.env['livestock.cutting.material'].create({
                 'product_id': self.product_id.id,
@@ -221,6 +227,7 @@ class LivestockSlaughter(models.Model):
                 'state': 'not_received',
                 'livestock_slaughter_id': self.id,
             })
+            self.material_request_id = material_request.id
         bom = material_request._get_product_bom()
         if not bom:
             material_request.unlink()
@@ -237,7 +244,6 @@ class LivestockSlaughter(models.Model):
                 % self.product_id.display_name
             )
 
-        self.material_request_id = material_request.id
         self.state = 'material_request'
 
         return {

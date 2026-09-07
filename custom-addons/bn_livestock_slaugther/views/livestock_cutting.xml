@@ -55,12 +55,15 @@
 
     <record id="livestock_cutting_action" model="ir.actions.act_window">
         <field name="name">Livestock Cutting</field>
-        <field name="res_model">livestock.cutting</field>
+        <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'cutting')]</field>
+        <field name="context">{
+            'create': 0,
+            'edit': 0,
+        }</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Let's add a new livestock cutting...
-            </p>
+            <p class="o_view_nocontent_smiling_face">No livestock records are currently in Cutting.</p>
         </field>
     </record>
 
