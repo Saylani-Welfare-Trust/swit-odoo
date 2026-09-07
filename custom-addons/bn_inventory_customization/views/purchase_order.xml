@@ -26,9 +26,12 @@
                 <field name="main_attribute_id" column_invisible="1"/>
             </xpath>
 
-            <!-- <xpath expr="//button[@name='action_create_invoice']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath> -->
+            <xpath expr="//header/button[@name='action_create_invoice'][1]" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_create_invoice'][2]" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
         </field>
     </record>
 
