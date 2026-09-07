@@ -130,7 +130,8 @@ class MedicalEquipment(models.Model):
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     # Actual deposit percentage - determines case type automatically
-    actual_deposit_percentage = fields.Float('Actual Deposit Percentage (%)', default=100.0)
+    actual_deposit_percentage = fields.Float('Actual Deposit Percentage (%)', compute="_compute_actual_deposit_percentage", store=True)
+    actual_amount = fields.Float('Amount')
     case_type = fields.Char('Case Type', compute='_compute_case_type', store=True)
     employee_id = fields.Many2one('hr.employee', string="Employee")
     loan_request_amount = fields.Float('Loan Request Amount')
@@ -497,6 +498,14 @@ class MedicalEquipment(models.Model):
             raise ValidationError(
                 _('Failed to register Donee: %s') % str(e)
             )
+
+    @api.depends('amount', 'total_amount')
+    def _compute_actual_deposit_percentage(self):
+        for record in self:
+            if record.total_amount:
+                record.actual_deposit_percentage = (record.amount / record.total_amount) * 100
+            else:
+                record.actual_deposit_percentage = 0.0
     
     @api.depends('donee_id')
     def _set_is_donee_register(self):
