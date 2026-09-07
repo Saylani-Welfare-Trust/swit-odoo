@@ -45,6 +45,7 @@ class MicrofinanceLine(models.Model):
     is_cheque_deposit = fields.Boolean('Is Cheque Deposit')
     payment_id = fields.Many2one('microfinance.installment', string="Payment Reference")
     payment_date = fields.Date('Payment Date')
+    paid_date = fields.Date('Paid Date')
 
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
     @api.depends('state')
@@ -110,6 +111,9 @@ class MicrofinanceLine(models.Model):
             })
 
     def write(self, vals):
+        if vals.get('state') == 'paid' and not vals.get('paid_date'):
+            vals['paid_date'] = vals.get('payment_date') or fields.Date.today()
+
         res = super().write(vals)
         
         if 'state' in vals or 'paid_amount' in vals:
