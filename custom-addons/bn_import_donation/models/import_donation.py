@@ -215,7 +215,7 @@ class ImportDonation(models.Model):
                         'category_id': [(6, 0, [
                             cats['donee'] if line.is_student else cats['donor'],
                             cats['individual'],
-                        )],
+                        ])],
                     })
                 partner_cache[partner_key] = partner
 
