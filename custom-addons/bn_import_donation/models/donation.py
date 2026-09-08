@@ -62,15 +62,7 @@ class Donation(models.Model):
         created_count = 0
         skipped_count = 0
 
-        donations_to_process = self.filtered(lambda record: not record.donor_id)
-
-        if not donations_to_process:
-            raise ValidationError(
-                _("All %s selected donation(s) already have a Donor / Student assigned. "
-                "Nothing to sync.") % len(self)
-            )
-
-        for donation in donations_to_process:
+        for donation in self:
             source_line = self.env['valid.import.donation'].search([
                 ('import_donation_id', '=', donation.import_donation_id.id),
                 ('transaction_id', '=', donation.transaction_id),
@@ -97,7 +89,7 @@ class Donation(models.Model):
                 })
                 created_count += 1
 
-            donation.donor_id = partner.id
+            donation.donor_id = partner.id  # overwrite even if already set
             linked_count += 1
 
         if linked_count == 0:
