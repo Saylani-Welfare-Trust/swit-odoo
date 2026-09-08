@@ -499,11 +499,11 @@ class MedicalEquipment(models.Model):
                 _('Failed to register Donee: %s') % str(e)
             )
 
-    @api.depends('amount', 'total_amount')
+    @api.depends('actual_amount', 'total_amount')
     def _compute_actual_deposit_percentage(self):
         for record in self:
             if record.total_amount:
-                record.actual_deposit_percentage = (record.amount / record.total_amount) * 100
+                record.actual_deposit_percentage = (record.actual_amount / record.total_amount) * 100
     
     @api.depends('donee_id')
     def _set_is_donee_register(self):
