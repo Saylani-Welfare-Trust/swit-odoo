@@ -92,8 +92,8 @@
                         <group name="budget_info">
                             <field name="user_id"/>
                             <field name="department_id"/>
-                            <field name="total_amount"/>
-                            <field name="budget_amount" invisible="state == 'draft'"/>
+                            <field name="total_amount" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
+                            <field name="budget_amount" invisible="state == 'draft'" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
                             <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>
                         </group>
                     </group>
@@ -111,9 +111,9 @@
                                     <field name="product_id" domain="[('detailed_type', '=', 'product'), ('categ_id', 'in', allowed_product_category_ids)]"/>
                                     <field name="budget_id"/>
                                     <field name="product_uom_id" />
-                                    <field name="quantity" readonly="0"/>
-                                    <field name="unit_price" readonly="0"/>
-                                    <field name="subtotal"/>
+                                    <field name="quantity" readonly="0" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
+                                    <field name="unit_price" readonly="0" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
+                                    <field name="subtotal" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
                                 </tree>
                             </field>
                         </page>
