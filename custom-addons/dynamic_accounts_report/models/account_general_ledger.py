@@ -39,7 +39,15 @@ class AccountGeneralLedger(models.TransientModel):
     def view_report(self, option, tag):
         """
         Retrieve partner ledger report data based on options and tags.
-        (Legacy method – kept for compatibility)
+
+        :param option: The options to filter the report data.
+        :type option: str
+
+        :param tag: The tag to filter the report data.
+        :type tag: str
+
+        :return: A dictionary containing the partner ledger report data.
+        :rtype: dict
         """
         account_dict = {}
         move_lines = self.env['account.move.line'].search_read(
@@ -79,9 +87,28 @@ class AccountGeneralLedger(models.TransientModel):
 
     @api.model
     def get_filter_values(self, journal_id, date_range, options, analytic,
-                        method, search='', include_filter_values=True):
+                          method, include_filter_values=True):
         """
-        Retrieve filtered values for the general ledger report.
+        Retrieve filtered values for the partner ledger report.
+
+        :param journal_id: The journal IDs to filter the report data.
+        :type journal_id: list
+
+        :param date_range: The date range option to filter the report data.
+        :type date_range: str or dict
+
+        :param options: The additional options to filter the report data.
+        :type options: dict
+
+        :param method: Find the method
+        :type options: dict
+
+        :param analytic: The analytic IDs to filter the report data.
+        :type analytic: list
+
+        :return: A dictionary containing the filtered values for the partner
+        ledger report.
+        :rtype: dict
         """
         account_dict = {}
         account_totals = {}
@@ -89,97 +116,71 @@ class AccountGeneralLedger(models.TransientModel):
         quarter_start, quarter_end = date_utils.get_quarter(today)
         previous_quarter_start = quarter_start - relativedelta(months=3)
         previous_quarter_end = quarter_start - relativedelta(days=1)
-
-        # --- Base domain (filters) ---
         if options == {}:
             options = None
-        option_domain = ['posted']
-        if options and 'draft' in options:
+        if options is None:
+            option_domain = ['posted']
+        elif 'draft' in options:
             option_domain = ['posted', 'draft']
-
-        domain = [('parent_state', 'in', option_domain)]
-
-        # Journals
-        if journal_id:
-            domain += [('journal_id', 'in', journal_id)]
-
-        # Cash basis
-        if method and 'cash' in method:
-            cash_journal = self.env.company.tax_cash_basis_journal_id
-            if cash_journal:
-                domain += [('journal_id', 'in', cash_journal.ids)]
-
-        # Analytic
+        domain = [('journal_id', 'in', journal_id),
+                  ('parent_state', 'in', option_domain), ] if journal_id else [
+            ('parent_state', 'in', option_domain), ]
+        if method == {}:
+            method = None
+        if method is not None and 'cash' in method:
+            domain += [('journal_id', 'in',
+                        self.env.company.tax_cash_basis_journal_id.ids), ]
         if analytic:
             domain += [('analytic_line_ids.account_id', 'in', analytic)]
-
-        # Date range
         if date_range:
             if date_range == 'month':
                 domain += [('date', '>=', today.replace(day=1)),
-                        ('date', '<=', today)]
+                           ('date', '<=', today)]
             elif date_range == 'year':
                 domain += [('date', '>=', today.replace(month=1, day=1)),
-                        ('date', '<=', today)]
+                           ('date', '<=', today)]
             elif date_range == 'quarter':
                 domain += [('date', '>=', quarter_start),
-                        ('date', '<=', quarter_end)]
+                           ('date', '<=', quarter_end)]
             elif date_range == 'last-month':
-                last_month_start = today.replace(day=1) - relativedelta(months=1)
+                last_month_start = today.replace(day=1) - relativedelta(
+                    months=1)
                 last_month_end = last_month_start + relativedelta(
-                    day=calendar.monthrange(last_month_start.year, last_month_start.month)[1])
+                    day=calendar.monthrange(last_month_start.year,
+                                            last_month_start.month)[
+                        1])
                 domain += [('date', '>=', last_month_start),
-                        ('date', '<=', last_month_end)]
+                           ('date', '<=', last_month_end)]
             elif date_range == 'last-year':
-                last_year_start = today.replace(month=1, day=1) - relativedelta(years=1)
+                last_year_start = today.replace(month=1,
+                                                day=1) - relativedelta(years=1)
                 last_year_end = last_year_start.replace(month=12, day=31)
                 domain += [('date', '>=', last_year_start),
-                        ('date', '<=', last_year_end)]
+                           ('date', '<=', last_year_end)]
             elif date_range == 'last-quarter':
                 domain += [('date', '>=', previous_quarter_start),
-                        ('date', '<=', previous_quarter_end)]
+                           ('date', '<=', previous_quarter_end)]
             elif 'start_date' in date_range and 'end_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
-                end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
+                start_date = datetime.strptime(date_range['start_date'],
+                                               '%Y-%m-%d').date()
+                end_date = datetime.strptime(date_range['end_date'],
+                                             '%Y-%m-%d').date()
                 domain += [('date', '>=', start_date),
-                        ('date', '<=', end_date)]
+                           ('date', '<=', end_date)]
             elif 'start_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
+                start_date = datetime.strptime(date_range['start_date'],
+                                               '%Y-%m-%d').date()
                 domain += [('date', '>=', start_date)]
             elif 'end_date' in date_range:
-                end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
+                end_date = datetime.strptime(date_range['end_date'],
+                                             '%Y-%m-%d').date()
                 domain += [('date', '<=', end_date)]
-
-        # --- SEARCH (improved) ---
-        if search:
-            search = search.strip()
-            if search:
-                # Build OR search across multiple fields
-                search_domain = [
-                    ('account_id.code', 'ilike', search),
-                    ('account_id.name', 'ilike', search),
-                    ('account_id.display_name', 'ilike', search),   # includes code + name
-                    ('move_id.name', 'ilike', search),
-                    ('move_id.ref', 'ilike', search),               # invoice number / reference
-                    ('partner_id.name', 'ilike', search),
-                    ('name', 'ilike', search),                      # journal item description
-                ]
-                # Combine search_domain with OR
-                or_domain = ['|'] * (len(search_domain) - 1) + search_domain
-                # Apply search AND existing domain
-                domain = ['&'] + or_domain + domain
-
-        # --- Execute search ---
-        # Uncomment the next line for debugging (logs the final domain)
-        # _logger.info("Final domain: %s", domain)
-
         move_lines = self.env['account.move.line'].search_read(
             domain,
             ['date', 'name', 'move_name', 'debit', 'credit',
-            'partner_id', 'account_id']
+               'partner_id', 'account_id']
         )
 
-        # --- Group by account ---
         if include_filter_values:
             account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
             account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
@@ -188,7 +189,7 @@ class AccountGeneralLedger(models.TransientModel):
         account_map = {}
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
         if account_ids:
-            account_map = {acc.id: acc.display_name for acc in self.env['account.account'].browse(list(account_ids))}
+            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
 
         for line in move_lines:
             account_id = line.get('account_id')
@@ -198,9 +199,7 @@ class AccountGeneralLedger(models.TransientModel):
             entries_by_account[account_key].append(line)
             totals = account_totals.setdefault(
                 account_key,
-                {'total_debit': 0.0, 'total_credit': 0.0,
-                'currency_id': self.env.company.currency_id.symbol,
-                'account_id': account_id[0]}
+                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
             )
             totals['total_debit'] += line.get('debit') or 0.0
             totals['total_credit'] += line.get('credit') or 0.0
@@ -215,7 +214,16 @@ class AccountGeneralLedger(models.TransientModel):
     def get_xlsx_report(self, data, response, report_name, report_action):
         """
         Generate an XLSX report based on the provided data and write it to the
-        response stream. (unchanged)
+        response stream.
+
+        :param data: The data used to generate the report.
+        :type data: str (JSON format)
+
+        :param response: The response object to write the generated report to.
+        :type response: werkzeug.wrappers.Response
+
+        :param report_name: The name of the report.
+        :type report_name: str
         """
         data = json.loads(data or '{}')
         report_data = data.get('data') or {}
