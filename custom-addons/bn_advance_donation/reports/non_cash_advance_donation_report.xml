@@ -4,6 +4,9 @@
             <t t-foreach="docs" t-as="line">
                 <div class="page">
                     <div class="header">
+                        <img t-if="order.env.company.dn_image"
+                            t-att-src="image_data_uri(order.env.company.dn_image)"
+                            style="height: 100%; width: 100%;"/>                 
                         <div class="row">
                             <div class="col-12 text-center">
                                 <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
