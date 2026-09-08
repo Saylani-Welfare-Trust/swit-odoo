@@ -305,7 +305,8 @@
                                                     </div>
                                                 </th>
                                                 <th colspan="5">
-                                                    <button t-att-data-id="this.getAccountTotalValue(account, 'account_id', 0)"
+                                                    <!-- Removed 'this.' -->
+                                                    <button t-att-data-id="getAccountTotalValue(account, 'account_id', 0)"
                                                             class="o_journal"
                                                             t-on-click="gotoJournalItem">
                                                         <i class="fa fa-arrow-right"/>
@@ -317,28 +318,28 @@
                                                 <th/>
                                                 <th>
                                                     <span>
-                                                        <t t-if="this.getAccountTotalValue(account, 'total_debit', 0)"
-                                                           t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                                        <t t-if="this.getAccountTotalValue(account, 'total_debit', 0)"
-                                                           t-esc="this.getAccountTotalValue(account, 'total_debit', 0)"/>
+                                                        <t t-if="getAccountTotalValue(account, 'total_debit', 0)"
+                                                           t-esc="getAccountTotalValue(account, 'currency_id', '')"/>
+                                                        <t t-if="getAccountTotalValue(account, 'total_debit', 0)"
+                                                           t-esc="getAccountTotalValue(account, 'total_debit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th>
                                                     <span>
-                                                        <t t-if="this.getAccountTotalValue(account, 'total_credit', 0)"
-                                                           t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                                        <t t-if="this.getAccountTotalValue(account, 'total_credit', 0)"
-                                                           t-esc="this.getAccountTotalValue(account, 'total_credit', 0)"/>
+                                                        <t t-if="getAccountTotalValue(account, 'total_credit', 0)"
+                                                           t-esc="getAccountTotalValue(account, 'currency_id', '')"/>
+                                                        <t t-if="getAccountTotalValue(account, 'total_credit', 0)"
+                                                           t-esc="getAccountTotalValue(account, 'total_credit', 0)"/>
                                                     </span>
                                                 </th>
                                                 <th>
                                                     <span class="fw-bolder">
-                                                        <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                                        <t t-esc="this.getAccountTotalValue(account, 'total_debit', 0) - this.getAccountTotalValue(account, 'total_credit', 0)"/>
+                                                        <t t-esc="getAccountTotalValue(account, 'currency_id', '')"/>
+                                                        <t t-esc="getAccountTotalValue(account, 'total_debit', 0) - getAccountTotalValue(account, 'total_credit', 0)"/>
                                                     </span>
                                                 </th>
                                             </tr>
-                                                          <t t-foreach="this.getAccountData(account)"
+                                                          <t t-foreach="getAccountData(account)"
                                                t-as="valuelist"
                                                t-key="valuelist_index">
                                                 <t t-if="valuelist and valuelist[0]">
@@ -380,7 +381,7 @@
                                                         <th>
                                                             <span>
                                                                 <t t-if="valuelist[0].get('debit')"
-                                                                   t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                                                   t-esc="getAccountTotalValue(account, 'currency_id', '')"/>
                                                                 <t t-if="valuelist[0].get('debit')"
                                                                    t-esc="valuelist[0].get('debit', 0)"/>
                                                             </span>
@@ -388,7 +389,7 @@
                                                         <th>
                                                             <span>
                                                                 <t t-if="valuelist[0].get('credit')"
-                                                                   t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                                                   t-esc="getAccountTotalValue(account, 'currency_id', '')"/>
                                                                 <t t-if="valuelist[0].get('credit')"
                                                                    t-esc="valuelist[0].get('credit', 0)"/>
                                                             </span>
