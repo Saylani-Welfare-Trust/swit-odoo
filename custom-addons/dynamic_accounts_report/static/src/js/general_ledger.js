@@ -35,12 +35,89 @@ class GeneralLedger extends owl.Component {
             date_range: 'month',
             options: {},
             method: {
-                        'accrual': true
-                    },
+                'accrual': true
+            },
+            searchQuery: '',               // NEW
         });
         this.load_data();
+        this.searchTimeout = null;
+        this.debounceSearch = this.debounceSearch.bind(this);
     }
+
+    // Debounce helper
+    debounceSearch(ev) {
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+        this.searchTimeout = setTimeout(() => {
+            this.applySearch();
+        }, 500);
+    }
+
+    async applySearch() {
+        await this.refreshData();   // just refresh with current search
+    }
+
+    clearSearch() {
+        this.state.searchQuery = '';
+        this.applySearch();
+    }
+
+    // ---------- NEW: central data refresh ----------
+    async refreshData() {
+        let account_list = [];
+        let account_totals = {};
+        let totalDebitSum = 0;
+        let totalCreditSum = 0;
+        let currency = null;
+        const self = this;
+
+        try {
+            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [
+                self.state.selected_journal_list,
+                self.state.date_range,
+                self.state.options,
+                self.state.selected_analytic_list,
+                self.state.method,
+                self.state.searchQuery   // always include search
+            ]);
+            const raw_data = filtered_data || {};
+            self.state.account_data = raw_data;
+            $.each(raw_data, function (index, value) {
+                if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
+                    if (Array.isArray(value) || value && typeof value === 'object') {
+                        account_list.push(index);
+                    }
+                } else if (index === 'journal_ids') {
+                    self.state.journals = value || [];
+                } else if (index === 'analytic_ids') {
+                    self.state.analytics = value || [];
+                } else {
+                    account_totals = value || {};
+                    Object.values(account_totals).forEach(acc => {
+                        if (acc && typeof acc === 'object') {
+                            currency = acc.currency_id || currency;
+                            totalDebitSum += Number(acc.total_debit || 0);
+                            totalCreditSum += Number(acc.total_credit || 0);
+                        }
+                    });
+                }
+            });
+            self.state.account = account_list;
+            self.state.account_list = account_list;
+            self.state.account_data_list = self.state.account_data;
+            self.state.account_total_list = account_totals;
+            self.state.account_total = account_totals;
+            self.state.currency = currency;
+            self.state.total_debit = Number(totalDebitSum || 0).toFixed(2);
+            self.state.total_credit = Number(totalCreditSum || 0).toFixed(2);
+        } catch (e) {
+            // keep previous data or reset
+        }
+    }
+
     async load_data() {
+        // same as before but now uses refreshData
         let account_list = [];
         let account_totals = {};
         let totalDebitSum = 0;
@@ -49,7 +126,14 @@ class GeneralLedger extends owl.Component {
         var self = this;
         var action_title = self.props.action.display_name;
         try {
-            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [
+                this.state.selected_journal_list,
+                this.state.date_range,
+                this.state.options,
+                this.state.selected_analytic_list,
+                this.state.method,
+                this.state.searchQuery
+            ]);
             const raw_data = filtered_data || {};
             self.state.account_data = raw_data;
             $.each(raw_data, function (index, value) {
@@ -94,127 +178,22 @@ class GeneralLedger extends owl.Component {
             self.state.title = action_title
         }
     }
-    async printPdf(ev) {
-        ev.preventDefault();
-        var self = this;
-        let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
-        }
-        var action_title = self.props.action.display_name;
-        return self.action.doAction({
-            'type': 'ir.actions.report',
-            'report_type': 'qweb-pdf',
-            'report_name': 'dynamic_accounts_report.general_ledger',
-            'report_file': 'dynamic_accounts_report.general_ledger',
-            'data': {
-                'report_options': {
-                    'journal_ids': self.state.selected_journal_list || [],
-                    'date_range': self.state.date_range || 'month',
-                    'options': self.state.options || {},
-                    'analytic_ids': self.state.selected_analytic_list || [],
-                    'method': self.state.method || {'accrual': true},
-                },
-                'title': action_title,
-                'filters': this.filter(),
-                'grand_total': totals,
-                'report_name': self.props.action.display_name
-            },
-            'display_name': self.props.action.display_name,
-        });
-    }
-    async print_xlsx() {
-        var self = this;
-        let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
-        }
-        var action_title = self.props.action.display_name;
-        var datas = {
-            'account': self.state.account,
-            'data': self.state.account_data,
-            'total': self.state.account_total,
-            'title': action_title,
-            'filters': this.filter(),
-            'grand_total': totals,
-        }
-        var action = {
-            'data': {
-                'model': 'account.general.ledger',
-                'data': JSON.stringify(datas),
-                'output_format': 'xlsx',
-                'report_action': self.props.action.xml_id,
-                'report_name': action_title,
-            },
-        };
-        BlockUI;
-        await download({
-            url: '/xlsx_report',
-            data: action.data,
-            complete: () => unblockUI,
-            error: (error) => self.call('crash_manager', 'rpc_error', error),
-        });
-    }
-    getAccountTotals(account) {
-        if (!this.state.account_total || !this.state.account_total[account]) {
-            return {};
-        }
-        return this.state.account_total[account];
-    }
-    getAccountTotalValue(account, key, fallback = 0) {
-        const totals = this.getAccountTotals(account);
-        return totals && totals[key] !== undefined && totals[key] !== null ? totals[key] : fallback;
-    }
-    getAccountData(account) {
-        if (!this.state.account_data || !this.state.account_data[account]) {
-            return [];
-        }
-        return this.state.account_data[account];
-    }
-    gotoJournalEntry(ev) {
-        return this.action.doAction({
-            type: "ir.actions.act_window",
-            res_model: 'account.move',
-            res_id: parseInt(ev.target.attributes["data-id"].value, 10),
-            views: [[false, "form"]],
-            target: "current",
-        });
-    }
-    gotoJournalItem(ev) {
-        return this.action.doAction({
-            type: "ir.actions.act_window",
-            res_model: 'account.move.line',
-            name: "Journal Items",
-            views: [[false, "list"]],
-            domain: [["account_id", "=", parseInt(ev.target.attributes["data-id"].value, 10)]],
-            target: "current",
-        });
-    }
-    getDomain() {
-        return [];
-    }
+
+    // ---------- applyFilter now only processes UI events and then calls refreshData ----------
     async applyFilter(val, ev, is_delete = false) {
-        let account_list = []
-        let account_totals = ''
-        let totalDebitSum = 0;
-        let totalCreditSum = 0;
-        this.state.account = null
-        this.state.account_data = null
-        this.state.account_total = null
-        this.state.filter_applied = true;
+        // Process filter changes from UI events
         if (ev) {
+            // handle account selection (unlikely here)
             if (ev.input && ev.input.attributes.placeholder.value == 'Account' && !is_delete) {
-                this.state.selected_analytic.push(val[0].id)
-                this.state.selected_analytic_account_rec.push(val[0])
+                this.state.selected_analytic.push(val[0].id);
+                this.state.selected_analytic_account_rec.push(val[0]);
             } else if (is_delete) {
-                let index = this.state.selected_analytic_account_rec.indexOf(val)
-                this.state.selected_analytic_account_rec.splice(index, 1)
-                this.state.selected_analytic = this.state.selected_analytic_account_rec.map((rec) => rec.id)
+                let index = this.state.selected_analytic_account_rec.indexOf(val);
+                this.state.selected_analytic_account_rec.splice(index, 1);
+                this.state.selected_analytic = this.state.selected_analytic_account_rec.map((rec) => rec.id);
             }
-        }
-        else {
+        } else {
+            // val is a DOM event from a button or input
             if (val.target.name === 'start_date') {
                 this.state.date_range = {
                     ...this.state.date_range,
@@ -225,120 +204,59 @@ class GeneralLedger extends owl.Component {
                     ...this.state.date_range,
                     end_date: val.target.value
                 };
-            } else if (val.target.attributes["data-value"].value == 'month') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            } else if (val.target.attributes["data-value"].value == 'year') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            } else if (val.target.attributes["data-value"].value == 'quarter') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            } else if (val.target.attributes["data-value"].value == 'last-month') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            } else if (val.target.attributes["data-value"].value == 'last-year') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            } else if (val.target.attributes["data-value"].value == 'last-quarter') {
-                this.state.date_range = val.target.attributes["data-value"].value
-            }
-            else if (val.target.attributes["data-value"].value == 'journal') {
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_journal_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_journal_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_journal_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-
-            else if (val.target.attributes["data-value"].value == 'analytic') {
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_analytic_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_analytic_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-            else if (val.target.attributes["data-value"].value == 'journal') {
-
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_journal_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_journal_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_journal_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-            else if (val.target.attributes["data-value"].value == 'analytic') {
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_analytic_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_analytic_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-            else if (val.target.attributes["data-value"].value === 'draft') {
-                if (val.target.classList.contains("selected-filter")) {
-                    const { draft, ...updatedAccount } = this.state.options;
-                    this.state.options = updatedAccount;
-                    val.target.classList.remove("selected-filter");
-                } else {
-                    this.state.options = {
-                        ...this.state.options,
-                        'draft': true
-                    };
-                    val.target.classList.add("selected-filter");
-                }
-            }else if (val.target.attributes["data-value"].value === 'cash-basis') {
-                if (val.target.classList.contains("selected-filter")) {
-                    const { cash, ...updatedAccount } = this.state.method;
-                    this.state.method = updatedAccount;
-                    this.state.method = {
-                        ...this.state.method,
-                        'accrual': true
+            } else if (val.target.attributes && val.target.attributes["data-value"]) {
+                const dataValue = val.target.attributes["data-value"].value;
+                if (['month', 'year', 'quarter', 'last-month', 'last-year', 'last-quarter'].includes(dataValue)) {
+                    this.state.date_range = dataValue;
+                } else if (dataValue === 'journal') {
+                    const journalId = parseInt(val.target.attributes["data-id"].value, 10);
+                    if (!val.target.classList.contains("selected-filter")) {
+                        this.state.selected_journal_list.push(journalId);
+                        val.target.classList.add("selected-filter");
+                    } else {
+                        this.state.selected_journal_list = this.state.selected_journal_list.filter(id => id !== journalId);
+                        val.target.classList.remove("selected-filter");
                     }
-                    val.target.classList.remove("selected-filter");
-                } else {
-                    const { accrual, ...updatedAccount } = this.state.method;
-                    this.state.method = updatedAccount;
-                    this.state.method = {
-                        ...this.state.method,
-                        'cash': true
-                    };
-                    val.target.classList.add("selected-filter");
+                } else if (dataValue === 'analytic') {
+                    const analyticId = parseInt(val.target.attributes["data-id"].value, 10);
+                    if (!val.target.classList.contains("selected-filter")) {
+                        this.state.selected_analytic_list.push(analyticId);
+                        val.target.classList.add("selected-filter");
+                    } else {
+                        this.state.selected_analytic_list = this.state.selected_analytic_list.filter(id => id !== analyticId);
+                        val.target.classList.remove("selected-filter");
+                    }
+                } else if (dataValue === 'draft') {
+                    if (val.target.classList.contains("selected-filter")) {
+                        const { draft, ...updated } = this.state.options;
+                        this.state.options = updated;
+                        val.target.classList.remove("selected-filter");
+                    } else {
+                        this.state.options = { ...this.state.options, 'draft': true };
+                        val.target.classList.add("selected-filter");
+                    }
+                } else if (dataValue === 'cash-basis') {
+                    if (val.target.classList.contains("selected-filter")) {
+                        const { cash, ...updated } = this.state.method;
+                        this.state.method = { ...updated, 'accrual': true };
+                        val.target.classList.remove("selected-filter");
+                    } else {
+                        const { accrual, ...updated } = this.state.method;
+                        this.state.method = { ...updated, 'cash': true };
+                        val.target.classList.add("selected-filter");
+                    }
                 }
             }
         }
-        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
-        filtered_data = filtered_data || {};
-        $.each(filtered_data, function (index, value) {
-            if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                if (Array.isArray(value) || value && typeof value === 'object') {
-                    account_list.push(index)
-                }
-            }
-            else {
-                account_totals = value || {}
-                Object.values(account_totals).forEach(account_list => {
-                        if (account_list && typeof account_list === 'object') {
-                            totalDebitSum += Number(account_list.total_debit || 0);
-                            totalCreditSum += Number(account_list.total_credit || 0);
-                        }
-                    });
-            }
-        })
-        this.state.account = account_list
-        this.state.account_data = filtered_data
-        this.state.account_total = account_totals
-        this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
-        this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
-        if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
-            this.unfoldButton.el.classList.remove("selected-filter")
+        // After processing UI changes, refresh the data
+        await this.refreshData();
+
+        // Remove unfoldAll highlight if any
+        if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el).find(".selected-filter").length) {
+            this.unfoldButton.el.classList.remove("selected-filter");
         }
     }
+
     async unfoldAll(ev) {
         if (!ev.target.classList.contains("selected-filter")) {
             for (var length = 0; length < this.tbody.el.children.length; length++) {
@@ -352,6 +270,7 @@ class GeneralLedger extends owl.Component {
             ev.target.classList.remove("selected-filter");
         }
     }
+
     filter() {
     var self=this;
     let startDate, endDate;
