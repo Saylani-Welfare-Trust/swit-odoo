@@ -53,7 +53,7 @@ class Donation(models.Model):
         donor_category = self.env.ref('bn_profile_management.donor_partner_category')
         donee_category = self.env.ref('bn_profile_management.donee_partner_category')
         individual_category = self.env.ref('bn_profile_management.individual_partner_category')
-        partner_cache = {}
+
         linked_count = 0
         created_count = 0
         skipped_count = 0
@@ -63,27 +63,18 @@ class Donation(models.Model):
                 ('import_donation_id', '=', donation.import_donation_id.id),
                 ('transaction_id', '=', donation.transaction_id),
             ], limit=1)
-            if not source_line:
+
+            if not source_line or not source_line.donor_student_name:
                 skipped_count += 1
                 continue
 
-            partner_key = (
-                source_line.mobile or source_line.cnic_no or
-                source_line.email or source_line.donor_student_name
-            )
-            partner = partner_cache.get(partner_key)
-            if not partner and source_line.mobile:
-                partner = Partner.search([('mobile', '=', source_line.mobile)], limit=1)
-            if not partner and source_line.cnic_no:
-                partner = Partner.search([('cnic_no', '=', source_line.cnic_no)], limit=1)
-            if not partner and source_line.email:
-                partner = Partner.search([('email', '=', source_line.email)], limit=1)
-            if not partner and source_line.donor_student_name:
-                partner = Partner.search([('name', '=', source_line.donor_student_name)], limit=1)
+            name = source_line.donor_student_name
+
+            partner = Partner.search([('name', '=', name)], limit=1)
 
             if not partner:
                 partner = Partner.create({
-                    'name': source_line.donor_student_name or 'Undefined Donor',
+                    'name': name,
                     'mobile': source_line.mobile,
                     'cnic_no': source_line.cnic_no,
                     'email': source_line.email,
@@ -94,7 +85,6 @@ class Donation(models.Model):
                 })
                 created_count += 1
 
-            partner_cache[partner_key] = partner
             donation.donor_id = partner.id
             linked_count += 1
 
