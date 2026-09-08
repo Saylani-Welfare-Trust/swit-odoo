@@ -11,4 +11,14 @@ model.action_correct_records()
         </field>
     </record>
 
+    <record id="sync_existing_donation_donors_action_server" model="ir.actions.server">
+        <field name="name">Sync Donors for Existing Donations</field>
+        <field name="model_id" ref="model_donation"/>
+        <field name="binding_model_id" ref="model_donation"/>
+        <field name="state">code</field>
+        <field name="code">
+action = records.action_sync_existing_donors()
+        </field>
+    </record>
+
 </odoo>
