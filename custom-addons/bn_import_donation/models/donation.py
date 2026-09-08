@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-
+from odoo.exceptions import ValidationError
 
 state_selection = [
     ('draft', 'Draft'),
@@ -48,7 +48,11 @@ class Donation(models.Model):
     def action_draft(self):
         self.state = 'draft'
 
+
     def action_sync_existing_donors(self):
+        if not self:
+            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
+
         Partner = self.env['res.partner']
         donor_category = self.env.ref('bn_profile_management.donor_partner_category')
         donee_category = self.env.ref('bn_profile_management.donee_partner_category')
@@ -58,7 +62,15 @@ class Donation(models.Model):
         created_count = 0
         skipped_count = 0
 
-        for donation in self.filtered(lambda record: not record.donor_id):
+        donations_to_process = self.filtered(lambda record: not record.donor_id)
+
+        if not donations_to_process:
+            raise ValidationError(
+                _("All %s selected donation(s) already have a Donor / Student assigned. "
+                "Nothing to sync.") % len(self)
+            )
+
+        for donation in donations_to_process:
             source_line = self.env['valid.import.donation'].search([
                 ('import_donation_id', '=', donation.import_donation_id.id),
                 ('transaction_id', '=', donation.transaction_id),
@@ -87,6 +99,13 @@ class Donation(models.Model):
 
             donation.donor_id = partner.id
             linked_count += 1
+
+        if linked_count == 0:
+            raise ValidationError(
+                _("No donations could be linked. This usually means no matching "
+                "'Valid Import Donation' line was found (missing import_donation_id, "
+                "transaction_id, or donor_student_name). %s record(s) were skipped.") % skipped_count
+            )
 
         return {
             'type': 'ir.actions.client',
