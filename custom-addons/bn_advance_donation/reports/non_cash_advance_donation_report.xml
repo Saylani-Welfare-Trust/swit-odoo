@@ -7,12 +7,10 @@
                         t-att-src="image_data_uri(line.env.company.dn_image)"
                         style="width: 100%; height: auto; display: block;"/>
                     <div>               
-                        <div class="row">
-                            <div class="col-12 text-center">
-                                <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
-                                <h4 style="color: #5D6D7E;">Individual Line Certificate</h4>
-                                <hr style="border: 2px solid #2E4053;"/>
-                            </div>
+                        <div style="width: 100%; text-align: center; margin: 20px auto 0 auto;">                            
+                            <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
+                            <h4 style="color: #5D6D7E;">Individual Line Certificate</h4>
+                            <hr style="border: 2px solid #2E4053;"/>
                         </div>
                     </div>
                     
@@ -145,6 +143,17 @@
             </t>
         </t>
     </template>
+    <record id="advance_donation_line_non_cash_paperformat" model="report.paperformat">
+        <field name="name">A4 - Non-Cash Donation Line Report</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">4</field>
+        <field name="margin_bottom">24</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_spacing">5</field>
+        <field name="dpi">90</field>
+    </record>
     
     <record id="action_report_advance_donation_line_non_cash" model="ir.actions.report">
         <field name="name">Non-Cash Donation Line Report</field>
@@ -155,5 +164,6 @@
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Non-Cash Donation Line - %s-%s' % (object.advance_donation_id.name, object.serial_no)</field>
+        <field name="paperformat_id" ref="advance_donation_line_non_cash_paperformat"/>
     </record>
 </odoo>
