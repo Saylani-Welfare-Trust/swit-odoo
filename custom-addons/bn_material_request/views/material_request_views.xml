@@ -14,7 +14,7 @@
                 <field name="request_date"/>
                 <field name="source_location_id"/>
                 <field name="dest_location_id"/>
-                <field name="total_amount"/>
+                <field name="total_amount" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
