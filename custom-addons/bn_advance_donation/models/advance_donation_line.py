@@ -11,6 +11,10 @@ class AdvanceDonationLine(models.Model):
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
     amount = fields.Monetary('Amount', currency_field='currency_id')
+    service_charge_amount = fields.Monetary(
+        'Service Charge Amount',
+        currency_field='currency_id',
+    )
 
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id')
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id')
