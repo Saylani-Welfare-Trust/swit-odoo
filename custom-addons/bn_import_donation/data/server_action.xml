@@ -16,9 +16,7 @@ model.action_correct_records()
         <field name="model_id" ref="model_donation"/>
         <field name="binding_model_id" ref="model_donation"/>
         <field name="state">code</field>
-        <field name="code">
-action = records.action_sync_existing_donors()
-        </field>
+        <field name="code">action = records.action_sync_existing_donors()</field>
     </record>
 
 </odoo>

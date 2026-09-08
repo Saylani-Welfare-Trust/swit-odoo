@@ -49,6 +49,9 @@ class Donation(models.Model):
         self.state = 'draft'
 
     def action_sync_existing_donors(self):
+        donations = self or self.env['donation'].search([
+            ('donor_id', '=', False),
+        ])
         Partner = self.env['res.partner']
         donor_category = self.env.ref('bn_profile_management.donor_partner_category')
         donee_category = self.env.ref('bn_profile_management.donee_partner_category')
@@ -58,11 +61,16 @@ class Donation(models.Model):
         created_count = 0
         skipped_count = 0
 
-        for donation in self.filtered(lambda record: not record.donor_id):
-            source_line = self.env['valid.import.donation'].search([
-                ('import_donation_id', '=', donation.import_donation_id.id),
-                ('transaction_id', '=', donation.transaction_id),
-            ], limit=1)
+        for donation in donations.filtered(lambda record: not record.donor_id):
+            source_line = False
+            if donation.transaction_id:
+                source_line = self.env['valid.import.donation'].search([
+                    ('transaction_id', '=', donation.transaction_id),
+                ], order='id desc', limit=1)
+            if not source_line:
+                source_line = self.env['valid.import.donation'].search([
+                    ('import_donation_id', '=', donation.import_donation_id.id),
+                ], order='id desc', limit=1)
             if not source_line:
                 skipped_count += 1
                 continue
