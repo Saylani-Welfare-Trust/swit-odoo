@@ -15,6 +15,17 @@
                     </div>
                     <div style="margin-right: 10px; margin-left: 10px;margin-bottom: 15px;display: flex;">
                         <div class="sub_container_left" style="width:70%;">
+                            <div class="search_filter_gl" style="display:flex;align-items:center;margin-left:10px;">
+                                <input type="text"
+                                    class="o_searchview_input"
+                                    placeholder="Search partner, ref, or account..."
+                                    t-att-value="state.search_query"
+                                    t-on-input="onSearchInput"
+                                    style="border:1px solid #ccc;border-radius:4px;padding:5px 10px;min-width:260px;"/>
+                                <span t-if="state.search_query" class="fa fa-times"
+                                    style="margin-left:-24px;cursor:pointer;color:#999;"
+                                    t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
+                            </div>
                             <div class="report_print">
                                 <!-- Print (PDF) Button -->
                                 <button type="button"
