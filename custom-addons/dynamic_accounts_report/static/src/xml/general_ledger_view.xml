@@ -255,7 +255,7 @@
                 <div class="table_main_view">
                     <table cellspacing="0" width="100%" class="gl_report_table">
                         <thead>
-                            <tr class="o_heading" style="background:#FFFF00;">
+                            <tr class="o_heading">
                                 <th>Sr</th>
                                 <th>Account Name</th>
                                 <th>Split Account</th>
@@ -275,7 +275,7 @@
                             <t t-if="state.account">
                                 <t t-foreach="state.account" t-as="account" t-key="account_index">
                                     <!-- Account section banner -->
-                                    <tr style="background:#CC0000;color:#fff;">
+                                    <tr >
                                         <td colspan="13" style="font-weight:bold;padding:6px;">
                                             <t t-if="account != 'false'"><t t-esc="account.toUpperCase()"/></t>
                                             <t t-else="">UNKNOWN ACCOUNTS</t>
@@ -283,7 +283,7 @@
                                     </tr>
 
                                     <!-- Opening balance row -->
-                                    <tr style="background:#CC0000;color:#fff;">
+                                    <tr >
                                         <td>00</td>
                                         <td colspan="8">OPENING BALANCE</td>
                                         <td/><td/>
@@ -297,7 +297,7 @@
                                     <t t-set="sr" t-value="0"/>
                                     <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
                                         <t t-set="sr" t-value="sr + 1"/>
-                                        <tr style="background:#CC0000;color:#fff;">
+                                        <tr >
                                             <td><t t-esc="sr"/></td>
                                             <td><t t-esc="account"/></td>
                                             <td><t t-esc="line.split_account"/></td>
@@ -325,7 +325,7 @@
                                     </t>
 
                                     <!-- Per-account totals row -->
-                                    <tr style="background:#FFFF00;font-weight:bold;">
+                                    <tr style="font-weight:bold;">
                                         <td colspan="10">Total</td>
                                         <td><t t-esc="this.getAccountTotalValue(account, 'total_debit', 0).toFixed(2)"/></td>
                                         <td><t t-esc="this.getAccountTotalValue(account, 'total_credit', 0).toFixed(2)"/></td>
