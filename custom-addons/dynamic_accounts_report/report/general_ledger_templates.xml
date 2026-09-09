@@ -23,7 +23,7 @@
                                 <tr>
                                     <th>Date Range</th>
                                     <th>Journal</th>
-                                    <th>Analytic</th>
+                                    <!-- <th>Analytic</th> -->
                                     <th>Options</th>
                                 </tr>
                             </thead>
