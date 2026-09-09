@@ -37,7 +37,11 @@ class GeneralLedger extends owl.Component {
             method: {
                         'accrual': true
                     },
+            search_query: '',
+            account_list_full: [],
+            account_data_full: {},
         });
+        this.searchTimeout = null;
         this.load_data();
     }
     async load_data() {
@@ -77,6 +81,8 @@ class GeneralLedger extends owl.Component {
             self.state.account = account_list
             self.state.account_list = account_list
             self.state.account_data_list = self.state.account_data
+            self.state.account_list_full = [...account_list];
+            self.state.account_data_full = { ...self.state.account_data };
             self.state.account_total_list = account_totals
             self.state.account_total = account_totals
             self.state.currency = currency
@@ -332,12 +338,67 @@ class GeneralLedger extends owl.Component {
         })
         this.state.account = account_list
         this.state.account_data = filtered_data
+        this.state.account_list_full = [...account_list];
+        this.state.account_data_full = { ...filtered_data };
         this.state.account_total = account_totals
         this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
         this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
         if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
             this.unfoldButton.el.classList.remove("selected-filter")
         }
+    }
+
+    onSearchInput(ev) {
+        const value = ev.target.value;
+        this.state.search_query = value;
+        clearTimeout(this.searchTimeout);
+        // debounce so we don't re-filter on every keystroke while typing fast
+        this.searchTimeout = setTimeout(() => {
+            this.applySearch();
+        }, 300);
+    }
+
+    applySearch() {
+        const query = (this.state.search_query || '').trim().toLowerCase();
+        if (!query) {
+            this.state.account = [...this.state.account_list_full];
+            this.state.account_data = { ...this.state.account_data_full };
+            return;
+        }
+
+        const matchedAccounts = [];
+        const filteredData = {};
+
+        for (const account of this.state.account_list_full) {
+            const accountMatches = account.toLowerCase().includes(query);
+            const lines = this.state.account_data_full[account] || [];
+
+            // keep the account if its name matches, or if any of its
+            // journal items match on communication / move / partner
+            const matchingLines = accountMatches
+                ? lines
+                : lines.filter((rec) => {
+                    const line = Array.isArray(rec) ? rec[0] : rec;
+                    const partner = line.partner_id;
+                    const partnerName = Array.isArray(partner) ? partner[1] : '';
+                    const haystack = [
+                        line.move_name || '',
+                        line.name || '',
+                        partnerName || '',
+                    ]
+                        .join(' ')
+                        .toLowerCase();
+                    return haystack.includes(query);
+                });
+
+            if (accountMatches || matchingLines.length) {
+                matchedAccounts.push(account);
+                filteredData[account] = matchingLines;
+            }
+        }
+
+        this.state.account = matchedAccounts;
+        this.state.account_data = filteredData;
     }
     async unfoldAll(ev) {
         if (!ev.target.classList.contains("selected-filter")) {

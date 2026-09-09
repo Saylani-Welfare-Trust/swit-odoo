@@ -31,6 +31,17 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="search_filter_gl" style="display:flex;align-items:center;margin-left:10px;">
+                            <input type="text"
+                                class="o_searchview_input"
+                                placeholder="Search account, partner, or reference..."
+                                t-att-value="state.search_query"
+                                t-on-input="onSearchInput"
+                                style="border:1px solid #ccc;border-radius:4px;padding:5px 10px;min-width:260px;"/>
+                            <span t-if="state.search_query" class="fa fa-times"
+                                style="margin-left:-24px;cursor:pointer;color:#999;"
+                                t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
+                        </div>
                         <div class="sub_container_right">
                             <div class="time_range" style="">
                                 <a type="button" class="dropdown-toggle"
