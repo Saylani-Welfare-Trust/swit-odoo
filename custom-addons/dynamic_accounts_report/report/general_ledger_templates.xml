@@ -76,7 +76,7 @@
                     <br/>
                     <t t-if="account">
                         <table class="table table-sm table-reports">
-                            <thead style="background:#808080;">
+                            <thead >
                                 <tr>
                                     <th>Sr</th>
                                     <th>Account</th>
@@ -97,7 +97,7 @@
                                 <t t-foreach="account" t-as="accounts" t-key="accounts_index">
                                     <!-- Account banner -->
                                     <tr>
-                                        <th colspan="13" style="background:#D3D3D3;">
+                                        <th colspan="13">
                                             <t t-esc="accounts if accounts != 'false' else 'Unknown Account'"/>
                                         </th>
                                     </tr>
@@ -134,16 +134,16 @@
                                     </t>
                                     <!-- Per-account total -->
                                     <tr>
-                                        <th colspan="10" style="background:#D3D3D3;">Total</th>
-                                        <th style="background:#D3D3D3;">
+                                        <th colspan="10" >Total</th>
+                                        <th >
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
                                             <t t-esc="'%.2f' % total[accounts].get('total_debit', 0)"/>
                                         </th>
-                                        <th style="background:#D3D3D3;">
+                                        <th >
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
                                             <t t-esc="'%.2f' % total[accounts].get('total_credit', 0)"/>
                                         </th>
-                                        <th style="background:#D3D3D3;">
+                                        <th >
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
                                             <t t-esc="'%.2f' % (total[accounts].get('opening_balance', 0.0) + total[accounts].get('total_debit', 0) - total[accounts].get('total_credit', 0))"/>
                                         </th>
