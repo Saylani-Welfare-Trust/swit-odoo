@@ -87,29 +87,7 @@ class AccountGeneralLedger(models.TransientModel):
 
     @api.model
     def get_filter_values(self, journal_id, date_range, options, analytic,
-                          method, include_filter_values=True):
-        """
-        Retrieve filtered values for the partner ledger report.
-
-        :param journal_id: The journal IDs to filter the report data.
-        :type journal_id: list
-
-        :param date_range: The date range option to filter the report data.
-        :type date_range: str or dict
-
-        :param options: The additional options to filter the report data.
-        :type options: dict
-
-        :param method: Find the method
-        :type options: dict
-
-        :param analytic: The analytic IDs to filter the report data.
-        :type analytic: list
-
-        :return: A dictionary containing the filtered values for the partner
-        ledger report.
-        :rtype: dict
-        """
+                        method, include_filter_values=True):
         account_dict = {}
         account_totals = {}
         today = fields.Date.today()
@@ -123,7 +101,7 @@ class AccountGeneralLedger(models.TransientModel):
         elif 'draft' in options:
             option_domain = ['posted', 'draft']
         domain = [('journal_id', 'in', journal_id),
-                  ('parent_state', 'in', option_domain), ] if journal_id else [
+                ('parent_state', 'in', option_domain), ] if journal_id else [
             ('parent_state', 'in', option_domain), ]
         if method == {}:
             method = None
@@ -132,79 +110,131 @@ class AccountGeneralLedger(models.TransientModel):
                         self.env.company.tax_cash_basis_journal_id.ids), ]
         if analytic:
             domain += [('analytic_line_ids.account_id', 'in', analytic)]
+
+        start_date = end_date = None
         if date_range:
             if date_range == 'month':
-                domain += [('date', '>=', today.replace(day=1)),
-                           ('date', '<=', today)]
+                start_date, end_date = today.replace(day=1), today
             elif date_range == 'year':
-                domain += [('date', '>=', today.replace(month=1, day=1)),
-                           ('date', '<=', today)]
+                start_date, end_date = today.replace(month=1, day=1), today
             elif date_range == 'quarter':
-                domain += [('date', '>=', quarter_start),
-                           ('date', '<=', quarter_end)]
+                start_date, end_date = quarter_start, quarter_end
             elif date_range == 'last-month':
-                last_month_start = today.replace(day=1) - relativedelta(
-                    months=1)
+                last_month_start = today.replace(day=1) - relativedelta(months=1)
                 last_month_end = last_month_start + relativedelta(
-                    day=calendar.monthrange(last_month_start.year,
-                                            last_month_start.month)[
-                        1])
-                domain += [('date', '>=', last_month_start),
-                           ('date', '<=', last_month_end)]
+                    day=calendar.monthrange(last_month_start.year, last_month_start.month)[1])
+                start_date, end_date = last_month_start, last_month_end
             elif date_range == 'last-year':
-                last_year_start = today.replace(month=1,
-                                                day=1) - relativedelta(years=1)
-                last_year_end = last_year_start.replace(month=12, day=31)
-                domain += [('date', '>=', last_year_start),
-                           ('date', '<=', last_year_end)]
+                last_year_start = today.replace(month=1, day=1) - relativedelta(years=1)
+                start_date, end_date = last_year_start, last_year_start.replace(month=12, day=31)
             elif date_range == 'last-quarter':
-                domain += [('date', '>=', previous_quarter_start),
-                           ('date', '<=', previous_quarter_end)]
-            elif 'start_date' in date_range and 'end_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'],
-                                               '%Y-%m-%d').date()
-                end_date = datetime.strptime(date_range['end_date'],
-                                             '%Y-%m-%d').date()
-                domain += [('date', '>=', start_date),
-                           ('date', '<=', end_date)]
-            elif 'start_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'],
-                                               '%Y-%m-%d').date()
+                start_date, end_date = previous_quarter_start, previous_quarter_end
+            elif isinstance(date_range, dict):
+                if date_range.get('start_date'):
+                    start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
+                if date_range.get('end_date'):
+                    end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
+
+            if start_date:
                 domain += [('date', '>=', start_date)]
-            elif 'end_date' in date_range:
-                end_date = datetime.strptime(date_range['end_date'],
-                                             '%Y-%m-%d').date()
+            if end_date:
                 domain += [('date', '<=', end_date)]
+
         move_lines = self.env['account.move.line'].search_read(
             domain,
-            ['date', 'name', 'move_name', 'debit', 'credit',
-               'partner_id', 'account_id']
+            ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
+            'partner_id', 'account_id', 'ref', 'journal_id',
+            'analytic_distribution']
         )
 
         if include_filter_values:
             account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
             account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
 
-        entries_by_account = defaultdict(list)
-        account_map = {}
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        account_map = {}
         if account_ids:
-            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
+            account_map = {a.id: a.display_name for a in self.env['account.account'].browse(list(account_ids))}
 
+        # --- opening balance (same domain, minus date filters, dated before start_date) ---
+        opening_balances = {}
+        if start_date and account_ids:
+            opening_domain = [d for d in domain if d[0] != 'date']
+            opening_domain += [('date', '<', start_date),
+                            ('account_id', 'in', list(account_ids))]
+            opening_lines = self.env['account.move.line'].read_group(
+                opening_domain, ['debit:sum', 'credit:sum'], ['account_id'])
+            for row in opening_lines:
+                acc_id = row['account_id'][0]
+                opening_balances[acc_id] = (row.get('debit', 0.0) or 0.0) - (row.get('credit', 0.0) or 0.0)
+
+        # --- corresponding/"split" account per move (siblings in the same entry) ---
+        move_ids = {line['move_id'][0] for line in move_lines if line.get('move_id')}
+        move_account_map = defaultdict(set)
+        if move_ids:
+            all_move_lines = self.env['account.move.line'].search_read(
+                [('move_id', 'in', list(move_ids))], ['move_id', 'account_id'])
+            for l in all_move_lines:
+                if l.get('account_id'):
+                    move_account_map[l['move_id'][0]].add(l['account_id'][1])
+
+        def split_account_for(line):
+            if not line.get('move_id') or not line.get('account_id'):
+                return ''
+            others = move_account_map[line['move_id'][0]] - {line['account_id'][1]}
+            if not others:
+                return ''
+            return list(others)[0] if len(others) == 1 else 'Multiple'
+
+        # --- location from first analytic account on the distribution ---
+        analytic_ids = set()
         for line in move_lines:
+            dist = line.get('analytic_distribution') or {}
+            for k in dist.keys():
+                try:
+                    analytic_ids.add(int(k))
+                except (TypeError, ValueError):
+                    pass
+        analytic_map = {}
+        if analytic_ids:
+            analytic_map = {a.id: a.display_name for a in
+                            self.env['account.analytic.account'].browse(list(analytic_ids))}
+
+        def location_for(line):
+            dist = line.get('analytic_distribution') or {}
+            for k in dist.keys():
+                try:
+                    return analytic_map.get(int(k), '')
+                except (TypeError, ValueError):
+                    continue
+            return ''
+
+        entries_by_account = defaultdict(list)
+        for line in sorted(move_lines, key=lambda l: (l.get('date') or '', l.get('id', 0))):
             account_id = line.get('account_id')
             if not account_id:
                 continue
             account_key = account_map.get(account_id[0], account_id[1])
+            line['split_account'] = split_account_for(line)
+            line['location'] = location_for(line)
+            line['trx_type'] = line['journal_id'][1] if line.get('journal_id') else ''
             entries_by_account[account_key].append(line)
             totals = account_totals.setdefault(
                 account_key,
-                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
+                {'total_debit': 0.0, 'total_credit': 0.0,
+                'currency_id': self.env.company.currency_id.symbol,
+                'account_id': account_id[0],
+                'opening_balance': opening_balances.get(account_id[0], 0.0)}
             )
             totals['total_debit'] += line.get('debit') or 0.0
             totals['total_credit'] += line.get('credit') or 0.0
 
+        # running balance per account
         for account_key, lines in entries_by_account.items():
+            running = account_totals[account_key]['opening_balance']
+            for line in lines:
+                running += (line.get('debit') or 0.0) - (line.get('credit') or 0.0)
+                line['running_balance'] = running
             account_dict[account_key] = lines
 
         account_dict['account_totals'] = account_totals

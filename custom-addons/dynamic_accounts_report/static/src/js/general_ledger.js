@@ -365,38 +365,28 @@ class GeneralLedger extends owl.Component {
             this.state.account_data = { ...this.state.account_data_full };
             return;
         }
-
         const matchedAccounts = [];
         const filteredData = {};
-
         for (const account of this.state.account_list_full) {
             const accountMatches = account.toLowerCase().includes(query);
             const lines = this.state.account_data_full[account] || [];
-
-            // keep the account if its name matches, or if any of its
-            // journal items match on communication / move / partner
             const matchingLines = accountMatches
                 ? lines
-                : lines.filter((rec) => {
-                    const line = Array.isArray(rec) ? rec[0] : rec;
+                : lines.filter((line) => {
                     const partner = line.partner_id;
                     const partnerName = Array.isArray(partner) ? partner[1] : '';
                     const haystack = [
-                        line.move_name || '',
-                        line.name || '',
-                        partnerName || '',
-                    ]
-                        .join(' ')
-                        .toLowerCase();
+                        line.move_name || '', line.name || '', partnerName,
+                        line.ref || '', line.trx_type || '',
+                        line.split_account || '', line.location || '',
+                    ].join(' ').toLowerCase();
                     return haystack.includes(query);
                 });
-
             if (accountMatches || matchingLines.length) {
                 matchedAccounts.push(account);
                 filteredData[account] = matchingLines;
             }
         }
-
         this.state.account = matchedAccounts;
         this.state.account_data = filteredData;
     }
