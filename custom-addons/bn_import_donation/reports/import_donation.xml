@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="bn_import_donation.donation_form">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <!-- PAGE WRAPPER -->
+                    <div class="page" style="position:relative;">
+                        <!-- ===== STYLES ===== -->
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                font-size: 11px;
+                            }
+
+                            h1 {
+                                font-size: 14px;
+                                font-weight: bold;
+                                margin: 2px 0;
+                            }
+
+                            h4 {
+                                font-size: 12px;
+                                margin: 6px 0;
+                                font-weight: bold;
+                            }
+
+                            table {
+                                font-size: 11px;
+                                border-collapse: collapse;
+                            }
+
+                            th, td {
+                                padding: 3px 4px !important;
+                            }
+
+                            /* ✅ FIXED WATERMARK */
+                            .watermark {
+                                position: absolute; /* was fixed */
+                                top: 420px;         /* adjust if needed */
+                                left: 50%;
+                                transform: translateX(-50%) rotate(-30deg);
+                                font-size: 80px;
+                                color: rgba(200, 200, 200, 0.15);
+                                font-weight: bold;
+                                white-space: nowrap;
+                                pointer-events: none;
+                                z-index: 0;
+                            }
+                        </style>
+
+                        <img t-if="o.env.company.dn_image"
+                            t-att-src="image_data_uri(o.env.company.dn_image)"
+                            style="height: 100%; width: 100%;"/>
+
+                        <!-- ===== WATERMARK ===== -->
+                        <div class="watermark">Donation</div>
+
+                        <!-- ===== HEADER ===== -->
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <h1>Donation Receipt</h1>
+                            </div>
+                            <div class="col-6 text-end">
+                                <h1>
+                                    Saylani Welfare International Trust
+                                </h1>
+                            </div>
+                        </div>
+
+                        <hr style="margin:4px 0"/>
+
+                        <!-- ===== BASIC INFO ===== -->
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <div><strong>RC #:</strong> ONLINE-<t t-esc="o.gateway_config_id.name"/>-<t t-esc="str(datetime.datetime.now()).split(' ')[0].split('-')[-2]"/><t t-esc="str(datetime.datetime.now()).split(' ')[0].split('-')[0][2:]"/>-<t t-esc="o.name.split('/')[-1]"/></div>
+                                <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name"/></div>
+                                <div><strong>Contact:</strong> <t t-esc="o.donor_id.mobile"/></div>
+                                <div><strong>Purpose:</strong> <t t-esc="o.product_id.name"/></div>
+                            </div>
+                            <div class="col-6">
+                                <div>
+                                    <strong>Date:</strong>
+                                    <t t-esc="o.date if o.date else '--'"/>
+                                </div>
+                                <div><strong>Currency:</strong> <t t-esc="o.currency_id.name"/></div>
+                                <div><strong>Amount:</strong> <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/></div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="text-center border-top pt-3 pb-3">
+                            <p class="small mb-1">This is computer generated receipt and does not require physical signature</p>
+                            <p class="small mb-0">For any queries: contact on Email: info@saylaniwelfare.com | Support: +92-21-111-729-526</p>
+                        </div>
+
+                        <div style="text-align: center; font-size: 12px;">
+                            Powered by BytesNode
+                        </div>
+
+                    </div>
+
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="report_import_donation_paperformat" model="report.paperformat">
+        <field name="name">A5 - Import Donation Receipt</field>
+        <field name="format">A5</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_donation_form" model="ir.actions.report">
+        <field name="name">Donation</field>
+        <field name="model">donation</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">bn_import_donation.donation_form</field>
+        <field name="report_file">bn_import_donation.donation_form</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="binding_model_id" ref="model_donation"/>
+        <field name="binding_type">report</field>
+        <field name="id" ref="bn_import_donation.report_import_donation_paperformat"/>
+    </record>
+
+</odoo>

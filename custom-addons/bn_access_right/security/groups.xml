@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-
-    <!-- HR Attendance -->
-    <record id="hr_attendance.group_hr_attendance_officer" model="res.groups">
-        <field name="category_id" ref="base.module_category_human_resources_attendances"/>
-    </record>
-
-</odoo>
