@@ -274,63 +274,77 @@
                         <tbody t-ref="tbody">
                             <t t-if="state.account">
                                 <t t-foreach="state.account" t-as="account" t-key="account_index">
-                                    <!-- Account section banner -->
-                                    <tr >
-                                        <td colspan="13" style="font-weight:bold;padding:6px;">
+
+                                    <!-- Account banner: always visible, doubles as the single-line summary -->
+                                    <tr style="cursor:pointer;" t-on-click="() => this.toggleAccount(account)">
+                                        <td colspan="9" style="font-weight:bold;padding:6px;">
+                                            <span class="toggle-icon" style="margin-right:6px;">
+                                                <i t-att-class="this.isAccountCollapsed(account) ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                            </span>
                                             <t t-if="account != 'false'"><t t-esc="account.toUpperCase()"/></t>
                                             <t t-else="">UNKNOWN ACCOUNTS</t>
                                         </td>
-                                    </tr>
-
-                                    <!-- Opening balance row -->
-                                    <tr >
-                                        <td>00</td>
-                                        <td colspan="8">OPENING BALANCE</td>
-                                        <td/><td/>
+                                        <td/>
                                         <td>
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                            <t t-esc="this.getAccountTotalValue(account, 'opening_balance', 0).toFixed(2)"/>
+                                            <t t-esc="this.getAccountTotalValue(account, 'total_debit', 0).toFixed(2)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.getAccountTotalValue(account, 'total_credit', 0).toFixed(2)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="(this.getAccountTotalValue(account, 'opening_balance', 0)
+                                                    + this.getAccountTotalValue(account, 'total_debit', 0)
+                                                    - this.getAccountTotalValue(account, 'total_credit', 0)).toFixed(2)"/>
                                         </td>
                                     </tr>
 
-                                    <!-- Transaction rows -->
-                                    <t t-set="sr" t-value="0"/>
-                                    <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
-                                        <t t-set="sr" t-value="sr + 1"/>
-                                        <tr >
-                                            <td><t t-esc="sr"/></td>
-                                            <td><t t-esc="account"/></td>
-                                            <td><t t-esc="line.split_account"/></td>
-                                            <td><t t-esc="line.location"/></td>
-                                            <td><t t-esc="line.date"/></td>
-                                            <td><t t-esc="line.trx_type"/></td>
-                                            <td><t t-esc="line.move_name"/></td>
-                                            <td><t t-esc="line.ref"/></td>
+                                    <!-- Everything below only shows when this account is expanded -->
+                                    <t t-if="!this.isAccountCollapsed(account)">
+                                        <!-- Opening balance row -->
+                                        <tr>
+                                            <td>00</td>
+                                            <td colspan="8">OPENING BALANCE</td>
+                                            <td/><td/>
                                             <td>
-                                                <t t-if="line.partner_id" t-esc="line.partner_id[1]"/>
+                                                <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                                <t t-esc="this.getAccountTotalValue(account, 'opening_balance', 0).toFixed(2)"/>
                                             </td>
-                                            <td><t t-esc="line.name"/></td>
-                                            <td>
-                                                <t t-if="line.debit">
-                                                    <t t-esc="line.debit.toFixed(2)"/>
-                                                </t>
-                                            </td>
-                                            <td>
-                                                <t t-if="line.credit">
-                                                    <t t-esc="line.credit.toFixed(2)"/>
-                                                </t>
-                                            </td>
-                                            <td><t t-esc="line.running_balance.toFixed(2)"/></td>
                                         </tr>
-                                    </t>
 
-                                    <!-- Per-account totals row -->
-                                    <tr style="font-weight:bold;">
-                                        <td colspan="10">Total</td>
-                                        <td><t t-esc="this.getAccountTotalValue(account, 'total_debit', 0).toFixed(2)"/></td>
-                                        <td><t t-esc="this.getAccountTotalValue(account, 'total_credit', 0).toFixed(2)"/></td>
-                                        <td/>
-                                    </tr>
+                                        <!-- Transaction rows -->
+                                        <t t-set="sr" t-value="0"/>
+                                        <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
+                                            <t t-set="sr" t-value="sr + 1"/>
+                                            <tr>
+                                                <td><t t-esc="sr"/></td>
+                                                <td><t t-esc="account"/></td>
+                                                <td><t t-esc="line.split_account"/></td>
+                                                <td><t t-esc="line.location"/></td>
+                                                <td><t t-esc="line.date"/></td>
+                                                <td><t t-esc="line.trx_type"/></td>
+                                                <td><t t-esc="line.move_name"/></td>
+                                                <td><t t-esc="line.ref"/></td>
+                                                <td>
+                                                    <t t-if="line.partner_id" t-esc="line.partner_id[1]"/>
+                                                </td>
+                                                <td><t t-esc="line.name"/></td>
+                                                <td>
+                                                    <t t-if="line.debit">
+                                                        <t t-esc="line.debit.toFixed(2)"/>
+                                                    </t>
+                                                </td>
+                                                <td>
+                                                    <t t-if="line.credit">
+                                                        <t t-esc="line.credit.toFixed(2)"/>
+                                                    </t>
+                                                </td>
+                                                <td><t t-esc="line.running_balance.toFixed(2)"/></td>
+                                            </tr>
+                                        </t>
+                                    </t>
                                 </t>
                             </t>
                         </tbody>

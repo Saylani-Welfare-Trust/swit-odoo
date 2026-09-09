@@ -40,6 +40,7 @@ class GeneralLedger extends owl.Component {
             search_query: '',
             account_list_full: [],
             account_data_full: {},
+            collapsed_accounts: {},
         });
         this.searchTimeout = null;
         this.load_data();
@@ -178,6 +179,15 @@ class GeneralLedger extends owl.Component {
             return [];
         }
         return this.state.account_data[account];
+    }
+    isAccountCollapsed(account) {
+        return !!this.state.collapsed_accounts[account];
+    }
+    toggleAccount(account) {
+        this.state.collapsed_accounts = {
+            ...this.state.collapsed_accounts,
+            [account]: !this.state.collapsed_accounts[account],
+        };
     }
     gotoJournalEntry(ev) {
         return this.action.doAction({
@@ -391,17 +401,13 @@ class GeneralLedger extends owl.Component {
         this.state.account_data = filteredData;
     }
     async unfoldAll(ev) {
-        if (!ev.target.classList.contains("selected-filter")) {
-            for (var length = 0; length < this.tbody.el.children.length; length++) {
-                $(this.tbody.el.children[length])[0].classList.add('show')
-            }
-            ev.target.classList.add("selected-filter");
-        } else {
-            for (var length = 0; length < this.tbody.el.children.length; length++) {
-                $(this.tbody.el.children[length])[0].classList.remove('show')
-            }
-            ev.target.classList.remove("selected-filter");
+        const shouldCollapseAll = !ev.target.classList.contains("selected-filter");
+        const updated = {};
+        for (const account of this.state.account || []) {
+            updated[account] = shouldCollapseAll;
         }
+        this.state.collapsed_accounts = updated;
+        ev.target.classList.toggle("selected-filter");
     }
     filter() {
     var self=this;
