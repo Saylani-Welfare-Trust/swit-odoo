@@ -79,39 +79,76 @@
                         <table class="table table-sm table-reports">
                             <thead style="background:#808080;">
                                 <tr>
-                                    <th colspan="6"/>
+                                    <th>Sr</th>
+                                    <th>Account</th>
+                                    <th>Split Account</th>
+                                    <th>Location</th>
                                     <th>Date</th>
-                                    <th>Communication</th>
-                                    <th>Partner</th>
+                                    <th>Trx Type</th>
+                                    <th>V.No</th>
+                                    <th>Ref No.</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
                                     <th>Debit</th>
                                     <th>Credit</th>
                                     <th>Balance</th>
                                 </tr>
                             </thead>
-                            <tbody style="font-size:11px;font-weight:100;">
+                            <tbody style="font-size:10px;font-weight:100;">
                                 <t t-foreach="account" t-as="accounts" t-key="accounts_index">
+                                    <!-- Account banner -->
                                     <tr>
-                                        <th colspan="6" style="background:#D3D3D3;">
+                                        <th colspan="13" style="background:#D3D3D3;">
                                             <t t-esc="accounts if accounts != 'false' else 'Unknown Account'"/>
                                         </th>
-                                        <th colspan="3" style="background:#D3D3D3;"/>
-                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_debit', 0)"/></th>
-                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_credit', 0)"/></th>
-                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_debit', 0) - total[accounts].get('total_credit', 0)"/></th>
                                     </tr>
-                                    <t t-foreach="data.get(accounts, [])" t-as="valuelist" t-key="valuelist_index">
-                                        <tr class="border-bottom">
-                                        <th colspan="6">
-                                            <t t-esc="valuelist.get('move_name', '')"/>
-                                        </th>
-                                        <th><t t-esc="valuelist.get('date', '')"/></th>
-                                        <th><t t-esc="valuelist.get('name', '')"/></th>
-                                        <th><t t-if="valuelist.get('partner_id')" t-esc="valuelist['partner_id'][1]"/></th>
-                                        <th><t t-if="valuelist.get('debit')" t-esc="valuelist.get('debit', 0)"/></th>
-                                        <th><t t-if="valuelist.get('credit')" t-esc="valuelist.get('credit', 0)"/></th>
+                                    <!-- Opening balance -->
+                                    <tr>
+                                        <th>00</th>
+                                        <th colspan="8">OPENING BALANCE</th>
                                         <th/>
+                                        <th/>
+                                        <th>
+                                            <t t-esc="total[accounts].get('currency_id', '')"/>
+                                            <t t-esc="'%.2f' % total[accounts].get('opening_balance', 0.0)"/>
+                                        </th>
+                                    </tr>
+                                    <!-- Transaction lines -->
+                                    <t t-set="sr" t-value="0"/>
+                                    <t t-foreach="data.get(accounts, [])" t-as="valuelist" t-key="valuelist_index">
+                                        <t t-set="sr" t-value="sr + 1"/>
+                                        <tr class="border-bottom">
+                                            <th><t t-esc="sr"/></th>
+                                            <th><t t-esc="accounts"/></th>
+                                            <th><t t-esc="valuelist.get('split_account', '')"/></th>
+                                            <th><t t-esc="valuelist.get('location', '')"/></th>
+                                            <th><t t-esc="valuelist.get('date', '')"/></th>
+                                            <th><t t-esc="valuelist.get('trx_type', '')"/></th>
+                                            <th><t t-esc="valuelist.get('move_name', '')"/></th>
+                                            <th><t t-esc="valuelist.get('ref', '')"/></th>
+                                            <th><t t-if="valuelist.get('partner_id')" t-esc="valuelist['partner_id'][1]"/></th>
+                                            <th><t t-esc="valuelist.get('name', '')"/></th>
+                                            <th><t t-if="valuelist.get('debit')" t-esc="'%.2f' % valuelist.get('debit', 0)"/></th>
+                                            <th><t t-if="valuelist.get('credit')" t-esc="'%.2f' % valuelist.get('credit', 0)"/></th>
+                                            <th><t t-esc="'%.2f' % valuelist.get('running_balance', 0.0)"/></th>
                                         </tr>
                                     </t>
+                                    <!-- Per-account total -->
+                                    <tr>
+                                        <th colspan="10" style="background:#D3D3D3;">Total</th>
+                                        <th style="background:#D3D3D3;">
+                                            <t t-esc="total[accounts].get('currency_id', '')"/>
+                                            <t t-esc="'%.2f' % total[accounts].get('total_debit', 0)"/>
+                                        </th>
+                                        <th style="background:#D3D3D3;">
+                                            <t t-esc="total[accounts].get('currency_id', '')"/>
+                                            <t t-esc="'%.2f' % total[accounts].get('total_credit', 0)"/>
+                                        </th>
+                                        <th style="background:#D3D3D3;">
+                                            <t t-esc="total[accounts].get('currency_id', '')"/>
+                                            <t t-esc="'%.2f' % (total[accounts].get('opening_balance', 0.0) + total[accounts].get('total_debit', 0) - total[accounts].get('total_credit', 0))"/>
+                                        </th>
+                                    </tr>
                                 </t>
                             </tbody>
                         </table>
@@ -131,6 +168,25 @@
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
                                     <t t-out="float(grand_total['total_debit']) - float(grand_total['total_credit'])"/>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th style="width:35%;">Total</th>
+                                <th style="width:10%">
+                                    <t t-out="grand_total['currency']"/>
+                                    <t t-out="'%.2f' % grand_total.get('opening_balance', 0.0)"/>
+                                </th>
+                                <th style="width:10%">
+                                    <t t-out="grand_total['currency']"/>
+                                    <t t-out="'%.2f' % grand_total['total_debit']"/>
+                                </th>
+                                <th style="width:10%">
+                                    <t t-out="grand_total['currency']"/>
+                                    <t t-out="'%.2f' % grand_total['total_credit']"/>
+                                </th>
+                                <th style="width:10%">
+                                    <t t-out="grand_total['currency']"/>
+                                    <t t-out="'%.2f' % (grand_total.get('opening_balance', 0.0) + float(grand_total['total_debit']) - float(grand_total['total_credit']))"/>
                                 </th>
                             </tr>
                         </tbody>

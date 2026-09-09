@@ -27,6 +27,7 @@ class GeneralLedgerReport(models.AbstractModel):
         totals = report_data.get('account_totals') or {}
         total_debit = sum(value.get('total_debit', 0.0) for value in totals.values())
         total_credit = sum(value.get('total_credit', 0.0) for value in totals.values())
+        total_opening = sum(value.get('opening_balance', 0.0) for value in totals.values())
         currency = self.env.company.currency_id.symbol
 
         return {
@@ -39,6 +40,7 @@ class GeneralLedgerReport(models.AbstractModel):
             'grand_total': {
                 'total_debit': total_debit,
                 'total_credit': total_credit,
+                'opening_balance': total_opening,
                 'currency': currency,
             },
             'report_name': data.get('report_name') or 'General Ledger',

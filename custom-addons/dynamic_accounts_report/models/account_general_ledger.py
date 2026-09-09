@@ -317,46 +317,97 @@ class AccountGeneralLedger(models.TransientModel):
             sheet.merge_range('C6:G6', option_keys_str, filter_body)
         if report_accounts:
             if report_action == 'dynamic_accounts_report.action_general_ledger':
-                sheet.write(8, col, ' ', sub_heading)
-                sheet.write(8, col + 1, 'Date', sub_heading)
-                sheet.merge_range('C9:E9', 'Communication', sub_heading)
-                sheet.merge_range('F9:G9', 'Partner', sub_heading)
-                sheet.merge_range('H9:I9', 'Debit', sub_heading)
-                sheet.merge_range('J9:K9', 'Credit', sub_heading)
-                sheet.merge_range('L9:M9', 'Balance', sub_heading)
+                headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
+                        'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
+                        'Debit', 'Credit', 'Balance']
+                # widen a few columns for readability
+                widths = [6, 22, 18, 16, 12, 12, 14, 12, 16, 32, 12, 12, 14]
+                for idx, w in enumerate(widths):
+                    sheet.set_column(idx, idx, w)
+
+                banner_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#CC0000', 'font_color': 'white'})
+                header_row_fmt = workbook.add_format(
+                    {'bold': True, 'align': 'center', 'font_size': '10px',
+                    'border': 1, 'bg_color': '#FFFF00'})
+                opening_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#CC0000', 'font_color': 'white'})
+                line_fmt = workbook.add_format({'font_size': '10px', 'border': 1})
+                num_fmt = workbook.add_format(
+                    {'font_size': '10px', 'border': 1, 'num_format': '#,##0.00'})
+                total_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#FFFF00'})
+                total_num_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#FFFF00', 'num_format': '#,##0.00'})
+
                 row = 8
+                for idx, header in enumerate(headers):
+                    sheet.write(row, idx, header, header_row_fmt)
+                row += 1
+
                 for account in report_accounts:
+                    account_total = report_totals.get(account, {})
+                    currency = account_total.get('currency_id', '')
+
+                    # Account banner
+                    sheet.merge_range(row, 0, row, 12,
+                                    account if account != 'false' else 'Unknown Account',
+                                    banner_fmt)
                     row += 1
-                    account_total = report_totals.get(account, {'total_debit': 0.0, 'total_credit': 0.0})
-                    sheet.write(row, col, account, txt_name)
-                    sheet.write(row, col + 1, ' ', txt_name)
-                    sheet.merge_range(row, col + 2, row, col + 4, ' ', txt_name)
-                    sheet.merge_range(row, col + 5, row, col + 6, ' ', txt_name)
-                    sheet.merge_range(row, col + 7, row, col + 8,
-                                      account_total.get('total_debit', 0.0), txt_name)
-                    sheet.merge_range(row, col + 9, row, col + 10,
-                                      account_total.get('total_credit', 0.0), txt_name)
-                    sheet.merge_range(row, col + 11, row, col + 12,
-                                      account_total.get('total_debit', 0.0) - account_total.get('total_credit', 0.0), txt_name)
-                    for rec in report_data.get(account, []):
-                        row += 1
+
+                    # Opening balance
+                    sheet.write(row, 0, '00', opening_fmt)
+                    sheet.merge_range(row, 1, row, 8, 'OPENING BALANCE', opening_fmt)
+                    sheet.write(row, 9, '', opening_fmt)
+                    sheet.write(row, 10, '', opening_fmt)
+                    sheet.write(row, 11, '', opening_fmt)
+                    sheet.write(row, 12,
+                                f"{currency} {account_total.get('opening_balance', 0.0):,.2f}",
+                                opening_fmt)
+                    row += 1
+
+                    # Transaction lines
+                    for sr, rec in enumerate(report_data.get(account, []), start=1):
                         record = rec[0] if isinstance(rec, list) else rec
                         partner = record.get('partner_id')
-                        name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else None
-                        sheet.write(row, col, record.get('move_name', ''), txt_name)
-                        sheet.write(row, col + 1, record.get('date', ''), txt_name)
-                        sheet.merge_range(row, col + 2, row, col + 4, record.get('name', ''), txt_name)
-                        sheet.merge_range(row, col + 5, row, col + 6, name, txt_name)
-                        sheet.merge_range(row, col + 7, row, col + 8, record.get('debit', 0.0), txt_name)
-                        sheet.merge_range(row, col + 9, row, col + 10, record.get('credit', 0.0), txt_name)
-                        sheet.merge_range(row, col + 11, row, col + 12, ' ', txt_name)
-                row += 1
-                sheet.merge_range(row, col, row, col + 6, 'Total', filter_head)
-                sheet.merge_range(row, col + 7, row, col + 8, grand_total.get('total_debit', 0.0), filter_head)
-                sheet.merge_range(row, col + 9, row, col + 10, grand_total.get('total_credit', 0.0), filter_head)
-                sheet.merge_range(row, col + 11, row, col + 12,
-                                  float(grand_total.get('total_debit', 0.0)) - float(grand_total.get('total_credit', 0.0)),
-                                  filter_head)
+                        partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
+                        sheet.write(row, 0, sr, line_fmt)
+                        sheet.write(row, 1, account, line_fmt)
+                        sheet.write(row, 2, record.get('split_account', ''), line_fmt)
+                        sheet.write(row, 3, record.get('location', ''), line_fmt)
+                        sheet.write(row, 4, record.get('date', ''), line_fmt)
+                        sheet.write(row, 5, record.get('trx_type', ''), line_fmt)
+                        sheet.write(row, 6, record.get('move_name', ''), line_fmt)
+                        sheet.write(row, 7, record.get('ref', ''), line_fmt)
+                        sheet.write(row, 8, partner_name, line_fmt)
+                        sheet.write(row, 9, record.get('name', ''), line_fmt)
+                        sheet.write(row, 10, record.get('debit', 0.0) or '', num_fmt)
+                        sheet.write(row, 11, record.get('credit', 0.0) or '', num_fmt)
+                        sheet.write(row, 12, record.get('running_balance', 0.0), num_fmt)
+                        row += 1
+
+                    # Per-account totals
+                    sheet.merge_range(row, 0, row, 9, 'Total', total_fmt)
+                    sheet.write(row, 10, account_total.get('total_debit', 0.0), total_num_fmt)
+                    sheet.write(row, 11, account_total.get('total_credit', 0.0), total_num_fmt)
+                    closing = (account_total.get('opening_balance', 0.0)
+                            + account_total.get('total_debit', 0.0)
+                            - account_total.get('total_credit', 0.0))
+                    sheet.write(row, 12, closing, total_num_fmt)
+                    row += 2  # blank row between account blocks
+
+                # Grand total row
+                grand_opening = sum(v.get('opening_balance', 0.0) for v in report_totals.values())
+                sheet.merge_range(row, 0, row, 9, 'Grand Total', total_fmt)
+                sheet.write(row, 10, grand_total.get('total_debit', 0.0), total_num_fmt)
+                sheet.write(row, 11, grand_total.get('total_credit', 0.0), total_num_fmt)
+                sheet.write(row, 12,
+                            grand_opening + float(grand_total.get('total_debit', 0.0)) - float(grand_total.get('total_credit', 0.0)),
+                            total_num_fmt)
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
