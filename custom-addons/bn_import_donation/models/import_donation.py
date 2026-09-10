@@ -449,7 +449,6 @@ class ImportDonation(models.Model):
                 if txn_id:
                     name_map[txn_id] = from_name
 
-            lines = rec.valid_import_donation_ids | rec.invalid_import_donation_ids
             updated = 0
             for lines in (rec.valid_import_donation_ids, rec.invalid_import_donation_ids):
                 for line in lines:
