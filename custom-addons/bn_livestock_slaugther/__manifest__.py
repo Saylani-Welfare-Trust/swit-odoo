@@ -12,7 +12,7 @@
     'data': [
         'data/sequence.xml',
         'data/stock_location.xml',
-        'security/groups.xml',
+        'data/operation_type_livestock.xml',
         'security/ir.model.access.csv',
         'views/livestock_slaugther.xml',
         'views/livestock_requisition.xml',
