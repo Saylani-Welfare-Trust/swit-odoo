@@ -451,11 +451,12 @@ class ImportDonation(models.Model):
 
             lines = rec.valid_import_donation_ids | rec.invalid_import_donation_ids
             updated = 0
-            for line in lines:
-                key = self._norm_id(line.transaction_id)
-                match_name = name_map.get(key)
-                if match_name and match_name != line.donor_student_name:
-                    line.donor_student_name = match_name
-                    updated += 1
+            for lines in (rec.valid_import_donation_ids, rec.invalid_import_donation_ids):
+                for line in lines:
+                    key = self._norm_id(line.transaction_id)
+                    match_name = name_map.get(key)
+                    if match_name and match_name != line.donor_student_name:
+                        line.donor_student_name = match_name
+                        updated += 1
 
             rec.message_post(body=f"Fetched donor/student names from Excel for {updated} line(s).")
