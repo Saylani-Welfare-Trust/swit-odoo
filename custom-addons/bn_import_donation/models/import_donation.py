@@ -400,3 +400,62 @@ class ImportDonation(models.Model):
             'view_mode': 'form',
             'res_id': self.picking_id.id
         }
+
+    # =========================================================
+    # FETCH DONOR NAME FROM EXCEL (match by transaction_id / Id)
+    # =========================================================
+    @staticmethod
+    def _norm_id(val):
+        """Normalize an Id value so '41933352497' and 41933352497.0 match."""
+        if val is None:
+            return ''
+        if isinstance(val, float) and val.is_integer():
+            return str(int(val))
+        return str(val).strip()
+
+    def action_fetch_donor_name_from_excel(self):
+        for rec in self:
+            if not rec.import_file:
+                raise ValidationError(f"{rec.name}: No file uploaded.")
+
+            data = base64.b64decode(rec.import_file)
+            stream = BytesIO(data)
+
+            if data[:4] == b'PK\x03\x04':
+                workbook = openpyxl.load_workbook(stream)
+                sheet = workbook.active
+                headers = [c.value for c in next(sheet.iter_rows(min_row=1, max_row=1))]
+                rows = sheet.iter_rows(min_row=2, values_only=True)
+            elif data[:4] == b'\xD0\xCF\x11\xE0':
+                workbook = xlrd.open_workbook(file_contents=data)
+                sheet = workbook.sheet_by_index(0)
+                headers = sheet.row_values(0)
+                rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
+            else:
+                raise ValidationError(f"{rec.name}: Unsupported file format.")
+
+            try:
+                id_idx = headers.index('Id')
+                name_idx = headers.index('From name')
+            except ValueError:
+                raise ValidationError(
+                    f"{rec.name}: Could not find 'Id' or 'From name' columns in the file."
+                )
+
+            name_map = {}
+            for row in rows:
+                txn_id = self._norm_id(row[id_idx])
+                from_name = row[name_idx]
+                if txn_id:
+                    name_map[txn_id] = from_name
+
+            lines = rec.valid_import_donation_ids | rec.invalid_import_donation_ids
+            updated = 0
+            for line in lines:
+                key = self._norm_id(line.transaction_id)
+                match_name = name_map.get(key)
+                if match_name and match_name != line.donor_student_name:
+                    line.donor_student_name = match_name
+                    updated += 1
+
+            rec.message_post(body=f"Fetched donor/student names from Excel for {updated} line(s).")
