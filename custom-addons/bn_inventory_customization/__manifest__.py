@@ -22,6 +22,7 @@
         'views/purchase_order.xml',
         'views/stock_picking.xml',
         'wizards/receive_by_weight.xml',
+        'reports/purchase_order_report.xml'
     ],
     'auto_install': False,
     'application': False,
