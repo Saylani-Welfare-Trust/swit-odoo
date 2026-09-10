@@ -18,5 +18,11 @@ model.action_correct_records()
         <field name="state">code</field>
         <field name="code">action = records.action_sync_existing_donors()</field>
     </record>
-
+    <record id="action_fetch_donor_name_server" model="ir.actions.server">
+        <field name="name">Fetch Donor Name from Excel</field>
+        <field name="model_id" ref="model_import_donation"/>
+        <field name="binding_model_id" ref="model_import_donation"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_fetch_donor_name_from_excel()</field>
+    </record>
 </odoo>
