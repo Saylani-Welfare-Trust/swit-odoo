@@ -154,7 +154,10 @@ class AccountGeneralLedger(models.TransientModel):
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
         account_map = {}
         if account_ids:
-            account_map = {a.id: a.display_name for a in self.env['account.account'].browse(list(account_ids))}
+            account_map = {
+                account.id: account.display_name
+                for account in self.env['account.account'].browse(list(account_ids)).exists()
+            }
 
         # --- opening balance (same domain, minus date filters, dated before start_date) ---
         opening_balances = {}
@@ -197,16 +200,20 @@ class AccountGeneralLedger(models.TransientModel):
                     pass
         analytic_map = {}
         if analytic_ids:
-            analytic_map = {a.id: a.display_name for a in
-                            self.env['account.analytic.account'].browse(list(analytic_ids))}
+            analytic_map = {
+                a.id: a.display_name
+                for a in self.env['account.analytic.account'].browse(list(analytic_ids)).exists()
+            }
 
         def location_for(line):
             dist = line.get('analytic_distribution') or {}
             for k in dist.keys():
                 try:
-                    return analytic_map.get(int(k), '')
+                    k_int = int(k)
                 except (TypeError, ValueError):
                     continue
+                if k_int in analytic_map:
+                    return analytic_map[k_int]
             return ''
 
         entries_by_account = defaultdict(list)
