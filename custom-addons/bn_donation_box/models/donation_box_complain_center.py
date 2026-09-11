@@ -89,25 +89,42 @@ class DonationBoxComplain(models.Model):
                     "Complain Officer Remark is required before resolving Missing or Robbery cases."
                 )
 
+            registration = self.donation_box_registration_installation_id
+
             # If box is recovered
             if self.box_recovered:
+                if registration:
+                    registration.status = 'close'
 
                 if self.lot_id:
                     self.lot_id.is_not_return = True
                     self.lot_id.lot_consume = False
 
                 if self.lot_id:
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                        {
+                            'key_bunch_id': False,
+                            'state': 'closed',
+                        }
+                    )
 
                 self.status = 'resolved'
 
             # If box is NOT recovered
             else:
+                if registration:
+                    registration.status = 'close'
+
                 if self.lot_id:
                     self.lot_id.is_not_return = True
 
                 if self.lot_id:
-                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                        {
+                            'key_bunch_id': False,
+                            'state': 'closed',
+                        }
+                    )
 
                 self.status = 'not_recovered'
 
@@ -115,10 +132,6 @@ class DonationBoxComplain(models.Model):
         if self.box_status == 'broken':
             self.action_scrap()
             self.status = 'resolved'
-
-        registration = self.donation_box_registration_installation_id
-        if registration:
-            registration.status = 'close'
 
     def action_return(self):
         """Return ONLY the selected serial (lot) from a multi-line picking."""
@@ -196,7 +209,12 @@ class DonationBoxComplain(models.Model):
             rec.status = 'resolved'
             rec.return_picking_id = return_picking.id
 
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
 
             # 🔟 Reset lot flags
             rec.lot_id.write({
@@ -255,6 +273,13 @@ class DonationBoxComplain(models.Model):
                 "company_id": picking.company_id.id,
                 "origin": picking.name,
             })
+
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
 
             # 5. Confirm / Validate the scrap
             scrap.action_validate()
@@ -405,7 +430,12 @@ class DonationBoxComplain(models.Model):
                 rec.donation_box_registration_installation_id.status = 'close'
             
             # 5. Delete the key record as a result it will be unlink from the bunch too
-            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).unlink()
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
 
             # 6. Update complain status to resolved
             rec.status = 'resolved'
