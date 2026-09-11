@@ -48,6 +48,7 @@ class Donation(models.Model):
     def action_draft(self):
         self.state = 'draft'
 
+    GLITCH_NAME = '3 START KK MART'
 
     def action_sync_existing_donors(self):
         if not self:
@@ -74,6 +75,17 @@ class Donation(models.Model):
 
             name = source_line.donor_student_name
 
+            # Only touch donations currently stuck on the glitch name;
+            # leave correctly-named ones alone.
+            if donation.donor_id and donation.donor_id.name != self.GLITCH_NAME:
+                skipped_count += 1
+                continue
+
+            if name == self.GLITCH_NAME:
+                # source line itself still has the glitch name - nothing useful to sync
+                skipped_count += 1
+                continue
+
             partner = Partner.search([('name', '=', name)], limit=1)
 
             if not partner:
@@ -89,14 +101,16 @@ class Donation(models.Model):
                 })
                 created_count += 1
 
-            donation.donor_id = partner.id  # overwrite even if already set
+            donation.donor_id = partner.id
             linked_count += 1
 
         if linked_count == 0:
             raise ValidationError(
                 _("No donations could be linked. This usually means no matching "
                 "'Valid Import Donation' line was found (missing import_donation_id, "
-                "transaction_id, or donor_student_name). %s record(s) were skipped.") % skipped_count
+                "transaction_id, or donor_student_name), or none of the selected "
+                "donations currently have the '%s' name to fix. %s record(s) were skipped.")
+                % (self.GLITCH_NAME, skipped_count)
             )
 
         return {
