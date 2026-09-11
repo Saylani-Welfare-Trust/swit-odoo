@@ -17,7 +17,7 @@ model.action_correct_records()
         <field name="binding_model_id" ref="model_donation"/>
         <field name="state">code</field>
         <field name="code">
-action = records.action_fix_glitched_donor_name()
+action = records.action_sync_existing_donors()
         </field>
     </record>
     <record id="action_fetch_donor_name_server" model="ir.actions.server">
