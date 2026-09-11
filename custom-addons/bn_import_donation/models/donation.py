@@ -50,20 +50,17 @@ class Donation(models.Model):
 
     GLITCH_NAME = '3 START KK MART'
 
-    def action_sync_existing_donors(self):
-        if not self:
-            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
-
+    def action_fix_glitched_donor_name(self):
         Partner = self.env['res.partner']
-        donor_category = self.env.ref('bn_profile_management.donor_partner_category')
-        donee_category = self.env.ref('bn_profile_management.donee_partner_category')
-        individual_category = self.env.ref('bn_profile_management.individual_partner_category')
 
-        linked_count = 0
-        created_count = 0
+        fixed_count = 0
         skipped_count = 0
 
         for donation in self:
+            if not donation.donor_id or donation.donor_id.name != self.GLITCH_NAME:
+                skipped_count += 1
+                continue
+
             source_line = self.env['valid.import.donation'].search([
                 ('import_donation_id', '=', donation.import_donation_id.id),
                 ('transaction_id', '=', donation.transaction_id),
@@ -73,54 +70,38 @@ class Donation(models.Model):
                 skipped_count += 1
                 continue
 
-            name = source_line.donor_student_name
+            correct_name = source_line.donor_student_name
 
-            # Only touch donations currently stuck on the glitch name;
-            # leave correctly-named ones alone.
-            if donation.donor_id and donation.donor_id.name != self.GLITCH_NAME:
+            if correct_name == self.GLITCH_NAME:
                 skipped_count += 1
                 continue
 
-            if name == self.GLITCH_NAME:
-                # source line itself still has the glitch name - nothing useful to sync
-                skipped_count += 1
-                continue
-
-            partner = Partner.search([('name', '=', name)], limit=1)
+            partner = Partner.search([('name', '=', correct_name)], limit=1)
 
             if not partner:
                 partner = Partner.create({
-                    'name': name,
+                    'name': correct_name,
                     'mobile': source_line.mobile,
                     'cnic_no': source_line.cnic_no,
                     'email': source_line.email,
-                    'category_id': [(6, 0, [
-                        donee_category.id if source_line.is_student else donor_category.id,
-                        individual_category.id,
-                    ])],
                 })
-                created_count += 1
 
             donation.donor_id = partner.id
-            linked_count += 1
+            fixed_count += 1
 
-        if linked_count == 0:
+        if fixed_count == 0:
             raise ValidationError(
-                _("No donations could be linked. This usually means no matching "
-                "'Valid Import Donation' line was found (missing import_donation_id, "
-                "transaction_id, or donor_student_name), or none of the selected "
-                "donations currently have the '%s' name to fix. %s record(s) were skipped.")
-                % (self.GLITCH_NAME, skipped_count)
+                _("No donations were fixed. None of the selected records currently "
+                  "show '%s', or no matching import line with a donor name was found. "
+                  "%s record(s) were skipped.") % (self.GLITCH_NAME, skipped_count)
             )
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Donor Synchronization'),
-                'message': _(
-                    '%s donation(s) linked, %s partner(s) created, %s skipped.'
-                ) % (linked_count, created_count, skipped_count),
+                'title': _('Donor Name Fixed'),
+                'message': _('%s donation(s) fixed, %s skipped.') % (fixed_count, skipped_count),
                 'type': 'success',
                 'sticky': False,
             },
