@@ -11,6 +11,10 @@
                     <field name="is_advance_donation" on_change="1" field_id="is_advance_donation"/>
                     <label for="is_advance_donation"/>
                 </span>
+                <span class="d-inline-flex">
+                    <field name="is_service_charge" on_change="1" field_id="is_service_charge"/>
+                    <label for="is_service_charge"/>
+                </span>
             </xpath>
         </field>
     </record>

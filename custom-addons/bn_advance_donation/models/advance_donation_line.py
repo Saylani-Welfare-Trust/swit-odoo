@@ -11,6 +11,10 @@ class AdvanceDonationLine(models.Model):
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
     amount = fields.Monetary('Amount', currency_field='currency_id')
+    service_charge_amount = fields.Monetary(
+        'Service Charge Amount',
+        currency_field='currency_id',
+    )
 
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id')
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id')
@@ -30,7 +34,7 @@ class AdvanceDonationLine(models.Model):
         default='draft',
         string='Donation State', related='advance_donation_id.state')
     approved_date = fields.Datetime('Approved Date', related='advance_donation_id.approved_date')
-    is_disbursed = fields.Boolean('Is Disbursed?', compute='_compute_disbursement_and_disbursed')
+    is_disbursed = fields.Boolean('Is Disbursed?', default=False)
     currency_id = fields.Many2one('res.currency', 'Currency', related='advance_donation_id.currency_id', readonly=True)
 
     date = fields.Date(
@@ -49,12 +53,10 @@ class AdvanceDonationLine(models.Model):
         compute='_compute_date_visibility'
     )
 
-    @api.depends('disbursed_amount', 'paid_amount')
+    @api.depends('is_disbursed')
     def _compute_disbursement_and_disbursed(self):
         for rec in self:
-            is_disbursed = rec.disbursed_amount == rec.paid_amount and rec.paid_amount != 0
-            rec.is_disbursed = is_disbursed
-            if is_disbursed:
+            if rec.is_disbursed:
                 rec.disbursement_date = td.today()
             else:
                 rec.disbursement_date = False

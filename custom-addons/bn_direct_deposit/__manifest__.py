@@ -9,6 +9,7 @@
         'bn_pos_cheque',
         'bn_donation_home_service',
         'bn_microfinance',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'data/server_action.xml',
@@ -26,7 +27,7 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_direct_deposit/static/src/app/**/*',
-            'bn_direct_deposit/static/src/screens/*',
+            # 'bn_direct_deposit/static/src/screens/*',
         ],
     },
 } # type: ignore

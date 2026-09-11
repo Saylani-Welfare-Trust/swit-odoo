@@ -81,6 +81,14 @@
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
                             <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
+                            <field name="service_charges" widget="boolean_toggle"/>
+                            <field name="service_charge_product_id"
+                                invisible="not service_charges"
+                                required="service_charges"/>
+                            <field name="service_charge_amount"
+                                invisible="not service_charges"
+                                readonly="state != 'draft'"
+                                force_save="1"/>
                             <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
                             <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
@@ -88,20 +96,21 @@
                     </group>
                     <notebook>
                         <page string="Donation Lines">
-                            <field name="advance_donation_lines" readonly="1" force_save="1">
+                            <field name="advance_donation_lines" force_save="1">
                                 <tree editable="bottom">
-                                    <field name="serial_no"/>
-                                    <field name="product_id"/>
-                                    <field name="amount"/>
-                                    <field name="paid_amount" />
-                                    <field name="remaining_amount"/>
-                                    <field name="date"  />
-                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
-                                    <field name="disbursed_amount"/>
-                                    <field name="is_disbursed"/>
-                                    <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
+                                    <field name="serial_no" readonly="1"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="amount" readonly="1"/>
+                                    <field name="service_charge_amount" readonly="1"/>
+                                    <field name="paid_amount" readonly="1" />
+                                    <field name="remaining_amount" readonly="1"/>
+                                    <field name="date" readonly="1" />
+                                    <field name="state" readonly="1" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                    <field name="disbursed_amount" readonly="1"/>
+                                    <field name="is_disbursed" readonly="0"/>
 
                                     <field name="disbursement_date"/> 
+                                    <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>

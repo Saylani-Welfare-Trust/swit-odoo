@@ -18,7 +18,7 @@
         'reports/advance_donation_report.xml',
         'reports/non_cash_advance_donation_report.xml',
         'reports/non_cash_disbursement_report.xml',
-        'reports/report_advance_donation_receipt.xml',
+        'reports/report_advance_donation_receipt.xml',  # <-- ADD THIS LINE
         'wizard/partial_payment.xml',
         'views/advance_donation.xml',
         'views/donation_receipt.xml',
@@ -26,12 +26,12 @@
         'views/product_product.xml',
         'views/menu.xml',
     ],
-    # 'assets': {
-    #     'point_of_sale._assets_pos': [
-    #         'bn_advance_donation/static/src/**/*.js',
-    #         'bn_advance_donation/static/src/**/*.xml',
-    #     ],
-    # },
+    'assets': {
+        'point_of_sale._assets_pos': [
+            'bn_advance_donation/static/src/**/*.js',
+            'bn_advance_donation/static/src/**/*.xml',
+        ],
+    },
     'license': 'AGPL-3',
     'installable': True,
     'application': False
