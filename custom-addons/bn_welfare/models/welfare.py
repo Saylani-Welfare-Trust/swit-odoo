@@ -1072,6 +1072,19 @@ class Welfare(models.Model):
     
     def _create_donee_in_portal(self):
         """Create donee in Sadqa Jaria portal"""
+        donee = self.donee_id
+
+        # Build a readable single-line address from standard partner fields
+        address_parts = [
+            donee.street,
+            donee.street2,
+            donee.city,
+            donee.state_id.name if donee.state_id else None,
+            donee.zip,
+            donee.country_id.name if donee.country_id else None,
+        ]
+        full_address = ", ".join(part for part in address_parts if part)
+
         data = {
                 "json":{
                 "name": self.donee_id.name or '',
@@ -1079,11 +1092,13 @@ class Welfare(models.Model):
                 "cnic": (
                     self.donee_id.cnic_no.replace("-", "")
                     if self.donee_id.cnic_no else ""
-                ),            
-                "odooId": self.donee_id.id
+                ),
+                "address": full_address,        
+                "odooId": self.donee_id.id,
+                "area" : self.donee_id.area.name if self.donee_id.area else '',
             }
         }
-        # raise UserError(str(data))
+        raise UserError(str(data))
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
