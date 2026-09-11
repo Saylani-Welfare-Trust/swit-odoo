@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="import_monthly_planning_wizard_view_form" model="ir.ui.view">
+        <field name="name">import.monthly.planning.wizard.form</field>
+        <field name="model">import.monthly.planning.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Monthly Planning">
+                <group>
+                    <field name="monthly_planning_id" readonly="1"/>
+                    <field name="clear_existing"/>
+                </group>
+                <group string="Excel File">
+                    <field name="file_data" filename="file_name"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+                <div class="alert alert-info" role="alert" colspan="2">
+                    <p><strong>File format:</strong></p>
+                    <ul>
+                        <li>One sheet per tab (name = <em>Kitchen</em>, <em>Madaris</em>, <em>Medical</em>, <em>Livestock</em>, <em>Food</em>, <em>Ration</em>, <em>Meat</em>).</li>
+                        <li>Row 1 = header row.</li>
+                        <li>Columns: <code>Date</code>, <code>Product</code> (code or name), <code>Quantity</code>, optional <code>Location</code> (livestock only).</li>
+                    </ul>
+                </div>
+                <footer>
+                    <button name="action_import" type="object"
+                            string="Import" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

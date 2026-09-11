@@ -11,3 +11,8 @@ access_monthly_planning_livestock_user,monthly.planning.livestock.user,model_mon
 access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,,1,1,1,1
 access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,,1,1,1,1
 access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,,1,1,1,1
+
+access_planning_type_user,planning.type.user,model_planning_type,,1,0,0,0
+access_planning_type_manager,planning.type.manager,model_planning_type,,1,1,1,1
+
+access_import_monthly_planning_wizard,import.monthly.planning.wizard,model_import_monthly_planning_wizard,,1,1,1,1

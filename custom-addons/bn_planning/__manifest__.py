@@ -17,6 +17,9 @@
         'security/ir.model.access.csv',
         'views/daily_planning.xml',
         'views/monthly_planning_views.xml',
+        'views/planning_type_view.xml',
+        
+        'wizard/import_monthly_planning_wizard_views.xml',
     ],
     'auto_install': False,
     'application': True,

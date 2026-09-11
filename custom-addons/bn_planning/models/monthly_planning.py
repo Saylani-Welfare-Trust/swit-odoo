@@ -42,6 +42,54 @@ class MonthlyPlanning(models.Model):
     ration_line_ids = fields.One2many('monthly.planning.ration', 'monthly_planning_id', string="Ration")
     meat_line_ids = fields.One2many('monthly.planning.meat', 'monthly_planning_id', string="Meat")
 
+    planning_type_id = fields.Many2one(
+    'planning.type',
+    string='Planning Type',
+    required=True,
+    tracking=True,
+    )
+
+    show_kitchen = fields.Boolean(
+        related='planning_type_id.kitchen',
+        string='Kitchen',
+        store=False,
+    )
+
+    show_madaris = fields.Boolean(
+        related='planning_type_id.madaris',
+        string='Madaris',
+        store=False,
+    )
+
+    show_medical = fields.Boolean(
+        related='planning_type_id.medical',
+        string='Medical',
+        store=False,
+    )
+
+    show_livestock = fields.Boolean(
+        related='planning_type_id.livestock',
+        string='Livestock',
+        store=False,
+    )
+
+    show_food = fields.Boolean(
+        related='planning_type_id.food',
+        string='Food',
+        store=False,
+    )
+
+    show_ration = fields.Boolean(
+        related='planning_type_id.ration',
+        string='Ration',
+    )
+
+    show_meat = fields.Boolean(
+        related='planning_type_id.meat',
+        string='Meat',
+        store=False,
+    )
+
     @api.depends('month', 'year')
     def _compute_name(self):
         for rec in self:
@@ -59,150 +107,18 @@ class MonthlyPlanning(models.Model):
             }))
         return commands
 
-    # ───── Button: actually create the lines (clears and recreates) ─────
-    def action_generate_days(self):
-        for rec in self:
-            if not rec.month or not rec.year:
-                raise ValidationError("Please select a month and year first.")
 
-            # Delete existing lines from ALL tabs
-            rec.kitchen_line_ids.unlink()
-            rec.madaris_line_ids.unlink()
-            rec.medical_line_ids.unlink()
-            rec.livestock_line_ids.unlink()
-            rec.food_line_ids.unlink()
-            rec.ration_line_ids.unlink()
-            rec.meat_line_ids.unlink()
-
-            days = calendar.monthrange(rec.year, list(dict(MONTH_SELECTION).keys()).index(rec.month) + 1)[1]
-            month_num = list(dict(MONTH_SELECTION).keys()).index(rec.month) + 1
-
-            for day in range(1, days + 1):
-                date_obj = datetime(rec.year, month_num, day).date()
-                # Create lines for each model
-                self.env['monthly.planning.kitchen'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                self.env['monthly.planning.madaris'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                self.env['monthly.planning.medical'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                self.env['monthly.planning.livestock'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                # NEW lines
-                self.env['monthly.planning.food'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                self.env['monthly.planning.ration'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-                self.env['monthly.planning.meat'].create({
-                    'monthly_planning_id': rec.id,
-                    'date': date_obj,
-                    'quantity': 0.0,
-                })
-
+    def action_open_import_wizard(self):
+        self.ensure_one()
+        if not self.planning_type_id:
+            raise ValidationError("Please select a Planning Type first.")
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
-
-    def action_generate_daily_planning(self):
-        """
-        For each day and each tab, create (or update) a Daily Planning record
-        for that specific tab only.
-        """
-        total_created = 0
-        total_updated = 0
-
-        # Map tab names to their One2many field names
-        tab_map = {
-            'kitchen': 'kitchen_line_ids',
-            'madaris': 'madaris_line_ids',
-            'medical': 'medical_line_ids',
-            'livestock': 'livestock_line_ids',
-            'food': 'food_line_ids',
-            'ration': 'ration_line_ids',
-            'meat': 'meat_line_ids',
-        }
-
-        for rec in self:
-            if not rec.month or not rec.year:
-                raise ValidationError("Please select a month and year first.")
-
-            month_num = [m[0] for m in MONTH_SELECTION].index(rec.month) + 1
-            days_in_month = calendar.monthrange(rec.year, month_num)[1]
-
-            for day in range(1, days_in_month + 1):
-                date_obj = datetime(rec.year, month_num, day).date()
-
-                for tab_key, field_name in tab_map.items():
-                    lines = getattr(rec, field_name).filtered(
-                        lambda l, d=date_obj: l.date == d and l.product_id
-                    )
-
-                    if not lines:
-                        continue
-
-                    # Build line commands for this tab
-                    line_vals = [(0, 0, {
-                        'product_id': line.product_id.id,
-                        'quantity': line.quantity,
-                    }) for line in lines]
-
-                    # Search for existing daily planning for this tab + day
-                    existing = self.env['daily.planning'].search([
-                        ('monthly_planning_id', '=', rec.id),
-                        ('date', '=', date_obj),
-                        ('source_tab', '=', tab_key),
-                    ], limit=1)
-
-                    try:
-                        if existing:
-                            existing.write({
-                                'daily_planning_line_ids': [(5, 0, 0)] + line_vals
-                            })
-                            total_updated += 1
-                        else:
-                            self.env['daily.planning'].create({
-                                'monthly_planning_id': rec.id,
-                                'day': day,
-                                'source_tab': tab_key,          # actual tab name
-                                'type': 'distribution',
-                                'daily_planning_line_ids': line_vals,
-                            })
-                            total_created += 1
-                    except Exception as e:
-                        raise ValidationError(f"Error generating Daily Planning for {date_obj} ({tab_key}):\n{str(e)}")
-
-        message = f"Daily Planning created: {total_created} new, updated: {total_updated}."
-        if total_created == 0 and total_updated == 0:
-            message = "No products found in any tab for any day. Nothing generated."
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Success',
-                'message': message,
-                'type': 'success',
-                'sticky': False,
-            }
+            'type': 'ir.actions.act_window',
+            'name': 'Import Monthly Planning from Excel',
+            'res_model': 'import.monthly.planning.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_monthly_planning_id': self.id},
         }
 
 # ─── Base class for line models ──────────────────────────────

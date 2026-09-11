@@ -8,6 +8,7 @@
                 <field name="month"/>
                 <field name="year"/>
                 <field name="name"/>
+                <field name="planning_type_id"/>
             </tree>
         </field>
     </record>
@@ -18,11 +19,13 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Generate Days" name="action_generate_days" type="object"
-                            class="oe_highlight" help="Clear and regenerate all daily lines for this month"/>
-                    <button string="Generate Daily Planning" name="action_generate_daily_planning" type="object"
-                            class="oe_highlight" help="Create/update Daily Planning records for every day that has products"/>
+                    <button string="Import from Excel"
+                            name="action_open_import_wizard"
+                            type="object"
+                            class="oe_highlight"
+                            help="Import monthly planning lines from an Excel file"/>
                 </header>
+
                 <sheet>
                     <div class="oe_title">
                         <label for="month"/>
@@ -31,9 +34,25 @@
                             <field name="year" class="oe_inline" required="1" options="{'width': 80}"/>
                         </h1>
                     </div>
+
+                    <group>
+                        <field name="planning_type_id"
+                            options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+
+                    <!-- ⬇⬇ REQUIRED: declare modifier fields -->
+                    <field name="show_kitchen"   invisible="1"/>
+                    <field name="show_madaris"   invisible="1"/>
+                    <field name="show_medical"   invisible="1"/>
+                    <field name="show_livestock" invisible="1"/>
+                    <field name="show_food"      invisible="1"/>
+                    <field name="show_ration"    invisible="1"/>
+                    <field name="show_meat"      invisible="1"/>
+
                     <notebook>
-                        <!-- Existing pages -->
-                        <page name="kitchen" string="Kitchen Planning">
+
+                        <page name="kitchen" string="Kitchen Planning"
+                            invisible="not show_kitchen">
                             <field name="kitchen_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -43,7 +62,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="madaris" string="Madaris Planning">
+
+                        <page name="madaris" string="Madaris Planning"
+                            invisible="not show_madaris">
                             <field name="madaris_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -53,7 +74,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="medical" string="Medical Planning">
+
+                        <page name="medical" string="Medical Planning"
+                            invisible="not show_medical">
                             <field name="medical_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -63,7 +86,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="livestock" string="Livestock Planning">
+
+                        <page name="livestock" string="Livestock Planning"
+                            invisible="not show_livestock">
                             <field name="livestock_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -75,8 +100,8 @@
                             </field>
                         </page>
 
-                        <!-- NEW pages -->
-                        <page name="food" string="Food Planning">
+                        <page name="food" string="Food Planning"
+                            invisible="not show_food">
                             <field name="food_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -86,7 +111,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="ration" string="Ration Planning">
+
+                        <page name="ration" string="Ration Planning"
+                            invisible="not show_ration">
                             <field name="ration_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -96,7 +123,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page name="meat" string="Meat Planning">
+
+                        <page name="meat" string="Meat Planning"
+                            invisible="not show_meat">
                             <field name="meat_line_ids">
                                 <tree editable="bottom">
                                     <field name="date" readonly="1"/>
@@ -106,13 +135,13 @@
                                 </tree>
                             </field>
                         </page>
+
                     </notebook>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- Action & Menu (unchanged) -->
     <record id="action_monthly_planning" model="ir.actions.act_window">
         <field name="name">Monthly Planning</field>
         <field name="res_model">monthly.planning</field>
