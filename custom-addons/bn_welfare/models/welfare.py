@@ -1080,8 +1080,6 @@ class Welfare(models.Model):
             donee.street2,
             donee.city,
             donee.state_id.name if donee.state_id else None,
-            donee.zip,
-            donee.country_id.name if donee.country_id else None,
         ]
         full_address = ", ".join(part for part in address_parts if part)
 
@@ -1098,7 +1096,7 @@ class Welfare(models.Model):
                 "area" : self.donee_id.area.name if self.donee_id.area else '',
             }
         }
-        raise UserError(str(data))
+        # raise UserError(str(data))
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
