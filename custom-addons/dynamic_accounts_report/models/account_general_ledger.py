@@ -22,6 +22,7 @@
 import io
 import json
 import calendar
+from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 import xlsxwriter
 from odoo import api, fields, models
@@ -49,60 +50,44 @@ class AccountGeneralLedger(models.TransientModel):
         :rtype: dict
         """
         account_dict = {}
+        move_lines = self.env['account.move.line'].search_read(
+            [('parent_state', '=', 'posted')],
+            ['date', 'name', 'move_name', 'debit', 'credit',
+             'partner_id', 'account_id']
+        )
+
+        account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+        account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+
+        entries_by_account = defaultdict(list)
         account_totals = {}
-        move_line_ids = self.env['account.move.line'].search(
-            [('parent_state', '=', 'posted')])
-        account_ids = move_line_ids.mapped('account_id')
-        account_dict['journal_ids'] = self.env['account.journal'].search_read(
-            [], ['name'])
-        account_dict['analytic_ids'] = self.env[
-            'account.analytic.account'].search_read(
-            [], ['name'])
-        for account in account_ids:
-            move_line_id = move_line_ids.filtered(
-                lambda x: x.account_id == account)
-            move_line_list = []
-            for move_line in move_line_id:
-                move_line_data = move_line.read(
-                    ['date', 'name', 'move_name', 'debit', 'credit',
-                     'partner_id', 'account_id', 'journal_id', 'move_id',
-                     'analytic_line_ids'])
-                move_line_list.append(move_line_data)
-            account_dict[account.display_name] = move_line_list
-            currency_id = self.env.company.currency_id.symbol
-            account_totals[account.display_name] = {
-                'total_debit': round(sum(move_line_id.mapped('debit')), 2),
-                'total_credit': round(sum(move_line_id.mapped('credit')), 2),
-                'currency_id': currency_id,
-                'account_id': account.id}
-            account_dict['account_totals'] = account_totals
+        account_map = {}
+        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        if account_ids:
+            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
+
+        for line in move_lines:
+            account_id = line.get('account_id')
+            if not account_id:
+                continue
+            account_key = account_map.get(account_id[0], account_id[1])
+            entries_by_account[account_key].append(line)
+            totals = account_totals.setdefault(
+                account_key,
+                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
+            )
+            totals['total_debit'] += line.get('debit') or 0.0
+            totals['total_credit'] += line.get('credit') or 0.0
+
+        for account_key, lines in entries_by_account.items():
+            account_dict[account_key] = lines
+
+        account_dict['account_totals'] = account_totals
         return account_dict
 
     @api.model
     def get_filter_values(self, journal_id, date_range, options, analytic,
-                          method):
-        """
-        Retrieve filtered values for the partner ledger report.
-
-        :param journal_id: The journal IDs to filter the report data.
-        :type journal_id: list
-
-        :param date_range: The date range option to filter the report data.
-        :type date_range: str or dict
-
-        :param options: The additional options to filter the report data.
-        :type options: dict
-
-        :param method: Find the method
-        :type options: dict
-
-        :param analytic: The analytic IDs to filter the report data.
-        :type analytic: list
-
-        :return: A dictionary containing the filtered values for the partner
-        ledger report.
-        :rtype: dict
-        """
+                        method, include_filter_values=True):
         account_dict = {}
         account_totals = {}
         today = fields.Date.today()
@@ -116,7 +101,7 @@ class AccountGeneralLedger(models.TransientModel):
         elif 'draft' in options:
             option_domain = ['posted', 'draft']
         domain = [('journal_id', 'in', journal_id),
-                  ('parent_state', 'in', option_domain), ] if journal_id else [
+                ('parent_state', 'in', option_domain), ] if journal_id else [
             ('parent_state', 'in', option_domain), ]
         if method == {}:
             method = None
@@ -124,77 +109,142 @@ class AccountGeneralLedger(models.TransientModel):
             domain += [('journal_id', 'in',
                         self.env.company.tax_cash_basis_journal_id.ids), ]
         if analytic:
-            analytic_line = self.env['account.analytic.line'].search(
-                [('account_id', 'in', analytic)]).mapped('id')
-            domain += [('analytic_line_ids', 'in', analytic_line)]
+            domain += [('analytic_line_ids.account_id', 'in', analytic)]
+
+        start_date = end_date = None
         if date_range:
             if date_range == 'month':
-                domain += [('date', '>=', today.replace(day=1)),
-                           ('date', '<=', today)]
+                start_date, end_date = today.replace(day=1), today
             elif date_range == 'year':
-                domain += [('date', '>=', today.replace(month=1, day=1)),
-                           ('date', '<=', today)]
+                start_date, end_date = today.replace(month=1, day=1), today
             elif date_range == 'quarter':
-                domain += [('date', '>=', quarter_start),
-                           ('date', '<=', quarter_end)]
+                start_date, end_date = quarter_start, quarter_end
             elif date_range == 'last-month':
-                last_month_start = today.replace(day=1) - relativedelta(
-                    months=1)
+                last_month_start = today.replace(day=1) - relativedelta(months=1)
                 last_month_end = last_month_start + relativedelta(
-                    day=calendar.monthrange(last_month_start.year,
-                                            last_month_start.month)[
-                        1])
-                domain += [('date', '>=', last_month_start),
-                           ('date', '<=', last_month_end)]
+                    day=calendar.monthrange(last_month_start.year, last_month_start.month)[1])
+                start_date, end_date = last_month_start, last_month_end
             elif date_range == 'last-year':
-                last_year_start = today.replace(month=1,
-                                                day=1) - relativedelta(years=1)
-                last_year_end = last_year_start.replace(month=12, day=31)
-                domain += [('date', '>=', last_year_start),
-                           ('date', '<=', last_year_end)]
+                last_year_start = today.replace(month=1, day=1) - relativedelta(years=1)
+                start_date, end_date = last_year_start, last_year_start.replace(month=12, day=31)
             elif date_range == 'last-quarter':
-                domain += [('date', '>=', previous_quarter_start),
-                           ('date', '<=', previous_quarter_end)]
-            elif 'start_date' in date_range and 'end_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'],
-                                               '%Y-%m-%d').date()
-                end_date = datetime.strptime(date_range['end_date'],
-                                             '%Y-%m-%d').date()
-                domain += [('date', '>=', start_date),
-                           ('date', '<=', end_date)]
-            elif 'start_date' in date_range:
-                start_date = datetime.strptime(date_range['start_date'],
-                                               '%Y-%m-%d').date()
+                start_date, end_date = previous_quarter_start, previous_quarter_end
+            elif isinstance(date_range, dict):
+                if date_range.get('start_date'):
+                    start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
+                if date_range.get('end_date'):
+                    end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
+
+            if start_date:
                 domain += [('date', '>=', start_date)]
-            elif 'end_date' in date_range:
-                end_date = datetime.strptime(date_range['end_date'],
-                                             '%Y-%m-%d').date()
+            if end_date:
                 domain += [('date', '<=', end_date)]
-        move_line_ids = self.env['account.move.line'].search(domain)
-        account_ids = move_line_ids.mapped('account_id')
-        account_dict['journal_ids'] = self.env['account.journal'].search_read(
-            [], ['name'])
-        account_dict['analytic_ids'] = self.env[
-            'account.analytic.account'].search_read(
-            [], ['name'])
-        for account in account_ids:
-            move_line_id = move_line_ids.filtered(
-                lambda x: x.account_id == account)
-            move_line_list = []
-            for move_line in move_line_id:
-                move_line_data = move_line.read(
-                    ['date', 'name', 'move_name', 'debit', 'credit',
-                     'partner_id', 'account_id', 'journal_id', 'move_id',
-                     'analytic_line_ids'])
-                move_line_list.append(move_line_data)
-            account_dict[account.display_name] = move_line_list
-            currency_id = self.env.company.currency_id.symbol
-            account_totals[account.display_name] = {
-                'total_debit': round(sum(move_line_id.mapped('debit')), 2),
-                'total_credit': round(sum(move_line_id.mapped('credit')), 2),
-                'currency_id': currency_id,
-                'account_id': account.id}
-            account_dict['account_totals'] = account_totals
+
+        move_lines = self.env['account.move.line'].search_read(
+            domain,
+            ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
+            'partner_id', 'account_id', 'ref', 'journal_id',
+            'analytic_distribution']
+        )
+
+        if include_filter_values:
+            account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+            account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+
+        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        account_map = {}
+        if account_ids:
+            account_map = {
+                account.id: account.display_name
+                for account in self.env['account.account'].browse(list(account_ids)).exists()
+            }
+
+        # --- opening balance (same domain, minus date filters, dated before start_date) ---
+        opening_balances = {}
+        if start_date and account_ids:
+            opening_domain = [d for d in domain if d[0] != 'date']
+            opening_domain += [('date', '<', start_date),
+                            ('account_id', 'in', list(account_ids))]
+            opening_lines = self.env['account.move.line'].read_group(
+                opening_domain, ['debit:sum', 'credit:sum'], ['account_id'])
+            for row in opening_lines:
+                acc_id = row['account_id'][0]
+                opening_balances[acc_id] = (row.get('debit', 0.0) or 0.0) - (row.get('credit', 0.0) or 0.0)
+
+        # --- corresponding/"split" account per move (siblings in the same entry) ---
+        move_ids = {line['move_id'][0] for line in move_lines if line.get('move_id')}
+        move_account_map = defaultdict(set)
+        if move_ids:
+            all_move_lines = self.env['account.move.line'].search_read(
+                [('move_id', 'in', list(move_ids))], ['move_id', 'account_id'])
+            for l in all_move_lines:
+                if l.get('account_id'):
+                    move_account_map[l['move_id'][0]].add(l['account_id'][1])
+
+        def split_account_for(line):
+            if not line.get('move_id') or not line.get('account_id'):
+                return ''
+            others = move_account_map[line['move_id'][0]] - {line['account_id'][1]}
+            if not others:
+                return ''
+            return list(others)[0] if len(others) == 1 else 'Multiple'
+
+        # --- location from first analytic account on the distribution ---
+        analytic_ids = set()
+        for line in move_lines:
+            dist = line.get('analytic_distribution') or {}
+            for k in dist.keys():
+                try:
+                    analytic_ids.add(int(k))
+                except (TypeError, ValueError):
+                    pass
+        analytic_map = {}
+        if analytic_ids:
+            analytic_map = {
+                a.id: a.display_name
+                for a in self.env['account.analytic.account'].browse(list(analytic_ids)).exists()
+            }
+
+        def location_for(line):
+            dist = line.get('analytic_distribution') or {}
+            for k in dist.keys():
+                try:
+                    k_int = int(k)
+                except (TypeError, ValueError):
+                    continue
+                if k_int in analytic_map:
+                    return analytic_map[k_int]
+            return ''
+
+        entries_by_account = defaultdict(list)
+        for line in sorted(move_lines, key=lambda l: (l.get('date') or '', l.get('id', 0))):
+            account_id = line.get('account_id')
+            if not account_id:
+                continue
+            account_key = account_map.get(account_id[0], account_id[1])
+            line['split_account'] = split_account_for(line)
+            line['location'] = location_for(line)
+            line['trx_type'] = line['journal_id'][1] if line.get('journal_id') else ''
+            entries_by_account[account_key].append(line)
+            totals = account_totals.setdefault(
+                account_key,
+                {'total_debit': 0.0, 'total_credit': 0.0,
+                'currency_id': self.env.company.currency_id.symbol,
+                'account_id': account_id[0],
+                'opening_balance': opening_balances.get(account_id[0], 0.0)}
+            )
+            totals['total_debit'] += line.get('debit') or 0.0
+            totals['total_credit'] += line.get('credit') or 0.0
+
+        # running balance per account
+        for account_key, lines in entries_by_account.items():
+            running = account_totals[account_key]['opening_balance']
+            for line in lines:
+                running += (line.get('debit') or 0.0) - (line.get('credit') or 0.0)
+                line['running_balance'] = running
+            account_dict[account_key] = lines
+
+        account_dict['account_totals'] = account_totals
         return account_dict
 
     @api.model
@@ -212,13 +262,21 @@ class AccountGeneralLedger(models.TransientModel):
         :param report_name: The name of the report.
         :type report_name: str
         """
-        data = json.loads(data)
+        data = json.loads(data or '{}')
+        report_data = data.get('data') or {}
+        report_accounts = data.get('account') or [
+            key for key in report_data.keys() if key not in ('account_totals', 'journal_ids', 'analytic_ids')
+        ]
+        report_totals = data.get('total') or report_data.get('account_totals') or {}
+        grand_total = data.get('grand_total') or {
+            'total_debit': 0.0,
+            'total_credit': 0.0,
+        }
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        start_date = data['filters']['start_date'] if \
-            data['filters']['start_date'] else ''
-        end_date = data['filters']['end_date'] if \
-            data['filters']['end_date'] else ''
+        filters = data.get('filters') or {}
+        start_date = filters.get('start_date') or ''
+        end_date = filters.get('end_date') or ''
         sheet = workbook.add_worksheet()
         head = workbook.add_format(
             {'align': 'center', 'bold': True, 'font_size': '15px'})
@@ -252,77 +310,111 @@ class AccountGeneralLedger(models.TransientModel):
         if start_date or end_date:
             sheet.merge_range('C3:G3', f"{start_date} to {end_date}",
                               filter_body)
-        if data['filters']['journal']:
-            display_names = [journal for
-                             journal in data['filters']['journal']]
+        if filters.get('journal'):
+            display_names = [journal for journal in filters.get('journal', [])]
             display_names_str = ', '.join(display_names)
             sheet.merge_range('C4:G4', display_names_str, filter_body)
-        if data['filters']['analytic']:
-            display_names = [analytic for
-                             analytic in data['filters']['analytic']]
+        if filters.get('analytic'):
+            display_names = [analytic for analytic in filters.get('analytic', [])]
             account_keys_str = ', '.join(display_names)
             sheet.merge_range('C5:G5', account_keys_str, filter_body)
-        if data['filters']['options']:
-            option_keys = list(data['filters']['options'].keys())
+        if filters.get('options'):
+            option_keys = list(filters['options'].keys())
             option_keys_str = ', '.join(option_keys)
             sheet.merge_range('C6:G6', option_keys_str, filter_body)
-        if data:
+        if report_accounts:
             if report_action == 'dynamic_accounts_report.action_general_ledger':
-                sheet.write(8, col, ' ', sub_heading)
-                sheet.write(8, col + 1, 'Date', sub_heading)
-                sheet.merge_range('C9:E9', 'Communication', sub_heading)
-                sheet.merge_range('F9:G9', 'Partner', sub_heading)
-                sheet.merge_range('H9:I9', 'Debit', sub_heading)
-                sheet.merge_range('J9:K9', 'Credit', sub_heading)
-                sheet.merge_range('L9:M9', 'Balance', sub_heading)
+                headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
+                        'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
+                        'Debit', 'Credit', 'Balance']
+                # widen a few columns for readability
+                widths = [6, 22, 18, 16, 12, 12, 14, 12, 16, 32, 12, 12, 14]
+                for idx, w in enumerate(widths):
+                    sheet.set_column(idx, idx, w)
+
+                banner_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#CC0000', 'font_color': 'white'})
+                header_row_fmt = workbook.add_format(
+                    {'bold': True, 'align': 'center', 'font_size': '10px',
+                    'border': 1, 'bg_color': '#FFFF00'})
+                opening_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#CC0000', 'font_color': 'white'})
+                line_fmt = workbook.add_format({'font_size': '10px', 'border': 1})
+                num_fmt = workbook.add_format(
+                    {'font_size': '10px', 'border': 1, 'num_format': '#,##0.00'})
+                total_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#FFFF00'})
+                total_num_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '10px', 'border': 1,
+                    'bg_color': '#FFFF00', 'num_format': '#,##0.00'})
+
                 row = 8
-                for account in data['account']:
-                    row += 1
-                    sheet.write(row, col, account, txt_name)
-                    sheet.write(row, col + 1, ' ', txt_name)
-                    sheet.merge_range(row, col + 2, row, col + 4, ' ', txt_name)
-                    sheet.merge_range(row, col + 5, row, col + 6, ' ',
-                                      txt_name)
-                    sheet.merge_range(row, col + 7, row, col + 8,
-                                      data['total'][account]['total_debit'],
-                                      txt_name)
-                    sheet.merge_range(row, col + 9, row, col + 10,
-                                      data['total'][account]['total_credit'],
-                                      txt_name)
-                    sheet.merge_range(row, col + 11, row, col + 12,
-                                      data['total'][account]['total_debit'] -
-                                      data['total'][account]['total_credit'],
-                                      txt_name)
-                    for rec in data['data'][account]:
-                        row += 1
-                        partner = rec[0]['partner_id']
-                        name = partner[1] if partner else None
-                        sheet.write(row, col, rec[0]['move_name'], txt_name)
-                        sheet.write(row, col + 1, rec[0]['date'], txt_name)
-                        sheet.merge_range(row, col + 2, row, col + 4,
-                                          rec[0]['name'], txt_name)
-                        sheet.merge_range(row, col + 5, row, col + 6, name,
-                                          txt_name)
-                        sheet.merge_range(row, col + 7, row, col + 8,
-                                          rec[0]['debit'],
-                                          txt_name)
-                        sheet.merge_range(row, col + 9, row, col + 10,
-                                          rec[0]['credit'], txt_name)
-                        sheet.merge_range(row, col + 11, row, col + 12, ' ',
-                                          txt_name)
+                for idx, header in enumerate(headers):
+                    sheet.write(row, idx, header, header_row_fmt)
                 row += 1
-                sheet.merge_range(row, col, row, col + 6, 'Total',
-                                  filter_head)
-                sheet.merge_range(row, col + 7, row, col + 8,
-                                  data['grand_total']['total_debit'],
-                                  filter_head)
-                sheet.merge_range(row, col + 9, row, col + 10,
-                                  data['grand_total']['total_credit'],
-                                  filter_head)
-                sheet.merge_range(row, col + 11, row, col + 12,
-                                  float(data['grand_total']['total_debit']) -
-                                  float(data['grand_total']['total_credit']),
-                                  filter_head)
+
+                for account in report_accounts:
+                    account_total = report_totals.get(account, {})
+                    currency = account_total.get('currency_id', '')
+
+                    # Account banner
+                    sheet.merge_range(row, 0, row, 12,
+                                    account if account != 'false' else 'Unknown Account',
+                                    banner_fmt)
+                    row += 1
+
+                    # Opening balance
+                    sheet.write(row, 0, '00', opening_fmt)
+                    sheet.merge_range(row, 1, row, 8, 'OPENING BALANCE', opening_fmt)
+                    sheet.write(row, 9, '', opening_fmt)
+                    sheet.write(row, 10, '', opening_fmt)
+                    sheet.write(row, 11, '', opening_fmt)
+                    sheet.write(row, 12,
+                                f"{currency} {account_total.get('opening_balance', 0.0):,.2f}",
+                                opening_fmt)
+                    row += 1
+
+                    # Transaction lines
+                    for sr, rec in enumerate(report_data.get(account, []), start=1):
+                        record = rec[0] if isinstance(rec, list) else rec
+                        partner = record.get('partner_id')
+                        partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
+                        sheet.write(row, 0, sr, line_fmt)
+                        sheet.write(row, 1, account, line_fmt)
+                        sheet.write(row, 2, record.get('split_account', ''), line_fmt)
+                        sheet.write(row, 3, record.get('location', ''), line_fmt)
+                        sheet.write(row, 4, record.get('date', ''), line_fmt)
+                        sheet.write(row, 5, record.get('trx_type', ''), line_fmt)
+                        sheet.write(row, 6, record.get('move_name', ''), line_fmt)
+                        sheet.write(row, 7, record.get('ref', ''), line_fmt)
+                        sheet.write(row, 8, partner_name, line_fmt)
+                        sheet.write(row, 9, record.get('name', ''), line_fmt)
+                        sheet.write(row, 10, record.get('debit', 0.0) or '', num_fmt)
+                        sheet.write(row, 11, record.get('credit', 0.0) or '', num_fmt)
+                        sheet.write(row, 12, record.get('running_balance', 0.0), num_fmt)
+                        row += 1
+
+                    # Per-account totals
+                    sheet.merge_range(row, 0, row, 9, 'Total', total_fmt)
+                    sheet.write(row, 10, account_total.get('total_debit', 0.0), total_num_fmt)
+                    sheet.write(row, 11, account_total.get('total_credit', 0.0), total_num_fmt)
+                    closing = (account_total.get('opening_balance', 0.0)
+                            + account_total.get('total_debit', 0.0)
+                            - account_total.get('total_credit', 0.0))
+                    sheet.write(row, 12, closing, total_num_fmt)
+                    row += 2  # blank row between account blocks
+
+                # Grand total row
+                grand_opening = sum(v.get('opening_balance', 0.0) for v in report_totals.values())
+                sheet.merge_range(row, 0, row, 9, 'Grand Total', total_fmt)
+                sheet.write(row, 10, grand_total.get('total_debit', 0.0), total_num_fmt)
+                sheet.write(row, 11, grand_total.get('total_credit', 0.0), total_num_fmt)
+                sheet.write(row, 12,
+                            grand_opening + float(grand_total.get('total_debit', 0.0)) - float(grand_total.get('total_credit', 0.0)),
+                            total_num_fmt)
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())

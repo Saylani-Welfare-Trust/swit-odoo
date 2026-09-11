@@ -31,7 +31,12 @@ class AgedPayable extends owl.Component {
             diff5_sum: null,
             selected_partner: [],
             selected_partner_rec: [],
-        });
+            search_query: '',
+                move_line_full: [],
+                data_full: {},
+                total_full: {},
+            });
+        this.searchTimeout = null;
         this.load_data(self.initial_render = true);
     }
     async load_data() {
@@ -82,6 +87,9 @@ class AgedPayable extends owl.Component {
             self.state.diff3_sum = diff3Sum
             self.state.diff4_sum = diff4Sum
             self.state.diff5_sum = diff5Sum
+            self.state.move_line_full = [...move_line_list];
+            self.state.data_full = { ...self.state.data };
+            self.state.total_full = { ...move_lines_total };
         }
         catch (el) {
             window.location.href;
@@ -304,6 +312,64 @@ class AgedPayable extends owl.Component {
         this.state.diff3_sum = diff3Sum
         this.state.diff4_sum = diff4Sum
         this.state.diff5_sum = diff5Sum
+        this.state.move_line_full = [...move_line_list];
+        this.state.data_full = { ...filtered_data };
+        this.state.total_full = { ...move_lines_total };
+    }
+
+    onSearchInput(ev) {
+        const value = ev.target.value;
+        this.state.search_query = value;
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.applySearch();
+        }, 300);
+    }
+
+    applySearch() {
+        const query = (this.state.search_query || '').trim().toLowerCase();
+        if (!query) {
+            this.state.move_line = [...this.state.move_line_full];
+            this.state.data = { ...this.state.data_full };
+            this.state.total = { ...this.state.total_full };
+            return;
+        }
+
+        const matchedGroups = [];
+        const filteredData = {};
+        const filteredTotal = {};
+
+        for (const move_line of this.state.move_line_full) {
+            const groupMatches = move_line.toLowerCase().includes(query);
+            const lines = this.state.data_full[move_line] || [];
+
+            // keep the group if its name matches, or if any of its
+            // invoice lines match on move name, ref, or account
+            const matchingLines = groupMatches
+                ? lines
+                : lines.filter((record) => {
+                    const account = record.account_id;
+                    const accountName = Array.isArray(account) ? account[1] : '';
+                    const haystack = [
+                        record.move_name || '',
+                        record.name || '',
+                        accountName || '',
+                    ]
+                        .join(' ')
+                        .toLowerCase();
+                    return haystack.includes(query);
+                });
+
+            if (groupMatches || matchingLines.length) {
+                matchedGroups.push(move_line);
+                filteredData[move_line] = matchingLines;
+                filteredTotal[move_line] = this.state.total_full[move_line];
+            }
+        }
+
+        this.state.move_line = matchedGroups;
+        this.state.data = filteredData;
+        this.state.total = filteredTotal;
     }
     getDomain() {
         return [];

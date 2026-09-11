@@ -92,6 +92,8 @@ class AgeReceivableReport(models.TransientModel):
         move_line_list['partner_totals'] = partner_total
         return move_line_list
 
+
+
     @api.model
     def get_filter_values(self, date, partner):
         """

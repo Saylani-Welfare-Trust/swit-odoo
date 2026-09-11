@@ -33,7 +33,12 @@ class PartnerLedger extends owl.Component {
             account: null,
             options: null,
             message_list : [],
+            search_query: '',
+            partners_full: [],
+            data_full: {},
+            total_full: {},
         });
+        this.searchTimeout = null;
         this.load_data(self.initial_render = true);
 
     }
@@ -69,6 +74,9 @@ class PartnerLedger extends owl.Component {
             self.state.partner_list = partner_list
             self.state.total_list = partner_totals
             self.state.total = partner_totals
+            self.state.partners_full = [...partner_list];
+            self.state.data_full = { ...self.state.data };
+            self.state.total_full = { ...partner_totals };
             self.state.currency = currency
             self.state.total_debit = totalDebitSum
             self.state.total_credit = totalCreditSum
@@ -366,11 +374,69 @@ class PartnerLedger extends owl.Component {
         this.state.partners = partner_list
         this.state.data = filtered_data
         this.state.total = partner_totals
+        this.state.partners_full = [...partner_list];
+        this.state.data_full = { ...filtered_data };
+        this.state.total_full = { ...partner_totals };
         this.state.total_debit = totalDebitSum
         this.state.total_credit = totalCreditSum
         if ($(this.unfoldButton.el.classList).find("selected-filter")) {
             this.unfoldButton.el.classList.remove("selected-filter")
         }
+    }
+
+    onSearchInput(ev) {
+        const value = ev.target.value;
+        this.state.search_query = value;
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.applySearch();
+        }, 300);
+    }
+
+    applySearch() {
+        const query = (this.state.search_query || '').trim().toLowerCase();
+        if (!query) {
+            this.state.partners = [...this.state.partners_full];
+            this.state.data = { ...this.state.data_full };
+            this.state.total = { ...this.state.total_full };
+            return;
+        }
+
+        const matchedPartners = [];
+        const filteredData = {};
+        const filteredTotal = {};
+
+        for (const partner of this.state.partners_full) {
+            const partnerMatches = partner.toLowerCase().includes(query);
+            const lines = this.state.data_full[partner] || [];
+
+            // keep the partner if the name matches, or if any of its
+            // move lines match on journal, ref, or account code
+            const matchingLines = partnerMatches
+                ? lines
+                : lines.filter((rec) => {
+                    const line = Array.isArray(rec) ? rec[0] : rec;
+                    const haystack = [
+                        line.jrnl || '',
+                        line.code || '',
+                        line.move_name || line.move_id || '',
+                        line.matching_number || '',
+                    ]
+                        .join(' ')
+                        .toLowerCase();
+                    return haystack.includes(query);
+                });
+
+            if (partnerMatches || matchingLines.length) {
+                matchedPartners.push(partner);
+                filteredData[partner] = matchingLines;
+                filteredTotal[partner] = this.state.total_full[partner];
+            }
+        }
+
+        this.state.partners = matchedPartners;
+        this.state.data = filteredData;
+        this.state.total = filteredTotal;
     }
     getDomain() {
         return [];

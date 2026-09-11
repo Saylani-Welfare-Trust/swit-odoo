@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_purchaseorder_document_custom"
+              inherit_id="purchase.report_purchaseorder_document">
+
+        <!-- ===================================================== -->
+        <!-- PAYMENT TERMS -->
+        <!-- ===================================================== -->
+
+        <xpath expr="//div[@id='informations']" position="inside">
+
+            <div t-if="o.payment_term_id" class="col-3 bm-2">
+                <strong>Payment Terms:</strong>
+                <p t-field="o.payment_term_id" class="m-0"/>
+            </div>
+
+        </xpath>
+
+
+        <!-- ===================================================== -->
+        <!-- DISCOUNT TOTAL -->
+        <!-- ===================================================== -->
+
+        <xpath expr="//div[@id='total']" position="before">
+
+            <div class="row justify-content-end">
+
+                <div class="col-4">
+
+                    <table class="table table-sm table-borderless">
+
+                        <tr>
+                            <td>
+                                <strong>Discount Total</strong>
+                            </td>
+
+                            <td class="text-end">
+
+                                <t t-set="discount_total"
+                                   t-value="sum(
+                                       line.price_unit * line.product_qty * line.discount / 100
+                                       for line in o.order_line
+                                       if not line.display_type
+                                   )"/>
+
+                                <span t-esc="discount_total"
+                                      t-options='{
+                                          "widget": "monetary",
+                                          "display_currency": o.currency_id
+                                      }'/>
+
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </xpath>
+
+    </template>
+
+</odoo>

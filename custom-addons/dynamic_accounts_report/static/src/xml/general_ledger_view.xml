@@ -5,31 +5,34 @@
         <div class="w-100">
             <div class="fin_report">
                 <div class="filter_view_gl">
-                    <div class="">
+                    <div>
                         <h1 style="padding:10px">
-                            <t t-if="state.title">
-                                <t t-esc="state.title"/>
-                            </t>
-                            <t t-else=" ">
-                                <t t-esc="props.action.name"/>
-                            </t>
+                            <t t-if="state.title"><t t-esc="state.title"/></t>
+                            <t t-else=""><t t-esc="props.action.name"/></t>
                         </h1>
                     </div>
-                    <div style="margin-right: 10px; margin-left: 10px;margin-bottom: 15px;display: flex;">
+                    <div style="margin-right:10px;margin-left:10px;margin-bottom:15px;display:flex;">
                         <div class="sub_container_left" style="width:70%;">
                             <div class="report_print">
-                                <button type="button"
-                                        class="btn btn-info btn-report-print mr-2"
-                                        t-on-click="printPdf"
-                                        style="margin-right: 8px;">
+                                <button type="button" class="btn btn-info btn-report-print mr-2"
+                                        t-on-click="printPdf" style="margin-right:8px;">
                                     Print (PDF)
                                 </button>
-                                <button type="button"
-                                        class="btn btn-info btn-report-print mr-2"
+                                <button type="button" class="btn btn-info btn-report-print mr-2"
                                         t-on-click="print_xlsx">
                                     Export (XLSX)
                                 </button>
                             </div>
+                        </div>
+                        <div class="search_filter_gl" style="display:flex;align-items:center;margin-left:10px;">
+                            <input type="text" class="o_searchview_input"
+                                placeholder="Search account, partner, ref, V.No..."
+                                t-att-value="state.search_query"
+                                t-on-input="onSearchInput"
+                                style="border:1px solid #ccc;border-radius:4px;padding:5px 10px;min-width:260px;"/>
+                            <span t-if="state.search_query" class="fa fa-times"
+                                style="margin-left:-24px;cursor:pointer;color:#999;"
+                                t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
                         </div>
                         <div class="sub_container_right">
                             <div class="time_range" style="">
@@ -160,7 +163,7 @@
                                     </div>
                                 </ul>
                             </div>
-                            <div class="analytic" style="">
+                            <!-- <div class="analytic" style="">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown"
                                    style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
@@ -208,8 +211,7 @@
                                         </t>
                                     </div>
                                 </div>
-                            </div>
-
+                            </div> -->
 
                             <div class="option" style="">
                                 <a type="button" class="dropdown-toggle"
@@ -248,174 +250,104 @@
                 </div>
             </div>
             <br/>
-            <div>
-                <div class="table_view_gl" style="right:20px;height: 650px; overflow-y: scroll;"
-                     t-ref="table_view_gl">
-                    <div>
-                        <div class="table_main_view">
-                            <table cellspacing="0" width="100%">
-                                <thead>
-                                    <tr class="o_heading">
-                                        <th colspan="6"/>
-                                        <th>Date</th>
-                                        <th>Communication</th>
-                                        <th>Partner</th>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
-                                        <th>Balance</th>
+            <div class="table_view_gl" style="right:20px;height:650px;overflow-y:scroll;" t-ref="table_view_gl">
+                <div class="table_main_view">
+                    <table cellspacing="0" width="100%" class="gl_report_table">
+                        <thead>
+                            <tr class="o_heading">
+                                <th>Sr</th>
+                                <th>Account Name</th>
+                                <th>Split Account</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                                <th>Trx Type</th>
+                                <th>V.No</th>
+                                <th>Ref No.</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody t-ref="tbody">
+                            <t t-if="state.account">
+                                <t t-foreach="state.account" t-as="account" t-key="account_index">
+
+                                    <!-- Account banner: always visible, doubles as the single-line summary -->
+                                    <tr style="cursor:pointer;" t-on-click="() => this.toggleAccount(account)">
+                                        <td colspan="9" style="font-weight:bold;padding:6px;">
+                                            <span class="toggle-icon" style="margin-right:6px;">
+                                                <i t-att-class="this.isAccountCollapsed(account) ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                            </span>
+                                            <t t-if="account != 'false'"><t t-esc="account.toUpperCase()"/></t>
+                                            <t t-else="">UNKNOWN ACCOUNTS</t>
+                                        </td>
+                                        <td/>
+                                        <td>
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.getAccountTotalValue(account, 'total_debit', 0).toFixed(2)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.getAccountTotalValue(account, 'total_credit', 0).toFixed(2)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="(this.getAccountTotalValue(account, 'opening_balance', 0)
+                                                    + this.getAccountTotalValue(account, 'total_debit', 0)
+                                                    - this.getAccountTotalValue(account, 'total_credit', 0)).toFixed(2)"/>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody t-ref="tbody">
-                                    <t t-if="state.account">
-                                        <t t-set="i" t-value="0"/>
-                                        <t t-foreach="state.account"
-                                           t-as="account"
-                                           t-key="account_index">
-                                            <t t-set="i" t-value="i + 1"/>
-                                            <tr class="border-bottom border-dark border-gainsboro">
-                                                <th>
-                                                    <div data-bs-toggle="collapse"
-                                                         t-attf-href="#account-{{i}}"
-                                                         aria-expanded="false"
-                                                         t-attf-aria-controls="account-{{i}}"
-                                                         class="ms-3 collapsed">
-                                                        <a class="btn header o_heading">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <t t-if="account != 'false'">
-                                                                <t t-esc="account"/>
-                                                            </t>
-                                                            <t t-else="">
-                                                                <span>Unknown
-                                                                    Accounts
-                                                                </span>
-                                                            </t>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <th colspan="5">
-                                                    <button t-att-data-id="state.account_total[account]['account_id']"
-                                                            class="o_journal"
-                                                            t-on-click="gotoJournalItem">
-                                                        <i class="fa fa-arrow-right"/>
-                                                        Journal Items
-                                                    </button>
-                                                </th>
-                                                <th/>
-                                                <th/>
-                                                <th/>
-                                                <th>
-                                                    <span>
-                                                        <t t-if="state.account_total[account]['total_debit']"
-                                                           t-esc="state.account_total[account]['currency_id']"/>
-                                                        <t t-if="state.account_total[account]['total_debit']"
-                                                           t-esc="state.account_total[account]['total_debit']"/>
-                                                    </span>
-                                                </th>
-                                                <th>
-                                                    <span>
-                                                        <t t-if="state.account_total[account]['total_credit']"
-                                                           t-esc="state.account_total[account]['currency_id']"/>
-                                                        <t t-if="state.account_total[account]['total_credit']"
-                                                           t-esc="state.account_total[account]['total_credit']"/>
-                                                    </span>
-                                                </th>
-                                                <th>
-                                                    <span class="fw-bolder">
-                                                        <t t-esc="state.account_total[account]['currency_id']"/>
-                                                        <t t-esc="(state.account_total[account]['total_debit'] - state.account_total[account]['total_credit']).toFixed(2)"/>
-                                                    </span>
-                                                </th>
+
+                                    <!-- Everything below only shows when this account is expanded -->
+                                    <t t-if="!this.isAccountCollapsed(account)">
+                                        <!-- Opening balance row -->
+                                        <tr>
+                                            <td>00</td>
+                                            <td colspan="8">OPENING BALANCE</td>
+                                            <td/><td/>
+                                            <td>
+                                                <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                                <t t-esc="this.getAccountTotalValue(account, 'opening_balance', 0).toFixed(2)"/>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Transaction rows -->
+                                        <t t-set="sr" t-value="0"/>
+                                        <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
+                                            <t t-set="sr" t-value="sr + 1"/>
+                                            <tr>
+                                                <td><t t-esc="sr"/></td>
+                                                <td><t t-esc="account"/></td>
+                                                <td><t t-esc="line.split_account"/></td>
+                                                <td><t t-esc="line.location"/></td>
+                                                <td><t t-esc="line.date"/></td>
+                                                <td><t t-esc="line.trx_type"/></td>
+                                                <td><t t-esc="line.move_name"/></td>
+                                                <td><t t-esc="line.ref"/></td>
+                                                <td>
+                                                    <t t-if="line.partner_id" t-esc="line.partner_id[1]"/>
+                                                </td>
+                                                <td><t t-esc="line.name"/></td>
+                                                <td>
+                                                    <t t-if="line.debit">
+                                                        <t t-esc="line.debit.toFixed(2)"/>
+                                                    </t>
+                                                </td>
+                                                <td>
+                                                    <t t-if="line.credit">
+                                                        <t t-esc="line.credit.toFixed(2)"/>
+                                                    </t>
+                                                </td>
+                                                <td><t t-esc="line.running_balance.toFixed(2)"/></td>
                                             </tr>
-                                            <t t-foreach="state.account_data[account]"
-                                               t-as="valuelist"
-                                               t-key="valuelist_index">
-                                                <tr class="border-bottom border-gainsboro collapse"
-                                                    t-attf-id="account-{{i}}">
-                                                    <th colspan="6">
-                                                        <span style="gap: 12px;display: flex;">
-                                                            <t t-esc="valuelist[0]['move_name']"/>
-                                                            <a type="button"
-                                                               class="dropdown-toggle"
-                                                               data-bs-toggle="dropdown">
-                                                            </a>
-                                                            <div class="dropdown-menu  journals">
-                                                                <button t-att-data-id="valuelist[0]['move_id'][0]"
-                                                                        type="button"
-                                                                        t-on-click="gotoJournalEntry"
-                                                                        style="border: none;
-                                                                            background-color: inherit;
-                                                                            padding: 4px 8px;
-                                                                            font-size: 16px;
-                                                                            cursor: pointer;
-                                                                            display: inline-block;">
-                                                                    View
-                                                                    Journal
-                                                                    Entry
-                                                                </button>
-                                                            </div>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-esc="valuelist[0]['date']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-esc="valuelist[0]['name']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-if="valuelist[0]['partner_id']"
-                                                               t-esc="valuelist[0]['partner_id'][1]"/>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-if="valuelist[0]['debit']"
-                                                               t-esc="state.account_total[account]['currency_id']"/>
-                                                            <t t-if="valuelist[0]['debit']"
-                                                               t-esc="valuelist[0]['debit']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th>
-                                                        <span>
-                                                            <t t-if="valuelist[0]['credit']"
-                                                               t-esc="state.account_total[account]['currency_id']"/>
-                                                            <t t-if="valuelist[0]['credit']"
-                                                               t-esc="valuelist[0]['credit']"/>
-                                                        </span>
-                                                    </th>
-                                                    <th/>
-                                                </tr>
-                                            </t>
                                         </t>
                                     </t>
-                                    <tr>
-                                        <th/>
-                                        <th colspan="8" class="o_heading">
-                                            Total
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="state.total_debit"/>
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="state.total_credit"/>
-                                        </th>
-                                        <th class="o_heading">
-                                            <t t-esc="state.currency"/>
-                                            <t t-out="(state.total_debit - state.total_credit).toFixed(2)"/>
-                                        </th>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                </t>
+                            </t>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
