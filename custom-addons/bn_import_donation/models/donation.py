@@ -48,7 +48,6 @@ class Donation(models.Model):
     def action_draft(self):
         self.state = 'draft'
 
-
     def action_sync_existing_donors(self):
         if not self:
             raise ValidationError(_("No donation records selected. Please select one or more donations first."))
