@@ -49,64 +49,33 @@ class Donation(models.Model):
         self.state = 'draft'
 
 
+
     def action_sync_existing_donors(self):
-        if not self:
-            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
+        donation = self[0] if self else None
+        if not donation:
+            return
 
-        Partner = self.env['res.partner']
-        GLITCH_NAME = '3 START KK MART'
+        txn_id = (donation.transaction_id or '').strip()
 
-        fixed_count = 0
-        skipped_count = 0
+        valid_line = self.env['valid.import.donation'].search([
+            ('transaction_id', '=', txn_id)
+        ], limit=1)
 
-        for donation in self:
-            if not donation.donor_id or donation.donor_id.name != GLITCH_NAME:
-                skipped_count += 1
-                continue
+        invalid_line = self.env['invalid.import.donation'].search([
+            ('transaction_id', '=', txn_id)
+        ], limit=1)
 
-            txn_id = (donation.transaction_id or '').strip()
+        all_valid_count = self.env['valid.import.donation'].search_count([])
 
-            source_line = self.env['valid.import.donation'].search([
-                ('transaction_id', '=', txn_id),
-            ], limit=1)
-
-            if not source_line or not source_line.donor_student_name:
-                skipped_count += 1
-                continue
-
-            correct_name = source_line.donor_student_name.strip()
-
-            if correct_name == GLITCH_NAME:
-                skipped_count += 1
-                continue
-
-            partner = Partner.search([('name', '=', correct_name)], limit=1)
-
-            if not partner:
-                partner = Partner.create({
-                    'name': correct_name,
-                    'mobile': source_line.mobile,
-                    'cnic_no': source_line.cnic_no,
-                    'email': source_line.email,
-                })
-
-            donation.donor_id = partner.id
-            fixed_count += 1
-
-        if fixed_count == 0:
-            raise ValidationError(
-                _("No donations were fixed. None of the selected records currently "
-                  "show '%s', or no matching import line with a donor name was found. "
-                  "%s record(s) were skipped.") % (GLITCH_NAME, skipped_count)
-            )
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Donor Name Fixed'),
-                'message': _('%s donation(s) fixed, %s skipped.') % (fixed_count, skipped_count),
-                'type': 'success',
-                'sticky': False,
-            },
-        }
+        raise ValidationError(
+            _("Debug: donation.transaction_id=%r (len=%s) | "
+              "valid_line=%s donor_name=%r | "
+              "invalid_line=%s reason=%r | "
+              "total valid lines in system=%s") %
+            (txn_id, len(txn_id),
+             valid_line.id if valid_line else False,
+             valid_line.donor_student_name if valid_line else None,
+             invalid_line.id if invalid_line else False,
+             invalid_line.reason if invalid_line else None,
+             all_valid_count)
+        )
