@@ -1018,7 +1018,7 @@ class APIDonationWizard(models.TransientModel):
                 'reason': 'Missing gateway config or account_id',
                 'credit': c,
             })
-        # raise ValidationError(str(missing_account_products))
+        raise ValidationError(str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast process for normal donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
         missing_account_products = []
