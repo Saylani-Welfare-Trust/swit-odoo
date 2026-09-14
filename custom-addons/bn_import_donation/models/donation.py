@@ -50,64 +50,14 @@ class Donation(models.Model):
 
 
     def action_sync_existing_donors(self):
-        if not self:
-            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
-
-        Partner = self.env['res.partner']
-        donor_category = self.env.ref('bn_profile_management.donor_partner_category')
-        donee_category = self.env.ref('bn_profile_management.donee_partner_category')
-        individual_category = self.env.ref('bn_profile_management.individual_partner_category')
-
-        linked_count = 0
-        created_count = 0
-        skipped_count = 0
-
-        for donation in self:
-            source_line = self.env['valid.import.donation'].search([
+        donation = self[0] if self else None
+        if donation:
+            line = self.env['valid.import.donation'].search([
                 ('import_donation_id', '=', donation.import_donation_id.id),
-                ('transaction_id', '=', donation.transaction_id),
+                ('transaction_id', '=', donation.transaction_id)
             ], limit=1)
-
-            if not source_line or not source_line.donor_student_name:
-                skipped_count += 1
-                continue
-
-            name = source_line.donor_student_name
-
-            partner = Partner.search([('name', '=', name)], limit=1)
-
-            if not partner:
-                partner = Partner.create({
-                    'name': name,
-                    'mobile': source_line.mobile,
-                    'cnic_no': source_line.cnic_no,
-                    'email': source_line.email,
-                    'category_id': [(6, 0, [
-                        donee_category.id if source_line.is_student else donor_category.id,
-                        individual_category.id,
-                    ])],
-                })
-                created_count += 1
-
-            donation.donor_id = partner.id  # overwrite even if already set
-            linked_count += 1
-
-        if linked_count == 0:
             raise ValidationError(
-                _("No donations could be linked. This usually means no matching "
-                "'Valid Import Donation' line was found (missing import_donation_id, "
-                "transaction_id, or donor_student_name). %s record(s) were skipped.") % skipped_count
+                _("Debug: donation %s, line %s, donor_student_name %s") %
+                (donation.id, line.id if line else False,
+                line.donor_student_name if line else None)
             )
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Donor Synchronization'),
-                'message': _(
-                    '%s donation(s) linked, %s partner(s) created, %s skipped.'
-                ) % (linked_count, created_count, skipped_count),
-                'type': 'success',
-                'sticky': False,
-            },
-        }
