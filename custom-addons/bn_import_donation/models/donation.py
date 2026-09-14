@@ -49,71 +49,62 @@ class Donation(models.Model):
         self.state = 'draft'
 
     def action_sync_existing_donors(self):
-        donations = self or self.env['donation'].search([
-            ('donor_id', '=', False),
-        ])
+        if not self:
+            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
+
         Partner = self.env['res.partner']
-        donor_category = self.env.ref('bn_profile_management.donor_partner_category')
-        donee_category = self.env.ref('bn_profile_management.donee_partner_category')
-        individual_category = self.env.ref('bn_profile_management.individual_partner_category')
-        partner_cache = {}
-        linked_count = 0
-        created_count = 0
+        GLITCH_NAME = '3 START KK MART'
+
+        fixed_count = 0
         skipped_count = 0
 
-        for donation in donations.filtered(lambda record: not record.donor_id):
-            source_line = False
-            if donation.transaction_id:
-                source_line = self.env['valid.import.donation'].search([
-                    ('transaction_id', '=', donation.transaction_id),
-                ], order='id desc', limit=1)
-            if not source_line:
-                source_line = self.env['valid.import.donation'].search([
-                    ('import_donation_id', '=', donation.import_donation_id.id),
-                ], order='id desc', limit=1)
-            if not source_line:
+        for donation in self:
+            if not donation.donor_id or donation.donor_id.name != GLITCH_NAME:
                 skipped_count += 1
                 continue
 
-            partner_key = (
-                source_line.mobile or source_line.cnic_no or
-                source_line.email or source_line.donor_student_name
-            )
-            partner = partner_cache.get(partner_key)
-            if not partner and source_line.mobile:
-                partner = Partner.search([('mobile', '=', source_line.mobile)], limit=1)
-            if not partner and source_line.cnic_no:
-                partner = Partner.search([('cnic_no', '=', source_line.cnic_no)], limit=1)
-            if not partner and source_line.email:
-                partner = Partner.search([('email', '=', source_line.email)], limit=1)
-            if not partner and source_line.donor_student_name:
-                partner = Partner.search([('name', '=', source_line.donor_student_name)], limit=1)
+            txn_id = (donation.transaction_id or '').strip()
+
+            source_line = self.env['valid.import.donation'].search([
+                ('transaction_id', '=', txn_id),
+            ], limit=1)
+
+            if not source_line or not source_line.donor_student_name:
+                skipped_count += 1
+                continue
+
+            correct_name = source_line.donor_student_name.strip()
+
+            if correct_name == GLITCH_NAME:
+                skipped_count += 1
+                continue
+
+            partner = Partner.search([('name', '=', correct_name)], limit=1)
 
             if not partner:
                 partner = Partner.create({
-                    'name': source_line.donor_student_name or 'Undefined Donor',
+                    'name': correct_name,
                     'mobile': source_line.mobile,
                     'cnic_no': source_line.cnic_no,
                     'email': source_line.email,
-                    'category_id': [(6, 0, [
-                        donee_category.id if source_line.is_student else donor_category.id,
-                        individual_category.id,
-                    ])],
                 })
-                created_count += 1
 
-            partner_cache[partner_key] = partner
             donation.donor_id = partner.id
-            linked_count += 1
+            fixed_count += 1
+
+        if fixed_count == 0:
+            raise ValidationError(
+                _("No donations were fixed. None of the selected records currently "
+                  "show '%s', or no matching import line with a donor name was found. "
+                  "%s record(s) were skipped.") % (GLITCH_NAME, skipped_count)
+            )
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Donor Synchronization'),
-                'message': _(
-                    '%s donation(s) linked, %s partner(s) created, %s skipped.'
-                ) % (linked_count, created_count, skipped_count),
+                'title': _('Donor Name Fixed'),
+                'message': _('%s donation(s) fixed, %s skipped.') % (fixed_count, skipped_count),
                 'type': 'success',
                 'sticky': False,
             },
