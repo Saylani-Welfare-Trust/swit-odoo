@@ -11,13 +11,11 @@
         'bn_kitchen',
     ],
     'data': [
-        'data/sequence_data.xml',
         'data/stock_location.xml',
-        'security/ir.model.xml',  # Load models first
         'security/ir.model.access.csv',
-        'views/daily_planning.xml',
         'views/monthly_planning_views.xml',
         'views/planning_type_view.xml',
+        'views/report_monthly_planning_line_views.xml',
         
         'wizard/import_monthly_planning_wizard_views.xml',
     ],

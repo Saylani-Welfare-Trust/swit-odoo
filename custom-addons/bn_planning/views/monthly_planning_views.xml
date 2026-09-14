@@ -1,5 +1,6 @@
 <odoo>
 
+    <!-- ═══════════════════ TREE ═══════════════════ -->
     <record id="view_monthly_planning_tree" model="ir.ui.view">
         <field name="name">monthly.planning.tree</field>
         <field name="model">monthly.planning</field>
@@ -9,21 +10,90 @@
                 <field name="year"/>
                 <field name="name"/>
                 <field name="planning_type_id"/>
+                <field name="enabled_tabs"/>
+                <field name="location_dest_id"/>
+                <field name="created_by"/>
+                <field name="state"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'draft'"
+                       widget="badge"/>
             </tree>
         </field>
     </record>
 
+    <!-- ═══════════════════ SEARCH ═══════════════════ -->
+    <record id="view_monthly_planning_search" model="ir.ui.view">
+        <field name="name">monthly.planning.search</field>
+        <field name="model">monthly.planning</field>
+        <field name="arch" type="xml">
+            <search>
+
+                <!-- Searchable fields -->
+                <field name="name" string="Reference"/>
+                <field name="month"/>
+                <field name="year"/>
+                <field name="planning_type_id"/>
+                <field name="location_dest_id"/>
+
+                <!-- Filters -->
+                <filter name="filter_draft"  string="Draft"
+                        domain="[('state','=','draft')]"/>
+                <filter name="filter_active" string="Active"
+                        domain="[('state','=','active')]"/>
+
+                <separator/>
+
+                <filter name="filter_this_year" string="This Year"
+                        domain="[('year','=', context_today().year)]"/>
+                <filter name="filter_this_month" string="This Month"
+                        domain="[('year','=', context_today().year),
+                                ('month','=', context_today().strftime('%b').lower())]"/>
+
+                <separator/>
+
+                <!-- Group By -->
+                <group expand="0" string="Group By">
+                    <filter name="group_state"    string="Status"
+                            context="{'group_by':'state'}"/>
+                    <filter name="group_type"     string="Planning Type"
+                            context="{'group_by':'planning_type_id'}"/>
+                    <filter name="group_dest"     string="Destination"
+                            context="{'group_by':'location_dest_id'}"/>
+                    <filter name="group_month"    string="Month"
+                            context="{'group_by':'month'}"/>
+                    <filter name="group_year"     string="Year"
+                            context="{'group_by':'year'}"/>
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════ FORM ═══════════════════ -->
     <record id="view_monthly_planning_form" model="ir.ui.view">
         <field name="name">monthly.planning.form</field>
         <field name="model">monthly.planning</field>
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,active"/>
+
                     <button string="Import from Excel"
                             name="action_open_import_wizard"
                             type="object"
                             class="oe_highlight"
+                            invisible="state == 'active'"
                             help="Import monthly planning lines from an Excel file"/>
+                    <button string="Activate"
+                            name="action_set_active"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state == 'active'"/>
+                    <button string="Set to Draft"
+                            name="action_set_draft"
+                            type="object"
+                            invisible="state == 'draft'"/>
                 </header>
 
                 <sheet>
@@ -37,10 +107,16 @@
 
                     <group>
                         <field name="planning_type_id"
-                            options="{'no_create': True, 'no_open': True}"/>
+                               options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                    <group>
+                        <field name="created_by" readonly="1"/>
+                        <field name="location_dest_id"
+                               options="{'no_create': True, 'no_open': True, 'no_create_edit': True}"
+                               required="1"
+                               placeholder="Select destination…"/>
                     </group>
 
-                    <!-- ⬇⬇ REQUIRED: declare modifier fields -->
                     <field name="show_kitchen"   invisible="1"/>
                     <field name="show_madaris"   invisible="1"/>
                     <field name="show_medical"   invisible="1"/>
@@ -52,9 +128,9 @@
                     <notebook>
 
                         <page name="kitchen" string="Kitchen Planning"
-                            invisible="not show_kitchen">
+                              invisible="not show_kitchen">
                             <field name="kitchen_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -64,9 +140,9 @@
                         </page>
 
                         <page name="madaris" string="Madaris Planning"
-                            invisible="not show_madaris">
+                              invisible="not show_madaris">
                             <field name="madaris_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -76,9 +152,9 @@
                         </page>
 
                         <page name="medical" string="Medical Planning"
-                            invisible="not show_medical">
+                              invisible="not show_medical">
                             <field name="medical_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -88,9 +164,9 @@
                         </page>
 
                         <page name="livestock" string="Livestock Planning"
-                            invisible="not show_livestock">
+                              invisible="not show_livestock">
                             <field name="livestock_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -101,9 +177,9 @@
                         </page>
 
                         <page name="food" string="Food Planning"
-                            invisible="not show_food">
+                              invisible="not show_food">
                             <field name="food_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -113,9 +189,9 @@
                         </page>
 
                         <page name="ration" string="Ration Planning"
-                            invisible="not show_ration">
+                              invisible="not show_ration">
                             <field name="ration_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -125,9 +201,9 @@
                         </page>
 
                         <page name="meat" string="Meat Planning"
-                            invisible="not show_meat">
+                              invisible="not show_meat">
                             <field name="meat_line_ids">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="date" readonly="1"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
@@ -142,15 +218,155 @@
         </field>
     </record>
 
+    <!-- ═══════════════════ ACTIONS ═══════════════════ -->
+
+    <!-- Normal (editable) action -->
     <record id="action_monthly_planning" model="ir.actions.act_window">
         <field name="name">Monthly Planning</field>
         <field name="res_model">monthly.planning</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_monthly_planning_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Create a new monthly plan.</p>
         </field>
     </record>
 
+    <!-- ═══════════════ READ-ONLY LINE VIEW (Reporting) ═══════════════ -->
+    <record id="view_monthly_planning_reporting_form" model="ir.ui.view">
+        <field name="name">monthly.planning.reporting.form</field>
+        <field name="model">monthly.planning</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <!-- Compact header: only the essential info -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="month" class="oe_inline" readonly="1"/>
+                            <field name="year" class="oe_inline" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="planning_type_id" readonly="1"/>
+                            <field name="created_by" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="location_dest_id" readonly="1"/>
+                            <field name="state" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Fields required for the page modifiers -->
+                    <field name="show_kitchen"   invisible="1"/>
+                    <field name="show_madaris"   invisible="1"/>
+                    <field name="show_medical"   invisible="1"/>
+                    <field name="show_livestock" invisible="1"/>
+                    <field name="show_food"      invisible="1"/>
+                    <field name="show_ration"    invisible="1"/>
+                    <field name="show_meat"      invisible="1"/>
+
+                    <notebook>
+
+                        <page name="kitchen" string="Kitchen Planning"
+                            invisible="not show_kitchen">
+                            <field name="kitchen_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="madaris" string="Madaris Planning"
+                            invisible="not show_madaris">
+                            <field name="madaris_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="medical" string="Medical Planning"
+                            invisible="not show_medical">
+                            <field name="medical_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="livestock" string="Livestock Planning"
+                            invisible="not show_livestock">
+                            <field name="livestock_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="location_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="food" string="Food Planning"
+                            invisible="not show_food">
+                            <field name="food_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="ration" string="Ration Planning"
+                            invisible="not show_ration">
+                            <field name="ration_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="meat" string="Meat Planning"
+                            invisible="not show_meat">
+                            <field name="meat_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="date"/>
+                                    <field name="product_id"/>
+                                    <field name="on_hand_qty"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════ MENUS ═══════════════════ -->
+    
+    <menuitem
+        id="planning_root_menu"
+        name="Planning"
+        web_icon="bn_master_setup,static/description/icon.png"
+        sequence="6"/>
+    <!-- Original menu under Planning root -->
     <menuitem
         id="menu_monthly_planning"
         name="Monthly Planning"

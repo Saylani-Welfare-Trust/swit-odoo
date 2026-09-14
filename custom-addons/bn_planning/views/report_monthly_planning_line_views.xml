@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════ TREE ═══════════════ -->
+    <record id="report_monthly_planning_line_view_tree" model="ir.ui.view">
+        <field name="name">report.monthly.planning.line.tree</field>
+        <field name="model">report.monthly.planning.line</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="monthly_planning_id"/>
+                <field name="month"/>
+                <field name="year"/>
+                <field name="tab"/>
+                <field name="date"/>
+                <field name="product_id"/>
+                <field name="on_hand_qty"/>
+                <field name="quantity"/>
+                <field name="location_id"
+                       optional="hide"
+                       invisible="tab != 'livestock'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════════════ SEARCH ═══════════════ -->
+    <record id="report_monthly_planning_line_view_search" model="ir.ui.view">
+        <field name="name">report.monthly.planning.line.search</field>
+        <field name="model">report.monthly.planning.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="monthly_planning_id"/>
+                <field name="product_id"/>
+                <field name="date"/>
+                <field name="tab"/>
+
+                <filter name="filter_kitchen"   string="Kitchen"   domain="[('tab','=','kitchen')]"/>
+                <filter name="filter_madaris"   string="Madaris"   domain="[('tab','=','madaris')]"/>
+                <filter name="filter_medical"   string="Medical"   domain="[('tab','=','medical')]"/>
+                <filter name="filter_livestock" string="Livestock" domain="[('tab','=','livestock')]"/>
+                <filter name="filter_food"      string="Food"      domain="[('tab','=','food')]"/>
+                <filter name="filter_ration"    string="Ration"    domain="[('tab','=','ration')]"/>
+                <filter name="filter_meat"      string="Meat"      domain="[('tab','=','meat')]"/>
+
+                <separator/>
+
+                <filter name="filter_active"
+                        string="Active Plans"
+                        domain="[('monthly_planning_id.state','=','active')]"/>
+                <filter name="filter_draft"
+                        string="Draft Plans"
+                        domain="[('monthly_planning_id.state','=','draft')]"/>
+
+                <separator/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_tab" string="Tab"
+                            context="{'group_by':'tab'}"/>
+                    <filter name="group_monthly" string="Monthly Planning"
+                            context="{'group_by':'monthly_planning_id'}"/>
+                    <filter name="group_product" string="Product"
+                            context="{'group_by':'product_id'}"/>
+                    <filter name="group_date" string="Date"
+                            context="{'group_by':'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════ ACTION ═══════════════ -->
+    <record id="report_monthly_planning_line_action" model="ir.actions.act_window">
+        <field name="name">Monthly Planning Lines</field>
+        <field name="res_model">report.monthly.planning.line</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="report_monthly_planning_line_view_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No planning lines found.</p>
+        </field>
+    </record>
+
+    <!-- ═══════════════ MENU — Inventory → Reporting ═══════════════ -->
+    <menuitem
+        id="menu_report_monthly_planning_lines"
+        name="Planning Summary"
+        action="report_monthly_planning_line_action"
+        parent="stock.menu_warehouse_report"
+        sequence="96"
+        groups="stock.group_stock_manager,stock.group_stock_user"/>
+
+</odoo>

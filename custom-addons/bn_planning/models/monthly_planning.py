@@ -49,6 +49,75 @@ class MonthlyPlanning(models.Model):
     tracking=True,
     )
 
+    created_by = fields.Many2one(
+        'res.users',
+        string='Created By',
+        default=lambda self: self.env.user,
+        readonly=True,
+        copy=False,
+        help='User who created this record.',
+    )
+    enabled_tabs = fields.Char(
+        string='Enabled Pages',
+        compute='_compute_enabled_tabs',
+        store=True,   # so you can sort / group / search on it
+    )
+
+    @api.depends(
+        'planning_type_id',
+        'planning_type_id.kitchen',
+        'planning_type_id.madaris',
+        'planning_type_id.medical',
+        'planning_type_id.livestock',
+        'planning_type_id.food',
+        'planning_type_id.ration',
+        'planning_type_id.meat',
+    )
+    def _compute_enabled_tabs(self):
+        label_map = [
+            ('kitchen',   'Kitchen'),
+            ('madaris',   'Madaris'),
+            ('medical',   'Medical'),
+            ('livestock', 'Livestock'),
+            ('food',      'Food'),
+            ('ration',    'Ration'),
+            ('meat',      'Meat'),
+        ]
+        for rec in self:
+            if not rec.planning_type_id:
+                rec.enabled_tabs = ''
+                continue
+            names = [
+                label for field, label in label_map
+                if getattr(rec.planning_type_id, field, False)
+            ]
+            rec.enabled_tabs = ', '.join(names)
+
+    # ─── Destination location ──────────────────────────────
+    location_dest_id = fields.Many2one(
+        'stock.location',
+        string='Destination Location',
+        domain="[('usage', 'in', ['internal'])]",
+        help='Where stock will be sent when this plan is issued.',
+    )
+
+    # ─── State ─────────────────────────────────────────────
+    state = fields.Selection(
+        selection=[
+            ('draft',  'Draft'),
+            ('active', 'Active'),
+        ],
+        string='Status',
+        default='draft',
+        required=True,
+        tracking=True,
+        copy=False,
+    )
+
+    # Default destination (Main Stock) — optional, helps new records
+    def _default_location_dest(self):
+        return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+
     show_kitchen = fields.Boolean(
         related='planning_type_id.kitchen',
         string='Kitchen',
@@ -121,6 +190,15 @@ class MonthlyPlanning(models.Model):
             'context': {'default_monthly_planning_id': self.id},
         }
 
+    def action_set_active(self):
+        for rec in self:
+            if not rec.planning_type_id:
+                raise ValidationError("Please select a Planning Type before activating.")
+            rec.state = 'active'
+
+    def action_set_draft(self):
+        for rec in self:
+            rec.state = 'draft'
 # ─── Base class for line models ──────────────────────────────
 class MonthlyPlanningLineBase(models.AbstractModel):
     _name = 'monthly.planning.line.base'
@@ -146,6 +224,14 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                 ).qty_available
             else:
                 rec.on_hand_qty = 0.0
+
+    @api.constrains('quantity', 'product_id')
+    def _check_active_plan(self):
+        for rec in self:
+            if rec.monthly_planning_id.state == 'active':
+                raise ValidationError(
+                    "This Monthly Planning is Active. Set it back to Draft to edit lines."
+                )
 
 
 # ─── Concrete models (existing + new) ──────────────────────────
