@@ -50,14 +50,63 @@ class Donation(models.Model):
 
 
     def action_sync_existing_donors(self):
-        donation = self[0] if self else None
-        if donation:
-            line = self.env['valid.import.donation'].search([
-                ('import_donation_id', '=', donation.import_donation_id.id),
-                ('transaction_id', '=', donation.transaction_id)
+        if not self:
+            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
+
+        Partner = self.env['res.partner']
+        GLITCH_NAME = '3 START KK MART'
+
+        fixed_count = 0
+        skipped_count = 0
+
+        for donation in self:
+            if not donation.donor_id or donation.donor_id.name != GLITCH_NAME:
+                skipped_count += 1
+                continue
+
+            txn_id = (donation.transaction_id or '').strip()
+
+            source_line = self.env['valid.import.donation'].search([
+                ('transaction_id', '=', txn_id),
             ], limit=1)
+
+            if not source_line or not source_line.donor_student_name:
+                skipped_count += 1
+                continue
+
+            correct_name = source_line.donor_student_name.strip()
+
+            if correct_name == GLITCH_NAME:
+                skipped_count += 1
+                continue
+
+            partner = Partner.search([('name', '=', correct_name)], limit=1)
+
+            if not partner:
+                partner = Partner.create({
+                    'name': correct_name,
+                    'mobile': source_line.mobile,
+                    'cnic_no': source_line.cnic_no,
+                    'email': source_line.email,
+                })
+
+            donation.donor_id = partner.id
+            fixed_count += 1
+
+        if fixed_count == 0:
             raise ValidationError(
-                _("Debug: donation %s, line %s, donor_student_name %s") %
-                (donation.id, line.id if line else False,
-                line.donor_student_name if line else None)
+                _("No donations were fixed. None of the selected records currently "
+                  "show '%s', or no matching import line with a donor name was found. "
+                  "%s record(s) were skipped.") % (GLITCH_NAME, skipped_count)
             )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Donor Name Fixed'),
+                'message': _('%s donation(s) fixed, %s skipped.') % (fixed_count, skipped_count),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
