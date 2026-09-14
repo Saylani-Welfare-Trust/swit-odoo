@@ -50,16 +50,121 @@ class Donation(models.Model):
         self.state = 'draft'
 
     def action_sync_existing_donors(self):
-        donation = self[0] if self else None
-        if not donation:
-            return
+        import base64
+        from io import BytesIO
+        import openpyxl
+        import xlrd
 
-        donor_name = donation.donor_id.name if donation.donor_id else None
+        if not self:
+            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
 
-        raise ValidationError(
-            _("Debug: donor_id=%s donor_name=%r (len=%s) matches_glitch=%s") %
-            (donation.donor_id.id if donation.donor_id else False,
-             donor_name,
-             len(donor_name) if donor_name else 0,
-             donor_name == '3 START KK MART' if donor_name else False)
-        )
+        Partner = self.env['res.partner']
+        GLITCH_NAME = '3 START KK MART'
+
+        fixed_count = 0
+        skipped_count = 0
+
+        # cache parsed excel name_map per import_donation_id, so we don't re-parse per row
+        name_map_cache = {}
+
+        def get_name_map(import_donation):
+            if import_donation.id in name_map_cache:
+                return name_map_cache[import_donation.id]
+
+            name_map = {}
+            if import_donation.import_file:
+                data = base64.b64decode(import_donation.import_file)
+                stream = BytesIO(data)
+
+                if data[:4] == b'PK\x03\x04':
+                    workbook = openpyxl.load_workbook(stream)
+                    sheet = workbook.active
+                    headers = [c.value for c in next(sheet.iter_rows(min_row=1, max_row=1))]
+                    rows = sheet.iter_rows(min_row=2, values_only=True)
+                elif data[:4] == b'\xD0\xCF\x11\xE0':
+                    workbook = xlrd.open_workbook(file_contents=data)
+                    sheet = workbook.sheet_by_index(0)
+                    headers = sheet.row_values(0)
+                    rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
+                else:
+                    rows = []
+                    headers = []
+
+                if 'Id' in headers and 'From name' in headers:
+                    id_idx = headers.index('Id')
+                    name_idx = headers.index('From name')
+                    for row in rows:
+                        raw_id = row[id_idx]
+                        if isinstance(raw_id, float) and raw_id.is_integer():
+                            txn_id = str(int(raw_id))
+                        else:
+                            txn_id = str(raw_id or '').strip()
+                        from_name = row[name_idx]
+                        if txn_id and from_name:
+                            name_map[txn_id] = from_name
+
+            name_map_cache[import_donation.id] = name_map
+            return name_map
+
+        for donation in self:
+            if not donation.donor_id or (donation.donor_id.name or '').strip() != GLITCH_NAME:
+                skipped_count += 1
+                continue
+            txn_id = (donation.transaction_id or '').strip()
+
+            # 1st try: donor_student_name already on the valid line
+            source_line = self.env['valid.import.donation'].search([
+                ('transaction_id', '=', txn_id)
+            ], limit=1)
+
+            correct_name = False
+            if source_line and source_line.donor_student_name:
+                correct_name = source_line.donor_student_name.strip()
+
+            # 2nd try: fall back to reading the Excel file directly
+            if not correct_name:
+                import_donation = donation.import_donation_id or (source_line.import_donation_id if source_line else False)
+                if import_donation:
+                    name_map = get_name_map(import_donation)
+                    correct_name = name_map.get(txn_id)
+
+            if not correct_name or correct_name == GLITCH_NAME:
+                skipped_count += 1
+                continue
+
+            partner = Partner.search([('name', '=', correct_name)], limit=1)
+
+            if not partner:
+                partner = Partner.create({
+                    'name': correct_name,
+                    'mobile': source_line.mobile if source_line else False,
+                    'cnic_no': source_line.cnic_no if source_line else False,
+                    'email': source_line.email if source_line else False,
+                })
+
+            donation.donor_id = partner.id
+
+            # also backfill the valid.import.donation line, so future runs don't hit this again
+            if source_line and not source_line.donor_student_name:
+                source_line.donor_student_name = correct_name
+
+            fixed_count += 1
+
+        if fixed_count == 0:
+            raise ValidationError(
+                _("No donations were fixed. None of the selected records currently "
+                  "show '%s', or no name could be found in the linked import line "
+                  "or the uploaded Excel file. %s record(s) were skipped.")
+                % (GLITCH_NAME, skipped_count)
+            )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Donor Name Fixed'),
+                'message': _('%s donation(s) fixed, %s skipped.') % (fixed_count, skipped_count),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
