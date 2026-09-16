@@ -6,4 +6,5 @@ from . import donation_slip_usage
 from . import product_template
 from . import product_product
 from . import pos_session
+from . import pos_order
 from . import advance_donation_disbursement

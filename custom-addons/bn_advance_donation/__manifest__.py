@@ -7,6 +7,7 @@
     'category': 'BytesNode/Advance Donation',
     'depends': [
         'account',
+        'point_of_sale',
         'bn_import_donation',
         # 'bn_master_setup',
     ],
@@ -15,6 +16,7 @@
         'security/ir.model.access.csv',
 
         'data/sequences.xml',
+        'data/sync_pos_donation_receipts_action.xml',
         'reports/advance_donation_report.xml',
         'reports/non_cash_advance_donation_report.xml',
         'reports/non_cash_disbursement_report.xml',
