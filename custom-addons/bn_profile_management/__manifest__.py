@@ -8,7 +8,8 @@
     'category': 'BytesNode/Profile Management',
     'depends': [
         'contacts',
-        'hr'
+        'hr',
+        'bn_analytic_account_customization'
     ],
     'data': [
         'data/sequence.xml',
