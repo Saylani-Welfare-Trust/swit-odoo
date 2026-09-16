@@ -76,7 +76,7 @@
                     <br/>
                     <t t-if="account">
                         <table class="table table-sm table-reports">
-                            <thead >
+                            <thead>
                                 <tr>
                                     <th>Sr</th>
                                     <th>Account</th>
@@ -109,7 +109,7 @@
                                         <th/>
                                         <th>
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
-                                            <t t-esc="'%.2f' % total[accounts].get('opening_balance', 0.0)"/>
+                                            <t t-esc="'{:,.2f}'.format(total[accounts].get('opening_balance') or 0.0)"/>
                                         </th>
                                     </tr>
                                     <!-- Transaction lines -->
@@ -125,27 +125,49 @@
                                             <th><t t-esc="valuelist.get('trx_type', '')"/></th>
                                             <th><t t-esc="valuelist.get('move_name', '')"/></th>
                                             <th><t t-esc="valuelist.get('ref', '')"/></th>
-                                            <th><t t-if="valuelist.get('partner_id')" t-esc="valuelist['partner_id'][1]"/></th>
-                                            <th><t t-esc="valuelist.get('name', '')"/></th>
-                                            <th><t t-if="valuelist.get('debit')" t-esc="'%.2f' % valuelist.get('debit', 0)"/></th>
-                                            <th><t t-if="valuelist.get('credit')" t-esc="'%.2f' % valuelist.get('credit', 0)"/></th>
-                                            <th><t t-esc="'%.2f' % valuelist.get('running_balance', 0.0)"/></th>
+                                            <!-- Name column with fallback -->
+                                            <th>
+                                                <t t-if="valuelist.get('partner_id') and valuelist['partner_id'][1]"
+                                                   t-esc="valuelist['partner_id'][1]"/>
+                                                <t t-elif="valuelist.get('name')"
+                                                   t-esc="valuelist.get('name')"/>
+                                            </th>
+                                            <!-- Description column -->
+                                            <th>
+                                                <t t-if="valuelist.get('description')"
+                                                   t-esc="valuelist.get('description')"/>
+                                                <t t-else=""
+                                                   t-esc="valuelist.get('name', '')"/>
+                                            </th>
+                                            <th>
+                                                <t t-if="valuelist.get('debit')"
+                                                   t-esc="'{:,.2f}'.format(valuelist.get('debit') or 0)"/>
+                                            </th>
+                                            <th>
+                                                <t t-if="valuelist.get('credit')"
+                                                   t-esc="'{:,.2f}'.format(valuelist.get('credit') or 0)"/>
+                                            </th>
+                                            <th>
+                                                <t t-esc="'{:,.2f}'.format(valuelist.get('running_balance') or 0.0)"/>
+                                            </th>
                                         </tr>
                                     </t>
                                     <!-- Per-account total -->
                                     <tr>
-                                        <th colspan="10" >Total</th>
-                                        <th >
+                                        <th colspan="10">Total</th>
+                                        <th>
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
-                                            <t t-esc="'%.2f' % total[accounts].get('total_debit', 0)"/>
+                                            <t t-esc="'{:,.2f}'.format(total[accounts].get('total_debit') or 0)"/>
                                         </th>
-                                        <th >
+                                        <th>
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
-                                            <t t-esc="'%.2f' % total[accounts].get('total_credit', 0)"/>
+                                            <t t-esc="'{:,.2f}'.format(total[accounts].get('total_credit') or 0)"/>
                                         </th>
-                                        <th >
+                                        <th>
                                             <t t-esc="total[accounts].get('currency_id', '')"/>
-                                            <t t-esc="'%.2f' % (total[accounts].get('opening_balance', 0.0) + total[accounts].get('total_debit', 0) - total[accounts].get('total_credit', 0))"/>
+                                            <t t-esc="'{:,.2f}'.format((total[accounts].get('opening_balance') or 0.0)
+                                                + (total[accounts].get('total_debit') or 0)
+                                                - (total[accounts].get('total_credit') or 0))"/>
                                         </th>
                                     </tr>
                                 </t>
@@ -158,34 +180,36 @@
                                 <th style="width:45%;">Total</th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="grand_total['total_debit']"/>
+                                    <t t-out="'{:,.2f}'.format(float(grand_total['total_debit'] or 0))"/>
                                 </th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="grand_total['total_credit']"/>
+                                    <t t-out="'{:,.2f}'.format(float(grand_total['total_credit'] or 0))"/>
                                 </th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="float(grand_total['total_debit']) - float(grand_total['total_credit'])"/>
+                                    <t t-out="'{:,.2f}'.format(float(grand_total['total_debit'] or 0) - float(grand_total['total_credit'] or 0))"/>
                                 </th>
                             </tr>
                             <tr>
                                 <th style="width:35%;">Total</th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="'%.2f' % grand_total.get('opening_balance', 0.0)"/>
+                                    <t t-out="'{:,.2f}'.format(grand_total.get('opening_balance') or 0.0)"/>
                                 </th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="'%.2f' % grand_total['total_debit']"/>
+                                    <t t-out="'{:,.2f}'.format(float(grand_total['total_debit'] or 0))"/>
                                 </th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="'%.2f' % grand_total['total_credit']"/>
+                                    <t t-out="'{:,.2f}'.format(float(grand_total['total_credit'] or 0))"/>
                                 </th>
                                 <th style="width:10%">
                                     <t t-out="grand_total['currency']"/>
-                                    <t t-out="'%.2f' % (grand_total.get('opening_balance', 0.0) + float(grand_total['total_debit']) - float(grand_total['total_credit']))"/>
+                                    <t t-out="'{:,.2f}'.format((grand_total.get('opening_balance') or 0.0)
+                                        + float(grand_total['total_debit'] or 0)
+                                        - float(grand_total['total_credit'] or 0))"/>
                                 </th>
                             </tr>
                         </tbody>
