@@ -293,7 +293,7 @@ class AccountGeneralLedger(models.TransientModel):
         headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
                    'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
                    'Debit', 'Credit', 'Balance']
-        widths = [6, 22, 26, 50, 12, 12, 16, 12, 16, 32, 12, 12, 14]
+        widths = [6, 25, 26, 50, 12, 12, 16, 12, 16, 32, 12, 12, 14]
         last_col = len(headers) - 1
 
         # base red background applied to every cell in the used columns by
