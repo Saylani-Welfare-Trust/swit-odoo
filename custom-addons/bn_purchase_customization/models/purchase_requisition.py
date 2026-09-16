@@ -7,7 +7,6 @@ PURCHASE_REQUISITION_STATES = [
     ('ongoing', 'Ongoing'),
     ('hod_approval', 'HOD Approval'),
     ('mem_approval', 'Member Approval'),
-    ('procurement_review', 'Procurement Manager Review'),
     ('deferred', 'Deferred / On Hold'),
     ('rfq_sent', 'RFQ Sent'),
     ('technical_evaluation', 'Technical Evaluation'),

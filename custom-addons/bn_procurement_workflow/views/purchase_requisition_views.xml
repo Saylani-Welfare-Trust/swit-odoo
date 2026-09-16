@@ -10,19 +10,27 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
+            <!-- This workflow skips HOD/Member Approval entirely: the Procurement Manager
+                 reviews and approves the draft PR directly. Hide those two buttons only for
+                 requisitions that came from a Material Request (this workflow); other
+                 purchase requisitions/blanket orders keep the original behaviour. -->
+            <xpath expr="//button[@name='action_hod_approval']" position="attributes">
+                <attribute name="invisible">state != 'draft' or material_request_id</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_mem_approval']" position="attributes">
+                <attribute name="invisible">state != 'hod_approval' or material_request_id</attribute>
+            </xpath>
+
             <xpath expr="//field[@name='state']" position="attributes">
-                <attribute name="statusbar_visible">draft,hod_approval,mem_approval,procurement_review,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
+                <attribute name="statusbar_visible">draft,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
-                <button string="Submit to Procurement" name="action_submit_to_procurement" type="object"
-                        class="oe_highlight" invisible="state != 'mem_approval'"/>
-
                 <button string="Procurement Approve" name="action_procurement_approve" type="object"
-                        class="oe_highlight" invisible="state != 'procurement_review'"
+                        class="oe_highlight" invisible="state != 'draft' or procurement_manager_id"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
-                        invisible="state != 'procurement_review'"
+                        invisible="state != 'draft' or procurement_manager_id"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Resume from Hold" name="action_procurement_resume" type="object"
                         class="oe_highlight" invisible="state != 'deferred'"
@@ -49,6 +57,12 @@
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
             </xpath>
 
+            <!-- RFQs are created while state is still 'draft' (once Procurement Manager
+                 approved) rather than in 'in_progress'/'open' as the base button assumed -->
+            <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
+                <attribute name="invisible">not ((state in ('in_progress', 'open')) or (state == 'draft' and procurement_manager_id))</attribute>
+            </xpath>
+
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_selected_rfq" type="object" class="oe_stat_button" icon="fa-file-text-o"
                         invisible="not selected_rfq_id">
@@ -65,7 +79,7 @@
                         <group string="Procurement Manager">
                             <field name="procurement_manager_id" readonly="1"/>
                             <field name="procurement_review_date" readonly="1"/>
-                            <field name="defer_reason" readonly="state != 'procurement_review'"/>
+                            <field name="defer_reason" readonly="state != 'draft'"/>
                         </group>
                     </group>
                     <group>

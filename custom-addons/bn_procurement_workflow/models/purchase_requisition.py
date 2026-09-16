@@ -46,35 +46,33 @@ class PurchaseRequisition(models.Model):
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ / Winning Quote',
                                        readonly=True, copy=False)
 
-    def action_submit_to_procurement(self):
-        """Member Approval done -> hand the draft PR to the Procurement Manager."""
+    def action_procurement_approve(self):
+        """Procurement Manager reviews and approves the draft PR directly - no HOD/Member
+        approval step in this workflow. State stays 'draft' (approval is recorded via
+        procurement_manager_id) until RFQs are actually sent to vendors."""
         self.ensure_one()
-        if self.state != 'mem_approval':
-            raise ValidationError(_('This request is not in Member Approval state.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
+        if self.procurement_manager_id:
+            raise ValidationError(_('This request has already been approved by a Procurement Manager.'))
+        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
         if not self.material_request_id:
             raise ValidationError(
                 _('This Purchase Requisition has no source Material Request, so there is no '
                   'requesting department to run Technical Evaluation against. It cannot enter '
                   'the Procurement workflow.'))
-        self.state = 'procurement_review'
-
-    def action_procurement_approve(self):
-        """Procurement Manager approves the draft PR for RFQ."""
-        self.ensure_one()
-        if self.state != 'procurement_review':
-            raise ValidationError(_('This request is not in Procurement Manager Review state.'))
-        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
         self.write({
             'procurement_manager_id': self.env.user.id,
             'procurement_review_date': fields.Datetime.now(),
         })
+        self.message_post(body=_('Approved by Procurement Manager - ready for RFQs to be sent to vendors.'))
 
     def action_open_defer_wizard(self):
         """Open the small popup collecting the mandatory deferral reason."""
         self.ensure_one()
-        if self.state != 'procurement_review':
-            raise ValidationError(_('This request is not in Procurement Manager Review state.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         return {
@@ -89,8 +87,8 @@ class PurchaseRequisition(models.Model):
     def action_procurement_defer(self, reason):
         """Procurement Manager defers the PR instead of approving it."""
         self.ensure_one()
-        if self.state != 'procurement_review':
-            raise ValidationError(_('This request is not in Procurement Manager Review state.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         if not reason:
@@ -99,19 +97,19 @@ class PurchaseRequisition(models.Model):
         self.message_post(body=_('Purchase Requisition deferred by Procurement Manager.\nReason: %s') % reason)
 
     def action_procurement_resume(self):
-        """Resume a deferred PR back into Procurement Manager Review."""
+        """Resume a deferred PR back to Draft for Procurement Manager review."""
         self.ensure_one()
         if self.state != 'deferred':
             raise ValidationError(_('This request is not Deferred.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can resume this request.'))
-        self.state = 'procurement_review'
+        self.state = 'draft'
 
     def action_mark_rfq_sent(self):
         """Called once RFQs have been created for this requisition."""
         self.ensure_one()
-        if self.state != 'procurement_review':
-            raise ValidationError(_('This request is not in Procurement Manager Review state.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
         if not self.procurement_manager_id:
             raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
         self.state = 'rfq_sent'

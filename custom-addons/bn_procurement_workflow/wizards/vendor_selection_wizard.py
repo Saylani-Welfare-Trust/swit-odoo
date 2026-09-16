@@ -8,7 +8,7 @@ class VendorSelectionWizard(models.TransientModel):
 
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
-        if requisition and (requisition.state != 'procurement_review' or not requisition.procurement_manager_id):
+        if requisition and (requisition.state != 'draft' or not requisition.procurement_manager_id):
             raise ValidationError(
                 _('RFQs can only be created once the Procurement Manager has approved this '
                   'Purchase Requisition for RFQ.'))
