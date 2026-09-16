@@ -64,7 +64,7 @@ class AccountGeneralLedger(models.TransientModel):
         account_map = {}
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
         if account_ids:
-            account_map = {account.id: account.display_name for account in self.env['account.account'].browse(list(account_ids))}
+            account_map = {account.id: f"{account.code} {account.name}" for account in self.env['account.account'].browse(list(account_ids))}
 
         for line in move_lines:
             account_id = line.get('account_id')
@@ -155,7 +155,7 @@ class AccountGeneralLedger(models.TransientModel):
         account_map = {}
         if account_ids:
             account_map = {
-                account.id: account.display_name
+                account.id: f"{account.code} {account.name}"
                 for account in self.env['account.account'].browse(list(account_ids)).exists()
             }
 
@@ -174,20 +174,29 @@ class AccountGeneralLedger(models.TransientModel):
         # --- corresponding/"split" account per move (siblings in the same entry) ---
         move_ids = {line['move_id'][0] for line in move_lines if line.get('move_id')}
         move_account_map = defaultdict(set)
+        split_account_ids = set()
         if move_ids:
             all_move_lines = self.env['account.move.line'].search_read(
                 [('move_id', 'in', list(move_ids))], ['move_id', 'account_id'])
             for l in all_move_lines:
                 if l.get('account_id'):
-                    move_account_map[l['move_id'][0]].add(l['account_id'][1])
+                    move_account_map[l['move_id'][0]].add(l['account_id'][0])
+                    split_account_ids.add(l['account_id'][0])
+
+        split_account_map = {}
+        if split_account_ids:
+            split_account_map = {
+                account.id: f"{account.code} {account.name}"
+                for account in self.env['account.account'].browse(list(split_account_ids)).exists()
+            }
 
         def split_account_for(line):
             if not line.get('move_id') or not line.get('account_id'):
                 return ''
-            others = move_account_map[line['move_id'][0]] - {line['account_id'][1]}
+            others = move_account_map[line['move_id'][0]] - {line['account_id'][0]}
             if not others:
                 return ''
-            return list(others)[0] if len(others) == 1 else 'Multiple'
+            return split_account_map.get(list(others)[0], '') if len(others) == 1 else 'Multiple'
 
         # --- location from first analytic account on the distribution ---
         analytic_ids = set()
@@ -284,7 +293,7 @@ class AccountGeneralLedger(models.TransientModel):
         headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
                    'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
                    'Debit', 'Credit', 'Balance']
-        widths = [6, 22, 18, 16, 12, 12, 14, 12, 16, 32, 12, 12, 14]
+        widths = [6, 22, 26, 30, 12, 12, 14, 12, 16, 32, 12, 12, 14]
         last_col = len(headers) - 1
 
         # base red background applied to every cell in the used columns by
