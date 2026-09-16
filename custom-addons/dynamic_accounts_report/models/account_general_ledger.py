@@ -296,11 +296,9 @@ class AccountGeneralLedger(models.TransientModel):
         widths = [6, 25, 26, 50, 12, 12, 16, 12, 16, 32, 12, 12, 14]
         last_col = len(headers) - 1
 
-        # base red background applied to every cell in the used columns by
-        # default; specific rows/cells below override it with their own format
-        red_base_fmt = workbook.add_format({'bg_color': '#FF0000'})
         for idx, w in enumerate(widths):
-            sheet.set_column(idx, idx, w, red_base_fmt)
+            sheet.set_column(idx, idx, w)
+        sheet.set_default_row(20)
 
         white_company_fmt = workbook.add_format(
             {'bg_color': 'white', 'bold': True, 'font_size': 16,
@@ -337,12 +335,12 @@ class AccountGeneralLedger(models.TransientModel):
              'bg_color': '#FF0000', 'font_color': 'white',
              'num_format': '#,##0.00'})
         line_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000'})
+            {'font_size': '10px', 'border': 1})
         name_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000',
+            {'font_size': '10px', 'border': 1,
              'text_wrap': True, 'valign': 'vcenter'})
         num_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000',
+            {'font_size': '10px', 'border': 1,
              'num_format': '#,##0.00'})
         total_fmt = workbook.add_format(
             {'bold': True, 'font_size': '10px', 'border': 1,
@@ -409,7 +407,7 @@ class AccountGeneralLedger(models.TransientModel):
                         sheet.write(row, 10, record.get('debit', 0.0) or '', num_fmt)
                         sheet.write(row, 11, record.get('credit', 0.0) or '', num_fmt)
                         sheet.write(row, 12, record.get('running_balance', 0.0), num_fmt)
-                        sheet.set_row(row, 28)
+                        sheet.set_row(row, 30)
                         row += 1
 
                     # Per-account totals
