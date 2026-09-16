@@ -293,7 +293,7 @@ class AccountGeneralLedger(models.TransientModel):
         headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
                    'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
                    'Debit', 'Credit', 'Balance']
-        widths = [6, 22, 26, 30, 12, 12, 14, 12, 16, 32, 12, 12, 14]
+        widths = [6, 22, 26, 50, 12, 12, 14, 12, 16, 32, 12, 12, 14]
         last_col = len(headers) - 1
 
         # base red background applied to every cell in the used columns by
@@ -338,6 +338,9 @@ class AccountGeneralLedger(models.TransientModel):
              'num_format': '#,##0.00'})
         line_fmt = workbook.add_format(
             {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000'})
+        name_fmt = workbook.add_format(
+            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000',
+             'text_wrap': True, 'valign': 'vcenter'})
         num_fmt = workbook.add_format(
             {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000',
              'num_format': '#,##0.00'})
@@ -394,7 +397,7 @@ class AccountGeneralLedger(models.TransientModel):
                         partner = record.get('partner_id')
                         partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
                         sheet.write(row, 0, sr, line_fmt)
-                        sheet.write(row, 1, account_label, line_fmt)
+                        sheet.write(row, 1, account_label.replace(' ', '\n', 1), name_fmt)
                         sheet.write(row, 2, record.get('split_account', ''), line_fmt)
                         sheet.write(row, 3, record.get('location', ''), line_fmt)
                         sheet.write(row, 4, record.get('date', ''), line_fmt)
@@ -406,6 +409,7 @@ class AccountGeneralLedger(models.TransientModel):
                         sheet.write(row, 10, record.get('debit', 0.0) or '', num_fmt)
                         sheet.write(row, 11, record.get('credit', 0.0) or '', num_fmt)
                         sheet.write(row, 12, record.get('running_balance', 0.0), num_fmt)
+                        sheet.set_row(row, 28)
                         row += 1
 
                     # Per-account totals
