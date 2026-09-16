@@ -278,103 +278,105 @@ class AccountGeneralLedger(models.TransientModel):
         start_date = filters.get('start_date') or ''
         end_date = filters.get('end_date') or ''
         sheet = workbook.add_worksheet()
-        head = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '15px'})
-        sub_heading = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px',
-             'border': 1, 'bg_color': '#D3D3D3',
-             'border_color': 'black'})
-        filter_head = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px',
-             'border': 1, 'bg_color': '#D3D3D3',
-             'border_color': 'black'})
-        filter_body = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px'})
-        side_heading_sub = workbook.add_format(
-            {'align': 'left', 'bold': True, 'font_size': '10px',
-             'border': 1,
-             'border_color': 'black'})
-        side_heading_sub.set_indent(1)
-        txt_name = workbook.add_format({'font_size': '10px', 'border': 1})
-        txt_name.set_indent(2)
-        sheet.set_column(0, 0, 30)
-        sheet.set_column(1, 1, 20)
-        sheet.set_column(2, 2, 15)
-        sheet.set_column(3, 3, 15)
-        col = 0
-        sheet.write('A1:b1', report_name, head)
-        sheet.write('B3:b4', 'Date Range', filter_head)
-        sheet.write('B4:b4', 'Journals', filter_head)
-        sheet.write('B5:b4', 'Analytic', filter_head)
-        sheet.write('B6:b4', 'Options', filter_head)
-        if start_date or end_date:
-            sheet.merge_range('C3:G3', f"{start_date} to {end_date}",
-                              filter_body)
-        if filters.get('journal'):
-            display_names = [journal for journal in filters.get('journal', [])]
-            display_names_str = ', '.join(display_names)
-            sheet.merge_range('C4:G4', display_names_str, filter_body)
-        if filters.get('analytic'):
-            display_names = [analytic for analytic in filters.get('analytic', [])]
-            account_keys_str = ', '.join(display_names)
-            sheet.merge_range('C5:G5', account_keys_str, filter_body)
-        if filters.get('options'):
-            option_keys = list(filters['options'].keys())
-            option_keys_str = ', '.join(option_keys)
-            sheet.merge_range('C6:G6', option_keys_str, filter_body)
+        company_name = self.env.company.name
+        printed_date = datetime.now().strftime('%d-%b-%y')
+
+        headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
+                   'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
+                   'Debit', 'Credit', 'Balance']
+        widths = [6, 22, 18, 16, 12, 12, 14, 12, 16, 32, 12, 12, 14]
+        last_col = len(headers) - 1
+
+        # base red background applied to every cell in the used columns by
+        # default; specific rows/cells below override it with their own format
+        red_base_fmt = workbook.add_format({'bg_color': '#FF0000'})
+        for idx, w in enumerate(widths):
+            sheet.set_column(idx, idx, w, red_base_fmt)
+
+        white_company_fmt = workbook.add_format(
+            {'bg_color': 'white', 'bold': True, 'font_size': 16,
+             'align': 'left', 'valign': 'vcenter'})
+        white_title_fmt = workbook.add_format(
+            {'bg_color': 'white', 'bold': True, 'font_size': 13,
+             'align': 'left', 'valign': 'vcenter'})
+        white_sub_fmt = workbook.add_format(
+            {'bg_color': 'white', 'font_size': 10,
+             'align': 'left', 'valign': 'vcenter'})
+        printed_date_fmt = workbook.add_format(
+            {'bg_color': 'white', 'bold': True, 'font_size': 9,
+             'align': 'right', 'valign': 'vcenter'})
+        range_label_fmt = workbook.add_format(
+            {'bg_color': '#FFFF00', 'font_color': 'black', 'bold': True,
+             'font_size': 10, 'align': 'left', 'border': 1})
+        range_label_fmt.set_indent(1)
+        range_value_fmt = workbook.add_format(
+            {'bg_color': '#FF0000', 'font_color': 'white', 'bold': True,
+             'font_size': 10, 'align': 'left', 'border': 1})
+        range_value_fmt.set_indent(1)
+        section_header_fmt = workbook.add_format(
+            {'bg_color': '#FF0000', 'font_color': '#FFFF00', 'bold': True,
+             'align': 'center', 'font_size': 10, 'border': 1})
+        banner_fmt = workbook.add_format(
+            {'bg_color': '#C0C0C0', 'font_color': 'black', 'bold': True,
+             'font_size': 10, 'border': 1, 'align': 'left'})
+        banner_fmt.set_indent(1)
+        opening_fmt = workbook.add_format(
+            {'bold': True, 'font_size': '10px', 'border': 1,
+             'bg_color': '#FF0000', 'font_color': 'white'})
+        opening_num_fmt = workbook.add_format(
+            {'bold': True, 'font_size': '10px', 'border': 1,
+             'bg_color': '#FF0000', 'font_color': 'white',
+             'num_format': '#,##0.00'})
+        line_fmt = workbook.add_format(
+            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000'})
+        num_fmt = workbook.add_format(
+            {'font_size': '10px', 'border': 1, 'bg_color': '#FF0000',
+             'num_format': '#,##0.00'})
+        total_fmt = workbook.add_format(
+            {'bold': True, 'font_size': '10px', 'border': 1,
+             'bg_color': '#FFFF00'})
+        total_num_fmt = workbook.add_format(
+            {'bold': True, 'font_size': '10px', 'border': 1,
+             'bg_color': '#FFFF00', 'num_format': '#,##0.00'})
+
+        # --- company / report header block ---
+        sheet.merge_range(0, 0, 0, 3, company_name, white_company_fmt)
+        sheet.merge_range(0, 4, 0, last_col, printed_date, printed_date_fmt)
+        sheet.merge_range(1, 0, 1, last_col, report_name, white_title_fmt)
+        date_range_text = f"{start_date} - {end_date}" if (start_date or end_date) else ''
+        sheet.merge_range(2, 0, 2, last_col, date_range_text, white_sub_fmt)
+
+        # --- account from / account to range ---
+        sorted_accounts = sorted(a for a in report_accounts if a and a != 'false')
+        account_from = sorted_accounts[0] if sorted_accounts else ''
+        account_to = sorted_accounts[-1] if sorted_accounts else ''
+        sheet.write(4, 1, 'Account From :', range_label_fmt)
+        sheet.merge_range(4, 2, 4, 6, account_from, range_value_fmt)
+        sheet.write(5, 1, 'Account To :', range_label_fmt)
+        sheet.merge_range(5, 2, 5, 6, account_to, range_value_fmt)
+
+        row = 8
         if report_accounts:
             if report_action == 'dynamic_accounts_report.action_general_ledger':
-                headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
-                        'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
-                        'Debit', 'Credit', 'Balance']
-                # widen a few columns for readability
-                widths = [6, 22, 18, 16, 12, 12, 14, 12, 16, 32, 12, 12, 14]
-                for idx, w in enumerate(widths):
-                    sheet.set_column(idx, idx, w)
-
-                banner_fmt = workbook.add_format(
-                    {'bold': True, 'font_size': '10px', 'border': 1,
-                    'bg_color': '#CC0000', 'font_color': 'white'})
-                header_row_fmt = workbook.add_format(
-                    {'bold': True, 'align': 'center', 'font_size': '10px',
-                    'border': 1, 'bg_color': '#FFFF00'})
-                opening_fmt = workbook.add_format(
-                    {'bold': True, 'font_size': '10px', 'border': 1,
-                    'bg_color': '#CC0000', 'font_color': 'white'})
-                line_fmt = workbook.add_format({'font_size': '10px', 'border': 1})
-                num_fmt = workbook.add_format(
-                    {'font_size': '10px', 'border': 1, 'num_format': '#,##0.00'})
-                total_fmt = workbook.add_format(
-                    {'bold': True, 'font_size': '10px', 'border': 1,
-                    'bg_color': '#FFFF00'})
-                total_num_fmt = workbook.add_format(
-                    {'bold': True, 'font_size': '10px', 'border': 1,
-                    'bg_color': '#FFFF00', 'num_format': '#,##0.00'})
-
-                row = 8
-                for idx, header in enumerate(headers):
-                    sheet.write(row, idx, header, header_row_fmt)
-                row += 1
-
                 for account in report_accounts:
                     account_total = report_totals.get(account, {})
-                    currency = account_total.get('currency_id', '')
+                    account_label = account if account != 'false' else 'Unknown Account'
+
+                    # Column headers, repeated for every account section
+                    for idx, header in enumerate(headers):
+                        sheet.write(row, idx, header, section_header_fmt)
+                    row += 1
 
                     # Account banner
-                    sheet.merge_range(row, 0, row, 12,
-                                    account if account != 'false' else 'Unknown Account',
-                                    banner_fmt)
+                    sheet.merge_range(row, 0, row, last_col, account_label, banner_fmt)
                     row += 1
 
                     # Opening balance
                     sheet.write(row, 0, '00', opening_fmt)
-                    sheet.merge_range(row, 1, row, 8, 'OPENING BALANCE', opening_fmt)
-                    sheet.write(row, 9, '', opening_fmt)
+                    sheet.merge_range(row, 1, row, 9, 'OPENING BALANCE', opening_fmt)
                     sheet.write(row, 10, '', opening_fmt)
                     sheet.write(row, 11, '', opening_fmt)
-                    sheet.write(row, 12,
-                                f"{currency} {account_total.get('opening_balance', 0.0):,.2f}",
-                                opening_fmt)
+                    sheet.write(row, 12, account_total.get('opening_balance', 0.0), opening_num_fmt)
                     row += 1
 
                     # Transaction lines
@@ -383,7 +385,7 @@ class AccountGeneralLedger(models.TransientModel):
                         partner = record.get('partner_id')
                         partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
                         sheet.write(row, 0, sr, line_fmt)
-                        sheet.write(row, 1, account, line_fmt)
+                        sheet.write(row, 1, account_label, line_fmt)
                         sheet.write(row, 2, record.get('split_account', ''), line_fmt)
                         sheet.write(row, 3, record.get('location', ''), line_fmt)
                         sheet.write(row, 4, record.get('date', ''), line_fmt)
