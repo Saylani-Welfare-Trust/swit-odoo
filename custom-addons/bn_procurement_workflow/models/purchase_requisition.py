@@ -48,13 +48,11 @@ class PurchaseRequisition(models.Model):
 
     def action_procurement_approve(self):
         """Procurement Manager reviews and approves the draft PR directly - no HOD/Member
-        approval step in this workflow. State stays 'draft' (approval is recorded via
-        procurement_manager_id) until RFQs are actually sent to vendors."""
+        approval step in this workflow. Moves the PR into its own 'Procurement Manager
+        Approval' state, which unlocks RFQ creation."""
         self.ensure_one()
         if self.state != 'draft':
             raise ValidationError(_('This request is not in Draft state.'))
-        if self.procurement_manager_id:
-            raise ValidationError(_('This request has already been approved by a Procurement Manager.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can approve this request.'))
         if not self.material_request_id:
@@ -65,6 +63,7 @@ class PurchaseRequisition(models.Model):
         self.write({
             'procurement_manager_id': self.env.user.id,
             'procurement_review_date': fields.Datetime.now(),
+            'state': 'procurement_approval',
         })
         self.message_post(body=_('Approved by Procurement Manager - ready for RFQs to be sent to vendors.'))
 
@@ -108,8 +107,8 @@ class PurchaseRequisition(models.Model):
     def action_mark_rfq_sent(self):
         """Called once RFQs have been created for this requisition."""
         self.ensure_one()
-        if self.state != 'draft':
-            raise ValidationError(_('This request is not in Draft state.'))
+        if self.state != 'procurement_approval':
+            raise ValidationError(_('This request is not in Procurement Manager Approval state.'))
         if not self.procurement_manager_id:
             raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
         self.state = 'rfq_sent'

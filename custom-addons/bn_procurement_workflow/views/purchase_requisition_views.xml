@@ -22,15 +22,15 @@
             </xpath>
 
             <xpath expr="//field[@name='state']" position="attributes">
-                <attribute name="statusbar_visible">draft,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
+                <attribute name="statusbar_visible">draft,procurement_approval,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
                 <button string="Procurement Approve" name="action_procurement_approve" type="object"
-                        class="oe_highlight" invisible="state != 'draft' or procurement_manager_id"
+                        class="oe_highlight" invisible="state != 'draft'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
-                        invisible="state != 'draft' or procurement_manager_id"
+                        invisible="state != 'draft'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Resume from Hold" name="action_procurement_resume" type="object"
                         class="oe_highlight" invisible="state != 'deferred'"
@@ -57,10 +57,10 @@
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
             </xpath>
 
-            <!-- RFQs are created while state is still 'draft' (once Procurement Manager
-                 approved) rather than in 'in_progress'/'open' as the base button assumed -->
+            <!-- RFQs are created once the Procurement Manager has approved (state
+                 'procurement_approval'), in addition to the base button's own states -->
             <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
-                <attribute name="invisible">not ((state in ('in_progress', 'open')) or (state == 'draft' and procurement_manager_id))</attribute>
+                <attribute name="invisible">state not in ('in_progress', 'open', 'procurement_approval')</attribute>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="inside">
