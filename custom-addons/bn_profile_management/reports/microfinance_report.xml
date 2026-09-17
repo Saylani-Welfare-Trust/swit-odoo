@@ -47,15 +47,15 @@
                         }
 
                         h2 {
-                            font-size: 19px;
+                            font-size: 20px;
                         }
 
                         h3 {
-                            font-size: 18px;
+                            font-size: 19px;
                         }
 
                         h4 {
-                            font-size: 17px;
+                            font-size: 18px;
                         }
 
                         @page {
@@ -108,11 +108,11 @@
                                             </tr>
                                         </table>
                                     </td>
-                                    <td style="width: 32%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
-                                        <h1 style="display:inline-block; background:black; color:white; padding:5px 12px; border-radius:8px; font-size:21px; margin:0; white-space:nowrap;">
+                                    <td style="width: 40%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
+                                        <h1 style="display:inline-block; background:black; color:white; padding:5px 12px; border-radius:8px; font-size:30px; margin:0; white-space:nowrap;">
                                             سیلانی مائیکرو فنانس فارم
                                         </h1>
-                                        <p style="margin-top:3px; font-size:13.5px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                                        <p style="margin-top:3px; font-size:16.6px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
                                     </td>
                                     <td style="width: 22%; vertical-align: top; border: none; text-align: center;">
                                         <t t-if="o.image_1920">
@@ -531,7 +531,7 @@
                         </div>
 
                         <div style="margin-top: 8px; direction: rtl; text-align: right;" class="urdu-text">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 22px;">
                                 <tr>
                                     <td style="text-align: right; padding: 5px 0; border: none;">دستخط درخواست گزاران: _________________</td>
                                     <td style="text-align: right; padding: 5px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
