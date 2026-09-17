@@ -55,7 +55,7 @@
                             <table style="width: 100%; border-collapse: collapse; direction: ltr; table-layout: fixed;">
                                 <tr>
                                     <td style="width: 46%; vertical-align: top; border: none; padding: 0;">
-                                        <table style="width: 100%; border-collapse: collapse; direction: ltr;">
+                                        <table style="width: 100%; border-collapse: collapse; direction: ltr; font-size: 13px;">
                                             <tr>
                                                 <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap; width: 1%;">Application No. :</td>
                                                 <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
@@ -521,7 +521,7 @@
                         </div>
 
                         <div style="margin-top: 8px; direction: rtl; text-align: right;" class="urdu-text">
-                            <table style="width: 100%; border-collapse: collapse;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                                 <tr>
                                     <td style="text-align: right; padding: 3px 0; border: none;">دستخط درخواست گزاران: _________________</td>
                                     <td style="text-align: right; padding: 3px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
@@ -534,6 +534,20 @@
             </t>
     </template>
 
+    <record id="paperformat_microfinance_application_form" model="report.paperformat">
+        <field name="name">MicroFinance Application Form</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">5</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="action_report_microfinance_application_form" model="ir.actions.report">
         <field name="name">MicroFinance Application Form</field>
         <field name="model">res.partner</field>
@@ -543,6 +557,7 @@
         <field name="print_report_name">'%s' % object.name</field>
         <field name="binding_model_id" ref="model_res_partner"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_microfinance_application_form"/>
     </record>
 
 </odoo>
