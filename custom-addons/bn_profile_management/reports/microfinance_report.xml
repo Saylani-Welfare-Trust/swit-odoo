@@ -503,13 +503,13 @@
                             </p>
                         </div>
 
-                        <div style="margin-top: 8px; direction: rtl; text-align: right;" class="urdu-text">
+                        <div style="margin-top: 28px; direction: rtl; text-align: right;" class="urdu-text">
                             <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
                                 <tr>
-                                    <td style="text-align: right; padding: 5px 0; border: none;">دستخط درخواست گزاران: _________________</td>
-                                    <td style="text-align: right; padding: 6px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
-                                    <td style="text-align: right; padding: 6px 0; border: none;">دستخط شعبہ ذمہ داران: _________________</td>
-                                </tr>
+                                    <td style="text-align: right; padding: 15px 5px; border: none; padding-top:25px;">دستخط درخواست گزاران: _________________</td>
+                                    <td style="text-align: right; padding: 16px 5px; border: none; padding-top:25px;">دستخط درخواست وصول کنندہ: _________________</td>
+                                    <td style="text-align: right; padding: 16px 5px; border: none; padding-top:25px;">دستخط شعبہ ذمہ داران: _________________</td>
+                                </tr> 
                             </table>
                         </div>
                     </div>
