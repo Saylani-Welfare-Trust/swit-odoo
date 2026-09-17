@@ -98,8 +98,8 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="width: 42%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
-                                        <h1 style="display:inline-block; background:black; color:white; padding:6px 14px; border-radius:8px; font-size:26px; margin:0; white-space:nowrap;">
+                                    <td style="width: 42%; vertical-align: top; border: none; text-align: center; direction: rtl; overflow: hidden;" class="urdu">
+                                        <h1 style="display:inline-block; max-width: 100%; background:black; color:white; padding:6px 14px; border-radius:8px; font-size:22px; margin:0;">
                                             سیلانی مائیکرو فنانس فارم
                                         </h1>
                                         <p style="margin-top:5px; font-size:14px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
