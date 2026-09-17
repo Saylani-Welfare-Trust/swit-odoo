@@ -31,7 +31,7 @@
                                 t-on-input="onSearchInput"
                                 style="border:1px solid #ccc;border-radius:4px;padding:5px 10px;min-width:260px;"/>
                             <span t-if="state.search_query" class="fa fa-times"
-                                style="margin-left:-24px;cursor:pointer;color:#999;"
+                                style="margin-left:-24px;cursor:pointer;"
                                 t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
                         </div>
                         <div class="sub_container_right">
@@ -164,53 +164,7 @@
                                 </ul>
                             </div>
                             <!-- <div class="analytic" style="">
-                                <a type="button" class="dropdown-toggle"
-                                   data-bs-toggle="dropdown"
-                                   style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
-                                    <div style="display:content;">
-                                        <span>
-                                            <span class="fa fa-book"
-                                                  title="Analytics"
-                                                  role="img"/>
-                                            Analytic
-                                        </span>
-                                    </div>
-                                    <t t-if="state.selected_analytic_list">:
-                                        <t t-foreach="state.selected_analytic_list"
-                                           t-as="Analytic_key"
-                                           t-key="Analytic_key_index">
-                                            <t t-foreach="state.analytics"
-                                               t-as="Analytic"
-                                               t-key="Analytic_index">
-                                                <t t-if="Analytic['id'] == Analytic_key">
-                                                    <span>
-                                                        <t t-esc="Analytic['name']"/>
-                                                    </span>
-                                                </t>
-                                            </t>
-                                            <t t-if="Analytic_key_index != Object.keys(state.selected_analytic_list).length - 1">
-                                                ,
-                                            </t>
-                                        </t>
-                                    </t>
-                                </a>
-                                <div class="dropdown-menu" role="menu">
-                                    <div class="list-group">
-                                        <t t-if="state.analytics">
-                                            <t t-foreach="state.analytics"
-                                               t-as="analytic"
-                                               t-key="analytic.id">
-                                                <button class="report-filter-button"
-                                                        t-att-data-value="'analytic'"
-                                                        t-att-data-id="analytic.id"
-                                                        type="button"
-                                                        t-on-click="applyFilter">
-                                                    <t t-esc="analytic.name"/>
-                                                </button>
-                                            </t>
-                                        </t>
-                                    </div>
-                                </div>
+                                ... commented analytic filter ...
                             </div> -->
 
                             <div class="option" style="">
@@ -286,17 +240,18 @@
                                         <td/>
                                         <td>
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                            <t t-esc="this.getAccountTotalValue(account, 'total_debit', 0).toFixed(2)"/>
+                                            <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_debit', 0))"/>
                                         </td>
                                         <td>
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                            <t t-esc="this.getAccountTotalValue(account, 'total_credit', 0).toFixed(2)"/>
+                                            <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_credit', 0))"/>
                                         </td>
                                         <td>
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                            <t t-esc="(this.getAccountTotalValue(account, 'opening_balance', 0)
+                                            <t t-esc="this.formatAmount(
+                                                    this.getAccountTotalValue(account, 'opening_balance', 0)
                                                     + this.getAccountTotalValue(account, 'total_debit', 0)
-                                                    - this.getAccountTotalValue(account, 'total_credit', 0)).toFixed(2)"/>
+                                                    - this.getAccountTotalValue(account, 'total_credit', 0))"/>
                                         </td>
                                     </tr>
 
@@ -309,7 +264,7 @@
                                             <td/><td/>
                                             <td>
                                                 <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
-                                                <t t-esc="this.getAccountTotalValue(account, 'opening_balance', 0).toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'opening_balance', 0))"/>
                                             </td>
                                         </tr>
 
@@ -326,21 +281,26 @@
                                                 <td><t t-esc="line.trx_type"/></td>
                                                 <td><t t-esc="line.move_name"/></td>
                                                 <td><t t-esc="line.ref"/></td>
+                                                <!-- Name column: always the vendor/partner -->
                                                 <td>
-                                                    <t t-if="line.partner_id" t-esc="line.partner_id[1]"/>
+                                                    <t t-if="line.partner_id and line.partner_id[1]"
+                                                       t-esc="line.partner_id[1]"/>
                                                 </td>
-                                                <td><t t-esc="line.name"/></td>
+                                                <!-- Description column: always the line label -->
+                                                <td>
+                                                    <t t-esc="line.name"/>
+                                                </td>
                                                 <td>
                                                     <t t-if="line.debit">
-                                                        <t t-esc="line.debit.toFixed(2)"/>
+                                                        <t t-esc="this.formatAmount(line.debit)"/>
                                                     </t>
                                                 </td>
                                                 <td>
                                                     <t t-if="line.credit">
-                                                        <t t-esc="line.credit.toFixed(2)"/>
+                                                        <t t-esc="this.formatAmount(line.credit)"/>
                                                     </t>
                                                 </td>
-                                                <td><t t-esc="line.running_balance.toFixed(2)"/></td>
+                                                <td><t t-esc="this.formatAmount(line.running_balance)"/></td>
                                             </tr>
                                         </t>
                                     </t>

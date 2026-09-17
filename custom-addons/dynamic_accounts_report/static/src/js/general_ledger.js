@@ -35,8 +35,8 @@ class GeneralLedger extends owl.Component {
             date_range: 'month',
             options: {},
             method: {
-                        'accrual': true
-                    },
+                'accrual': true
+            },
             search_query: '',
             account_list_full: [],
             account_data_full: {},
@@ -45,6 +45,15 @@ class GeneralLedger extends owl.Component {
         this.searchTimeout = null;
         this.load_data();
     }
+
+    formatAmount(value) {
+        const num = Number(value || 0);
+        return num.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
     async load_data() {
         let account_list = [];
         let account_totals = {};
@@ -90,6 +99,9 @@ class GeneralLedger extends owl.Component {
             self.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
             self.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
             self.state.title = action_title
+            const collapsed = {};
+            account_list.forEach((acc) => { collapsed[acc] = true; });
+            self.state.collapsed_accounts = collapsed;
         }
         catch (el) {
             self.state.account = []
@@ -99,15 +111,16 @@ class GeneralLedger extends owl.Component {
             self.state.total_debit = '0.00'
             self.state.total_credit = '0.00'
             self.state.title = action_title
+            self.state.collapsed_accounts = {};
         }
     }
     async printPdf(ev) {
         ev.preventDefault();
         var self = this;
         let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
+            'total_debit': this.state.total_debit,
+            'total_credit': this.state.total_credit,
+            'currency': this.state.currency,
         }
         var action_title = self.props.action.display_name;
         return self.action.doAction({
@@ -121,7 +134,7 @@ class GeneralLedger extends owl.Component {
                     'date_range': self.state.date_range || 'month',
                     'options': self.state.options || {},
                     'analytic_ids': self.state.selected_analytic_list || [],
-                    'method': self.state.method || {'accrual': true},
+                    'method': self.state.method || { 'accrual': true },
                 },
                 'title': action_title,
                 'filters': this.filter(),
@@ -134,9 +147,9 @@ class GeneralLedger extends owl.Component {
     async print_xlsx() {
         var self = this;
         let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
+            'total_debit': this.state.total_debit,
+            'total_credit': this.state.total_credit,
+            'currency': this.state.currency,
         }
         var action_title = self.props.action.display_name;
         var datas = {
@@ -264,28 +277,6 @@ class GeneralLedger extends owl.Component {
                     val.target.classList.remove("selected-filter");
                 }
             }
-
-            else if (val.target.attributes["data-value"].value == 'analytic') {
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_analytic_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_analytic_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-            else if (val.target.attributes["data-value"].value == 'journal') {
-
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_journal_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_journal_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_journal_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
             else if (val.target.attributes["data-value"].value == 'analytic') {
                 if (!val.target.classList.contains("selected-filter")) {
                     this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
@@ -308,7 +299,7 @@ class GeneralLedger extends owl.Component {
                     };
                     val.target.classList.add("selected-filter");
                 }
-            }else if (val.target.attributes["data-value"].value === 'cash-basis') {
+            } else if (val.target.attributes["data-value"].value === 'cash-basis') {
                 if (val.target.classList.contains("selected-filter")) {
                     const { cash, ...updatedAccount } = this.state.method;
                     this.state.method = updatedAccount;
@@ -339,11 +330,11 @@ class GeneralLedger extends owl.Component {
             else {
                 account_totals = value || {}
                 Object.values(account_totals).forEach(account_list => {
-                        if (account_list && typeof account_list === 'object') {
-                            totalDebitSum += Number(account_list.total_debit || 0);
-                            totalCreditSum += Number(account_list.total_credit || 0);
-                        }
-                    });
+                    if (account_list && typeof account_list === 'object') {
+                        totalDebitSum += Number(account_list.total_debit || 0);
+                        totalCreditSum += Number(account_list.total_credit || 0);
+                    }
+                });
             }
         })
         this.state.account = account_list
@@ -353,6 +344,9 @@ class GeneralLedger extends owl.Component {
         this.state.account_total = account_totals
         this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
         this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
+        const collapsed = {};
+        account_list.forEach((acc) => { collapsed[acc] = true; });
+        this.state.collapsed_accounts = collapsed;
         if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
             this.unfoldButton.el.classList.remove("selected-filter")
         }
@@ -410,10 +404,10 @@ class GeneralLedger extends owl.Component {
         ev.target.classList.toggle("selected-filter");
     }
     filter() {
-    var self=this;
-    let startDate, endDate;
-    let startYear, startMonth, startDay, endYear, endMonth, endDay;
-        if (self.state.date_range){
+        var self = this;
+        let startDate, endDate;
+        let startYear, startMonth, startDay, endYear, endMonth, endDay;
+        if (self.state.date_range) {
             const today = new Date();
             if (self.state.date_range === 'year') {
                 startDate = new Date(today.getFullYear(), 0, 1);
@@ -436,33 +430,33 @@ class GeneralLedger extends owl.Component {
                 startDate = new Date(today.getFullYear(), lastQuarter * 3, 1);
                 endDate = new Date(today.getFullYear(), (lastQuarter + 1) * 3, 0);
             }
-            else{
+            else {
                 startDate = new Date(self.state.date_range.start_date);
                 endDate = new Date(self.state.date_range.end_date);
             }
-        // Get the date components for start and end dates
-        if (startDate) {
-        startYear = startDate.getFullYear();
-        startMonth = startDate.getMonth() + 1;
-        startDay = startDate.getDate();
-        }
-        if (endDate) {
-        endYear = endDate.getFullYear();
-        endMonth = endDate.getMonth() + 1;
-        endDay = endDate.getDate();
-        }
+            // Get the date components for start and end dates
+            if (startDate) {
+                startYear = startDate.getFullYear();
+                startMonth = startDate.getMonth() + 1;
+                startDay = startDate.getDate();
+            }
+            if (endDate) {
+                endYear = endDate.getFullYear();
+                endMonth = endDate.getMonth() + 1;
+                endDay = endDate.getDate();
+            }
         }
         const journals = self.state.journals || [];
         const analytics = self.state.analytics || [];
         const selectedJournalIDs = Object.values(self.state.selected_journal_list || []);
         const selectedJournalNames = selectedJournalIDs.map((journalID) => {
-          const journal = journals.find((journal) => journal.id === journalID);
-          return journal ? journal.name : '';
+            const journal = journals.find((journal) => journal.id === journalID);
+            return journal ? journal.name : '';
         });
         const selectedAnalyticIDs = Object.values(self.state.selected_analytic_list || []);
         const selectedAnalyticNames = selectedAnalyticIDs.map((analyticID) => {
-          const analytic = analytics.find((analytic) => analytic.id === analyticID);
-          return analytic ? analytic.name : '';
+            const analytic = analytics.find((analytic) => analytic.id === analyticID);
+            return analytic ? analytic.name : '';
         });
         let filters = {
             'journal': selectedJournalNames,
