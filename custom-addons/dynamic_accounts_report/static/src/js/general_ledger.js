@@ -367,6 +367,10 @@ class GeneralLedger extends owl.Component {
         if (!query) {
             this.state.account = [...this.state.account_list_full];
             this.state.account_data = { ...this.state.account_data_full };
+            // Reset collapsed state to "all collapsed" for consistency
+            const collapsed = {};
+            this.state.account_list_full.forEach((acc) => { collapsed[acc] = true; });
+            this.state.collapsed_accounts = collapsed;
             return;
         }
 
@@ -376,12 +380,13 @@ class GeneralLedger extends owl.Component {
         );
 
         if (accountNameMatches.length) {
-            // Show ONLY the matching accounts, with all their lines
             const filteredData = {};
             const collapsed = {};
+            // If exactly one account matched, expand it; otherwise collapse all
+            const expandSingle = accountNameMatches.length === 1;
             for (const account of accountNameMatches) {
                 filteredData[account] = this.state.account_data_full[account] || [];
-                collapsed[account] = true;  // start collapsed
+                collapsed[account] = !expandSingle;
             }
             this.state.account = accountNameMatches;
             this.state.account_data = filteredData;
