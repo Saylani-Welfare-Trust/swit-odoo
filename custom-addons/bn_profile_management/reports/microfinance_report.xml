@@ -174,42 +174,39 @@
                             padding:20px;
                             border-radius:20px;
                             background:#f8f8f8;
-                            position:relative;
                             margin-bottom:20px;
-                            page-break-inside: avoid;
                         ">
-                        
-                            <span style="
-                                background:black;
-                                color:white;
-                                padding:6px 18px;
-                                font-size:18px;
-                                font-weight:bold;
-                                border-radius:6px;
-                                position:absolute;
-                                right:15px;
-                                top:-16px;
-                                white-space:nowrap;
-                            ">
-                                محترم سائلین کو اہم تنبیہ
-                            </span>
-                        
+                            <div style="text-align:right; margin-bottom:10px;">
+                                <span style="
+                                    display:inline-block;
+                                    background:black;
+                                    color:white;
+                                    padding:6px 18px;
+                                    font-size:18px;
+                                    font-weight:bold;
+                                    border-radius:6px;
+                                    white-space:nowrap;
+                                ">
+                                    محترم سائلین کو اہم تنبیہ
+                                </span>
+                            </div>
+
                             <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
                                 اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے۔
                             </p>
-                        
-                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;     margin-right:560px; ">
+
+                            <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
                                 (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے۔
                             </p>
-                        
+
                             <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
                                 بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے۔
                             </p>
-                        
+
                             <p style="text-align:justify; padding:4px 0; line-height:2.3; font-size:18px; margin-top:5px;">
                                 اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
                             </p>
-                        
+
                         </div>
 
                        
@@ -560,20 +557,24 @@
                                 </label>
                             </div>
                         </div>
-                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative; page-break-inside: avoid;" class="urdu-text">
-                            <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
-                                نوٹ:
-                            </span>
-                            <p style="line-height: 1.8; text-align: right; margin-top: 15px; margin-bottom: 0;">
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; page-break-inside: avoid;" class="urdu-text">
+                            <div style="text-align: right; margin-bottom: 8px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white;">
+                                    نوٹ:
+                                </span>
+                            </div>
+                            <p style="line-height: 1.8; text-align: right; margin-top: 0; margin-bottom: 0;">
                                 برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
                             </p>
                         </div>
 
-                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative; page-break-inside: avoid;" class="urdu-text">
-                            <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
-                                حلف نامہ:
-                            </span>
-                            <p style="line-height: 1.8; text-align: right; margin-top: 15px; margin-bottom: 0;">
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; page-break-inside: avoid;" class="urdu-text">
+                            <div style="text-align: right; margin-bottom: 8px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white;">
+                                    حلف نامہ:
+                                </span>
+                            </div>
+                            <p style="line-height: 1.8; text-align: right; margin-top: 0; margin-bottom: 0;">
                                 میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
                             </p>
                         </div>
