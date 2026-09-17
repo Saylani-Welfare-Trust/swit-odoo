@@ -66,57 +66,47 @@
                       <section name="print_detail">
                             <table style="width: 100%; border-collapse: collapse; direction: ltr; table-layout: fixed;">
                                 <tr>
-                                    <td style="width: 46%; vertical-align: top; border: none; padding: 0;">
-                                        <table style="width: 100%; border-collapse: collapse; direction: ltr; font-size: 15px;">
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap; width: 1%;">Application No. :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
+                                    <td style="width: 36%; vertical-align: top; border: none; padding: 0;">
+                                        <div style="direction: ltr; font-size: 15px;">
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">Application No. :</span>
+                                                <span style="word-break: break-word;">
                                                     <t t-if="o.microfinance_line_ids">
                                                         <t t-esc="o.microfinance_line_ids[-1].name"/>
                                                     </t>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap;">Master Donee No. :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
-                                                    <t t-esc="o.primary_registration_id"/>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap;">Donee Name :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
-                                                    <t t-esc="o.name"/>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap;">Mobile Number :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
-                                                    <t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap;">CNIC No. :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
-                                                    <t t-esc="o.cnic_no or 'N/A'"/>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none; padding: 1px 4px 1px 0; text-align: left; white-space: nowrap; vertical-align: top;">Address :</td>
-                                                <td style="border: none; padding: 1px 0; text-align: left; word-break: break-word;">
-                                                    <t t-esc="o.contact_address or 'N/A'"/>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                                </span>
+                                            </div>
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">Master Donee No. :</span>
+                                                <span style="word-break: break-word;"><t t-esc="o.primary_registration_id"/></span>
+                                            </div>
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">Donee Name :</span>
+                                                <span style="word-break: break-word;"><t t-esc="o.name"/></span>
+                                            </div>
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">Mobile Number :</span>
+                                                <span style="word-break: break-word;"><t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/></span>
+                                            </div>
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">CNIC No. :</span>
+                                                <span style="word-break: break-word;"><t t-esc="o.cnic_no or 'N/A'"/></span>
+                                            </div>
+                                            <div style="display: flex;">
+                                                <span style="white-space: nowrap; padding-right: 4px;">Address :</span>
+                                                <span style="word-break: break-word;"><t t-esc="o.contact_address or 'N/A'"/></span>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td style="width: 60%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
-                                        <h1 style="display:inline-block; background:black; color:white; padding:5px 12px; border-radius:8px; font-size:28px; margin:0; white-space:nowrap;">
+                                    <td style="width: 42%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
+                                        <h1 style="display:inline-block; background:black; color:white; padding:6px 14px; border-radius:8px; font-size:26px; margin:0; white-space:nowrap;">
                                             سیلانی مائیکرو فنانس فارم
                                         </h1>
-                                        <p style="margin-top:3px; font-size:14px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                                        <p style="margin-top:5px; font-size:14px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
                                     </td>
                                     <td style="width: 22%; vertical-align: top; border: none; text-align: center;">
                                         <t t-if="o.image_1920">
-                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 155px; height: 155px; border: 1px solid #000; object-fit: cover;"/>
+                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 110px; height: 110px; border: 1px solid #000; object-fit: cover;"/>
                                         </t>
                                         <t t-else="">
                                             <div style="width: 70px; height: 70px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">
@@ -374,13 +364,15 @@
 
                             </tr>
                         </table>
-                        <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">تفصیلات کی درخواست کریں</h4>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
-                            <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">مداد کی قسم متوقع ہے</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">کفالت / مدد کی مدت متوقع</th>
-                            </tr>
-                        </table>
+                        <div style="page-break-inside: avoid;">
+                            <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">تفصیلات کی درخواست کریں</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
+                                <tr>
+                                    <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">مداد کی قسم متوقع ہے</th>
+                                    <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">کفالت / مدد کی مدت متوقع</th>
+                                </tr>
+                            </table>
+                        </div>
 
                         <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">گارنٹر کی تفصیلات</h4>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 6px; page-break-inside: avoid;" class="compact-table">
