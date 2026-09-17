@@ -28,7 +28,6 @@ import xlsxwriter
 from odoo import api, fields, models
 from datetime import datetime
 from odoo.tools import date_utils
-import line
 
 
 class AccountGeneralLedger(models.TransientModel):
