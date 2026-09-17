@@ -116,7 +116,7 @@
                                     </td>
                                     <td style="width: 22%; vertical-align: top; border: none; text-align: center;">
                                         <t t-if="o.image_1920">
-                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 80px; height: 80px; border: 1px solid #000; object-fit: cover;"/>
+                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 155px; height: 155px; border: 1px solid #000; object-fit: cover;"/>
                                         </t>
                                         <t t-else="">
                                             <div style="width: 70px; height: 70px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">
@@ -156,22 +156,20 @@
                                 </span>
                             </div>
 
-                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:13px; margin-top:3px;">
-                                اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے۔
-                            </p>
-
-                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:13px; margin-top:3px;">
-                                (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے۔
-                            </p>
-
-                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:13px; margin-top:3px;">
-                                بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے۔
-                            </p>
-
-                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:13px; margin-top:3px;">
-                                اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
-                            </p>
-
+                            <ul style="margin: 3px 0; padding-right: 18px; list-style-position: outside;">
+                                <li style="text-align:justify; line-height:1.1; font-size:13px; margin-top:3px;">
+                                    اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے۔
+                                </li>
+                                <li style="text-align:justify; line-height:1.1; font-size:13px; margin-top:3px;">
+                                    (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے۔
+                                </li>
+                                <li style="text-align:justify; line-height:1.1; font-size:13px; margin-top:3px;">
+                                    بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے۔
+                                </li>
+                                <li style="text-align:justify; line-height:1.1; font-size:13px; margin-top:3px;">
+                                    اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
+                                </li>
+                            </ul>
                         </div>
 
                         <!-- Job / Business Info -->
@@ -272,7 +270,7 @@
                         </table>
 
                         <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">
-                            تفصیلات کے ساتھ گھر کے ارکان کو کمان
+                            تفصیلات کے ساتھ گھر کے ارکان کی کمائی
                         </h4>
 
                         <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
@@ -422,6 +420,8 @@
                             </tr>
                         </table>
 
+                        <hr style="border: none; border-top: 2px dashed black; margin: 10px 0;"/>
+
                         <div style="margin-bottom: 7px; margin-top: 9px; text-align: center;">
                             <h4 style="display: inline-block; background: black; color: white; padding: 6px 12px; border-radius: 8px; margin: 5px 0; white-space: nowrap;" class="urdu-text">
                                 آفس کے استعمال کے لئے
@@ -469,10 +469,10 @@
                         </div>
                         <div style="margin-bottom: 7px; direction: rtl; text-align: right;" class="urdu-text">
 
-                            <div style="text-align: right;">
-                                <h2 style="display: inline-block; background-color: black; color: white; padding: 5px 10px; border-radius: 8px; font-size: 17px; margin: 0 0 4px 0;">
+                            <div style="text-align: center; margin-bottom: 5px;">
+                                <h4 style="display: inline-block; background: black; color: white; padding: 6px 12px; border-radius: 8px; margin: 5px 0; white-space: nowrap;">
                                     برکتیں حاصل کرنے کے کچھ روحانی ذرائع
-                                </h2>
+                                </h4>
                             </div>
 
                             <div style="margin-top: 5px; font-size: 14px;">
