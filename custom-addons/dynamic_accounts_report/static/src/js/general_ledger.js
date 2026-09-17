@@ -367,22 +367,26 @@ class GeneralLedger extends owl.Component {
         if (!query) {
             this.state.account = [...this.state.account_list_full];
             this.state.account_data = { ...this.state.account_data_full };
-            // Reset collapsed state to "all collapsed" for consistency
             const collapsed = {};
             this.state.account_list_full.forEach((acc) => { collapsed[acc] = true; });
             this.state.collapsed_accounts = collapsed;
             return;
         }
 
-        // ---------- Pass 1: match by ACCOUNT NAME only ----------
-        const accountNameMatches = this.state.account_list_full.filter(
-            (account) => account.toLowerCase().includes(query)
+        // Split the query into words; every word must appear somewhere in the
+        // account name (any order, any spacing) for a match.
+        const queryTokens = query.split(/\s+/).filter(Boolean);
+        const matchesAllTokens = (haystack) =>
+            queryTokens.every((token) => haystack.includes(token));
+
+        // ---------- Pass 1: match by ACCOUNT NAME (token-based) ----------
+        const accountNameMatches = this.state.account_list_full.filter((account) =>
+            matchesAllTokens(account.toLowerCase())
         );
 
         if (accountNameMatches.length) {
             const filteredData = {};
             const collapsed = {};
-            // If exactly one account matched, expand it; otherwise collapse all
             const expandSingle = accountNameMatches.length === 1;
             for (const account of accountNameMatches) {
                 filteredData[account] = this.state.account_data_full[account] || [];
@@ -394,7 +398,7 @@ class GeneralLedger extends owl.Component {
             return;
         }
 
-        // ---------- Pass 2: match by LINE content (no split_account) ----------
+        // ---------- Pass 2: match by LINE content (token-based, no split_account) ----------
         const matchedAccounts = [];
         const filteredData = {};
         const collapsed = {};
@@ -410,9 +414,8 @@ class GeneralLedger extends owl.Component {
                     line.ref || '',
                     line.trx_type || '',
                     line.location || '',
-                    // NOTE: intentionally NOT including split_account
                 ].join(' ').toLowerCase();
-                return haystack.includes(query);
+                return matchesAllTokens(haystack);
             });
             if (matchingLines.length) {
                 matchedAccounts.push(account);
