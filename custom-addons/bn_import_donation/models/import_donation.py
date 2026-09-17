@@ -255,12 +255,20 @@ class ImportDonation(models.Model):
 
         for line in self.valid_import_donation_ids:
 
-            key = line.mobile
+            key = line.mobile or line.cnic_no or line.email or line.donor_student_name
 
             if key in partner_cache:
                 partner = partner_cache[key]
             else:
-                partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                partner = False
+                if line.mobile:
+                    partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                if not partner and line.cnic_no:
+                    partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
+                if not partner and line.email:
+                    partner = Partner.search([('email', '=', line.email)], limit=1)
+                if not partner and line.donor_student_name:
+                    partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
 
                 if not partner:
                     vals = {
