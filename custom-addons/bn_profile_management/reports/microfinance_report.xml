@@ -559,31 +559,34 @@
                                 </label>
                             </div>
                         </div>
-                        <div style="margin-bottom: 20px;">
-                                <p style="display: inline-block; line-height: 1.6; text-align: left;" class="urdu-text">
-                                    <span style="font-weight: bold; background-color:black; padding: 10px 30px; border-radius: 20px; color:white; margin-left:10px; text-align: left;">
-                                        نوٹ:
-                                    </span>
-                                    برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
-                                </p>
-                            </div>
-                            
-                            <div style="margin-bottom: 20px; direction: rtl; padding-left: 2px;">
-                                <p style="line-height: 1.6; text-align: right; padding-left: 200px;" class="urdu-text">
-                                    <span style="                                 font-weight: bold;                                 background-color: black;                                 padding: 10px 35px;                                 border-radius: 60px;                                 color: white;                                 margin-left: 2px;                             ">
-                                        حلف نامه:
-                                    </span>
-                                    میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
-                                </p>
-                            </div>
-                            <div style="margin-top: 50px; direction: rtl; text-align: right;" class="urdu-text">
-                                <span style="margin-right:20px;">دستخط درخواست گزارن: _________________</span><br/>
-                                
-        
-                                <span style="direction: rtl; text-align: right; margin-left: 300px;">دستخط درخواست وصول کننده : _________________</span><br/>
-                                <span style="margin-right: 10px;">دستخط شعبه ذمه دارن: _________________</span>
-                            </div>
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative;" class="urdu-text">
+                            <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
+                                نوٹ:
+                            </span>
+                            <p style="line-height: 1.8; text-align: right; margin-top: 15px; margin-bottom: 0;">
+                                برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
+                            </p>
                         </div>
+
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative;" class="urdu-text">
+                            <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
+                                حلف نامہ:
+                            </span>
+                            <p style="line-height: 1.8; text-align: right; margin-top: 15px; margin-bottom: 0;">
+                                میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
+                            </p>
+                        </div>
+
+                        <div style="margin-top: 40px; direction: rtl; text-align: right;" class="urdu-text">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="text-align: right; padding: 10px 0; border: none;">دستخط درخواست گزاران: _________________</td>
+                                    <td style="text-align: right; padding: 10px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
+                                    <td style="text-align: right; padding: 10px 0; border: none;">دستخط شعبہ ذمہ داران: _________________</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                     </t>
                 </t>
             </div>
