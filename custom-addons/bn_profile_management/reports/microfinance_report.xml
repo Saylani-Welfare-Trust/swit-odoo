@@ -302,6 +302,7 @@
                             </tr>
                         </table>
 
+                        <div style="page-break-inside: avoid;">
                         <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">دیگر مالی معلومات</h4>
 
                         <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
@@ -334,6 +335,7 @@
                                 </th>
                             </tr>
                         </table>
+                        </div>
 
                         <h4 style="text-align: right; padding: 5px 8px; margin: 6px 0 4px 0;" class="urdu-text">دیگر معلوماتت</h4>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
