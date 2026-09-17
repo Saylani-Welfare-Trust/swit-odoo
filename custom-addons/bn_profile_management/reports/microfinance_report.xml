@@ -470,37 +470,35 @@
                         </div>
                         <div style="margin-bottom: 6px; direction: rtl; text-align: right;" class="urdu-text">
 
-                            <h2 style="
-                                text-align: right;
-                                background-color: black;
-                                color: white;
-                                padding: 4px 12px;
-                                border-radius: 8px;
-                                font-size: 14px;
-                                display: inline-block;
-                                margin-bottom: 4px;
-                                margin-right: 0;
-                                float: right;
-                                clear: both;
-                            ">
-                                برکتیں حاصل کرنے کے کچھ روحانی ذرائع
-                            </h2>
+                            <div style="text-align: right;">
+                                <h2 style="
+                                    display: inline-block;
+                                    background-color: black;
+                                    color: white;
+                                    padding: 4px 12px;
+                                    border-radius: 8px;
+                                    font-size: 17px;
+                                    margin: 0 0 4px 0;
+                                ">
+                                    برکتیں حاصل کرنے کے کچھ روحانی ذرائع
+                                </h2>
+                            </div>
 
-                            <div style="margin-top: 4px; clear: both;">
-                                <label style="display: block; margin-bottom: 2px;">
+                            <div style="margin-top: 4px; font-size: 17px;">
+                                <div style="margin-bottom: 2px;">
                                     <input type="checkbox" style="margin-left: 5px;" />
                                     نماز پنجگانہ اور قرآن کی تلاوت کا معمول ہے ؟ (اگر نہیں تو فوری شروع کیجئے)
-                                </label>
+                                </div>
 
-                                <label style="display: block;">
+                                <div>
                                     <input type="checkbox" style="margin-left: 5px;" />
                                     کم از کم ہفتہ وار دینی بیانات اور دروس کو پڑھنے کا معمول ہے۔ (اگر نہیں تو فوری شروع کیجئے)
-                                </label>
+                                </div>
                             </div>
                         </div>
-                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid;" class="urdu-text">
+                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
                             <div style="text-align: right; margin-bottom: 3px;">
-                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 14px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 17px;">
                                     نوٹ:
                                 </span>
                             </div>
@@ -509,9 +507,9 @@
                             </p>
                         </div>
 
-                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid;" class="urdu-text">
+                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
                             <div style="text-align: right; margin-bottom: 3px;">
-                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 14px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 17px;">
                                     حلف نامہ:
                                 </span>
                             </div>
