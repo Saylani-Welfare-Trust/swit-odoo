@@ -193,10 +193,13 @@ class AccountGeneralLedger(models.TransientModel):
         def split_account_for(line):
             if not line.get('move_id') or not line.get('account_id'):
                 return ''
-            others = move_account_map[line['move_id'][0]] - {line['account_id'][1]}
+            others = move_account_map[line['move_id'][0]] - {line['account_id'][0]}
             if not others:
                 return ''
-            return ', '.join(sorted(others))
+            names = sorted(
+                split_account_map.get(acc_id, '') for acc_id in others
+            )
+            return ', '.join(n for n in names if n)
 
         # --- location from first analytic account on the distribution ---
         analytic_ids = set()
