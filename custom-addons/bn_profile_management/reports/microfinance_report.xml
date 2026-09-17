@@ -35,7 +35,7 @@
 
                         th, td {
                             border: 1px solid black;
-                            padding: 3px;
+                            padding: 5px;
                             text-align: right;
                             vertical-align: middle;
                             font-size: 14px;
@@ -43,7 +43,19 @@
 
                         h2, h3, h4 {
                             text-align: center;
-                            margin: 4px 0;
+                            margin: 8px 0 5px 0;
+                        }
+
+                        h2 {
+                            font-size: 19px;
+                        }
+
+                        h3 {
+                            font-size: 18px;
+                        }
+
+                        h4 {
+                            font-size: 17px;
                         }
 
                         @page {
@@ -117,13 +129,13 @@
                         </section>
 
                     <!-- ================= CONTENT ================= -->
-                    <div class="page urdu" style="margin-top: 6px;">
+                    <div class="page urdu" style="margin-top: 10px;">
 
-                        <hr style="margin: 4px 0;"/>
+                        <hr style="margin: 8px 0;"/>
 
                         <!-- Important Notes -->
-                        <div style="border: 1px solid black; padding: 5px; margin-bottom: 6px; page-break-inside: avoid;">
-                            <h4 style="text-align:right; background:black;color:white;padding:3px;">
+                        <div style="border: 1px solid black; padding: 5px; margin-bottom: 10px; page-break-inside: avoid;">
+                            <h4 style="text-align:right; background:black;color:white;padding:5px;">
                                 اہم ہدایات
                             </h4>
 
@@ -131,7 +143,7 @@
                                 یاد رہے! دین اسلام کے مال دار افراد کو زکوٰۃ و خیرات کے ذریعے مستحق افراد تک پہنچانے کا حکم دیا گیا ہے تاکہ مستحق افراد اس فرم سے اپنی ضروریات کو پورا کر سکیں۔ سلیانی ویلفیئر بغیر بطور فیس یہ مدد پہنچانے کا کام کر رہی ہے، اگر آپ بھی یہ نیکی کا کام کرنا چاہتے ہیں تو۔
                             </p>
 
-                            <p style="text-align:right; border:1px solid black; padding:6px; border-radius:8px; background:#f8f8f8; margin: 3px 0;">
+                            <p style="text-align:right; border:1px solid black; padding:10px; border-radius:8px; background:#f8f8f8; margin: 3px 0;">
                                 <strong>نوٹ:</strong>
                                 نام، دستخط دیے گئے تمام کالم ٹھیک طور پر مکمل کریں۔ ہماری انفارمی ٹیم تصدیق کرنے کے لیے آپ کے دیے گئے پتہ پر جائے گی۔ اگر فراہم کردہ معلومات میں کوئی بھی غلطی ہوئی تو ادارہ آپ کے خلاف قانونی کارروائی کرنے کا حق محفوظ رکھتا ہے۔
                             </p>
@@ -140,7 +152,7 @@
                         <div style="
                             text-align:right;
                             border:1px solid black;
-                            padding:6px;
+                            padding:10px;
                             border-radius:8px;
                             background:#f8f8f8;
                             margin-bottom:6px;
@@ -150,7 +162,7 @@
                                     display:inline-block;
                                     background:black;
                                     color:white;
-                                    padding:3px 10px;
+                                    padding:5px 12px;
                                     font-size:15px;
                                     font-weight:bold;
                                     border-radius:5px;
@@ -182,14 +194,14 @@
                         <h4 style="text-align: right; padding-right: 0px;">ملازمت کی تفصیلات / کاروباری معلومات</h4>
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <th colspan="3" style="text-align: right; padding: 3px 6px;">کمپنی کا نام:</th>
-                                <th style="text-align: right; padding: 3px 8px;">کمپنی کا پتہ:</th>
+                                <th colspan="3" style="text-align: right; padding: 5px 8px;">کمپنی کا نام:</th>
+                                <th style="text-align: right; padding: 5px 10px;">کمپنی کا پتہ:</th>
                             </tr>
                             <tr>
-                                <th style="text-align: right; padding: 3px 8px;">ماہانہ تنخواہ:</th>
-                                <th style="text-align: right; padding: 3px 8px;">نوکری کا دورانیہ:</th>
-                                <th style="text-align: right; padding: 3px 8px;">عہدہ:</th>
-                                <th style="text-align: right; padding: 3px 6px;">کمپنی کا فون نمبر:</th>
+                                <th style="text-align: right; padding: 5px 10px;">ماہانہ تنخواہ:</th>
+                                <th style="text-align: right; padding: 5px 10px;">نوکری کا دورانیہ:</th>
+                                <th style="text-align: right; padding: 5px 10px;">عہدہ:</th>
+                                <th style="text-align: right; padding: 5px 8px;">کمپنی کا فون نمبر:</th>
                             </tr>
                         </table>
 
@@ -197,9 +209,9 @@
                         <h4 style="text-align: right; padding-right: 10px;">تعلیم کی تفصیلات</h4>
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <th style="text-align: right; padding: 3px 8px;">سال:</th>
-                                <th style="text-align: right; padding: 3px 8px;">ادارہ:</th>
-                                <th style="text-align: right; padding: 3px 8px;">تعلیم:</th>
+                                <th style="text-align: right; padding: 5px 10px;">سال:</th>
+                                <th style="text-align: right; padding: 5px 10px;">ادارہ:</th>
+                                <th style="text-align: right; padding: 5px 10px;">تعلیم:</th>
                             </tr>
                         </table>
 
@@ -208,123 +220,123 @@
 
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <th colspan="2" style="text-align: right; padding: 3px 8px;">رینٹل / مشترکہ دورانیہ:</th>
-                                <th style="text-align: right; padding: 3px 8px;">فون نمبر:</th>
-                                <th style="text-align: right; padding: 3px 8px;">رہائش کی قسم:</th>
+                                <th colspan="2" style="text-align: right; padding: 5px 10px;">رینٹل / مشترکہ دورانیہ:</th>
+                                <th style="text-align: right; padding: 5px 10px;">فون نمبر:</th>
+                                <th style="text-align: right; padding: 5px 10px;">رہائش کی قسم:</th>
                             </tr>
                             <tr>
-                                <th colspan="2" style="text-align: right; padding: 3px 6px;">مالک مکان کا نام:</th>
-                                <th style="text-align: right; padding: 3px 6px;">6 ماہ کا مجموعی گیس بل:</th>
-                                <th style="text-align: right; padding: 3px 6px;">6 ماہ کا مجموعی بجلی کا بل:</th>
+                                <th colspan="2" style="text-align: right; padding: 5px 8px;">مالک مکان کا نام:</th>
+                                <th style="text-align: right; padding: 5px 8px;">6 ماہ کا مجموعی گیس بل:</th>
+                                <th style="text-align: right; padding: 5px 8px;">6 ماہ کا مجموعی بجلی کا بل:</th>
                             </tr>
                             <tr>
-                                <th style="text-align: right; padding: 3px 8px;">ماہانہ کرایہ:</th>
-                                <th style="text-align: right; padding: 3px 6px;">دیگر معلومات / پتہ:</th>
-                                <th style="text-align: right; padding: 3px 6px;">مالک مکان کا موبائل نمبر:</th>
-                                <th style="text-align: right; padding: 3px 6px;">مالک مکان کا شناختی کارڈ نمبر:</th>
+                                <th style="text-align: right; padding: 5px 10px;">ماہانہ کرایہ:</th>
+                                <th style="text-align: right; padding: 5px 8px;">دیگر معلومات / پتہ:</th>
+                                <th style="text-align: right; padding: 5px 8px;">مالک مکان کا موبائل نمبر:</th>
+                                <th style="text-align: right; padding: 5px 8px;">مالک مکان کا شناختی کارڈ نمبر:</th>
                             </tr>
                         </table>
 
                         <!-- Family Members Details -->
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">
                             فیملی ممبرز کی تفصیل
                         </h4>
 
                         <table style="width: 100%; border-collapse: collapse;" class="compact-table">
                                 <tr>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right;" colspan="2" class="urdu-text">تفصیلات کے ساتھ انحصار کرنے والوں کی تعداد:</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right;" colspan="2" class="urdu-text">تفصیلات کے ساتھ انحصار کرنے والوں کی تعداد:</th>
                                 </tr>
                         </table>
 
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">تعلیم</th>
-                                <th style="border: 1px solid black; padding: 3px 10px; text-align: right;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">رشته</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">عمر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">مکمل نام</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">نمبر شمار</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">تعلیم</th>
+                                <th style="border: 1px solid black; padding: 5px 12px; text-align: right;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">رشته</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">عمر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">مکمل نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نمبر شمار</th>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                         </table>
 
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">
                             تفصیلات کے ساتھ گھر کے ارکان کو کمان
                         </h4>
 
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">تعلیم</th>
-                                <th style="border: 1px solid black; padding: 3px 10px; text-align: right;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">رشته</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">عمر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">مکمل نام</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">نمبر شمار</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">تعلیم</th>
+                                <th style="border: 1px solid black; padding: 5px 12px; text-align: right;" class="urdu-text">شناختی کارڈ/ بے فارم:</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">رشته</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">عمر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">مکمل نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نمبر شمار</th>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
-                                <td style="border: 1px solid black; padding: 3px; height: 10px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
+                                <td style="border: 1px solid black; padding: 5px; height: 14px;"/>
                             </tr>
                         </table>
 
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">دیگر مالی معلومات</h4>
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">دیگر مالی معلومات</h4>
 
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">اکاؤنٹ نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">بینک کا نام</th>
-                                <th style="border: 1px solid black; padding: 3px;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">اکاؤنٹ نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">بینک کا نام</th>
+                                <th style="border: 1px solid black; padding: 5px;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px;">بینک اکاؤنٹ</span>
                                         <input type="checkbox" style="margin-left: 3px;">No</input>
@@ -332,15 +344,15 @@
 
                                     </div>
                                 </th>
-                                <th style="border: 1px solid black; padding: 3px 20px; text-align: center;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 22px; text-align: center;" class="urdu-text">
                                     ماہانہ گھر یلو اخراجات:
                                 </th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">بقایہ رقم</th>
-                                <th colspan="3" style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">ادارے کا نام</th>
-                                <th style="border: 1px solid black; padding: 3px;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">بقایہ رقم</th>
+                                <th colspan="3" style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ادارے کا نام</th>
+                                <th style="border: 1px solid black; padding: 5px;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px;">کوئی اور قرض</span>
                                         <input type="checkbox" style="margin-left: 3px;">No</input>
@@ -351,12 +363,12 @@
                             </tr>
                         </table>
 
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">دیگر معلوماتت</h4>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px;" class="compact-table">
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">دیگر معلوماتت</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; width: 20%; padding: 3px; text-align: right;" class="urdu-text">ڈرائیونگ لائسنس نمبر</th>
-                                <th style="border: 1px solid black; width: 20%; padding: 3px 6px; text-align: right;" class="urdu-text">تفصیلات / مادری زبان</th>
-                                <th style="border: 1px solid black; width: 30%; padding: 3px 0px; text-align: right;" class="urdu-text">
+                                <th style="border: 1px solid black; width: 20%; padding: 5px; text-align: right;" class="urdu-text">ڈرائیونگ لائسنس نمبر</th>
+                                <th style="border: 1px solid black; width: 20%; padding: 5px 8px; text-align: right;" class="urdu-text">تفصیلات / مادری زبان</th>
+                                <th style="border: 1px solid black; width: 30%; padding: 5px 0px; text-align: right;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px; text-align: right;">
                                             کیا آپ نے بھی سیلانی ویلفیئر انٹرنیشنل ٹرسٹ میں اپلائی کیا ہے
@@ -366,7 +378,7 @@
 
                                     </div>
                                 </th>
-                                <th style="border: 1px solid black; width: 20%; padding: 3px; text-align: right;" class="urdu-text">
+                                <th style="border: 1px solid black; width: 20%; padding: 5px; text-align: right;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px; text-align: right;">
                                             کسی دوسری تنظیم سے امداد
@@ -379,96 +391,96 @@
 
                             </tr>
                         </table>
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">تفصیلات کی درخواست کریں</h4>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px;" class="compact-table">
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">تفصیلات کی درخواست کریں</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">مداد کی قسم متوقع ہے</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">کفالت / مدد کی مدت متوقع</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">مداد کی قسم متوقع ہے</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">کفالت / مدد کی مدت متوقع</th>
                             </tr>
                         </table>
 
-                        <h4 style="text-align: right; padding: 3px 6px;" class="urdu-text">گارنٹر کی تفصیلات</h4>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px; page-break-inside: avoid;" class="compact-table">
+                        <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">گارنٹر کی تفصیلات</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">نام</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
                             </tr>
                         </table>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 3px; page-break-inside: avoid;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">نام</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 3px 6px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
                             </tr>
                         </table>
 
-                        <div style="margin-bottom: 6px; margin-top: 6px; text-align: center;">
+                        <div style="margin-bottom: 10px; margin-top: 6px; text-align: center;">
                             <h4 style="display: inline-block; background: black; color: white; padding: 4px 12px; border-radius: 8px;" class="urdu-text">
                                 آفس کے استعمال کے لئے
                             </h4>
 
                             <table style="width: 100%; border-collapse: collapse;" class="compact-table">
                                 <tr>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">فارم نمبر</th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">وصول کنندہ</th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">دستخط</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">فارم نمبر</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">وصول کنندہ</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">دستخط</th>
                                 </tr>
                                 <tr>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">
                                         <div style="display: flex; align-items: center;">
                                             <span style="margin-left: auto;">انٹرویو</span>
                                             <input type="checkbox" style="margin-left: 3px;">No</input>
                                             <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
                                         </div>
                                     </th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">انٹرویو کی تاریخ</th>
-                                    <th rowspan="2" style="border: 1px solid black; padding: 3px; text-align: right; height: 40px; vertical-align: top;" class="urdu-text">تاثرات</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">انٹرویو کی تاریخ</th>
+                                    <th rowspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 48px; vertical-align: top;" class="urdu-text">تاثرات</th>
                                 </tr>
                                 <tr>
-                                    <td colspan="2" style="border: 1px solid black; padding: 3px; height: 24px;"/>
+                                    <td colspan="2" style="border: 1px solid black; padding: 5px; height: 30px;"/>
                                 </tr>
                                 <tr>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">
                                         <div style="display: flex; align-items: center;">
                                             <span style="margin-left: auto;">انٹرویو کا نتیجہ</span>
                                             <input type="checkbox" style="margin-left: 3px;">No</input>
                                             <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
                                         </div>
                                     </th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">رقم</th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">ماہانہ قسط</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">رقم</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">ماہانہ قسط</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="2" style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">دستخط ہیڈ آفس ڈیپارٹمنٹ</th>
-                                    <th style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">ادائیگی کی تاریخ</th>
+                                    <th colspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">دستخط ہیڈ آفس ڈیپارٹمنٹ</th>
+                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">ادائیگی کی تاریخ</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="3" style="border: 1px solid black; padding: 3px; text-align: right; height: 16px;" class="urdu-text">دستخط انچارج</th>
+                                    <th colspan="3" style="border: 1px solid black; padding: 5px; text-align: right; height: 20px;" class="urdu-text">دستخط انچارج</th>
                                 </tr>
                             </table>
                         </div>
-                        <div style="margin-bottom: 6px; direction: rtl; text-align: right;" class="urdu-text">
+                        <div style="margin-bottom: 10px; direction: rtl; text-align: right;" class="urdu-text">
 
                             <div style="text-align: right;">
                                 <h2 style="
@@ -496,9 +508,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
+                        <div style="margin-bottom: 10px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 10px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
                             <div style="text-align: right; margin-bottom: 3px;">
-                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 17px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 5px 12px; border-radius: 8px; color:white; font-size: 17px;">
                                     نوٹ:
                                 </span>
                             </div>
@@ -507,9 +519,9 @@
                             </p>
                         </div>
 
-                        <div style="margin-bottom: 6px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 6px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
+                        <div style="margin-bottom: 10px; direction: rtl; border: 1px solid black; border-radius: 8px; padding: 10px; page-break-inside: avoid; font-size: 17px;" class="urdu-text">
                             <div style="text-align: right; margin-bottom: 3px;">
-                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 3px 10px; border-radius: 8px; color:white; font-size: 17px;">
+                                <span style="display:inline-block; font-weight: bold; background-color:black; padding: 5px 12px; border-radius: 8px; color:white; font-size: 17px;">
                                     حلف نامہ:
                                 </span>
                             </div>
@@ -521,9 +533,9 @@
                         <div style="margin-top: 8px; direction: rtl; text-align: right;" class="urdu-text">
                             <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
                                 <tr>
-                                    <td style="text-align: right; padding: 3px 0; border: none;">دستخط درخواست گزاران: _________________</td>
-                                    <td style="text-align: right; padding: 3px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
-                                    <td style="text-align: right; padding: 3px 0; border: none;">دستخط شعبہ ذمہ داران: _________________</td>
+                                    <td style="text-align: right; padding: 5px 0; border: none;">دستخط درخواست گزاران: _________________</td>
+                                    <td style="text-align: right; padding: 5px 0; border: none;">دستخط درخواست وصول کنندہ: _________________</td>
+                                    <td style="text-align: right; padding: 5px 0; border: none;">دستخط شعبہ ذمہ داران: _________________</td>
                                 </tr>
                             </table>
                         </div>
@@ -537,7 +549,7 @@
         <field name="default" eval="False"/>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">0</field>
+        <field name="margin_top">5</field>
         <field name="margin_bottom">5</field>
         <field name="margin_left">5</field>
         <field name="margin_right">5</field>
