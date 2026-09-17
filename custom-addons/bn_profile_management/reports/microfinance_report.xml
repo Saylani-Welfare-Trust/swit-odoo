@@ -47,81 +47,68 @@
                         }
                     </style>
                       <section name="print_detail">
-                            <div class="row" style="align-items: flex-start;">
-                                <!-- Left Column for Details -->
-                                <div class="col-5">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>Application No. : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-if="o.microfinance_line_ids">
-                                                <t t-esc="o.microfinance_line_ids[-1].name"/>
-                                            </t>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>Master Donee No. : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-esc="o.primary_registration_id"/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>Donee Name : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-esc="o.name"/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>Mobile Number : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>CNIC No. : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-esc="o.cnic_no or 'N/A'"/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <span>Address : </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <t t-esc="o.contact_address or 'N/A'"/>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Middle Column: Title banner -->
-                                <div class="col-4 text-center urdu" style="direction: rtl;">
-                                    <h1 style="display:inline-block; background:black; color:white; padding:10px 20px; border-radius:10px; font-size:22px; margin:0; white-space:nowrap;">
-                                        سیلانی مائیکرو فنانس فارم
-                                    </h1>
-                                    <p style="margin-top:8px; font-size:14px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
-                                </div>
-
-                                <!-- Right Column for Image -->
-                                <div class="col-3 text-center">
-                                    <t t-if="o.image_1920">
-                                        <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 120px; height: 120px; border: 1px solid #000; object-fit: cover;"/>
-                                    </t>
-                                    <t t-else="">
-                                        <div style="width: 120px; height: 120px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">
-                                            <span>No Image</span>
-                                        </div>
-                                    </t>
-                                </div>
-                            </div>
+                            <table style="width: 100%; border-collapse: collapse; direction: ltr; table-layout: fixed;">
+                                <tr>
+                                    <td style="width: 46%; vertical-align: top; border: none; padding: 0;">
+                                        <table style="width: 100%; border-collapse: collapse; direction: ltr;">
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap; width: 1%;">Application No. :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-if="o.microfinance_line_ids">
+                                                        <t t-esc="o.microfinance_line_ids[-1].name"/>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap;">Master Donee No. :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-esc="o.primary_registration_id"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap;">Donee Name :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-esc="o.name"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap;">Mobile Number :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap;">CNIC No. :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-esc="o.cnic_no or 'N/A'"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none; padding: 2px 4px 2px 0; text-align: left; white-space: nowrap; vertical-align: top;">Address :</td>
+                                                <td style="border: none; padding: 2px 0; text-align: left; word-break: break-word;">
+                                                    <t t-esc="o.contact_address or 'N/A'"/>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td style="width: 32%; vertical-align: top; border: none; text-align: center; direction: rtl;" class="urdu">
+                                        <h1 style="display:inline-block; background:black; color:white; padding:10px 20px; border-radius:10px; font-size:22px; margin:0; white-space:nowrap;">
+                                            سیلانی مائیکرو فنانس فارم
+                                        </h1>
+                                        <p style="margin-top:8px; font-size:14px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
+                                    </td>
+                                    <td style="width: 22%; vertical-align: top; border: none; text-align: center;">
+                                        <t t-if="o.image_1920">
+                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 120px; height: 120px; border: 1px solid #000; object-fit: cover;"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div style="width: 120px; height: 120px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">
+                                                <span>No Image</span>
+                                            </div>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
                         </section>
 
                     <!-- ================= CONTENT ================= -->
