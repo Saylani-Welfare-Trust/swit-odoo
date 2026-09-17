@@ -327,19 +327,14 @@
                                                 <td><t t-esc="line.trx_type"/></td>
                                                 <td><t t-esc="line.move_name"/></td>
                                                 <td><t t-esc="line.ref"/></td>
-                                                <!-- Name column with fallback -->
+                                                <!-- Name column: always the vendor/partner -->
                                                 <td>
                                                     <t t-if="line.partner_id and line.partner_id[1]"
-                                                       t-esc="line.partner_id[1]"/>
-                                                    <t t-elif="line.name"
-                                                       t-esc="line.name"/>
+                                                    t-esc="line.partner_id[1]"/>
                                                 </td>
-                                                <!-- Description column -->
+                                                <!-- Description column: always the line label -->
                                                 <td>
-                                                    <t t-if="line.description"
-                                                       t-esc="line.description"/>
-                                                    <t t-else=""
-                                                       t-esc="line.name"/>
+                                                    <t t-esc="line.name"/>
                                                 </td>
                                                 <td>
                                                     <t t-if="line.debit">

@@ -125,19 +125,14 @@
                                             <th><t t-esc="valuelist.get('trx_type', '')"/></th>
                                             <th><t t-esc="valuelist.get('move_name', '')"/></th>
                                             <th><t t-esc="valuelist.get('ref', '')"/></th>
-                                            <!-- Name column with fallback -->
+                                            <!-- Name column: always the vendor/partner -->
                                             <th>
                                                 <t t-if="valuelist.get('partner_id') and valuelist['partner_id'][1]"
-                                                   t-esc="valuelist['partner_id'][1]"/>
-                                                <t t-elif="valuelist.get('name')"
-                                                   t-esc="valuelist.get('name')"/>
+                                                t-esc="valuelist['partner_id'][1]"/>
                                             </th>
-                                            <!-- Description column -->
+                                            <!-- Description column: always the line label -->
                                             <th>
-                                                <t t-if="valuelist.get('description')"
-                                                   t-esc="valuelist.get('description')"/>
-                                                <t t-else=""
-                                                   t-esc="valuelist.get('name', '')"/>
+                                                <t t-esc="valuelist.get('name', '')"/>
                                             </th>
                                             <th>
                                                 <t t-if="valuelist.get('debit')"

@@ -28,6 +28,7 @@ import xlsxwriter
 from odoo import api, fields, models
 from datetime import datetime
 from odoo.tools import date_utils
+import line
 
 
 class AccountGeneralLedger(models.TransientModel):
@@ -193,10 +194,10 @@ class AccountGeneralLedger(models.TransientModel):
         def split_account_for(line):
             if not line.get('move_id') or not line.get('account_id'):
                 return ''
-            others = move_account_map[line['move_id'][0]] - {line['account_id'][0]}
+            others = move_account_map[line['move_id'][0]] - {line['account_id'][1]}
             if not others:
                 return ''
-            return split_account_map.get(list(others)[0], '') if len(others) == 1 else 'Multiple'
+            return ', '.join(sorted(others))
 
         # --- location from first analytic account on the distribution ---
         analytic_ids = set()
