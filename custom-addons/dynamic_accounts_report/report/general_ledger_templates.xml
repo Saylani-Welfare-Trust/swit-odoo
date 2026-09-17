@@ -128,7 +128,7 @@
                                             <!-- Name column: always the vendor/partner -->
                                             <th>
                                                 <t t-if="valuelist.get('partner_id') and valuelist['partner_id'][1]"
-                                                t-esc="valuelist['partner_id'][1]"/>
+                                                   t-esc="valuelist['partner_id'][1]"/>
                                             </th>
                                             <!-- Description column: always the line label -->
                                             <th>

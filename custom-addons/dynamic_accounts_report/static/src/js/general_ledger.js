@@ -99,6 +99,9 @@ class GeneralLedger extends owl.Component {
             self.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
             self.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
             self.state.title = action_title
+            const collapsed = {};
+            account_list.forEach((acc) => { collapsed[acc] = true; });
+            self.state.collapsed_accounts = collapsed;
         }
         catch (el) {
             self.state.account = []
@@ -108,6 +111,7 @@ class GeneralLedger extends owl.Component {
             self.state.total_debit = '0.00'
             self.state.total_credit = '0.00'
             self.state.title = action_title
+            self.state.collapsed_accounts = {};
         }
     }
     async printPdf(ev) {
@@ -340,6 +344,9 @@ class GeneralLedger extends owl.Component {
         this.state.account_total = account_totals
         this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
         this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
+        const collapsed = {};
+        account_list.forEach((acc) => { collapsed[acc] = true; });
+        this.state.collapsed_accounts = collapsed;
         if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
             this.unfoldButton.el.classList.remove("selected-filter")
         }
