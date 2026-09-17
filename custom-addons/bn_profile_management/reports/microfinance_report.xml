@@ -17,14 +17,14 @@
 
                         body, .page {
                             font-family: 'JameelNooriNastaleeq' !important;
-                            font-size: 14px;
+                            font-size: 17px;
                         }
 
                         .urdu {
                             direction: rtl;
                             text-align: right;
                             font-family: 'JameelNooriNastaleeq' !important;
-                            line-height: 1.3;
+                            line-height: 1.05;
                         }
 
                         table {
@@ -38,24 +38,24 @@
                             padding: 5px;
                             text-align: right;
                             vertical-align: middle;
-                            font-size: 14px;
+                            font-size: 17px;
                         }
 
                         h2, h3, h4 {
                             text-align: center;
-                            margin: 8px 0 5px 0;
+                            margin: 6px 0 3px 0;
                         }
 
                         h2 {
-                            font-size: 20px;
+                            font-size: 23px;
                         }
 
                         h3 {
-                            font-size: 19px;
+                            font-size: 22px;
                         }
 
                         h4 {
-                            font-size: 18px;
+                            font-size: 21px;
                         }
 
                         @page {
@@ -172,19 +172,19 @@
                                 </span>
                             </div>
 
-                            <p style="text-align:justify; padding:1px 0; line-height:1.3; font-size:14px; margin-top:2px;">
+                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:14px; margin-top:2px;">
                                 اب آپ خود فیصلہ کرلیں کہ آپ اس رقم / مدد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم / مدد ادارے سے وصول کی تو اس کا نقصان آپ کو یہ ہو سکتا ہے۔
                             </p>
 
-                            <p style="text-align:justify; padding:1px 0; line-height:1.3; font-size:14px; margin-top:2px;">
+                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:14px; margin-top:2px;">
                                 (مشاہدے کی بات ہے) کہ آپ کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے۔
                             </p>
 
-                            <p style="text-align:justify; padding:1px 0; line-height:1.3; font-size:14px; margin-top:2px;">
+                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:14px; margin-top:2px;">
                                 بلا کی طرح آپ پر نازل ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے، ہر مسلمان کی پریشانیاں دور کرے (آمین)۔ سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لیے موجود ہے۔
                             </p>
 
-                            <p style="text-align:justify; padding:1px 0; line-height:1.3; font-size:14px; margin-top:2px;">
+                            <p style="text-align:justify; padding:1px 0; line-height:1.1; font-size:14px; margin-top:2px;">
                                 اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لیے بنائے گئے ہیں، امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے اسٹاف کے ساتھ تعاون کریں گے۔
                             </p>
 
@@ -366,8 +366,9 @@
                         <h4 style="text-align: right; padding: 5px 8px;" class="urdu-text">دیگر معلوماتت</h4>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 8px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; width: 20%; padding: 5px; text-align: right;" class="urdu-text">ڈرائیونگ لائسنس نمبر</th>
-                                <th style="border: 1px solid black; width: 20%; padding: 5px 8px; text-align: right;" class="urdu-text">تفصیلات / مادری زبان</th>
+                                <th style="border: 1px solid black; width: 15%; padding: 5px; text-align: right;" class="urdu-text">ڈرائیونگ لائسنس نمبر</th>
+                                <th style="border: 1px solid black; width: 15%; padding: 5px 8px; text-align: right;" class="urdu-text">تفصیلات</th>
+                                <th style="border: 1px solid black; width: 15%; padding: 5px 8px; text-align: right;" class="urdu-text">مادری زبان</th>
                                 <th style="border: 1px solid black; width: 30%; padding: 5px 0px; text-align: right;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px; text-align: right;">
@@ -403,35 +404,37 @@
                         <table style="width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid;" class="compact-table">
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">پیشہ</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نام</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">لینڈ لائن نمبر</th>
                             </tr>
                         </table>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid;" class="compact-table">
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">پیشہ</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">نام</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">لینڈ لائن نمبر</th>
                             </tr>
                         </table>
 
@@ -514,7 +517,7 @@
                                     نوٹ:
                                 </span>
                             </div>
-                            <p style="line-height: 1.3; text-align: right; margin-top: 0; margin-bottom: 0;">
+                            <p style="line-height: 1.1; text-align: right; margin-top: 0; margin-bottom: 0;">
                                 برائے کرم اس فارم کی بھرنے کے بعد علیحیدہ سے ایک درخواست بھی تھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے ۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنے شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
                             </p>
                         </div>
@@ -525,7 +528,7 @@
                                     حلف نامہ:
                                 </span>
                             </div>
-                            <p style="line-height: 1.3; text-align: right; margin-top: 0; margin-bottom: 0;">
+                            <p style="line-height: 1.1; text-align: right; margin-top: 0; margin-bottom: 0;">
                                 میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوۃ کا حقدار ہوں اور میں نے جو فارم پر کیا ہے بالکل درست اور ٹھیک پُر کیا ہے ۔ یا اللہ عز و جل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
                             </p>
                         </div>
