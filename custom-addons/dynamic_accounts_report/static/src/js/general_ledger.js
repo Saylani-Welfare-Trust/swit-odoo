@@ -28,6 +28,8 @@ class GeneralLedger extends owl.Component {
             analytics: [],
             selected_analytic_list: [],
             selected_analytic_account_rec: [],
+            selected_account_list: [],
+            all_accounts: [],
             title: null,
             filter_applied: null,
             account_list: [],
@@ -92,6 +94,7 @@ class GeneralLedger extends owl.Component {
             self.state.account_list = account_list
             self.state.account_data_list = self.state.account_data
             self.state.account_list_full = [...account_list];
+            self.state.all_accounts = [...account_list];
             self.state.account_data_full = { ...self.state.account_data };
             self.state.account_total_list = account_totals
             self.state.account_total = account_totals
@@ -340,6 +343,7 @@ class GeneralLedger extends owl.Component {
         this.state.account = account_list
         this.state.account_data = filtered_data
         this.state.account_list_full = [...account_list];
+        this.state.all_accounts = [...account_list];
         this.state.account_data_full = { ...filtered_data };
         this.state.account_total = account_totals
         this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
@@ -364,35 +368,103 @@ class GeneralLedger extends owl.Component {
 
     applySearch() {
         const query = (this.state.search_query || '').trim().toLowerCase();
+        const accFilter = this.state.selected_account_list || [];
+
+        // Base accounts: all, or only those picked in the Account dropdown
+        let baseAccounts = this.state.account_list_full;
+        if (accFilter.length) {
+            baseAccounts = baseAccounts.filter((acc) => accFilter.includes(acc));
+        }
+
+        // No search query → return base accounts, all collapsed
         if (!query) {
-            this.state.account = [...this.state.account_list_full];
-            this.state.account_data = { ...this.state.account_data_full };
+            const filteredData = {};
+            const collapsed = {};
+            baseAccounts.forEach((acc) => {
+                filteredData[acc] = this.state.account_data_full[acc] || [];
+                collapsed[acc] = true;
+            });
+            this.state.account = baseAccounts;
+            this.state.account_data = filteredData;
+            this.state.collapsed_accounts = collapsed;
             return;
         }
+
+        // Token-based search
+        const queryTokens = query.split(/\s+/).filter(Boolean);
+        const matchesAllTokens = (haystack) =>
+            queryTokens.every((token) => haystack.includes(token));
+
+        // ---------- Pass 1: match by ACCOUNT NAME ----------
+        const accountNameMatches = baseAccounts.filter((account) =>
+            matchesAllTokens(account.toLowerCase())
+        );
+
+        if (accountNameMatches.length) {
+            const filteredData = {};
+            const collapsed = {};
+            const expandSingle = accountNameMatches.length === 1;
+            for (const account of accountNameMatches) {
+                filteredData[account] = this.state.account_data_full[account] || [];
+                collapsed[account] = !expandSingle;
+            }
+            this.state.account = accountNameMatches;
+            this.state.account_data = filteredData;
+            this.state.collapsed_accounts = collapsed;
+            return;
+        }
+
+        // ---------- Pass 2: match by LINE content (no split_account) ----------
         const matchedAccounts = [];
         const filteredData = {};
-        for (const account of this.state.account_list_full) {
-            const accountMatches = account.toLowerCase().includes(query);
+        const collapsed = {};
+        for (const account of baseAccounts) {
             const lines = this.state.account_data_full[account] || [];
-            const matchingLines = accountMatches
-                ? lines
-                : lines.filter((line) => {
-                    const partner = line.partner_id;
-                    const partnerName = Array.isArray(partner) ? partner[1] : '';
-                    const haystack = [
-                        line.move_name || '', line.name || '', partnerName,
-                        line.ref || '', line.trx_type || '',
-                        line.split_account || '', line.location || '',
-                    ].join(' ').toLowerCase();
-                    return haystack.includes(query);
-                });
-            if (accountMatches || matchingLines.length) {
+            const matchingLines = lines.filter((line) => {
+                const partner = line.partner_id;
+                const partnerName = Array.isArray(partner) ? partner[1] : '';
+                const haystack = [
+                    line.move_name || '',
+                    line.name || '',
+                    partnerName,
+                    line.ref || '',
+                    line.trx_type || '',
+                    line.location || '',
+                ].join(' ').toLowerCase();
+                return matchesAllTokens(haystack);
+            });
+            if (matchingLines.length) {
                 matchedAccounts.push(account);
                 filteredData[account] = matchingLines;
+                collapsed[account] = true;
             }
         }
         this.state.account = matchedAccounts;
         this.state.account_data = filteredData;
+        this.state.collapsed_accounts = collapsed;
+    }
+
+    async applyAccountFilter(ev) {
+        const accName = ev.target.attributes["data-id"].value;
+        let selected = [...this.state.selected_account_list];
+
+        if (selected.includes(accName)) {
+            selected = selected.filter((a) => a !== accName);
+            ev.target.classList.remove("selected-filter");
+        } else {
+            selected.push(accName);
+            ev.target.classList.add("selected-filter");
+        }
+        this.state.selected_account_list = selected;
+        this.applySearch();
+    }
+
+    clearAccountFilter() {
+        this.state.selected_account_list = [];
+        document
+            .querySelectorAll(".report-filter-button[data-value='account']")
+            .forEach((btn) => btn.classList.remove("selected-filter"));
+        this.applySearch();
     }
     async unfoldAll(ev) {
         const shouldCollapseAll = !ev.target.classList.contains("selected-filter");
