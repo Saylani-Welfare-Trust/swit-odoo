@@ -296,92 +296,121 @@ class AccountGeneralLedger(models.TransientModel):
         headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
                    'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
                    'Debit', 'Credit', 'Balance']
-        widths = [6, 25, 26, 50, 12, 12, 16, 12, 16, 32, 12, 12, 14]
+        widths = [6, 25, 30, 50, 12, 14, 18, 14, 22, 34, 14, 14, 16]
         last_col = len(headers) - 1
 
         for idx, w in enumerate(widths):
             sheet.set_column(idx, idx, w)
         sheet.set_default_row(20)
 
-        white_company_fmt = workbook.add_format(
-            {'bg_color': 'white', 'bold': True, 'font_size': 16,
-             'align': 'left', 'valign': 'vcenter'})
-        white_title_fmt = workbook.add_format(
-            {'bg_color': 'white', 'bold': True, 'font_size': 13,
-             'align': 'left', 'valign': 'vcenter'})
-        white_sub_fmt = workbook.add_format(
-            {'bg_color': 'white', 'font_size': 10,
-             'align': 'left', 'valign': 'vcenter'})
-        printed_date_fmt = workbook.add_format(
-            {'bg_color': 'white', 'bold': True, 'font_size': 9,
-             'align': 'right', 'valign': 'vcenter'})
-        range_label_fmt = workbook.add_format(
-            {'bg_color': '#FFFF00', 'font_color': 'black', 'bold': True,
-             'font_size': 10, 'align': 'left', 'border': 1})
-        range_label_fmt.set_indent(1)
-        range_value_fmt = workbook.add_format(
-            {'bg_color': '#FF0000', 'font_color': 'white', 'bold': True,
-             'font_size': 10, 'align': 'left', 'border': 1})
-        range_value_fmt.set_indent(1)
-        section_header_fmt = workbook.add_format(
-            {'bg_color': '#FF0000', 'font_color': '#FFFF00', 'bold': True,
-             'align': 'center', 'font_size': 10, 'border': 1})
-        banner_fmt = workbook.add_format(
-            {'bg_color': '#C0C0C0', 'font_color': 'black', 'bold': True,
-             'font_size': 10, 'border': 1, 'align': 'left'})
+        # ==================== Neutral / clean format palette ====================
+        # Company name (larger, bold, dark text)
+        company_fmt = workbook.add_format({
+            'bold': True, 'font_size': 16, 'font_color': '#1A1A1A',
+            'align': 'left', 'valign': 'vcenter'})
+
+        # Report title (medium, bold)
+        title_fmt = workbook.add_format({
+            'bold': True, 'font_size': 13, 'font_color': '#333333',
+            'align': 'left', 'valign': 'vcenter'})
+
+        # Date range / subtitle (small gray)
+        subtitle_fmt = workbook.add_format({
+            'font_size': 10, 'font_color': '#666666',
+            'align': 'left', 'valign': 'vcenter'})
+
+        # Printed date (right aligned)
+        printed_date_fmt = workbook.add_format({
+            'bold': True, 'font_size': 9, 'font_color': '#666666',
+            'align': 'right', 'valign': 'vcenter'})
+
+        # Section header (dark bar, white text)
+        section_header_fmt = workbook.add_format({
+            'bg_color': '#333333', 'font_color': '#FFFFFF',
+            'bold': True, 'align': 'center', 'valign': 'vcenter',
+            'font_size': 10, 'border': 1, 'border_color': '#333333'})
+
+        # Account banner (light gray, bold black text)
+        banner_fmt = workbook.add_format({
+            'bg_color': '#E8E8E8', 'font_color': '#1A1A1A',
+            'bold': True, 'font_size': 10, 'border': 1,
+            'border_color': '#BFBFBF', 'align': 'left', 'valign': 'vcenter'})
         banner_fmt.set_indent(1)
-        opening_fmt = workbook.add_format(
-            {'bold': True, 'font_size': '10px', 'border': 1,
-             'bg_color': '#FF0000', 'font_color': 'white'})
-        opening_num_fmt = workbook.add_format(
-            {'bold': True, 'font_size': '10px', 'border': 1,
-             'bg_color': '#FF0000', 'font_color': 'white',
-             'num_format': '#,##0.00'})
-        line_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1})
-        name_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1,
-             'text_wrap': True, 'valign': 'vcenter'})
-        num_fmt = workbook.add_format(
-            {'font_size': '10px', 'border': 1,
-             'num_format': '#,##0.00'})
-        total_fmt = workbook.add_format(
-            {'bold': True, 'font_size': '10px', 'border': 1,
-             'bg_color': '#FFFF00'})
-        total_num_fmt = workbook.add_format(
-            {'bold': True, 'font_size': '10px', 'border': 1,
-             'bg_color': '#FFFF00', 'num_format': '#,##0.00'})
+
+        # Opening balance row (very light gray)
+        opening_fmt = workbook.add_format({
+            'bold': True, 'font_size': 10, 'bg_color': '#F2F2F2',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
+            'valign': 'vcenter'})
+        opening_num_fmt = workbook.add_format({
+            'bold': True, 'font_size': 10, 'bg_color': '#F2F2F2',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
+            'num_format': '#,##0.00', 'valign': 'vcenter'})
+
+        # Transaction line (white, thin gray borders)
+        line_fmt = workbook.add_format({
+            'font_size': 10, 'border': 1, 'border_color': '#D9D9D9',
+            'valign': 'vcenter'})
+        name_fmt = workbook.add_format({
+            'font_size': 10, 'border': 1, 'border_color': '#D9D9D9',
+            'text_wrap': True, 'valign': 'vcenter'})
+        num_fmt = workbook.add_format({
+            'font_size': 10, 'border': 1, 'border_color': '#D9D9D9',
+            'num_format': '#,##0.00', 'valign': 'vcenter'})
+
+        # Per-account total (light gray, bold, top border emphasis)
+        total_fmt = workbook.add_format({
+            'bold': True, 'font_size': 10, 'bg_color': '#E8E8E8',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
+            'top': 2, 'top_color': '#333333', 'valign': 'vcenter'})
+        total_num_fmt = workbook.add_format({
+            'bold': True, 'font_size': 10, 'bg_color': '#E8E8E8',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
+            'top': 2, 'top_color': '#333333',
+            'num_format': '#,##0.00', 'valign': 'vcenter'})
+
+        # Grand total (darker gray, bold, double top border)
+        grand_total_fmt = workbook.add_format({
+            'bold': True, 'font_size': 11, 'bg_color': '#D9D9D9',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#808080',
+            'top': 5, 'top_color': '#333333', 'valign': 'vcenter'})
+        grand_total_num_fmt = workbook.add_format({
+            'bold': True, 'font_size': 11, 'bg_color': '#D9D9D9',
+            'font_color': '#1A1A1A', 'border': 1, 'border_color': '#808080',
+            'top': 5, 'top_color': '#333333',
+            'num_format': '#,##0.00', 'valign': 'vcenter'})
 
         # --- company / report header block ---
-        sheet.merge_range(0, 0, 0, 3, company_name, white_company_fmt)
+        sheet.set_row(0, 24)
+        sheet.set_row(1, 22)
+        sheet.set_row(2, 16)
+        sheet.merge_range(0, 0, 0, 3, company_name, company_fmt)
         sheet.merge_range(0, 4, 0, last_col, printed_date, printed_date_fmt)
-        sheet.merge_range(1, 0, 1, last_col, report_name, white_title_fmt)
-        date_range_text = f"{start_date} - {end_date}" if (start_date or end_date) else ''
-        sheet.merge_range(2, 0, 2, last_col, date_range_text, white_sub_fmt)
+        sheet.merge_range(1, 0, 1, last_col, report_name, title_fmt)
+        date_range_text = f"{start_date}  -  {end_date}" if (start_date or end_date) else ''
+        sheet.merge_range(2, 0, 2, last_col, date_range_text, subtitle_fmt)
 
-        # --- account from / account to range ---
-        sorted_accounts = sorted(a for a in report_accounts if a and a != 'false')
-        account_from = sorted_accounts[0] if sorted_accounts else ''
-        account_to = sorted_accounts[-1] if sorted_accounts else ''
-        sheet.write(4, 1, 'Account From :', range_label_fmt)
-        sheet.merge_range(4, 2, 4, 6, account_from, range_value_fmt)
-        sheet.write(5, 1, 'Account To :', range_label_fmt)
-        sheet.merge_range(5, 2, 5, 6, account_to, range_value_fmt)
+        # Bottom border under the header block
+        underline_fmt = workbook.add_format({'bottom': 1, 'bottom_color': '#333333'})
+        sheet.merge_range(3, 0, 3, last_col, '', underline_fmt)
+        sheet.set_row(3, 4)
 
-        row = 8
+        row = 5
         if report_accounts:
             if report_action == 'dynamic_accounts_report.action_general_ledger':
                 for account in report_accounts:
                     account_total = report_totals.get(account, {})
                     account_label = account if account != 'false' else 'Unknown Account'
 
-                    # Column headers, repeated for every account section
+                    # Column headers, repeated per account section
                     for idx, header in enumerate(headers):
                         sheet.write(row, idx, header, section_header_fmt)
+                    sheet.set_row(row, 22)
                     row += 1
 
                     # Account banner
                     sheet.merge_range(row, 0, row, last_col, account_label, banner_fmt)
+                    sheet.set_row(row, 22)
                     row += 1
 
                     # Opening balance
@@ -421,16 +450,22 @@ class AccountGeneralLedger(models.TransientModel):
                             + account_total.get('total_debit', 0.0)
                             - account_total.get('total_credit', 0.0))
                     sheet.write(row, 12, closing, total_num_fmt)
-                    row += 2  # blank row between account blocks
+                    sheet.set_row(row, 24)
+                    row += 2  # blank spacer row between account blocks
 
                 # Grand total row
                 grand_opening = sum(v.get('opening_balance', 0.0) for v in report_totals.values())
-                sheet.merge_range(row, 0, row, 9, 'Grand Total', total_fmt)
-                sheet.write(row, 10, grand_total.get('total_debit', 0.0), total_num_fmt)
-                sheet.write(row, 11, grand_total.get('total_credit', 0.0), total_num_fmt)
+                sheet.merge_range(row, 0, row, 9, 'GRAND TOTAL', grand_total_fmt)
+                sheet.write(row, 10, grand_total.get('total_debit', 0.0), grand_total_num_fmt)
+                sheet.write(row, 11, grand_total.get('total_credit', 0.0), grand_total_num_fmt)
                 sheet.write(row, 12,
                             grand_opening + float(grand_total.get('total_debit', 0.0)) - float(grand_total.get('total_credit', 0.0)),
-                            total_num_fmt)
+                            grand_total_num_fmt)
+                sheet.set_row(row, 26)
+
+        # Freeze the header rows so they stay visible while scrolling
+        sheet.freeze_panes(5, 0)
+
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
