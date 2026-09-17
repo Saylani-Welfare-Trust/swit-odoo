@@ -130,7 +130,7 @@
                         <hr/>
 
                         <!-- Important Notes -->
-                        <div style="border: 1px solid black; padding: 10px; margin-bottom: 15px;">
+                        <div style="border: 1px solid black; padding: 10px; margin-bottom: 15px; page-break-inside: avoid;">
                             <h4 style="text-align:right; background:black;color:white;padding:5px;">
                                 اہم ہدایات
                             </h4>
@@ -176,6 +176,7 @@
                             background:#f8f8f8;
                             position:relative;
                             margin-bottom:20px;
+                            page-break-inside: avoid;
                         ">
                         
                             <span style="
@@ -448,7 +449,7 @@
   
     
                         <h4 style="text-align: right; padding: 5px 10px; margin-bottom: 10px;" class="urdu-text">گارنٹر کی تفصیلات</h4>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid;" class="compact-table">
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
                                 <th style="border: 1px solid black; padding: 5px 10px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
@@ -465,7 +466,7 @@
                                 <th style="border: 1px solid black; padding: 5px 10px; text-align: right;" colspan="2" class="urdu-text">لینڈ لائن نمبر</th>
                             </tr>
                         </table>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" class="compact-table">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid;" class="compact-table">
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px 5px; text-align: right;" class="urdu-text">شناختی کارڈ نمبر</th>
                                 <th style="border: 1px solid black; padding: 5px 10px; text-align: right;" class="urdu-text">والد / شریک حیات کا نام / پیشہ</th>
@@ -559,7 +560,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative;" class="urdu-text">
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative; page-break-inside: avoid;" class="urdu-text">
                             <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
                                 نوٹ:
                             </span>
@@ -568,7 +569,7 @@
                             </p>
                         </div>
 
-                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative;" class="urdu-text">
+                        <div style="margin-bottom: 20px; direction: rtl; border: 1px solid black; border-radius: 20px; padding: 15px; position: relative; page-break-inside: avoid;" class="urdu-text">
                             <span style="font-weight: bold; background-color:black; padding: 8px 25px; border-radius: 20px; color:white; position: absolute; right: 15px; top: -16px;">
                                 حلف نامہ:
                             </span>
