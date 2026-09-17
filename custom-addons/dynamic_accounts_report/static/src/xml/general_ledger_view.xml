@@ -35,6 +35,51 @@
                                 t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
                         </div>
                         <div class="sub_container_right">
+                            <div class="account_filter" style="">
+                                <a type="button" class="dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
+                                    <div style="display:content;">
+                                        <span>
+                                            <span class="fa fa-list-alt" title="Accounts" role="img"/>
+                                            Accounts
+                                        </span>
+                                    </div>
+                                    <t t-if="state.selected_account_list and state.selected_account_list.length">:
+                                        <t t-foreach="state.selected_account_list"
+                                        t-as="acc_key" t-key="acc_key_index">
+                                            <span><t t-esc="acc_key"/></span>
+                                            <t t-if="acc_key_index != state.selected_account_list.length - 1">, </t>
+                                        </t>
+                                    </t>
+                                </a>
+                                <ul class="dropdown-menu" role="menu"
+                                    style="max-height:420px;overflow-y:auto;min-width:320px;">
+                                    <div class="list-group">
+                                        <button class="report-filter-button"
+                                                type="button"
+                                                t-if="state.selected_account_list and state.selected_account_list.length"
+                                                t-on-click="clearAccountFilter"
+                                                style="font-weight:bold;">
+                                            Clear All
+                                        </button>
+                                        <t t-if="state.all_accounts">
+                                            <t t-foreach="state.all_accounts"
+                                            t-as="acc" t-key="acc_index">
+                                                <button class="report-filter-button"
+                                                        t-att-data-value="'account'"
+                                                        t-att-data-id="acc"
+                                                        type="button"
+                                                        data-bs-auto-close="outside"
+                                                        t-on-click="applyAccountFilter"
+                                                        t-att-class="state.selected_account_list.includes(acc) ? 'selected-filter' : ''">
+                                                    <t t-esc="acc"/>
+                                                </button>
+                                            </t>
+                                        </t>
+                                    </div>
+                                </ul>
+                            </div>
                             <div class="time_range" style="">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown">
