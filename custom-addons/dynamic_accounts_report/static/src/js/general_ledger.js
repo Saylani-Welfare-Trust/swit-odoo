@@ -369,30 +369,55 @@ class GeneralLedger extends owl.Component {
             this.state.account_data = { ...this.state.account_data_full };
             return;
         }
+
+        // ---------- Pass 1: match by ACCOUNT NAME only ----------
+        const accountNameMatches = this.state.account_list_full.filter(
+            (account) => account.toLowerCase().includes(query)
+        );
+
+        if (accountNameMatches.length) {
+            // Show ONLY the matching accounts, with all their lines
+            const filteredData = {};
+            const collapsed = {};
+            for (const account of accountNameMatches) {
+                filteredData[account] = this.state.account_data_full[account] || [];
+                collapsed[account] = true;  // start collapsed
+            }
+            this.state.account = accountNameMatches;
+            this.state.account_data = filteredData;
+            this.state.collapsed_accounts = collapsed;
+            return;
+        }
+
+        // ---------- Pass 2: match by LINE content (no split_account) ----------
         const matchedAccounts = [];
         const filteredData = {};
+        const collapsed = {};
         for (const account of this.state.account_list_full) {
-            const accountMatches = account.toLowerCase().includes(query);
             const lines = this.state.account_data_full[account] || [];
-            const matchingLines = accountMatches
-                ? lines
-                : lines.filter((line) => {
-                    const partner = line.partner_id;
-                    const partnerName = Array.isArray(partner) ? partner[1] : '';
-                    const haystack = [
-                        line.move_name || '', line.name || '', partnerName,
-                        line.ref || '', line.trx_type || '',
-                        line.split_account || '', line.location || '',
-                    ].join(' ').toLowerCase();
-                    return haystack.includes(query);
-                });
-            if (accountMatches || matchingLines.length) {
+            const matchingLines = lines.filter((line) => {
+                const partner = line.partner_id;
+                const partnerName = Array.isArray(partner) ? partner[1] : '';
+                const haystack = [
+                    line.move_name || '',
+                    line.name || '',
+                    partnerName,
+                    line.ref || '',
+                    line.trx_type || '',
+                    line.location || '',
+                    // NOTE: intentionally NOT including split_account
+                ].join(' ').toLowerCase();
+                return haystack.includes(query);
+            });
+            if (matchingLines.length) {
                 matchedAccounts.push(account);
                 filteredData[account] = matchingLines;
+                collapsed[account] = true;
             }
         }
         this.state.account = matchedAccounts;
         this.state.account_data = filteredData;
+        this.state.collapsed_accounts = collapsed;
     }
     async unfoldAll(ev) {
         const shouldCollapseAll = !ev.target.classList.contains("selected-filter");
