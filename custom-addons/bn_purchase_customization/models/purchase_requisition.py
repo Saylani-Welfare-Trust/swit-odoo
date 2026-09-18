@@ -27,7 +27,7 @@ class PurchaseRequisition(models.Model):
     state = fields.Selection(PURCHASE_REQUISITION_STATES,
                               'Status', tracking=True, required=True,
                               copy=False, default='draft')
-    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES)
+    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
 
 
     def action_in_progress(self):
