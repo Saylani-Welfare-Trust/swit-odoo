@@ -28,6 +28,13 @@ class PurchaseRequisition(models.Model):
     # RFQ's approval progress, see models/purchase_order.py in this module.
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ / Winning Quote',
                                        readonly=True, copy=False)
+    # Deliberately NOT written onto the native vendor_id field: doing so would
+    # flip action_in_progress() into its blanket-order branch, which requires
+    # every purchase.requisition.line to already have a price_unit > 0 - those
+    # lines never carry a price in this Material Request flow (only the RFQ's
+    # own order lines do), so that would break _release_po() outright.
+    selected_vendor_id = fields.Many2one(
+        related='selected_rfq_id.partner_id', string='Selected Vendor', store=True)
     selected_rfq_cxo_approved = fields.Boolean(
         related='selected_rfq_id.cxo_approved', string='CXO Approved (on RFQ)')
     selected_rfq_cxo_approved_by = fields.Many2one(

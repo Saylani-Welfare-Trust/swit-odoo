@@ -62,6 +62,14 @@
                 </button>
             </xpath>
 
+            <!-- The native "Vendor" field stays empty throughout this workflow
+                 (see selected_vendor_id's definition for why it can't just be
+                 copied there) - show the actual chosen vendor next to it as
+                 soon as one is selected, not just after Funds Check. -->
+            <xpath expr="//field[@name='vendor_id']" position="after">
+                <field name="selected_vendor_id" invisible="not selected_vendor_id"/>
+            </xpath>
+
             <xpath expr="//notebook" position="inside">
                 <page string="Procurement Approval Trail" name="procurement_approval_trail">
                     <group>
