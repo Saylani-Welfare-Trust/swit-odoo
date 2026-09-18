@@ -49,9 +49,11 @@
                         groups="bn_procurement_workflow.group_hod_procurement"/>
 
                 <button string="Funds Available" name="action_funds_available" type="object"
-                        class="oe_highlight" invisible="state != 'funds_check'"/>
+                        class="oe_highlight" invisible="state != 'funds_check'"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
                 <button string="Funds Not Available" name="action_funds_unavailable" type="object"
-                        invisible="state != 'funds_check' or funds_available"/>
+                        invisible="state != 'funds_check' or funds_available"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
                 <button string="Confirm Fund Transfer" name="action_cfo_shariah_transfer_confirm" type="object"
                         class="oe_highlight" invisible="state != 'funds_check' or funds_available"
                         groups="bn_procurement_workflow.group_cfo_shariah"/>

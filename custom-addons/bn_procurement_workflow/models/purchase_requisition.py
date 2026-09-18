@@ -236,6 +236,8 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if self.state != 'funds_check':
             raise ValidationError(_('This request is not in Funds Availability Check state.'))
+        if not self.env.user.has_group('bn_procurement_workflow.group_cfo_shariah'):
+            raise ValidationError(_('Only CFO / Shariah Dept can decide fund availability.'))
         is_ok, balance, insufficient_accounts = self._get_shariah_funds_check()
         if not is_ok:
             raise ValidationError(_(
@@ -255,6 +257,8 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if self.state != 'funds_check':
             raise ValidationError(_('This request is not in Funds Availability Check state.'))
+        if not self.env.user.has_group('bn_procurement_workflow.group_cfo_shariah'):
+            raise ValidationError(_('Only CFO / Shariah Dept can decide fund availability.'))
         self.write({'funds_available': False, 'funds_transfer_remarks': self.funds_transfer_remarks})
         self.message_post(body=_('Funds not available — awaiting CFO / Shariah Dept fund transfer.'))
 
