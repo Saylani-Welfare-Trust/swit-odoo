@@ -35,7 +35,7 @@
 
                         th, td {
                             border: 1px solid black;
-                            padding: 12px 8px !important;
+                            padding: 7px 8px !important;
                             text-align: right;
                             vertical-align: middle;
                             font-size: 13px;
@@ -308,9 +308,9 @@
 
                         <table style="width: 100%; border-collapse: collapse; margin-top: 6px;" class="compact-table">
                             <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">اکاؤنٹ نمبر</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">بینک کا نام</th>
-                                <th style="border: 1px solid black; padding: 5px;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right; width: 27%;" class="urdu-text">اکاؤنٹ نمبر</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right; width: 27%;" class="urdu-text">بینک کا نام</th>
+                                <th style="border: 1px solid black; padding: 5px; width: 18%;" class="urdu-text">
                                     <div style="display: flex; align-items: center;">
                                         <span style="margin-left: auto; padding-right: 6px;">بینک اکاؤنٹ</span>
                                         <input type="checkbox" style="margin-left: 3px;">No</input>
@@ -318,10 +318,10 @@
 
                                     </div>
                                 </th>
-                                <th style="border: 1px solid black; padding: 5px 22px; text-align: center;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 22px; text-align: right; width: 14%;" class="urdu-text">
                                     ماہانہ گھر یلو اخراجات:
                                 </th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ماہانہ آمدنی</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right; width: 14%;" class="urdu-text">ماہانہ آمدنی</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">بقایہ رقم</th>
