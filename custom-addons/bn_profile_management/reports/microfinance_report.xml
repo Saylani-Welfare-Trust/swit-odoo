@@ -436,11 +436,13 @@
                                             <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
                                         </div>
                                     </th>
-                                    <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">انٹرویو کی تاریخ</th>
-                                    <th rowspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 22px; vertical-align: top;" class="urdu-text">تاثرات</th>
+                                    <th colspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">انٹرویو کی تاریخ</th>
                                 </tr>
                                 <tr>
-                                    <td colspan="2" style="border: 1px solid black; padding: 5px; height: 60px;"/>
+                                    <th colspan="3" style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">تاثرات</th>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" style="border: 1px solid black; padding: 5px; height: 45px;"/>
                                 </tr>
                                 <tr>
                                     <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">
