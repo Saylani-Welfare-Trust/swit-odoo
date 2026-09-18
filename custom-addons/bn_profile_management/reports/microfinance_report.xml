@@ -387,8 +387,8 @@
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="1" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="4" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
@@ -405,8 +405,8 @@
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">2ضامن نمبر</th>
                             </tr>
                             <tr>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="1" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="4" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
