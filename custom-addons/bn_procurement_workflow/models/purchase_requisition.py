@@ -46,6 +46,50 @@ class PurchaseRequisition(models.Model):
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ / Winning Quote',
                                        readonly=True, copy=False)
 
+    # Automatic Shariah Law balance check for the Funds Availability gate
+    funds_shariah_balance = fields.Monetary(
+        string='Shariah Law Closing Balance', currency_field='currency_id',
+        compute='_compute_shariah_funds_check')
+    funds_shariah_ok = fields.Boolean(
+        string='Shariah Balance Sufficient', compute='_compute_shariah_funds_check')
+
+    @api.depends('selected_rfq_id', 'selected_rfq_id.order_line.price_subtotal', 'state')
+    def _compute_shariah_funds_check(self):
+        for requisition in self:
+            is_ok, balance, _accounts = requisition._get_shariah_funds_check()
+            requisition.funds_shariah_ok = is_ok
+            requisition.funds_shariah_balance = balance
+
+    def _get_shariah_funds_check(self):
+        """Match the winning RFQ's lines to their Shariah Law segment (analytic
+        account) and check whether each segment's closing balance covers what
+        this purchase is about to commit - the same matching bn_shariah_law
+        already does on purchase.order.button_confirm(), surfaced here so the
+        Funds Availability gate reflects it instead of being a blind manual
+        approval."""
+        self.ensure_one()
+        shariah_law = self.env['shariah.law']
+        rfq = self.selected_rfq_id
+        insufficient_accounts = self.env['account.analytic.account']
+        lowest_balance = 0.0
+        if not rfq:
+            return True, lowest_balance, insufficient_accounts
+        balances = []
+        for line in rfq.order_line:
+            if not line.product_id:
+                continue
+            analytic = self.env['account.analytic.account'].search(
+                [('product_ids', 'in', [line.product_id.id])], limit=1)
+            if not analytic:
+                continue
+            balance = shariah_law.get_closing_balance(analytic.id)
+            balances.append(balance)
+            if line.price_subtotal > balance:
+                insufficient_accounts |= analytic
+        if balances:
+            lowest_balance = min(balances)
+        return not insufficient_accounts, lowest_balance, insufficient_accounts
+
     def action_procurement_approve(self):
         """Procurement Manager reviews and approves the draft PR directly - no HOD/Member
         approval step in this workflow. Moves the PR into its own 'Procurement Manager
@@ -192,6 +236,13 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if self.state != 'funds_check':
             raise ValidationError(_('This request is not in Funds Availability Check state.'))
+        is_ok, balance, insufficient_accounts = self._get_shariah_funds_check()
+        if not is_ok:
+            raise ValidationError(_(
+                'Shariah Law closing balance is insufficient for segment(s): %s '
+                '(balance: %s). Use "Confirm Fund Transfer" instead once the '
+                'CFO / Shariah Dept has transferred funds.'
+            ) % (', '.join(insufficient_accounts.mapped('display_name')), balance))
         self.write({
             'funds_available': True,
             'funds_gate_approver_id': self.env.user.id,

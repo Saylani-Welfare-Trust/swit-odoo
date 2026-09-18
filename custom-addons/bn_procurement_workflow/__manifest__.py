@@ -11,6 +11,7 @@
         'purchase_requisition',
         'bn_purchase_customization',
         'bn_material_request',
+        'bn_shariah_law',
     ],
     'data': [
         'security/group.xml',

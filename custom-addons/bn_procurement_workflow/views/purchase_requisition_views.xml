@@ -100,6 +100,8 @@
                     </group>
                     <group>
                         <group string="Funds Availability">
+                            <field name="funds_shariah_ok" string="Shariah Balance Sufficient" widget="boolean_toggle" readonly="1"/>
+                            <field name="funds_shariah_balance" readonly="1"/>
                             <field name="funds_available" widget="boolean_toggle" readonly="1"/>
                             <field name="funds_transfer_remarks" readonly="state != 'funds_check'"/>
                             <field name="funds_gate_approver_id" readonly="1"/>
