@@ -311,14 +311,15 @@
                                 <th style="border: 1px solid black; padding: 5px 8px 20px 8px; text-align: right; width: 27%;" class="urdu-text">اکاؤنٹ نمبر</th>
                                 <th style="border: 1px solid black; padding: 5px 8px 20px 8px; text-align: right; width: 27%;" class="urdu-text">بینک کا نام</th>
                                 <th style="border: 1px solid black; padding: 5px; width: 18%;" class="urdu-text">
-                                    <div style="display: flex; align-items: center;">
-                                        <span style="margin-left: auto; padding-right: 6px;">بینک اکاؤنٹ</span>
-                                        <input type="checkbox" style="margin-left: 3px;">No</input>
-                                        <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
-
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span>بینک اکاؤنٹ</span>
+                                        <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                        </div>
                                     </div>
                                 </th>
-                                <th style="border: 1px solid black; padding: 5px 22px; text-align: right; width: 14%;" class="urdu-text">
+                                <th style="border: 1px solid black; padding: 5px 22px 16px 22px; text-align: right; width: 14%;" class="urdu-text">
                                     ماہانہ گھر یلو اخراجات:
                                 </th>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right; width: 14%;" class="urdu-text">ماہانہ آمدنی</th>
@@ -327,11 +328,12 @@
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">بقایہ رقم</th>
                                 <th colspan="3" style="border: 1px solid black; padding: 5px 8px; text-align: right;" class="urdu-text">ادارے کا نام</th>
                                 <th style="border: 1px solid black; padding: 5px;" class="urdu-text">
-                                    <div style="display: flex; align-items: center;">
-                                        <span style="margin-left: auto; padding-right: 6px;">کوئی اور قرض</span>
-                                        <input type="checkbox" style="margin-left: 3px;">No</input>
-                                        <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
-
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span>کوئی اور قرض</span>
+                                        <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                        </div>
                                     </div>
                                 </th>
                             </tr>
@@ -344,24 +346,26 @@
                                 <th style="border: 1px solid black; width: 15%; padding: 5px; text-align: right;" class="urdu-text">ڈرائیونگ لائسنس نمبر</th>
                                 <th style="border: 1px solid black; width: 15%; padding: 5px 8px; text-align: right;" class="urdu-text">تفصیلات</th>
                                 <th style="border: 1px solid black; width: 15%; padding: 5px 8px; text-align: right;" class="urdu-text">مادری زبان</th>
-                                <th style="border: 1px solid black; width: 30%; padding: 5px 0px; text-align: right;" class="urdu-text">
-                                    <div style="display: flex; align-items: center;">
-                                        <span style="margin-left: auto; padding-right: 6px; text-align: right;">
+                                <th style="border: 1px solid black; width: 30%; padding: 5px 8px; text-align: right;" class="urdu-text">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span style="text-align: right;">
                                             کیا آپ نے بھی سیلانی ویلفیئر انٹرنیشنل ٹرسٹ میں اپلائی کیا ہے
                                         </span>
-                                        <input type="checkbox" style="margin-left: 3px;">No</input>
-                                        <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
-
+                                        <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                        </div>
                                     </div>
                                 </th>
                                 <th style="border: 1px solid black; width: 20%; padding: 5px; text-align: right;" class="urdu-text">
-                                    <div style="display: flex; align-items: center;">
-                                        <span style="margin-left: auto; padding-right: 6px; text-align: right;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span style="text-align: right;">
                                             کسی دوسری تنظیم سے امداد
                                         </span>
-                                        <input type="checkbox" style="margin-left: 3px;">No</input>
-                                        <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
-
+                                        <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                            <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                        </div>
                                     </div>
                                 </th>
 
@@ -430,10 +434,12 @@
                                 </tr>
                                 <tr>
                                     <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">
-                                        <div style="display: flex; align-items: center;">
-                                            <span style="margin-left: auto;">انٹرویو</span>
-                                            <input type="checkbox" style="margin-left: 3px;">No</input>
-                                            <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                            <span>انٹرویو</span>
+                                            <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                                <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                                <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                            </div>
                                         </div>
                                     </th>
                                     <th colspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">انٹرویو کی تاریخ</th>
@@ -446,10 +452,12 @@
                                 </tr>
                                 <tr>
                                     <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">
-                                        <div style="display: flex; align-items: center;">
-                                            <span style="margin-left: auto;">انٹرویو کا نتیجہ</span>
-                                            <input type="checkbox" style="margin-left: 3px;">No</input>
-                                            <input type="checkbox" style="margin-left: 3px; margin-right: 3px;">Yes</input>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                            <span>انٹرویو کا نتیجہ</span>
+                                            <div style="display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                                                <span style="display: inline-flex; align-items: center; gap: 3px;">Yes<input type="checkbox"/></span>
+                                                <span style="display: inline-flex; align-items: center; gap: 3px;">No<input type="checkbox"/></span>
+                                            </div>
                                         </div>
                                     </th>
                                     <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">رقم</th>
@@ -526,7 +534,7 @@
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
         <field name="margin_top">15</field>
-        <field name="margin_bottom">18</field>
+        <field name="margin_bottom">12</field>
         <field name="margin_left">10</field>
         <field name="margin_right">10</field>
         <field name="header_line" eval="False"/>
