@@ -7,9 +7,11 @@ class RFQPriceWizard(models.TransientModel):
 
     def _confirm_rfq(self, rfq):
         """RFQs linked to a requisition under the Procurement workflow are not
-        confirmed immediately - they are routed to Technical Evaluation instead."""
+        confirmed immediately - the winning one is marked as selected and
+        waits for CXO + HOD approval directly on that RFQ, then Funds Check,
+        before it can ever be confirmed."""
         requisition = rfq.requisition_id
         if requisition and requisition.state == 'rfq_sent':
-            requisition.action_send_to_technical_evaluation(rfq)
+            requisition.action_select_winning_rfq(rfq)
         else:
             super()._confirm_rfq(rfq)

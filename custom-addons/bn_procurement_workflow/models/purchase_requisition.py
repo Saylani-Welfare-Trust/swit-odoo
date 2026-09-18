@@ -3,13 +3,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
-APPROVAL_RESULTS = [
-    ('pending', 'Pending'),
-    ('approved', 'Approved'),
-    ('rejected', 'Rejected'),
-]
-
-
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
 
@@ -22,29 +15,27 @@ class PurchaseRequisition(models.Model):
     procurement_review_date = fields.Datetime(readonly=True, copy=False)
     defer_reason = fields.Text(string='Deferral Reason')
 
-    # Technical evaluation (requesting department's HOD/CXO)
-    technical_evaluation_result = fields.Selection(
-        APPROVAL_RESULTS, string='Technical Evaluation', default='pending', copy=False, tracking=True)
-    technical_evaluation_remarks = fields.Text(string='Technical Evaluation Remarks')
-    technical_evaluator_id = fields.Many2one('res.users', readonly=True, copy=False)
-    technical_evaluation_date = fields.Datetime(readonly=True, copy=False)
-
-    # HOD Procurement commercial approval
-    hod_procurement_result = fields.Selection(
-        APPROVAL_RESULTS, string='HOD Procurement Approval', default='pending', copy=False, tracking=True)
-    hod_procurement_remarks = fields.Text(string='HOD Procurement Remarks')
-    hod_procurement_id = fields.Many2one('res.users', readonly=True, copy=False)
-    hod_procurement_date = fields.Datetime(readonly=True, copy=False)
-
     # Funds availability gate
     funds_available = fields.Boolean(string='Funds Available', copy=False, tracking=True)
     funds_transfer_remarks = fields.Text(string='CFO / Shariah Fund Transfer Remarks')
     funds_gate_approver_id = fields.Many2one('res.users', readonly=True, copy=False)
     funds_gate_date = fields.Datetime(readonly=True, copy=False)
 
-    # Winning RFQ tracked through the gate chain
+    # Winning RFQ tracked through the gate chain. CXO and HOD approval happen
+    # only once, directly on this RFQ (purchase.order.action_cxo_approve_po /
+    # action_hod_approve_po from bn_purchase_customization) - this
+    # requisition's own state advances automatically as a reflection of that
+    # RFQ's approval progress, see models/purchase_order.py in this module.
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ / Winning Quote',
                                        readonly=True, copy=False)
+    selected_rfq_cxo_approved = fields.Boolean(
+        related='selected_rfq_id.cxo_approved', string='CXO Approved (on RFQ)')
+    selected_rfq_cxo_approved_by = fields.Many2one(
+        related='selected_rfq_id.cxo_approved_by', string='CXO Approved By')
+    selected_rfq_hod_approved = fields.Boolean(
+        related='selected_rfq_id.hod_approved', string='HOD Approved (on RFQ)')
+    selected_rfq_hod_approved_by = fields.Many2one(
+        related='selected_rfq_id.hod_approved_by', string='HOD Approved By')
 
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
@@ -157,79 +148,20 @@ class PurchaseRequisition(models.Model):
             raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
         self.state = 'rfq_sent'
 
-    def action_send_to_technical_evaluation(self, winning_po):
-        """Called by the RFQ price wizard once a winning quote has been selected."""
+    def action_select_winning_rfq(self, winning_po):
+        """Called by the RFQ price wizard once a winning quote has been selected.
+        From here on, CXO and HOD approval happen directly on winning_po itself -
+        this requisition just waits for that RFQ's approval flags to advance."""
         self.ensure_one()
         if self.state != 'rfq_sent':
             raise ValidationError(_('This request is not in RFQ Sent state.'))
         self.write({
             'selected_rfq_id': winning_po.id,
-            'technical_evaluation_result': 'pending',
-            'hod_procurement_result': 'pending',
-            'state': 'technical_evaluation',
+            'state': 'vendor_selected',
         })
-        self.message_post(body=_('Quote from %s selected and sent for Technical Evaluation.') % winning_po.partner_id.display_name)
-
-    def action_technical_evaluate_approve(self):
-        self.ensure_one()
-        self._action_technical_evaluate(True, self.technical_evaluation_remarks)
-
-    def action_technical_evaluate_reject(self):
-        self.ensure_one()
-        self._action_technical_evaluate(False, self.technical_evaluation_remarks)
-
-    def _action_technical_evaluate(self, approved, remarks):
-        """Technical Evaluation by the requesting department's HOD/CXO."""
-        self.ensure_one()
-        if self.state != 'technical_evaluation':
-            raise ValidationError(_('This request is not in Technical Evaluation state.'))
-        manager = self.requesting_department_id.manager_id
-        if not manager or manager.user_id.id != self.env.user.id:
-            raise ValidationError(_('Only the requesting department\'s HOD can perform Technical Evaluation.'))
-        if not remarks:
-            raise ValidationError(_('Technical Evaluation remarks are required.'))
-        self.write({
-            'technical_evaluation_result': 'approved' if approved else 'rejected',
-            'technical_evaluation_remarks': remarks,
-            'technical_evaluator_id': self.env.user.id,
-            'technical_evaluation_date': fields.Datetime.now(),
-        })
-        if approved:
-            self.state = 'hod_procurement_approval'
-            self.message_post(body=_('Technical Evaluation approved.\nRemarks: %s') % remarks)
-        else:
-            self.state = 'rfq_sent'
-            self.message_post(body=_('Technical Evaluation rejected — returned for re-quoting.\nRemarks: %s') % remarks)
-
-    def action_hod_procurement_approve_btn(self):
-        self.ensure_one()
-        self._action_hod_procurement_approve(True, self.hod_procurement_remarks)
-
-    def action_hod_procurement_reject_btn(self):
-        self.ensure_one()
-        self._action_hod_procurement_approve(False, self.hod_procurement_remarks)
-
-    def _action_hod_procurement_approve(self, approved, remarks):
-        """HOD (Procurement) approval of the vendor selection."""
-        self.ensure_one()
-        if self.state != 'hod_procurement_approval':
-            raise ValidationError(_('This request is not in HOD Procurement Approval state.'))
-        if not self.env.user.has_group('bn_procurement_workflow.group_hod_procurement'):
-            raise ValidationError(_('Only HOD Procurement can approve the vendor selection.'))
-        if not remarks:
-            raise ValidationError(_('HOD Procurement remarks are required.'))
-        self.write({
-            'hod_procurement_result': 'approved' if approved else 'rejected',
-            'hod_procurement_remarks': remarks,
-            'hod_procurement_id': self.env.user.id,
-            'hod_procurement_date': fields.Datetime.now(),
-        })
-        if approved:
-            self.state = 'funds_check'
-            self.message_post(body=_('HOD Procurement approved the vendor selection.\nRemarks: %s') % remarks)
-        else:
-            self.state = 'rfq_sent'
-            self.message_post(body=_('HOD Procurement rejected the vendor selection — returned for re-quoting.\nRemarks: %s') % remarks)
+        self.message_post(body=_(
+            'Quote from %s selected. Awaiting CXO and HOD approval on that RFQ.'
+        ) % winning_po.partner_id.display_name)
 
     def action_funds_available(self):
         """Decide whether funds are available for the selected quote."""
@@ -297,23 +229,16 @@ class PurchaseRequisition(models.Model):
     def _release_po(self):
         """Confirm the winning RFQ and mark the requisition as Confirmed.
 
-        The Technical Evaluation (by the requesting department's HOD/CXO) and
-        HOD Procurement approval already recorded on this requisition satisfy
-        the same CXO + HOD approval that purchase.order.button_confirm() now
-        requires on every purchase order, so mark the winning RFQ approved
-        here rather than asking the same people to approve it a second time
-        on the PO itself.
+        button_confirm() (bn_purchase_customization) already requires the RFQ
+        itself to be CXO and HOD approved, so this simply calls it - if
+        someone reaches Funds Check without those two approvals recorded on
+        the RFQ (which shouldn't be reachable through the normal flow, since
+        this requisition's own state only advances to 'funds_check' once the
+        RFQ is HOD approved), button_confirm() will raise and stop the
+        release rather than silently skipping the check.
         """
         self.ensure_one()
         if not self.selected_rfq_id:
             raise ValidationError(_('No selected RFQ to release.'))
-        self.selected_rfq_id.write({
-            'cxo_approved': True,
-            'cxo_approved_by': self.technical_evaluator_id.id,
-            'cxo_approved_date': self.technical_evaluation_date,
-            'hod_approved': True,
-            'hod_approved_by': self.hod_procurement_id.id,
-            'hod_approved_date': self.hod_procurement_date,
-        })
         self.selected_rfq_id.button_confirm()
         self.action_in_progress()
