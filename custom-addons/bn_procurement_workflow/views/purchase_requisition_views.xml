@@ -57,10 +57,12 @@
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
             </xpath>
 
-            <!-- RFQs are created once the Procurement Manager has approved (state
-                 'procurement_approval'), in addition to the base button's own states -->
+            <!-- RFQs can only ever be created while state == 'procurement_approval' -
+                 action_create_rfqs() on the wizard enforces this unconditionally, so
+                 showing the button in any other state (e.g. after _release_po() has
+                 already moved the requisition to 'in_progress') is a guaranteed dead end. -->
             <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
-                <attribute name="invisible">state not in ('in_progress', 'open', 'procurement_approval')</attribute>
+                <attribute name="invisible">state != 'procurement_approval'</attribute>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="inside">
