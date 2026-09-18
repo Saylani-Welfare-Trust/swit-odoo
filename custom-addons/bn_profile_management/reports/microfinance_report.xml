@@ -56,6 +56,7 @@
 
                         h4 {
                             font-size: 16px;
+                            font-weight: bold;
                         }
 
                         @page {
@@ -86,7 +87,7 @@
                                             </div>
                                             <div style="display: flex;">
                                                 <span style="white-space: nowrap; padding-right: 4px;">Mobile Number :</span>
-                                                <span style="word-break: break-word;"><t t-esc="o.country_code_id.name"/><t t-esc="o.mobile"/></span>
+                                                <span style="word-break: break-word;"><t t-if="o.country_code_id.phone_code">+<t t-esc="o.country_code_id.phone_code"/> </t><t t-esc="o.mobile"/></span>
                                             </div>
                                             <div style="display: flex;">
                                                 <span style="white-space: nowrap; padding-right: 4px;">CNIC No. :</span>
@@ -387,7 +388,7 @@
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; height: 40px; vertical-align: top; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
@@ -405,7 +406,7 @@
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="3" class="urdu-text">درخواست گزار کے ساتھ تعلق</th>
-                                <th style="border: 1px solid black; padding: 5px 8px; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
+                                <th style="border: 1px solid black; padding: 5px 8px; height: 40px; vertical-align: top; text-align: right;" colspan="2" class="urdu-text">پتہ</th>
                             </tr>
                             <tr>
                                 <th style="border: 1px solid black; padding: 5px; text-align: right;" class="urdu-text">موبائل نمبر</th>
@@ -439,7 +440,7 @@
                                     <th rowspan="2" style="border: 1px solid black; padding: 5px; text-align: right; height: 22px; vertical-align: top;" class="urdu-text">تاثرات</th>
                                 </tr>
                                 <tr>
-                                    <td colspan="2" style="border: 1px solid black; padding: 5px; height: 16px;"/>
+                                    <td colspan="2" style="border: 1px solid black; padding: 5px; height: 60px;"/>
                                 </tr>
                                 <tr>
                                     <th style="border: 1px solid black; padding: 5px; text-align: right; height: 15px;" class="urdu-text">
