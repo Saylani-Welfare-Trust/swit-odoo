@@ -35,7 +35,7 @@
 
                         th, td {
                             border: 1px solid black;
-                            padding: 4px;
+                            padding: 12px 8px !important;
                             text-align: right;
                             vertical-align: middle;
                             font-size: 13px;
@@ -55,7 +55,7 @@
                         }
 
                         h4 {
-                            font-size: 16px;
+                            font-size: 18px;
                             font-weight: bold;
                         }
 
@@ -100,7 +100,7 @@
                                         </div>
                                     </td>
                                     <td style="width: 45%; vertical-align: top; border: none; text-align: center; direction: rtl; overflow: hidden;" class="urdu">
-                                        <h1 style="display:inline-block; max-width: 100%; background:black; color:white; padding:7px 16px; border-radius:8px; font-size:28px; margin:0;">
+                                        <h1 style="display:inline-block; max-width: 100%; background:black; color:white; padding:7px 16px; border-radius:8px; font-size:34px; margin:0;">
                                             سیلانی مائیکرو فنانس فارم
                                         </h1>
                                         <p style="margin-top:6px; font-size:15px;">یہ فارم مستحق افراد کی مدد کے لیے ہے</p>
