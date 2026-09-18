@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
 
 
 class PurchaseOrder(models.Model):
@@ -7,6 +7,32 @@ class PurchaseOrder(models.Model):
 
 
     comparative_count = fields.Integer('Comparative Count', compute="_set_comparative_count")
+
+    cxo_approved = fields.Boolean('CXO Approved', copy=False, tracking=True)
+    cxo_approved_by = fields.Many2one('res.users', string='CXO Approved By', readonly=True, copy=False)
+    cxo_approved_date = fields.Datetime(string='CXO Approved On', readonly=True, copy=False)
+
+    hod_approved = fields.Boolean('HOD Approved', copy=False, tracking=True)
+    hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
+    hod_approved_date = fields.Datetime(string='HOD Approved On', readonly=True, copy=False)
+
+    def action_cxo_approve_po(self):
+        for order in self:
+            order.write({
+                'cxo_approved': True,
+                'cxo_approved_by': self.env.user.id,
+                'cxo_approved_date': fields.Datetime.now(),
+            })
+
+    def action_hod_approve_po(self):
+        for order in self:
+            if not order.cxo_approved:
+                raise UserError(_('CXO approval is required before HOD approval.'))
+            order.write({
+                'hod_approved': True,
+                'hod_approved_by': self.env.user.id,
+                'hod_approved_date': fields.Datetime.now(),
+            })
 
 
     def _set_comparative_count(self):
@@ -40,6 +66,11 @@ class PurchaseOrder(models.Model):
 
     def button_confirm(self):
         for order in self:
+            if not (order.cxo_approved and order.hod_approved):
+                raise UserError(_(
+                    'Purchase order %s cannot be confirmed until it has both CXO approval '
+                    'and HOD approval.'
+                ) % (order.name if order.name != '/' else order.display_name))
             if order.name == '/':
                 order.name = self.env['ir.sequence'].next_by_code(
                     'purchase.order'

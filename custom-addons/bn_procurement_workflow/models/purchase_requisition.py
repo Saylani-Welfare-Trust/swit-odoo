@@ -240,9 +240,25 @@ class PurchaseRequisition(models.Model):
         }
 
     def _release_po(self):
-        """Confirm the winning RFQ and mark the requisition as Confirmed."""
+        """Confirm the winning RFQ and mark the requisition as Confirmed.
+
+        The Technical Evaluation (by the requesting department's HOD/CXO) and
+        HOD Procurement approval already recorded on this requisition satisfy
+        the same CXO + HOD approval that purchase.order.button_confirm() now
+        requires on every purchase order, so mark the winning RFQ approved
+        here rather than asking the same people to approve it a second time
+        on the PO itself.
+        """
         self.ensure_one()
         if not self.selected_rfq_id:
             raise ValidationError(_('No selected RFQ to release.'))
+        self.selected_rfq_id.write({
+            'cxo_approved': True,
+            'cxo_approved_by': self.technical_evaluator_id.id,
+            'cxo_approved_date': self.technical_evaluation_date,
+            'hod_approved': True,
+            'hod_approved_by': self.hod_procurement_id.id,
+            'hod_approved_date': self.hod_procurement_date,
+        })
         self.selected_rfq_id.button_confirm()
         self.action_in_progress()

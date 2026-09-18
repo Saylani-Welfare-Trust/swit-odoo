@@ -11,6 +11,28 @@
                     <field name="comparative_count" string="Comparative Orders" widget="statinfo"/>
                 </button>
             </xpath>
+            <xpath expr="//header" position="inside">
+                <button string="CXO Approval" name="action_cxo_approve_po" type="object" class="oe_highlight"
+                        groups="bn_purchase_customization.purchase_cxo_group"
+                        invisible="cxo_approved or state not in ('draft', 'sent')"/>
+                <button string="HOD Approval" name="action_hod_approve_po" type="object" class="oe_highlight"
+                        groups="bn_purchase_customization.purchase_hod_group"
+                        invisible="not cxo_approved or hod_approved or state not in ('draft', 'sent')"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="after">
+                <group string="Approval Status" invisible="state not in ('draft', 'sent')">
+                    <group>
+                        <field name="cxo_approved" widget="boolean_toggle" readonly="1"/>
+                        <field name="cxo_approved_by" readonly="1"/>
+                        <field name="cxo_approved_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="hod_approved" widget="boolean_toggle" readonly="1"/>
+                        <field name="hod_approved_by" readonly="1"/>
+                        <field name="hod_approved_date" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
                 <field name="on_hand_qty" readonly="1"/>
                 <field name="last_purchase_amount" readonly="1"/>
