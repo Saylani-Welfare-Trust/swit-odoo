@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_audit_trail_log_tree" model="ir.ui.view">
+    <record id="view_bn_audit_trial_log_tree" model="ir.ui.view">
         <field name="name">audit.trail.log.tree</field>
         <field name="model">audit.trail.log</field>
         <field name="arch" type="xml">
@@ -19,7 +19,7 @@
         </field>
     </record>
 
-    <record id="view_audit_trail_log_form" model="ir.ui.view">
+    <record id="view_bn_audit_trial_log_form" model="ir.ui.view">
         <field name="name">audit.trail.log.form</field>
         <field name="model">audit.trail.log</field>
         <field name="arch" type="xml">
@@ -54,7 +54,7 @@
         </field>
     </record>
 
-    <record id="view_audit_trail_log_search" model="ir.ui.view">
+    <record id="view_bn_audit_trial_log_search" model="ir.ui.view">
         <field name="name">audit.trail.log.search</field>
         <field name="model">audit.trail.log</field>
         <field name="arch" type="xml">
@@ -79,10 +79,10 @@
         </field>
     </record>
 
-    <record id="action_audit_trail_log" model="ir.actions.act_window">
+    <record id="action_bn_audit_trial_log" model="ir.actions.act_window">
         <field name="name">Audit Logs</field>
         <field name="res_model">audit.trail.log</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="view_audit_trail_log_search"/>
+        <field name="search_view_id" ref="view_bn_audit_trial_log_search"/>
     </record>
 </odoo>

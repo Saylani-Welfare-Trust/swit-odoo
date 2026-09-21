@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_audit_trail_rule_tree" model="ir.ui.view">
+    <record id="view_bn_audit_trial_rule_tree" model="ir.ui.view">
         <field name="name">audit.trail.rule.tree</field>
         <field name="model">audit.trail.rule</field>
         <field name="arch" type="xml">
@@ -15,7 +15,7 @@
         </field>
     </record>
 
-    <record id="view_audit_trail_rule_form" model="ir.ui.view">
+    <record id="view_bn_audit_trial_rule_form" model="ir.ui.view">
         <field name="name">audit.trail.rule.form</field>
         <field name="model">audit.trail.rule</field>
         <field name="arch" type="xml">
@@ -35,7 +35,7 @@
         </field>
     </record>
 
-    <record id="action_audit_trail_rule" model="ir.actions.act_window">
+    <record id="action_bn_audit_trial_rule" model="ir.actions.act_window">
         <field name="name">Audit Rules</field>
         <field name="res_model">audit.trail.rule</field>
         <field name="view_mode">tree,form</field>

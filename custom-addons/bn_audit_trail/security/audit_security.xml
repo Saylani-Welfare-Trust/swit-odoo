@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="group_audit_trail_viewer" model="res.groups">
+    <record id="group_bn_audit_trial_viewer" model="res.groups">
         <field name="name">Audit Trail / Viewer</field>
         <field name="category_id" ref="base.module_category_administration"/>
         <field name="comment">Can view the audit log, cannot change what gets audited.</field>
     </record>
 
-    <record id="group_audit_trail_manager" model="res.groups">
+    <record id="group_bn_audit_trial_manager" model="res.groups">
         <field name="name">Audit Trail / Manager</field>
         <field name="category_id" ref="base.module_category_administration"/>
-        <field name="implied_ids" eval="[(4, ref('group_audit_trail_viewer'))]"/>
+        <field name="implied_ids" eval="[(4, ref('group_bn_audit_trial_viewer'))]"/>
         <field name="users" eval="[(4, ref('base.user_admin'))]"/>
         <field name="comment">Can configure which models/operations are audited, and view the log.</field>
     </record>

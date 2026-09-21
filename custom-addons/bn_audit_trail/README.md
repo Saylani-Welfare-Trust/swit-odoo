@@ -7,8 +7,8 @@ with field-level before/after values.
 
 ## Install
 
-1. Copy the `audit_trail` folder into your Odoo `addons` path
-   (e.g. `/mnt/extra-addons/audit_trail`).
+1. Copy the `bn_audit_trial` folder into your Odoo `addons` path
+   (e.g. `/mnt/extra-addons/bn_audit_trial`).
 2. Restart the Odoo service.
 3. Apps > Update Apps List > search "Audit Trail" > Install.
 
