@@ -28,8 +28,7 @@ class AccountMove(models.Model):
             raise ValidationError(_('This action only applies to vendor bills.'))
         if not self.env.user.has_group('bn_procurement_finance.group_finance'):
             raise ValidationError(_('Only Finance users can confirm vendor bills.'))
-        if not self.vendor_invoice_reference:
-            raise ValidationError(_('Please enter the Vendor Invoice Reference before confirming.'))
+ 
         self.write({
             'finance_confirmed': True,
             'finance_confirmed_by': self.env.user.id,
