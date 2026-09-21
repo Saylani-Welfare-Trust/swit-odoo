@@ -41,7 +41,7 @@ class AuditTrailRule(models.Model):
         """
         self.env.cr.execute("""
             SELECT im.model, r.log_create, r.log_write, r.log_unlink
-            FROM bn_audit_trial_rule r
+            FROM audit_trail_rule r
             JOIN ir_model im ON im.id = r.model_id
             WHERE r.active = true
         """)
