@@ -12,19 +12,24 @@ class PurchaseOrder(models.Model):
 
 
     def _get_shariah_shortfalls(self):
-        """Segments whose Shariah Law closing balance is below this order's amount.
+        """Segments whose Shariah Law closing balance is below what this order's
+        lines commit to them.
 
-        Returns [(analytic account, required, closing balance)]; empty when the
-        Purchase Orders blocker is switched off."""
+        Each line goes to the analytic account (segment) of its product, and
+        the lines' Subtotal amounts are added up per segment and compared with
+        that segment's closing balance. Returns [(analytic account, required,
+        closing balance)]; empty when the Purchase Orders blocker is switched off."""
         self.ensure_one()
         blocker = self.env['shariah.law.blocker'].get_blocker_config()
         if not (blocker and blocker.enable_purchase):
             return []
         amounts = {}
         for line in self.order_line:
+            if not line.product_id:
+                continue
             analytic_account = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])], limit=1)
             if analytic_account:
-                amounts[analytic_account.id] = self.amount_total
+                amounts[analytic_account.id] = amounts.get(analytic_account.id, 0.0) + line.price_subtotal
         return self.env['shariah.law'].get_shortfalls(amounts)
 
     def button_confirm(self):
