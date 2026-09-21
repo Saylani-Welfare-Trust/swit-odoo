@@ -5,20 +5,27 @@ from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
-# Technical / internal models that are NEVER audited, regardless of any
-# configuration in Audit Rules - either because it would be pure noise, or
-# because auditing them risks recursion (the audit log's own tables) or a
-# meaningful performance hit on core Odoo machinery. Since v1.1.0, every
-# OTHER model is audited (Create/Update/Delete) by default - this list is
-# the only hardcoded exception, everything else is opt-out via the UI.
+# Every model is audited (Create, Update, Delete, View) by default. This
+# fixed set is the ONLY exception - hardcoded, not database/UI-configured,
+# so there is no cache or config screen that can silently go stale. These
+# are internal Odoo plumbing models where logging would either recurse on
+# itself (the audit log's own tables) or be high-volume, low-value noise
+# (document numbering, cron, bus, mail bookkeeping, attachments).
+#
+# To exclude an additional model (e.g. a very high-frequency detail line
+# model you decide isn't worth logging), add its technical name here and
+# redeploy - this is deliberately a code change, not a runtime setting.
 AUDIT_EXCLUDED_MODELS = {
     'audit.trail.log',
     'audit.trail.log.line',
-    'audit.trail.rule',
     'ir.logging',
     'ir.cron',
     'ir.cron.trigger',
     'ir.attachment',
+    'ir.sequence',
+    'ir.sequence.date_range',
+    'ir.model.data',
+    'ir.default',
     'bus.bus',
     'bus.presence',
     'mail.message',
@@ -32,49 +39,32 @@ AUDIT_EXCLUDED_MODELS = {
 class Base(models.AbstractModel):
     """Inheriting 'base' patches EVERY model in the registry - built-in
     (res.partner, sale.order, account.move, ...) and custom alike - without
-    needing to touch a single line of any other module. Create/Update/Delete
-    are audited for every model by default; Audit Rules is used to turn
-    specific operations OFF for specific (usually high-volume, low-value)
-    models, and to turn View/Read tracking ON where it's actually wanted.
+    needing to touch a single line of any other module.
+
+    Policy: Create / Update / Delete / View are audited for every model,
+    always, except AUDIT_EXCLUDED_MODELS above. No configuration screen,
+    no database-backed rules, no cache to go stale.
     """
     _inherit = 'base'
 
     # -----------------------------------------------------------------
-    def _audit_is_enabled(self, method):
+    def _audit_is_enabled(self):
         if self._transient or self._abstract:
             return False
         if self._name in AUDIT_EXCLUDED_MODELS:
             return False
         if not self.env.registry.ready:
-            # Avoid querying our own tables while they're still being
+            # Avoid touching our own tables while they're still being
             # created during this module's own installation.
             return False
-        try:
-            rules = self.env['audit.trail.rule'].sudo()._get_active_rules()
-        except Exception:
-            return False
-        rule = rules.get(self._name)
-
-        if method == 'read':
-            # View/Read tracking is opt-in ONLY: it's the highest-volume
-            # event type by far (every form/list open triggers reads), so
-            # it must be explicitly switched on per model.
-            return bool(rule and rule.get('log_read'))
-
-        # Create / Update / Delete are audited by default for every model.
-        # A rule here is only needed to turn a specific operation OFF for
-        # a given model (typically a high-volume technical model you've
-        # decided isn't worth logging) - no rule at all means "audit it".
-        if rule is None:
-            return True
-        return bool(rule.get('log_%s' % method))
+        return True
 
     # -----------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
         try:
-            if records and self._audit_is_enabled('create'):
+            if records and self._audit_is_enabled():
                 self.env['audit.trail.log']._log_create(records, vals_list)
         except Exception:
             _logger.exception('Audit Trail: failed to log create for %s', self._name)
@@ -84,7 +74,7 @@ class Base(models.AbstractModel):
         audit_enabled = False
         old_values = {}
         try:
-            audit_enabled = self._audit_is_enabled('write')
+            audit_enabled = self._audit_is_enabled()
             if audit_enabled:
                 tracked = [f for f in vals.keys() if f in self._fields]
                 old_values = {
@@ -111,7 +101,7 @@ class Base(models.AbstractModel):
         # access path (browser UI, RPC, XML-RPC) uniformly.
         result = super()._read_format(fnames, load=load)
         try:
-            if self._ids and self._audit_is_enabled('read'):
+            if self._ids and self._audit_is_enabled():
                 self.env['audit.trail.log']._log_read(self._name, result)
         except Exception:
             _logger.exception('Audit Trail: failed to log read for %s', self._name)
@@ -121,7 +111,7 @@ class Base(models.AbstractModel):
         audit_enabled = False
         snapshot = {}
         try:
-            audit_enabled = self._audit_is_enabled('unlink')
+            audit_enabled = self._audit_is_enabled()
             if audit_enabled:
                 snapshot = {rec.id: self.env['audit.trail.log']._safe_display_name(rec)
                             for rec in self}
