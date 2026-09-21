@@ -49,13 +49,13 @@ class ProductTemplate(models.Model):
             for template in self:
                 old = old_accounts.get(template.id)
                 if old and old != template.analytic_account_id:
-                    old.product_ids = [(3, pid) for pid in template.product_variant_ids.ids]
+                    old.sudo().product_ids = [(3, pid) for pid in template.product_variant_ids.ids]
             self._link_analytic_products()
         return res
 
     def _link_analytic_products(self):
         for template in self.filtered('analytic_account_id'):
-            template.analytic_account_id.product_ids = [(4, pid) for pid in template.product_variant_ids.ids]
+            template.analytic_account_id.sudo().product_ids = [(4, pid) for pid in template.product_variant_ids.ids]
 
     @api.model
     def _backfill_analytic_products(self):
