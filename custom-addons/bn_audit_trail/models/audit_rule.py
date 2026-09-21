@@ -57,15 +57,15 @@ class AuditTrailRule(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        self.env.registry.clear_caches()
+        self._get_active_rules.clear_cache(self)
         return records
 
     def write(self, vals):
         res = super().write(vals)
-        self.env.registry.clear_caches()
+        self._get_active_rules.clear_cache(self)
         return res
 
     def unlink(self):
         res = super().unlink()
-        self.env.registry.clear_caches()
+        self._get_active_rules.clear_cache(self)
         return res
