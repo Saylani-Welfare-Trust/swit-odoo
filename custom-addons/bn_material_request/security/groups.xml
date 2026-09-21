@@ -12,10 +12,6 @@
         <field name="name">Material Request / CFO Approval</field>
     </record>
     
-    <record id="menu_group_material_request_supply_chain" model="res.groups">
-        <field name="name">Material Request / Supply Chain Head</field>
-    </record>
-
     <record id="menu_group_material_request_members" model="res.groups">
         <field name="name">Material Request / Members</field>
     </record>

@@ -72,11 +72,6 @@ class MemberApproval(models.Model):
     # State
     state = fields.Selection([
         ('draft', 'Draft'),
-        ('submitted', 'Submitted'),
-        ('technical_validation', 'Technical Validation'),
-        ('technical_hod', 'Technical HOD Approval'),
-        ('supply_chain', 'Supply Chain Verification'),
-        ('on_hold', 'On Hold (Fund Shortage)'),
         ('budget_check', 'Budget Checked'),
         ('hod_approval', 'HOD Approval'),
         # ('cfo_approval', 'CFO Approval'),
@@ -103,19 +98,6 @@ class MemberApproval(models.Model):
     # Remarks
     rejection_reason = fields.Text('Rejection Reason', tracking=True)
     committee_remarks = fields.Text('Committee Remarks')
-
-    # Technical validation / approval workflow
-    technical_validator_id = fields.Many2one(
-        'res.users', string='Technical Validator', compute='_compute_technical_approvers',
-        store=True, tracking=True,
-        help='Manager (HOD) of the requester\'s department. Validates the request technically.')
-    technical_hod_id = fields.Many2one(
-        'res.users', string='Technical HOD', compute='_compute_technical_approvers',
-        store=True, tracking=True,
-        help='Head of the technical department that the requested products belong to.')
-    resume_state = fields.Char(copy=False, readonly=True)
-    hold_reason = fields.Text('Hold Reason', readonly=True, copy=False, tracking=True)
-    log_ids = fields.One2many('material.request.log', 'request_id', string='Audit Trail', readonly=True)
     cfo_remarks = fields.Text('CFO Remarks')
     coo_remarks = fields.Text('COO Remarks')
 
@@ -165,38 +147,21 @@ class MemberApproval(models.Model):
     #             rec.source_location_domain = "[('usage','=','internal')]"
     
 
-    @api.depends('department_id.manager_id.user_id', 'line_ids.product_id.categ_id.technical_department_id')
-    def _compute_technical_approvers(self):
-        for rec in self:
-            rec.technical_validator_id = rec.department_id.manager_id.user_id
-            hods, missing = rec._get_technical_hods()
-            rec.technical_hod_id = hods if len(hods) == 1 and not missing else False
-
-    def _get_technical_hods(self):
-        """Return (HOD users, categories without a resolvable HOD) for the request lines."""
-        self.ensure_one()
-        hods = self.env['res.users']
-        missing = self.env['product.category']
-        for categ in self.line_ids.product_id.categ_id:
-            hod = categ._get_technical_department().manager_id.user_id
-            if hod:
-                hods |= hod
-            else:
-                missing |= categ
-        return hods, missing
-
-    def _compute_funds(self):
-        """Return (available_budget, in_budget) for the request lines."""
+    def action_check_budget(self):
+        """Check budget per analytic account (supports multiple lines)"""
         self.ensure_one()
 
         if not self.line_ids:
             raise ValidationError(_('Please add at least one product line.'))
 
         today = fields.Date.today()
+
+        # Budget check per line (analytic + budget)
         total_available_budget = 0.0
         is_in_budget = True
 
         for line in self.line_ids:
+            # Search for analytic account linked to the product
             analytic = self.env['account.analytic.account'].search([
                 ('product_ids', 'in', [line.product_id.id])
             ], limit=1)
@@ -207,54 +172,37 @@ class MemberApproval(models.Model):
                     % line.product_id.display_name
                 )
 
+            budget = line.budget_id
+            # if not budget:
+            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            
             budget_lines = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', analytic.id),
-                ('budget_id', '=', line.budget_id.id),
+                ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
+                ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
                 ('date_to', '>=', today),
             ])
-
-            available_budget = sum(abs(l.practical_amount) for l in budget_lines)
+            
+            # if not budget_lines:
+            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
+            
+            available_budget = sum(
+                abs(l.practical_amount)
+                for l in budget_lines
+            )
             total_available_budget += available_budget
-
+            
             if line.subtotal > available_budget:
                 is_in_budget = False
 
-        return total_available_budget, is_in_budget
-
-    def action_check_budget(self):
-        """Preview fund availability without moving the request through the workflow."""
-        self.ensure_one()
-        total_available_budget, is_in_budget = self._compute_funds()
+        # Set state for approval cycle
+        next_state = 'hod_approval'
         self.write({
             'budget_amount': total_available_budget,
             'is_in_budget': is_in_budget,
+            'state': next_state,
         })
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Budget Check'),
-                'message': _('Available budget: %(available)s, required: %(required)s. %(result)s') % {
-                    'available': total_available_budget,
-                    'required': self.total_amount,
-                    'result': _('Funds are sufficient.') if is_in_budget else _('Funds are insufficient.'),
-                },
-                'type': 'success' if is_in_budget else 'warning',
-                'sticky': False,
-            },
-        }
-
-    def _release_request(self):
-        """Funds confirmed and all approvals done: create the transfer / purchase request."""
-        self.ensure_one()
-        self.budget_amount = max(float(self.budget_amount or 0.0) - float(self.total_amount or 0.0), 0.0)
-        if self.request_type == 'internal':
-            self._create_internal_transfer()
-            self.state = 'pending'
-        elif self.request_type == 'purchase_request':
-            self._create_purchase_request()
-            self.state = 'purchase_request'
+        return True
 
     def action_hod_approve(self):
         """HOD approves the request - next step depends on budget status"""
@@ -267,9 +215,47 @@ class MemberApproval(models.Model):
         
         
 
-        self._log('hod_approve')
         if self.is_in_budget:
-            self._release_request()
+            # Deduct approved amount from available budget
+            self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+            if self.budget_amount < 0:
+                self.budget_amount = 0.0
+                
+                
+            # Update budget lines for each product
+            # today = fields.Date.today()
+            # updated_lines = self.env['budget.lines']
+
+            # for line in self.line_ids:
+            #     # Find analytic account via product
+            #     analytic = self.env['analytical.product.line'].search(
+            #         [('product_id', '=', line.product_id.id)], limit=1
+            #     ).analytic_account_id
+            #     if analytic:
+            #         # Find active budget line(s)
+            #         budget_lines = self.env['budget.lines'].search([
+            #             ('analytic_account_id', '=', analytic.id),
+            #             ('budget_id', '=', line.budget_id.id),
+            #             ('date_from', '<=', today),
+            #             ('date_to', '>=', today),
+            #         ])
+            #         if budget_lines:
+            #             # Deduct line.subtotal (practical_amount is negative, so add)
+            #             budget_lines[0].practical_amount += line.subtotal
+            #             updated_lines |= budget_lines
+
+            # # Recompute total remaining budget
+            # self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
+
+       
+
+            # Within budget: go to procurement (simulate with 'done' state and create transfer)
+            if self.request_type == 'internal':
+                self._create_internal_transfer()
+                self.state = 'pending'
+            elif self.request_type == 'purchase_request':
+                self._create_purchase_request()
+                self.state = 'purchase_request'
         else:
             # Outside budget: go to COO/CFO approval
             self.state = 'committee_approval'
@@ -282,7 +268,6 @@ class MemberApproval(models.Model):
         if not self.cfo_remarks:
             raise ValidationError(_('CFO Remarks are required to approve.'))
         self.cfo_approved = True
-        self._log('cfo_approve', self.cfo_remarks)
         self._check_committee_approval()
         return True
 
@@ -294,7 +279,6 @@ class MemberApproval(models.Model):
         if not self.coo_remarks:
             raise ValidationError(_('COO Remarks are required to approve.'))
         self.coo_approved = True
-        self._log('coo_approve', self.coo_remarks)
         self._check_committee_approval()
         return True
 
@@ -308,165 +292,6 @@ class MemberApproval(models.Model):
             elif self.request_type == 'purchase_request':
                 self._create_purchase_request()
                 self.state = 'purchase_request'
-
-    # ------------------------------------------------------------------
-    # Technical validation / approval workflow
-    # ------------------------------------------------------------------
-    def _log(self, action, remarks=False):
-        self.ensure_one()
-        self.env['material.request.log'].sudo().create({
-            'request_id': self.id,
-            'user_id': self.env.user.id,
-            'stage': self.state,
-            'action': action,
-            'remarks': remarks or False,
-        })
-
-    def _assert_state(self, *states):
-        self.ensure_one()
-        if self.state not in states:
-            raise UserError(_('This action is not allowed in the current stage (%s).') % dict(self._fields['state'].selection).get(self.state))
-
-    def _assert_user(self, user_field=None, groups=()):
-        self.ensure_one()
-        if self.env.is_superuser():
-            return
-        user = self.env.user
-        if user_field and self[user_field] == user:
-            return
-        if any(user.has_group('bn_material_request.' + g) for g in groups):
-            return
-        raise UserError(_('You are not authorized to perform this action at the current stage.'))
-
-    def _check_stage_user(self):
-        """Only the person/role responsible for the current stage may act on it."""
-        self.ensure_one()
-        if self.state in ('submitted', 'technical_validation'):
-            self._assert_user('technical_validator_id')
-        elif self.state == 'technical_hod':
-            self._assert_user('technical_hod_id')
-        elif self.state == 'supply_chain':
-            self._assert_user(groups=('menu_group_material_request_supply_chain',))
-        elif self.state == 'on_hold':
-            self._assert_user(groups=(
-                'menu_group_material_request_cfo',
-                'menu_group_material_request_coo',
-                'menu_group_material_request_supply_chain',
-            ))
-
-    def _advance(self, next_state, action, remarks=False):
-        """Log the action, check funds, then move to next_state or put the request on hold.
-
-        next_state 'release' means all approvals are done and the request is fulfilled.
-        """
-        self.ensure_one()
-        self._log(action, remarks)
-        available, in_budget = self._compute_funds()
-        self.write({'budget_amount': available, 'is_in_budget': in_budget})
-        if not in_budget:
-            self._put_on_hold(next_state)
-        elif next_state == 'release':
-            self._release_request()
-        else:
-            self.state = next_state
-
-    def _put_on_hold(self, resume_state):
-        self.ensure_one()
-        reason = _('Insufficient funds: required %(required)s, available %(available)s.') % {
-            'required': self.total_amount,
-            'available': self.budget_amount,
-        }
-        self._log('hold', reason)
-        self.write({'state': 'on_hold', 'resume_state': resume_state, 'hold_reason': reason})
-
-        partners = self.user_id.partner_id | self.technical_validator_id.partner_id | self.technical_hod_id.partner_id
-        for group in ('menu_group_material_request_cfo', 'menu_group_material_request_coo', 'menu_group_material_request_supply_chain'):
-            partners |= self.env.ref('bn_material_request.' + group).sudo().users.partner_id
-        self.message_post(
-            body=_('Material Request %(name)s is On Hold due to fund shortage. %(reason)s', name=self.name, reason=reason),
-            partner_ids=partners.ids,
-            message_type='comment',
-            subtype_xmlid='mail.mt_comment',
-        )
-
-    def action_submit(self):
-        self.ensure_one()
-        self._assert_state('draft')
-        if not self.line_ids:
-            raise ValidationError(_('Please add at least one product line.'))
-        self._compute_technical_approvers()
-        if not self.technical_validator_id:
-            raise ValidationError(_('The requester\'s department has no manager to act as Technical Validator.'))
-        if not self.technical_hod_id:
-            hods, missing = self._get_technical_hods()
-            if missing:
-                raise ValidationError(_(
-                    'No Technical HOD found. Set a Technical Department (with a manager) on the product category: %s.'
-                ) % ', '.join(missing.mapped('display_name')))
-            raise ValidationError(_('The products belong to different technical departments. Please create a separate request for each department.'))
-        self._advance('submitted', 'submit')
-        return True
-
-    def action_start_validation(self):
-        self.ensure_one()
-        self._assert_state('submitted')
-        self._assert_user('technical_validator_id')
-        self._advance('technical_validation', 'start_validation')
-        return True
-
-    def _do_validate(self, remarks=False):
-        self.ensure_one()
-        self._assert_state('technical_validation')
-        self._assert_user('technical_validator_id')
-        self._advance('technical_hod', 'validate', remarks)
-
-    def _do_hod_approve(self, remarks=False):
-        self.ensure_one()
-        self._assert_state('technical_hod')
-        self._assert_user('technical_hod_id')
-        self._advance('supply_chain', 'tech_hod_approve', remarks)
-
-    def _do_verify(self, remarks=False):
-        self.ensure_one()
-        self._assert_state('supply_chain')
-        self._assert_user(groups=('menu_group_material_request_supply_chain',))
-        self._advance('release', 'verify', remarks)
-
-    def _do_resume(self, remarks=False):
-        self.ensure_one()
-        self._assert_state('on_hold')
-        self._check_stage_user()
-        available, in_budget = self._compute_funds()
-        self.write({'budget_amount': available, 'is_in_budget': in_budget})
-        if not in_budget:
-            raise UserError(_('Funds are still insufficient: required %(required)s, available %(available)s.') % {
-                'required': self.total_amount, 'available': available})
-        self._log('resume', remarks)
-        resume_state = self.resume_state
-        self.write({'resume_state': False, 'hold_reason': False})
-        if resume_state == 'release':
-            self._release_request()
-        else:
-            self.state = resume_state
-
-    def _do_send_committee(self, remarks=False):
-        self.ensure_one()
-        self._assert_state('on_hold')
-        self._check_stage_user()
-        self._log('committee', remarks)
-        self.write({
-            'state': 'committee_approval',
-            'is_in_budget': False,
-            'cfo_approved': False,
-            'coo_approved': False,
-            'resume_state': False,
-            'hold_reason': False,
-        })
-
-    def _do_reject(self, remarks=False):
-        self.ensure_one()
-        self.rejection_reason = remarks
-        self.action_reject()
 
     def _create_internal_transfer(self):
         self.ensure_one()
@@ -620,23 +445,20 @@ class MemberApproval(models.Model):
     def action_reject(self):
         """Reject the request"""
         self.ensure_one()
-
+        
         if not self.rejection_reason:
             raise ValidationError(_('Please provide a rejection reason.'))
-        if self.state in ('done', 'rejected', 'pending', 'purchase_request'):
-            raise UserError(_('This request can no longer be rejected.'))
-        self._check_stage_user()
-
+        
         self.picking_id.action_cancel()
-        self._log('reject', self.rejection_reason)
-        self.write({'state': 'rejected', 'resume_state': False})
+
+        self.state = 'rejected'
+        
         return True
 
     def action_reset_to_draft(self):
         """Reset to draft state"""
         self.ensure_one()
-
-        self._log('reset')
+        
         self.write({
             'state': 'draft',
             'is_in_budget': False,
@@ -644,10 +466,8 @@ class MemberApproval(models.Model):
             'cfo_approved': False,
             'coo_approved': False,
             'rejection_reason': False,
-            'resume_state': False,
-            'hold_reason': False,
         })
-
+        
         return True
 
     def action_view_picking(self):

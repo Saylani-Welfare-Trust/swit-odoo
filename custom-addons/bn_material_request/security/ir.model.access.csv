@@ -5,5 +5,3 @@ access_vendor_selection_wizard,vendor.selection.wizard,model_vendor_selection_wi
 access_rfq_price_wizard,rfq.price.wizard,model_rfq_price_wizard,,1,1,1,1
 access_rfq_price_wizard_line,rfq.price.wizard.line,model_rfq_price_wizard_line,,1,1,1,1
 access_rfq_price_wizard_rfq_line,rfq.price.wizard.rfq.line,model_rfq_price_wizard_rfq_line,,1,1,1,1
-access_material_request_action_wizard,material.request.action.wizard,model_material_request_action_wizard,,1,1,1,1
-access_material_request_log,material.request.log,model_material_request_log,base.group_user,1,0,0,0

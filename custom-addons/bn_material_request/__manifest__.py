@@ -26,8 +26,6 @@
         'security/record_rule.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
-        'views/product_category_views.xml',
-        'views/action_wizard_views.xml',
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
         'views/wizard_views.xml',
