@@ -93,8 +93,38 @@ class AuditTrailRule(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        records = super().create(vals_list)
-        return records
+        """Self-healing create: if an exception row for a given model
+        already exists - active OR archived (Odoo hides archived rows from
+        the default list view, so they're easy to forget about) - update
+        and reactivate that row instead of raising a unique-constraint
+        error. Also merges duplicate models within the same batch."""
+        to_create = []
+        seen_at = {}
+        result_records = self.browse()
+        for vals in vals_list:
+            model_id = vals.get('model_id')
+            if not model_id:
+                to_create.append(vals)
+                continue
+            if model_id in seen_at:
+                # Same model appears twice in this one call - merge into
+                # the entry already queued instead of creating two rows.
+                to_create[seen_at[model_id]].update(
+                    {k: v for k, v in vals.items() if k != 'model_id'})
+                continue
+            existing = self.with_context(active_test=False).search(
+                [('model_id', '=', model_id)], limit=1)
+            if existing:
+                existing.write({k: v for k, v in vals.items() if k != 'model_id'})
+                if not existing.active:
+                    existing.active = True
+                result_records |= existing
+            else:
+                seen_at[model_id] = len(to_create)
+                to_create.append(vals)
+        if to_create:
+            result_records |= super(AuditTrailRule, self).create(to_create)
+        return result_records
 
     def write(self, vals):
         res = super().write(vals)

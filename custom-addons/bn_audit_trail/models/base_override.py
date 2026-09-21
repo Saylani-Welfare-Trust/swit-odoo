@@ -103,17 +103,15 @@ class Base(models.AbstractModel):
             _logger.exception('Audit Trail: failed to log write for %s', self._name)
         return result
 
-    def read(self, fields=None, load='_classic_read'):
-        audit_enabled = False
+    def _read_format(self, fnames, load='_classic_read'):
+        # Hooked here rather than on read() - Odoo 17's web client mostly
+        # calls web_read()/web_search_read(), not the classic read(); both
+        # of those, and classic read() itself, all funnel through
+        # _read_format() internally. Hooking this one method catches every
+        # access path (browser UI, RPC, XML-RPC) uniformly.
+        result = super()._read_format(fnames, load=load)
         try:
-            audit_enabled = bool(self._ids) and self._audit_is_enabled('read')
-        except Exception:
-            _logger.exception('Audit Trail: failed to check read audit for %s', self._name)
-
-        result = super().read(fields=fields, load=load)
-
-        try:
-            if audit_enabled:
+            if self._ids and self._audit_is_enabled('read'):
                 self.env['audit.trail.log']._log_read(self._name, result)
         except Exception:
             _logger.exception('Audit Trail: failed to log read for %s', self._name)

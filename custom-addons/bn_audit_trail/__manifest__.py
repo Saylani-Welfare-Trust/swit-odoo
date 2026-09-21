@@ -1,6 +1,6 @@
 {
     'name': 'Audit Trail',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'category': 'BytesNode/Audit Trail',
     'summary': 'Track create, update, view and delete activity across all Odoo models by default (standard & custom)',
     'description': """

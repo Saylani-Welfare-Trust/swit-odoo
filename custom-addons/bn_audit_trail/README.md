@@ -57,12 +57,23 @@ the system is being audited for Create/Update/Delete.
 
 ### View (read) tracking - still opt-in
 
-"View" logs every time a user opens or loads a record - this is what
-tells you *who read which record*. It stays **off by default** even
-though everything else is now on, because it's by far the
-highest-volume log type (a single form open can trigger several read
-calls, across every model in the system). To turn it on for a model:
-Audit Exceptions > add the model > tick "Log View (Read)".
+"View" logs every time a user's session actually loads a record's field
+data - this is what tells you *who read which record*. It stays **off
+by default** even though everything else is now on, because it's by far
+the highest-volume log type. To turn it on for a model: Audit
+Exceptions > add the model > tick "Log View (Read)".
+
+Technical note: this is hooked at `_read_format()`, the internal method
+that Odoo 17's `read()`, `web_read()` and `web_search_read()` all funnel
+through - not just the classic `read()` method. This matters because
+the modern web client mostly uses `web_read`/`web_search_read`, which
+do NOT go through classic `read()`; hooking only `read()` would silently
+miss most real browser activity. The trade-off: `_read_format()` also
+fires for some internal/indirect access (e.g. a related record's name
+being pulled in to display on another form), not only explicit "user
+opened this record's own form" events - the per-transaction dedup below
+keeps that from turning into log spam, but expect the count to include
+some incidental access, not only direct opens.
 
 Duplicate reads of the same record by the same user within one request
 are deduplicated automatically, so opening one form doesn't produce a
