@@ -18,6 +18,8 @@
         'security/ir.model.access.csv',
         'views/procurement_defer_wizard_views.xml',
         'views/purchase_requisition_views.xml',
+        'views/material_request_views.xml',
+        'views/purchase_order_views.xml',
     ],
     'installable': True,
     'auto_install': False,

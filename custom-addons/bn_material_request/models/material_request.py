@@ -68,6 +68,8 @@ class MemberApproval(models.Model):
     # Approvals
     cfo_approved = fields.Boolean('CFO Approved', readonly=True, copy=False, tracking=True)
     coo_approved = fields.Boolean('COO Approved', readonly=True, copy=False, tracking=True)
+    hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False, tracking=True)
+    hod_approved_date = fields.Datetime('HOD Approved On', readonly=True, copy=False)
     
     # State
     state = fields.Selection([
@@ -204,6 +206,13 @@ class MemberApproval(models.Model):
         })
         return True
 
+    def _shariah_hold_gate(self):
+        """Called by every approval step once its own validation has passed.
+        Returns a client action when the request has been put on hold (the
+        approval must then not go ahead), False otherwise. Overridden by
+        bn_procurement_workflow, which knows about the Shariah Law balances."""
+        return False
+
     def action_hod_approve(self):
         """HOD approves the request - next step depends on budget status"""
         self.ensure_one()
@@ -212,8 +221,15 @@ class MemberApproval(models.Model):
 
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
-        
-        
+
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
+
+        self.write({
+            'hod_approved_by': self.env.user.id,
+            'hod_approved_date': fields.Datetime.now(),
+        })
 
         if self.is_in_budget:
             # Deduct approved amount from available budget
@@ -267,6 +283,9 @@ class MemberApproval(models.Model):
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         if not self.cfo_remarks:
             raise ValidationError(_('CFO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
         self.cfo_approved = True
         self._check_committee_approval()
         return True
@@ -278,6 +297,9 @@ class MemberApproval(models.Model):
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         if not self.coo_remarks:
             raise ValidationError(_('COO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
         self.coo_approved = True
         self._check_committee_approval()
         return True
@@ -465,6 +487,8 @@ class MemberApproval(models.Model):
             'budget_amount': 0.0,
             'cfo_approved': False,
             'coo_approved': False,
+            'hod_approved_by': False,
+            'hod_approved_date': False,
             'rejection_reason': False,
         })
         

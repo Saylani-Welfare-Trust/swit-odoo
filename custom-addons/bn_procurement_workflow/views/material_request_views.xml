@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="material_request_view_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">material.request.view.form.inherit.bn.procurement.workflow</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button string="Shariah Approve" name="action_shariah_hold_approve" type="object"
+                        class="oe_highlight" invisible="state != 'shariah_hold'"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+                <button string="Shariah Reject" name="action_shariah_hold_reject" type="object"
+                        invisible="state != 'shariah_hold'"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+            </xpath>
+
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning" role="alert" invisible="state != 'shariah_hold'">
+                    <strong>Shariah Hold</strong> - the amount exceeds the Shariah Law balance. Only the CFO can approve or reject this request.
+                    <field name="shariah_hold_reason" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='is_in_budget']" position="after">
+                <field name="hod_approved_by" invisible="not hod_approved_by"/>
+                <field name="hod_approved_date" invisible="not hod_approved_by"/>
+                <field name="shariah_override" widget="boolean_toggle" readonly="1" invisible="not shariah_override"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="material_request_view_search_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">material.request.view.search.inherit.bn.procurement.workflow</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_committee']" position="after">
+                <filter string="Shariah Hold" name="filter_shariah_hold" domain="[('state', '=', 'shariah_hold')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

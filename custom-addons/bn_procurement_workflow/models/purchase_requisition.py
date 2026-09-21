@@ -247,5 +247,8 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if not self.selected_rfq_id:
             raise ValidationError(_('No selected RFQ to release.'))
+        # The CFO / Shariah Dept has just made the funds decision for this RFQ
+        # at the gate, so it must not be put on a second Shariah Hold here.
+        self.selected_rfq_id.shariah_override = True
         self.selected_rfq_id.button_confirm()
         self.action_in_progress()
