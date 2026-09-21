@@ -10,7 +10,7 @@ class AuditTrailLog(models.Model):
     _rec_name = 'summary'
 
     user_id = fields.Many2one('res.users', string='User', required=True, index=True)
-    model_id = fields.Many2one('ir.model', string='Model', required=True, index=True)
+    model_id = fields.Many2one('ir.model', string='Model', ondelete='cascade', required=True, index=True)
     model_name = fields.Char(related='model_id.model', store=True, index=True,
                               string='Technical Model')
     res_id = fields.Integer(string='Record ID', index=True)
