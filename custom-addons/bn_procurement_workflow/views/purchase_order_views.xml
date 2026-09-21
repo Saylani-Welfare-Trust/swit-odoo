@@ -14,13 +14,16 @@
                 <attribute name="invisible">not cxo_approved or hod_approved or state not in ('draft', 'sent') or shariah_hold</attribute>
             </xpath>
             <xpath expr="//button[@id='bid_confirm']" position="attributes">
-                <attribute name="invisible">state != 'sent' or shariah_hold</attribute>
+                <attribute name="invisible">state != 'sent' or shariah_hold or not cfo_approved</attribute>
             </xpath>
             <xpath expr="//button[@id='draft_confirm']" position="attributes">
-                <attribute name="invisible">state != 'draft' or shariah_hold</attribute>
+                <attribute name="invisible">state != 'draft' or shariah_hold or not cfo_approved</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
+                <button string="CFO Approval" name="action_cfo_approve_po" type="object" class="oe_highlight"
+                        invisible="not cxo_approved or not hod_approved or cfo_approved or state not in ('draft', 'sent') or shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
                 <field name="is_cxo_approver_allowed" invisible="1"/>
                 <field name="shariah_hold" invisible="1"/>
                 <button string="Shariah Approve" name="action_shariah_hold_approve" type="object"
@@ -29,6 +32,14 @@
                 <button string="Shariah Reject" name="action_shariah_hold_reject" type="object"
                         invisible="not shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
+            </xpath>
+
+            <xpath expr="//group[@string='Approval Status']" position="inside">
+                <group>
+                    <field name="cfo_approved" widget="boolean_toggle" readonly="1"/>
+                    <field name="cfo_approved_by" readonly="1"/>
+                    <field name="cfo_approved_date" readonly="1"/>
+                </group>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="before">

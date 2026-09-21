@@ -241,12 +241,14 @@ class PurchaseRequisition(models.Model):
         someone reaches Funds Check without those two approvals recorded on
         the RFQ (which shouldn't be reachable through the normal flow, since
         this requisition's own state only advances to 'funds_check' once the
-        RFQ is HOD approved), button_confirm() will raise and stop the
+        RFQ is CFO approved), button_confirm() will raise and stop the
         release rather than silently skipping the check.
         """
         self.ensure_one()
         if not self.selected_rfq_id:
             raise ValidationError(_('No selected RFQ to release.'))
+        if not self.selected_rfq_id.cfo_approved:
+            raise ValidationError(_('The selected RFQ needs CFO approval before it can be released.'))
         # The CFO / Shariah Dept has just made the funds decision for this RFQ
         # at the gate, so it must not be put on a second Shariah Hold here.
         self.selected_rfq_id.shariah_override = True

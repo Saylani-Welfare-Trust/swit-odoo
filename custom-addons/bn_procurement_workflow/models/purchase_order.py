@@ -8,6 +8,11 @@ CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
+    # Final approval before the RFQ can be confirmed into a PO (after CXO and HOD).
+    cfo_approved = fields.Boolean('CFO Approved', copy=False, readonly=True, tracking=True)
+    cfo_approved_by = fields.Many2one('res.users', string='CFO Approved By', readonly=True, copy=False)
+    cfo_approved_date = fields.Datetime(string='CFO Approved On', readonly=True, copy=False)
+
     is_cxo_approver_allowed = fields.Boolean(
         compute='_compute_is_cxo_approver_allowed',
         help='Whether the current user may CXO-approve this RFQ: when it comes from a '
@@ -131,8 +136,8 @@ class PurchaseOrder(models.Model):
         return self._shariah_hold_notification() if held else res
 
     def action_hod_approve_po(self):
-        """Likewise for HOD approval - once recorded on the winning RFQ, the
-        requisition moves straight to the Funds Availability gate."""
+        """HOD approval; the requisition then waits for the CFO's approval of
+        this RFQ before moving to the Funds Availability gate."""
         # Orders without CXO approval are left to super(), which rejects them
         # before any Shariah check is worth doing.
         allowed, held = self.filtered('cxo_approved')._shariah_gate()
@@ -141,13 +146,43 @@ class PurchaseOrder(models.Model):
         for order in allowed:
             requisition = order.requisition_id
             if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
-                requisition.write({'state': 'funds_check'})
                 requisition.message_post(body=_(
-                    'HOD approved the selected RFQ %s - moving to Funds Availability check.'
+                    'HOD approved the selected RFQ %s - awaiting CFO approval on that RFQ.'
                 ) % order.name)
         return self._shariah_hold_notification() if held else res
 
+    def action_cfo_approve_po(self):
+        """CFO approval on the RFQ, needed before it can be confirmed into a
+        PO. Once given on the winning RFQ, the requisition moves to the Funds
+        Availability gate."""
+        for order in self:
+            if not self.env.user.has_group(CFO_GROUP):
+                raise UserError(_('Only the CFO can give CFO approval.'))
+            if not (order.cxo_approved and order.hod_approved):
+                raise UserError(_('CXO and HOD approval are required before CFO approval.'))
+            if order.cfo_approved:
+                raise UserError(_('RFQ %s is already CFO approved.') % order.display_name)
+        allowed, held = self._shariah_gate()
+        allowed.write({
+            'cfo_approved': True,
+            'cfo_approved_by': self.env.user.id,
+            'cfo_approved_date': fields.Datetime.now(),
+        })
+        for order in allowed:
+            requisition = order.requisition_id
+            if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
+                requisition.write({'state': 'funds_check'})
+                requisition.message_post(body=_(
+                    'CFO approved the selected RFQ %s - moving to Funds Availability check.'
+                ) % order.name)
+        return self._shariah_hold_notification() if held else True
+
     def button_confirm(self):
+        for order in self:
+            if not order.cfo_approved:
+                raise UserError(_(
+                    'RFQ %s cannot be confirmed until it has CFO approval.'
+                ) % order.display_name)
         allowed, held = self._shariah_gate()
         res = super(PurchaseOrder, allowed).button_confirm() if allowed else None
         return self._shariah_hold_notification() if held else res
