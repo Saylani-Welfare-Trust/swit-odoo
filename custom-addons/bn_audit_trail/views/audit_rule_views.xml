@@ -10,6 +10,7 @@
                 <field name="log_create"/>
                 <field name="log_write"/>
                 <field name="log_unlink"/>
+                <field name="log_read"/>
                 <field name="active"/>
             </tree>
         </field>
@@ -25,28 +26,40 @@
                         <field name="model_id"/>
                         <field name="active"/>
                     </group>
-                    <group string="Operations to Track">
+                    <group string="Operations">
                         <field name="log_create"/>
                         <field name="log_write"/>
                         <field name="log_unlink"/>
+                        <field name="log_read"/>
                     </group>
+                    <div class="alert alert-info" role="alert">
+                        Every model is audited for Create/Update/Delete by
+                        default. Untick an operation above to turn it OFF
+                        for this model, or tick "Log View (Read)" to turn
+                        View tracking ON for this model - View stays off
+                        everywhere else unless you add it here.
+                    </div>
                 </sheet>
             </form>
         </field>
     </record>
 
     <record id="action_audit_trail_rule" model="ir.actions.act_window">
-        <field name="name">Audit Rules</field>
+        <field name="name">Audit Exceptions</field>
         <field name="res_model">audit.trail.rule</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Add a model to start auditing it
+                Every model is audited by default - add an exception only
+                if you need one
             </p>
             <p>
-                Pick any model - standard (Contacts, Sales Orders, Invoices...)
-                or custom - and choose which operations to log. Takes effect
-                immediately, no restart needed.
+                Create/Update/Delete are logged for every standard and
+                custom model automatically. Add a row here to turn OFF
+                specific operations for a specific (usually high-volume,
+                low-value) model, or to turn ON View/Read tracking for a
+                model - View tracking is opt-in only and stays off
+                everywhere else.
             </p>
         </field>
     </record>

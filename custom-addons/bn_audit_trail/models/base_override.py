@@ -5,9 +5,12 @@ from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
-# Technical / internal models that must never be audited, either because
-# it would be noise, or because auditing them could cause recursion
-# (the audit log models themselves) or heavy performance cost.
+# Technical / internal models that are NEVER audited, regardless of any
+# configuration in Audit Rules - either because it would be pure noise, or
+# because auditing them risks recursion (the audit log's own tables) or a
+# meaningful performance hit on core Odoo machinery. Since v1.1.0, every
+# OTHER model is audited (Create/Update/Delete) by default - this list is
+# the only hardcoded exception, everything else is opt-out via the UI.
 AUDIT_EXCLUDED_MODELS = {
     'audit.trail.log',
     'audit.trail.log.line',
@@ -29,8 +32,10 @@ AUDIT_EXCLUDED_MODELS = {
 class Base(models.AbstractModel):
     """Inheriting 'base' patches EVERY model in the registry - built-in
     (res.partner, sale.order, account.move, ...) and custom alike - without
-    needing to touch a single line of any other module. This is what lets
-    the Audit Rules screen enable tracking on any model with zero code.
+    needing to touch a single line of any other module. Create/Update/Delete
+    are audited for every model by default; Audit Rules is used to turn
+    specific operations OFF for specific (usually high-volume, low-value)
+    models, and to turn View/Read tracking ON where it's actually wanted.
     """
     _inherit = 'base'
 
@@ -49,8 +54,19 @@ class Base(models.AbstractModel):
         except Exception:
             return False
         rule = rules.get(self._name)
-        if not rule:
-            return False
+
+        if method == 'read':
+            # View/Read tracking is opt-in ONLY: it's the highest-volume
+            # event type by far (every form/list open triggers reads), so
+            # it must be explicitly switched on per model.
+            return bool(rule and rule.get('log_read'))
+
+        # Create / Update / Delete are audited by default for every model.
+        # A rule here is only needed to turn a specific operation OFF for
+        # a given model (typically a high-volume technical model you've
+        # decided isn't worth logging) - no rule at all means "audit it".
+        if rule is None:
+            return True
         return bool(rule.get('log_%s' % method))
 
     # -----------------------------------------------------------------
@@ -85,6 +101,22 @@ class Base(models.AbstractModel):
                 self.env['audit.trail.log']._log_write(self, vals, old_values)
         except Exception:
             _logger.exception('Audit Trail: failed to log write for %s', self._name)
+        return result
+
+    def read(self, fields=None, load='_classic_read'):
+        audit_enabled = False
+        try:
+            audit_enabled = bool(self._ids) and self._audit_is_enabled('read')
+        except Exception:
+            _logger.exception('Audit Trail: failed to check read audit for %s', self._name)
+
+        result = super().read(fields=fields, load=load)
+
+        try:
+            if audit_enabled:
+                self.env['audit.trail.log']._log_read(self._name, result)
+        except Exception:
+            _logger.exception('Audit Trail: failed to log read for %s', self._name)
         return result
 
     def unlink(self):

@@ -14,7 +14,7 @@
         sequence="20"
         groups="bn_audit_trail.group_audit_trail_manager"/>
 
-    <menuitem id="menu_audit_trail_rules" name="Audit Rules"
+    <menuitem id="menu_audit_trail_rules" name="Audit Exceptions"
         parent="menu_audit_trail_config"
         action="action_audit_trail_rule"
         sequence="10"/>

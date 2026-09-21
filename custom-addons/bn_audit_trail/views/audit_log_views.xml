@@ -7,7 +7,8 @@
             <tree create="false" edit="false"
                   decoration-danger="method == 'unlink'"
                   decoration-success="method == 'create'"
-                  decoration-info="method == 'write'">
+                  decoration-info="method == 'write'"
+                  decoration-muted="method == 'read'">
                 <field name="date"/>
                 <field name="user_id"/>
                 <field name="model_name"/>
@@ -66,6 +67,7 @@
                 <filter string="Create" name="filter_create" domain="[('method','=','create')]"/>
                 <filter string="Update" name="filter_write" domain="[('method','=','write')]"/>
                 <filter string="Delete" name="filter_unlink" domain="[('method','=','unlink')]"/>
+                <filter string="View" name="filter_read" domain="[('method','=','read')]"/>
                 <separator/>
                 <filter string="Today" name="filter_today"
                         domain="[('date','&gt;=', context_today().strftime('%Y-%m-%d'))]"/>

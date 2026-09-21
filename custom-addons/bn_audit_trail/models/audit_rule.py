@@ -3,11 +3,14 @@ from odoo import api, fields, models, tools
 
 
 class AuditTrailRule(models.Model):
-    """Configuration: which model(s) get audited, and for which operations.
+    """Exceptions list for auditing, not a whitelist.
 
-    This is the on/off switch. Adding a rule here for ANY model - standard
-    (res.partner, sale.order, ...) or custom (x_my_module.my_model) - turns
-    on logging for it immediately, with no code change required.
+    Create/Update/Delete are audited for EVERY model by default (see
+    models/base_override.py) - you do not need a row here to start
+    auditing a model. Add a row here only to:
+      * turn OFF specific operations for a specific (typically
+        high-volume, low business value) model, or
+      * turn ON View/Read tracking for a model, which stays opt-in only.
     """
     _name = 'audit.trail.rule'
     _description = 'Audit Trail Rule'
@@ -16,31 +19,64 @@ class AuditTrailRule(models.Model):
     model_id = fields.Many2one(
         'ir.model', string='Model', required=True, ondelete='cascade',
         domain=[('transient', '=', False)],
-        help="The model to audit. Works for built-in and custom models alike.",
+        help="The model this exception applies to. Every model is audited "
+             "(Create/Update/Delete) by default - only add a row here to "
+             "change that for a specific model.",
     )
     model_name = fields.Char(related='model_id.model', store=True, readonly=True,
                               string='Technical Name')
-    log_create = fields.Boolean(string='Log Create', default=True)
-    log_write = fields.Boolean(string='Log Update', default=True)
-    log_unlink = fields.Boolean(string='Log Delete', default=True)
-    active = fields.Boolean(default=True)
+    log_create = fields.Boolean(
+        string='Log Create', default=True,
+        help="Untick to stop logging new records of this model. "
+             "Ticked (or no rule at all) = audited, which is the default "
+             "for every model.")
+    log_write = fields.Boolean(
+        string='Log Update', default=True,
+        help="Untick to stop logging edits to records of this model. "
+             "Ticked (or no rule at all) = audited, which is the default "
+             "for every model.")
+    log_unlink = fields.Boolean(
+        string='Log Delete', default=True,
+        help="Untick to stop logging deletions of records of this model. "
+             "Ticked (or no rule at all) = audited, which is the default "
+             "for every model.")
+    log_read = fields.Boolean(
+        string='Log View (Read)', default=False,
+        help="Logs every time a user opens/views a record of this model - "
+             "i.e. who read which record, and when. Off by default and "
+             "NOT audited unless you tick this here: this is the "
+             "highest-volume type of log (every form/list open counts), "
+             "so enable it selectively on models where 'who looked at "
+             "this' actually matters (e.g. donor records, payroll, HR "
+             "files).",
+    )
+    active = fields.Boolean(
+        default=True,
+        help="If unchecked, this exception is ignored and the model falls "
+             "back to full default auditing (Create/Update/Delete on, "
+             "View off).")
 
     _sql_constraints = [
         ('model_uniq', 'unique(model_id)',
-         'An audit rule already exists for this model.'),
+         'An audit exception already exists for this model.'),
     ]
 
     @api.model
     @tools.ormcache()
     def _get_active_rules(self):
-        """Cached lookup: {model_technical_name: {log_create, log_write, log_unlink}}.
+        """Cached lookup: {model_technical_name: {log_create, log_write,
+        log_unlink, log_read}} for every model that has an EXPLICIT
+        exception row. A model with no entry here is audited under the
+        default policy (Create/Update/Delete on, View off) - see
+        _audit_is_enabled() in models/base_override.py.
 
-        Cached in memory per-database so the check on every create/write/unlink
-        across the whole system is cheap. Cache is cleared whenever a rule is
-        created, edited or removed (see below).
+        Cached in memory per-database so the check on every create/write/
+        unlink/read across the whole system is cheap. NOTE: this cache is
+        NOT auto-cleared when a rule changes (see README "Cache note") -
+        restart the service or upgrade the module after editing rules.
         """
         self.env.cr.execute("""
-            SELECT im.model, r.log_create, r.log_write, r.log_unlink
+            SELECT im.model, r.log_create, r.log_write, r.log_unlink, r.log_read
             FROM audit_trail_rule r
             JOIN ir_model im ON im.id = r.model_id
             WHERE r.active = true
@@ -50,6 +86,7 @@ class AuditTrailRule(models.Model):
                 'log_create': row[1],
                 'log_write': row[2],
                 'log_unlink': row[3],
+                'log_read': row[4],
             }
             for row in self.env.cr.fetchall()
         }

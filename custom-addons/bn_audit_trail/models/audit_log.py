@@ -19,6 +19,7 @@ class AuditTrailLog(models.Model):
         ('create', 'Create'),
         ('write', 'Update'),
         ('unlink', 'Delete'),
+        ('read', 'View'),
     ], string='Action', required=True, index=True)
     date = fields.Datetime(string='Date', default=fields.Datetime.now,
                             index=True, required=True)
@@ -138,6 +139,42 @@ class AuditTrailLog(models.Model):
                 'date': fields.Datetime.now(),
                 'summary': _('Updated %s') % name,
                 'line_ids': lines,
+            })
+        if logs:
+            self.sudo().create(logs)
+
+    @api.model
+    def _log_read(self, model_name, result_rows):
+        """Log which user viewed which record(s). Deduplicated within the
+        current request/transaction so opening one form doesn't produce a
+        dozen rows just because several widgets each re-read the record."""
+        if not result_rows:
+            return
+        seen = getattr(self.env, '_audit_read_seen', None)
+        if seen is None:
+            seen = set()
+            try:
+                self.env._audit_read_seen = seen
+            except Exception:
+                pass  # fall back to logging without dedup for this call
+
+        model_id = self.env['ir.model']._get_id(model_name)
+        logs = []
+        for row in result_rows:
+            res_id = row.get('id')
+            key = (model_name, res_id, self.env.uid)
+            if key in seen:
+                continue
+            seen.add(key)
+            name = row.get('display_name') or ''
+            logs.append({
+                'user_id': self.env.uid,
+                'model_id': model_id,
+                'res_id': res_id,
+                'record_name': name,
+                'method': 'read',
+                'date': fields.Datetime.now(),
+                'summary': _('Viewed %s') % (name or ('#%s' % res_id)),
             })
         if logs:
             self.sudo().create(logs)

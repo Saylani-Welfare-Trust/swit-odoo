@@ -1,24 +1,30 @@
 {
     'name': 'Audit Trail',
-    'version': '17.0.1.0.0',
+    'version': '17.0.1.1.0',
     'category': 'BytesNode/Audit Trail',
-    'summary': 'Track create, update and delete activity across all Odoo models (standard & custom)',
+    'summary': 'Track create, update, view and delete activity across all Odoo models by default (standard & custom)',
     'description': """
 Audit Trail
 ===========
-Monitor and log Create / Update / Delete activity on any Odoo model
-(built-in or custom), with field-level before/after values, per user,
-per date, with configurable rules per model.
+Monitor and log Create / Update / Delete / View activity across EVERY
+Odoo model (built-in or custom) by default, with field-level before/after
+values, per user, per date. Nothing to configure to get started - add
+exceptions only where you want to turn something off (or turn View
+tracking on).
 
 Key features
 ------------
-* Enable/disable auditing per model, from a simple config screen
-  (Audit Trail > Configuration > Audit Rules) - no code changes needed
-  to start auditing a new custom model.
-* Choose exactly which operations to track per model: Create, Update, Delete.
+* Audits Create, Update and Delete on every standard and custom model
+  out of the box - no per-model setup required.
+* Audit Exceptions screen (Audit Trail > Configuration) lets you turn
+  OFF specific operations for specific (usually high-volume, low-value)
+  models, and turn ON View/Read tracking (who opened/read a record),
+  which stays opt-in only given its volume.
 * Field-level before/after change tracking on updates (human-readable
   values for many2one, selection, boolean fields, etc).
-* Full log viewer with filters and group-by (user, model, action, date).
+* Full log viewer with filters and group-by (user, model, action, date) -
+  filter by user to see everything one person created, changed, deleted
+  and viewed.
 * Access restricted to two dedicated security groups
   (Audit Trail Viewer / Audit Trail Manager) - normal users never see it.
 * Built as a generic hook on the 'base' model, so it works for ANY
