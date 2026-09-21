@@ -51,10 +51,35 @@ class Base(models.AbstractModel):
         - a small, purpose-built config screen for turning specific models
         off, with a correctly-invalidated cache (see that model for why
         this matters).
+
+    CRITICAL: every database-touching thing this module does (the
+    exclusion-list check AND the actual log write) runs inside its own
+    cursor SAVEPOINT via _audit_safe() below. A plain try/except around a
+    failed SQL statement stops Python from crashing, but it does NOT
+    un-poison the surrounding PostgreSQL transaction once a query inside
+    it has actually errored - every later query in that same request then
+    fails too ("current transaction is aborted"), which can take down
+    completely unrelated functionality (this happened in production: a
+    logging failure here caused /web itself to 500). A savepoint gives
+    our logging code its own rollback boundary, so if anything inside it
+    goes wrong, only that savepoint is rolled back - the real operation
+    (the user's actual create/write/read) and the rest of the request
+    continue unaffected.
     """
     _inherit = 'base'
 
     # -----------------------------------------------------------------
+    def _audit_safe(self, func, *args, **kwargs):
+        """Run func(*args, **kwargs) inside its own savepoint, swallowing
+        (and logging) any exception - Python-level OR database-level -
+        without ever letting it affect the caller's transaction."""
+        try:
+            with self.env.cr.savepoint():
+                return func(*args, **kwargs)
+        except Exception:
+            _logger.exception('Audit Trail: logging step failed for %s', self._name)
+            return None
+
     def _audit_is_enabled(self):
         if self._transient or self._abstract:
             return False
@@ -64,49 +89,35 @@ class Base(models.AbstractModel):
             # Avoid touching our own tables while they're still being
             # created during this module's own installation.
             return False
-        try:
-            excluded = self.env['audit.trail.exclusion'].sudo()._get_excluded_model_names()
-        except Exception:
-            excluded = set()
-        if self._name in excluded:
-            return False
-        return True
+        excluded = self._audit_safe(
+            lambda: self.env['audit.trail.exclusion'].sudo()._get_excluded_model_names()
+        )
+        return self._name not in (excluded or set())
 
     # -----------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        try:
-            if records and self._audit_is_enabled():
-                self.env['audit.trail.log']._log_create(records, vals_list)
-        except Exception:
-            _logger.exception('Audit Trail: failed to log create for %s', self._name)
+        if records and self._audit_is_enabled():
+            self._audit_safe(self.env['audit.trail.log']._log_create, records, vals_list)
         return records
 
     def write(self, vals):
-        audit_enabled = False
+        audit_enabled = self._audit_is_enabled()
         old_values = {}
-        try:
-            audit_enabled = self._audit_is_enabled()
-            if audit_enabled:
+        if audit_enabled:
+            def _snapshot():
                 tracked = [f for f in vals.keys() if f in self._fields]
                 # Fetch pre-write values for the diff without that internal
                 # fetch itself generating a spurious View/read log entry.
-                snapshot = self.with_context(_audit_trail_skip_read=True)
-                old_values = {
-                    rec.id: {f: rec[f] for f in tracked}
-                    for rec in snapshot
-                }
-        except Exception:
-            _logger.exception('Audit Trail: failed to snapshot old values for %s', self._name)
+                rs = self.with_context(_audit_trail_skip_read=True)
+                return {rec.id: {f: rec[f] for f in tracked} for rec in rs}
+            old_values = self._audit_safe(_snapshot) or {}
 
         result = super().write(vals)
 
-        try:
-            if audit_enabled:
-                self.env['audit.trail.log']._log_write(self, vals, old_values)
-        except Exception:
-            _logger.exception('Audit Trail: failed to log write for %s', self._name)
+        if audit_enabled:
+            self._audit_safe(self.env['audit.trail.log']._log_write, self, vals, old_values)
         return result
 
     def _read_format(self, fnames, load='_classic_read'):
@@ -116,30 +127,22 @@ class Base(models.AbstractModel):
         # _read_format() internally. Hooking this one method catches every
         # access path (browser UI, RPC, XML-RPC) uniformly.
         result = super()._read_format(fnames, load=load)
-        try:
-            if (self._ids and not self.env.context.get('_audit_trail_skip_read')
-                    and self._audit_is_enabled()):
-                self.env['audit.trail.log']._log_read(self._name, result)
-        except Exception:
-            _logger.exception('Audit Trail: failed to log read for %s', self._name)
+        if (self._ids and not self.env.context.get('_audit_trail_skip_read')
+                and self._audit_is_enabled()):
+            self._audit_safe(self.env['audit.trail.log']._log_read, self._name, result)
         return result
 
     def unlink(self):
-        audit_enabled = False
+        audit_enabled = self._audit_is_enabled()
         snapshot = {}
-        try:
-            audit_enabled = self._audit_is_enabled()
-            if audit_enabled:
-                snapshot = {rec.id: self.env['audit.trail.log']._safe_display_name(rec)
-                            for rec in self}
-        except Exception:
-            _logger.exception('Audit Trail: failed to snapshot records for %s', self._name)
+        if audit_enabled:
+            def _snapshot():
+                return {rec.id: self.env['audit.trail.log']._safe_display_name(rec)
+                        for rec in self}
+            snapshot = self._audit_safe(_snapshot) or {}
 
         result = super().unlink()
 
-        try:
-            if audit_enabled and snapshot:
-                self.env['audit.trail.log']._log_unlink(self._name, snapshot)
-        except Exception:
-            _logger.exception('Audit Trail: failed to log unlink for %s', self._name)
+        if audit_enabled and snapshot:
+            self._audit_safe(self.env['audit.trail.log']._log_unlink, self._name, snapshot)
         return result

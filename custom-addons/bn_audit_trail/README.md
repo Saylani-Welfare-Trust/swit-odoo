@@ -1,5 +1,14 @@
 # Audit Trail (Odoo 17)
 
+**Critical fix in this version:** every database-touching thing this
+module does now runs inside its own cursor SAVEPOINT. Previously, a
+failure inside our logging code could leave the surrounding database
+transaction "poisoned" for the rest of that request - every later query
+in it would then fail too, even completely unrelated ones (this
+happened in production: it took `/web` itself down with a 500). If
+you're on an earlier version of this module, upgrading to this one is
+not optional - install it as soon as possible.
+
 Generic audit trail module for Saylani Welfare and International Trust's
 Odoo 17 instance. **Every standard and custom model is audited
 automatically** for Create / Update / Delete / View, with field-level
@@ -43,6 +52,14 @@ you actively want to turn a specific model off.
   `env.registry.clear_caches()`, which did not reliably invalidate
   anything; this version uses `self.clear_caches()`, the documented,
   stable Odoo API for clearing a model's own cached methods.)
+- **Every audit log write happens inside its own database SAVEPOINT**
+  (`_audit_safe()` in `models/base_override.py`). If the logging code
+  itself hits an error for any reason, only that savepoint is rolled
+  back - the real operation the user actually performed, and the rest
+  of that HTTP request, are unaffected. Without this, a single bad
+  query inside our logging could poison the entire surrounding
+  transaction and break unrelated functionality for the rest of that
+  request - which is exactly what happened before this fix.
 
 ## Usage
 
