@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 
@@ -36,8 +36,9 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     # CFO budget approval
     # ------------------------------------------------------------------
-    def _get_accounting_budget_shortfalls(self):
-        """Checks the RFQ's own amounts against the accounting budget, the same
+    def _get_accounting_budget_rows(self):
+        """Every (analytic account, budget, required, available) row of the
+        accounting budget check, whether it is short or not. Checks the RFQ's own amounts against the accounting budget, the same
         way the Material Request does (available budget per analytic account and
         budget). The vendor's prices can differ from the Material Request's
         estimate that its CFO / COO approved, so the RFQ is checked again.
@@ -59,7 +60,7 @@ class PurchaseOrder(models.Model):
             request_line = request.line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
             budget = request_line.budget_id or line_model._get_default_budget_for_analytic(analytic)
             totals[(analytic, budget)] += line.price_subtotal
-        shortfalls = []
+        rows = []
         for (analytic, budget), required in totals.items():
             budget_lines = self.env['budget.lines'].search([
                 ('analytic_account_id', '=', analytic.id),
@@ -68,9 +69,40 @@ class PurchaseOrder(models.Model):
                 ('date_to', '>=', today),
             ])
             available = sum(abs(l.practical_amount) for l in budget_lines)
-            if required > available:
-                shortfalls.append((analytic, budget, required, available))
-        return shortfalls
+            rows.append((analytic, budget, required, available))
+        return rows
+
+    def _get_accounting_budget_shortfalls(self):
+        """The rows of the accounting budget check where the RFQ exceeds the budget."""
+        self.ensure_one()
+        return [row for row in self._get_accounting_budget_rows() if row[2] > row[3]]
+
+    def _get_budget_check_summary(self):
+        """Human-readable figures behind the budget check, so it is visible why an
+        RFQ was (or was not) sent to the CFO."""
+        self.ensure_one()
+        lines = []
+        if not self.material_request_id:
+            lines.append(_('Accounting budget: not checked (no source Material Request).'))
+        for analytic, budget, required, available in self._get_accounting_budget_rows():
+            lines.append(_('Accounting budget %(budget)s / %(segment)s: RFQ %(required).2f, available %(available).2f') % {
+                'budget': budget.display_name or _('none'), 'segment': analytic.display_name,
+                'required': required, 'available': available})
+        blocker = self.env['shariah.law.blocker'].get_blocker_config()
+        if not (blocker and blocker.enable_purchase):
+            lines.append(_('Shariah balance: NOT checked - "Purchase Orders" is switched off in the Shariah Law Blocker.'))
+        else:
+            amounts = self._get_shariah_amounts()
+            if not amounts:
+                lines.append(_('Shariah balance: nothing to check - none of the products belongs to a Shariah segment (analytic account).'))
+            for analytic_id, required in amounts.items():
+                analytic = self.env['account.analytic.account'].browse(analytic_id)
+                lines.append(_('Shariah %(segment)s: RFQ %(required).2f, closing balance %(balance).2f') % {
+                    'segment': analytic.display_name, 'required': required,
+                    'balance': self.env['shariah.law'].get_closing_balance(analytic_id)})
+        if self.shariah_override:
+            lines.append(_('The CFO has already approved this RFQ, so the figures are not enforced.'))
+        return lines
 
     def _get_budget_exceeded_reasons(self):
         """Why this RFQ needs the CFO's decision; empty when it is within both
@@ -136,6 +168,12 @@ class PurchaseOrder(models.Model):
         held = self.browse()
         for order in self:
             reasons = order._get_budget_exceeded_reasons()
+            # TEMPORARY diagnostic: show the check's figures on HOD approval,
+            # within budget or not. Remove this raise to restore the flow.
+            raise ValidationError(_('Budget check - %(result)s:\n%(summary)s') % {
+                'result': _('OUT OF BUDGET') if reasons else _('within budget'),
+                'summary': '\n'.join(order._get_budget_check_summary()),
+            })
             if not reasons:
                 order._mark_cfo_approved(auto=True)
                 order._release_to_po()

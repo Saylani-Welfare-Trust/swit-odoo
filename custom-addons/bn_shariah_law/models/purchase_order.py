@@ -11,6 +11,19 @@ class PurchaseOrder(models.Model):
         help='Set once the CFO has approved this order despite it exceeding the Shariah Law closing balance.')
 
 
+    def _get_shariah_amounts(self):
+        """{analytic account id: amount} - the Subtotal of this order's lines added
+        up per segment (the analytic account of each line's product)."""
+        self.ensure_one()
+        amounts = {}
+        for line in self.order_line:
+            if not line.product_id:
+                continue
+            analytic_account = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])], limit=1)
+            if analytic_account:
+                amounts[analytic_account.id] = amounts.get(analytic_account.id, 0.0) + line.price_subtotal
+        return amounts
+
     def _get_shariah_shortfalls(self):
         """Segments whose Shariah Law closing balance is below what this order's
         lines commit to them.
@@ -23,14 +36,7 @@ class PurchaseOrder(models.Model):
         blocker = self.env['shariah.law.blocker'].get_blocker_config()
         if not (blocker and blocker.enable_purchase):
             return []
-        amounts = {}
-        for line in self.order_line:
-            if not line.product_id:
-                continue
-            analytic_account = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])], limit=1)
-            if analytic_account:
-                amounts[analytic_account.id] = amounts.get(analytic_account.id, 0.0) + line.price_subtotal
-        return self.env['shariah.law'].get_shortfalls(amounts)
+        return self.env['shariah.law'].get_shortfalls(self._get_shariah_amounts())
 
     def button_confirm(self):
         """
