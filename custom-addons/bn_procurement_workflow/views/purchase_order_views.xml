@@ -22,6 +22,7 @@
 
             <xpath expr="//header" position="inside">
                 <field name="is_cxo_approver_allowed" invisible="1"/>
+                <field name="shariah_hold" invisible="1"/>
                 <button string="Shariah Approve" name="action_shariah_hold_approve" type="object"
                         class="oe_highlight" invisible="not shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
