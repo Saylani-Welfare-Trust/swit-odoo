@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
@@ -34,19 +36,61 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     # CFO budget approval
     # ------------------------------------------------------------------
+    def _get_accounting_budget_shortfalls(self):
+        """Checks the RFQ's own amounts against the accounting budget, the same
+        way the Material Request does (available budget per analytic account and
+        budget). The vendor's prices can differ from the Material Request's
+        estimate that its CFO / COO approved, so the RFQ is checked again.
+        Returns [(analytic account, budget, required, available)]."""
+        self.ensure_one()
+        request = self.material_request_id
+        if not request:
+            return []
+        today = fields.Date.context_today(self)
+        line_model = self.env['material.request.line']
+        totals = defaultdict(float)
+        for line in self.order_line:
+            if not line.product_id:
+                continue
+            analytic = self.env['account.analytic.account'].search(
+                [('product_ids', 'in', [line.product_id.id])], limit=1)
+            if not analytic:
+                continue
+            request_line = request.line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
+            budget = request_line.budget_id or line_model._get_default_budget_for_analytic(analytic)
+            totals[(analytic, budget)] += line.price_subtotal
+        shortfalls = []
+        for (analytic, budget), required in totals.items():
+            budget_lines = self.env['budget.lines'].search([
+                ('analytic_account_id', '=', analytic.id),
+                ('budget_id', '=', budget.id),
+                ('date_from', '<=', today),
+                ('date_to', '>=', today),
+            ])
+            available = sum(abs(l.practical_amount) for l in budget_lines)
+            if required > available:
+                shortfalls.append((analytic, budget, required, available))
+        return shortfalls
+
     def _get_budget_exceeded_reasons(self):
-        """Why this RFQ needs the CFO's budget approval; empty when it is within
-        the Shariah Law balance (or the CFO has already overridden it). The
-        Material Request's own out-of-budget CFO / COO approval stays on the
-        request and is not repeated here."""
+        """Why this RFQ needs the CFO's decision; empty when it is within both
+        the accounting budget and the Shariah Law balance, or when the CFO has
+        already approved it. Checked on the RFQ's current amounts every time."""
         self.ensure_one()
         if self.shariah_override:
             return []
-        return [
+        reasons = [
+            _('Budget %(budget)s / %(segment)s: RFQ amount %(required).2f, available %(available).2f') % {
+                'budget': budget.display_name or _('none'), 'segment': analytic.display_name,
+                'required': required, 'available': available}
+            for analytic, budget, required, available in self._get_accounting_budget_shortfalls()
+        ]
+        reasons += [
             _('%(segment)s: required %(required).2f, Shariah closing balance %(balance).2f') % {
                 'segment': analytic.display_name, 'required': required, 'balance': balance}
             for analytic, required, balance in self._get_shariah_shortfalls()
         ]
+        return reasons
 
     def _mark_cfo_approved(self, auto=False):
         """Record the CFO approval and let the requisition move on to the Funds
@@ -146,7 +190,7 @@ class PurchaseOrder(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': _('CFO Approval Required'),
-                'message': _('The budget is exceeded. The RFQ waits for the CFO to approve it or arrange the budget.'),
+                'message': _('The budget is exceeded (see the banner for the current figures). The RFQ waits for the CFO to approve it or arrange the budget.'),
                 'type': 'warning',
                 'sticky': True,
                 'next': {'type': 'ir.actions.act_window_close'},
@@ -161,9 +205,18 @@ class PurchaseOrder(models.Model):
             raise UserError(_('Only the CFO can approve or reject a Shariah Hold.'))
 
     def action_shariah_hold_approve(self):
-        """CFO approves the RFQ despite the exceeded budget, and its PO is created."""
+        """CFO approves the RFQ despite the exceeded budget, and its PO is created.
+        The amounts are checked again first: if they changed since the hold was
+        raised, the CFO gets to review the new figures before approving."""
         self.ensure_one()
         self._check_shariah_cfo()
+        reason = '\n'.join(self._get_budget_exceeded_reasons())
+        if reason and reason != self.shariah_hold_reason:
+            self.write({'shariah_hold_reason': reason})
+            self.message_post(body=_(
+                'The RFQ amounts changed while it was waiting for the CFO.<br/>%s'
+            ) % reason.replace('\n', '<br/>'))
+            return self._shariah_hold_notification()
         self.write({'shariah_hold': False, 'shariah_hold_reason': False, 'shariah_override': True})
         self._mark_cfo_approved()
         self._release_to_po()
