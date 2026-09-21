@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="procurement_arrange_budget_wizard_view_form" model="ir.ui.view">
+        <field name="name">procurement.arrange.budget.wizard.view.form</field>
+        <field name="model">procurement.arrange.budget.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="order_id" invisible="1"/>
+                <p class="text-muted">
+                    Move budget into the segments that are short, from other Shariah segments.
+                    Each line creates a Shariah transfer and updates the Shariah Law balances.
+                    Once the RFQ fits the balance it is approved and its PO is created.
+                </p>
+                <field name="line_ids">
+                    <tree editable="bottom">
+                        <field name="destination_id"/>
+                        <field name="shortfall"/>
+                        <field name="allowed_source_ids" column_invisible="1"/>
+                        <field name="source_id" options="{'no_create': True}"/>
+                        <field name="source_balance"/>
+                        <field name="amount"/>
+                    </tree>
+                </field>
+                <footer>
+                    <button string="Transfer Budget" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

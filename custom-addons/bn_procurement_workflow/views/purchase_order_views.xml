@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="bn_purchase_customization.purchase_purchase_order_form_inherit_bn_purchase_customization"/>
         <field name="arch" type="xml">
             <!-- Only the HOD approver of the source Material Request may CXO-approve;
-                 nothing can be approved or confirmed while on Shariah Hold. -->
+                 nothing can be approved or confirmed while waiting for the CFO's budget decision. -->
             <xpath expr="//button[@name='action_cxo_approve_po']" position="attributes">
                 <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed</attribute>
             </xpath>
@@ -21,15 +21,18 @@
             </xpath>
 
             <xpath expr="//header" position="inside">
-                <button string="CFO Approval" name="action_cfo_approve_po" type="object" class="oe_highlight"
+                <button string="Check Budget" name="action_cfo_approve_po" type="object" class="oe_highlight"
                         invisible="not cxo_approved or not hod_approved or cfo_approved or state not in ('draft', 'sent') or shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
                 <field name="is_cxo_approver_allowed" invisible="1"/>
                 <field name="shariah_hold" invisible="1"/>
-                <button string="Shariah Approve" name="action_shariah_hold_approve" type="object"
+                <button string="CFO Approval" name="action_shariah_hold_approve" type="object"
                         class="oe_highlight" invisible="not shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
-                <button string="Shariah Reject" name="action_shariah_hold_reject" type="object"
+                <button string="Arrange Budget" name="action_open_arrange_budget" type="object"
+                        class="oe_highlight" invisible="not shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+                <button string="CFO Reject" name="action_shariah_hold_reject" type="object"
                         invisible="not shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
             </xpath>
@@ -45,7 +48,7 @@
 
             <xpath expr="//div[@name='button_box']" position="before">
                 <div class="alert alert-warning" role="alert" invisible="not shariah_hold">
-                    <strong>Shariah Hold</strong> - the amount exceeds the Shariah Law balance. Only the CFO can approve or reject this RFQ.
+                    <strong>Waiting for CFO</strong> - the budget is exceeded. Only the CFO can approve it, arrange the budget, or reject it.
                     <field name="shariah_hold_reason" readonly="1" nolabel="1"/>
                 </div>
             </xpath>

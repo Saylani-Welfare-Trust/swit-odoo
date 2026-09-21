@@ -32,40 +32,121 @@ class PurchaseOrder(models.Model):
             order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
 
     # ------------------------------------------------------------------
-    # Shariah hold
+    # CFO budget approval
     # ------------------------------------------------------------------
-    def _shariah_gate(self):
-        """Put every order exceeding the Shariah Law balance on hold and return
-        the ones that may go ahead with the CFO approval step."""
-        allowed = self.browse()
+    def _get_budget_exceeded_reasons(self):
+        """Why this RFQ needs the CFO's budget approval; empty when it is within
+        the Shariah Law balance (or the CFO has already overridden it). The
+        Material Request's own out-of-budget CFO / COO approval stays on the
+        request and is not repeated here."""
+        self.ensure_one()
+        if self.shariah_override:
+            return []
+        return [
+            _('%(segment)s: required %(required).2f, Shariah closing balance %(balance).2f') % {
+                'segment': analytic.display_name, 'required': required, 'balance': balance}
+            for analytic, required, balance in self._get_shariah_shortfalls()
+        ]
+
+    def _mark_cfo_approved(self, auto=False):
+        """Record the CFO approval and let the requisition move on to the Funds
+        Availability gate."""
+        for order in self:
+            order.write({
+                'cfo_approved': True,
+                'cfo_approved_by': False if auto else self.env.user.id,
+                'cfo_approved_date': fields.Datetime.now(),
+            })
+            order.message_post(body=_('Within budget - CFO approval recorded automatically.')
+                               if auto else _('CFO approved by %s.') % self.env.user.display_name)
+            requisition = order.requisition_id
+            if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
+                requisition.write({'state': 'funds_check'})
+                requisition.message_post(body=_(
+                    'CFO approval on the selected RFQ %s done - moving to Funds Availability check.'
+                ) % order.name)
+
+    def _release_to_po(self):
+        """Turn the approved RFQ into a PO. For an RFQ picked in a Purchase
+        Requisition this goes through the requisition's own release, so the
+        requisition is marked as in progress too. A failure is reported on the
+        RFQ instead of undoing the approval that triggered it - Confirm Order
+        then stays available to do it by hand."""
+        self.ensure_one()
+        order = self.sudo()
+        try:
+            with self.env.cr.savepoint():
+                requisition = order.requisition_id
+                if requisition and requisition.selected_rfq_id == order:
+                    requisition._release_po()
+                else:
+                    order.button_confirm()
+        except UserError as e:
+            self.message_post(body=_(
+                'The PO could not be created automatically: %s<br/>Use Confirm Order once this is resolved.') % e)
+
+    def _evaluate_cfo_stage(self):
+        """Within budget: CFO approval is recorded automatically and the PO is
+        created. Over budget: the RFQ waits for the CFO, who approves it or
+        arranges the budget. Returns the RFQs that were put on hold."""
         held = self.browse()
         for order in self:
-            if order.shariah_hold:
-                raise UserError(_(
-                    'RFQ %s is on Shariah Hold - only the CFO can approve or reject it.'
-                ) % order.display_name)
-            shortfalls = [] if order.shariah_override else order._get_shariah_shortfalls()
-            if not shortfalls:
-                allowed |= order
+            reasons = order._get_budget_exceeded_reasons()
+            if not reasons:
+                order._mark_cfo_approved(auto=True)
+                order._release_to_po()
                 continue
-            reason = '\n'.join(
-                _('%(segment)s: required %(required).2f, Shariah closing balance %(balance).2f') % {
-                    'segment': analytic.display_name, 'required': required, 'balance': balance}
-                for analytic, required, balance in shortfalls)
+            reason = '\n'.join(reasons)
             order.write({'shariah_hold': True, 'shariah_hold_reason': reason})
             order.message_post(body=_(
-                'Put on Shariah Hold - the amount exceeds the Shariah Law balance. '
-                'Only the CFO can approve or reject it.<br/>%s') % reason.replace('\n', '<br/>'))
+                'Budget exceeded - waiting for the CFO to approve it or arrange the budget.<br/>%s'
+            ) % reason.replace('\n', '<br/>'))
             held |= order
-        return allowed, held
+        return held
+
+    def action_open_arrange_budget(self):
+        """CFO opens the wizard that moves budget in from other Shariah segments."""
+        self.ensure_one()
+        self._check_shariah_cfo()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Arrange Budget'),
+            'res_model': 'procurement.arrange.budget.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_order_id': self.id},
+        }
+
+    def _after_budget_arranged(self, transfers):
+        """Called once the CFO's Shariah transfers are done: when the RFQ now
+        fits the balance it is approved and its PO created."""
+        self.ensure_one()
+        pending = transfers.filtered(lambda t: t.state != 'posted')
+        if transfers:
+            self.message_post(body=_('Budget arranged by %(user)s through Shariah transfer(s): %(names)s.') % {
+                'user': self.env.user.display_name, 'names': ', '.join(transfers.mapped('name'))})
+        if pending:
+            self.message_post(body=_(
+                'Waiting for Shariah member approval of: %s. Open Arrange Budget again once approved.'
+            ) % ', '.join(pending.mapped('name')))
+            return
+        reasons = self._get_budget_exceeded_reasons()
+        if reasons:
+            reason = '\n'.join(reasons)
+            self.write({'shariah_hold_reason': reason})
+            self.message_post(body=_('The RFQ is still over budget.<br/>%s') % reason.replace('\n', '<br/>'))
+            return
+        self.write({'shariah_hold': False, 'shariah_hold_reason': False})
+        self._mark_cfo_approved()
+        self._release_to_po()
 
     def _shariah_hold_notification(self):
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Shariah Hold'),
-                'message': _('The amount exceeds the Shariah Law balance. The RFQ is on hold until the CFO approves or rejects it.'),
+                'title': _('CFO Approval Required'),
+                'message': _('The budget is exceeded. The RFQ waits for the CFO to approve it or arrange the budget.'),
                 'type': 'warning',
                 'sticky': True,
                 'next': {'type': 'ir.actions.act_window_close'},
@@ -80,11 +161,12 @@ class PurchaseOrder(models.Model):
             raise UserError(_('Only the CFO can approve or reject a Shariah Hold.'))
 
     def action_shariah_hold_approve(self):
-        """CFO releases the hold; the RFQ carries on from the stage it was held at."""
+        """CFO approves the RFQ despite the exceeded budget, and its PO is created."""
         self.ensure_one()
         self._check_shariah_cfo()
         self.write({'shariah_hold': False, 'shariah_hold_reason': False, 'shariah_override': True})
-        self.message_post(body=_('Shariah Hold approved by CFO %s.') % self.env.user.display_name)
+        self._mark_cfo_approved()
+        self._release_to_po()
         return True
 
     def action_shariah_hold_reject(self):
@@ -135,42 +217,27 @@ class PurchaseOrder(models.Model):
         return res
 
     def action_hod_approve_po(self):
-        """HOD approval; the requisition then waits for the CFO's approval of
-        this RFQ before moving to the Funds Availability gate."""
+        """HOD approval. Then the budget decides the CFO stage: within budget the
+        CFO approval is recorded automatically and the PO is created; over
+        budget the RFQ waits for the CFO."""
         res = super().action_hod_approve_po()
-        for order in self:
-            requisition = order.requisition_id
-            if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
-                requisition.message_post(body=_(
-                    'HOD approved the selected RFQ %s - awaiting CFO approval on that RFQ.'
-                ) % order.name)
-        return res
+        held = self._evaluate_cfo_stage()
+        return self._shariah_hold_notification() if held else res
 
     def action_cfo_approve_po(self):
-        """CFO approval on the RFQ, needed before it can be confirmed into a
-        PO. This is the one step where the Shariah Law balance is checked: an
-        RFQ exceeding it goes on Shariah Hold instead. Once approved on the
-        winning RFQ, the requisition moves to the Funds Availability gate."""
+        """Manual CFO approval, for RFQs that got CXO and HOD approval before the
+        automatic budget check existed. Same rules: within budget it is approved,
+        over budget it waits for the CFO's decision."""
+        if not self.env.user.has_group(CFO_GROUP):
+            raise UserError(_('Only the CFO can give CFO approval.'))
         for order in self:
-            if not self.env.user.has_group(CFO_GROUP):
-                raise UserError(_('Only the CFO can give CFO approval.'))
             if not (order.cxo_approved and order.hod_approved):
                 raise UserError(_('CXO and HOD approval are required before CFO approval.'))
             if order.cfo_approved:
                 raise UserError(_('RFQ %s is already CFO approved.') % order.display_name)
-        allowed, held = self._shariah_gate()
-        allowed.write({
-            'cfo_approved': True,
-            'cfo_approved_by': self.env.user.id,
-            'cfo_approved_date': fields.Datetime.now(),
-        })
-        for order in allowed:
-            requisition = order.requisition_id
-            if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
-                requisition.write({'state': 'funds_check'})
-                requisition.message_post(body=_(
-                    'CFO approved the selected RFQ %s - moving to Funds Availability check.'
-                ) % order.name)
+            if order.shariah_hold:
+                raise UserError(_('RFQ %s is waiting for the CFO decision.') % order.display_name)
+        held = self._evaluate_cfo_stage()
         return self._shariah_hold_notification() if held else True
 
     def button_confirm(self):
