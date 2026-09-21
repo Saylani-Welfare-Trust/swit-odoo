@@ -34,7 +34,8 @@
                         groups="bn_material_request.menu_group_material_request_cfo"/>
             </xpath>
 
-            <xpath expr="//group[@string='Approval Status']" position="inside">
+            <!-- Third column next to the CXO and HOD groups of "Approval Status" -->
+            <xpath expr="//field[@name='hod_approved_date']/parent::group" position="after">
                 <group>
                     <field name="cfo_approved" widget="boolean_toggle" readonly="1"/>
                     <field name="cfo_approved_by" readonly="1"/>
