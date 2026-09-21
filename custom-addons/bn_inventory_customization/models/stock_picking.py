@@ -1,6 +1,10 @@
-from odoo import models, fields
+import logging
+
+from odoo import models, fields, _
 from odoo.exceptions import ValidationError
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class StockPicking(models.Model):
@@ -37,21 +41,32 @@ class StockPicking(models.Model):
         purchase = self.purchase_id
 
         if not purchase or purchase.state not in ('purchase', 'done'):
+            purchase and purchase.message_post(body=_(
+                'No vendor bill created on receipt %(picking)s: the purchase order is in state "%(state)s".',
+                picking=self.name, state=purchase.state))
             return
 
         # Nothing left to bill (e.g. fully invoiced already, or invoicing
         # policy is "ordered quantity" and it was already billed at
         # confirmation) - nothing to do.
         if purchase.invoice_status != 'to invoice':
+            purchase.message_post(body=_(
+                'No vendor bill created on receipt %(picking)s: the purchase order billing status is "%(status)s", not "To Bill".',
+                picking=self.name, status=purchase.invoice_status))
             return
 
         try:
-            purchase.action_create_invoice()
-        except UserError:
+            # Savepoint so a failed attempt leaves no half-created bill behind.
+            with self.env.cr.savepoint():
+                purchase.action_create_invoice()
+        except UserError as e:
             # Don't block/undo the receipt validation if a bill can't be
             # generated (e.g. missing vendor bill reference requirements).
             # The user can still create it manually from the PO afterwards.
-            pass
+            _logger.warning('Vendor bill for %s was not created on receipt %s: %s', purchase.name, self.name, e)
+            purchase.message_post(body=_(
+                'Vendor bill could not be created on receipt %(picking)s: %(error)s',
+                picking=self.name, error=str(e)))
 
 
 
