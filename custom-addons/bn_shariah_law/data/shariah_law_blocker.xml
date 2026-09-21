@@ -9,6 +9,7 @@
         <field name="enable_purchase">False</field>
         <field name="enable_welfare">False</field>
         <field name="enable_microfinance">False</field>
+        <field name="enable_material_request">False</field>
     </record>
 
 </odoo>

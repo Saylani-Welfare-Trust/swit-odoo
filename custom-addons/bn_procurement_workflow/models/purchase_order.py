@@ -36,7 +36,7 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     def _shariah_gate(self):
         """Put every order exceeding the Shariah Law balance on hold and return
-        the ones that may go ahead with the current approval step."""
+        the ones that may go ahead with the CFO approval step."""
         allowed = self.browse()
         held = self.browse()
         for order in self:
@@ -119,9 +119,8 @@ class PurchaseOrder(models.Model):
                     'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
                     'can give CXO approval to this RFQ.'
                 ) % {'user': hod_user.display_name, 'request': order.material_request_id.name})
-        allowed, held = self._shariah_gate()
-        res = super(PurchaseOrder, allowed).action_cxo_approve_po() if allowed else None
-        for order in allowed:
+        res = super().action_cxo_approve_po()
+        for order in self:
             requisition = order.requisition_id
             if not requisition or not requisition.material_request_id:
                 continue
@@ -133,28 +132,25 @@ class PurchaseOrder(models.Model):
             elif requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
                 requisition.write({'state': 'cxo_approved'})
                 requisition.message_post(body=_('CXO approved the selected RFQ %s.') % order.name)
-        return self._shariah_hold_notification() if held else res
+        return res
 
     def action_hod_approve_po(self):
         """HOD approval; the requisition then waits for the CFO's approval of
         this RFQ before moving to the Funds Availability gate."""
-        # Orders without CXO approval are left to super(), which rejects them
-        # before any Shariah check is worth doing.
-        allowed, held = self.filtered('cxo_approved')._shariah_gate()
-        allowed |= self - self.filtered('cxo_approved')
-        res = super(PurchaseOrder, allowed).action_hod_approve_po() if allowed else None
-        for order in allowed:
+        res = super().action_hod_approve_po()
+        for order in self:
             requisition = order.requisition_id
             if requisition and requisition.selected_rfq_id == order and requisition.state == 'cxo_approved':
                 requisition.message_post(body=_(
                     'HOD approved the selected RFQ %s - awaiting CFO approval on that RFQ.'
                 ) % order.name)
-        return self._shariah_hold_notification() if held else res
+        return res
 
     def action_cfo_approve_po(self):
         """CFO approval on the RFQ, needed before it can be confirmed into a
-        PO. Once given on the winning RFQ, the requisition moves to the Funds
-        Availability gate."""
+        PO. This is the one step where the Shariah Law balance is checked: an
+        RFQ exceeding it goes on Shariah Hold instead. Once approved on the
+        winning RFQ, the requisition moves to the Funds Availability gate."""
         for order in self:
             if not self.env.user.has_group(CFO_GROUP):
                 raise UserError(_('Only the CFO can give CFO approval.'))
@@ -183,6 +179,4 @@ class PurchaseOrder(models.Model):
                 raise UserError(_(
                     'RFQ %s cannot be confirmed until it has CFO approval.'
                 ) % order.display_name)
-        allowed, held = self._shariah_gate()
-        res = super(PurchaseOrder, allowed).button_confirm() if allowed else None
-        return self._shariah_hold_notification() if held else res
+        return super().button_confirm()
