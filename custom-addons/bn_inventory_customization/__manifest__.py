@@ -20,6 +20,7 @@
         'views/product_attribute_value.xml',
         'views/product_template.xml',
         'views/product_product.xml',
+        'views/account_analytic_account.xml',
         'views/purchase_order.xml',
         'views/stock_picking.xml',
         'wizards/receive_by_weight.xml',
