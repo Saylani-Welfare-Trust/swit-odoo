@@ -17,10 +17,10 @@
                 <field name="total_amount" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
-                       decoration-info="state == 'draft'"
-                       decoration-warning="state in ['budget_check', 'hod_approval', 'pending', 'committee_approval']"
+                       decoration-info="state in ['draft', 'submitted']"
+                       decoration-warning="state in ['technical_validation', 'technical_hod', 'supply_chain', 'budget_check', 'hod_approval', 'pending', 'committee_approval']"
                        decoration-success="state == 'done'"
-                       decoration-danger="state == 'rejected'"/>
+                       decoration-danger="state in ['rejected', 'on_hold']"/>
             </tree>
         </field>
     </record>
@@ -33,7 +33,26 @@
             <form>
                 <header>
                     <button string="Check Budget" name="action_check_budget" type="object"
+                            invisible="state != 'draft'"/>
+                    <button string="Submit" name="action_submit" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
+                    <button string="Start Technical Validation" name="action_start_validation" type="object"
+                            class="oe_highlight" invisible="state != 'submitted'"/>
+                    <button string="Complete Technical Validation" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'validate'}"
+                            class="oe_highlight" invisible="state != 'technical_validation'"/>
+                    <button string="Technical HOD Approve" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'hod_approve'}"
+                            class="oe_highlight" invisible="state != 'technical_hod'"/>
+                    <button string="Verify (Supply Chain)" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'verify'}"
+                            class="oe_highlight" invisible="state != 'supply_chain'"/>
+                    <button string="Resume (Funds Available)" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'resume'}"
+                            class="oe_highlight" invisible="state != 'on_hold'"/>
+                    <button string="Send to Committee" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'send_committee'}"
+                            invisible="state != 'on_hold'"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
                             class="oe_highlight" invisible="state!='hod_approval'"/>
                             <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
@@ -42,11 +61,12 @@
                                 class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
                             <button string="COO Approve" name="action_coo_approve" type="object"
                                 class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
-                    <button string="Reject" name="action_reject" type="object"
-                            invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
+                    <button string="Reject" name="%(bn_material_request.material_request_action_wizard_action)d" type="action"
+                            context="{'default_action_type': 'reject'}"
+                            invisible="state not in ['submitted', 'technical_validation', 'technical_hod', 'supply_chain', 'on_hold', 'hod_approval', 'committee_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,pending,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,technical_validation,technical_hod,supply_chain,pending,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -92,11 +112,16 @@
                         <group name="budget_info">
                             <field name="user_id"/>
                             <field name="department_id"/>
+                            <field name="technical_validator_id" options="{'no_open': True}"/>
+                            <field name="technical_hod_id" options="{'no_open': True}"/>
                             <field name="total_amount" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
-                            <field name="budget_amount" invisible="state == 'draft'" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
-                            <field name="is_in_budget" invisible="state == 'draft'" widget="boolean_toggle"/>
+                            <field name="budget_amount" invisible="state == 'draft' and not budget_amount" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
+                            <field name="is_in_budget" invisible="state == 'draft' and not budget_amount" widget="boolean_toggle"/>
                         </group>
                     </group>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'on_hold'">
+                        <field name="hold_reason" readonly="1" nolabel="1"/>
+                    </div>
                     <group invisible="state != 'committee_approval'">
                         <group string="Committee Approval Status">
                             <field name="cfo_approved" widget="boolean_toggle" readonly="1"/>
@@ -115,6 +140,17 @@
                                     <field name="quantity" readonly="0"/>
                                     <field name="unit_price" readonly="0" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
                                     <field name="subtotal" groups="bn_material_request.menu_group_material_request_coo,bn_material_request.menu_group_material_request_cfo"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Audit Trail" name="audit_trail">
+                            <field name="log_ids" readonly="1">
+                                <tree>
+                                    <field name="date"/>
+                                    <field name="user_id"/>
+                                    <field name="stage"/>
+                                    <field name="action"/>
+                                    <field name="remarks"/>
                                 </tree>
                             </field>
                         </page>
@@ -154,6 +190,13 @@
                 <field name="source_location_id"/>
                 <field name="dest_location_id"/>
                 <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <field name="technical_validator_id"/>
+                <field name="technical_hod_id"/>
+                <filter string="Submitted" name="filter_submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Technical Validation" name="filter_tech_validation" domain="[('state', '=', 'technical_validation')]"/>
+                <filter string="Technical HOD Approval" name="filter_tech_hod" domain="[('state', '=', 'technical_hod')]"/>
+                <filter string="Supply Chain Verification" name="filter_supply_chain" domain="[('state', '=', 'supply_chain')]"/>
+                <filter string="On Hold" name="filter_on_hold" domain="[('state', '=', 'on_hold')]"/>
                 <filter string="HOD Approval" name="filter_hod" domain="[('state', '=', 'hod_approval')]"/>
                 <filter string="Committee Approval" name="filter_committee" domain="[('state', '=', 'committee_approval')]"/>
                 <filter string="Done" name="filter_done" domain="[('state', '=', 'done')]"/>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="material_request_action_wizard_view_form" model="ir.ui.view">
+        <field name="name">material.request.action.wizard.form</field>
+        <field name="model">material.request.action.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirm Action">
+                <group>
+                    <field name="request_id" invisible="1"/>
+                    <field name="action_type"/>
+                    <field name="remarks" placeholder="Enter remarks..." required="action_type == 'reject'"/>
+                </group>
+                <footer>
+                    <button string="Confirm" name="action_confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="material_request_action_wizard_action" model="ir.actions.act_window">
+        <field name="name">Confirm Action</field>
+        <field name="res_model">material.request.action.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
