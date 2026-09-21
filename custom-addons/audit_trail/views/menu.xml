@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_audit_trail_root" name="Audit Trail" sequence="95"
+              groups="audit_trail.group_audit_trail_viewer"/>
+
+    <menuitem id="menu_audit_trail_logs" name="Logs"
+              parent="menu_audit_trail_root"
+              action="action_audit_trail_log"
+              sequence="10"/>
+
+    <menuitem id="menu_audit_trail_config" name="Configuration"
+              parent="menu_audit_trail_root"
+              sequence="20"
+              groups="audit_trail.group_audit_trail_manager"/>
+
+    <menuitem id="menu_audit_trail_rules" name="Audit Rules"
+              parent="menu_audit_trail_config"
+              action="action_audit_trail_rule"
+              sequence="10"/>
+</odoo>
