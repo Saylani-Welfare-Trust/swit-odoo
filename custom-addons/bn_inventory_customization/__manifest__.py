@@ -10,6 +10,7 @@
         'product',
         'stock',
         'purchase',
+        'analytic',
         'bn_donation_home_service',
     ],
     'data': [
