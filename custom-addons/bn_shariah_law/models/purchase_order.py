@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class PurchaseOrder(models.Model):
@@ -11,6 +11,15 @@ class PurchaseOrder(models.Model):
         help='Set once the CFO has approved this order despite it exceeding the Shariah Law closing balance.')
 
 
+    @api.model
+    def _get_product_segment(self, product):
+        """The analytic account (segment) of a product: the one set on the product
+        itself, otherwise the one whose Products list contains it."""
+        analytic = self.env['account.analytic.account']
+        if 'analytic_account_id' in product._fields:
+            analytic = product.analytic_account_id
+        return analytic or analytic.search([('product_ids', 'in', [product.id])], limit=1)
+
     def _get_shariah_amounts(self):
         """{analytic account id: amount} - the Subtotal of this order's lines added
         up per segment (the analytic account of each line's product)."""
@@ -19,7 +28,7 @@ class PurchaseOrder(models.Model):
         for line in self.order_line:
             if not line.product_id:
                 continue
-            analytic_account = self.env['account.analytic.account'].search([('product_ids', 'in', [line.product_id.id])], limit=1)
+            analytic_account = self._get_product_segment(line.product_id)
             if analytic_account:
                 amounts[analytic_account.id] = amounts.get(analytic_account.id, 0.0) + line.price_subtotal
         return amounts

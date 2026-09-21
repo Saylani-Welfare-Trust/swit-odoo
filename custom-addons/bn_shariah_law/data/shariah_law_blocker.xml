@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<odoo noupdate="1">
 
+    <!-- noupdate: the toggles are set from the Shariah Law Blocker screen and must not be
+         reset to these initial values every time the module is upgraded. -->
     <record id="module_shariah_law_blocker" model="shariah.law.blocker">
         <field name="enable_pos">False</field>
         <field name="enable_donations">False</field>

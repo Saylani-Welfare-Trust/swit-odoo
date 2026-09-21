@@ -53,8 +53,7 @@ class PurchaseOrder(models.Model):
         for line in self.order_line:
             if not line.product_id:
                 continue
-            analytic = self.env['account.analytic.account'].search(
-                [('product_ids', 'in', [line.product_id.id])], limit=1)
+            analytic = self._get_product_segment(line.product_id)
             if not analytic:
                 continue
             request_line = request.line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
