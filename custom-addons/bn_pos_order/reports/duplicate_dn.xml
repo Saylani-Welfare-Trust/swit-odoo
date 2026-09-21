@@ -108,8 +108,8 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
-                                        <t t-esc="order.create_date.strftime('%d-%m-%Y %H:%M') if order.create_date else '--'"/>
-                                    </div>
+                                         <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
+                                    </div>  
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Cheque Date:</strong>
                                         <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
