@@ -70,6 +70,9 @@ class MemberApproval(models.Model):
     coo_approved = fields.Boolean('COO Approved', readonly=True, copy=False, tracking=True)
     hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False, tracking=True)
     hod_approved_date = fields.Datetime('HOD Approved On', readonly=True, copy=False)
+    is_current_user_hod = fields.Boolean(
+        compute='_compute_is_current_user_hod',
+        help='Whether the current user is the manager of the requesting department (may HOD approve).')
     
     # State
     state = fields.Selection([
@@ -112,6 +115,13 @@ class MemberApproval(models.Model):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
         return super().create(vals)
+
+    @api.depends_context('uid')
+    @api.depends('department_id.manager_id')
+    def _compute_is_current_user_hod(self):
+        employee = self.env.user.employee_id
+        for rec in self:
+            rec.is_current_user_hod = not rec.department_id or rec.department_id.manager_id == employee
 
     @api.depends('line_ids.subtotal')
     def _compute_total_amount(self):

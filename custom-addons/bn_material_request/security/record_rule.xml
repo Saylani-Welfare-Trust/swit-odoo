@@ -1,27 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="material_request_rule" model="ir.rule">
-        <field name="name">Material Request</field>
-        <field name="model_id" ref="bn_material_request.model_material_request"/>
-        <field name="domain_force">['|', ('user_id', '=', user.id), ('department_id.manager_id.user_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_user'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="True"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- The CFO approves/rejects requests on Shariah Hold (and out-of-budget ones)
-         for every department, so is not limited to their own / managed requests.
-         Rules of different groups are OR-ed, so this widens the rule above. -->
-    <record id="material_request_rule_cfo" model="ir.rule">
-        <field name="name">Material Request: CFO sees all</field>
-        <field name="model_id" ref="bn_material_request.model_material_request"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_cfo'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="True"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
+    <!-- No record rules on material.request: anyone with access to the menu can open
+         any request. Who may act on it is decided by the buttons (HOD approve is
+         shown only to the department manager, CFO / COO approve to their groups). -->
 </odoo>

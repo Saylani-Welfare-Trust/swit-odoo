@@ -34,14 +34,17 @@
                 <header>
                     <button string="Check Budget" name="action_check_budget" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
+                    <field name="is_current_user_hod" invisible="1"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
-                            class="oe_highlight" invisible="state!='hod_approval'"/>
+                            class="oe_highlight" invisible="state!='hod_approval' or not is_current_user_hod"/>
                             <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
                                 class="oe_highlight" invisible="is_in_budget or state != 'committee_approval'"/> -->
                             <button string="CFO Approve" name="action_cfo_approve" type="object"
-                                class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"/>
+                                class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"
+                                groups="bn_material_request.menu_group_material_request_cfo"/>
                             <button string="COO Approve" name="action_coo_approve" type="object"
-                                class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"/>
+                                class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"
+                                groups="bn_material_request.menu_group_material_request_coo"/>
                     <button string="Reject" name="action_reject" type="object"
                             invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
