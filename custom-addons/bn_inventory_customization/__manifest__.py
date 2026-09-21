@@ -11,6 +11,7 @@
         'stock',
         'purchase',
         'analytic',
+        'bn_shariah_law',
         'bn_donation_home_service',
     ],
     'data': [
@@ -21,6 +22,7 @@
         'views/product_template.xml',
         'views/product_product.xml',
         'views/account_analytic_account.xml',
+        'data/backfill.xml',
         'views/purchase_order.xml',
         'views/stock_picking.xml',
         'wizards/receive_by_weight.xml',
