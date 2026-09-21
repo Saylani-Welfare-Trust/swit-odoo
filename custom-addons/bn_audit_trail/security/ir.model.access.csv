@@ -1,4 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_audit_trail_exclusion_manager,audit.trail.exclusion.manager,model_audit_trail_exclusion,group_audit_trail_manager,1,1,1,1
 access_audit_trail_log_manager,audit.trail.log.manager,model_audit_trail_log,group_audit_trail_manager,1,0,0,1
 access_audit_trail_log_viewer,audit.trail.log.viewer,model_audit_trail_log,group_audit_trail_viewer,1,0,0,0
 access_audit_trail_log_line_manager,audit.trail.log.line.manager,model_audit_trail_log_line,group_audit_trail_manager,1,0,0,1

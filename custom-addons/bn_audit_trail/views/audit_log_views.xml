@@ -40,12 +40,12 @@
                     </group>
                     <field name="summary"/>
                     <notebook>
-                        <page string="Field Changes">
-                            <field name="line_ids">
+                        <page string="Field Changes (Before / After)">
+                            <field name="line_ids" nolabel="1">
                                 <tree create="false" edit="false" delete="false">
-                                    <field name="field_description"/>
-                                    <field name="old_value"/>
-                                    <field name="new_value"/>
+                                    <field name="field_description" string="Field"/>
+                                    <field name="old_value" string="Before"/>
+                                    <field name="new_value" string="After"/>
                                 </tree>
                             </field>
                         </page>

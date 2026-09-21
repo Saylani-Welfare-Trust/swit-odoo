@@ -204,6 +204,6 @@ class AuditTrailLogLine(models.Model):
     log_id = fields.Many2one('audit.trail.log', required=True,
                               ondelete='cascade', index=True)
     field_name = fields.Char(required=True)
-    field_description = fields.Char()
-    old_value = fields.Text()
-    new_value = fields.Text()
+    field_description = fields.Char(string='Field')
+    old_value = fields.Text(string='Before')
+    new_value = fields.Text(string='After')

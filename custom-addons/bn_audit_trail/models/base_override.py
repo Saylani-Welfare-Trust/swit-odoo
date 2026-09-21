@@ -6,18 +6,21 @@ from odoo import api, models
 _logger = logging.getLogger(__name__)
 
 # Every model is audited (Create, Update, Delete, View) by default. This
-# fixed set is the ONLY exception - hardcoded, not database/UI-configured,
-# so there is no cache or config screen that can silently go stale. These
-# are internal Odoo plumbing models where logging would either recurse on
-# itself (the audit log's own tables) or be high-volume, low-value noise
-# (document numbering, cron, bus, mail bookkeeping, attachments).
+# fixed set is always excluded, no matter what - hardcoded, not
+# database/UI-configured, so it can't be accidentally changed or go stale.
+# These are internal Odoo plumbing models where logging would either
+# recurse on itself (the audit log's own tables) or be high-volume,
+# low-value noise (document numbering, cron, bus, mail bookkeeping,
+# attachments). For excluding OTHER models via the UI, see
+# audit.trail.exclusion (Audit Trail > Excluded Models) below.
 #
-# To exclude an additional model (e.g. a very high-frequency detail line
-# model you decide isn't worth logging), add its technical name here and
-# redeploy - this is deliberately a code change, not a runtime setting.
+# To add another permanent, code-level exclusion, add its technical name
+# here and redeploy - this set is deliberately not meant to be end-user
+# editable.
 AUDIT_EXCLUDED_MODELS = {
     'audit.trail.log',
     'audit.trail.log.line',
+    'audit.trail.exclusion',
     'ir.logging',
     'ir.cron',
     'ir.cron.trigger',
@@ -41,9 +44,13 @@ class Base(models.AbstractModel):
     (res.partner, sale.order, account.move, ...) and custom alike - without
     needing to touch a single line of any other module.
 
-    Policy: Create / Update / Delete / View are audited for every model,
-    always, except AUDIT_EXCLUDED_MODELS above. No configuration screen,
-    no database-backed rules, no cache to go stale.
+    Policy: Create / Update / Delete / View are audited for every model
+    by default, except:
+      * AUDIT_EXCLUDED_MODELS above - fixed, code-level, not configurable.
+      * Models listed in Audit Trail > Excluded Models (audit.trail.exclusion)
+        - a small, purpose-built config screen for turning specific models
+        off, with a correctly-invalidated cache (see that model for why
+        this matters).
     """
     _inherit = 'base'
 
@@ -56,6 +63,12 @@ class Base(models.AbstractModel):
         if not self.env.registry.ready:
             # Avoid touching our own tables while they're still being
             # created during this module's own installation.
+            return False
+        try:
+            excluded = self.env['audit.trail.exclusion'].sudo()._get_excluded_model_names()
+        except Exception:
+            excluded = set()
+        if self._name in excluded:
             return False
         return True
 
@@ -77,9 +90,12 @@ class Base(models.AbstractModel):
             audit_enabled = self._audit_is_enabled()
             if audit_enabled:
                 tracked = [f for f in vals.keys() if f in self._fields]
+                # Fetch pre-write values for the diff without that internal
+                # fetch itself generating a spurious View/read log entry.
+                snapshot = self.with_context(_audit_trail_skip_read=True)
                 old_values = {
                     rec.id: {f: rec[f] for f in tracked}
-                    for rec in self
+                    for rec in snapshot
                 }
         except Exception:
             _logger.exception('Audit Trail: failed to snapshot old values for %s', self._name)
@@ -101,7 +117,8 @@ class Base(models.AbstractModel):
         # access path (browser UI, RPC, XML-RPC) uniformly.
         result = super()._read_format(fnames, load=load)
         try:
-            if self._ids and self._audit_is_enabled():
+            if (self._ids and not self.env.context.get('_audit_trail_skip_read')
+                    and self._audit_is_enabled()):
                 self.env['audit.trail.log']._log_read(self._name, result)
         except Exception:
             _logger.exception('Audit Trail: failed to log read for %s', self._name)

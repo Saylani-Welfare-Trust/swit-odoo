@@ -4,4 +4,15 @@
         action="action_audit_trail_log"
         web_icon="bn_audit_trail,static/description/icon.png"
         groups="bn_audit_trail.group_audit_trail_viewer"/>
+
+    <menuitem id="menu_audit_trail_logs" name="Logs"
+        parent="menu_audit_trail_root"
+        action="action_audit_trail_log"
+        sequence="10"/>
+
+    <menuitem id="menu_audit_trail_exclusions" name="Excluded Models"
+        parent="menu_audit_trail_root"
+        action="action_audit_trail_exclusion"
+        sequence="20"
+        groups="bn_audit_trail.group_audit_trail_manager"/>
 </odoo>
