@@ -22,9 +22,9 @@
         <field name="arch" type="xml">
             <form create="0" edit="0">
                 <header>
-                    <button string="Issued" name="action_issue" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'overdue']" />
-                    <button string="Return" name="action_return" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned']" />
-                    <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'returned', 'overdue']" />
+                    <button string="Issued" name="action_issue" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'pending', 'overdue']" />
+                    <button string="Return" name="action_return" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'pending', 'returned']" />
+                    <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'pending', 'returned', 'overdue']" />
                     <button string="Print Receipt" name="%(bn_donation_box.donation_box_receipt_report_action)d" type="action" class="btn-secondary" icon="fa-print"  invisible="state in ['draft', 'issued', 'returned', 'overdue']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,overdue,returned"/>
