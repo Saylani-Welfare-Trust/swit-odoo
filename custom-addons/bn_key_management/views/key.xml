@@ -21,7 +21,7 @@
         <field name="arch" type="xml">
             <form create="0">
                 <header>
-                    <button string="Available" name="action_available" type="object" class="oe_highlight" invisible="state in ['available', 'issued']" />
+                    <button string="Available" name="action_available" type="object" class="oe_highlight" invisible="state in ['available', 'issued', 'pending']" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, available, issued"/>
                 </header>

@@ -198,7 +198,7 @@ class BulkKeyIssuance(models.TransientModel):
         KeyIssuance = self.env['key.issuance']
 
         for group in self.key_bunch_ids:
-            keys = group.key_ids
+            keys = group.key_ids.filtered(lambda x:x.state == 'available')
 
             invalid_keys = []
             valid_issuances = []
