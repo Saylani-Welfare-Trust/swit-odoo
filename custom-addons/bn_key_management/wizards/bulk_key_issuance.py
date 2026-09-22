@@ -137,7 +137,7 @@ class BulkKeyIssuance(models.TransientModel):
         KeyIssuance = self.env['key.issuance']
 
         for group in self.key_bunch_ids:
-            keys = group.key_ids
+            keys = group.key_ids.filtered(lambda x:x.state == 'available')
 
             # 🚫 1. Check ANY key already issued (active only)
             issued_keys = KeyIssuance.search([
@@ -198,7 +198,7 @@ class BulkKeyIssuance(models.TransientModel):
         KeyIssuance = self.env['key.issuance']
 
         for group in self.key_bunch_ids:
-            keys = group.key_ids.filtered(lambda x:x.state == 'available')
+            keys = group.key_ids
 
             invalid_keys = []
             valid_issuances = []
