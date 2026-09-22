@@ -64,6 +64,13 @@ class POSOrder(models.Model):
             if order.state not in ('paid', 'done', 'invoiced'):
                 continue
 
+            # Cash payments fall into livestock right away. Cheque and direct
+            # deposit payments (both tracked through pos.cheque/cheque_state)
+            # only do so once they are cleared - a bounced or cancelled
+            # payment never reaches livestock.
+            if order.pos_cheque_id and order.cheque_state != 'clear':
+                continue
+
             livestock_lines = order.lines.filtered(
                 lambda line: line.product_id.is_livestock and line.qty > 0
             )
