@@ -120,4 +120,10 @@ class DonationBoxRegistrationInstallation(models.Model):
         if key.state == 'issued':
             raise ValidationError('The respected key is in issued state.')
 
+        key.key_bunch_id = self.key_bunch_id.id
+        key.donation_box_request_id = self.donation_box_request_id.id
+        key.donation_box_registration_installation_id = self.id
+
+        key.action_available()
+
         self.status = 'change_request'
