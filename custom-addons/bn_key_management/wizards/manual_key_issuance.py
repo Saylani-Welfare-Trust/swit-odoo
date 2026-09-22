@@ -98,15 +98,10 @@ class ManualKeyIssuance(models.TransientModel):
         if not self.date:
             raise ValidationError('Please select issue date')
 
-        # 🔍 Get key bunch
-        bunch = key.key_bunch_id
-
-        if bunch:
-            bunch_keys = bunch.key_ids
-
-            # 🚫 1. Block if ANY key from bunch is already issued (active)
+        if key:
+            # 🚫 1. Block if ANY key is already issued (active)
             issued_keys = self.env['key.issuance'].search([
-                ('key_id', 'in', bunch_keys.ids),
+                ('key_id', '=', key.id),
                 ('state', '=', 'issued')
             ])
 
@@ -119,7 +114,7 @@ class ManualKeyIssuance(models.TransientModel):
 
             # 🚫 2. SAME-DAY constraint (IMPORTANT FIX)
             same_day_issue = self.env['key.issuance'].search([
-                ('key_id', 'in', bunch_keys.ids),
+                ('key_id', '=', key.id),
                 ('issue_date', '=', self.date),
                 ('state', '=', 'issued')
             ])
