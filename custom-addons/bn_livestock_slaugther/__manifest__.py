@@ -8,6 +8,7 @@
     'depends': [
         'bn_donation_home_service',
         'bn_pos_cheque',
+        'bn_direct_deposit',
         'mrp',
         'mail',
     ],
