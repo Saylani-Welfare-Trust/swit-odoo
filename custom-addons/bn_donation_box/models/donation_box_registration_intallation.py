@@ -115,4 +115,9 @@ class DonationBoxRegistrationInstallation(models.Model):
             rec.lock_no = lock_no
 
     def action_change_request(self):
+        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
+
+        if key.state == 'issued':
+            raise ValidationError('The respected key is in issued state.')
+
         self.status = 'change_request'
