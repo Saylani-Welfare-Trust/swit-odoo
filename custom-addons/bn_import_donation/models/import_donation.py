@@ -29,6 +29,27 @@ class ImportDonation(models.Model):
     journal_entry_id = fields.Many2one('account.move')
     picking_id = fields.Many2one('stock.picking')
 
+    picking_type_id = fields.Many2one(
+        'stock.picking.type',
+        string="Picking Type",
+        default=lambda self: self.env.ref(
+            'bn_import_donation.online_donation_stock_picking_type',
+            raise_if_not_found=False
+        ).id
+    )
+
+    source_location_id = fields.Many2one(
+        related='picking_type_id.default_location_src_id',
+        string="Source Location",
+        store=True
+    )
+
+    destination_location_id = fields.Many2one(
+        related='picking_type_id.default_location_dest_id',
+        string="Destination Location",
+        store=True
+    )
+
     state = fields.Selection(state_selection, default='draft', tracking=True)
 
     import_file = fields.Binary('Import File')
