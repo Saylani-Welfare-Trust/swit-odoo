@@ -22,6 +22,8 @@ class LivestockSlaughter(models.Model):
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
     pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
     direct_deposit_line_id = fields.Many2one('direct.deposit.line', string="Direct Deposit Line", copy=False, index=True)
+    donation_id = fields.Many2one('donation', string="Import Donation", copy=False, index=True)
+    api_donation_item_id = fields.Many2one('api.donation.item', string="API Donation Item", copy=False, index=True)
     cutting_material_id = fields.Many2one('livestock.cutting.material', string='Cutting Record', copy=False)
     cutting_line_ids = fields.One2many(
         related='cutting_material_id.livestock_cutting_material_line_ids',
@@ -66,6 +68,16 @@ class LivestockSlaughter(models.Model):
             'unique_direct_deposit_line_id',
             'unique(direct_deposit_line_id)',
             'A livestock slaughter record already exists for this Direct Deposit line.',
+        ),
+        (
+            'unique_donation_id',
+            'unique(donation_id)',
+            'A livestock slaughter record already exists for this Donation.',
+        ),
+        (
+            'unique_api_donation_item_id',
+            'unique(api_donation_item_id)',
+            'A livestock slaughter record already exists for this API Donation item.',
         ),
     ]
 

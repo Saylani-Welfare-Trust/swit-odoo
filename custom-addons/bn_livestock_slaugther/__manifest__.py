@@ -9,6 +9,7 @@
         'bn_donation_home_service',
         'bn_pos_cheque',
         'bn_direct_deposit',
+        'bn_import_donation',
         'mrp',
         'mail',
     ],
