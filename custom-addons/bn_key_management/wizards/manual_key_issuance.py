@@ -38,21 +38,21 @@ class ManualKeyIssuance(models.TransientModel):
                 active_issuances = KeyIssuance.search([
                     ('state', '!=', 'returned')
                 ])
-                active_bunch_ids = active_issuances.mapped('key_id.key_bunch_id').ids
+                active_key_ids = active_issuances.mapped('key_id').ids
 
                 # 🔴 Same-day issuances
                 today_issuances = KeyIssuance.search([
                     ('issue_date', '=', rec.date),
                     ('state', '!=', 'returned')
                 ])
-                today_bunch_ids = today_issuances.mapped('key_id.key_bunch_id').ids
+                today_key_ids = today_issuances.mapped('key_id').ids
 
-                blocked_bunch_ids = list(set(active_bunch_ids + today_bunch_ids))
+                blocked_key_ids = list(set(active_key_ids + today_key_ids))
 
                 keys = Key.search([
                     ('state', '=', 'available'),
                     ('lot_id', '!=', False),
-                    ('key_bunch_id', 'not in', blocked_bunch_ids)
+                    ('id', 'not in', blocked_key_ids)
                 ])
 
                 lot_ids = keys.mapped('lot_id').ids
