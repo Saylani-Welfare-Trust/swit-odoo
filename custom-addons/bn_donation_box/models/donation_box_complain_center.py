@@ -59,6 +59,7 @@ class DonationBoxComplain(models.Model):
     remarks = fields.Text('Remarks', tracking=True)
     complain_officer_remark = fields.Text('Complain Officer Remark', tracking=True)
     box_recovered = fields.Boolean('Box Recovered', default=False, tracking=True)
+    active = fields.Boolean('Active', default=True, tracking=True)
 
 
     def action_process(self):
