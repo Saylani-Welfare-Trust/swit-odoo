@@ -151,6 +151,9 @@ class AccountTrialBalance(models.TransientModel):
         :return: List of dictionaries representing the financial report.
         :rtype: list
         """
+        
+        if not start_date or not end_date:
+            return []
         if options == {}:
             options = None
         if options is None:
