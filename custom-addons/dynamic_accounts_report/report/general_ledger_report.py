@@ -9,7 +9,7 @@ class GeneralLedgerReport(models.AbstractModel):
     # wkhtmltopdf reliably segfaults (error code -11) once the rendered HTML
     # gets too large. Cap the PDF export and point big pulls to XLSX instead,
     # which has no such ceiling.
-    PDF_MAX_LINES = 15000
+    PDF_MAX_LINES = 50000
 
     @api.model
     def _get_report_values(self, docids, data=None):
