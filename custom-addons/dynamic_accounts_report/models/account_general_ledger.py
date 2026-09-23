@@ -443,6 +443,7 @@ class AccountGeneralLedger(models.TransientModel):
                         row += 1
 
                     # Per-account totals
+                                        # Per-account totals
                     sheet.merge_range(row, 0, row, 9, 'Total', total_fmt)
                     sheet.write(row, 10, account_total.get('total_debit', 0.0), total_num_fmt)
                     sheet.write(row, 11, account_total.get('total_credit', 0.0), total_num_fmt)
@@ -451,17 +452,42 @@ class AccountGeneralLedger(models.TransientModel):
                             - account_total.get('total_credit', 0.0))
                     sheet.write(row, 12, closing, total_num_fmt)
                     sheet.set_row(row, 24)
+                    row += 1
+
+                    # Explicit Closing Balance row, mirroring Opening Balance above
+                    sheet.write(row, 0, '', opening_fmt)
+                    sheet.merge_range(row, 1, row, 9, 'CLOSING BALANCE', opening_fmt)
+                    sheet.write(row, 10, '', opening_fmt)
+                    sheet.write(row, 11, '', opening_fmt)
+                    sheet.write(row, 12, closing, opening_num_fmt)
                     row += 2  # blank spacer row between account blocks
 
                 # Grand total row
+                                # Grand total row
                 grand_opening = sum(v.get('opening_balance', 0.0) for v in report_totals.values())
+                grand_closing = (grand_opening
+                                  + float(grand_total.get('total_debit', 0.0))
+                                  - float(grand_total.get('total_credit', 0.0)))
+
+                sheet.merge_range(row, 0, row, 9, 'GRAND OPENING BALANCE', grand_total_fmt)
+                sheet.write(row, 10, '', grand_total_num_fmt)
+                sheet.write(row, 11, '', grand_total_num_fmt)
+                sheet.write(row, 12, grand_opening, grand_total_num_fmt)
+                sheet.set_row(row, 24)
+                row += 1
+
                 sheet.merge_range(row, 0, row, 9, 'GRAND TOTAL', grand_total_fmt)
                 sheet.write(row, 10, grand_total.get('total_debit', 0.0), grand_total_num_fmt)
                 sheet.write(row, 11, grand_total.get('total_credit', 0.0), grand_total_num_fmt)
-                sheet.write(row, 12,
-                            grand_opening + float(grand_total.get('total_debit', 0.0)) - float(grand_total.get('total_credit', 0.0)),
-                            grand_total_num_fmt)
+                sheet.write(row, 12, grand_closing, grand_total_num_fmt)
                 sheet.set_row(row, 26)
+                row += 1
+
+                sheet.merge_range(row, 0, row, 9, 'GRAND CLOSING BALANCE', grand_total_fmt)
+                sheet.write(row, 10, '', grand_total_num_fmt)
+                sheet.write(row, 11, '', grand_total_num_fmt)
+                sheet.write(row, 12, grand_closing, grand_total_num_fmt)
+                sheet.set_row(row, 24)
 
         # Freeze the header rows so they stay visible while scrolling
         sheet.freeze_panes(5, 0)
