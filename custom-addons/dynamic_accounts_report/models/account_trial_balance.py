@@ -29,23 +29,39 @@ from odoo import api, fields, models
 from odoo.tools.date_utils import get_month, get_fiscal_year, \
     get_quarter_number, subtract
 
+ACCOUNT_TYPE_GROUPS = {
+    'asset_receivable': ('Assets', 1),
+    'asset_cash': ('Assets', 1),
+    'asset_current': ('Assets', 1),
+    'asset_non_current': ('Assets', 1),
+    'asset_prepayments': ('Assets', 1),
+    'asset_fixed': ('Assets', 1),
+    'liability_payable': ('Liabilities', 2),
+    'liability_credit_card': ('Liabilities', 2),
+    'liability_current': ('Liabilities', 2),
+    'liability_non_current': ('Liabilities', 2),
+    'equity': ('Equity', 3),
+    'equity_unaffected': ('Equity', 3),
+    'income': ('Income', 4),
+    'income_other': ('Income', 4),
+    'expense': ('Expenses', 5),
+    'expense_depreciation': ('Expenses', 5),
+    'expense_direct_cost': ('Expenses', 5),
+    'off_balance': ('Off Balance', 6),
+}
+
+def _group_info(account_type):
+    return ACCOUNT_TYPE_GROUPS.get(account_type, ('Other', 99))
 
 class AccountTrialBalance(models.TransientModel):
     """For creating Trial Balance report"""
     _name = 'account.trial.balance'
     _description = 'Trial Balance Report'
 
+    
+    
     @api.model
     def view_report(self):
-        """
-        Generates a trial balance report for multiple accounts.
-        Retrieves account information and calculates total debit and credit
-        amounts for each account within the specified date range. Returns a list
-        of dictionaries containing account details and transaction totals.
-
-        :return: List of dictionaries representing the trial balance report.
-        :rtype: list
-        """
         today = fields.Date.today()
         first_day, last_day = get_month(today)
 
@@ -55,14 +71,15 @@ class AccountTrialBalance(models.TransientModel):
         )
 
         account_totals = defaultdict(lambda: {'initial_total_debit': 0.0, 'initial_total_credit': 0.0, 'total_debit': 0.0, 'total_credit': 0.0})
-        account_display_names = {}
+        account_records = {}
 
         for line in move_lines:
             account_id = line.get('account_id')
             if not account_id:
                 continue
             account_id = account_id[0]
-            account_display_names.setdefault(account_id, self.env['account.account'].browse(account_id).display_name)
+            if account_id not in account_records:
+                account_records[account_id] = self.env['account.account'].browse(account_id)
             if line.get('date') and line['date'] < first_day:
                 account_totals[account_id]['initial_total_debit'] += line.get('debit') or 0.0
                 account_totals[account_id]['initial_total_credit'] += line.get('credit') or 0.0
@@ -72,6 +89,7 @@ class AccountTrialBalance(models.TransientModel):
 
         move_line_list = []
         for account_id, values in account_totals.items():
+            account = account_records[account_id]
             initial_total_debit = round(values['initial_total_debit'], 2)
             initial_total_credit = round(values['initial_total_credit'], 2)
             total_debit = round(values['total_debit'], 2)
@@ -85,17 +103,29 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
+
+            group_label, group_order = _group_info(account.account_type)
+
             move_line_list.append({
-                'account': account_display_names.get(account_id),
+                'account': account.display_name,
+                'account_name': account.name,  
                 'account_id': account_id,
+                'account_code': account.code or '',
+                'group_label': group_label,
+                'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], ['name']),
                 'initial_total_debit': initial_total_debit,
                 'initial_total_credit': initial_total_credit,
+                'initial_balance': initial_total_debit - initial_total_credit,
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'end_total_debit': end_total_debit,
                 'end_total_credit': end_total_credit,
+                # Net closing figure: positive = net debit balance, negative = net credit balance.
+                'end_balance': end_total_debit - end_total_credit,
             })
+
+        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
         return move_line_list
 
     @api.model
@@ -121,6 +151,9 @@ class AccountTrialBalance(models.TransientModel):
         :return: List of dictionaries representing the financial report.
         :rtype: list
         """
+        
+        if not start_date or not end_date:
+            return []
         if options == {}:
             options = None
         if options is None:
@@ -132,8 +165,16 @@ class AccountTrialBalance(models.TransientModel):
         dynamic_total_debit = {}
         dynamic_date_num = {}
         dynamic_total_credit = {}
-        account_ids = self.env['account.move.line'].search([]).mapped(
-            'account_id')
+                # `analytic` here actually carries selected account.account ids from
+        # the "Account" filter (placeholder is 'Account', not an analytic
+        # account). When specific accounts are picked, show only those;
+        # otherwise show every account. Either way, sort by code.
+        if analytic:
+            account_ids = self.env['account.account'].browse(analytic).exists()
+        else:
+            account_ids = self.env['account.move.line'].search([]).mapped(
+                'account_id')
+        account_ids = account_ids.sorted(key=lambda a: a.code or '')
         move_line_list = []
         start_date_first = \
             get_fiscal_year(datetime.strptime(start_date, "%Y-%m-%d").date())[
@@ -164,9 +205,9 @@ class AccountTrialBalance(models.TransientModel):
             if journal_list:
                 domain.append(
                     ('journal_id', 'in', journal_list), )
-            if analytic:
-                domain.append(
-                    ('analytic_line_ids', 'in', analytic))
+            # if analytic:
+            #     domain.append(
+            #         ('analytic_line_ids', 'in', analytic))
             if method is not None and 'cash' in method:
                 domain.append(('journal_id', 'in',
                                self.env.company.tax_cash_basis_journal_id.ids))
@@ -188,9 +229,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids))
@@ -217,9 +258,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids), )
@@ -250,9 +291,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids))
@@ -275,9 +316,9 @@ class AccountTrialBalance(models.TransientModel):
             if journal_list:
                 domain.append(
                     ('journal_id', 'in', journal_list), )
-            if analytic:
-                domain.append(
-                    ('analytic_line_ids', 'in', analytic))
+            # if analytic:
+            #     domain.append(
+            #         ('analytic_line_ids', 'in', analytic))
             if method is not None and 'cash' in method:
                 domain.append(('journal_id', 'in',
                                self.env.company.tax_cash_basis_journal_id.ids))
@@ -295,17 +336,24 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
+            group_label, group_order = _group_info(account_id.account_type)
             data = {
                 'account': account_id.display_name,
+                'account_name': account_id.name, 
                 'account_id': account_id.id,
+                'account_code': account_id.code or '',
+                'group_label': group_label,
+                'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], [
                     'name']),
                 'initial_total_debit': initial_total_debit,
                 'initial_total_credit': initial_total_credit,
+                'initial_balance': initial_total_debit - initial_total_credit,
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'end_total_debit': end_total_debit,
-                'end_total_credit': end_total_credit
+                'end_total_credit': end_total_credit,
+                'end_balance': end_total_debit - end_total_credit,
             }
             if comparison_number:
                 if dynamic_date_num:
@@ -319,6 +367,8 @@ class AccountTrialBalance(models.TransientModel):
                         f"dynamic_total_credit_{eval(comparison_number) + 1 - i}",
                         0.0)
             move_line_list.append(data)
+
+        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
         return move_line_list
 
     @api.model
@@ -371,11 +421,17 @@ class AccountTrialBalance(models.TransientModel):
         side_heading_sub.set_indent(1)
         txt_name = workbook.add_format({'font_size': '10px', 'border': 1})
         txt_name.set_indent(2)
-        sheet.set_column(0, 0, 30)
-        sheet.set_column(1, 1, 20)
-        sheet.set_column(2, 2, 15)
-        sheet.set_column(3, 3, 15)
+        sheet.set_column(0, 0, 16)   # Account Number
+        sheet.set_column(1, 1, 34)   # Account Name
+        sheet.set_column(2, 2, 15)   # Initial Balance (net)
         col = 0
+
+        num_fmt_whole = workbook.add_format(
+            {'font_size': '10px', 'border': 1, 'num_format': '#,##0'})
+        group_header_fmt = workbook.add_format(
+            {'bold': True, 'font_size': '11px', 'bg_color': '#D9D9D9',
+             'border': 1})
+
         sheet.write('A1:b1', report_name, head)
         sheet.write('B3:b4', 'Date Range', filter_head)
         sheet.write('B4:b4', 'Comparison', filter_head)
@@ -403,56 +459,67 @@ class AccountTrialBalance(models.TransientModel):
             option_keys = list(data['filters']['options'].keys())
             option_keys_str = ', '.join(option_keys)
             sheet.merge_range('C7:G7', option_keys_str, filter_body)
-        sheet.write(9, col, '', sub_heading)
-        sheet.merge_range(9, col + 1, 9, col + 2, 'Initial Balance',
-                          sub_heading)
+
+        # Header row: Account Number | Account Name | Initial Balance (net) | period pairs... | End Balance
+        sheet.write(9, col, 'Account No.', sub_heading)
+        sheet.write(9, col + 1, 'Account Name', sub_heading)
+        sheet.write(9, col + 2, 'Initial Balance', sub_heading)
         i = 3
         for date_view in data['date_viewed']:
             sheet.merge_range(9, col + i, 9, col + i + 1, date_view,
                               sub_heading)
             i += 2
-        sheet.merge_range(9, col + i, 9, col + i + 1, 'End Balance',
-                          sub_heading)
+        sheet.write(9, col + i, 'End Balance', sub_heading)
+
         sheet.write(10, col, '', sub_heading)
-        sheet.write(10, col + 1, 'Debit', sub_heading)
-        sheet.write(10, col + 2, 'Credit', sub_heading)
+        sheet.write(10, col + 1, '', sub_heading)
+        sheet.write(10, col + 2, '', sub_heading)
         i = 3
         for date_views in data['date_viewed']:
             sheet.write(10, col + i, 'Debit', sub_heading)
             i += 1
             sheet.write(10, col + i, 'Credit', sub_heading)
             i += 1
-        sheet.write(10, col + i, 'Debit', sub_heading)
-        sheet.write(10, col + (i + 1), 'Credit', sub_heading)
+        sheet.write(10, col + i, '', sub_heading)
+        # sheet.write(10, col + (i + 1), 'Credit', sub_heading)
+
         if data:
             if report_action == 'dynamic_accounts_report.action_trial_balance':
                 row = 11
+                current_group = None
                 for move_line in data['data']:
-                    sheet.write(row, col, move_line['account'],
-                                side_heading_sub)
-                    sheet.write(row, col + 1, move_line['initial_total_debit'],
-                                txt_name)
+                    group_label = move_line.get('group_label', 'Other')
+                    if group_label != current_group:
+                        last_col = col + 3 + (2 * len(data['date_viewed'])) + 1
+                        sheet.merge_range(row, col, row, last_col,
+                                          group_label, group_header_fmt)
+                        row += 1
+                        current_group = group_label
+
+                    sheet.write(row, col, move_line.get('account_code', ''), txt_name)
+                    sheet.write(row, col + 1, move_line.get('account_name',
+                                        move_line['account']), side_heading_sub)
                     sheet.write(row, col + 2,
-                                move_line['initial_total_credit'], txt_name)
+                                move_line.get('initial_balance', 0.0),
+                                num_fmt_whole)
                     j = 3
                     if data['apply_comparison']:
                         number_of_periods = data['comparison_number_range']
                         for num in number_of_periods:
                             sheet.write(row, col + j, move_line[
-                                'dynamic_total_debit_' + str(num)], txt_name)
+                                'dynamic_total_debit_' + str(num)], num_fmt_whole)
                             sheet.write(row, col + j + 1, move_line[
-                                'dynamic_total_credit_' + str(num)], txt_name)
+                                'dynamic_total_credit_' + str(num)], num_fmt_whole)
                             j += 2
                     sheet.write(row, col + j, move_line['total_debit'],
-                                txt_name)
+                                num_fmt_whole)
                     sheet.write(row, col + j + 1, move_line['total_credit'],
-                                txt_name)
-                    sheet.write(row, col + j + 2, move_line['end_total_debit'],
-                                txt_name)
-                    sheet.write(row, col + j + 3,
-                                move_line['end_total_credit'], txt_name)
+                                num_fmt_whole)
+                    sheet.write(row, col + j + 2,
+                        move_line.get('end_balance', 0.0), num_fmt_whole)
                     row += 1
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
         output.close()
+        

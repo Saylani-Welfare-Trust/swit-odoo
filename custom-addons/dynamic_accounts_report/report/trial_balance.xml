@@ -17,58 +17,88 @@
                     <br/>
                     <br/>
                     <div class="filters">
-                        <table class="table table-sm table-reports">
-                            <thead class="filter_table"
-                                   style="background:#808080;">
+                        <table class="table table-sm table-reports"
+                            style="width: fit-content;">
+                            <thead style="background:#808080;">
                                 <tr>
-                                    <th>Date Range</th>
-                                    <th>Comparison</th>
-                                    <th>Account</th>
-                                    <th>Journal</th>
-                                    <th>Options</th>
+                                    <th colspan="6"/>
+                                    <th>Initial Balance</th>
+                                    <t t-foreach="date_viewed" t-as="date_view"
+                                    t-key="date_view_index">
+                                        <th colspan="2">
+                                            <t t-esc="date_view"/>
+                                        </th>
+                                    </t>
+                                    <th>End Balance</th>
+                                </tr>
+                                <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
+                                    <th colspan="6"/>
+                                    <th/>
+                                    <t t-if="apply_comparison == true">
+                                        <t t-set="number_of_periods"
+                                        t-value="comparison_number_range"/>
+                                        <t t-foreach="number_of_periods"
+                                        t-as="number" t-key="number">
+                                            <th>Debit</th>
+                                            <th>Credit</th>
+                                        </t>
+                                    </t>
+                                    <th/>
                                 </tr>
                             </thead>
-                            <tbody style="font-size:11px;font-weight:100;">
-                                <tr>
-                                    <th>
-                                        <t t-if="filters['start_date']"
-                                           t-out="filters['start_date']"/>
-                                        <t t-if="filters['end_date']">
-                                            to
-                                            <t t-out="filters['end_date']"/>
+                            <tbody>
+                                <t t-if="data">
+                                    <t t-set="current_group" t-value="False"/>
+                                    <t t-set="i" t-value="0"/>
+                                    <t t-foreach="data"
+                                    t-as="move_line"
+                                    t-key="move_line_index">
+                                        <t t-set="i" t-value="i + 1"/>
+                                        <t t-if="move_line.get('group_label', 'Other') != current_group">
+                                            <tr style="background:#EAEAEA;">
+                                                <th colspan="12">
+                                                    <t t-esc="move_line.get('group_label', 'Other')"/>
+                                                </th>
+                                            </tr>
+                                            <t t-set="current_group" t-value="move_line.get('group_label', 'Other')"/>
                                         </t>
-                                    </th>
-                                    <th>
-                                        <t t-if="filters['comparison_number_range']">
-                                            <t t-out="filters['comparison_type']"/>
-                                            :
-                                            <t t-out="filters['comparison_number_range']"/>
-                                        </t>
-                                    </th>
-                                    <th>
-                                        <t t-foreach="filters['journal']"
-                                           t-as="selected_journal"
-                                           t-key="journal_index">
-                                            <t t-out="selected_journal"/>
-                                            ,
-                                        </t>
-                                    </th>
-                                    <th>
-                                        <t t-foreach="filters['account']"
-                                           t-as="selected_account"
-                                           t-key="account_index">
-                                            <t t-out="selected_account['display_name']"/>
-                                            ,
-                                        </t>
-                                    </th>
-                                    <th>
-                                        <t t-foreach="filters['options']"
-                                           t-as="selected_options"
-                                           t-key="options_index">
-                                            <t t-out="selected_options"/>,
-                                        </t>
-                                    </th>
-                                </tr>
+                                        <tr class="border-bottom"
+                                            style="border-spacing: 0 10px;">
+                                            <th colspan="6">
+                                                <t t-esc="move_line['account']"/>
+                                            </th>
+                                            <th style="text-align:center;">
+                                                <t t-esc="'{:,.0f}'.format(move_line.get('initial_balance', 0.0))"/>
+                                            </th>
+                                            <t t-if="apply_comparison == true">
+                                                <t t-set="number_of_periods"
+                                                t-value="comparison_number_range"/>
+                                                <t t-foreach="number_of_periods"
+                                                t-as="num" t-key="num">
+                                                    <th style="text-align:center;">
+                                                        <t t-if="move_line['dynamic_total_debit_' + str(num)]"
+                                                        t-esc="'{:,.0f}'.format(move_line['dynamic_total_debit_' + str(num)])"/>
+                                                    </th>
+                                                    <th style="text-align:center;">
+                                                        <t t-if="move_line['dynamic_total_credit_' + str(num)]"
+                                                        t-esc="'{:,.0f}'.format(move_line['dynamic_total_credit_' + str(num)])"/>
+                                                    </th>
+                                                </t>
+                                            </t>
+                                            <th style="text-align:center;">
+                                                <t t-if="move_line['total_debit']"
+                                                t-esc="'{:,.0f}'.format(move_line['total_debit'])"/>
+                                            </th>
+                                            <th style="text-align:center;">
+                                                <t t-if="move_line['total_credit']"
+                                                t-esc="'{:,.0f}'.format(move_line['total_credit'])"/>
+                                            </th>
+                                            <th style="text-align:center;">
+                                                <t t-esc="'{:,.0f}'.format(move_line.get('end_balance', 0.0))"/>
+                                            </th>
+                                        </tr>
+                                    </t>
+                                </t>
                             </tbody>
                         </table>
                     </div>
@@ -78,17 +108,36 @@
                     <table class="table table-sm table-reports"
                            style="width: fit-content;">
                         <thead style="background:#808080;">
-                            <tr>
+
+                            <!-- Row 1: period labels — Initial / End must span 2 cols -->
+                            <tr class="o_heading" style="text-align:center;">
                                 <th colspan="6"/>
                                 <th colspan="2">Initial Balance</th>
-                                <t t-foreach="date_viewed" t-as="date_view"
-                                   t-key="date_view_index">
-                                    <th colspan="2">
-                                        <t t-esc="date_view"/>
-                                    </th>
+                                <t t-if="date_viewed">
+                                    <t t-foreach="date_viewed" t-as="date_view" t-key="date_view_index">
+                                        <th colspan="2">
+                                            <t t-esc="date_view"/>
+                                        </th>
+                                    </t>
                                 </t>
                                 <th colspan="2">End Balance</th>
                             </tr>
+
+                            <!-- Row 2: only labels comparison periods, everything else stays blank -->
+                            <tr class="o_heading" style="text-align:center;">
+                                <th colspan="6"/>
+                                <th colspan="2"/>
+                                <t t-if="apply_comparison == true">
+                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                    <t t-foreach="number_of_periods" t-as="number" t-key="number">
+                                        <th>Debit</th>
+                                        <th>Credit</th>
+                                    </t>
+                                </t>
+                                <th colspan="2"/>
+                            </tr>
+
+                            <!-- Row 3: Debit/Credit for Initial + current + End, then comparison periods -->
                             <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
                                 <th colspan="6"/>
                                 <th>Debit</th>
@@ -98,10 +147,8 @@
                                 <th>Debit</th>
                                 <th>Credit</th>
                                 <t t-if="apply_comparison == true">
-                                    <t t-set="number_of_periods"
-                                       t-value="comparison_number_range"/>
-                                    <t t-foreach="number_of_periods"
-                                       t-as="number" t-key="number">
+                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                    <t t-foreach="number_of_periods" t-as="number" t-key="number">
                                         <th>Debit</th>
                                         <th>Credit</th>
                                     </t>
@@ -117,8 +164,11 @@
                                     <t t-set="i" t-value="i + 1"/>
                                     <tr class="border-bottom"
                                         style="border-spacing: 0 10px;">
-                                        <th colspan="6">
-                                            <t t-esc="move_line['account']"/>
+                                        <th>
+                                            <t t-esc="move_line['account_code']"/>
+                                        </th>
+                                        <th colspan="5">
+                                            <t t-esc="move_line['account_name']"/>
                                         </th>
                                         <th style="text-align:center;">
                                             <t t-if="move_line['initial_total_debit']"
