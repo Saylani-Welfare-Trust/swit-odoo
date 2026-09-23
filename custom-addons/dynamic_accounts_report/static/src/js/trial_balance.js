@@ -27,6 +27,7 @@ class TrialBalance extends owl.Component {
             data: null,
             total: null,
             journals: null,
+            accounts: [],
             selected_analytic: [],
             analytic_account: null,
             selected_journal_list: [],
@@ -48,10 +49,7 @@ class TrialBalance extends owl.Component {
     }
 
     async load_data() {
-        // Refs must exist — if not, bail out (they will be ready by onMounted)
-        if (!this.start_date?.el || !this.end_date?.el) {
-            return;
-        }
+        if (!this.start_date?.el || !this.end_date?.el) return;
 
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -63,6 +61,14 @@ class TrialBalance extends owl.Component {
         this.state.date_viewed = [
             monthNamesShort[today.getMonth()] + '  ' + today.getFullYear()
         ];
+
+        // Load accounts (used by the Account filter dropdown)
+        this.state.accounts = await this.orm.searchRead(
+            "account.account",
+            [],
+            ["code", "name", "display_name"],
+            { order: "code" }
+        );
 
         this.state.data = await this.orm.call(
             "account.trial.balance", "view_report", []
@@ -193,26 +199,32 @@ class TrialBalance extends owl.Component {
                 };
             } else if (val && val.target.attributes["data-value"].value == 'journal') {
                 if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_journal_list.push(parseInt(val.target.attributes["data-id"].value, 10))
+                    this.state.selected_journal_list.push(
+                        parseInt(val.target.attributes["data-id"].value, 10));
                     val.target.classList.add("selected-filter");
                 } else {
-                    const updatedList = this.state.selected_journal_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_journal_list = updatedList
+                    const updatedList = this.state.selected_journal_list.filter(
+                        item => item !== parseInt(val.target.attributes["data-id"].value, 10));
+                    this.state.selected_journal_list = updatedList;
+                    val.target.classList.remove("selected-filter");
+                }
+            } else if (val && val.target.attributes["data-value"].value == 'account') {
+                // -------- NEW: account multi-select (mirrors journal) --------
+                const accId = parseInt(val.target.attributes["data-id"].value, 10);
+                if (!val.target.classList.contains("selected-filter")) {
+                    this.state.selected_analytic.push(accId);
+                    const rec = this.state.accounts.find(a => a.id === accId);
+                    if (rec) this.state.selected_analytic_account_rec.push(rec);
+                    val.target.classList.add("selected-filter");
+                } else {
+                    this.state.selected_analytic = this.state.selected_analytic.filter(
+                        id => id !== accId);
+                    this.state.selected_analytic_account_rec =
+                        this.state.selected_analytic_account_rec.filter(r => r.id !== accId);
                     val.target.classList.remove("selected-filter");
                 }
             } else if (val && val.target.attributes["data-value"].value === 'draft') {
-                if (val.target.classList.contains("selected-filter")) {
-                    const { draft, ...updatedAccount } = this.state.options;
-                    this.state.options = updatedAccount;
-                    val.target.classList.remove("selected-filter");
-                } else {
-                    this.state.options = {
-                        ...this.state.options,
-                        'draft': true
-                    };
-                    val.target.classList.add("selected-filter");
-                }
-            }else if (val.target.attributes["data-value"].value === 'cash-basis') {
+                // ... unchanged ...
                 if (val.target.classList.contains("selected-filter")) {
                     const { cash, ...updatedAccount } = this.state.method;
                     this.state.method = updatedAccount;

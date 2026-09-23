@@ -32,6 +32,53 @@
                             </div>
                         </div>
                         <div class="sub_container_right">
+                            <!-- Account Filter -->
+                            <div class="account" style="">
+                                <a type="button" class="dropdown-toggle"
+                                data-bs-toggle="dropdown" style="display: flex;
+                                                                    text-wrap: wrap;
+                                                                    flex-direction: row;
+                                                                    align-items: center;
+                                                                    justify-content: flex-start;
+                                                                    min-width: 105px;">
+                                    <span class="fa fa-list" title="Accounts" role="img"/>
+                                    Accounts
+                                    <t t-if="state.selected_analytic_account_rec.length">
+                                        :
+                                        <t t-foreach="state.selected_analytic_account_rec"
+                                        t-as="acc"
+                                        t-key="acc.id">
+                                            <t t-esc="acc.code"/> <t t-esc="acc.name"/>
+                                            <t t-if="acc_index != state.selected_analytic_account_rec.length - 1">,
+                                            </t>
+                                        </t>
+                                    </t>
+                                </a>
+                                <div class="dropdown-menu" role="menu"
+                                    style="max-height: 420px; overflow-y: auto; min-width: 260px;">
+                                    <div class="list-group">
+                                        <t t-if="state.accounts and state.accounts.length">
+                                            <t t-foreach="state.accounts"
+                                            t-as="account"
+                                            t-key="account.id">
+                                                <button class="report-filter-button"
+                                                        t-att-data-value="'account'"
+                                                        t-att-data-id="account.id"
+                                                        t-attf-class="report-filter-button #{state.selected_analytic.includes(account.id) ? 'selected-filter' : ''}"
+                                                        type="button"
+                                                        t-on-click="applyFilter">
+                                                    <t t-esc="account.code"/> — <t t-esc="account.name"/>
+                                                </button>
+                                            </t>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="text-muted" style="padding: 6px 10px;">
+                                                No accounts
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Time Range -->
                             <div class="time_range" style="">
                                 <a type="button" class="dropdown-toggle"
