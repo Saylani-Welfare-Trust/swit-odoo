@@ -108,37 +108,36 @@
                     <table class="table table-sm table-reports"
                            style="width: fit-content;">
                         <thead style="background:#808080;">
-                                                                <tr class="o_heading"
-                                        style="text-align:center;">
-                                        <th colspan="6"/>
-                                        <th>Initial Balance</th>
-                                        <t t-if="state.date_viewed.length != 0">
-                                            <t t-foreach="state.date_viewed"
-                                               t-as="date_view"
-                                               t-key="date_view_index">
-                                                <th colspan="2">
-                                  
-                                                    <t t-esc="date_view"/>
-                                                </th>
-                                            </t>
-                                        </t>
-                                        <th>End Balance</th>
-                                    </tr>
-                                    <tr class="o_heading"
-                                        style="text-align:center;">
-                                        <th colspan="6"/>
-                                        <th/>
-                                        <t t-if="state.apply_comparison == true">
-                                            <t t-set="number_of_periods"
-                                               t-value="comparison_number_range"/>
-                                            <t t-foreach="number_of_periods"
-                                               t-as="number" t-key="number">
-                                                <th>Debit</th>
-                                                <th>Credit</th>
-                                            </t>
-                                        </t>
-                                        <th/>
-                                    </tr>
+
+                            <!-- Row 1: period labels — Initial / End must span 2 cols -->
+                            <tr class="o_heading" style="text-align:center;">
+                                <th colspan="6"/>
+                                <th colspan="2">Initial Balance</th>
+                                <t t-if="date_viewed">
+                                    <t t-foreach="date_viewed" t-as="date_view" t-key="date_view_index">
+                                        <th colspan="2">
+                                            <t t-esc="date_view"/>
+                                        </th>
+                                    </t>
+                                </t>
+                                <th colspan="2">End Balance</th>
+                            </tr>
+
+                            <!-- Row 2: only labels comparison periods, everything else stays blank -->
+                            <tr class="o_heading" style="text-align:center;">
+                                <th colspan="6"/>
+                                <th colspan="2"/>
+                                <t t-if="apply_comparison == true">
+                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                    <t t-foreach="number_of_periods" t-as="number" t-key="number">
+                                        <th>Debit</th>
+                                        <th>Credit</th>
+                                    </t>
+                                </t>
+                                <th colspan="2"/>
+                            </tr>
+
+                            <!-- Row 3: Debit/Credit for Initial + current + End, then comparison periods -->
                             <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
                                 <th colspan="6"/>
                                 <th>Debit</th>
@@ -148,10 +147,8 @@
                                 <th>Debit</th>
                                 <th>Credit</th>
                                 <t t-if="apply_comparison == true">
-                                    <t t-set="number_of_periods"
-                                       t-value="comparison_number_range"/>
-                                    <t t-foreach="number_of_periods"
-                                       t-as="number" t-key="number">
+                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                    <t t-foreach="number_of_periods" t-as="number" t-key="number">
                                         <th>Debit</th>
                                         <th>Credit</th>
                                     </t>
