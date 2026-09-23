@@ -2,13 +2,14 @@
 <odoo>
     <data>
         <template id="bn_pos_order.pos_donation_receipt_template">
-            <t t-call="web.basic_layout">
+            <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="order">
-                    <!-- Set Payment Method -->
-                    <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
+                    <t t-call="web.external_layout">
+                        <!-- Set Payment Method -->
+                        <t t-set="payment_method" t-value="order.payment_ids and order.payment_ids[0].payment_method_id.name or ''"/>
 
-                    <!-- PAGE WRAPPER -->
-                    <div class="page" style="position:relative;">
+                        <!-- PAGE WRAPPER -->
+                        <div class="page" style="position:relative;">
                             <!-- ===== STYLES ===== -->
                             <style>
                                 body {
@@ -54,7 +55,7 @@
 
                             <img t-if="order.env.company.dn_image"
                                 t-att-src="image_data_uri(order.env.company.dn_image)"
-                                style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
+                                style="height: 100%; width: 100%;"/>
 
                             <!-- ===== WATERMARK ===== -->
                             <div class="watermark">Duplicate</div>
@@ -154,12 +155,10 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <table style="width:100%; margin-top:10px; font-size:10px;">
-                                <tr>
-                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="order.user_id.employee_id.name"/></strong></td>
-                                    <td style="text-align:right; padding:0;">Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/></strong></td>
-                                </tr>
-                            </table>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
+                                <div>Entered by: <strong><t t-esc="order.user_id.employee_id.name"/></strong></div>
+                                <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/></strong></div>
+                            </div>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
@@ -197,7 +196,9 @@
                                 Powered by BytesNode
                             </div>
 
-                    </div>
+                        </div>
+
+                    </t>
                 </t>
             </t>
         </template>
