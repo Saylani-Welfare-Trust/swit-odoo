@@ -523,9 +523,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
                 this.cancel();
 
-                this.report.doAction("bn_direct_deposit.report_direct_deposit_provisional", [
-                    data.id,
-                ]);
             }
 
             this.pos.removeOrder(selectedOrder);
