@@ -45,15 +45,18 @@ class TrialBalance extends owl.Component {
         onMounted(() => {
             this.load_data();
         });
-        this.load_data(self.initial_render = true);
     }
 
     async load_data() {
+        // Refs must exist — if not, bail out (they will be ready by onMounted)
+        if (!this.start_date?.el || !this.end_date?.el) {
+            return;
+        }
+
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const endOfMonth   = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-        // Refs are guaranteed to exist here
         this.start_date.el.value = this._fmt(startOfMonth);
         this.end_date.el.value   = this._fmt(endOfMonth);
 
@@ -64,7 +67,6 @@ class TrialBalance extends owl.Component {
         this.state.data = await this.orm.call(
             "account.trial.balance", "view_report", []
         );
-        // journals
         this.state.journals = (this.state.data[0] || {}).journal_ids || [];
     }
 
