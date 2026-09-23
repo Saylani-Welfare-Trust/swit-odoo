@@ -55,7 +55,7 @@
                             <!-- ===== BANNER ===== -->
                             <img t-if="o.env.company.dn_image"
                                 t-att-src="image_data_uri(o.env.company.dn_image)"
-                                style="display:block; max-width:100%; max-height:70mm; width:auto; height:auto; margin:0 auto 6px auto;"/>
+                                style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
