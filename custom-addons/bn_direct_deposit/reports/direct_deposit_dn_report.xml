@@ -9,7 +9,8 @@
             <t t-call="web.basic_layout">
                 <t t-foreach="docs" t-as="o">
                     <!-- PAGE WRAPPER -->
-                    <div class="page" style="position:relative;">
+                    <div class="page"
+                        t-attf-style="position:relative; min-height:200mm; background-repeat:no-repeat; background-position:top left; background-size:140mm 200mm; background-image:{{ ('url(%s)' % image_data_uri(o.env.company.dn_image)) if o.env.company.dn_image else 'none' }};">
                             <style>
                                 body {
                                     font-family: Arial, sans-serif;
@@ -51,10 +52,6 @@
                                     z-index: 0;
                                 }
                             </style>
-
-                            <img t-if="o.env.company.dn_image"
-                                t-att-src="image_data_uri(o.env.company.dn_image)"
-                                style="height: 100%; width: 100%;"/>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
