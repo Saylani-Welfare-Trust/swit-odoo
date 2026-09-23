@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 
@@ -104,24 +104,19 @@ class PurchaseOrder(models.Model):
         return lines
 
     def _get_budget_exceeded_reasons(self):
-        """Why this RFQ needs the CFO's decision; empty when it is within both
-        the accounting budget and the Shariah Law balance, or when the CFO has
-        already approved it. Checked on the RFQ's current amounts every time."""
+        """Why this RFQ needs the CFO's decision; empty when it is within the
+        Shariah Law balance, or when the CFO has already approved it. The
+        accounting budget is not checked here - the Material Request's own
+        CFO / COO Budget Approval already covers that; this step only looks at
+        Shariah. Checked on the RFQ's current amounts every time."""
         self.ensure_one()
         if self.shariah_override:
             return []
-        reasons = [
-            _('Budget %(budget)s / %(segment)s: RFQ amount %(required).2f, available %(available).2f') % {
-                'budget': budget.display_name or _('none'), 'segment': analytic.display_name,
-                'required': required, 'available': available}
-            for analytic, budget, required, available in self._get_accounting_budget_shortfalls()
-        ]
-        reasons += [
+        return [
             _('%(segment)s: required %(required).2f, Shariah closing balance %(balance).2f') % {
                 'segment': analytic.display_name, 'required': required, 'balance': balance}
             for analytic, required, balance in self._get_shariah_shortfalls()
         ]
-        return reasons
 
     def _mark_cfo_approved(self, auto=False):
         """Record the CFO approval and let the requisition move on to the Funds
@@ -167,6 +162,13 @@ class PurchaseOrder(models.Model):
         held = self.browse()
         for order in self:
             reasons = order._get_budget_exceeded_reasons()
+            # TEMPORARY diagnostic: show what the Shariah check found, on every
+            # HOD approval, so it's visible whether it's actually checking.
+            # Remove this raise once confirmed.
+            raise ValidationError(_('Shariah check - %(result)s:\n%(summary)s') % {
+                'result': _('OUT OF BUDGET') if reasons else _('within budget'),
+                'summary': '\n'.join(order._get_budget_check_summary()),
+            })
             if not reasons:
                 order.message_post(body=_('Budget check - within budget:<br/>%s') % '<br/>'.join(order._get_budget_check_summary()))
                 order._mark_cfo_approved(auto=True)
