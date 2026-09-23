@@ -90,11 +90,12 @@ class GeneralLedger extends owl.Component {
                     });
                 }
             })
+            // sort accounts A -> Z (case-insensitive, numeric-aware)
+            account_list = self.sortAccounts(account_list);
             self.state.account = account_list
             self.state.account_list = account_list
             self.state.account_data_list = self.state.account_data
             self.state.account_list_full = [...account_list];
-            self.state.all_accounts = self.sortAccounts(account_list);
             self.state.all_accounts = [...account_list];
             self.state.account_data_full = { ...self.state.account_data };
             self.state.account_total_list = account_totals
@@ -228,6 +229,7 @@ class GeneralLedger extends owl.Component {
     getDomain() {
         return [];
     }
+
     async applyFilter(val, ev, is_delete = false) {
         let account_list = []
         let account_totals = ''
@@ -341,10 +343,11 @@ class GeneralLedger extends owl.Component {
                 });
             }
         })
+        // sort accounts A -> Z (case-insensitive, numeric-aware)
+        account_list = this.sortAccounts(account_list);
         this.state.account = account_list
         this.state.account_data = filtered_data
         this.state.account_list_full = [...account_list];
-        this.state.all_accounts = this.sortAccounts(account_list);
         this.state.all_accounts = [...account_list];
         this.state.account_data_full = { ...filtered_data };
         this.state.account_total = account_totals
