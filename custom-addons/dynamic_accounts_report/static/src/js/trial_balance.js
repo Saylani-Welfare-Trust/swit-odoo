@@ -6,6 +6,7 @@ import { useRef, useState } from "@odoo/owl";
 import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
 const actionRegistry = registry.category("actions");
+import { onMounted } from "@odoo/owl";
 const today = luxon.DateTime.now();
 let monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -41,32 +42,36 @@ class TrialBalance extends owl.Component {
                         'accural': true
                     },
         });
+        onMounted(() => {
+            this.load_data();
+        });
         this.load_data(self.initial_render = true);
     }
+
     async load_data() {
-        /**
-         * Loads the data for the trial balance report.
-         */
-        let move_line_list = []
-        let move_lines_total = ''
-        var self = this;
-        var action_title = self.props.action.display_name;
-        try {
-            var self = this;
-            var today = new Date();
-            var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            var endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            self.state.data = await self.orm.call("account.trial.balance", "view_report", []);
-            self.start_date.el.value = startOfMonth.getFullYear() + '-' + String(startOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(startOfMonth.getDate()).padStart(2, '0');
-            self.end_date.el.value = endOfMonth.getFullYear() + '-' + String(endOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(endOfMonth.getDate()).padStart(2, '0');
-            self.state.date_viewed.push(monthNamesShort[today.getMonth()] + '  ' + today.getFullYear())
-            $.each(self.state.data, function (index, value) {
-                self.state.journals = value.journal_ids
-            })
-        }
-        catch (el) {
-            window.location.href;
-        }
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth   = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        // Refs are guaranteed to exist here
+        this.start_date.el.value = this._fmt(startOfMonth);
+        this.end_date.el.value   = this._fmt(endOfMonth);
+
+        this.state.date_viewed = [
+            monthNamesShort[today.getMonth()] + '  ' + today.getFullYear()
+        ];
+
+        this.state.data = await this.orm.call(
+            "account.trial.balance", "view_report", []
+        );
+        // journals
+        this.state.journals = (this.state.data[0] || {}).journal_ids || [];
+    }
+
+    _fmt(d) {
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
     }
     async applyFilter(val, ev, is_delete) {
         /**
@@ -89,6 +94,9 @@ class TrialBalance extends owl.Component {
         if (ev && ev.target && ev.target.attributes["data-value"] && ev.target.attributes["data-value"].value == 'no comparison') {
             const lastIndex = this.state.date_viewed.length - 1;
             this.state.date_viewed.splice(0, lastIndex);
+        }
+        if (!this.start_date.el?.value || !this.end_date.el?.value) {
+            return;
         }
         if (ev) {
             if (ev.input && ev.input.attributes.placeholder.value == 'Account' && !is_delete) {
@@ -286,6 +294,11 @@ class TrialBalance extends owl.Component {
          * @param {Event} ev - Event object triggering the comparison period application.
          * @returns {void} No explicit return value.
          */
+         if (!this.start_date.el?.value || !this.end_date.el?.value) {
+            this.env.services.notification.add(
+                "Please pick a date range first.", { type: "warning" });
+            return;
+        }
         this.state.apply_comparison = true
         this.state.comparison_type = this.state.date_type
         this.applyFilter(null, ev)
