@@ -331,30 +331,6 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
-            data = {
-                'account': account_id.display_name,
-                'account_id': account_id.id,
-                'journal_ids': self.env['account.journal'].search_read([], [
-                    'name']),
-                'initial_total_debit': initial_total_debit,
-                'initial_total_credit': initial_total_credit,
-                'total_debit': total_debit,
-                'total_credit': total_credit,
-                'end_total_debit': end_total_debit,
-                'end_total_credit': end_total_credit
-            }
-            if comparison_number:
-                if dynamic_date_num:
-                    data['dynamic_date_num'] = dynamic_date_num
-                for i in range(1, eval(comparison_number) + 1):
-                    data[f'dynamic_total_debit_{i}'] = dynamic_total_debit.get(
-                        f"dynamic_total_debit_{eval(comparison_number) + 1 - i}",
-                        0.0)
-                    data[
-                        f'dynamic_total_credit_{i}'] = dynamic_total_credit.get(
-                        f"dynamic_total_credit_{eval(comparison_number) + 1 - i}",
-                        0.0)
-            move_line_list.append(data)
             group_label, group_order = _group_info(account_id.account_type)
             data = {
                 'account': account_id.display_name,
@@ -372,7 +348,20 @@ class AccountTrialBalance(models.TransientModel):
                 'end_total_debit': end_total_debit,
                 'end_total_credit': end_total_credit
             }
-            move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
+            if comparison_number:
+                if dynamic_date_num:
+                    data['dynamic_date_num'] = dynamic_date_num
+                for i in range(1, eval(comparison_number) + 1):
+                    data[f'dynamic_total_debit_{i}'] = dynamic_total_debit.get(
+                        f"dynamic_total_debit_{eval(comparison_number) + 1 - i}",
+                        0.0)
+                    data[
+                        f'dynamic_total_credit_{i}'] = dynamic_total_credit.get(
+                        f"dynamic_total_credit_{eval(comparison_number) + 1 - i}",
+                        0.0)
+            move_line_list.append(data)
+
+        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
         return move_line_list
 
     @api.model
