@@ -399,8 +399,23 @@ class AccountGeneralLedger(models.TransientModel):
         if report_accounts:
             if report_action == 'dynamic_accounts_report.action_general_ledger':
                 for account in report_accounts:
-                    account_total = report_totals.get(account, {})
+                    account_total = report_totals.get(account) or {}
                     account_label = account if account != 'false' else 'Unknown Account'
+                    lines_for_account = report_data.get(account, [])
+
+                    # Recompute debit/credit directly from the displayed lines
+                    # instead of trusting the separately-passed totals dict —
+                    # guards against any key mismatch between `data` and `total`.
+                    computed_debit = 0.0
+                    computed_credit = 0.0
+                    for rec in lines_for_account:
+                        record = rec[0] if isinstance(rec, list) else rec
+                        computed_debit += record.get('debit', 0.0) or 0.0
+                        computed_credit += record.get('credit', 0.0) or 0.0
+
+                    opening_balance = account_total.get('opening_balance', 0.0)
+                    closing = opening_balance + computed_debit - computed_credit
+                    currency = account_total.get('currency_id', '')
 
                     # Column headers, repeated per account section
                     for idx, header in enumerate(headers):
@@ -418,11 +433,11 @@ class AccountGeneralLedger(models.TransientModel):
                     sheet.merge_range(row, 1, row, 9, 'OPENING BALANCE', opening_fmt)
                     sheet.write(row, 10, '', opening_fmt)
                     sheet.write(row, 11, '', opening_fmt)
-                    sheet.write(row, 12, account_total.get('opening_balance', 0.0), opening_num_fmt)
+                    sheet.write(row, 12, opening_balance, opening_num_fmt)
                     row += 1
 
                     # Transaction lines
-                    for sr, rec in enumerate(report_data.get(account, []), start=1):
+                    for sr, rec in enumerate(lines_for_account, start=1):
                         record = rec[0] if isinstance(rec, list) else rec
                         partner = record.get('partner_id')
                         partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
@@ -442,19 +457,15 @@ class AccountGeneralLedger(models.TransientModel):
                         sheet.set_row(row, 30)
                         row += 1
 
-                    # Per-account totals
-                                        # Per-account totals
+                    # Per-account totals — now guaranteed consistent with the lines above
                     sheet.merge_range(row, 0, row, 9, 'Total', total_fmt)
-                    sheet.write(row, 10, account_total.get('total_debit', 0.0), total_num_fmt)
-                    sheet.write(row, 11, account_total.get('total_credit', 0.0), total_num_fmt)
-                    closing = (account_total.get('opening_balance', 0.0)
-                            + account_total.get('total_debit', 0.0)
-                            - account_total.get('total_credit', 0.0))
+                    sheet.write(row, 10, computed_debit, total_num_fmt)
+                    sheet.write(row, 11, computed_credit, total_num_fmt)
                     sheet.write(row, 12, closing, total_num_fmt)
                     sheet.set_row(row, 24)
                     row += 1
 
-                    # Explicit Closing Balance row, mirroring Opening Balance above
+                    # Closing Balance row
                     sheet.write(row, 0, '', opening_fmt)
                     sheet.merge_range(row, 1, row, 9, 'CLOSING BALANCE', opening_fmt)
                     sheet.write(row, 10, '', opening_fmt)
@@ -463,11 +474,21 @@ class AccountGeneralLedger(models.TransientModel):
                     row += 2  # blank spacer row between account blocks
 
                 # Grand total row
-                                # Grand total row
-                grand_opening = sum(v.get('opening_balance', 0.0) for v in report_totals.values())
-                grand_closing = (grand_opening
-                                  + float(grand_total.get('total_debit', 0.0))
-                                  - float(grand_total.get('total_credit', 0.0)))
+                # Grand total row
+                                # Grand total row — computed from the same lines as each account
+                # section above, not from the separately-passed totals dict.
+                grand_opening = sum(
+                    (report_totals.get(acc) or {}).get('opening_balance', 0.0)
+                    for acc in report_accounts
+                )
+                grand_debit = 0.0
+                grand_credit = 0.0
+                for acc in report_accounts:
+                    for rec in report_data.get(acc, []):
+                        record = rec[0] if isinstance(rec, list) else rec
+                        grand_debit += record.get('debit', 0.0) or 0.0
+                        grand_credit += record.get('credit', 0.0) or 0.0
+                grand_closing = grand_opening + grand_debit - grand_credit
 
                 sheet.merge_range(row, 0, row, 9, 'GRAND OPENING BALANCE', grand_total_fmt)
                 sheet.write(row, 10, '', grand_total_num_fmt)
@@ -477,8 +498,8 @@ class AccountGeneralLedger(models.TransientModel):
                 row += 1
 
                 sheet.merge_range(row, 0, row, 9, 'GRAND TOTAL', grand_total_fmt)
-                sheet.write(row, 10, grand_total.get('total_debit', 0.0), grand_total_num_fmt)
-                sheet.write(row, 11, grand_total.get('total_credit', 0.0), grand_total_num_fmt)
+                sheet.write(row, 10, grand_debit, grand_total_num_fmt)
+                sheet.write(row, 11, grand_credit, grand_total_num_fmt)
                 sheet.write(row, 12, grand_closing, grand_total_num_fmt)
                 sheet.set_row(row, 26)
                 row += 1
