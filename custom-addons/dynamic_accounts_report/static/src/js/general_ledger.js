@@ -94,6 +94,7 @@ class GeneralLedger extends owl.Component {
             self.state.account_list = account_list
             self.state.account_data_list = self.state.account_data
             self.state.account_list_full = [...account_list];
+            self.state.all_accounts = self.sortAccounts(account_list);
             self.state.all_accounts = [...account_list];
             self.state.account_data_full = { ...self.state.account_data };
             self.state.account_total_list = account_totals
@@ -343,6 +344,7 @@ class GeneralLedger extends owl.Component {
         this.state.account = account_list
         this.state.account_data = filtered_data
         this.state.account_list_full = [...account_list];
+        this.state.all_accounts = this.sortAccounts(account_list);
         this.state.all_accounts = [...account_list];
         this.state.account_data_full = { ...filtered_data };
         this.state.account_total = account_totals
