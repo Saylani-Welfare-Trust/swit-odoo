@@ -204,26 +204,31 @@ class BulkKeyIssuance(models.TransientModel):
             valid_issuances = []
 
             for key in keys:
-                # 🔥 Get latest issuance for this key + rider
+                # Get latest issuance for this key + rider
                 issuance = KeyIssuance.search([
                     ('key_id', '=', key.id),
                     ('rider_id', '=', self.rider_id.id),
                 ], order="id desc", limit=1)
 
-                # ❌ If no issuance OR wrong state → block
-                if not issuance or issuance.state not in ['donation_receive', 'pending']:
+                if not issuance:
+                    # No issuance record at all for this key+rider - nothing
+                    # to block on and nothing to call action_return() on.
+                    # Treated as returnable: just skip it, don't flag it.
+                    continue
+
+                if issuance.state not in ['donation_receive', 'pending']:
+                    # There IS a record, but it's in the wrong state (e.g.
+                    # already returned, cancelled) - this is a real block.
                     invalid_keys.append(key.name)
                 else:
                     valid_issuances.append(issuance)
 
-            # 🚫 Block entire bunch if any key invalid
             if invalid_keys:
                 raise ValidationError(
-                    "❌ Cannot return this Key Bunch!\n\n"
-                    "Following keys are not in returnable state:\n" +
+                    "Cannot return this Key Bunch!\n\n"
+                    "Following keys are not in a returnable state:\n" +
                     "\n".join([f"  • {k}" for k in invalid_keys])
                 )
 
-            # ✅ All keys valid → return entire bunch
             for issuance in valid_issuances:
                 issuance.action_return()
