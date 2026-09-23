@@ -5,6 +5,7 @@ import { useService } from "@web/core/utils/hooks";
 import { useRef, useState } from "@odoo/owl";
 import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
+import { useRef, useState, onMounted } from "@odoo/owl";
 const actionRegistry = registry.category("actions");
 
 class GeneralLedger extends owl.Component {
@@ -54,6 +55,79 @@ class GeneralLedger extends owl.Component {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
+    }
+
+    setup() {
+        super.setup(...arguments);
+        this.initial_render = true;
+        this.orm    = useService('orm');
+        this.action = useService('action');
+        this.tbody  = useRef('tbody');
+        this.unfoldButton  = useRef('unfoldButton');
+        this.gl_start_date = useRef('gl_start_date');
+        this.gl_end_date   = useRef('gl_end_date');
+
+        // ---- Inherit filters from the action that opened this GL ----
+        const params = (this.props.action && this.props.action.params) || {};
+
+        const incomingDateRange  = params.default_date_range || 'month';
+        const incomingJournals   = Array.isArray(params.default_journal_ids)
+            ? params.default_journal_ids : [];
+        const incomingAccounts   = Array.isArray(params.default_account_names)
+            ? params.default_account_names : [];
+        const incomingOptions    = params.default_options || {};
+        const incomingMethod     = (params.default_method &&
+                                    Object.keys(params.default_method).length)
+            ? { ...params.default_method } : { accrual: true };
+
+        this.state = useState({
+            account: [],
+            account_data: {},
+            account_data_list: null,
+            account_total: {},
+            total_debit: 0,
+            total_credit: 0,
+            currency: null,
+
+            journals: [],
+            selected_journal_list: [...incomingJournals],
+
+            analytics: [],
+            selected_analytic_list: [],
+            selected_analytic_account_rec: [],
+
+            selected_account_list: [...incomingAccounts],
+            all_accounts: [],
+
+            title: null,
+            filter_applied: null,
+            account_list: [],
+            account_total_list: {},
+
+            date_range: incomingDateRange,
+            options: { ...incomingOptions },
+            method: { ...incomingMethod },
+
+            search_query: '',
+            account_list_full: [],
+            account_data_full: {},
+            collapsed_accounts: {},
+        });
+        this.searchTimeout = null;
+
+        onMounted(() => {
+            // Reflect the inherited date range in the visible inputs
+            if (typeof incomingDateRange === 'object') {
+                if (this.gl_start_date?.el && incomingDateRange.start_date) {
+                    this.gl_start_date.el.value = incomingDateRange.start_date;
+                }
+                if (this.gl_end_date?.el && incomingDateRange.end_date) {
+                    this.gl_end_date.el.value = incomingDateRange.end_date;
+                }
+            }
+        });
+
+        this.load_data();
     }
 
     async load_data() {
@@ -107,6 +181,9 @@ class GeneralLedger extends owl.Component {
             const collapsed = {};
             account_list.forEach((acc) => { collapsed[acc] = true; });
             self.state.collapsed_accounts = collapsed;
+            if (self.state.selected_account_list.length) {
+                self.applySearch();
+            }
         }
         catch (el) {
             self.state.account = []
@@ -239,6 +316,9 @@ class GeneralLedger extends owl.Component {
         this.state.account_data = null
         this.state.account_total = null
         this.state.filter_applied = true;
+        if (this.state.selected_account_list.length) {
+            this.applySearch();
+        }
         if (ev) {
             if (ev.input && ev.input.attributes.placeholder.value == 'Account' && !is_delete) {
                 this.state.selected_analytic.push(val[0].id)
