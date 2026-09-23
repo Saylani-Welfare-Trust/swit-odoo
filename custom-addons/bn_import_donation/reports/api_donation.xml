@@ -2,11 +2,10 @@
 <odoo>
 
     <template id="bn_import_donation.api_donation_form">
-        <t t-call="web.html_container">
+        <t t-call="web.basic_layout">
             <t t-foreach="docs" t-as="o">
-                <t t-call="web.external_layout">
-                    <!-- PAGE WRAPPER -->
-                    <div class="page" style="position:relative;">
+                <!-- PAGE WRAPPER -->
+                <div class="page" style="position:relative;">
                         <!-- ===== STYLES ===== -->
                         <style>
                             body {
@@ -52,7 +51,7 @@
 
                         <img t-if="o.env.company.dn_image"
                             t-att-src="image_data_uri(o.env.company.dn_image)"
-                            style="height: 100%; width: 100%;"/>
+                            style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
 
                         <!-- ===== WATERMARK ===== -->
                         <div class="watermark">Donation</div>
@@ -91,9 +90,9 @@
                             <thead>
                                 <tr>
                                     <th>Purpose</th>
-                                    <th class="text-yend">Quantity</th>
-                                    <th class="text-yend">Rate</th>
-                                    <th class="text-yend">Amount</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Rate</th>
+                                    <th class="text-end">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -108,10 +107,12 @@
                             </tbody>
                         </table>
 
-                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                            <div>Bank Charges: <strong><t t-esc="'{:,.2f}'.format(o.bank_charges or 0.00)"/></strong></div>
-                            <div>Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(float(o.total_amount or 0))"/></strong></div>
-                        </div>
+                        <table style="width:100%; margin-top:10px; font-size:10px;">
+                            <tr>
+                                <td style="text-align:left; padding:0;">Bank Charges: <strong><t t-esc="'{:,.2f}'.format(o.bank_charges or 0.00)"/></strong></td>
+                                <td style="text-align:right; padding:0;">Total Amount: <strong>Rs <t t-esc="'{:,.2f}'.format(float(o.total_amount or 0))"/></strong></td>
+                            </tr>
+                        </table>
 
                         <!-- Footer -->
                         <div class="text-center border-top pt-3 pb-3">
@@ -124,10 +125,8 @@
                         </div>
 
                     </div>
-
                 </t>
             </t>
-        </t>
     </template>
 
     <record id="action_report_api_donation_form" model="ir.actions.report">
@@ -139,7 +138,7 @@
         <field name="print_report_name">'%s' % object.name</field>
         <field name="binding_model_id" ref="model_api_donation"/>
         <field name="binding_type">report</field>
-        <field name="id" ref="bn_import_donation.report_import_donation_paperformat"/>
+        <field name="paperformat_id" ref="bn_import_donation.report_import_donation_paperformat"/>
     </record>
 
 </odoo>
