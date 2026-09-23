@@ -6,11 +6,10 @@
         <!-- Direct Deposit Receipt -->
         <!-- ===================== -->
         <template id="bn_direct_deposit.direct_deposit_receipt_template_dn">
-            <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
                 <t t-foreach="docs" t-as="o">
-                    <t t-call="web.external_layout">
-                        <!-- PAGE WRAPPER -->
-                        <div class="page" style="position:relative;">
+                    <!-- PAGE WRAPPER -->
+                    <div class="page" style="position:relative;">
                             <style>
                                 body {
                                     font-family: Arial, sans-serif;
@@ -120,8 +119,8 @@
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Qty</th>
-                                        <th class="text-yend">Rate</th>
-                                        <th class="text-yend">Amount</th>
+                                        <th class="text-end">Rate</th>
+                                        <th class="text-end">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -139,18 +138,15 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
-                                <div>Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.amount) or 0)"/></strong></div>
+                            <div style="width:100%; margin-top:10px; font-size:10px;">
+                                <div style="float:left;">Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
+                                <div style="float:right;">Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.amount) or 0)"/></strong></div>
+                                <div style="clear:both;"/>
                             </div>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
                             <div class="row mb-2">
-                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    
-                                </div>
-
                                 <div class="col-6">
                                     <div><strong>DD #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
@@ -176,9 +172,7 @@
                                 Powered by BytesNode
                             </div>
 
-                        </div>
-
-                    </t>
+                    </div>
                 </t>
             </t>
         </template>
