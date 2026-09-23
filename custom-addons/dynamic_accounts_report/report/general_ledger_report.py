@@ -1,9 +1,15 @@
 from odoo import api, models
+from odoo.exceptions import UserError
 
 
 class GeneralLedgerReport(models.AbstractModel):
     _name = 'report.dynamic_accounts_report.general_ledger'
     _description = 'General Ledger PDF Report'
+
+    # wkhtmltopdf reliably segfaults (error code -11) once the rendered HTML
+    # gets too large. Cap the PDF export and point big pulls to XLSX instead,
+    # which has no such ceiling.
+    PDF_MAX_LINES = 5000
 
     @api.model
     def _get_report_values(self, docids, data=None):
@@ -24,6 +30,16 @@ class GeneralLedgerReport(models.AbstractModel):
             key for key in report_data
             if key not in ('account_totals', 'journal_ids', 'analytic_ids')
         ]
+
+        total_lines = sum(len(report_data.get(acc, [])) for acc in accounts)
+        if total_lines > self.PDF_MAX_LINES:
+            raise UserError(
+                "This General Ledger selection has %s transaction lines, "
+                "which is too large to render as a PDF safely.\n\n"
+                "Please narrow the date range or journal filter, or use "
+                "'Export (XLSX)' instead — Excel has no row limit." % total_lines
+            )
+
         totals = report_data.get('account_totals') or {}
         total_debit = sum(value.get('total_debit', 0.0) for value in totals.values())
         total_credit = sum(value.get('total_credit', 0.0) for value in totals.values())
