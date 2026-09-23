@@ -5,49 +5,9 @@ import { useService } from "@web/core/utils/hooks";
 import { useRef, useState } from "@odoo/owl";
 import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
-import { useRef, useState, onMounted } from "@odoo/owl";
 const actionRegistry = registry.category("actions");
 
 class GeneralLedger extends owl.Component {
-    setup() {
-        super.setup(...arguments);
-        this.initial_render = true;
-        this.orm = useService('orm');
-        this.action = useService('action');
-        this.tbody = useRef('tbody');
-        this.unfoldButton = useRef('unfoldButton');
-        this.state = useState({
-            account: [],
-            account_data: {},
-            account_data_list: null,
-            account_total: {},
-            total_debit: 0,
-            total_credit: 0,
-            currency: null,
-            journals: [],
-            selected_journal_list: [],
-            analytics: [],
-            selected_analytic_list: [],
-            selected_analytic_account_rec: [],
-            selected_account_list: [],
-            all_accounts: [],
-            title: null,
-            filter_applied: null,
-            account_list: [],
-            account_total_list: {},
-            date_range: 'month',
-            options: {},
-            method: {
-                'accrual': true
-            },
-            search_query: '',
-            account_list_full: [],
-            account_data_full: {},
-            collapsed_accounts: {},
-        });
-        this.searchTimeout = null;
-        this.load_data();
-    }
 
     formatAmount(value) {
         const num = Number(value || 0);

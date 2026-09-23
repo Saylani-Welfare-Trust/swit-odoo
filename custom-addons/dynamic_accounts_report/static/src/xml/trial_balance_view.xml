@@ -383,7 +383,9 @@
                                                         <span class="dropdown-menu">
                                                             <a role="menuitem"
                                                             t-att-data-account-id="move_line['account_id']"
-                                                            t-on-click="show_gl" class="show_gl">
+                                                            t-att-data-account-name="move_line['account']"
+                                                            t-on-click="show_gl"
+                                                            class="show_gl">
                                                                 General Ledger (this period)
                                                             </a>
                                                             <div role="separator" class="dropdown-divider"/>
