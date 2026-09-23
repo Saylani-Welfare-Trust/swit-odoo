@@ -32,7 +32,7 @@
                                     <th>End Balance</th>
                                 </tr>
                                 <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
-                                    <th colspan="5"/>
+                                    <th colspan="6"/>
                                     <th/>
                                     <t t-if="apply_comparison == true">
                                         <t t-set="number_of_periods"
