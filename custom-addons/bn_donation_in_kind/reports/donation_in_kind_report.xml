@@ -3,14 +3,13 @@
 
     <data>
         <!-- ===================== -->
-        <!-- Direct Deposit Receipt -->
+        <!-- Donation In Kind Receipt -->
         <!-- ===================== -->
         <template id="bn_donation_in_kind.donation_in_kind_report">
-            <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
                 <t t-foreach="docs" t-as="o">
-                    <t t-call="web.external_layout">
-                        <!-- PAGE WRAPPER -->
-                        <div class="page" style="position:relative;">
+                    <!-- PAGE WRAPPER -->
+                    <div class="page" style="position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -128,17 +127,15 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="o.create_uid.name"/></strong></div>
-                            </div>
+                            <table style="width:100%; margin-top:10px; font-size:10px;">
+                                <tr>
+                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="o.create_uid.name"/></strong></td>
+                                </tr>
+                            </table>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
                             <div class="row mb-2">
-                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    
-                                </div>
-
                                 <div class="col-6">
                                     <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
@@ -164,9 +161,7 @@
                                 Powered by BytesNode
                             </div>
 
-                        </div>
-
-                    </t>
+                    </div>
                 </t>
             </t>
         </template>
@@ -175,7 +170,7 @@
             <field name="name">A5 - Donation In Kind Report</field>
             <field name="format">A5</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">84.67</field>
+            <field name="margin_top">84.5</field>
             <field name="margin_bottom">10</field>
             <field name="margin_left">4</field>
             <field name="margin_right">4</field>
