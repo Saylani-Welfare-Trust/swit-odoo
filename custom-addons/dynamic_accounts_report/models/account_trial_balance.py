@@ -115,12 +115,13 @@ class AccountTrialBalance(models.TransientModel):
                 'journal_ids': self.env['account.journal'].search_read([], ['name']),
                 'initial_total_debit': initial_total_debit,
                 'initial_total_credit': initial_total_credit,
-                # Single signed net figure: positive = net debit, negative = net credit.
                 'initial_balance': initial_total_debit - initial_total_credit,
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'end_total_debit': end_total_debit,
                 'end_total_credit': end_total_credit,
+                # Net closing figure: positive = net debit balance, negative = net credit balance.
+                'end_balance': end_total_debit - end_total_credit,
             })
 
         move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
@@ -346,7 +347,8 @@ class AccountTrialBalance(models.TransientModel):
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'end_total_debit': end_total_debit,
-                'end_total_credit': end_total_credit
+                'end_total_credit': end_total_credit,
+                'end_balance': end_total_debit - end_total_credit,
             }
             if comparison_number:
                 if dynamic_date_num:
@@ -462,8 +464,7 @@ class AccountTrialBalance(models.TransientModel):
             sheet.merge_range(9, col + i, 9, col + i + 1, date_view,
                               sub_heading)
             i += 2
-        sheet.merge_range(9, col + i, 9, col + i + 1, 'End Balance',
-                          sub_heading)
+        sheet.write(9, col + i, 'End Balance', sub_heading)
 
         sheet.write(10, col, '', sub_heading)
         sheet.write(10, col + 1, '', sub_heading)
@@ -474,7 +475,7 @@ class AccountTrialBalance(models.TransientModel):
             i += 1
             sheet.write(10, col + i, 'Credit', sub_heading)
             i += 1
-        sheet.write(10, col + i, 'Debit', sub_heading)
+        sheet.write(10, col + i, '', sub_heading)
         sheet.write(10, col + (i + 1), 'Credit', sub_heading)
 
         if data:
@@ -510,10 +511,8 @@ class AccountTrialBalance(models.TransientModel):
                                 num_fmt_whole)
                     sheet.write(row, col + j + 1, move_line['total_credit'],
                                 num_fmt_whole)
-                    sheet.write(row, col + j + 2, move_line['end_total_debit'],
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 3,
-                                move_line['end_total_credit'], num_fmt_whole)
+                    sheet.write(row, col + j + 2,
+                                move_line.get('end_balance', 0.0), num_fmt_whole)
                     row += 1
         workbook.close()
         output.seek(0)

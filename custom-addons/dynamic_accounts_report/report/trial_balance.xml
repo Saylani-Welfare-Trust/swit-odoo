@@ -19,7 +19,7 @@
                     <div class="filters">
                         <table class="table table-sm table-reports"
                             style="width: fit-content;">
-                            <thead style="background:#808080;">
+                                                        <thead style="background:#808080;">
                                 <tr>
                                     <th colspan="6"/>
                                     <th>Initial Balance</th>
@@ -29,7 +29,7 @@
                                             <t t-esc="date_view"/>
                                         </th>
                                     </t>
-                                    <th colspan="2">End Balance</th>
+                                    <th>End Balance</th>
                                 </tr>
                                 <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
                                     <th colspan="6"/>
@@ -43,10 +43,7 @@
                                             <th>Credit</th>
                                         </t>
                                     </t>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
+                                    <th/>
                                 </tr>
                             </thead>
                             <tbody>
@@ -97,12 +94,7 @@
                                                 t-esc="'{:,.0f}'.format(move_line['total_credit'])"/>
                                             </th>
                                             <th style="text-align:center;">
-                                                <t t-if="move_line['end_total_debit']"
-                                                t-esc="'{:,.0f}'.format(move_line['end_total_debit'])"/>
-                                            </th>
-                                            <th style="text-align:center;">
-                                                <t t-if="move_line['end_total_credit']"
-                                                t-esc="'{:,.0f}'.format(move_line['end_total_credit'])"/>
+                                                <t t-esc="'{:,.0f}'.format(move_line.get('end_balance', 0.0))"/>
                                             </th>
                                         </tr>
                                     </t>
@@ -116,17 +108,36 @@
                     <table class="table table-sm table-reports"
                            style="width: fit-content;">
                         <thead style="background:#808080;">
-                            <tr>
-                                <th colspan="6"/>
-                                <th colspan="2">Initial Balance</th>
-                                <t t-foreach="date_viewed" t-as="date_view"
-                                   t-key="date_view_index">
-                                    <th colspan="2">
-                                        <t t-esc="date_view"/>
-                                    </th>
-                                </t>
-                                <th colspan="2">End Balance</th>
-                            </tr>
+                                                                <tr class="o_heading"
+                                        style="text-align:center;">
+                                        <th colspan="6"/>
+                                        <th>Initial Balance</th>
+                                        <t t-if="state.date_viewed.length != 0">
+                                            <t t-foreach="state.date_viewed"
+                                               t-as="date_view"
+                                               t-key="date_view_index">
+                                                <th colspan="2">
+                                                    <t t-esc="date_view"/>
+                                                </th>
+                                            </t>
+                                        </t>
+                                        <th>End Balance</th>
+                                    </tr>
+                                    <tr class="o_heading"
+                                        style="text-align:center;">
+                                        <th colspan="6"/>
+                                        <th/>
+                                        <t t-if="state.apply_comparison == true">
+                                            <t t-set="number_of_periods"
+                                               t-value="comparison_number_range"/>
+                                            <t t-foreach="number_of_periods"
+                                               t-as="number" t-key="number">
+                                                <th>Debit</th>
+                                                <th>Credit</th>
+                                            </t>
+                                        </t>
+                                        <th/>
+                                    </tr>
                             <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
                                 <th colspan="6"/>
                                 <th>Debit</th>
