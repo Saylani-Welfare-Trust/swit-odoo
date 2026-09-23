@@ -459,6 +459,14 @@ class GeneralLedger extends owl.Component {
         this.applySearch();
     }
 
+    sortAccounts(accounts) {
+        return [...(accounts || [])].sort((a, b) =>
+            String(a ?? '').localeCompare(String(b ?? ''), undefined, {
+                sensitivity: 'base', // case-insensitive: "abc" and "ABC" grouped together
+                numeric: true,       // so "Account 2" comes before "Account 10"
+            })
+        );
+    }
     clearAccountFilter() {
         this.state.selected_account_list = [];
         document
