@@ -276,7 +276,8 @@
                                                                 <thead>
                                     <tr class="o_heading"
                                         style="text-align:center;">
-                                        <th colspan="6"/>
+                                        <th>Code</th>
+                                        <th colspan="5">Account</th>
                                         <th>Initial Balance</th>
                                         <t t-if="state.date_viewed.length != 0">
                                             <t t-foreach="state.date_viewed"
@@ -291,7 +292,7 @@
                                     </tr>
                                     <tr class="o_heading"
                                         style="text-align:center;">
-                                        <th colspan="6"/>
+                                        <th colspan="5"/>
                                         <th/>
                                         <t t-if="state.apply_comparison == true">
                                             <t t-set="number_of_periods"
@@ -316,7 +317,7 @@
                                             <t t-set="i" t-value="i + 1"/>
                                             <t t-if="move_line.group_label !== current_group">
                                                 <tr style="background:#EAEAEA;">
-                                                    <th colspan="12">
+                                                    <th colspan="11">
                                                         <t t-esc="move_line.group_label || 'Other'"/>
                                                     </th>
                                                 </tr>
@@ -324,28 +325,24 @@
                                             </t>
                                             <tr class="border-bottom"
                                                 style="border-spacing: 0 10px;">
-                                                <th colspan="6">
+                                                <th style="text-align:left;">
+                                                    <t t-esc="move_line['account_code']"/>
+                                                </th>
+                                                <th colspan="5" style="text-align:left;">
                                                     <span class="dropdown">
-                                                        <a class="dropdown-toggle"
-                                                           data-bs-toggle="dropdown"
-                                                           style="color: black;">
-                                                            <span>
-                                                                <t t-esc="move_line['account']"/>
-                                                            </span>
+                                                        <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
+                                                            <span><t t-esc="move_line['account_name']"/></span>
                                                         </a>
                                                         <span class="dropdown-menu">
                                                             <a role="menuitem"
-                                                               t-att-data-account-id="move_line['account_id']"
-                                                               t-on-click="show_gl"
-                                                               class="show_gl">
+                                                            t-att-data-account-id="move_line['account_id']"
+                                                            t-on-click="show_gl" class="show_gl">
                                                                 General Ledger (this period)
                                                             </a>
-                                                            <div role="separator"
-                                                                 class="dropdown-divider"/>
+                                                            <div role="separator" class="dropdown-divider"/>
                                                             <a role="menuitem"
-                                                               t-att-data-id="move_line['account_id']"
-                                                               t-on-click="gotoJournalItem"
-                                                               class="show_gl">
+                                                            t-att-data-id="move_line['account_id']"
+                                                            t-on-click="gotoJournalItem" class="show_gl">
                                                                 Journal Items
                                                             </a>
                                                         </span>
@@ -382,9 +379,9 @@
                                                 </th>
                                             </tr>
                                         </t>
-                                        <tr class="border-bottom"
-                                            style="border-spacing: 0 10px;color:#000">
-                                            <th colspan="6">Total</th>
+                                        <tr class="border-bottom" style="border-spacing: 0 10px;color:#000">
+                                            <th/>
+                                            <th colspan="5">Total</th>
                                             <th style="text-align:center;">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'initial_balance'))"/>
                                             </th>

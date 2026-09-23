@@ -108,6 +108,7 @@ class AccountTrialBalance(models.TransientModel):
 
             move_line_list.append({
                 'account': account.display_name,
+                'account_name': account.name,  
                 'account_id': account_id,
                 'account_code': account.code or '',
                 'group_label': group_label,
@@ -335,6 +336,7 @@ class AccountTrialBalance(models.TransientModel):
             group_label, group_order = _group_info(account_id.account_type)
             data = {
                 'account': account_id.display_name,
+                'account_name': account_id.name, 
                 'account_id': account_id.id,
                 'account_code': account_id.code or '',
                 'group_label': group_label,
@@ -491,10 +493,9 @@ class AccountTrialBalance(models.TransientModel):
                         row += 1
                         current_group = group_label
 
-                    sheet.write(row, col, move_line.get('account_code', ''),
-                                txt_name)
-                    sheet.write(row, col + 1, move_line['account'],
-                                side_heading_sub)
+                    sheet.write(row, col, move_line.get('account_code', ''), txt_name)
+                    sheet.write(row, col + 1, move_line.get('account_name',
+                                        move_line['account']), side_heading_sub)
                     sheet.write(row, col + 2,
                                 move_line.get('initial_balance', 0.0),
                                 num_fmt_whole)
