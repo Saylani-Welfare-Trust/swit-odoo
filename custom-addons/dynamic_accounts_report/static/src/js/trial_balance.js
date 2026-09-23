@@ -479,17 +479,22 @@ class TrialBalance extends owl.Component {
             error: (error) => self.call('crash_manager', 'rpc_error', error),
         });
     }
+    formatAmount(value) {
+        const num = Number(value || 0);
+        return Math.round(num).toLocaleString('en-US');
+    }
+
     async show_gl(ev) {
-    /**
-    * Shows the General Ledger view by triggering an action.
-    *
-    * @param {Event} ev - The event object triggered by the action.
-    * @returns {Promise} - A promise that resolves to the result of the action.
-    */
+        const accountId = parseInt(ev.currentTarget.attributes["data-account-id"].value, 10);
         return this.action.doAction({
             type: 'ir.actions.client',
             name: 'General Ledger',
             tag: 'gen_l',
+            params: {
+                default_account_id: accountId,
+                default_start_date: this.start_date.el.value,
+                default_end_date: this.end_date.el.value,
+            },
         });
     }
     formatDate(dateString) {

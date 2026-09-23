@@ -273,11 +273,11 @@
                     <div>
                         <div class="table_main_view">
                             <table cellspacing="0" width="100%">
-                                <thead>
+                                                                <thead>
                                     <tr class="o_heading"
                                         style="text-align:center;">
                                         <th colspan="6"/>
-                                        <th colspan="2">Initial Balance</th>
+                                        <th>Initial Balance</th>
                                         <t t-if="state.date_viewed.length != 0">
                                             <t t-foreach="state.date_viewed"
                                                t-as="date_view"
@@ -292,12 +292,7 @@
                                     <tr class="o_heading"
                                         style="text-align:center;">
                                         <th colspan="6"/>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
+                                        <th/>
                                         <t t-if="state.apply_comparison == true">
                                             <t t-set="number_of_periods"
                                                t-value="comparison_number_range"/>
@@ -307,15 +302,28 @@
                                                 <th>Credit</th>
                                             </t>
                                         </t>
+                                        <th>Debit</th>
+                                        <th>Credit</th>
+                                        <th>Debit</th>
+                                        <th>Credit</th>
                                     </tr>
                                 </thead>
                                 <tbody t-ref="tbody">
                                     <t t-if="state.data">
+                                        <t t-set="current_group" t-value="null"/>
                                         <t t-set="i" t-value="0"/>
                                         <t t-foreach="state.data"
                                            t-as="move_line"
                                            t-key="move_line_index">
                                             <t t-set="i" t-value="i + 1"/>
+                                            <t t-if="move_line.group_label !== current_group">
+                                                <tr style="background:#EAEAEA;">
+                                                    <th colspan="12">
+                                                        <t t-esc="move_line.group_label || 'Other'"/>
+                                                    </th>
+                                                </tr>
+                                                <t t-set="current_group" t-value="move_line.group_label"/>
+                                            </t>
                                             <tr class="border-bottom"
                                                 style="border-spacing: 0 10px;">
                                                 <th colspan="6">
@@ -329,9 +337,10 @@
                                                         </a>
                                                         <span class="dropdown-menu">
                                                             <a role="menuitem"
+                                                               t-att-data-account-id="move_line['account_id']"
                                                                t-on-click="show_gl"
                                                                class="show_gl">
-                                                                General Ledger
+                                                                General Ledger (this period)
                                                             </a>
                                                             <div role="separator"
                                                                  class="dropdown-divider"/>
@@ -345,12 +354,7 @@
                                                     </span>
                                                 </th>
                                                 <th style="text-align:center;">
-                                                    <t t-if="move_line['initial_total_debit']"
-                                                       t-esc="move_line['initial_total_debit']"/>
-                                                </th>
-                                                <th style="text-align:center;">
-                                                    <t t-if="move_line['initial_total_credit']"
-                                                       t-esc="move_line['initial_total_credit']"/>
+                                                    <t t-esc="this.formatAmount(move_line.initial_balance)"/>
                                                 </th>
                                                 <t t-if="state.apply_comparison == true">
                                                     <t t-set="number_of_periods"
@@ -359,29 +363,29 @@
                                                        t-as="num" t-key="num">
                                                         <th style="text-align:center;">
                                                             <t t-if="move_line['dynamic_total_debit_' + num]"
-                                                               t-esc="move_line['dynamic_total_debit_' + num]"/>
+                                                               t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
                                                         </th>
                                                         <th style="text-align:center;">
                                                             <t t-if="move_line['dynamic_total_credit_' + num]"
-                                                               t-esc="move_line['dynamic_total_credit_' + num]"/>
+                                                               t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
                                                         </th>
                                                     </t>
                                                 </t>
                                                 <th style="text-align:center;">
                                                     <t t-if="move_line['total_debit']"
-                                                       t-esc="move_line['total_debit'].toFixed(2)"/>
+                                                       t-esc="this.formatAmount(move_line['total_debit'])"/>
                                                 </th>
                                                 <th style="text-align:center;">
                                                     <t t-if="move_line['total_credit']"
-                                                       t-esc="move_line['total_credit'].toFixed(2)"/>
+                                                       t-esc="this.formatAmount(move_line['total_credit'])"/>
                                                 </th>
                                                 <th style="text-align:center;">
                                                     <t t-if="move_line['end_total_debit']"
-                                                       t-esc="move_line['end_total_debit'].toFixed(2)"/>
+                                                       t-esc="this.formatAmount(move_line['end_total_debit'])"/>
                                                 </th>
                                                 <th style="text-align:center;">
                                                     <t t-if="move_line['end_total_credit']"
-                                                       t-esc="move_line['end_total_credit'].toFixed(2)"/>
+                                                       t-esc="this.formatAmount(move_line['end_total_credit'])"/>
                                                 </th>
                                             </tr>
                                         </t>
@@ -389,10 +393,7 @@
                                             style="border-spacing: 0 10px;color:#000">
                                             <th colspan="6">Total</th>
                                             <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'initial_total_debit').toFixed(2)"/>
-                                            </th>
-                                            <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'initial_total_credit').toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'initial_balance'))"/>
                                             </th>
                                             <t t-if="state.apply_comparison == true">
                                                 <t t-set="number_of_periods"
@@ -400,24 +401,24 @@
                                                 <t t-foreach="number_of_periods"
                                                    t-as="nb" t-key="nb">
                                                     <th style="text-align:center;">
-                                                        <t t-esc="sumByKey(state.data, 'dynamic_total_debit_' + nb).toFixed(2)"/>
+                                                        <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_debit_' + nb))"/>
                                                     </th>
                                                     <th style="text-align:center;">
-                                                        <t t-esc="sumByKey(state.data, 'dynamic_total_credit_' + nb).toFixed(2)"/>
+                                                        <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_credit_' + nb))"/>
                                                     </th>
                                                 </t>
                                             </t>
                                             <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'total_debit').toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'total_debit'))"/>
                                             </th>
                                             <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'total_credit').toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'total_credit'))"/>
                                             </th>
                                             <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'end_total_debit').toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'end_total_debit'))"/>
                                             </th>
                                             <th style="text-align:center;">
-                                                <t t-esc="sumByKey(state.data, 'end_total_credit').toFixed(2)"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'end_total_credit'))"/>
                                             </th>
                                         </tr>
                                     </t>
