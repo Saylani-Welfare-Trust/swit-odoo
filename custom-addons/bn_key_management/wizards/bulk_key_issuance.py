@@ -211,9 +211,7 @@ class BulkKeyIssuance(models.TransientModel):
                 ], order="id desc", limit=1)
 
                 # ❌ If no issuance OR wrong state → block
-                if not issuance:
-                    continue
-                elif issuance or issuance.state not in ['donation_receive', 'pending']:
+                if issuance or issuance.state not in ['donation_receive', 'pending']:
                     invalid_keys.append(key.name)
                 else:
                     valid_issuances.append(issuance)
