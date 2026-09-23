@@ -505,25 +505,30 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
     
             console.log("DD popup - payload sent:", payload); // TEMP DEBUG
 
-            await this.orm.call('direct.deposit', "create_dd_record", [payload]).then((data) => {
-                console.log("DD popup - response received:", data); // TEMP DEBUG
+            const data = await this.orm.call('direct.deposit', "create_dd_record", [payload]);
 
-                if (data.status === 'success') {
-                    this.notification.add(_t("Operation Successful"), {
-                        type: "info",
-                    });
-    
-                    this.cancel()
-                    
-                    this.report.doAction("bn_direct_deposit.report_direct_deposit_provisional", [
-                        data.id,
-                    ]);
-                }
-    
-                this.pos.removeOrder(selectedOrder);
-                this.pos.add_new_order();
-            })
-        }
+            console.log("DD popup - response received:", data); // TEMP DEBUG
+
+            if (data.status === 'error') {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: data.body,
+                });
+                return; // stop here - don't touch the order, let the user fix the ref
+            }
+
+            if (data.status === 'success') {
+                this.notification.add(_t("Operation Successful"), {
+                    type: "info",
+                });
+
+                this.cancel();
+
+            }
+
+            this.pos.removeOrder(selectedOrder);
+            this.pos.add_new_order();
+        } // <-- closes "if (this.action_type === 'dd')"
     }
 
     /**
