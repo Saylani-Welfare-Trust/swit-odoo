@@ -476,7 +476,7 @@ class AccountTrialBalance(models.TransientModel):
             sheet.write(10, col + i, 'Credit', sub_heading)
             i += 1
         sheet.write(10, col + i, '', sub_heading)
-        sheet.write(10, col + (i + 1), 'Credit', sub_heading)
+        # sheet.write(10, col + (i + 1), 'Credit', sub_heading)
 
         if data:
             if report_action == 'dynamic_accounts_report.action_trial_balance':
@@ -512,7 +512,7 @@ class AccountTrialBalance(models.TransientModel):
                     sheet.write(row, col + j + 1, move_line['total_credit'],
                                 num_fmt_whole)
                     sheet.write(row, col + j + 2,
-                                move_line.get('end_balance', 0.0), num_fmt_whole)
+                        move_line.get('end_balance', 0.0), num_fmt_whole)
                     row += 1
         workbook.close()
         output.seek(0)

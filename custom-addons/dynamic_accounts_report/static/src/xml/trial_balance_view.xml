@@ -287,7 +287,7 @@
                                                 </th>
                                             </t>
                                         </t>
-                                        <th colspan="2">End Balance</th>
+                                        <th>End Balance</th>
                                     </tr>
                                     <tr class="o_heading"
                                         style="text-align:center;">
@@ -302,8 +302,6 @@
                                                 <th>Credit</th>
                                             </t>
                                         </t>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
                                         <th>Debit</th>
                                         <th>Credit</th>
                                     </tr>
@@ -380,12 +378,7 @@
                                                        t-esc="this.formatAmount(move_line['total_credit'])"/>
                                                 </th>
                                                 <th style="text-align:center;">
-                                                    <t t-if="move_line['end_total_debit']"
-                                                       t-esc="this.formatAmount(move_line['end_total_debit'])"/>
-                                                </th>
-                                                <th style="text-align:center;">
-                                                    <t t-if="move_line['end_total_credit']"
-                                                       t-esc="this.formatAmount(move_line['end_total_credit'])"/>
+                                                    <t t-esc="this.formatAmount(move_line['end_balance'])"/>
                                                 </th>
                                             </tr>
                                         </t>
@@ -415,10 +408,7 @@
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'total_credit'))"/>
                                             </th>
                                             <th style="text-align:center;">
-                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'end_total_debit'))"/>
-                                            </th>
-                                            <th style="text-align:center;">
-                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'end_total_credit'))"/>
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'end_balance'))"/>
                                             </th>
                                         </tr>
                                     </t>
