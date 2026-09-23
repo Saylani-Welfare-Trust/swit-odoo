@@ -55,7 +55,7 @@
                             <!-- ===== BANNER ===== -->
                             <img t-if="o.env.company.dn_image"
                                 t-att-src="image_data_uri(o.env.company.dn_image)"
-                                style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
+                                style="display:block; max-width:100%; max-height:70mm; width:auto; height:auto; margin:0 auto 6px auto;"/>
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
@@ -139,11 +139,12 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <div style="width:100%; margin-top:10px; font-size:10px;">
-                                <div style="float:left;">Entered by: <strong><t t-esc="o.user_id.name"/></strong></div>
-                                <div style="float:right;">Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.amount) or 0)"/></strong></div>
-                                <div style="clear:both;"/>
-                            </div>
+                            <table style="width:100%; margin-top:10px; font-size:10px;">
+                                <tr>
+                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="o.user_id.name"/></strong></td>
+                                    <td style="text-align:right; padding:0;">Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(o.amount) or 0)"/></strong></td>
+                                </tr>
+                            </table>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
