@@ -205,9 +205,9 @@ class AccountTrialBalance(models.TransientModel):
             if journal_list:
                 domain.append(
                     ('journal_id', 'in', journal_list), )
-            if analytic:
-                domain.append(
-                    ('analytic_line_ids', 'in', analytic))
+            # if analytic:
+            #     domain.append(
+            #         ('analytic_line_ids', 'in', analytic))
             if method is not None and 'cash' in method:
                 domain.append(('journal_id', 'in',
                                self.env.company.tax_cash_basis_journal_id.ids))
@@ -229,9 +229,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids))
@@ -258,9 +258,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids), )
@@ -291,9 +291,9 @@ class AccountTrialBalance(models.TransientModel):
                         if journal_list:
                             domain.append(
                                 ('journal_id', 'in', journal_list), )
-                        if analytic:
-                            domain.append(
-                                ('analytic_line_ids', 'in', analytic))
+                        # if analytic:
+                        #     domain.append(
+                        #         ('analytic_line_ids', 'in', analytic))
                         if method is not None and 'cash' in method:
                             domain.append(('journal_id', 'in',
                                            self.env.company.tax_cash_basis_journal_id.ids))
@@ -316,9 +316,9 @@ class AccountTrialBalance(models.TransientModel):
             if journal_list:
                 domain.append(
                     ('journal_id', 'in', journal_list), )
-            if analytic:
-                domain.append(
-                    ('analytic_line_ids', 'in', analytic))
+            # if analytic:
+            #     domain.append(
+            #         ('analytic_line_ids', 'in', analytic))
             if method is not None and 'cash' in method:
                 domain.append(('journal_id', 'in',
                                self.env.company.tax_cash_basis_journal_id.ids))
