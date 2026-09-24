@@ -169,9 +169,7 @@ class PurchaseOrder(models.Model):
                 continue
             reason = '\n'.join(reasons)
             order.write({'shariah_hold': True, 'shariah_hold_reason': reason})
-            order.message_post(body=_(
-                'Budget exceeded - waiting for the CFO to approve it or arrange the budget.<br/>%s'
-            ) % reason.replace('\n', '<br/>'))
+            order._notify_cfo_approval_needed(reason)
             held |= order
         return held
 
@@ -210,6 +208,28 @@ class PurchaseOrder(models.Model):
         self.write({'shariah_hold': False, 'shariah_hold_reason': False})
         self._mark_cfo_approved()
         self._release_to_po()
+
+    def _notify_cfo_approval_needed(self, reason):
+        """Message the RFQ's chatter and, in it, ping every user who can give CFO
+        approval (the Material Request CFO group), so they see this record needs
+        their action - in their inbox, and by email per their own notification
+        settings."""
+        self.ensure_one()
+        cfo_users = self.env['res.users'].search([
+            ('groups_id', 'in', self.env.ref(CFO_GROUP).id),
+        ])
+        body = _(
+            'Budget exceeded - waiting for the CFO to approve it or arrange the budget.<br/>%s'
+        ) % reason.replace('\n', '<br/>')
+        self.message_post(
+            body=body,
+            partner_ids=cfo_users.partner_id.ids,
+            subtype_xmlid='mail.mt_comment',
+        )
+        if not cfo_users:
+            self.message_post(body=_(
+                'No user currently holds the CFO approval group (%s) - nobody was notified.'
+            ) % CFO_GROUP)
 
     def _shariah_hold_notification(self):
         return {
