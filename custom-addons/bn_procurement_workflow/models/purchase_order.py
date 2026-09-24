@@ -228,6 +228,13 @@ class PurchaseOrder(models.Model):
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
             return
+        # A user whose notification preference is "Handle by Emails" (the
+        # default) gets no inbox item at all for message_notify - only a
+        # queued email. Force these approvers onto "Handle in Odoo" so the
+        # message reliably reaches them even if outgoing email is down; this
+        # also changes how they receive every other Odoo notification, not
+        # just this one.
+        cfo_users.filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         self.message_notify(
             body=body,
             partner_ids=cfo_users.partner_id.ids,
