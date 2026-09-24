@@ -31,8 +31,8 @@
                             direction: rtl;
                             text-align: justify;
                             font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
-                            font-size: 13px;
-                            line-height: 1.5;
+                            font-size: 15.5px;
+                            line-height: 1.65;
                         }
                         .welfare-urdu p {
                             margin: 0 0 2px 0;
@@ -41,9 +41,9 @@
                             background-color: #3b3591;
                             color: #ffffff;
                             text-align: center;
-                            padding: 1px 8px;
+                            padding: 2px 9px;
                             margin: 2px 0;
-                            font-size: 14px;
+                            font-size: 17px;
                         }
                         .welfare-urdu .urdu-label {
                             background-color: #3b3591;
@@ -87,7 +87,7 @@
                     <style>
                         .welfare-detail-title {
                             text-align: center;
-                            font-size: 22px;
+                            font-size: 27px;
                             line-height: 1.2;
                             margin: 0;
                         }
@@ -98,22 +98,22 @@
                         }
                         .welfare-detail-table td {
                             border: 1px solid #bfbfbf;
-                            padding: 2px 6px;
+                            padding: 4px 7px;
                             text-align: center;
                             vertical-align: middle;
-                            font-size: 12px;
+                            font-size: 14.5px;
                             word-wrap: break-word;
                         }
                         .welfare-detail-table td.urdu-row {
                             direction: rtl;
                             text-align: right;
                             font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
-                            font-size: 13px;
-                            padding: 2px 8px;
+                            font-size: 15.5px;
+                            padding: 5px 9px;
                         }
                         .welfare-detail-table td.complaint-phone {
                             font-weight: bold;
-                            font-size: 13px;
+                            font-size: 15.5px;
                         }
                     </style>
                     <t t-set="employee" t-value="welfare.employee_id"/>
