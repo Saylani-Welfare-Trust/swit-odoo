@@ -3,7 +3,23 @@
 
     <template id="user_profile_report" name="Donee Form">
         <t t-call="web.html_container">
-           <t t-call="web.external_layout">
+            <!-- Welfare prints use the basic layout (no company header/footer) -->
+            <t t-if="welfare">
+                <t t-call="web.basic_layout">
+                    <div class="page">
+                        <t t-call="bn_profile_management.user_profile_report_body"/>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <t t-call="web.external_layout">
+                    <t t-call="bn_profile_management.user_profile_report_body"/>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="user_profile_report_body" name="Donee Form Body">
                 <!-- Urdu instructions header (only when printed from Welfare) -->
                 <t t-if="welfare">
                     <style>
@@ -352,8 +368,6 @@
                         </p>
                     </section>
                 </t>
-           </t>
-        </t>
     </template>
 
     <record id="action_profile_management_report" model="ir.actions.report">
