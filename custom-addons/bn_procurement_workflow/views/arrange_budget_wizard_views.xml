@@ -15,7 +15,6 @@
                     <tree editable="bottom">
                         <field name="destination_id"/>
                         <field name="shortfall"/>
-                        <field name="allowed_source_ids" column_invisible="1"/>
                         <field name="source_id" options="{'no_create': True}"/>
                         <field name="source_balance"/>
                         <field name="amount"/>

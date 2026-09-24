@@ -35,7 +35,6 @@ class ArrangeBudgetWizard(models.TransientModel):
         if not order.shariah_hold:
             raise UserError(_('This RFQ is not waiting for the CFO.'))
         transfer_model = self.env['shariah.transfer']
-        rule_model = self.env['segment.transfer.rule']
         transfers = transfer_model
         for line in self.line_ids:
             if not line.source_id:
@@ -46,8 +45,9 @@ class ArrangeBudgetWizard(models.TransientModel):
                 raise UserError(_(
                     '%(source)s only has %(balance).2f available, which is less than the %(amount).2f to transfer.'
                 ) % {'source': line.source_id.display_name, 'balance': line.source_balance, 'amount': line.amount})
-            # Same rules as a manual Shariah transfer (allowed destination, maximum amount).
-            rule_model.check_transfer_allowed(line.source_id.id, line.destination_id.id, line.amount)
+            # The CFO can move budget from any segment here - the Segment Transfer
+            # Rules that gate a normal manual Shariah transfer are not enforced for
+            # this wizard, only the source having enough balance (checked above).
             transfer = transfer_model.create({
                 'source_analytic_account_id': line.source_id.id,
                 'destination_analytic_account_id': line.destination_id.id,
@@ -69,24 +69,14 @@ class ArrangeBudgetWizardLine(models.TransientModel):
         'account.analytic.account', string='Segment Short of Budget', required=True,
         domain="[('plan_id.name', '=', 'Segment')]")
     shortfall = fields.Float(string='Shortfall', readonly=True)
-    allowed_source_ids = fields.Many2many(
-        'account.analytic.account', compute='_compute_allowed_source_ids')
+    # Any Segment analytic account can be the source here - not filtered by the
+    # Segment Transfer Rules that gate a normal manual Shariah transfer - other
+    # than not letting a segment be its own source.
     source_id = fields.Many2one(
         'account.analytic.account', string='Take Budget From',
-        domain="[('id', 'in', allowed_source_ids)]")
+        domain="[('plan_id.name', '=', 'Segment'), ('id', '!=', destination_id)]")
     source_balance = fields.Float(string='Available There', compute='_compute_source_balance')
     amount = fields.Float(string='Amount to Transfer')
-
-    @api.depends('destination_id')
-    def _compute_allowed_source_ids(self):
-        """Segments the transfer rules allow to send budget to the destination."""
-        for line in self:
-            rules = self.env['segment.transfer.rule'].search([
-                ('destination_segment_ids', 'in', line.destination_id.ids),
-                ('allowed', '=', True),
-                ('active', '=', True),
-            ]) if line.destination_id else self.env['segment.transfer.rule']
-            line.allowed_source_ids = rules.mapped('source_segment_id')
 
     @api.depends('source_id')
     def _compute_source_balance(self):
