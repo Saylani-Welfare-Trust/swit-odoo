@@ -216,7 +216,7 @@ class BulkKeyIssuance(models.TransientModel):
                     # Treated as returnable: just skip it, don't flag it.
                     continue
 
-                if issuance.state not in ['donation_receive', 'pending']:
+                if issuance.state not in ['donation_receive', 'pending','returned']:
                     # There IS a record, but it's in the wrong state (e.g.
                     # already returned, cancelled) - this is a real block.
                     invalid_keys.append(key.name)
