@@ -12,42 +12,4 @@
         </field>
     </record>
 
-    <record id="hr_expense_view_search_analytic_location" model="ir.ui.view">
-        <field name="name">hr.expense.view.search.analytic.location</field>
-        <field name="model">hr.expense</field>
-        <field name="inherit_id" ref="hr_expense.hr_expense_view_search"/>
-        <field name="arch" type="xml">
-
-            <!-- ✅ Group By -->
-            <xpath expr="//group" position="inside">
-                <filter string="Province"
-                        name="group_by_analytic_province"
-                        context="{'group_by': 'analytic_province_id'}"/>
-                <filter string="City"
-                        name="group_by_analytic_city"
-                        context="{'group_by': 'analytic_city_id'}"/>
-                <filter string="Zone"
-                        name="group_by_analytic_zone"
-                        context="{'group_by': 'analytic_zone_id'}"/>
-                <filter string="Branch"
-                        name="group_by_analytic_branch"
-                        context="{'group_by': 'analytic_branch_id'}"/>
-            </xpath>
-
-            <!-- ✅ Optional: quick filters -->
-            <xpath expr="//search" position="inside">
-                <separator/>
-                <filter string="Province" name="filter_analytic_province"
-                        domain="[('analytic_province_id', '!=', False)]"/>
-                <filter string="City" name="filter_analytic_city"
-                        domain="[('analytic_city_id', '!=', False)]"/>
-                <filter string="Zone" name="filter_analytic_zone"
-                        domain="[('analytic_zone_id', '!=', False)]"/>
-                <filter string="Branch" name="filter_analytic_branch"
-                        domain="[('analytic_branch_id', '!=', False)]"/>
-            </xpath>
-
-        </field>
-    </record>
-
 </odoo>
