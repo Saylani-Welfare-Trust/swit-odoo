@@ -4,6 +4,72 @@
     <template id="user_profile_report" name="Donee Form">
         <t t-call="web.html_container">
            <t t-call="web.external_layout">
+                <!-- Urdu instructions header (only when printed from Welfare) -->
+                <t t-if="context.get('active_welfare_id')">
+                    <style>
+                        @font-face {
+                            font-family: 'JameelNooriNastaleeq';
+                            src: url('/bn_profile_management/static/src/fonts/JameelNooriNastaleeqRegular.ttf') format('truetype');
+                        }
+                        .welfare-urdu {
+                            direction: rtl;
+                            text-align: justify;
+                            font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
+                            font-size: 14px;
+                            line-height: 1.8;
+                        }
+                        .welfare-urdu p {
+                            margin: 0 0 4px 0;
+                        }
+                        .welfare-urdu .urdu-banner {
+                            background-color: #3b3591;
+                            color: #ffffff;
+                            text-align: center;
+                            padding: 2px 10px;
+                            margin: 4px 0;
+                            font-size: 15px;
+                        }
+                        .welfare-urdu .urdu-label {
+                            background-color: #3b3591;
+                            color: #ffffff;
+                            padding: 0 8px;
+                            margin-left: 6px;
+                        }
+                        .welfare-urdu .urdu-check {
+                            display: inline-block;
+                            width: 12px;
+                            height: 12px;
+                            border: 1px solid #000000;
+                            margin-left: 6px;
+                            vertical-align: middle;
+                        }
+                    </style>
+                    <section name="welfare_header" class="welfare-urdu">
+                        <div class="urdu-banner">اہم ہدایات</div>
+                        <p>
+                            یاد رکھیں دینِ اسلام کے مالدار افراد کو زکوٰۃ خیرات کی رقم غریب افراد تک پہنچانے کا حکم دیا گیا ہے تاکہ مستحق افراد اس رقم سے اپنی ضرورتوں کو
+                            پورا کر سکیں۔ سیلانی ویلفیئر بطورِ وکیل آپ تک یہ رقم امداد پہنچانے کا کام کر رہی ہے اگر آپ یہ سمجھتے ہیں کہ:
+                        </p>
+                        <div class="urdu-banner">آپ کی آمدنی اس قابل نہیں کہ جس سے آپ اپنے اخراجات پورے کر سکتے ہیں تو آپ یہ فارم بھر سکتے ہیں۔</div>
+                        <p>
+                            ہمارے پیارے آقا مصطفیٰ ﷺ کا ارشاد پاک ہے (مفہوم) کہ اگر کوئی شخص بلا ضرورت (یعنی اس کو ضرورت نہیں تھی) کسی کے آگے ہاتھ پھیلاتا ہے
+                            اور مانگتا ہے۔۔۔۔ آپ نے قسم کھا کر ارشاد فرمایا کہ وہ زندگی بھر لوگوں کے سامنے ہاتھ پھیلاتا رہے گا پھر بھی اس کا پیٹ نہیں بھرے گا۔ (الامان والحفیظ)
+                        </p>
+                        <p>
+                            <span class="urdu-label">محترم سائلین کرام توجہ فرمائیں</span>
+                            اب آپ خود فیصلہ کر لیں کہ آپ اس رقم امداد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر
+                            آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم امداد ادارے سے وصول کی اس کا نقصان آپ کو یہ ہو سکتا ہے۔ (مشاہدے کی بات ہے) کہ آپ
+                            کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے، بلا کی طرح آپ پر نازل
+                            ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے ہر مسلمان کی پریشانیاں دور کرے۔ (آمین)
+                        </p>
+                        <p>
+                            سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لئے موجود ہے، اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں
+                            فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لئے بنائے گئے ہیں امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے
+                            اسٹاف کے ساتھ تعاون کریں گے۔
+                        </p>
+                    </section>
+                    <br/>
+                </t>
                 <section name="Title">
                     <t t-if="'Microfinance' in docs.category_id.mapped('name')">
                         <center>
@@ -188,6 +254,36 @@
                             </div>
                         </t>
                 </section>
+                <!-- Urdu declaration footer (only when printed from Welfare) -->
+                <t t-if="context.get('active_welfare_id')">
+                    <br/>
+                    <section name="welfare_footer" class="welfare-urdu">
+                        <div class="urdu-banner">برکتیں حاصل کرنے کے لئے کچھ روحانی ذرائع</div>
+                        <p>
+                            <span class="urdu-check"/>
+                            نمازِ پنجگانہ اور قرآن کی تلاوت کا معمول ہے؟ (اگر نہیں تو فوری شروع کیجئے)
+                        </p>
+                        <p>
+                            <span class="urdu-check"/>
+                            کم از کم ہفتہ وار صلوٰۃ الحاجات اور روزانہ درود پاک پڑھنے کا معمول ہے۔ (اگر نہیں تو فوری شروع کیجئے)
+                        </p>
+                        <p>
+                            <span class="urdu-check"/>
+                            محترم / محترمہ ان حالات میں بھی جتنا ممکن ہو صدقہ و خیرات دے کر اللہ عزوجل سے مدد حاصل کرنے کا ذہن بنائیں تاکہ آپ کا ہاتھ بھی بانٹنے والا بن جائے۔
+                        </p>
+                        <p>
+                            <span class="urdu-label">نوٹ:</span>
+                            برائے کرم اس فارم کو بھرنے کے بعد علیحدہ سے ایک درخواست بھی لکھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس
+                            سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنی شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر
+                            قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
+                        </p>
+                        <p>
+                            <span class="urdu-label">حلف نامہ:</span>
+                            میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوٰۃ کی / کا حقدار ہوں اور میں نے جو فارم پُر کیا ہے بالکل
+                            درست اور ٹھیک پُر کیا ہے۔ یا اللہ عزوجل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
+                        </p>
+                    </section>
+                </t>
            </t>
         </t>
     </template>
