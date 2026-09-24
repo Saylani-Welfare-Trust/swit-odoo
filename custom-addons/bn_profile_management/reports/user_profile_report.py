@@ -12,20 +12,24 @@ class UserProfileReport(models.AbstractModel):
         # Odoo drops the action context for PDF downloads.
         docids = docids or data.get('partner_ids') or []
         partners = self.env['res.partner'].browse(docids)
+        is_welfare = False
         welfare = False
         if 'welfare' in self.env:
             Welfare = self.env['welfare'].sudo()
             if welfare_id:
                 partners = partners.sudo()
                 welfare = Welfare.browse(welfare_id)
-            elif partners:
-                # Printed from the donee form: use the donee's latest welfare application.
-                # Not based on the 'Welfare' tag, older donees often don't have it.
-                welfare = Welfare.search([('donee_id', '=', partners[:1].id)], order='id desc', limit=1) or False
+                is_welfare = True
+            elif partners and 'Welfare' in partners[:1].category_id.mapped('name'):
+                # Printed from the donee form: a Welfare-tagged donee always gets the
+                # welfare form, filled from the latest application (empty if none)
+                welfare = Welfare.search([('donee_id', '=', partners[:1].id)], order='id desc', limit=1)
+                is_welfare = True
         return {
             'doc_ids': docids,
             'doc_model': 'res.partner',
             'docs': partners,
             'data': data,
             'welfare': welfare,
+            'is_welfare': is_welfare,
         }

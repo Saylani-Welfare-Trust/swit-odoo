@@ -4,7 +4,7 @@
     <template id="user_profile_report" name="Donee Form">
         <t t-call="web.html_container">
             <!-- Welfare prints use the basic layout (no company header/footer) -->
-            <t t-if="welfare">
+            <t t-if="is_welfare">
                 <t t-call="web.basic_layout">
                     <div class="page">
                         <t t-call="bn_profile_management.user_profile_report_body"/>
@@ -21,7 +21,7 @@
 
     <template id="user_profile_report_body" name="Donee Form Body">
                 <!-- Urdu instructions header (only when printed from Welfare) -->
-                <t t-if="welfare">
+                <t t-if="is_welfare">
                     <style>
                         @font-face {
                             font-family: 'JameelNooriNastaleeq';
@@ -374,7 +374,7 @@
                 </section>
                 </t>
                 <!-- Urdu declaration footer (only when printed from Welfare) -->
-                <t t-if="welfare">
+                <t t-if="is_welfare">
                     <div style="height: 4px;"/>
                     <section name="welfare_footer" class="welfare-urdu">
                         <div class="urdu-banner">برکتیں حاصل کرنے کے لئے کچھ روحانی ذرائع</div>
