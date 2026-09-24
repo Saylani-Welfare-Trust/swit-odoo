@@ -16,6 +16,7 @@
                 <field name="create_date" string="Created On" readonly="1"  />
                 <field name="transaction_ref" readonly="1"  />
                 <field name="state" optional="show" widget="badge" decoration-warning="state == 'draft'" decoration-info="state == 'not_clear'" decoration-success="state == 'clear'" />
+                <button name="action_print_receipt" type="object" icon="fa-print" title="Print Receipt" invisible="state != 'clear'" />
             </tree>
         </field>
     </record>
