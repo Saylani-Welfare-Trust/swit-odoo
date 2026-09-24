@@ -13,9 +13,14 @@ class UserProfileReport(models.AbstractModel):
         docids = docids or data.get('partner_ids') or []
         partners = self.env['res.partner'].browse(docids)
         welfare = False
-        if welfare_id:
-            partners = partners.sudo()
-            welfare = self.env['welfare'].sudo().browse(welfare_id)
+        if 'welfare' in self.env:
+            Welfare = self.env['welfare'].sudo()
+            if welfare_id:
+                partners = partners.sudo()
+                welfare = Welfare.browse(welfare_id)
+            elif partners and 'Welfare' in partners[:1].category_id.mapped('name'):
+                # Printed from the donee form: use the donee's latest welfare application
+                welfare = Welfare.search([('donee_id', '=', partners[:1].id)], order='id desc', limit=1) or False
         return {
             'doc_ids': docids,
             'doc_model': 'res.partner',
