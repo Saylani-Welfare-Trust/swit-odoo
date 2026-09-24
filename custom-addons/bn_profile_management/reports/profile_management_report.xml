@@ -31,19 +31,19 @@
                             direction: rtl;
                             text-align: justify;
                             font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
-                            font-size: 18px;
-                            line-height: 1.8;
+                            font-size: 13px;
+                            line-height: 1.5;
                         }
                         .welfare-urdu p {
-                            margin: 0 0 4px 0;
+                            margin: 0 0 2px 0;
                         }
                         .welfare-urdu .urdu-banner {
                             background-color: #3b3591;
                             color: #ffffff;
                             text-align: center;
-                            padding: 2px 10px;
-                            margin: 4px 0;
-                            font-size: 20px;
+                            padding: 1px 8px;
+                            margin: 2px 0;
+                            font-size: 14px;
                         }
                         .welfare-urdu .urdu-label {
                             background-color: #3b3591;
@@ -84,11 +84,10 @@
                             اسٹاف کے ساتھ تعاون کریں گے۔
                         </p>
                     </section>
-                    <br/>
                     <style>
                         .welfare-detail-title {
                             text-align: center;
-                            font-size: 32px;
+                            font-size: 22px;
                             line-height: 1.2;
                             margin: 0;
                         }
@@ -99,22 +98,22 @@
                         }
                         .welfare-detail-table td {
                             border: 1px solid #bfbfbf;
-                            padding: 6px 8px;
+                            padding: 2px 6px;
                             text-align: center;
                             vertical-align: middle;
-                            font-size: 17px;
+                            font-size: 12px;
                             word-wrap: break-word;
                         }
                         .welfare-detail-table td.urdu-row {
                             direction: rtl;
                             text-align: right;
                             font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
-                            font-size: 18px;
-                            padding: 8px 10px;
+                            font-size: 13px;
+                            padding: 2px 8px;
                         }
                         .welfare-detail-table td.complaint-phone {
                             font-weight: bold;
-                            font-size: 18px;
+                            font-size: 13px;
                         }
                     </style>
                     <t t-set="employee" t-value="welfare.employee_id"/>
@@ -374,7 +373,7 @@
                 </t>
                 <!-- Urdu declaration footer (only when printed from Welfare) -->
                 <t t-if="welfare">
-                    <br/>
+                    <div style="height: 4px;"/>
                     <section name="welfare_footer" class="welfare-urdu">
                         <div class="urdu-banner">برکتیں حاصل کرنے کے لئے کچھ روحانی ذرائع</div>
                         <p>
