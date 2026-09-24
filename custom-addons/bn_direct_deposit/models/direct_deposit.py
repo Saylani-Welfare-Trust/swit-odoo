@@ -754,7 +754,11 @@ May Allah bless you!
         except Exception as e:
             _logger.error('DD %s: notification step failed: %s', self.name, str(e))
 
+        return self.action_print_receipt()
+
+    def action_print_receipt(self):
         return self.env.ref('bn_direct_deposit.report_direct_deposit_dn').report_action(self)
+
     def action_not_clear(self):
         if self.source_model == 'welfare':
             self._bounce_welfare()

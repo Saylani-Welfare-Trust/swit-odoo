@@ -19,6 +19,7 @@
                 
                 <button name="action_clear" type="object" icon="fa-check" title="Clear" invisible="state != 'draft'" />
                 <button name="action_not_clear" type="object" icon="fa-times" title="Not Clear" invisible="state != 'draft'" />
+                <button name="action_print_receipt" type="object" icon="fa-print" title="Print Receipt" invisible="state != 'clear'" />
                 <!-- <button name="action_transfer_to_dhs" type="object" icon="fa-arrow-right" title="Transfer to DHS" invisible="state != 'clear' or dhs_ids" /> -->
             </tree>
         </field>
@@ -32,6 +33,7 @@
                 <header>
                     <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button string="Not Clear" name="action_not_clear" type="object" invisible="state != 'draft'"/>
+                    <button string="Print Receipt" name="action_print_receipt" type="object" class="oe_highlight" invisible="state != 'clear'"/>
                     <!-- <button string="Transfer to DHS" name="action_transfer_to_dhs" type="object" class="oe_highlight" invisible="state != 'clear' or dhs_ids"/> -->
                     
 
