@@ -1576,7 +1576,8 @@ class Welfare(models.Model):
         # Use sudo to bypass potential access restrictions on the partner (e.g., inactive record)
         partner = self.donee_id.sudo()
         
-        # Pass the welfare record ID in the context so the report can show welfare‑specific data
+        # Pass the welfare record ID in `data` (the action context is dropped for PDF downloads)
+        # so the report can show welfare‑specific data
         return self.env.ref(
             'bn_profile_management.action_profile_management_report'
-        ).with_context(active_welfare_id=self.id).report_action(partner)
+        ).report_action(partner, data={'welfare_id': self.id, 'partner_ids': partner.ids})

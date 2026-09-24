@@ -5,7 +5,7 @@
         <t t-call="web.html_container">
            <t t-call="web.external_layout">
                 <!-- Urdu instructions header (only when printed from Welfare) -->
-                <t t-if="context.get('active_welfare_id')">
+                <t t-if="welfare">
                     <style>
                         @font-face {
                             font-family: 'JameelNooriNastaleeq';
@@ -69,7 +69,93 @@
                         </p>
                     </section>
                     <br/>
+                    <style>
+                        .welfare-detail-title {
+                            text-align: center;
+                            font-size: 26px;
+                            line-height: 1.2;
+                            margin: 0;
+                        }
+                        .welfare-detail-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: fixed;
+                        }
+                        .welfare-detail-table td {
+                            border: 1px solid #bfbfbf;
+                            padding: 4px 6px;
+                            text-align: center;
+                            vertical-align: middle;
+                            font-size: 13px;
+                            word-wrap: break-word;
+                        }
+                    </style>
+                    <t t-set="employee" t-value="welfare.employee_id"/>
+                    <section name="welfare_detail">
+                        <div class="welfare-detail-title">Saylani Welfare International Trust</div>
+                        <div class="welfare-detail-title">Welfare Application</div>
+                        <table class="welfare-detail-table">
+                            <tr>
+                                <td>Date:</td>
+                                <td><t t-esc="welfare.date or datetime.date.today()"/></td>
+                                <td>Case</td>
+                                <td><t t-esc="welfare.name"/></td>
+                            </tr>
+                            <tr>
+                                <td>Name:</td>
+                                <td><t t-esc="docs.name"/></td>
+                                <td>Mobile:</td>
+                                <td><t t-esc="docs.mobile"/></td>
+                            </tr>
+                            <tr>
+                                <td>CNIC No. :</td>
+                                <td><t t-esc="docs.cnic_no"/></td>
+                                <td>City:</td>
+                                <td><t t-esc="docs.city"/></td>
+                            </tr>
+                            <tr>
+                                <td>Gender:</td>
+                                <td><t t-if="docs.gender" t-esc="docs.gender.title()"/></td>
+                                <td>DOB:</td>
+                                <td><t t-esc="docs.date_of_birth"/></td>
+                            </tr>
+                            <tr>
+                                <td>Religion :</td>
+                                <td><t t-if="docs.religion" t-esc="docs.religion.title()"/></td>
+                                <td>Next Kin:</td>
+                                <td><t t-esc="docs.next_kin"/></td>
+                            </tr>
+                            <tr>
+                                <td>Address:</td>
+                                <td><t t-esc="docs.street"/></td>
+                                <td>Nearest Land</td>
+                                <td><t t-esc="docs.nearest_land_mark"/></td>
+                            </tr>
+                            <tr>
+                                <td>Father Name:</td>
+                                <td><t t-esc="docs.father_name"/></td>
+                                <td>Cast</td>
+                                <td><t t-esc="docs.surname"/></td>
+                            </tr>
+                            <tr>
+                                <td>Married Status:</td>
+                                <td><t t-if="docs.martial_status" t-esc="docs.martial_status.title()"/></td>
+                                <td>Category Type:</td>
+                                <td><t t-esc="', '.join(welfare.welfare_line_ids.mapped('disbursement_category_id.name'))"/></td>
+                            </tr>
+                            <tr>
+                                <td>Inquiry Officer</td>
+                                <td>
+                                    <t t-esc="employee.name"/>
+                                    <t t-if="employee.barcode"> ( <t t-esc="employee.barcode"/>)</t>
+                                </td>
+                                <td>Officer Phone</td>
+                                <td><t t-esc="employee.mobile_phone or employee.work_phone"/></td>
+                            </tr>
+                        </table>
+                    </section>
                 </t>
+                <t t-else="">
                 <section name="Title">
                     <t t-if="'Microfinance' in docs.category_id.mapped('name')">
                         <center>
@@ -234,28 +320,10 @@
                             <t t-esc="docs.details"/>
                         </div>
                     </div>
-                    <!-- Inquiry Officer Information (only when printed from Welfare) -->
-                        <t t-if="context.get('active_welfare_id')">
-                            <t t-set="welfare" t-value="env['welfare'].browse(context.get('active_welfare_id'))"/>
-                            <br/>
-                            <div class="row">
-                                <div class="col-2">
-                                    <span>Inquiry Officer : </span>
-                                </div>
-                                <div class="col-4">
-                                    <t t-esc="welfare.employee_id.name if welfare.employee_id else ''"/>
-                                </div>
-                                <div class="col-2">
-                                    <span>Officer Phone : </span>
-                                </div>
-                                <div class="col-4">
-                                    <t t-esc="(welfare.employee_id.mobile_phone or welfare.employee_id.work_phone) if welfare.employee_id else ''"/>
-                                </div>
-                            </div>
-                        </t>
                 </section>
+                </t>
                 <!-- Urdu declaration footer (only when printed from Welfare) -->
-                <t t-if="context.get('active_welfare_id')">
+                <t t-if="welfare">
                     <br/>
                     <section name="welfare_footer" class="welfare-urdu">
                         <div class="urdu-banner">برکتیں حاصل کرنے کے لئے کچھ روحانی ذرائع</div>
