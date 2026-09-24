@@ -18,8 +18,9 @@ class UserProfileReport(models.AbstractModel):
             if welfare_id:
                 partners = partners.sudo()
                 welfare = Welfare.browse(welfare_id)
-            elif partners and 'Welfare' in partners[:1].category_id.mapped('name'):
-                # Printed from the donee form: use the donee's latest welfare application
+            elif partners:
+                # Printed from the donee form: use the donee's latest welfare application.
+                # Not based on the 'Welfare' tag, older donees often don't have it.
                 welfare = Welfare.search([('donee_id', '=', partners[:1].id)], order='id desc', limit=1) or False
         return {
             'doc_ids': docids,
