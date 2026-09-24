@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 
 CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 
@@ -162,13 +162,6 @@ class PurchaseOrder(models.Model):
         held = self.browse()
         for order in self:
             reasons = order._get_budget_exceeded_reasons()
-            # TEMPORARY diagnostic: show what the Shariah check found, on every
-            # HOD approval, so it's visible whether it's actually checking.
-            # Remove this raise once confirmed.
-            raise ValidationError(_('Shariah check - %(result)s:\n%(summary)s') % {
-                'result': _('OUT OF BUDGET') if reasons else _('within budget'),
-                'summary': '\n'.join(order._get_budget_check_summary()),
-            })
             if not reasons:
                 order.message_post(body=_('Budget check - within budget:<br/>%s') % '<br/>'.join(order._get_budget_check_summary()))
                 order._mark_cfo_approved(auto=True)
