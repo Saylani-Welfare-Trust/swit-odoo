@@ -212,26 +212,27 @@ class PurchaseOrder(models.Model):
     def _notify_cfo_approval_needed(self, reason):
         """Ping every user who can give CFO approval (the Material Request CFO
         group) that this RFQ needs their action, two ways:
-        - a chatter message addressed to them (inbox, and email per their own
-          notification preference);
+        - a direct message to each of them (message_notify - lands straight in
+          their own inbox as a personal notification, and by email per their own
+          notification preference, rather than a comment on the RFQ's chatter
+          that they'd only see by opening the record);
         - a "To Do" activity assigned to each of them, since that shows up on
-          their own Activities view/dashboard even if they never open this RFQ
-          from the chatter notification."""
+          their own Activities view/dashboard too."""
         self.ensure_one()
         cfo_users = self.env.ref(CFO_GROUP).users
         body = _(
-            'Budget exceeded - waiting for the CFO to approve it or arrange the budget.<br/>%s'
-        ) % reason.replace('\n', '<br/>')
-        self.message_post(
-            body=body,
-            partner_ids=cfo_users.partner_id.ids,
-            subtype_xmlid='mail.mt_comment',
-        )
+            'Budget exceeded on RFQ %(rfq)s - waiting for the CFO to approve it or arrange the budget.<br/>%(reason)s'
+        ) % {'rfq': self.display_name, 'reason': reason.replace('\n', '<br/>')}
         if not cfo_users:
             self.message_post(body=_(
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
             return
+        self.message_notify(
+            body=body,
+            partner_ids=cfo_users.partner_id.ids,
+            subject=_('CFO Approval Required'),
+        )
         activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
         for user in cfo_users:
             self.activity_schedule(
