@@ -210,14 +210,15 @@ class PurchaseOrder(models.Model):
         self._release_to_po()
 
     def _notify_cfo_approval_needed(self, reason):
-        """Message the RFQ's chatter and, in it, ping every user who can give CFO
-        approval (the Material Request CFO group), so they see this record needs
-        their action - in their inbox, and by email per their own notification
-        settings."""
+        """Ping every user who can give CFO approval (the Material Request CFO
+        group) that this RFQ needs their action, two ways:
+        - a chatter message addressed to them (inbox, and email per their own
+          notification preference);
+        - a "To Do" activity assigned to each of them, since that shows up on
+          their own Activities view/dashboard even if they never open this RFQ
+          from the chatter notification."""
         self.ensure_one()
-        cfo_users = self.env['res.users'].search([
-            ('groups_id', 'in', self.env.ref(CFO_GROUP).id),
-        ])
+        cfo_users = self.env.ref(CFO_GROUP).users
         body = _(
             'Budget exceeded - waiting for the CFO to approve it or arrange the budget.<br/>%s'
         ) % reason.replace('\n', '<br/>')
@@ -230,6 +231,15 @@ class PurchaseOrder(models.Model):
             self.message_post(body=_(
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
+            return
+        activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+        for user in cfo_users:
+            self.activity_schedule(
+                activity_type_id=activity_type.id if activity_type else False,
+                summary=_('CFO approval needed: budget exceeded'),
+                note=body,
+                user_id=user.id,
+            )
 
     def _shariah_hold_notification(self):
         return {
