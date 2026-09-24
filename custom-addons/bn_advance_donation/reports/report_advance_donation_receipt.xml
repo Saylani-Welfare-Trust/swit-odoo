@@ -60,13 +60,11 @@
                                     text-align: center !important;
                                 }
                             </style>
-                            <!-- ===== COMPANY LOGO ===== -->
-                            <div style="text-align: center; margin-bottom: 5px;">
-                                <!-- Try dn_image first (if exists), then fallback to logo -->
-                                <img t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="display:block; max-height:70px; width:auto; margin:0 auto;" class="company-logo"/>
-                                <img t-elif="receipt.env.company.logo" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo" style="display:block; max-height:70px; width:auto; margin:0 auto;" class="company-logo"/>
-                                <img t-elif="receipt.env.company.logo_web" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo_web" style="display:block; max-height:70px; width:auto; margin:0 auto;" class="company-logo"/>
-                            </div>                                         
+                            <!-- ===== COMPANY BANNER ===== -->
+                            <!-- Try dn_image first (if exists), then fallback to logo -->
+                            <img t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img t-elif="receipt.env.company.logo" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img t-elif="receipt.env.company.logo_web" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo_web" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
                             <!-- ===== WATERMARK ===== -->
                             <div t-if="receipt.state == 'draft'" class="watermark">Draft</div>
                             <div t-if="receipt.state == 'pending'" class="watermark">Pending</div>
@@ -96,6 +94,8 @@
                                         <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile or '-'"/>
                                     </div>
                                     <div><strong>Donation:</strong> <t t-esc="receipt.donation_id.name or '-'"/></div>
+                                </div>
+                                <div class="col-6">
                                     <!-- Category Field -->
                                     <div t-if="receipt.category_id">
                                         <strong>Category:</strong> <t t-esc="receipt.category_id.display_name or '-'"/>
@@ -105,8 +105,6 @@
                                         <strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name or '-'"/>
                                     </div>
                                     <div><strong>Payment Type:</strong> <t t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></div>
-                                </div>
-                                <div class="col-6">
                                     <div>
                                         <strong>Date:</strong>
                                         <t t-esc="receipt.date.strftime('%d-%m-%Y') if receipt.date else '--'"/>
@@ -142,32 +140,29 @@
                                 </div>
                             </div>
 
-                            <!-- ===== AMOUNT TABLE ===== -->
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th class="text-end">Amount (Rs)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Donation Amount</td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(receipt.amount or 0)"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Total Amount</strong></td>
-                                        <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(receipt.amount or 0)"/></strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Used Amount</td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(receipt.used_amount or 0)"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Remaining Amount</td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(receipt.remaining_amount or 0)"/></td>
-                                    </tr>
-                                </tbody>
+                            <!-- ===== AMOUNT CARDS ===== -->
+                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053; margin-top:8px;">Financial Details</h5>
+                            <table style="width:100%; margin:0 0 6px 0;">
+                                <tr>
+                                    <td style="width:33%; padding:0 4px 0 0; vertical-align:top;">
+                                        <div style="border:2px solid #3498DB; padding:8px;">
+                                            <div style="color:#3498DB; font-size:10px; font-weight:bold;">Total Amount</div>
+                                            <div style="color:#2E4053; font-size:14px; font-weight:bold;"><t t-esc="'{:,.2f}'.format(receipt.amount or 0)"/> <t t-esc="receipt.currency_id.symbol"/></div>
+                                        </div>
+                                    </td>
+                                    <td style="width:33%; padding:0 2px; vertical-align:top;">
+                                        <div style="border:2px solid #27AE60; padding:8px;">
+                                            <div style="color:#27AE60; font-size:10px; font-weight:bold;">Used Amount</div>
+                                            <div style="color:#27AE60; font-size:14px; font-weight:bold;"><t t-esc="'{:,.2f}'.format(receipt.used_amount or 0)"/> <t t-esc="receipt.currency_id.symbol"/></div>
+                                        </div>
+                                    </td>
+                                    <td style="width:33%; padding:0 0 0 4px; vertical-align:top;">
+                                        <div style="border:2px solid #E74C3C; padding:8px;">
+                                            <div style="color:#E74C3C; font-size:10px; font-weight:bold;">Remaining Amount</div>
+                                            <div style="color:#E74C3C; font-size:14px; font-weight:bold;"><t t-esc="'{:,.2f}'.format(receipt.remaining_amount or 0)"/> <t t-esc="receipt.currency_id.symbol"/></div>
+                                        </div>
+                                    </td>
+                                </tr>
                             </table>
 
                             <!-- ===== REMARKS SECTION (from POS) ===== -->
