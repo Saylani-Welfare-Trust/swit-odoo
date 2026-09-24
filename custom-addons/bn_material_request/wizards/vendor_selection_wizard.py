@@ -55,12 +55,18 @@ class VendorSelectionWizard(models.TransientModel):
                     'price_unit': 0.0,  # Will be filled later
                 }))
             
+            # Purchase Representative on the RFQ is the user who created the source
+            # Material Request, not whoever runs this wizard - falls back to the
+            # normal default (current user) when there's no Material Request behind it.
+            requester = self.source_requisition_id.material_request_id.user_id
+
             # Create RFQ (Purchase Order) for this vendor
             rfq = self.env['purchase.order'].create({
                 'partner_id': vendor.id,
                 'requisition_id': self.source_requisition_id.id,
                 'origin': self.source_requisition_id.name or self.source_requisition_id.origin or '',
                 'order_line': line_vals,
+                **({'user_id': requester.id} if requester else {}),
             })
             created_rfqs |= rfq
         
