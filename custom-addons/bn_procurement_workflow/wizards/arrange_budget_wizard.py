@@ -66,15 +66,14 @@ class ArrangeBudgetWizardLine(models.TransientModel):
 
     wizard_id = fields.Many2one('procurement.arrange.budget.wizard', required=True, ondelete='cascade')
     destination_id = fields.Many2one(
-        'account.analytic.account', string='Segment Short of Budget', required=True,
-        domain="[('plan_id.name', '=', 'Segment')]")
+        'account.analytic.account', string='Segment Short of Budget', required=True)
     shortfall = fields.Float(string='Shortfall', readonly=True)
-    # Any Segment analytic account can be the source here - not filtered by the
-    # Segment Transfer Rules that gate a normal manual Shariah transfer - other
-    # than not letting a segment be its own source.
+    # Any analytic account can be the source here - not limited to the Segment
+    # plan, and not filtered by the Segment Transfer Rules that gate a normal
+    # manual Shariah transfer - other than not letting a segment be its own source.
     source_id = fields.Many2one(
         'account.analytic.account', string='Take Budget From',
-        domain="[('plan_id.name', '=', 'Segment'), ('id', '!=', destination_id)]")
+        domain="[('id', '!=', destination_id)]")
     source_balance = fields.Float(string='Available There', compute='_compute_source_balance')
     amount = fields.Float(string='Amount to Transfer')
 
