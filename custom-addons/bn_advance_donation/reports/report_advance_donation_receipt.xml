@@ -94,6 +94,8 @@
                                         <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile or '-'"/>
                                     </div>
                                     <div><strong>Donation:</strong> <t t-esc="receipt.donation_id.name or '-'"/></div>
+                                </div>
+                                <div class="col-6">
                                     <!-- Category Field -->
                                     <div t-if="receipt.category_id">
                                         <strong>Category:</strong> <t t-esc="receipt.category_id.display_name or '-'"/>
@@ -103,8 +105,6 @@
                                         <strong>Product Name:</strong> <t t-esc="receipt.product_id.display_name or '-'"/>
                                     </div>
                                     <div><strong>Payment Type:</strong> <t t-esc="dict(receipt.fields_get(allfields=['payment_type'])['payment_type']['selection'])[receipt.payment_type]"/></div>
-                                </div>
-                                <div class="col-6">
                                     <div>
                                         <strong>Date:</strong>
                                         <t t-esc="receipt.date.strftime('%d-%m-%Y') if receipt.date else '--'"/>
