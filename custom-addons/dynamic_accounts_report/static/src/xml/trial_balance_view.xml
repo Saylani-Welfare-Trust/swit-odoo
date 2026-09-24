@@ -339,19 +339,20 @@
                                     </tr>
                                     <tr class="o_heading"
                                         style="text-align:center;">
-                                        <th colspan="5"/>
-                                        <th/>
+                                        <th colspan="6"/>
+                                        <th/>                                   <!-- empty cell under Initial Balance -->
                                         <t t-if="state.apply_comparison == true">
                                             <t t-set="number_of_periods"
-                                               t-value="comparison_number_range"/>
+                                            t-value="comparison_number_range"/>
                                             <t t-foreach="number_of_periods"
-                                               t-as="number" t-key="number">
+                                            t-as="number" t-key="number">
                                                 <th>Debit</th>
                                                 <th>Credit</th>
                                             </t>
                                         </t>
-                                        <th>Debit</th>
+                                        <th>Debit</th>                          <!-- current month -->
                                         <th>Credit</th>
+                                        <th/>                                   <!-- empty cell under End Balance -->
                                     </tr>
                                 </thead>
                                 <tbody t-ref="tbody">
