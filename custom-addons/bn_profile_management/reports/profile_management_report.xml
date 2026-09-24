@@ -60,6 +60,10 @@
                             vertical-align: middle;
                         }
                     </style>
+                    <section name="welfare_title">
+                        <div class="welfare-detail-title">Saylani Welfare International Trust</div>
+                        <div class="welfare-detail-title">Welfare Application</div>
+                    </section>
                     <section name="welfare_header" class="welfare-urdu">
                         <div class="urdu-banner">اہم ہدایات</div>
                         <p>
@@ -118,8 +122,6 @@
                     </style>
                     <t t-set="employee" t-value="welfare.employee_id"/>
                     <section name="welfare_detail">
-                        <div class="welfare-detail-title">Saylani Welfare International Trust</div>
-                        <div class="welfare-detail-title">Welfare Application</div>
                         <table class="welfare-detail-table">
                             <tr>
                                 <td>Date:</td>
