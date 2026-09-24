@@ -512,39 +512,29 @@ class TrialBalance extends owl.Component {
     }
 
     async show_gl(ev) {
-        const accountId = parseInt(ev.currentTarget.attributes["data-account-id"].value, 10);
-
-        const start_date = this.start_date?.el?.value || '';
-        const end_date   = this.end_date?.el?.value   || '';
-
-        // If TB has an Account filter active, honour it. Otherwise fall back
-        // to the account the user clicked so GL opens scoped to that account.
-        let accountNames = [];
-        if (this.state.selected_analytic_account_rec?.length) {
-            accountNames = this.state.selected_analytic_account_rec.map(
-                a => a.display_name || `${a.code} ${a.name}`
-            );
-        } else {
-            const row = (this.state.data || []).find(r => r.account_id === accountId);
-            if (row && row.account) accountNames = [row.account];
-        }
-
-        // Normalise method key (TB uses 'accural', GL uses 'accrual')
-        const method = (this.state.method && this.state.method.cash)
-            ? { cash: true }
-            : { accrual: true };
-
+        /**
+         * Opens General Ledger pre-filtered to the clicked account and the
+         * Trial Balance's currently active date range.
+         *
+         * @param {Event} ev - The event object triggered by the action.
+         * @returns {Promise} - A promise that resolves to the result of the action.
+         */
+        const accountName = ev.currentTarget.attributes["data-account-name"]
+            ? ev.currentTarget.attributes["data-account-name"].value
+            : null;
         return this.action.doAction({
             type: 'ir.actions.client',
             name: 'General Ledger',
             tag: 'gen_l',
             params: {
-                default_account_id: accountId,
-                default_date_range: { start_date, end_date },
+                default_date_range: {
+                    start_date: this.start_date.el.value,
+                    end_date: this.end_date.el.value,
+                },
+                default_account_names: accountName ? [accountName] : [],
                 default_journal_ids: this.state.selected_journal_list || [],
-                default_account_names: accountNames,
                 default_options: this.state.options || {},
-                default_method: method,
+                default_method: this.state.method || { accrual: true },
             },
         });
     }
