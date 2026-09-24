@@ -31,7 +31,7 @@
                             direction: rtl;
                             text-align: justify;
                             font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
-                            font-size: 14px;
+                            font-size: 18px;
                             line-height: 1.8;
                         }
                         .welfare-urdu p {
@@ -43,7 +43,7 @@
                             text-align: center;
                             padding: 2px 10px;
                             margin: 4px 0;
-                            font-size: 15px;
+                            font-size: 20px;
                         }
                         .welfare-urdu .urdu-label {
                             background-color: #3b3591;
@@ -88,7 +88,7 @@
                     <style>
                         .welfare-detail-title {
                             text-align: center;
-                            font-size: 26px;
+                            font-size: 32px;
                             line-height: 1.2;
                             margin: 0;
                         }
@@ -99,11 +99,22 @@
                         }
                         .welfare-detail-table td {
                             border: 1px solid #bfbfbf;
-                            padding: 4px 6px;
+                            padding: 6px 8px;
                             text-align: center;
                             vertical-align: middle;
-                            font-size: 13px;
+                            font-size: 17px;
                             word-wrap: break-word;
+                        }
+                        .welfare-detail-table td.urdu-row {
+                            direction: rtl;
+                            text-align: right;
+                            font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
+                            font-size: 18px;
+                            padding: 8px 10px;
+                        }
+                        .welfare-detail-table td.complaint-phone {
+                            font-weight: bold;
+                            font-size: 18px;
                         }
                     </style>
                     <t t-set="employee" t-value="welfare.employee_id"/>
@@ -167,6 +178,29 @@
                                 </td>
                                 <td>Officer Phone</td>
                                 <td><t t-esc="employee.mobile_phone or employee.work_phone"/></td>
+                            </tr>
+                            <!-- Required documents -->
+                            <tr>
+                                <td colspan="4" class="urdu-row">اپنی اور بیوی کے شناختی کارڈ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">بچوں کے ب فارم یا پیدائش سرٹیفکیٹ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">نکاح نامہ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">شادی شدہ ہونے کی صورت میں بیوی اور اپنے شناختی کارڈ یا ب فارم کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">بجلی یا گیس کے کنکشن کے بل کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">بینک سے رقم منتقلی میں مدد کے لیے بینک کے اکاؤنٹ یا چیک کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td class="complaint-phone">0328-3385542</td>
+                                <td colspan="3" class="urdu-row">شکایت کی صورت میں ان نمبرز پر رابطہ کریں۔</td>
                             </tr>
                         </table>
                     </section>
