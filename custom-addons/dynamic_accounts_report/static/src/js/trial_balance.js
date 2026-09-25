@@ -511,14 +511,7 @@ class TrialBalance extends owl.Component {
         return Math.round(num).toLocaleString('en-US');
     }
 
-    async show_gl(ev) {
-        /**
-         * Opens General Ledger pre-filtered to the clicked account and the
-         * Trial Balance's currently active date range.
-         *
-         * @param {Event} ev - The event object triggered by the action.
-         * @returns {Promise} - A promise that resolves to the result of the action.
-         */
+        async show_gl(ev) {
         const accountName = ev.currentTarget.attributes["data-account-name"]
             ? ev.currentTarget.attributes["data-account-name"].value
             : null;
@@ -527,6 +520,9 @@ class TrialBalance extends owl.Component {
             name: 'General Ledger',
             tag: 'gen_l',
             params: {
+                default_title: accountName
+                    ? `General Ledger - ${accountName}`
+                    : 'General Ledger',
                 default_date_range: {
                     start_date: this.start_date.el.value,
                     end_date: this.end_date.el.value,
@@ -538,6 +534,7 @@ class TrialBalance extends owl.Component {
             },
         });
     }
+
     formatDate(dateString) {
     /**
      * Formats a date string in "YYYY-MM-DD" format to "DD/MM/YYYY" format.
