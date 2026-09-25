@@ -67,8 +67,10 @@
                         <div t-if="res_company.logo" class="welfare-logo">
                             <img t-att-src="image_data_uri(res_company.logo)" alt="Logo"/>
                         </div>
-                        <div class="welfare-detail-title">Saylani Welfare International Trust</div>
-                        <div class="welfare-detail-title">Welfare Application</div>
+                        <div class="welfare-detail-title">
+                            <div><span class="title-main">سیلانی ویلفیئر انٹرنیشنل ٹرسٹ</span></div>
+                            <div><span class="title-sub">درخواست برائے امداد</span></div>
+                        </div>
                     </section>
                     <section name="welfare_header" class="welfare-urdu">
                         <div class="urdu-banner">اہم ہدایات</div>
@@ -104,10 +106,29 @@
                             max-width: 240px;
                         }
                         .welfare-detail-title {
+                            direction: rtl;
                             text-align: center;
-                            font-size: 27px;
-                            line-height: 1.2;
-                            margin: 0;
+                            font-family: 'JameelNooriNastaleeq', 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', sans-serif !important;
+                            margin: 0 0 8px 0;
+                        }
+                        /* Nastaleeq glyphs are tall, so keep the line-height generous to avoid clipping */
+                        .welfare-detail-title .title-main {
+                            display: inline-block;
+                            font-size: 40px;
+                            line-height: 1.8;
+                            color: #3b3591;
+                            padding: 0 24px;
+                            border-bottom: 4px double #3b3591;
+                        }
+                        .welfare-detail-title .title-sub {
+                            display: inline-block;
+                            margin-top: 6px;
+                            padding: 0 30px;
+                            font-size: 24px;
+                            line-height: 1.7;
+                            color: #ffffff;
+                            background-color: #3b3591;
+                            border-radius: 20px;
                         }
                         .welfare-detail-table {
                             width: 100%;
