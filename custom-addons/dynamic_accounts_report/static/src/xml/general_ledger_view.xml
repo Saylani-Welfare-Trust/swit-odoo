@@ -256,6 +256,7 @@
                         <thead>
                             <tr class="o_heading">
                                 <th>Sr</th>
+                                <th>Account Code</th>
                                 <th>Account Name</th>
                                 <th>Split Account</th>
                                 <th>Location</th>
@@ -276,7 +277,7 @@
 
                                     <!-- Account banner: always visible, doubles as the single-line summary -->
                                     <tr style="cursor:pointer;" t-on-click="() => this.toggleAccount(account)">
-                                        <td colspan="9" style="font-weight:bold;padding:6px;">
+                                        <td colspan="10" style="font-weight:bold;padding:6px;">
                                             <span class="toggle-icon" style="margin-right:6px;">
                                                 <i t-att-class="this.isAccountCollapsed(account) ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
                                             </span>
@@ -306,8 +307,8 @@
                                         <!-- Opening balance row -->
                                         <tr>
                                             <td>00</td>
-                                            <td colspan="8">OPENING BALANCE</td>
-                                            <td/><td/>
+                                            <td colspan="9">OPENING BALANCE</td>
+                                            <td/><td/><td/>
                                             <td>
                                                 <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
                                                 <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'opening_balance', 0))"/>
@@ -320,22 +321,19 @@
                                             <t t-set="sr" t-value="sr + 1"/>
                                             <tr>
                                                 <td><t t-esc="sr"/></td>
-                                                <td><t t-esc="account"/></td>
+                                                <td><t t-esc="this.getAccountTotalValue(account, 'account_code', '')"/></td>
+                                                <td><t t-esc="this.getAccountTotalValue(account, 'account_name', '')"/></td>
                                                 <td><t t-esc="line.split_account"/></td>
                                                 <td><t t-esc="line.location"/></td>
                                                 <td><t t-esc="line.date"/></td>
                                                 <td><t t-esc="line.trx_type"/></td>
                                                 <td><t t-esc="line.move_name"/></td>
                                                 <td><t t-esc="line.ref"/></td>
-                                                <!-- Name column: always the vendor/partner -->
                                                 <td>
                                                     <t t-if="line.partner_id and line.partner_id[1]"
-                                                       t-esc="line.partner_id[1]"/>
+                                                    t-esc="line.partner_id[1]"/>
                                                 </td>
-                                                <!-- Description column: always the line label -->
-                                                <td>
-                                                    <t t-esc="line.name"/>
-                                                </td>
+                                                <td><t t-esc="line.name"/></td>
                                                 <td>
                                                     <t t-if="line.debit">
                                                         <t t-esc="this.formatAmount(line.debit)"/>
