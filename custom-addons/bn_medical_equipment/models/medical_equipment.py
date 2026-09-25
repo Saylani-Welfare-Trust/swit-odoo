@@ -499,11 +499,22 @@ class MedicalEquipment(models.Model):
                 _('Failed to register Donee: %s') % str(e)
             )
 
-    @api.depends('actual_amount', 'total_amount')
+    @api.depends('actual_amount', 'medical_equipment_line_ids.base_security_deposit', 'medical_equipment_line_ids.quantity')
     def _compute_actual_deposit_percentage(self):
+        """
+        Percentage = (actual_amount / full security deposit of all lines) * 100
+        Full deposit uses base_security_deposit (not security_deposit) to avoid a
+        circular dependency, since security_deposit itself depends on this percentage.
+        """
         for record in self:
-            if record.total_amount:
-                record.actual_deposit_percentage = (record.actual_amount / record.total_amount) * 100
+            actual_deposit_amount = sum(
+                line.base_security_deposit * line.quantity
+                for line in record.medical_equipment_line_ids
+            )
+            if actual_deposit_amount:
+                record.actual_deposit_percentage = (record.actual_amount / actual_deposit_amount) * 100
+            else:
+                record.actual_deposit_percentage = 0.0
     
     @api.depends('donee_id')
     def _set_is_donee_register(self):
