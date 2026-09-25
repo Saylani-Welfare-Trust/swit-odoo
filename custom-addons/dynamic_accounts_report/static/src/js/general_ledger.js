@@ -228,7 +228,7 @@ class GeneralLedger extends owl.Component {
             || (this.props.action && (this.props.action.display_name || this.props.action.name))
             || 'General Ledger';
     }
-    
+
     /* --------------------------------------------------------------------
     * Account code range filter (From / To)
     * ------------------------------------------------------------------ */
@@ -245,7 +245,6 @@ class GeneralLedger extends owl.Component {
         const from = (this.state.account_from || '').trim();
         const to   = (this.state.account_to   || '').trim();
 
-        // Nothing to do if both boxes are empty
         if (!from && !to) {
             return;
         }
@@ -255,32 +254,26 @@ class GeneralLedger extends owl.Component {
             if (!code) {
                 return false;
             }
-            // Pad both sides so "99" < "101" compares like numbers, not strings
+            // Left-pad so "99" < "101" compares numerically, not lexically
             const width = Math.max(code.length, from.length, to.length);
             const pad   = (v) => String(v).padStart(width, '0');
-            const c = pad(code);
+            const c     = pad(code);
             if (from && c < pad(from)) { return false; }
             if (to   && c > pad(to))   { return false; }
             return true;
         };
 
-        const selected = new Set(this.state.selected_account_list || []);
-        for (const acc of (this.state.all_accounts || [])) {
-            if (inRange(acc)) {
-                selected.add(acc);
-            }
-        }
-        this.state.selected_account_list = Array.from(selected);
+        // ⬇⬇ KEY CHANGE: REPLACE, don't union ⬇⬇
+        const selected = (this.state.all_accounts || []).filter(inRange);
+        this.state.selected_account_list = selected;
 
-        // Reflect the "selected" class on the buttons that are now checked
-        document.querySelectorAll(
-            ".report-filter-button[data-value='account']"
-        ).forEach((btn) => {
-            const id = btn.getAttribute('data-id');
-            if (selected.has(id)) {
-                btn.classList.add('selected-filter');
-            }
-        });
+        // Sync highlight on every account button in the dropdown
+        document
+            .querySelectorAll(".report-filter-button[data-value='account']")
+            .forEach((btn) => {
+                const id = btn.getAttribute('data-id');
+                btn.classList.toggle('selected-filter', selected.includes(id));
+            });
 
         this.applySearch();
     }
