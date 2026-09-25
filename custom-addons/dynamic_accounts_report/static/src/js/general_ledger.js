@@ -97,7 +97,7 @@ class GeneralLedger extends owl.Component {
         let totalCreditSum = 0;
         let currency = null;
         var self = this;
-        var action_title = self.props.action.display_name;
+        var action_title = self.getActionTitle();
         try {
             const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
             const raw_data = filtered_data || {};
@@ -164,7 +164,7 @@ class GeneralLedger extends owl.Component {
             'total_credit': this.state.total_credit,
             'currency': this.state.currency,
         }
-        var action_title = self.props.action.display_name;
+        var action_title = self.getActionTitle();
         return self.action.doAction({
             'type': 'ir.actions.report',
             'report_type': 'qweb-pdf',
@@ -193,7 +193,7 @@ class GeneralLedger extends owl.Component {
             'total_credit': this.state.total_credit,
             'currency': this.state.currency,
         }
-        var action_title = self.props.action.display_name;
+        var action_title = self.getActionTitle();
         var datas = {
             'account': self.state.account,
             'data': self.state.account_data,
@@ -218,6 +218,11 @@ class GeneralLedger extends owl.Component {
             complete: () => unblockUI,
             error: (error) => self.call('crash_manager', 'rpc_error', error),
         });
+    }
+
+    getActionTitle() {
+        return (this.props.action && (this.props.action.display_name || this.props.action.name))
+            || 'General Ledger';
     }
     getAccountTotals(account) {
         if (!this.state.account_total || !this.state.account_total[account]) {
