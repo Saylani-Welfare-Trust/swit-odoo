@@ -5,7 +5,7 @@
         <t t-call="web.html_container">
             <!-- Welfare prints use the basic layout (no company header/footer) -->
             <t t-if="is_welfare">
-                <t t-call="web.basic_layout">
+                <t t-call="web.external_layout">
                     <div class="page">
                         <t t-call="bn_profile_management.user_profile_report_body"/>
                     </div>
