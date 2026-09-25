@@ -5,7 +5,7 @@
         <field name="name">Purchase / HOD</field>
     </record>
     
-    <record id="purchase_cxo_group" model="res.groups">
+    <record id="purchased_cxo_group" model="res.groups">
         <field name="name">Purchase / CXO</field>
     </record>
 
