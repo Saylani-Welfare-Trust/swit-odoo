@@ -58,6 +58,8 @@ class GeneralLedger extends owl.Component {
 
             selected_account_list: [...incomingAccounts],
             all_accounts: [],
+            account_from: '',
+            account_to: '',
 
             title: null,
             filter_applied: null,
@@ -225,6 +227,67 @@ class GeneralLedger extends owl.Component {
         return params.default_title
             || (this.props.action && (this.props.action.display_name || this.props.action.name))
             || 'General Ledger';
+    }
+    
+    /* --------------------------------------------------------------------
+    * Account code range filter (From / To)
+    * ------------------------------------------------------------------ */
+
+    _extractAccountCode(acc) {
+        // Pull the leading numeric code out of the account label.
+        // Handles "1010 Cash", "1010 - Cash", "1010-Cash", "1010".
+        const s = String(acc ?? '').trim();
+        const m = s.match(/^(\d+)/);
+        return m ? m[1] : '';
+    }
+
+    applyAccountRange() {
+        const from = (this.state.account_from || '').trim();
+        const to   = (this.state.account_to   || '').trim();
+
+        // Nothing to do if both boxes are empty
+        if (!from && !to) {
+            return;
+        }
+
+        const inRange = (acc) => {
+            const code = this._extractAccountCode(acc);
+            if (!code) {
+                return false;
+            }
+            // Pad both sides so "99" < "101" compares like numbers, not strings
+            const width = Math.max(code.length, from.length, to.length);
+            const pad   = (v) => String(v).padStart(width, '0');
+            const c = pad(code);
+            if (from && c < pad(from)) { return false; }
+            if (to   && c > pad(to))   { return false; }
+            return true;
+        };
+
+        const selected = new Set(this.state.selected_account_list || []);
+        for (const acc of (this.state.all_accounts || [])) {
+            if (inRange(acc)) {
+                selected.add(acc);
+            }
+        }
+        this.state.selected_account_list = Array.from(selected);
+
+        // Reflect the "selected" class on the buttons that are now checked
+        document.querySelectorAll(
+            ".report-filter-button[data-value='account']"
+        ).forEach((btn) => {
+            const id = btn.getAttribute('data-id');
+            if (selected.has(id)) {
+                btn.classList.add('selected-filter');
+            }
+        });
+
+        this.applySearch();
+    }
+
+    clearAccountRange() {
+        this.state.account_from = '';
+        this.state.account_to   = '';
     }
     getActionXmlId() {
         return (this.props.action && this.props.action.xml_id)
@@ -525,6 +588,8 @@ class GeneralLedger extends owl.Component {
     }
     clearAccountFilter() {
         this.state.selected_account_list = [];
+        this.state.account_from = '';
+        this.state.account_to   = '';
         document
             .querySelectorAll(".report-filter-button[data-value='account']")
             .forEach((btn) => btn.classList.remove("selected-filter"));

@@ -63,6 +63,36 @@
                                                 style="font-weight:bold;">
                                             Clear All
                                         </button>
+                                        <div class="account-range-filter"
+                                            style="padding:6px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #eee;margin-bottom:4px;">
+                                            <input type="text"
+                                                class="o_input"
+                                                placeholder="From code"
+                                                t-att-value="state.account_from"
+                                                t-on-input="(ev) => this.state.account_from = ev.target.value"
+                                                t-on-click.stop="() => {}"
+                                                style="width:85px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;"/>
+                                            <span style="opacity:.6;">→</span>
+                                            <input type="text"
+                                                class="o_input"
+                                                placeholder="To code"
+                                                t-att-value="state.account_to"
+                                                t-on-input="(ev) => this.state.account_to = ev.target.value"
+                                                t-on-click.stop="() => {}"
+                                                style="width:85px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;"/>
+                                            <button class="report-filter-button"
+                                                    type="button"
+                                                    t-on-click.stop="applyAccountRange"
+                                                    style="font-weight:bold;">
+                                                Apply Range
+                                            </button>
+                                            <button class="report-filter-button"
+                                                    type="button"
+                                                    t-on-click.stop="clearAccountRange"
+                                                    style="font-size:11px;opacity:.75;">
+                                                ✕
+                                            </button>
+                                        </div>
                                         <t t-if="state.all_accounts">
                                             <t t-foreach="state.all_accounts"
                                             t-as="acc" t-key="acc_index">
@@ -160,8 +190,9 @@
                             </div>
                             <div class="journal" style="">
                                 <a type="button" class="dropdown-toggle"
-                                   data-bs-toggle="dropdown"
-                                   style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
                                     <div style="display:content;">
                                         <span>
                                             <span class="fa fa-book"
