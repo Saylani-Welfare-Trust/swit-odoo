@@ -207,7 +207,7 @@ class GeneralLedger extends owl.Component {
                 'model': 'account.general.ledger',
                 'data': JSON.stringify(datas),
                 'output_format': 'xlsx',
-                'report_action': self.props.action.xml_id,
+                'report_action': self.getActionXmlId(),
                 'report_name': action_title,
             },
         };
@@ -225,6 +225,10 @@ class GeneralLedger extends owl.Component {
         return params.default_title
             || (this.props.action && (this.props.action.display_name || this.props.action.name))
             || 'General Ledger';
+    }
+    getActionXmlId() {
+        return (this.props.action && this.props.action.xml_id)
+            || 'dynamic_accounts_report.action_general_ledger';
     }
     getAccountTotals(account) {
         if (!this.state.account_total || !this.state.account_total[account]) {
