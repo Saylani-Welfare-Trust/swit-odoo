@@ -63,8 +63,11 @@ class AccountGeneralLedger(models.TransientModel):
         account_totals = {}
         account_map = {}
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
+        account_meta = {}
         if account_ids:
-            account_map = {account.id: f"{account.code} {account.name}" for account in self.env['account.account'].browse(list(account_ids))}
+            account_records = self.env['account.account'].browse(list(account_ids))
+            account_map = {a.id: f"{a.code} {a.name}" for a in account_records}
+            account_meta = {a.id: {'code': a.code or '', 'name': a.name or ''} for a in account_records}
 
         for line in move_lines:
             account_id = line.get('account_id')
@@ -74,7 +77,11 @@ class AccountGeneralLedger(models.TransientModel):
             entries_by_account[account_key].append(line)
             totals = account_totals.setdefault(
                 account_key,
-                {'total_debit': 0.0, 'total_credit': 0.0, 'currency_id': self.env.company.currency_id.symbol, 'account_id': account_id[0]}
+                {'total_debit': 0.0, 'total_credit': 0.0,
+                'currency_id': self.env.company.currency_id.symbol,
+                'account_id': account_id[0],
+                'account_code': account_meta.get(account_id[0], {}).get('code', ''),
+                'account_name': account_meta.get(account_id[0], {}).get('name', account_key)}
             )
             totals['total_debit'] += line.get('debit') or 0.0
             totals['total_credit'] += line.get('credit') or 0.0
@@ -153,10 +160,16 @@ class AccountGeneralLedger(models.TransientModel):
 
         account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
         account_map = {}
+        account_meta = {}
         if account_ids:
+            account_records = self.env['account.account'].browse(list(account_ids)).exists()
             account_map = {
                 account.id: f"{account.code} {account.name}"
-                for account in self.env['account.account'].browse(list(account_ids)).exists()
+                for account in account_records
+            }
+            account_meta = {
+                account.id: {'code': account.code or '', 'name': account.name or ''}
+                for account in account_records
             }
 
         # --- opening balance (same domain, minus date filters, dated before start_date) ---
@@ -243,6 +256,8 @@ class AccountGeneralLedger(models.TransientModel):
                 {'total_debit': 0.0, 'total_credit': 0.0,
                 'currency_id': self.env.company.currency_id.symbol,
                 'account_id': account_id[0],
+                'account_code': account_meta.get(account_id[0], {}).get('code', ''),
+                'account_name': account_meta.get(account_id[0], {}).get('name', account_key),
                 'opening_balance': opening_balances.get(account_id[0], 0.0)}
             )
             totals['total_debit'] += line.get('debit') or 0.0
@@ -293,10 +308,10 @@ class AccountGeneralLedger(models.TransientModel):
         company_name = self.env.company.name
         printed_date = datetime.now().strftime('%d-%b-%y')
 
-        headers = ['Sr', 'Account Name', 'Split Account', 'Location', 'Date',
+        headers = ['Sr', 'Account Code', 'Account Name', 'Split Account', 'Location', 'Date',
                    'Trx Type', 'V.No', 'Ref No.', 'Name', 'Description',
                    'Debit', 'Credit', 'Balance']
-        widths = [6, 25, 30, 50, 12, 14, 18, 14, 22, 34, 14, 14, 16]
+        widths = [6, 16, 25, 30, 50, 12, 14, 18, 14, 22, 34, 14, 14, 16]
         last_col = len(headers) - 1
 
         for idx, w in enumerate(widths):
@@ -430,10 +445,10 @@ class AccountGeneralLedger(models.TransientModel):
 
                     # Opening balance
                     sheet.write(row, 0, '00', opening_fmt)
-                    sheet.merge_range(row, 1, row, 9, 'OPENING BALANCE', opening_fmt)
-                    sheet.write(row, 10, '', opening_fmt)
+                    sheet.merge_range(row, 1, row, 10, 'OPENING BALANCE', opening_fmt)
                     sheet.write(row, 11, '', opening_fmt)
-                    sheet.write(row, 12, opening_balance, opening_num_fmt)
+                    sheet.write(row, 12, '', opening_fmt)
+                    sheet.write(row, 13, opening_balance, opening_num_fmt)
                     row += 1
 
                     # Transaction lines
@@ -442,35 +457,36 @@ class AccountGeneralLedger(models.TransientModel):
                         partner = record.get('partner_id')
                         partner_name = partner[1] if isinstance(partner, (list, tuple)) and len(partner) > 1 else ''
                         sheet.write(row, 0, sr, line_fmt)
-                        sheet.write(row, 1, account_label.replace(' ', '\n', 1), name_fmt)
-                        sheet.write(row, 2, record.get('split_account', ''), line_fmt)
-                        sheet.write(row, 3, record.get('location', ''), line_fmt)
-                        sheet.write(row, 4, record.get('date', ''), line_fmt)
-                        sheet.write(row, 5, record.get('trx_type', ''), line_fmt)
-                        sheet.write(row, 6, record.get('move_name', ''), line_fmt)
-                        sheet.write(row, 7, record.get('ref', ''), line_fmt)
-                        sheet.write(row, 8, partner_name, line_fmt)
-                        sheet.write(row, 9, record.get('name', ''), line_fmt)
-                        sheet.write(row, 10, record.get('debit', 0.0) or '', num_fmt)
-                        sheet.write(row, 11, record.get('credit', 0.0) or '', num_fmt)
-                        sheet.write(row, 12, record.get('running_balance', 0.0), num_fmt)
+                        sheet.write(row, 1, account_total.get('account_code', ''), line_fmt)
+                        sheet.write(row, 2, account_total.get('account_name', ''), name_fmt)
+                        sheet.write(row, 3, record.get('split_account', ''), line_fmt)
+                        sheet.write(row, 4, record.get('location', ''), line_fmt)
+                        sheet.write(row, 5, record.get('date', ''), line_fmt)
+                        sheet.write(row, 6, record.get('trx_type', ''), line_fmt)
+                        sheet.write(row, 7, record.get('move_name', ''), line_fmt)
+                        sheet.write(row, 8, record.get('ref', ''), line_fmt)
+                        sheet.write(row, 9, partner_name, line_fmt)
+                        sheet.write(row, 10, record.get('name', ''), line_fmt)
+                        sheet.write(row, 11, record.get('debit', 0.0) or '', num_fmt)
+                        sheet.write(row, 12, record.get('credit', 0.0) or '', num_fmt)
+                        sheet.write(row, 13, record.get('running_balance', 0.0), num_fmt)
                         sheet.set_row(row, 30)
                         row += 1
 
                     # Per-account totals — now guaranteed consistent with the lines above
-                    sheet.merge_range(row, 0, row, 9, 'Total', total_fmt)
-                    sheet.write(row, 10, computed_debit, total_num_fmt)
-                    sheet.write(row, 11, computed_credit, total_num_fmt)
-                    sheet.write(row, 12, closing, total_num_fmt)
+                    sheet.merge_range(row, 0, row, 10, 'Total', total_fmt)
+                    sheet.write(row, 11, computed_debit, total_num_fmt)
+                    sheet.write(row, 12, computed_credit, total_num_fmt)
+                    sheet.write(row, 13, closing, total_num_fmt)
                     sheet.set_row(row, 24)
                     row += 1
 
                     # Closing Balance row
                     sheet.write(row, 0, '', opening_fmt)
-                    sheet.merge_range(row, 1, row, 9, 'CLOSING BALANCE', opening_fmt)
-                    sheet.write(row, 10, '', opening_fmt)
+                    sheet.merge_range(row, 1, row, 10, 'CLOSING BALANCE', opening_fmt)
                     sheet.write(row, 11, '', opening_fmt)
-                    sheet.write(row, 12, closing, opening_num_fmt)
+                    sheet.write(row, 12, '', opening_fmt)
+                    sheet.write(row, 13, closing, opening_num_fmt)
                     row += 2  # blank spacer row between account blocks
 
                 # Grand total row
@@ -490,24 +506,24 @@ class AccountGeneralLedger(models.TransientModel):
                         grand_credit += record.get('credit', 0.0) or 0.0
                 grand_closing = grand_opening + grand_debit - grand_credit
 
-                sheet.merge_range(row, 0, row, 9, 'GRAND OPENING BALANCE', grand_total_fmt)
-                sheet.write(row, 10, '', grand_total_num_fmt)
+                sheet.merge_range(row, 0, row, 10, 'GRAND OPENING BALANCE', grand_total_fmt)
                 sheet.write(row, 11, '', grand_total_num_fmt)
-                sheet.write(row, 12, grand_opening, grand_total_num_fmt)
+                sheet.write(row, 12, '', grand_total_num_fmt)
+                sheet.write(row, 13, grand_opening, grand_total_num_fmt)
                 sheet.set_row(row, 24)
                 row += 1
 
-                sheet.merge_range(row, 0, row, 9, 'GRAND TOTAL', grand_total_fmt)
-                sheet.write(row, 10, grand_debit, grand_total_num_fmt)
-                sheet.write(row, 11, grand_credit, grand_total_num_fmt)
-                sheet.write(row, 12, grand_closing, grand_total_num_fmt)
+                sheet.merge_range(row, 0, row, 10, 'GRAND TOTAL', grand_total_fmt)
+                sheet.write(row, 11, grand_debit, grand_total_num_fmt)
+                sheet.write(row, 12, grand_credit, grand_total_num_fmt)
+                sheet.write(row, 13, grand_closing, grand_total_num_fmt)
                 sheet.set_row(row, 26)
                 row += 1
 
-                sheet.merge_range(row, 0, row, 9, 'GRAND CLOSING BALANCE', grand_total_fmt)
-                sheet.write(row, 10, '', grand_total_num_fmt)
+                sheet.merge_range(row, 0, row, 10, 'GRAND CLOSING BALANCE', grand_total_fmt)
                 sheet.write(row, 11, '', grand_total_num_fmt)
-                sheet.write(row, 12, grand_closing, grand_total_num_fmt)
+                sheet.write(row, 12, '', grand_total_num_fmt)
+                sheet.write(row, 13, grand_closing, grand_total_num_fmt)
                 sheet.set_row(row, 24)
 
         # Freeze the header rows so they stay visible while scrolling
