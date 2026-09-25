@@ -25,7 +25,7 @@
         'data/backfill.xml',
         'views/purchase_order.xml',
         'views/stock_picking.xml',
-        'views/stock_move.xml',
+        # 'views/stock_move.xml',
         'wizards/receive_by_weight.xml',
         'reports/purchase_order_report.xml'
     ],
