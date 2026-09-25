@@ -2,8 +2,225 @@
 <odoo>
 
     <template id="user_profile_report" name="Donee Form">
+        <!-- The paperformat is sized for the welfare form; give the external layout room for the company header -->
+        <t t-set="data_report_margin_top" t-value="None if is_welfare else 52"/>
+        <t t-set="data_report_header_spacing" t-value="None if is_welfare else 52"/>
         <t t-call="web.html_container">
-           <t t-call="web.external_layout">
+            <!-- Welfare prints use the basic layout (no company header/footer) -->
+            <t t-if="is_welfare">
+                <t t-call="web.basic_layout">
+                    <div class="page">
+                        <t t-call="bn_profile_management.user_profile_report_body"/>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <t t-call="web.external_layout">
+                    <t t-call="bn_profile_management.user_profile_report_body"/>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="user_profile_report_body" name="Donee Form Body">
+                <!-- Urdu instructions header (only when printed from Welfare) -->
+                <t t-if="is_welfare">
+                    <style>
+                        @font-face {
+                            font-family: 'JameelNooriNastaleeq';
+                            src: url('/bn_profile_management/static/src/fonts/JameelNooriNastaleeqRegular.ttf') format('truetype');
+                        }
+                        .welfare-urdu {
+                            direction: rtl;
+                            text-align: justify;
+                            font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
+                            font-size: 15.5px;
+                            line-height: 1.65;
+                        }
+                        .welfare-urdu p {
+                            margin: 0 0 2px 0;
+                        }
+                        .welfare-urdu .urdu-banner {
+                            background-color: #3b3591;
+                            color: #ffffff;
+                            text-align: center;
+                            padding: 2px 9px;
+                            margin: 2px 0;
+                            font-size: 17px;
+                        }
+                        .welfare-urdu .urdu-label {
+                            background-color: #3b3591;
+                            color: #ffffff;
+                            padding: 0 8px;
+                            margin-left: 6px;
+                        }
+                        .welfare-urdu .urdu-check {
+                            display: inline-block;
+                            width: 12px;
+                            height: 12px;
+                            border: 1px solid #000000;
+                            margin-left: 6px;
+                            vertical-align: middle;
+                        }
+                    </style>
+                    <section name="welfare_title">
+                        <div t-if="res_company.logo" class="welfare-logo">
+                            <img t-att-src="image_data_uri(res_company.logo)" alt="Logo"/>
+                        </div>
+                        <div class="welfare-detail-title">Saylani Welfare International Trust</div>
+                        <div class="welfare-detail-title">Welfare Application</div>
+                    </section>
+                    <section name="welfare_header" class="welfare-urdu">
+                        <div class="urdu-banner">اہم ہدایات</div>
+                        <p>
+                            یاد رکھیں دینِ اسلام کے مالدار افراد کو زکوٰۃ خیرات کی رقم غریب افراد تک پہنچانے کا حکم دیا گیا ہے تاکہ مستحق افراد اس رقم سے اپنی ضرورتوں کو
+                            پورا کر سکیں۔ سیلانی ویلفیئر بطورِ وکیل آپ تک یہ رقم امداد پہنچانے کا کام کر رہی ہے اگر آپ یہ سمجھتے ہیں کہ:
+                        </p>
+                        <div class="urdu-banner">آپ کی آمدنی اس قابل نہیں کہ جس سے آپ اپنے اخراجات پورے کر سکتے ہیں تو آپ یہ فارم بھر سکتے ہیں۔</div>
+                        <p>
+                            ہمارے پیارے آقا مصطفیٰ ﷺ کا ارشاد پاک ہے (مفہوم) کہ اگر کوئی شخص بلا ضرورت (یعنی اس کو ضرورت نہیں تھی) کسی کے آگے ہاتھ پھیلاتا ہے
+                            اور مانگتا ہے۔۔۔۔ آپ نے قسم کھا کر ارشاد فرمایا کہ وہ زندگی بھر لوگوں کے سامنے ہاتھ پھیلاتا رہے گا پھر بھی اس کا پیٹ نہیں بھرے گا۔ (الامان والحفیظ)
+                        </p>
+                        <p>
+                            <span class="urdu-label">محترم سائلین کرام توجہ فرمائیں</span>
+                            اب آپ خود فیصلہ کر لیں کہ آپ اس رقم امداد کے حقدار ہیں یا کسی حقدار کا حق مار رہے ہیں۔ یقین جانیے اگر
+                            آپ نے جانتے بوجھتے غلط طریقے سے جھوٹ بول کر یہ رقم امداد ادارے سے وصول کی اس کا نقصان آپ کو یہ ہو سکتا ہے۔ (مشاہدے کی بات ہے) کہ آپ
+                            کسی بھی تکلیف میں مبتلا ہو سکتے ہیں، بیماری، ایکسیڈنٹ، پریشانی، جھگڑے، مالی تنگی یا کوئی بھی ایسی آفت جس کا آپ تصور نہیں کر سکتے، بلا کی طرح آپ پر نازل
+                            ہو سکتی ہے اور جس سے آپ بے سکون ہو جائیں گے (الامان والحفیظ)۔ اللہ عزوجل ہم سب کی مدد فرمائے ہر مسلمان کی پریشانیاں دور کرے۔ (آمین)
+                        </p>
+                        <p>
+                            سیلانی ویلفیئر ان شاء اللہ عزوجل آپ کی خدمت عزت و تعظیم کے ساتھ کرنے کے لئے موجود ہے، اللہ عزوجل سیلانی ویلفیئر کو بھی مستحقین تک ان کی امانتیں
+                            فوری طور پر پہنچانے کی توفیق عطا فرمائے۔ ادارے کے کچھ قوانین ہیں جو آپ کی بہتری کے لئے بنائے گئے ہیں امید ہے کہ آپ ان پر عمل کریں گے اور ہمارے
+                            اسٹاف کے ساتھ تعاون کریں گے۔
+                        </p>
+                    </section>
+                    <style>
+                        .welfare-logo {
+                            text-align: left;
+                            margin-bottom: 4px;
+                        }
+                        .welfare-logo img {
+                            max-height: 100px;
+                            max-width: 240px;
+                        }
+                        .welfare-detail-title {
+                            text-align: center;
+                            font-size: 27px;
+                            line-height: 1.2;
+                            margin: 0;
+                        }
+                        .welfare-detail-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: fixed;
+                        }
+                        .welfare-detail-table td {
+                            border: 1px solid #bfbfbf;
+                            padding: 4px 7px;
+                            text-align: center;
+                            vertical-align: middle;
+                            font-size: 14.5px;
+                            word-wrap: break-word;
+                        }
+                        .welfare-detail-table td.urdu-row {
+                            direction: rtl;
+                            text-align: right;
+                            font-family: 'JameelNooriNastaleeq', 'Noto Naskh Arabic', sans-serif !important;
+                            font-size: 15.5px;
+                            padding: 5px 9px;
+                        }
+                        .welfare-detail-table td.complaint-phone {
+                            font-weight: bold;
+                            font-size: 15.5px;
+                        }
+                    </style>
+                    <t t-set="employee" t-value="welfare.employee_id"/>
+                    <section name="welfare_detail">
+                        <table class="welfare-detail-table">
+                            <tr>
+                                <td>Date:</td>
+                                <td><t t-esc="welfare.date or datetime.date.today()"/></td>
+                                <td>Case</td>
+                                <td><t t-esc="welfare.name"/></td>
+                            </tr>
+                            <tr>
+                                <td>Name:</td>
+                                <td><t t-esc="docs.name"/></td>
+                                <td>Mobile:</td>
+                                <td><t t-esc="docs.mobile"/></td>
+                            </tr>
+                            <tr>
+                                <td>CNIC No. :</td>
+                                <td><t t-esc="docs.cnic_no"/></td>
+                                <td>City:</td>
+                                <td><t t-esc="docs.city"/></td>
+                            </tr>
+                            <tr>
+                                <td>Gender:</td>
+                                <td><t t-if="docs.gender" t-esc="docs.gender.title()"/></td>
+                                <td>DOB:</td>
+                                <td><t t-esc="docs.date_of_birth"/></td>
+                            </tr>
+                            <tr>
+                                <td>Religion :</td>
+                                <td><t t-if="docs.religion" t-esc="docs.religion.title()"/></td>
+                                <td>Next Kin:</td>
+                                <td><t t-esc="docs.next_kin"/></td>
+                            </tr>
+                            <tr>
+                                <td>Address:</td>
+                                <td><t t-esc="docs.street"/></td>
+                                <td>Nearest Land</td>
+                                <td><t t-esc="docs.nearest_land_mark"/></td>
+                            </tr>
+                            <tr>
+                                <td>Father Name:</td>
+                                <td><t t-esc="docs.father_name"/></td>
+                                <td>Cast</td>
+                                <td><t t-esc="docs.surname"/></td>
+                            </tr>
+                            <tr>
+                                <td>Married Status:</td>
+                                <td><t t-if="docs.martial_status" t-esc="docs.martial_status.title()"/></td>
+                                <td>Category Type:</td>
+                                <td><t t-esc="', '.join(welfare.welfare_line_ids.mapped('disbursement_category_id.name'))"/></td>
+                            </tr>
+                            <tr>
+                                <td>Inquiry Officer</td>
+                                <td>
+                                    <t t-esc="employee.name"/>
+                                    <t t-if="employee.barcode"> ( <t t-esc="employee.barcode"/>)</t>
+                                </td>
+                                <td>Officer Phone</td>
+                                <td><t t-esc="employee.mobile_phone or employee.work_phone"/></td>
+                            </tr>
+                            <!-- Required documents -->
+                            <tr>
+                                <td colspan="4" class="urdu-row">1۔ اپنی اور بیوی کے شناختی کارڈ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">2۔ بچوں کے ب فارم یا پیدائش سرٹیفکیٹ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">3۔ نکاح نامہ کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">4۔ شادی شدہ ہونے کی صورت میں بیوی اور اپنے شناختی کارڈ یا ب فارم کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">5۔ بجلی یا گیس کے کنکشن کے بل کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="urdu-row">6۔ بینک سے رقم منتقلی میں مدد کے لیے بینک کے اکاؤنٹ یا چیک کی کاپی۔</td>
+                            </tr>
+                            <tr>
+                                <td class="complaint-phone">0328-3385542</td>
+                                <td colspan="3" class="urdu-row">شکایت کی صورت میں ان نمبرز پر رابطہ کریں۔</td>
+                            </tr>
+                        </table>
+                    </section>
+                </t>
+                <t t-else="">
                 <section name="Title">
                     <t t-if="'Microfinance' in docs.category_id.mapped('name')">
                         <center>
@@ -168,29 +385,53 @@
                             <t t-esc="docs.details"/>
                         </div>
                     </div>
-                    <!-- Inquiry Officer Information (only when printed from Welfare) -->
-                        <t t-if="context.get('active_welfare_id')">
-                            <t t-set="welfare" t-value="env['welfare'].browse(context.get('active_welfare_id'))"/>
-                            <br/>
-                            <div class="row">
-                                <div class="col-2">
-                                    <span>Inquiry Officer : </span>
-                                </div>
-                                <div class="col-4">
-                                    <t t-esc="welfare.employee_id.name if welfare.employee_id else ''"/>
-                                </div>
-                                <div class="col-2">
-                                    <span>Officer Phone : </span>
-                                </div>
-                                <div class="col-4">
-                                    <t t-esc="(welfare.employee_id.mobile_phone or welfare.employee_id.work_phone) if welfare.employee_id else ''"/>
-                                </div>
-                            </div>
-                        </t>
                 </section>
-           </t>
-        </t>
+                </t>
+                <!-- Urdu declaration footer (only when printed from Welfare) -->
+                <t t-if="is_welfare">
+                    <div style="height: 4px;"/>
+                    <section name="welfare_footer" class="welfare-urdu">
+                        <div class="urdu-banner">برکتیں حاصل کرنے کے لئے کچھ روحانی ذرائع</div>
+                        <p>
+                            <span class="urdu-check"/>
+                            نمازِ پنجگانہ اور قرآن کی تلاوت کا معمول ہے؟ (اگر نہیں تو فوری شروع کیجئے)
+                        </p>
+                        <p>
+                            <span class="urdu-check"/>
+                            کم از کم ہفتہ وار صلوٰۃ الحاجات اور روزانہ درود پاک پڑھنے کا معمول ہے۔ (اگر نہیں تو فوری شروع کیجئے)
+                        </p>
+                        <p>
+                            <span class="urdu-check"/>
+                            محترم / محترمہ ان حالات میں بھی جتنا ممکن ہو صدقہ و خیرات دے کر اللہ عزوجل سے مدد حاصل کرنے کا ذہن بنائیں تاکہ آپ کا ہاتھ بھی بانٹنے والا بن جائے۔
+                        </p>
+                        <p>
+                            <span class="urdu-label">نوٹ:</span>
+                            برائے کرم اس فارم کو بھرنے کے بعد علیحدہ سے ایک درخواست بھی لکھیں کہ آپ ادارے سے کیوں اور کیا مدد لینا چاہتے ہیں اور اس
+                            سے پہلے آپ نے ادارے سے کب اور کتنی مدد لی ہے۔ یاد رکھیں آپ کی لکھی گئی باتوں کو ادارہ اپنی شرائط و ضوابط کے اعتبار سے انکوائری کرانے اور ہر
+                            قسم کے فیصلے کا حق محفوظ رکھتا ہے۔
+                        </p>
+                        <p>
+                            <span class="urdu-label">حلف نامہ:</span>
+                            میں اللہ عزوجل کو سمیع و بصیر جان کر یہ اقرار کرتا / کرتی ہوں کہ میں زکوٰۃ کی / کا حقدار ہوں اور میں نے جو فارم پُر کیا ہے بالکل
+                            درست اور ٹھیک پُر کیا ہے۔ یا اللہ عزوجل اگر میں جانتے بوجھتے اس میں غلط بیانی کی تو مجھے دنیا اور آخرت میں اس کی سزا دے۔ (الامان والحفیظ)
+                        </p>
+                    </section>
+                </t>
     </template>
+
+    <record id="paperformat_profile_management_report" model="report.paperformat">
+        <field name="name">User Profile Report</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
 
     <record id="action_profile_management_report" model="ir.actions.report">
         <field name="name">User Profile Report</field>
@@ -201,6 +442,7 @@
         <field name="print_report_name">'%s' % object.name</field>
         <field name="binding_model_id" ref="model_res_partner"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_profile_management_report"/>
     </record>
 
 </odoo>
