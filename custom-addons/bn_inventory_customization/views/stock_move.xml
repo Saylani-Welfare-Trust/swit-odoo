@@ -1,28 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_picking_form_onhand" model="ir.ui.view">
-        <field name="name">stock.picking.form.onhand</field>
+
+    <record id="view_picking_form_inherit_on_hand_qty" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.on.hand.qty</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-
-            <!-- Operations tab (stock.move) -->
-            <xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='product_uom_qty']"
-                   position="after">
-                <field name="qty_available" optional="show"/>
+            <xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='product_id']" position="after">
+                <field name="on_hand_qty"/>
             </xpath>
-
-            <!-- Optional: per-move popup form -->
-            <xpath expr="//field[@name='move_ids_without_package']/form//field[@name='product_uom_qty']"
-                   position="after">
-                <field name="qty_available"/>
-            </xpath>
-
-            <!-- Detailed Operations tab (stock.move.line) -->
-            <xpath expr="//field[@name='move_line_ids_without_package']/tree/field[@name='product_uom_qty']"
-                   position="after">
-                <field name="qty_available" optional="show"/>
-            </xpath>
-
         </field>
     </record>
+
 </odoo>
