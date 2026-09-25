@@ -2,6 +2,9 @@
 <odoo>
 
     <template id="user_profile_report" name="Donee Form">
+        <!-- The paperformat is sized for the welfare form; give the external layout room for the company header -->
+        <t t-set="data_report_margin_top" t-value="None if is_welfare else 52"/>
+        <t t-set="data_report_header_spacing" t-value="None if is_welfare else 52"/>
         <t t-call="web.html_container">
             <!-- Welfare prints use the basic layout (no company header/footer) -->
             <t t-if="is_welfare">
@@ -405,6 +408,20 @@
                 </t>
     </template>
 
+    <record id="paperformat_profile_management_report" model="report.paperformat">
+        <field name="name">User Profile Report</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">15</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="action_profile_management_report" model="ir.actions.report">
         <field name="name">User Profile Report</field>
         <field name="model">res.partner</field>
@@ -414,6 +431,7 @@
         <field name="print_report_name">'%s' % object.name</field>
         <field name="binding_model_id" ref="model_res_partner"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_profile_management_report"/>
     </record>
 
 </odoo>
