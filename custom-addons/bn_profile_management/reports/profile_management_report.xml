@@ -8,7 +8,7 @@
         <t t-call="web.html_container">
             <!-- Welfare prints use the basic layout (no company header/footer) -->
             <t t-if="is_welfare">
-                <t t-call="web.external_layout">
+                <t t-call="web.basic_layout">
                     <div class="page">
                         <t t-call="bn_profile_management.user_profile_report_body"/>
                     </div>
@@ -64,6 +64,9 @@
                         }
                     </style>
                     <section name="welfare_title">
+                        <div t-if="res_company.logo" class="welfare-logo">
+                            <img t-att-src="image_data_uri(res_company.logo)" alt="Logo"/>
+                        </div>
                         <div class="welfare-detail-title">Saylani Welfare International Trust</div>
                         <div class="welfare-detail-title">Welfare Application</div>
                     </section>
@@ -92,6 +95,14 @@
                         </p>
                     </section>
                     <style>
+                        .welfare-logo {
+                            text-align: center;
+                            margin-bottom: 4px;
+                        }
+                        .welfare-logo img {
+                            max-height: 80px;
+                            max-width: 220px;
+                        }
                         .welfare-detail-title {
                             text-align: center;
                             font-size: 27px;
