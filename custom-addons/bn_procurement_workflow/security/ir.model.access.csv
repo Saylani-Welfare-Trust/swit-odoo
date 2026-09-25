@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_procurement_defer_wizard,procurement.defer.wizard,model_procurement_defer_wizard,,1,1,1,1
+access_procurement_arrange_budget_wizard,procurement.arrange.budget.wizard,model_procurement_arrange_budget_wizard,,1,1,1,1
+access_procurement_arrange_budget_wizard_line,procurement.arrange.budget.wizard.line,model_procurement_arrange_budget_wizard_line,,1,1,1,1

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="bn_purchase_customization.purchase_purchase_order_form_inherit_bn_purchase_customization"/>
+        <field name="arch" type="xml">
+            <!-- Only the HOD approver of the source Material Request may CXO-approve;
+                 nothing can be approved or confirmed while waiting for the CFO's budget decision. -->
+            <xpath expr="//button[@name='action_cxo_approve_po']" position="attributes">
+                <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_hod_approve_po']" position="attributes">
+                <attribute name="invisible">not cxo_approved or hod_approved or state not in ('draft', 'sent') or shariah_hold</attribute>
+            </xpath>
+            <xpath expr="//button[@id='bid_confirm']" position="attributes">
+                <attribute name="invisible">state != 'sent' or shariah_hold or not cfo_approved</attribute>
+            </xpath>
+            <xpath expr="//button[@id='draft_confirm']" position="attributes">
+                <attribute name="invisible">state != 'draft' or shariah_hold or not cfo_approved</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button string="Check Budget" name="action_cfo_approve_po" type="object" class="oe_highlight"
+                        invisible="not cxo_approved or not hod_approved or cfo_approved or state not in ('draft', 'sent') or shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+                <field name="is_cxo_approver_allowed" invisible="1"/>
+                <field name="shariah_hold" invisible="1"/>
+                <button string="CFO Approval" name="action_shariah_hold_approve" type="object"
+                        class="oe_highlight" invisible="not shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+                <button string="Arrange Budget" name="action_open_arrange_budget" type="object"
+                        class="oe_highlight" invisible="not shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+                <button string="CFO Reject" name="action_shariah_hold_reject" type="object"
+                        invisible="not shariah_hold"
+                        groups="bn_material_request.menu_group_material_request_cfo"/>
+            </xpath>
+
+            <!-- Third column next to the CXO and HOD groups of "Approval Status" -->
+            <xpath expr="//field[@name='hod_approved_date']/parent::group" position="after">
+                <group>
+                    <field name="cfo_approved" widget="boolean_toggle" readonly="1"/>
+                    <field name="cfo_approved_by" readonly="1"/>
+                    <field name="cfo_approved_date" readonly="1"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="before">
+                <div class="alert alert-warning" role="alert" invisible="not shariah_hold">
+                    <strong>Waiting for CFO</strong> - the budget is exceeded. Only the CFO can approve it, arrange the budget, or reject it.
+                    <field name="shariah_hold_reason" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

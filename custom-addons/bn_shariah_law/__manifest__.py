@@ -14,6 +14,7 @@
         'bn_microfinance',
         'bn_donation_in_kind',
         'bn_welfare',
+        'bn_material_request',
     ],
     'data': [
         'data/ir_module_category.xml',

@@ -118,6 +118,22 @@ class ShariahLaw(models.Model):
         
         return record.closing_balance if record else 0.0
 
+    @api.model
+    def get_shortfalls(self, amounts):
+        """Compare the amount required per segment with its closing balance.
+
+        :param amounts: {analytic_account_id: amount required}
+        :return: [(analytic account, required, closing balance)] for every
+                 segment whose closing balance does not cover the amount.
+        """
+        analytic_model = self.env['account.analytic.account']
+        shortfalls = []
+        for analytic_id, required in amounts.items():
+            balance = self.get_closing_balance(analytic_id)
+            if required > balance:
+                shortfalls.append((analytic_model.browse(analytic_id), required, balance))
+        return shortfalls
+
     # ============================================================
     # DAILY RESET SCHEDULED ACTION
     # ============================================================

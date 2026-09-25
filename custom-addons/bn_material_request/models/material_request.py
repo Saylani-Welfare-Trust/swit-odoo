@@ -68,6 +68,11 @@ class MemberApproval(models.Model):
     # Approvals
     cfo_approved = fields.Boolean('CFO Approved', readonly=True, copy=False, tracking=True)
     coo_approved = fields.Boolean('COO Approved', readonly=True, copy=False, tracking=True)
+    hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False, tracking=True)
+    hod_approved_date = fields.Datetime('HOD Approved On', readonly=True, copy=False)
+    is_current_user_hod = fields.Boolean(
+        compute='_compute_is_current_user_hod',
+        help='Whether the current user is the manager of the requesting department (may HOD approve).')
     
     # State
     state = fields.Selection([
@@ -111,6 +116,13 @@ class MemberApproval(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
         return super().create(vals)
 
+    @api.depends_context('uid')
+    @api.depends('department_id.manager_id')
+    def _compute_is_current_user_hod(self):
+        employee = self.env.user.employee_id
+        for rec in self:
+            rec.is_current_user_hod = not rec.department_id or rec.department_id.manager_id == employee
+
     @api.depends('line_ids.subtotal')
     def _compute_total_amount(self):
         for rec in self:
@@ -145,8 +157,7 @@ class MemberApproval(models.Model):
     #             )
     #         else:
     #             rec.source_location_domain = "[('usage','=','internal')]"
-
- 
+    
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
@@ -205,6 +216,13 @@ class MemberApproval(models.Model):
         })
         return True
 
+    def _shariah_hold_gate(self):
+        """Called by every approval step once its own validation has passed.
+        Returns a client action when the request has been put on hold (the
+        approval must then not go ahead), False otherwise. Overridden by
+        bn_procurement_workflow, which knows about the Shariah Law balances."""
+        return False
+
     def action_hod_approve(self):
         """HOD approves the request - next step depends on budget status"""
         self.ensure_one()
@@ -213,8 +231,15 @@ class MemberApproval(models.Model):
 
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
             raise ValidationError(_('This request can only be approved by its respected Manager.'))
-        
-        
+
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
+
+        self.write({
+            'hod_approved_by': self.env.user.id,
+            'hod_approved_date': fields.Datetime.now(),
+        })
 
         if self.is_in_budget:
             # Deduct approved amount from available budget
@@ -268,6 +293,9 @@ class MemberApproval(models.Model):
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         if not self.cfo_remarks:
             raise ValidationError(_('CFO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
         self.cfo_approved = True
         self._check_committee_approval()
         return True
@@ -279,6 +307,9 @@ class MemberApproval(models.Model):
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
         if not self.coo_remarks:
             raise ValidationError(_('COO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
         self.coo_approved = True
         self._check_committee_approval()
         return True
@@ -399,7 +430,8 @@ class MemberApproval(models.Model):
             purchase_request = self.env['purchase.requisition'].create({
                 'origin': "%s (Stock Shortage)" % self.name,
                 'line_ids': purchase_lines,
-                    'material_request_id': self.id,   # <-- autopopulate here
+                'material_request_id': self.id,   # <-- autopopulate here
+                'user_id': self.user_id.id,   # Purchase Representative = MR requester
             })
 
             self.auto_purchase_request_id = purchase_request.id
@@ -438,6 +470,7 @@ class MemberApproval(models.Model):
             'origin': self.name,
             'line_ids': line_vals,
             'material_request_id': self.id,   # <-- autopopulate here
+            'user_id': self.user_id.id,   # Purchase Representative = MR requester
         })
         # Confirm and assign purchase
         self.purchase_request_id = purchase_request.id
@@ -466,6 +499,8 @@ class MemberApproval(models.Model):
             'budget_amount': 0.0,
             'cfo_approved': False,
             'coo_approved': False,
+            'hod_approved_by': False,
+            'hod_approved_date': False,
             'rejection_reason': False,
         })
         

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_requisition_view_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.form.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+        <field name="arch" type="xml">
+            <!-- The native Confirm button is superseded by the Procurement gate chain -->
+            <xpath expr="//button[@name='action_in_progress']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- This workflow skips HOD/Member Approval entirely: the Procurement Manager
+                 reviews and approves the draft PR directly. Hide those two buttons only for
+                 requisitions that came from a Material Request (this workflow); other
+                 purchase requisitions/blanket orders keep the original behaviour. -->
+            <xpath expr="//button[@name='action_hod_approval']" position="attributes">
+                <attribute name="invisible">state != 'draft' or material_request_id</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_mem_approval']" position="attributes">
+                <attribute name="invisible">state != 'hod_approval' or material_request_id</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="statusbar_visible">draft,procurement_approval,rfq_sent,vendor_selected,cxo_approved,funds_check,in_progress,open,done</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button string="Procurement Approve" name="action_procurement_approve" type="object"
+                        class="oe_highlight" invisible="state != 'draft'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+                <button string="Defer" name="action_open_defer_wizard" type="object"
+                        invisible="state != 'draft'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+                <button string="Resume from Hold" name="action_procurement_resume" type="object"
+                        class="oe_highlight" invisible="state != 'deferred'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+
+                <button string="Funds Available" name="action_funds_available" type="object"
+                        class="oe_highlight" invisible="state != 'funds_check'"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
+                <button string="Funds Not Available" name="action_funds_unavailable" type="object"
+                        invisible="state != 'funds_check' or funds_available"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
+                <button string="Confirm Fund Transfer" name="action_cfo_shariah_transfer_confirm" type="object"
+                        class="oe_highlight" invisible="state != 'funds_check' or funds_available"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
+            </xpath>
+
+            <!-- RFQs can only ever be created while state == 'procurement_approval' -
+                 action_create_rfqs() on the wizard enforces this unconditionally, so
+                 showing the button in any other state (e.g. after _release_po() has
+                 already moved the requisition to 'in_progress') is a guaranteed dead end. -->
+            <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
+                <attribute name="invisible">state != 'procurement_approval'</attribute>
+                <attribute name="groups">bn_procurement_workflow.group_procurement_manager</attribute>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_selected_rfq" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not selected_rfq_id">
+                    <field name="selected_rfq_id" widget="statinfo" string="Selected RFQ"/>
+                </button>
+            </xpath>
+
+            <!-- The native "Vendor" field stays empty throughout this workflow
+                 (see selected_vendor_id's definition for why it can't just be
+                 copied there) - show the actual chosen vendor next to it as
+                 soon as one is selected, not just after Funds Check. -->
+            <xpath expr="//field[@name='vendor_id']" position="after">
+                <field name="selected_vendor_id" invisible="not selected_vendor_id"/>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Procurement Approval Trail" name="procurement_approval_trail">
+                    <group>
+                        <group string="Requesting Department">
+                            <field name="requesting_department_id" readonly="1"/>
+                        </group>
+                        <group string="Procurement Manager">
+                            <field name="procurement_manager_id" readonly="1"/>
+                            <field name="procurement_review_date" readonly="1"/>
+                            <field name="defer_reason" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group invisible="not selected_rfq_id">
+                        <group string="Approval on the Selected RFQ">
+                            <field name="selected_rfq_id" readonly="1"/>
+                            <field name="selected_rfq_cxo_approved" widget="boolean_toggle" readonly="1"/>
+                            <field name="selected_rfq_cxo_approved_by" readonly="1"/>
+                            <field name="selected_rfq_hod_approved" widget="boolean_toggle" readonly="1"/>
+                            <field name="selected_rfq_hod_approved_by" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Funds Availability">
+                            <field name="funds_shariah_ok" string="Shariah Balance Sufficient" widget="boolean_toggle" readonly="1"/>
+                            <field name="funds_shariah_balance" readonly="1"/>
+                            <field name="funds_available" widget="boolean_toggle" readonly="1"/>
+                            <field name="funds_transfer_remarks" readonly="state != 'funds_check'"/>
+                            <field name="funds_gate_approver_id" readonly="1"/>
+                            <field name="funds_gate_date" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

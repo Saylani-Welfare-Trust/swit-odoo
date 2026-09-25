@@ -5,8 +5,8 @@
         <field name="name">Purchase / HOD</field>
     </record>
     
-    <record id="purchase_member_group" model="res.groups">
-        <field name="name">Purchase / Member</field>
+    <record id="purchase_cxo_group" model="res.groups">
+        <field name="name">Purchase / CXO</field>
     </record>
 
 </odoo>
