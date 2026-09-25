@@ -1,0 +1,28 @@
+<odoo>
+    <record id="view_picking_form_onhand" model="ir.ui.view">
+        <field name="name">stock.picking.form.onhand</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Operations tab (stock.move) -->
+            <xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='product_uom_qty']"
+                   position="after">
+                <field name="qty_available" optional="show"/>
+            </xpath>
+
+            <!-- Optional: per-move popup form -->
+            <xpath expr="//field[@name='move_ids_without_package']/form//field[@name='product_uom_qty']"
+                   position="after">
+                <field name="qty_available"/>
+            </xpath>
+
+            <!-- Detailed Operations tab (stock.move.line) -->
+            <xpath expr="//field[@name='move_line_ids_without_package']/tree/field[@name='product_uom_qty']"
+                   position="after">
+                <field name="qty_available" optional="show"/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
