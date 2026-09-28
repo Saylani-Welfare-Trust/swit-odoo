@@ -102,8 +102,9 @@
                             margin-bottom: 4px;
                         }
                         .welfare-logo img {
-                            max-height: 100px;
-                            max-width: 240px;
+                            height: 150px;
+                            width: auto;
+                            max-width: 100%;
                         }
                         .welfare-detail-title {
                             direction: rtl;
