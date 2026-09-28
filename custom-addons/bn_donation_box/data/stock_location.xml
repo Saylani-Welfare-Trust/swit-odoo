@@ -6,7 +6,7 @@
         <record id="donation_box_stock_location" model="stock.location">
             <field name="name">Donation Box</field>
             <field name="usage">customer</field>
-            <field name="location_id" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="location_id" eval="ref('stock.warehouse0').view_location_id.id" />
         </record>
     
     </data>
