@@ -1,15 +1,13 @@
 from . import models
 
-from odoo import api, SUPERUSER_ID
-
 
 def post_init_hook(env):
     """Fresh installs: bind the default Donation Box operation type to its warehouse."""
+
     env['stock.warehouse']._bn_migrate_legacy_donation_box_type()
 
-    env = api.Environment(cr, SUPERUSER_ID, {})
-
     warehouse = env.ref('stock.warehouse0')
+
     donation_location = env['stock.location'].create({
         'name': 'Donation Box',
         'usage': 'customer',
