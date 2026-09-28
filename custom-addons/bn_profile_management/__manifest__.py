@@ -7,7 +7,6 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Profile Management',
     'depends': [
-        'bn_analytic_account_customization',
         'bn_pos_customization',
     ],
     'data': [
