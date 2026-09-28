@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- No record rules on material.request: anyone with access to the menu can open
-         any request. Who may act on it is decided by the buttons (HOD approve is
-         shown only to the department manager, CFO / COO approve to their groups). -->
+    <!-- A user only sees the requests they created. The department manager (HOD)
+         also sees their department's requests, since HOD approval is theirs to give. -->
+    <record id="material_request_rule_own" model="ir.rule">
+        <field name="name">Material Request: own requests</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('department_id.manager_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- The CFO and COO approve out-of-budget requests (and the CFO the Shariah Hold
+         ones) for every department. Rules of different groups are OR-ed, so these
+         widen the rule above. -->
+    <record id="material_request_rule_cfo" model="ir.rule">
+        <field name="name">Material Request: CFO sees all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_cfo'))]"/>
+    </record>
+
+    <record id="material_request_rule_coo" model="ir.rule">
+        <field name="name">Material Request: COO sees all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_coo'))]"/>
+    </record>
 </odoo>

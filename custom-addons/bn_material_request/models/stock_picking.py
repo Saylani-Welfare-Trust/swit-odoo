@@ -12,7 +12,9 @@ class StockPicking(models.Model):
     def _update_material_request_on_validation(self):
         """After a delivery is validated, mark the linked Material Request
         as done once all its related pickings (main + shortage) are done."""
-        MaterialRequest = self.env['material.request']
+        # sudo: the warehouse user validating the picking is usually not the
+        # requester, so the Material Request record rule would hide the request.
+        MaterialRequest = self.env['material.request'].sudo()
 
         related_mrs = MaterialRequest.search([
             ('state', '=', 'pending'),

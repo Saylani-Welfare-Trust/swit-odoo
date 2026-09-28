@@ -14,7 +14,7 @@ class MemberApproval(models.Model):
     # Request Details
     user_id = fields.Many2one('res.users', string='Requested By', default=lambda self: self.env.user, readonly=True, tracking=True)
     department_id = fields.Many2one(related='user_id.employee_id.department_id', string="Department", store=True)
-    purchase_request_id = fields.Many2one('purchase.requisition', string="Purchase Request")
+    purchase_request_id =   fields.Many2one('purchase.requisition', string="Purchase Request")
     auto_purchase_request_id = fields.Many2one('purchase.requisition', string="Auto Purchase Request (Stock Shortage)", readonly=True, copy=False, help="Automatically created purchase requisition when stock is insufficient.")
    
     employee_location_id = fields.Many2one(

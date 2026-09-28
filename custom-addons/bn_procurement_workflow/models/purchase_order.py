@@ -30,7 +30,8 @@ class PurchaseOrder(models.Model):
     @api.depends('material_request_id.hod_approved_by')
     def _compute_is_cxo_approver_allowed(self):
         for order in self:
-            hod_user = order.material_request_id.hod_approved_by
+            # sudo: the Material Request record rule hides requests the user didn't create.
+            hod_user = order.material_request_id.sudo().hod_approved_by
             order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
 
     # ------------------------------------------------------------------
@@ -56,8 +57,9 @@ class PurchaseOrder(models.Model):
             analytic = self._get_product_segment(line.product_id)
             if not analytic:
                 continue
-            request_line = request.line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
-            budget = request_line.budget_id or line_model._get_default_budget_for_analytic(analytic)
+            # sudo: the Material Request record rule hides requests the user didn't create.
+            request_line = request.sudo().line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
+            budget = request_line.budget_id.sudo(False) or line_model._get_default_budget_for_analytic(analytic)
             totals[(analytic, budget)] += line.price_subtotal
         rows = []
         for (analytic, budget), required in totals.items():
@@ -315,12 +317,14 @@ class PurchaseOrder(models.Model):
         When the RFQ comes from a Material Request, only the user who gave that
         request its HOD approval may do this CXO approval."""
         for order in self:
-            hod_user = order.material_request_id.hod_approved_by
+            # sudo: the Material Request record rule hides requests the user didn't create.
+            request = order.material_request_id.sudo()
+            hod_user = request.hod_approved_by
             if hod_user and hod_user != self.env.user:
                 raise UserError(_(
                     'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
                     'can give CXO approval to this RFQ.'
-                ) % {'user': hod_user.display_name, 'request': order.material_request_id.name})
+                ) % {'user': hod_user.display_name, 'request': request.name})
         res = super().action_cxo_approve_po()
         for order in self:
             requisition = order.requisition_id
