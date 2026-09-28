@@ -7,8 +7,8 @@
     'category': 'BytesNode/Analytical Account Enhancement',
     'depends': [
         'hr_expense',
-        'analytic',
         'bn_master_setup',
+        'account_analytic_parent',
     ],
     'data': [
         'security/ir.model.access.csv',
