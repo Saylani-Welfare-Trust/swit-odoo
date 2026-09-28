@@ -61,7 +61,9 @@ class PurchaseOrder(models.Model):
             totals[(analytic, budget)] += line.price_subtotal
         rows = []
         for (analytic, budget), required in totals.items():
-            budget_lines = self.env['budget.lines'].search([
+            # sudo: practical_amount reads account.budget.post, which only
+            # accounting users may access.
+            budget_lines = self.env['budget.lines'].sudo().search([
                 ('analytic_account_id', '=', analytic.id),
                 ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
@@ -85,7 +87,7 @@ class PurchaseOrder(models.Model):
             lines.append(_('Accounting budget: not checked (no source Material Request).'))
         for analytic, budget, required, available in self._get_accounting_budget_rows():
             lines.append(_('Accounting budget %(budget)s / %(segment)s: RFQ %(required).2f, available %(available).2f') % {
-                'budget': budget.display_name or _('none'), 'segment': analytic.display_name,
+                'budget': budget.sudo().display_name or _('none'), 'segment': analytic.display_name,
                 'required': required, 'available': available})
         blocker = self.env['shariah.law.blocker'].get_blocker_config()
         if not (blocker and blocker.enable_purchase):

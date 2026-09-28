@@ -188,7 +188,9 @@ class MemberApproval(models.Model):
             # if not budget:
             #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
             
-            budget_lines = self.env['budget.lines'].search([
+            # sudo: practical_amount reads account.budget.post, which only
+            # accounting users may access; requesters just need the figure.
+            budget_lines = self.env['budget.lines'].sudo().search([
                 ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
                 ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
