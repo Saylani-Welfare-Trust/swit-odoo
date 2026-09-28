@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="installation_category_view_tree" model="ir.ui.view">
+        <field name="name">installation.category.view.tree</field>
+        <field name="model">installation.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="installation_category_action" model="ir.actions.act_window">
+        <field name="name">Installation Category</field>
+        <field name="res_model">installation.category</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a installation category....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="donation_box_config_menu"
+        name="Donation box"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="installation_category_menu"
+        name="Installation Category"
+        action="installation_category_action"
+        parent="donation_box_config_menu"
+        sequence="0"/>
+
+</odoo>

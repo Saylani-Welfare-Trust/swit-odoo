@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_donation_box_donation_box_request_view_form_inherit_bn_key_management" model="ir.ui.view">
+        <field name="name">bn.donation.box.donation.box.request..view.form.inherit.bn.key.management</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='donation_box_key']" position="inside">
+                <field name="key_ids" readonly="1">
+                    <tree>
+                        <field name="name" string="Tag" />
+                        <field name="lot_id" string="Box No." />
+                        <field name="lock_no" />
+                        <field name="state" widget="badge" decoration-info="state == 'issued'" decoration-success="state == 'available'" />
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
