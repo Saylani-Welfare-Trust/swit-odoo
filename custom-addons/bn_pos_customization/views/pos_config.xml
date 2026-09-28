@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="point_of_sale_pos_config_view_form_inherit_bn_pos_customization" model="ir.ui.view">
+        <field name="name">point.of.sale.pos.config.view.form.inherit.bn.pos.customization</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='restaurant_on_create']" position="after">
+                <setting>
+                        <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

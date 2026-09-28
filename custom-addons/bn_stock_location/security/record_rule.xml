@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- <field name="name">Warehouse Rule</field>
+    <field name="model_id" ref="model_stock_warehouse"/>
+    <field eval="True" name="global"/>
+    <field name="domain_force">[('id', 'in', user.allowed_warehouse_ids.ids)]</field> -->
+    
+    <!-- Warehouse -->
+    <record id="custom_warehouse_rule" model="ir.rule">
+        <field name="name">Warehouse Rule</field>
+        <field name="model_id" ref="stock.model_stock_warehouse"/>
+        <field name="domain_force">[('id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Location -->
+    <!-- <record id="custom_location_rule" model="ir.rule">
+        <field name="name">Location Rule</field>
+        <field name="model_id" ref="stock.model_stock_location"/>
+        <field name="domain_force">[('id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record> -->
+    
+    <!-- Stock Valuation Layer -->
+    <record id="custom_stock_valuation_layer_rule" model="ir.rule">
+        <field name="name">Stock Valuation Layer Rule</field>
+        <field name="model_id" ref="stock_account.model_stock_valuation_layer"/>
+        <field name="domain_force">[('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Route -->
+    <record id="custom_stock_route_rule" model="ir.rule">
+        <field name="name">Stock Route Rule</field>
+        <field name="model_id" ref="stock.model_stock_route"/>
+        <field name="domain_force">['|', ('warehouse_ids', 'in', user.allowed_warehouse_ids.ids), ('supplied_wh_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Picking Type -->
+    <record id="custom_stock_picking_type_rule" model="ir.rule">
+        <field name="name">Stock Picking Type Rule</field>
+        <field name="model_id" ref="stock.model_stock_picking_type"/>
+        <field name="domain_force">[('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Picking -->
+    <record id="custom_stock_picking_rule" model="ir.rule">
+        <field name="name">Stock Picking Rule</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="domain_force">['|', ('location_id', 'in', user.allowed_location_ids.ids), ('location_dest_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Qaunt -->
+    <record id="custom_stock_quant_rule" model="ir.rule">
+        <field name="name">Stock Qaunt Rule</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="domain_force">[('location_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Scrap -->
+    <record id="custom_stock_scrap_rule" model="ir.rule">
+        <field name="name">Stock Scrap Rule</field>
+        <field name="model_id" ref="stock.model_stock_scrap"/>
+        <field name="domain_force">[('location_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Scrap -->
+    <record id="custom_stock_warehouse_orderpoint_rule" model="ir.rule">
+        <field name="name">Stock Warehouse Order Point Rule</field>
+        <field name="model_id" ref="stock.model_stock_warehouse_orderpoint"/>
+        <field name="domain_force">[('location_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Lot -->
+    <record id="custom_stock_lot_rule" model="ir.rule">
+        <field name="name">Stock Lot Rule</field>
+        <field name="model_id" ref="stock.model_stock_lot"/>
+        <field name="domain_force">[('location_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Quant Package -->
+    <record id="custom_stock_quant_package_rule" model="ir.rule">
+        <field name="name">Stock Quant Package Rule</field>
+        <field name="model_id" ref="stock.model_stock_quant_package"/>
+        <field name="domain_force">[('location_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Move Line -->
+    <record id="custom_stock_move_line_rule" model="ir.rule">
+        <field name="name">Stock Move Line Rule</field>
+        <field name="model_id" ref="stock.model_stock_move_line"/>
+        <field name="domain_force">['|', ('location_id', 'in', user.allowed_location_ids.ids), ('location_dest_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Move -->
+    <record id="custom_stock_move_rule" model="ir.rule">
+        <field name="name">Stock Move Rule</field>
+        <field name="model_id" ref="stock.model_stock_move"/>
+        <field name="domain_force">['|', ('location_id', 'in', user.allowed_location_ids.ids), ('location_dest_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Rule -->
+    <record id="custom_stock_rule_rule" model="ir.rule">
+        <field name="name">Stock Rule Rule</field>
+        <field name="model_id" ref="stock.model_stock_rule"/>
+        <field name="domain_force">['|', ('location_src_id', 'in', user.allowed_location_ids.ids), ('location_dest_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Stock Putaway Rule -->
+    <record id="custom_stock_putaway_rule_rule" model="ir.rule">
+        <field name="name">Stock Putaway Rule Rule</field>
+        <field name="model_id" ref="stock.model_stock_putaway_rule"/>
+        <field name="domain_force">['|', ('location_in_id', 'in', user.allowed_location_ids.ids), ('location_out_id', 'in', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(4, ref('bn_stock_location.inventory_custom_access_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

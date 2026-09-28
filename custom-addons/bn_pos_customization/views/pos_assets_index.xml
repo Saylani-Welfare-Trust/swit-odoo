@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="bn_pos_customization.index" inherit_id="point_of_sale.index">
+        <xpath expr="//head//title" position="replace">
+            <title>BytesNode</title>
+        </xpath>
+    </template>
+
+</odoo>
