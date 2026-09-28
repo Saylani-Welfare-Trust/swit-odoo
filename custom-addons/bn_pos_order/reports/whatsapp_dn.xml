@@ -169,8 +169,8 @@
                                         <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/>
                                     </div>
-                                    <div name="custom-donor"/>
-                                    <div>
+                                    <div name="footer-custom-donor"><strong>Donor Name:</strong> <t t-esc="o.favor or o.donor_id.name or '-'"/></div>
+                                    <div>   
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
                                         <t t-foreach="order.lines" t-as="l">
