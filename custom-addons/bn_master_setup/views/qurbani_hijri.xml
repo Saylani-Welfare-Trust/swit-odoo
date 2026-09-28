@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_qurbani_hijri_tree" model="ir.ui.view">
+        <field name="name">qurbani.hijri.tree</field>
+        <field name="model">qurbani.hijri</field>
+        <field name="arch" type="xml">
+            <tree string="Qurbani Hijri" editable="bottom">
+                <field name="hijri"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_qurbani_hijri" model="ir.actions.act_window">
+        <field name="name">Hijri</field>
+        <field name="res_model">qurbani.hijri</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <menuitem id="menu_qurbani_hijri"
+          name="Hijri"
+          parent="qurbani_menu"
+          action="action_qurbani_hijri"
+          sequence="1"/>
+</odoo>

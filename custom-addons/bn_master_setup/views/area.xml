@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="area_view_tree" model="ir.ui.view">
+        <field name="name">area.view.tree</field>
+        <field name="model">area</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+                <field name="area_code" />
+                <field name="area_description" />
+                <field name="active_status" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="area_action" model="ir.actions.act_window">
+        <field name="name">Area</field>
+        <field name="res_model">area</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new area....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="area_menu"
+        name="Area"
+        action="area_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="5"/>
+
+</odoo>

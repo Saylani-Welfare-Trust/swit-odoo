@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="day_1" model="qurbani.day">
+        <field name="name">1st Day</field>
+    </record>
+
+    <record id="day_2" model="qurbani.day">
+        <field name="name">2nd Day</field>
+    </record>
+
+    <record id="day_3" model="qurbani.day">
+        <field name="name">3rd Day</field>
+    </record>
+
+</odoo>
