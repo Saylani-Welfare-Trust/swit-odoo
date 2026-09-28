@@ -1,4 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_record_search,access.record.search,bn_profile_management.model_record_search,,1,1,1,1
-access_confirm_search,access.confirm.search,bn_profile_management.model_confirm_search,,1,1,1,1
-access_microfinance_application_wizard,access.microfinance.application.wizard,bn_profile_management.model_microfinance_application_wizard,,1,1,1,1
+access_record_search,access.record.search,bn_profile_management.model_record_search,base.group_user,1,1,1,1
+access_confirm_search,access.confirm.search,bn_profile_management.model_confirm_search,base.group_user,1,1,1,1
+access_microfinance_application_wizard,access.microfinance.application.wizard,bn_profile_management.model_microfinance_application_wizard,base.group_user,1,1,1,1
+access_profile_management_page,profile.management.page,bn_profile_management.model_profile_management_page,base.group_user,1,0,0,0
+access_profile_management_page_manager,profile.management.page manager,bn_profile_management.model_profile_management_page,bn_profile_management.profile_management_group,1,1,1,1

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="profile_page_general_info" model="profile.management.page">
+        <field name="name">General Information</field>
+        <field name="technical_name">general_info</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="profile_page_donation" model="profile.management.page">
+        <field name="name">Donation</field>
+        <field name="technical_name">donation</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="profile_page_welfare" model="profile.management.page">
+        <field name="name">Welfare Details</field>
+        <field name="technical_name">welfare</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="profile_page_microfinance" model="profile.management.page">
+        <field name="name">Microfinance Details</field>
+        <field name="technical_name">microfinance</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="profile_page_medical" model="profile.management.page">
+        <field name="name">Medical Equipment</field>
+        <field name="technical_name">medical</field>
+        <field name="sequence">50</field>
+    </record>
+
+</odoo>

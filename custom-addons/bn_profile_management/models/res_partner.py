@@ -3,37 +3,33 @@ from odoo.exceptions import ValidationError
 
 import re
 
-# --------------------------------------
-# --------------------------------------
-# GOLBAL VARIABLE
-# --------------------------------------
-# --------------------------------------
-CNIC_PATTERN = r'^\d{5}-\d{7}-\d{1}$'
+# CNIC regular expression
+cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 
-GENERAL_SELECTION = [
+general_selection = [
     ('yes', 'Yes'),
     ('no', 'No'),
 ]
 
-GENDER_SELECTION = [
+gender_selection = [
     ('male', 'Male'),
     ('female', 'Female'),
 ]
 
-RELIGION_SELECTION = [
+religion_selection = [
     ('muslim', 'Muslim'),
     ('non_muslim', 'Non-Muslim'),
     ('syed', 'Syed'),
 ]
 
-MARTIAL_STATUS_SELECTION = [
+martial_status_selection = [
     ('married', 'Married'),
     ('un_married', 'Unmarried'),
     ('divorce', 'Divorce'),
 ]
 
-STATE_SELECTION = [
+state_selection = [
     ('draft', 'Draft'),
     ('register', 'Registered'),
     ('reject', 'Rejected'),
@@ -45,302 +41,73 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
 
-    # --------------------------------------
-    # --------------------------------------
-    # SELECTION FIELDS
-    # --------------------------------------
-    # --------------------------------------
-    gender = fields.Selection(selection=GENDER_SELECTION, string="Gender", tracking=True)
-    religion = fields.Selection(selection=RELIGION_SELECTION, string="Religion", tracking=True)
-    martial_status = fields.Selection(selection=MARTIAL_STATUS_SELECTION, string="Martial Status", tracking=True)
-    has_cnic = fields.Selection(selection=GENERAL_SELECTION, string="Has CNIC", default='yes', tracking=True)
-    state = fields.Selection(selection=STATE_SELECTION, string="State", default='draft', tracking=True)
-
-    # --------------------------------------
-    # --------------------------------------
-    # CHAR FIELDS (WITHOUT LIMIT)
-    # --------------------------------------
-    # --------------------------------------
+    gender = fields.Selection(selection=gender_selection, string="Gender", tracking=True)
+    religion = fields.Selection(selection=religion_selection, string="Religion", tracking=True)
+    martial_status = fields.Selection(selection=martial_status_selection, string="Martial Status", tracking=True)
+    has_cnic = fields.Selection(selection=general_selection, string="Has CNIC", default='yes', tracking=True)
+    state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
+    
+    area = fields.Many2one('area', string="Area", tracking=True)
+    mobile = fields.Char(size=10, tracking=True)
     surname = fields.Char('Surname', tracking=True)
+    cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
     next_kin = fields.Char('Next Kin', tracking=True)
     spouse_name = fields.Char('Spouse Name', tracking=True)
     father_name = fields.Char('Father Name', tracking=True)
-    area = fields.Many2one('area', string="Area", tracking=True)
+    head_cnic_no = fields.Char('Head CNIC No.', tracking=True, size=15)
+    old_system_id = fields.Char('Old System ID', tracking=True)
+    member_cnic_no = fields.Char('Member CNIC No.', tracking=True, size=15)
+    father_cnic_no = fields.Char('Father CNIC No.', tracking=True, size=15)
     nearest_land_mark = fields.Char('Nearest Land Mark', tracking=True)
     reference_remarks = fields.Char('Reference / Remarks', tracking=True)
+    bank_wallet_account = fields.Char('Bank / Wallet Account', tracking=True)
+    primary_registration_id = fields.Char('Primary Registration ID', tracking=True)
+    secondary_registration_id = fields.Char('Secondary Registration ID', tracking=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # CHAR FIELDS (FOR BINARY FILE)
-    # --------------------------------------
-    # --------------------------------------
     cnic_back = fields.Char('CNIC Back', tracking=True)
     cnic_front = fields.Char('CNIC Front', tracking=True)
     approved_form = fields.Char('Approved Form', tracking=True)
     reference_letter = fields.Char('Reference Letter', tracking=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # CHAR FIELDS (FOR SYSTEM ID)
-    # --------------------------------------
-    # --------------------------------------
-    old_system_id = fields.Char('Old System ID', tracking=True)
-    primary_registration_id = fields.Char('Primary Registration ID', tracking=True)
-    secondary_registration_id = fields.Char('Secondary Registration ID', tracking=True)
-    
-    # --------------------------------------
-    # --------------------------------------
-    # CHAR FIELDS (WITH LIMIT)
-    # --------------------------------------
-    # --------------------------------------
-    cnic_no = fields.Char('CNIC No.', tracking=True, size=15)
-    mobile = fields.Char(required=True, tracking=True, size=10)
-    head_cnic_no = fields.Char('Head CNIC No.', tracking=True, size=15)
-    member_cnic_no = fields.Char('Member CNIC No.', tracking=True, size=15)
-    father_cnic_no = fields.Char('Father CNIC No.', tracking=True, size=15)
-
-    # --------------------------------------
-    # --------------------------------------
-    # BINARY FIELDS
-    # --------------------------------------
-    # --------------------------------------
     cnic_back_image = fields.Binary('CNIC Back Image')
     cnic_front_image = fields.Binary('CNIC Front Image')
     approved_form_file = fields.Binary('Approved Form File')
     reference_letter_file = fields.Binary('Reference Letter File')
 
-    # --------------------------------------
-    # --------------------------------------
-    # DATE FIELDS
-    # --------------------------------------
-    # --------------------------------------
     cnic_expiration = fields.Date('CNIC Expiration', tracking=True)
     date_of_birth = fields.Date('Date Of Birth', tracking=True)
     
-    # --------------------------------------
-    # --------------------------------------
-    # TEXT FIELDS
-    # --------------------------------------
-    # --------------------------------------
     details = fields.Text('Details', tracking=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # MANY2ONE FIELDS
-    # --------------------------------------
-    # --------------------------------------
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
     country_code_id = fields.Many2one('res.country', string="Phone Code")
 
-    # --------------------------------------
-    # --------------------------------------
-    # INTEGER FIELDS
-    # --------------------------------------
-    # --------------------------------------
     age = fields.Integer('Age',compute="_compute_age", store=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # BOOLEAN FIELDS
-    # --------------------------------------
-    # --------------------------------------
     is_change_request = fields.Boolean('Is Change Request')
-    is_donor = fields.Boolean('Is Donor', compute="_compute_is_donor", store=True)
-
-    # --------------------------------------
-    # --------------------------------------
-    # BOOLEAN (COMPUTED FIELDS)
-    # --------------------------------------
-    # --------------------------------------
+    is_donor = fields.Boolean('Is Donor', compute="_set_is_donor", store=True)
     donee_required_fields = fields.Boolean('Donee Required Fields', compute="_set_donee_required_fields", store=True)
     welfare_donee_required_fields = fields.Boolean('Welfare Donee Required Fields', compute="_set_welfare_donee_required_fields", store=True)
     welfare_donee_female_required = fields.Boolean('Welfare Donee', compute="_compute_female_required_override", store=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # HELPER FUNCTIONS
-    # --------------------------------------
-    # --------------------------------------
-    def is_valid_cnic_format(self, cnic):
-        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
+    # Profile Management: which form fields/pages this contact should show,
+    # as the union of every enabled tag it carries. Wrapped in commas so a
+    # view can test membership with "',fieldname,' in profile_visible_form_field_names".
+    profile_visible_form_field_names = fields.Char(
+        'Profile Visible Fields', compute='_compute_profile_visibility', store=True)
+    profile_visible_page_names = fields.Char(
+        'Profile Visible Pages', compute='_compute_profile_visibility', store=True)
 
-    # --------------------------------------
-    # --------------------------------------
-    # ONCHANGE FUNCTIONS
-    # --------------------------------------
-    # --------------------------------------
-    @api.onchange('category_id')
-    def _onchange_category_id(self):
+    @api.depends('category_id', 'category_id.is_profile_type',
+                 'category_id.profile_form_field_ids', 'category_id.profile_page_ids')
+    def _compute_profile_visibility(self):
         for rec in self:
-            has_employee_tag = any(
-                'employee' in (tag.name or '').lower()
-                for tag in rec.category_id
-            )
+            categories = rec.category_id.filtered('is_profile_type')
+            field_names = categories.mapped('profile_form_field_ids.name')
+            page_names = categories.mapped('profile_page_ids.technical_name')
+            rec.profile_visible_form_field_names = ',' + ','.join(field_names) + ','
+            rec.profile_visible_page_names = ',' + ','.join(page_names) + ','
 
-            if has_employee_tag:
-                advance_account_id = self.env['account.account'].search([('code', '=', '102501001')]).id
-                petty_cash_account_id = self.env['account.account'].search([('code', '=', '202101010')]).id
-
-                rec.property_account_receivable_id = advance_account_id
-                rec.property_account_payable_id = petty_cash_account_id
-
-    @api.onchange('cnic_no')
-    def _onchange_cnic_no(self):
-        if self.cnic_no:
-            cleaned_cnic = re.sub(r'[^0-9]', '', self.cnic_no)
-            if len(cleaned_cnic) >= 13:
-                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
-            elif len(cleaned_cnic) > 5:
-                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
-            if not self.is_valid_cnic_format(self.cnic_no):
-                raise ValidationError(
-                    'Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )'
-                )
-
-    @api.onchange('member_cnic_no')
-    def _onchange_member_cnic_no(self):
-        if self.member_cnic_no:
-            cleaned_cnic = re.sub(r'[^0-9]', '', self.member_cnic_no)
-            if len(cleaned_cnic) >= 13:
-                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
-            elif len(cleaned_cnic) > 5:
-                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
-            if not self.is_valid_cnic_format(self.member_cnic_no):
-                raise ValidationError(
-                    'Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )'
-                )
-
-    @api.onchange('father_cnic_no')
-    def _onchange_father_cnic_no(self):
-        if self.father_cnic_no:
-            cleaned_cnic = re.sub(r'[^0-9]', '', self.father_cnic_no)
-            if len(cleaned_cnic) >= 13:
-                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
-            elif len(cleaned_cnic) > 5:
-                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
-
-            if not self.is_valid_cnic_format(self.father_cnic_no):
-                raise ValidationError(
-                    'Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )'
-                )
-
-    @api.onchange('date_of_birth')
-    def _onchange_date_of_birth(self):
-        if self.date_of_birth:
-            if self.date_of_birth.year == fields.Date.today().year or self.date_of_birth.year > fields.Date.today().year:
-                raise ValidationError(str(f'Invalid Date of Birth...'))
-
-    # --------------------------------------
-    # --------------------------------------
-    # CONSTRAINT FUNCTIONS
-    # --------------------------------------
-    # --------------------------------------
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
-
-    @api.constrains('cnic_no')
-    def _check_cnic_no_format(self):
-        for record in self:
-            if record.cnic_no:
-                if not re.match(CNIC_PATTERN, record.cnic_no):
-                    raise ValidationError(
-                        "Invalid CNIC format. Please use XXXXX-XXXXXXX-X"
-                    )
-                parts = record.cnic_no.split('-')
-                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
-                    raise ValidationError(
-                        "Invalid CNIC format. Ensure the parts have the correct number of digits."
-                    )
-
-    @api.constrains('member_cnic_no')
-    def _check_member_cnic_no_format(self):
-        for record in self:
-            if record.member_cnic_no:
-                if not re.match(CNIC_PATTERN, record.member_cnic_no):
-                    raise ValidationError(
-                        "Invalid CNIC format. Please use XXXXX-XXXXXXX-X"
-                    )
-                parts = record.member_cnic_no.split('-')
-                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
-                    raise ValidationError(
-                        "Invalid CNIC format. Ensure the parts have the correct number of digits."
-                    )
-
-    @api.constrains('father_cnic_no')
-    def _check_father_cnic_no_format(self):
-        for record in self:
-            if record.father_cnic_no:
-                if not re.match(CNIC_PATTERN, record.father_cnic_no):
-                    raise ValidationError(
-                        "Invalid CNIC format. Please use XXXXX-XXXXXXX-X"
-                    )
-                parts = record.father_cnic_no.split('-')
-                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
-                    raise ValidationError(
-                        "Invalid CNIC format. Ensure the parts have the correct number of digits."
-                    )
-
-    # --------------------------------------
-    # --------------------------------------
-    # COMPUTED FUNCTIONS
-    # --------------------------------------
-    # --------------------------------------
-    @api.depends('name', 'category_id')
-    def _set_welfare_donee_required_fields(self):
-        for rec in self:
-            rec.welfare_donee_required_fields = False
-            cat_names = rec.category_id.mapped('name')
-            is_donee_individual = 'Donee' in cat_names and 'Individual' in cat_names
-            is_welfare = 'Welfare' in cat_names
-            if is_donee_individual and not is_welfare:
-                rec.welfare_donee_required_fields = True
-            
-    @api.depends('welfare_donee_required_fields', 'gender')
-    def _compute_female_required_override(self):
-        for rec in self:
-            # For welfare-sensitive fields, if gender is female, required = True
-            # (overrides the welfare exclusion)
-            rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
-
-    @api.depends('name', 'category_id')
-    def _set_donee_required_fields(self):
-        for rec in self:
-            rec.donee_required_fields = False
-
-            if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
-                rec.donee_required_fields = True
-    
-    @api.depends('name', 'category_id')
-    def _compute_is_donor(self):
-        for rec in self:
-            rec.is_donor = False
-
-            if 'Donor' in rec.category_id.mapped('name'):
-                rec.is_donor = True
-
-    @api.depends('date_of_birth')
-    def _compute_age(self):
-        for record in self:
-            if record.date_of_birth:
-                # Get today's date
-                today = fields.Date.today()
-                age = today.year - record.date_of_birth.year
-                record.age = age
-            else:
-                record.age = 0  # Default value when there's no birth date
-    
-    # --------------------------------------
-    # --------------------------------------
-    # DEFAULT FUNCTIONS
-    # --------------------------------------
-    # --------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
         pakistan_id = self.env.ref('base.pk').id
@@ -377,11 +144,151 @@ class ResPartner(models.Model):
                     )
         return super(ResPartner, self).write(vals)
 
-    # --------------------------------------
-    # --------------------------------------
-    # ACTIONS
-    # --------------------------------------
-    # --------------------------------------
+    @api.onchange('category_id')
+    def _onchange_category_id(self):
+        for rec in self:
+            has_employee_tag = any(
+                'employee' in (tag.name or '').lower()
+                for tag in rec.category_id
+            )
+
+            if has_employee_tag:
+                advance_account_id = self.env['account.account'].search([('code', '=', '102501001')]).id
+                petty_cash_account_id = self.env['account.account'].search([('code', '=', '202101010')]).id
+
+                rec.property_account_receivable_id = advance_account_id
+                rec.property_account_payable_id = petty_cash_account_id
+
+    @api.constrains('mobile')
+    def _check_mobile_number(self):
+        for rec in self:
+            if rec.mobile:
+                if not re.fullmatch(r"\d{10}", rec.mobile):
+                    raise ValidationError(
+                        "Mobile number must contain exactly 10 digits."
+                    )
+
+    @api.depends('name', 'category_id')
+    def _set_welfare_donee_required_fields(self):
+        for rec in self:
+            rec.welfare_donee_required_fields = False
+            cat_names = rec.category_id.mapped('name')
+            is_donee_individual = 'Donee' in cat_names and 'Individual' in cat_names
+            is_welfare = 'Welfare' in cat_names
+            if is_donee_individual and not is_welfare:
+                rec.welfare_donee_required_fields = True
+            
+    @api.depends('welfare_donee_required_fields', 'gender')
+    def _compute_female_required_override(self):
+        for rec in self:
+            # For welfare-sensitive fields, if gender is female, required = True
+            # (overrides the welfare exclusion)
+            rec.welfare_donee_female_required = rec.gender != 'female' or rec.welfare_donee_required_fields
+
+    @api.depends('name', 'category_id')
+    def _set_donee_required_fields(self):
+        for rec in self:
+            rec.donee_required_fields = False
+
+            if 'Donee' in rec.category_id.mapped('name') and 'Individual' in rec.category_id.mapped('name'):
+                rec.donee_required_fields = True
+    
+    @api.depends('name', 'category_id')
+    def _set_is_donor(self):
+        for rec in self:
+            rec.is_donor = False
+
+            if 'Donor' in rec.category_id.mapped('name'):
+                rec.is_donor = True
+
+    @api.depends('date_of_birth')
+    def _compute_age(self):
+        for record in self:
+            if record.date_of_birth:
+                # Get today's date
+                today = fields.Date.today()
+                age = today.year - record.date_of_birth.year
+                record.age = age
+            else:
+                record.age = 0  # Default value when there's no birth date
+
+    @api.constrains('cnic_no')
+    def _check_cnic_no_format(self):
+        for record in self:
+            if record.cnic_no:
+                if not re.match(cnic_pattern, record.cnic_no):
+                    raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
+                parts = record.cnic_no.split('-')
+                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
+                    raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
+
+    def is_valid_cnic_format(self, cnic):
+        return bool(re.fullmatch(r'\d{5}-\d{7}-\d', cnic))
+
+    @api.onchange('cnic_no')
+    def _onchange_cnic_no(self):
+        if self.cnic_no:
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.cnic_no)
+            if len(cleaned_cnic) >= 13:
+                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
+            elif len(cleaned_cnic) > 5:
+                self.cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            if not self.is_valid_cnic_format(self.cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
+
+    @api.constrains('member_cnic_no')
+    def _check_member_cnic_no_format(self):
+        for record in self:
+            if record.member_cnic_no:
+                if not re.match(cnic_pattern, record.member_cnic_no):
+                    raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
+                parts = record.member_cnic_no.split('-')
+                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
+                    raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
+
+    @api.onchange('member_cnic_no')
+    def _onchange_member_cnic_no(self):
+        if self.member_cnic_no:
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.member_cnic_no)
+            if len(cleaned_cnic) >= 13:
+                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
+            elif len(cleaned_cnic) > 5:
+                self.member_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            
+            if not self.is_valid_cnic_format(self.member_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
+    
+    @api.constrains('father_cnic_no')
+    def _check_father_cnic_no_format(self):
+        for record in self:
+            if record.father_cnic_no:
+                if not re.match(cnic_pattern, record.father_cnic_no):
+                    raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
+                parts = record.father_cnic_no.split('-')
+                if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:
+                    raise ValidationError("Invalid CNIC format. Ensure the parts have the correct number of digits.")
+
+    @api.onchange('father_cnic_no')
+    def _onchange_father_cnic_no(self):
+        if self.father_cnic_no:
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.father_cnic_no)
+            if len(cleaned_cnic) >= 13:
+                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
+            elif len(cleaned_cnic) > 5:
+                self.father_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:]}"
+
+            
+            if not self.is_valid_cnic_format(self.father_cnic_no):
+                raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
+    
+    @api.onchange('date_of_birth')
+    def _onchange_date_of_birth(self):
+        if self.date_of_birth:
+            if self.date_of_birth.year == fields.Date.today().year or self.date_of_birth.year > fields.Date.today().year:
+                raise ValidationError(str(f'Invalid Date of Birth...'))
+
     def action_print_info(self):
         if self.is_change_request:
             self.state = 'draft'

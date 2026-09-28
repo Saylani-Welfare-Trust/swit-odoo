@@ -3,7 +3,7 @@ from odoo.exceptions import ValidationError
 
 import re
 
-CNIC_PATTERN = r'^\d{5}-\d{7}-\d{1}$'
+cnic_pattern = r'^\d{5}-\d{7}-\d{1}$'
 
 
 donee_registration_selection = [
@@ -50,7 +50,7 @@ class RecordSearch(models.TransientModel):
     def _check_cnic_format(self):
         for record in self:
             if record.cnic_no:
-                if not re.match(CNIC_PATTERN, record.cnic_no):
+                if not re.match(cnic_pattern, record.cnic_no):
                     raise ValidationError("Invalid CNIC format. Please use XXXXX-XXXXXXX-X")
                 parts = record.cnic_no.split('-')
                 if len(parts[0]) != 5 or len(parts[1]) != 7 or len(parts[2]) != 1:

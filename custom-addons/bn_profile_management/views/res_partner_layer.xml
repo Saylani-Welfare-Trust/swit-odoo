@@ -86,6 +86,36 @@
         </field>
     </record>
 
+    <record id="profile_management_view_search" model="ir.ui.view">
+        <field name="name">profile.management.view.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="complete_name" string="Name"/>
+                <field name="primary_registration_id" invisible="not context.get('show_search_primary_registration_id')"/>
+                <field name="secondary_registration_id" invisible="not context.get('show_search_secondary_registration_id')"/>
+                <field name="old_system_id" invisible="not context.get('show_search_old_system_id')"/>
+                <field name="cnic_no" invisible="not context.get('show_search_cnic_no')"/>
+                <field name="mobile" invisible="not context.get('show_search_mobile')"/>
+                <field name="email" invisible="not context.get('show_search_email')"/>
+                <field name="city" invisible="not context.get('show_search_city')"/>
+                <field name="area" invisible="not context.get('show_search_area')"/>
+                <field name="analytic_account_id" invisible="not context.get('show_search_analytic_account_id')"/>
+                <field name="father_name" invisible="not context.get('show_search_father_name')"/>
+                <field name="category_id"/>
+                <separator/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Registered" name="filter_register" domain="[('state', '=', 'register')]"/>
+                <filter string="Rejected" name="filter_reject" domain="[('state', '=', 'reject')]"/>
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter string="Gender" name="group_gender" domain="[]" context="{'group_by': 'gender'}"/>
+                    <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="profile_management_view_tree" model="ir.ui.view">
         <field name="name">profile.management.view.tree</field>
         <field name="model">res.partner</field>
@@ -94,22 +124,27 @@
                 <header>
                     <button string="Register" name="action_bulk_register_donee" type="object" class="oe_highlight"/>
                 </header>
-                
-                <field name="primary_registration_id" string="Primary ID" />
-                <field name="secondary_registration_id" string="Secondary ID" />
 
-                <field name="old_system_id" />
+                <!-- complete_name and state are always shown; every other column is
+                     opt-in per tag via the action's context (see res.partner.category
+                     "List View Fields") so this one view serves every profile type. -->
                 <field name="complete_name" />
-                <field name="gender" />
-                <field name="martial_status" />
-                <field name="street" string="Address" />
-                <field name="country_code_id" />
-                <field name="mobile" widget="phone" />
-                <field name="cnic_no" />
-                <field name="date_of_birth" />
-                <field name="age" />
-                <field name="city" />
-                <field name="analytic_account_id" string="Branch" />
+                <field name="primary_registration_id" string="Primary ID" column_invisible="not context.get('show_list_primary_registration_id')" />
+                <field name="secondary_registration_id" string="Secondary ID" column_invisible="not context.get('show_list_secondary_registration_id')" />
+                <field name="old_system_id" column_invisible="not context.get('show_list_old_system_id')" />
+                <field name="gender" column_invisible="not context.get('show_list_gender')" />
+                <field name="martial_status" column_invisible="not context.get('show_list_martial_status')" />
+                <field name="street" string="Address" column_invisible="not context.get('show_list_street')" />
+                <field name="country_code_id" column_invisible="not context.get('show_list_country_code_id')" />
+                <field name="mobile" widget="phone" column_invisible="not context.get('show_list_mobile')" />
+                <field name="email" column_invisible="not context.get('show_list_email')" />
+                <field name="cnic_no" column_invisible="not context.get('show_list_cnic_no')" />
+                <field name="date_of_birth" column_invisible="not context.get('show_list_date_of_birth')" />
+                <field name="age" column_invisible="not context.get('show_list_age')" />
+                <field name="city" column_invisible="not context.get('show_list_city')" />
+                <field name="analytic_account_id" string="Branch" column_invisible="not context.get('show_list_analytic_account_id')" />
+                <field name="father_name" column_invisible="not context.get('show_list_father_name')" />
+                <field name="area" column_invisible="not context.get('show_list_area')" />
 
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'validate'" decoration-success="state == 'register'" decoration-danger="state == 'reject'" />
             </tree>
@@ -145,6 +180,8 @@
                         <field name="is_change_request" invisible="1" />
                         <field name="donee_required_fields" invisible="1" />
                         <field name="is_donor" invisible="1"/>
+                        <field name="profile_visible_form_field_names" invisible="1"/>
+                        <field name="profile_visible_page_names" invisible="1"/>
                         <field name="commercial_partner_id" invisible="1"/>
                         <field name="active" invisible="1"/>
                         <field name="company_id" invisible="1"/>
@@ -183,39 +220,39 @@
                         <page name="general_info" string="General Information">
                             <group>
                                 <group name="general_info_col_1">
-                                    <field name="surname" readonly="state == 'register'" />
-                                    <field name="area" readonly="state == 'register'" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
-                                    <field name="gender" required="donee_required_fields" readonly="state == 'register'" />
-                                    <field name="religion" readonly="state == 'register'" />
-                                    <field name="martial_status" readonly="state == 'register'" />
-                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married'" readonly="state == 'register'" />
-                                    <field name="has_cnic" readonly="state == 'register'" />
-                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
-                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
-                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
-                                    <field name="approved_form_file" filename="approved_form" readonly="not is_change_request" required="is_change_request" />
+                                    <field name="surname" readonly="state == 'register'"  invisible="',surname,' not in profile_visible_form_field_names"/>
+                                    <field name="area" readonly="state == 'register'" options="{'no_create': True, 'no_edit': True}" required="(donee_required_fields) and ',area,' in profile_visible_form_field_names"  invisible="',area,' not in profile_visible_form_field_names"/>
+                                    <field name="gender" required="(donee_required_fields) and ',gender,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',gender,' not in profile_visible_form_field_names"/>
+                                    <field name="religion" readonly="state == 'register'"  invisible="',religion,' not in profile_visible_form_field_names"/>
+                                    <field name="martial_status" readonly="state == 'register'"  invisible="',martial_status,' not in profile_visible_form_field_names"/>
+                                    <field name="spouse_name" invisible="(martial_status == 'un_married') or ',spouse_name,' not in profile_visible_form_field_names" required="(donee_required_fields and martial_status == 'married') and ',spouse_name,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="has_cnic" readonly="state == 'register'"  invisible="',has_cnic,' not in profile_visible_form_field_names"/>
+                                    <field name="cnic_no" invisible="(has_cnic == 'no') or ',cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_no,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="cnic_expiration" invisible="(has_cnic == 'no') or ',cnic_expiration,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_expiration,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="cnic_front_image" filename="cnic_front" invisible="(has_cnic == 'no') or ',cnic_front_image,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_front_image,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="cnic_back_image" filename="cnic_back" invisible="(has_cnic == 'no') or ',cnic_back_image,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_back_image,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="head_cnic_no" invisible="(has_cnic == 'yes') or ',head_cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',head_cnic_no,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="member_cnic_no" invisible="(has_cnic == 'yes') or ',member_cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',member_cnic_no,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="reference_letter_file" filename="reference_letter" invisible="(has_cnic == 'yes') or ',reference_letter_file,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',reference_letter_file,' in profile_visible_form_field_names" readonly="state == 'register'" />
+                                    <field name="approved_form_file" filename="approved_form" readonly="not is_change_request" required="(is_change_request) and ',approved_form_file,' in profile_visible_form_field_names"  invisible="',approved_form_file,' not in profile_visible_form_field_names"/>
                                 </group>
                                 <group name="general_info_col_2">
-                                    <field name="date_of_birth" required="donee_required_fields" readonly="state == 'register'" />
-                                    <field name="age" />
-                                    <field name="father_name" required="donee_required_fields" readonly="state == 'register'" />
-                                    <field name="father_cnic_no" required="welfare_donee_required_fields" readonly="state == 'register'" />
-                                    <field name="next_kin" required="welfare_donee_required_fields" readonly="state == 'register'" />
-                                    <field name="nearest_land_mark" required="donee_required_fields" readonly="state == 'register'" />
-                                    <field name="reference_remarks" readonly="state == 'register'" />
-                                    <field name="bank_wallet_account" readonly="state == 'register'" />
-                                    <field name="primary_registration_id" string="Primary ID" readonly="1" />
-                                    <field name="secondary_registration_id" string="Secondary ID" readonly="1" />
-                                    <field name="old_system_id" readonly="state == 'register'" />
-                                    <field name="details" readonly="state == 'register'" />
+                                    <field name="date_of_birth" required="(donee_required_fields) and ',date_of_birth,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',date_of_birth,' not in profile_visible_form_field_names"/>
+                                    <field name="age"  invisible="',age,' not in profile_visible_form_field_names"/>
+                                    <field name="father_name" required="(donee_required_fields) and ',father_name,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',father_name,' not in profile_visible_form_field_names"/>
+                                    <field name="father_cnic_no" required="(welfare_donee_required_fields) and ',father_cnic_no,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',father_cnic_no,' not in profile_visible_form_field_names"/>
+                                    <field name="next_kin" required="(welfare_donee_required_fields) and ',next_kin,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',next_kin,' not in profile_visible_form_field_names"/>
+                                    <field name="nearest_land_mark" required="(donee_required_fields) and ',nearest_land_mark,' in profile_visible_form_field_names" readonly="state == 'register'"  invisible="',nearest_land_mark,' not in profile_visible_form_field_names"/>
+                                    <field name="reference_remarks" readonly="state == 'register'"  invisible="',reference_remarks,' not in profile_visible_form_field_names"/>
+                                    <field name="bank_wallet_account" readonly="state == 'register'"  invisible="',bank_wallet_account,' not in profile_visible_form_field_names"/>
+                                    <field name="primary_registration_id" string="Primary ID" readonly="1"  invisible="',primary_registration_id,' not in profile_visible_form_field_names"/>
+                                    <field name="secondary_registration_id" string="Secondary ID" readonly="1"  invisible="',secondary_registration_id,' not in profile_visible_form_field_names"/>
+                                    <field name="old_system_id" readonly="state == 'register'"  invisible="',old_system_id,' not in profile_visible_form_field_names"/>
+                                    <field name="details" readonly="state == 'register'"  invisible="',details,' not in profile_visible_form_field_names"/>
                                 </group>
                             </group>
                         </page>
-                        <page name="donation" string="Donation" invisible="not is_donor">
+                        <page name="donation" string="Donation" invisible="',donation,' not in profile_visible_page_names">
                             <notebook>
                                 <page name="pos" string="POS Details">
                                     
@@ -237,13 +274,13 @@
                                 </page>
                             </notebook>
                         </page>
-                        <page name="welfare" string="Welfare Details" invisible="is_donor">
+                        <page name="welfare" string="Welfare Details" invisible="',welfare,' not in profile_visible_page_names">
                             
                         </page>
-                        <page name="microfinance" string="Microfinance Details" invisible="is_donor">
+                        <page name="microfinance" string="Microfinance Details" invisible="',microfinance,' not in profile_visible_page_names">
                             
                         </page>
-                        <page name="medical" string="Medical Equipment" invisible="is_donor">
+                        <page name="medical" string="Medical Equipment" invisible="',medical,' not in profile_visible_page_names">
 
                         </page>
                     </notebook>
@@ -274,6 +311,7 @@
                 Let's create a new donee....
             </p>
         </field>
+        <field name="search_view_id" ref="bn_profile_management.profile_management_view_search"/>
         <field name="view_ids"
             eval="[(5, 0, 0),
                     (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),
@@ -298,6 +336,7 @@
                 Let's create a new donor....
             </p>
         </field>
+        <field name="search_view_id" ref="bn_profile_management.profile_management_view_search"/>
         <field name="view_ids"
             eval="[(5, 0, 0),
                     (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),

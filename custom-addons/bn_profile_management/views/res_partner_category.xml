@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_partner_category_view_tree_profile" model="ir.ui.view">
+        <field name="name">res.partner.category.view.tree.profile</field>
+        <field name="model">res.partner.category</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="is_profile_type" widget="boolean_toggle"/>
+                <field name="profile_page_ids" widget="many2many_tags" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="res_partner_category_view_form_profile" model="ir.ui.view">
+        <field name="name">res.partner.category.view.form.profile</field>
+        <field name="model">res.partner.category</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Donor"/></h1>
+                    </div>
+                    <group>
+                        <field name="parent_id" options="{'no_create': True}"/>
+                        <field name="color" widget="color_picker"/>
+                    </group>
+                    <group>
+                        <field name="is_profile_type"/>
+                    </group>
+                    <div invisible="not is_profile_type">
+                        <separator string="What contacts tagged with this show"/>
+                        <p class="text-muted">
+                            A contact can carry more than one enabled tag; it shows the
+                            union of everything each of its tags configures here.
+                        </p>
+                        <group>
+                            <field name="profile_page_ids" widget="many2many_tags"
+                                   placeholder="e.g. General Information, Donation..."/>
+                        </group>
+                        <group string="Fields">
+                            <group name="profile_fields_col_1">
+                                <field name="profile_form_field_ids" widget="many2many_tags"
+                                       string="Form View" placeholder="Fields shown on the form"/>
+                                <field name="profile_list_field_ids" widget="many2many_tags"
+                                       string="List View" placeholder="Columns shown in the list"/>
+                            </group>
+                            <group name="profile_fields_col_2">
+                                <field name="profile_search_field_ids" widget="many2many_tags"
+                                       string="Search View" placeholder="Fields searchable/filterable"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="profile_menu_id" readonly="1"/>
+                            <field name="profile_action_id" readonly="1"/>
+                        </group>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="res_partner_category_action_profile" model="ir.actions.act_window">
+        <field name="name">Profile Types (Tags)</field>
+        <field name="res_model">res.partner.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('res_partner_category_view_tree_profile')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('res_partner_category_view_form_profile')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's set up a profile type...
+            </p>
+            <p>
+                Any contact tag can be turned into a dedicated Profile Management screen -
+                enable it and pick which fields and pages it should show.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="profile_management_config_menu"
+        name="Configuration"
+        parent="bn_profile_management.profile_management_menu"
+        groups="bn_profile_management.profile_management_group"
+        sequence="99"/>
+
+    <menuitem
+        id="res_partner_category_menu_profile"
+        name="Profile Types (Tags)"
+        action="res_partner_category_action_profile"
+        parent="profile_management_config_menu"
+        sequence="0"/>
+
+</odoo>
