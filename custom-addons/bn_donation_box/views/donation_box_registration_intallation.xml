@@ -7,9 +7,9 @@
         <field name="arch" type="xml">
             <form create="0">
                 <header>
-                    <button name="action_install" string="Install" type="object" class="oe_highlight" invisible="status in ['installed', 'approved', 'available', 'close', 'change_request']" />
-                    <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status in ['draft', 'approved', 'available', 'close']" groups="bn_donation_box.donation_box_registration_installation_approve_group" />
-                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status in ['change_request','draft', 'installed']" groups="bn_donation_box.donation_box_registration_installation_change_request_group" />
+                    <button name="action_install" string="Install" type="object" class="oe_highlight" invisible="status != 'draft'" />
+                    <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status not in ['installed', 'change_request']" groups="bn_donation_box.donation_box_registration_installation_approve_group" />
+                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status not in ['available', 'close']" groups="bn_donation_box.donation_box_registration_installation_change_request_group" />
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, installed, available"/>
                 </header>
@@ -26,13 +26,13 @@
                             <field name="key_issuance" invisible="1" />
 
                             <field name="request_no" class="oe_inline" readonly="1" />
-                            <field name="shop_name" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="contact_person" required="1" readonly="status in ['approved', 'available']" />
-                            <field name="location" required="1" readonly="status in ['approved', 'available', 'change_request', 'installed']" />
-                            <field name="shop_plot_no" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="street" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="landmark" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="block_floor_office_no" required="1" readonly="status in ['approved', 'available', 'change_request']" />
+                            <field name="shop_name" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="contact_person" required="1" readonly="status in ['available', 'close']" />
+                            <field name="location" required="1" readonly="status in ['available', 'change_request', 'installed', 'close']" />
+                            <field name="shop_plot_no" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="street" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="landmark" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="block_floor_office_no" required="1" readonly="status in ['available', 'change_request', 'close']" />
                             <field name="installer_id" string="Installer" domain="[('category_ids', 'in', [employee_category_2_id])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="product_id" string="Box Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                             <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." readonly="1" />
@@ -40,14 +40,15 @@
                             <field name="box_status" readonly="1" />
                         </group>
                         <group name="donation_box_registration_installation_col_2">
-                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['DB Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, [2, 4, 14])], 'default_street': location, 'default_street': location, 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_city': city_id.name, 'default_state': 'draft'}" options="{'no_edit': True, 'no_open': True}" readonly="status in ['approved', 'available', 'change_request', 'installed']" />
+                            <field name="donor_category_ids" invisible="1" />
+                            <field name="donor_id" string="Donor" domain="[('category_id.name', 'in', ['DB Donor']), ('state', '=', 'register')]" context="{'default_category_id': [(6, 0, donor_category_ids)], 'default_street': location, 'default_country_code_id': country_id, 'default_mobile': contact_no, 'default_city': city_id.name, 'default_state': 'draft'}" options="{'no_edit': True, 'no_open': True}" readonly="status in ['available', 'change_request', 'installed', 'close']" />
                             <label for="contact_no"/>
-                            <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_id" readonly="status in ['approved', 'available']" required="1"/> <field style="width: 70% !important;" name="contact_no" required="1" readonly="status in ['approved', 'available']" /></div>
-                            <field name="installation_date" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="installation_category_id" string="Installation Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" readonly="status in ['approved', 'available', 'change_request']" />
-                            <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="city_id == False" readonly="status in ['approved', 'available','change_request']"/>
-                            <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="zone_id == False" readonly="status in ['approved', 'available']"/>
+                            <div style="display: flex;"><field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" name="country_id" readonly="status in ['available', 'close']" required="1"/> <field style="width: 70% !important;" name="contact_no" required="1" readonly="status in ['available', 'close']" /></div>
+                            <field name="installation_date" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="installation_category_id" string="Installation Category" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" readonly="status in ['available', 'change_request', 'close']" />
+                            <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="city_id == False" readonly="status in ['available', 'change_request', 'close']"/>
+                            <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="status == 'installed'" invisible="zone_id == False" readonly="status in ['available', 'close']"/>
                             <field name="old_box_no" readonly="1"/>
                         </group>
                     </group>
@@ -89,7 +90,7 @@
                 <field name="lock_no" />
                 <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
                 <field name="installation_date" />
-                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" decoration-muted="status == 'close'" />
             </tree>
         </field>
     </record>

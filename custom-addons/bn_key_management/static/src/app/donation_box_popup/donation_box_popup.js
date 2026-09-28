@@ -37,7 +37,7 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
     onSelection(ev) {
         const rider_id = parseInt(ev.target.value);
         this.rider_collections = this.collection_ids.filter(
-            (col) => col.rider_id === rider_id && col.amount
+            (col) => col.rider_id === rider_id
         );
         this.render(); // refresh template
     }

@@ -1,5 +1,5 @@
 from odoo import models, fields
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 state_selection = [
@@ -66,12 +66,21 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.foreign_notes = self.foreign_notes
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
-        
-        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
-        key.state = 'pending'
 
-        key_issuance = self.env['key.issuance'].search([('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id), ('key_id', '=', key.id), ('state', 'in', ['issued', 'overdue'])], limit=1)
-        key_issuance.state = 'pending'
+        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
+        if not key:
+            raise ValidationError('No key found for box "%s".' % self.lot_id.display_name)
+
+        key_issuance = self.env['key.issuance'].search([
+            ('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id),
+            ('key_id', '=', key.id), ('state', 'in', ['issued', 'overdue']),
+        ], limit=1)
+        if not key_issuance:
+            raise ValidationError('No active issuance found for box "%s" on %s.' % (self.lot_id.display_name, self.date))
+
+        # Goes through the guarded workflow method (checks state, keeps key.state in
+        # sync with the issuance) instead of writing .state directly on both records.
+        key_issuance.action_pending()
     
     def mark_as_submit(self):
         if self.amount < 0:
@@ -103,7 +112,7 @@ class RiderScheduleLine(models.TransientModel):
         if not self.box_status:
             raise ValidationError('Please select the box status first.')
 
-        self.env['donation.box.complain.center'].create({
+        complaint = self.env['donation.box.complain.center'].create({
             'donation_box_registration_installation_id': self.donation_box_registration_installation_id.id,
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,
@@ -111,10 +120,13 @@ class RiderScheduleLine(models.TransientModel):
             'box_status': self.box_status,
             'remarks': self.remarks,
         })
+        # Moves the complaint from Draft to Process (its own required-field checks
+        # apply here). The registration itself is only closed later, when a Complain
+        # Officer resolves the complaint - not immediately on report, unreviewed.
+        complaint.action_process()
 
         # Hide button after complaint generation
         self.is_complain_generated = True
-        self.donation_box_registration_installation_id.status = 'close'
 
         # Mark related rider collection
         if self.rider_collection_id:

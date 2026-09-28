@@ -1,6 +1,6 @@
-from odoo import fields, models, api
+# -*- coding: utf-8 -*-
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-
 
 action_type_selection = [
     ('issue', 'Issue'),
@@ -12,151 +12,98 @@ class ManualKeyIssuance(models.TransientModel):
     _name = 'manual.key.issuance'
     _description = 'Manual Key Issuance'
 
-
     action_type = fields.Selection(selection=action_type_selection, string="Type")
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
     lot_id = fields.Many2one('stock.lot', string="Box No.", domain="[('id', 'in', available_lot_ids)]")
-    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id)
+    employee_category_id = fields.Many2one(
+        'hr.employee.category', string="Employee Category",
+        default=lambda self: self._default_employee_category_id())
     key_id = fields.Many2one('key', string="Key", compute="_set_key_id", store=True)
-    
+
     available_lot_ids = fields.Many2many('stock.lot', string="Available Lots", compute="_compute_available_lot_ids")
 
     date = fields.Date('Date', default=fields.Date.context_today)
 
+    @api.model
+    def _default_employee_category_id(self):
+        category = self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False)
+        return category.id if category else False
 
     @api.depends('action_type', 'date', 'rider_id')
     def _compute_available_lot_ids(self):
         for rec in self:
             lot_ids = []
-
             Key = self.env['key']
             KeyIssuance = self.env['key.issuance']
 
             if rec.action_type == 'issue' and rec.date:
-                # 🔴 Active issuances
-                active_issuances = KeyIssuance.search([
-                    ('state', '!=', 'returned')
-                ])
-                active_key_ids = active_issuances.mapped('key_id').ids
-
-                # 🔴 Same-day issuances
-                today_issuances = KeyIssuance.search([
+                blocked_key_ids = KeyIssuance.search([
+                    '|', ('state', 'in', ('issued', 'overdue', 'pending')),
                     ('issue_date', '=', rec.date),
-                    ('state', '!=', 'returned')
-                ])
-                today_key_ids = today_issuances.mapped('key_id').ids
-
-                blocked_key_ids = list(set(active_key_ids + today_key_ids))
+                ]).mapped('key_id').ids
 
                 keys = Key.search([
                     ('state', '=', 'available'),
                     ('lot_id', '!=', False),
-                    ('id', 'not in', blocked_key_ids)
+                    ('id', 'not in', blocked_key_ids),
                 ])
-
                 lot_ids = keys.mapped('lot_id').ids
 
             elif rec.action_type == 'return' and rec.rider_id:
-
-                # 🔵 Only issued or overdue keys for selected rider
-                key_issuances = KeyIssuance.search([
+                issuances = KeyIssuance.search([
                     ('rider_id', '=', rec.rider_id.id),
-                    ('state', '!=', 'returned')
+                    ('state', 'in', ('donation_receive', 'pending')),
                 ])
-
-                keys = key_issuances.mapped('key_id')
-
-                lot_ids = keys.mapped('lot_id').ids
+                lot_ids = issuances.mapped('key_id.lot_id').ids
 
             rec.available_lot_ids = [(6, 0, list(set(lot_ids)))]
 
     @api.depends('lot_id')
     def _set_key_id(self):
-        """Search for key by lot_id"""
-        if self.lot_id:
-        
-            key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
-            
-            if not key:
-                raise ValidationError(f'Key with Box No. "{self.lot_id.name}" not found')
-            
-            self.key_id = key.id
+        for rec in self:
+            rec.key_id = False
+            if rec.lot_id:
+                key = self.env['key'].search([('lot_id', '=', rec.lot_id.id)], limit=1)
+                if not key:
+                    raise ValidationError(_('Key with Box No. "%s" not found.') % rec.lot_id.display_name)
+                rec.key_id = key.id
 
     def action_issue(self):
         if not self.rider_id:
-            raise ValidationError('Please Select a Rider')
-
-        key = self.key_id  # record
-
-        if not key:
-            raise ValidationError('Please select a key')
-
-        if key.state != 'available':
-            raise ValidationError(f'Key "{key.name}" is not available for issuance')
-
+            raise ValidationError(_('Please select a Rider.'))
+        if not self.key_id:
+            raise ValidationError(_('Please select a key.'))
         if not self.date:
-            raise ValidationError('Please select issue date')
+            raise ValidationError(_('Please select the issue date.'))
 
-        if key:
-            # 🚫 1. Block if ANY key is already issued (active)
-            issued_keys = self.env['key.issuance'].search([
-                ('key_id', '=', key.id),
-                ('state', '=', 'issued')
-            ])
-
-            if issued_keys:
-                raise ValidationError(
-                    "❌ Cannot manually issue this key!\n\n"
-                    "Another key from the same bunch is already issued:\n" +
-                    "\n".join([f"  • {rec.key_id.name}" for rec in issued_keys])
-                )
-
-            # 🚫 2. SAME-DAY constraint (IMPORTANT FIX)
-            same_day_issue = self.env['key.issuance'].search([
-                ('key_id', '=', key.id),
-                ('issue_date', '=', self.date),
-                ('state', '=', 'issued')
-            ])
-
-            if same_day_issue:
-                raise ValidationError(
-                    "❌ This key bunch already has an issue recorded for the selected date."
-                )
-
-        # ✅ Safe to issue manually
-        key_issuance_obj = self.env['key.issuance'].create({
+        issuance = self.env['key.issuance'].create({
             'rider_id': self.rider_id.id,
-            'key_id': key.id,
+            'key_id': self.key_id.id,
             'action_type': 'manual',
             'issue_date': self.date,
         })
-
-        key_issuance_obj.action_issue()
+        # Availability / duplicate-issuance validation happens here.
+        issuance.action_issue()
+        return True
 
     def action_return(self):
         if not self.rider_id:
-            raise ValidationError('Please Select a Rider')
+            raise ValidationError(_('Please select a Rider.'))
+        if not self.key_id:
+            raise ValidationError(_('Please select a Key.'))
 
-        key = self.key_id
+        issuance = self.env['key.issuance'].search([
+            ('key_id', '=', self.key_id.id),
+            ('rider_id', '=', self.rider_id.id),
+            ('state', 'in', ('donation_receive', 'pending')),
+        ], order="id desc", limit=1)
 
-        if not key:
-            raise ValidationError('Please Select a Key')
+        if not issuance:
+            raise ValidationError(_(
+                'Key "%s" cannot be returned. Only keys in "Donation Received" or "Pending" '
+                'state can be returned.'
+            ) % self.key_id.display_name)
 
-        KeyIssuance = self.env['key.issuance']
-
-        # 🔴 Find valid returnable record
-        key_issuance = KeyIssuance.search([
-            ('key_id', '=', key.id),
-            ('state', 'in', ['donation_receive', 'pending'])
-        ], limit=1)
-
-        # ❌ If not found → cannot return
-        if not key_issuance:
-            raise ValidationError(
-                f'Key "{key.name}" cannot be returned.\n'
-                f'Only keys in "Donation Received" or "Pending" state can be returned.'
-            )
-
-        # 🚀 Proceed return
-        key_issuance.action_return()
+        issuance.action_return()
+        return True

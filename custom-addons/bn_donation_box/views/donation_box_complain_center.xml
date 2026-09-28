@@ -37,20 +37,20 @@
 
                     <div class="oe_title">
                         <label for="rider_id"/>
-                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status in ['not_recovered', 'process']"/></h1>
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status != 'draft'"/></h1>
                     </div>
 
                     <group>
                         <group name="donation_box_complain_col_1" >
-                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="box_status" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
-                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status != 'draft'"/>
+                            <field name="box_status" required="1" readonly="status != 'draft'"/>
+                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
+                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
                         </group>
                         <group name="donation_box_complain_col_2">
                             <field name="date" readonly="1"/>
-                            <field name="remarks" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
+                            <field name="remarks" required="1" readonly="status != 'draft'"/>
+                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
                         </group>
                     </group>
 

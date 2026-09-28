@@ -1,11 +1,12 @@
-from odoo import models, fields, api
+# -*- coding: utf-8 -*-
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class KeyBunch(models.Model):
     _name = 'key.bunch'
     _description = 'Key Bunch'
     _inherit = ["mail.thread", "mail.activity.mixin"]
-
 
     name = fields.Char('Name', tracking=True)
     room_no = fields.Char('Room No.', tracking=True)
@@ -18,3 +19,9 @@ class KeyBunch(models.Model):
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
     key_ids = fields.One2many('key', 'key_bunch_id', string="Keys")
+
+    def unlink(self):
+        for bunch in self:
+            if bunch.key_ids.filtered(lambda k: k.state != 'closed'):
+                raise UserError(_('Bunch "%s" still contains keys and cannot be deleted.') % bunch.display_name)
+        return super().unlink()
