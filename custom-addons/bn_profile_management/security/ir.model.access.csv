@@ -4,3 +4,5 @@ access_confirm_search,access.confirm.search,bn_profile_management.model_confirm_
 access_microfinance_application_wizard,access.microfinance.application.wizard,bn_profile_management.model_microfinance_application_wizard,base.group_user,1,1,1,1
 access_profile_management_page,profile.management.page,bn_profile_management.model_profile_management_page,base.group_user,1,0,0,0
 access_profile_management_page_manager,profile.management.page manager,bn_profile_management.model_profile_management_page,bn_profile_management.profile_management_group,1,1,1,1
+access_area_read,area.read,model_area,base.group_user,1,0,0,0
+access_area_manage,area.manage,model_area,bn_profile_management.profile_management_group,1,1,1,1

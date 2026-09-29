@@ -44,8 +44,11 @@ class HREmployee(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
             
-    def create(self, vals):
-        if 'barcode' in vals:
-            vals['name'] = vals['name'] + " ( " + vals['barcode'] + " )"
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            barcode = vals.get('barcode')
+            if barcode and vals.get('name'):
+                vals['name'] = "%s ( %s )" % (vals['name'], barcode)
 
-        return super(HREmployee, self).create(vals)
+        return super().create(vals_list)

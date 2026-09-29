@@ -153,7 +153,8 @@ class APIDonationWizard(models.TransientModel):
 
         self.create_fetch_log(history.id, "Processing page data", "Processing", f"Records: {len(donations_info)}")
 
-        journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
+        journal = self.env['account.journal'].search(
+            [('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         company_currency = company.currency_id
 
@@ -509,7 +510,14 @@ class APIDonationWizard(models.TransientModel):
 
             picking.action_confirm()
             picking.action_assign()
-            picking.button_validate()
+            picking.with_context(skip_backorder=True, skip_immediate=True).button_validate()
+            if picking.state != 'done':
+                self.create_fetch_log(
+                    history.id,
+                    f"Stock transfer {picking.name} could not be validated (status: {picking.state})",
+                    'Error',
+                    'button_validate did not complete the transfer automatically'
+                )
 
         self.create_fetch_log(
             history.id,
@@ -713,228 +721,6 @@ class APIDonationWizard(models.TransientModel):
 
         return donation_vals
           
-    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
-        self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
-
-        """Prepare donation values with optimized lookups"""
-        if info.get('status') != 'success':
-            self.create_fetch_log(history.id, f"Skipping donation {info} at index {info_idx} due to unsuccessful status", 'Skipped', f"Donation at index {info_idx} is skipped because its status is not successful")
-
-            return None
-        
-        # Parse dates
-        created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
-        updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
-        
-        # Get currency and conversion rate - ensure we have a valid currency
-        currency_name = info.get('currency', '') or ''
-        conv_rate = all_data['conversion_rates'].get(currency_name.lower(), 1.0)
-        
-        # Validate currency exists
-        if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found in system, using company currency", 'Error', f"Currency {currency_name} not found in system, using company currency")
-
-            _logger.warning(f"Currency {currency_name} not found in system, using company currency")
-            # Use company currency as fallback
-            currency_name = self.env.company.currency_id.name.lower()
-            conv_rate = 1.0
-        
-        # Calculate amounts
-        total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
-        total_local = total_amount / conv_rate
-        
-        # Prepare donor info
-        donor = info.get('donor_details') or {}
-        donor_id = None
-        partner_key = None
-        
-        if donor.get('name', ''):
-            mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-            country_code = donor.get('country', '')
-            country_id = all_data['country_by_code'].get(country_code)
-            
-            # Check cache first - simpler approach
-            if mobile and country_id:
-                
-                # Try to find by mobile number in cache
-                for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
-                        donor_id = cached_id
-                        break
-            
-            if not donor_id:
-                # Create new partner
-                partner_vals = {
-                    'name': donor.get('name', ''),
-                    'mobile': mobile,
-                    'email': donor.get('email', ''),
-                    'country_code_id': country_id,
-                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                }
-                
-                partner_to_create.append(partner_vals)
-                # Use (mobile, country_id) tuple as key for mapping later
-                partner_key = (mobile, country_id)
-        else:
-            donor_id = all_data['default_partner_id']
-        
-        default_center = False
-        # Prepare donation items
-        items = info.get('items') or []
-        orm_items = []
-        order_lines = []
-        for it in items:
-            types_name = ''
-            item_name = ''
-            
-            # Fast extraction of type and item names
-            type_data = it.get('type', {})
-            if isinstance(type_data, dict) and 'en' in type_data:
-                types_name = type_data.get('en', {}).get('name', '')
-            
-            item_data = it.get('item', {})
-            if isinstance(item_data, dict) and 'en' in item_data:
-                item_name = item_data.get('en', {}).get('name', '')
-            
-            if info.get('qurbani') != True:
-                orm_items.append({
-                    'donation_type': it.get('donationType', ''),
-                    'total': float(it.get('total', 0) or 0),
-                    'price': it.get('price', 0),
-                    'price_id': it.get('price_id', 0),
-                    'qty': it.get('qty', 0),
-                    'type': types_name,
-                    'item': item_name,
-                    'donation_no': it.get('donationNo', 0),
-                    'is_priced_item': it.get('isPricedItem', False),
-                })
-            
-            else:   # qurbani == True
-                # -------------------------------------------------------------
-                # 1. Product resolution (from your upper code)
-                # -------------------------------------------------------------
-                self.create_fetch_log(
-                    history.id,
-                    f"Distribution Data from API",
-                    "Qurbani",
-                    f"Qurbani json {info}"
-                )
-
-                # -------------------------------------------------------------
-                # 2. Share names (from upper code)
-                # -------------------------------------------------------------
-                share_names = it.get('share_names', [donor.get('name', '')])
-                if not share_names:
-                    share_names = [donor.get('name', '')]
-
-                # -------------------------------------------------------------
-                # 3. Create qurbani order lines (from upper code)
-                # -------------------------------------------------------------
-                # FIXED: number of lines should follow the number of share
-                # names actually provided, not `qty` - a "Full - 7 Shares"
-                # item can have qty=2 (2 units bought) but 14 share_names
-                # (2 x 7 shares). Using qty here silently dropped shares.
-                item_qty = int(it.get('qty', 1) or 1)
-                num_lines = len(share_names)
-                if num_lines != item_qty:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Qurbani share count mismatch for item '{item_name}': "
-                        f"qty={item_qty} but {num_lines} share_names provided. "
-                        f"Using share_names count ({num_lines}) to build order lines.",
-                        'Warning',
-                        'qty vs share_names length mismatch'
-                    )
-
-                item_total = float(it.get('total', 0) or 0)
-                # FIXED: previously each generated line carried the item's
-                # full total, so summing `total` across lines double/multi
-                # counted the amount. Split evenly across the actual lines.
-                per_line_total = item_total / num_lines if num_lines else item_total
-
-                for idx in range(num_lines):
-                    share_name = share_names[idx % len(share_names)]
-
-                    order_lines.append({
-                        'donation_type': it.get('donationType', ''),
-                        'total': per_line_total,
-                        'price': it.get('price', 0),
-                        'price_id': it.get('price_id', 0),
-                        'qty': 1,
-                        'type': types_name,
-                        'item': item_name,
-                        'donation_no': it.get('donationNo', 0),
-                        'day': it.get('day', ''),
-                        # City now sourced from donor_details.qurbaniCity
-                        # (donation-level city) instead of the item's own
-                        # 'city' key.
-                        'city': donor.get('qurbaniCity', ''),
-                        'hissa_name': share_name,
-                        'branch': it.get('branch', ''),
-                        'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
-                    })
-
-
-        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
-        self.create_fetch_log(history.id, f"order_lines for donation at index {info_idx}: {order_lines}", 'Processing', f"Prepared Order lines for donation at index {info_idx}")
-
-        # Build donation values
-        donation_vals = {
-            'import_id': info.get('_id', ''),
-            'remarks': info.get('remarks', ''),
-            'total_amount': total_amount,
-            'total_amount_local': total_local,
-            'donor': info.get('donor', ''),
-            'donation_type': info.get('donation_type', ''),
-            'donation_from': info.get('donation_from', ''),
-            'dn_number': info.get('DN_Number', ''),
-            'subscription_interval': info.get('subscriptionInterval', ''),
-            'is_recurring': info.get('isRecurring', False),
-            'response_code': info.get('response_code', ''),
-            'response_description': info.get('response_description', ''),
-            'currency': currency_name,
-            'referer': info.get('referer', ''),
-            'website': info.get('website', ''),
-            'account_source': info.get('account_source', ''),
-            'conversion_rate': conv_rate,
-            'bank_charges': info.get('bank_charges', 0),
-            'bank_charges_in_text': info.get('bank_charges_in_text', ''),
-            'blinq_notification_number': info.get('blinq_notification_number', ''),
-            'created_at': created_dt,
-            'updated_at': updated_dt,
-            'donation_id': info.get('donation_id', ''),
-            'invoice_id': info.get('invoice_id', ''),
-            'transaction_id': info.get('transaction_id', ''),
-            'name': donor.get('name', ''),
-            'phone': donor.get('phone', ''),
-            'email': donor.get('email', ''),
-            'cnic': donor.get('cnic', ''),
-            'country': donor.get('country', ''),
-            'ip_address': donor.get('ipAddress', ''),
-            'subscription_for_news': donor.get('subscriptionForNews', False),
-            'subscription_for_whatsapp': donor.get('subscriptionForWhatsapp', False),
-            'subscription_for_sms': donor.get('subscriptionForSms', False),
-            'qurbani_country': donor.get('qurbaniCountry', ''),
-            'qurbani_city': donor.get('qurbaniCity', ''),
-            'qurbani_day': donor.get('qurbaniDay', ''),
-            'donation_item_ids': [(0, 0, it) for it in orm_items],
-            'qurbani_order_line_ids': [(0, 0, it) for it in order_lines],
-            'fetch_history_id': history.id,
-            'qurbani': True if info.get('qurbani') else False,
-        }
-
-        # Set donor_id - either from cache, from new partner, or default
-        if donor_id:
-            donation_vals['donor_id'] = donor_id
-        elif partner_key is not None:
-            donation_vals['partner_key'] = partner_key
-        else:
-            donation_vals['donor_id'] = all_data['default_partner_id']
-
-        self.create_fetch_log(history.id, f"End _prepare_donation_vals_fast", 'Processing', f"Completed preparation of donation values for index {info_idx}")
-        
-        return donation_vals
-
     def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency, 
                                         debit_accumulator, credit_accumulator, history):
         self.create_fetch_log(history.id, f"Start _accumulate_donation_lines_fast", 'Processing', f"Starting to accumulate journal lines for donation with import_id {donation_vals.get('import_id', '')} using optimized lookups")

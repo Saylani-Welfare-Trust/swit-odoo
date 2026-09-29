@@ -1,5 +1,9 @@
-from odoo import models, fields
+import logging
+
+from odoo import models, fields, _
 from odoo.exceptions import ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class APIDonation(models.Model):
@@ -58,6 +62,7 @@ class APIDonation(models.Model):
         ('skipped', 'Skipped'),
         ('failed', 'Failed'),
     ], string="Partner Status", default='pending', tracking=True)
+    error_message = fields.Text('Error Message', tracking=True)
     
     def action_create_partners_for_selected(self):
         """Create partners for selected donation records - Partners stay in DRAFT state"""

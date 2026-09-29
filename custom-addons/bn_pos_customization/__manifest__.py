@@ -1,6 +1,6 @@
 {
     'name': 'POS Customization',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -13,8 +13,6 @@
     'data': [
         'security/group.xml',
         'security/record_rule.xml',
-        'views/pos_config.xml',
-        'views/pos_session.xml',
         'views/pos_assets_index.xml',
     ],
     'auto_install': False,

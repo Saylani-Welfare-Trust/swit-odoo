@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import base64
 from io import BytesIO
@@ -26,6 +26,21 @@ class ImportDonation(models.Model):
 
     gateway_config_id = fields.Many2one('gateway.config', tracking=True)
 
+    company_id = fields.Many2one('res.company', string="Company", default=lambda self: self.env.company)
+    warehouse_id = fields.Many2one(
+        'stock.warehouse', string="Warehouse",
+        default=lambda self: self._default_warehouse_id(),
+        domain="[('company_id', '=', company_id)]")
+    picking_type_id = fields.Many2one(
+        'stock.picking.type', string="Operation Type",
+        domain="['|', ('warehouse_id', '=', warehouse_id), ('warehouse_id', '=', False)]",
+        help="Operation type used for the receipt of stockable donated products. "
+             "Only needed when a line's product is a storable product.")
+    source_location_id = fields.Many2one(
+        'stock.location', string="Source Location", compute='_compute_locations', store=True)
+    destination_location_id = fields.Many2one(
+        'stock.location', string="Destination Location", compute='_compute_locations', store=True)
+
     journal_entry_id = fields.Many2one('account.move')
     picking_id = fields.Many2one('stock.picking')
 
@@ -40,11 +55,33 @@ class ImportDonation(models.Model):
         'valid.import.donation', 'import_donation_id'
     )
 
+    @api.model
+    def _default_warehouse_id(self):
+        warehouse = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.env.company.id)], limit=1)
+        return warehouse.id
+
+    @api.depends('picking_type_id', 'picking_type_id.default_location_src_id',
+                 'picking_type_id.default_location_dest_id')
+    def _compute_locations(self):
+        for rec in self:
+            rec.source_location_id = rec.picking_type_id.default_location_src_id
+            rec.destination_location_id = rec.picking_type_id.default_location_dest_id
+
+    def _check_state(self, allowed, action):
+        for rec in self:
+            if rec.state not in allowed:
+                raise ValidationError(_(
+                    '"%(action)s" is not allowed for "%(record)s" because it is in status '
+                    '"%(current)s".'
+                ) % {'action': action, 'record': rec.display_name, 'current': rec.state})
+
     
     # =========================================================
     # Draft
     # =========================================================
     def action_draft(self):
+        self._check_state(('draft', 'validated', 'uploaded', 'sync_donor'), _('Reset to Draft'))
         self.valid_import_donation_ids.unlink()
         self.invalid_import_donation_ids.unlink()
 
@@ -65,6 +102,7 @@ class ImportDonation(models.Model):
     # VALIDATE EXCEL
     # =========================================================
     def action_validate_excel_file(self):
+        self._check_state(('draft',), _('Validate Excel'))
         if not self.import_file:
             raise ValidationError("No file uploaded.")
 
@@ -176,6 +214,7 @@ class ImportDonation(models.Model):
     # UPLOAD (ONLY DONATION CREATION)
     # =========================================================
     def action_upload(self):
+        self._check_state(('validated',), _('Upload'))
         if not self.valid_import_donation_ids:
             raise ValidationError("No valid records.")
 
@@ -239,12 +278,14 @@ class ImportDonation(models.Model):
     # SYNC PARTNER (ONLY PARTNER + LINKING)
     # =========================================================
     def action_sync_partner(self):
+        self._check_state(('uploaded', 'sync_donor'), _('Sync Donor'))
         Partner = self.env['res.partner']
         Donation = self.env['donation']
 
         donation_map = {
             d.transaction_id: d
             for d in Donation.search([
+                ('import_donation_id', '=', self.id),
                 ('transaction_id', 'in', self.valid_import_donation_ids.mapped('transaction_id'))
             ])
         }
@@ -297,20 +338,41 @@ class ImportDonation(models.Model):
     # CONFIRM (ACCOUNT + STOCK CREATION HERE)
     # =========================================================
     def action_confirm(self):
+        self.ensure_one()
+        self._check_state(('uploaded', 'sync_donor'), _('Confirm'))
+
         Donation = self.env['donation']
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
         journal = self.env['account.journal'].search(
-            [('name', 'ilike', 'Bank')], limit=1
+            [('type', '=', 'bank'), ('company_id', '=', self.company_id.id)], limit=1
         )
-
         if not journal:
-            raise ValidationError("Bank journal not found.")
+            raise ValidationError(_("No Bank journal found for company %s.") % self.company_id.display_name)
+
+        if not self.gateway_config_id.account_id:
+            raise ValidationError(_(
+                'Gateway Config "%s" has no Debit Account configured.'
+            ) % self.gateway_config_id.display_name)
 
         donations = Donation.search([
-            ('transaction_id', 'in', self.valid_import_donation_ids.mapped('transaction_id'))
+            ('import_donation_id', '=', self.id),
+            ('transaction_id', 'in', self.valid_import_donation_ids.mapped('transaction_id')),
         ])
+        if not donations:
+            raise ValidationError(_("No donations found to confirm for this import batch."))
+
+        needs_stock = donations.filtered(
+            lambda d: d.product_id and d.product_id.detailed_type == 'product')
+        if needs_stock and not self.picking_type_id:
+            raise ValidationError(_(
+                'Some donated products are storable and require a stock transfer, but no '
+                'Operation Type is configured on this import. Please select one.'))
+        if needs_stock and (not self.source_location_id or not self.destination_location_id):
+            raise ValidationError(_(
+                'The operation type "%s" has no default source/destination location.'
+            ) % self.picking_type_id.display_name)
 
         credit_groups = {}
         total = 0.0
@@ -323,8 +385,13 @@ class ImportDonation(models.Model):
             total += d.amount
 
             acc = d.product_id.property_account_income_id.id if d.product_id else False
-            if acc:
-                credit_groups[acc] = credit_groups.get(acc, 0.0) + d.amount
+            if not acc:
+                raise ValidationError(_(
+                    'Donation "%(donation)s": product "%(product)s" has no Income Account '
+                    'configured, so no credit line can be created for it.'
+                ) % {'donation': d.display_name,
+                     'product': d.product_id.display_name if d.product_id else _('(none)')})
+            credit_groups[acc] = credit_groups.get(acc, 0.0) + d.amount
 
             if d.product_id and d.product_id.detailed_type == 'product':
                 stock_map.setdefault(d.product_id.id, {'product': d.product_id, 'qty': 0})
@@ -356,7 +423,12 @@ class ImportDonation(models.Model):
 
             picking.action_confirm()
             picking.action_assign()
-            picking.button_validate()
+            picking.with_context(skip_backorder=True, skip_immediate=True).button_validate()
+            if picking.state != 'done':
+                raise ValidationError(_(
+                    'The stock transfer %(picking)s could not be validated automatically '
+                    '(status: %(state)s). Nothing has been posted.'
+                ) % {'picking': picking.display_name, 'state': picking.state})
 
         # ACCOUNT MOVE
         debit = (0, 0, {

@@ -21,6 +21,7 @@
         'views/res_partner.xml',
         'views/res_partner_layer.xml',
         'views/res_partner_category.xml',
+        'views/area.xml',
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'wizards/microfinance_application_wizard.xml',

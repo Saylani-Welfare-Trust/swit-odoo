@@ -1,6 +1,6 @@
 {
     'name': 'Master Setup',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -8,17 +8,13 @@
     'depends': [
         'base',
         'mail',
-        'product',
-        'stock',
-        'account',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'security/group.xml',
+        'security/ir.model.access.csv',
         'views/menu.xml',
         'views/city.xml',
         'views/bank.xml',
-        'views/area.xml',
     ],
     'auto_install': False,
     'application': True,

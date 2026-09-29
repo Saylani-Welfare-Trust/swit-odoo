@@ -33,6 +33,7 @@
         name="Installation Category"
         action="installation_category_action"
         parent="donation_box_config_menu"
+        groups="bn_donation_box.donation_box_registration_admin_group"
         sequence="0"/>
 
 </odoo>

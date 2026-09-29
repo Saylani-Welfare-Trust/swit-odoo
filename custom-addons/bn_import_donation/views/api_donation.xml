@@ -22,6 +22,7 @@
                     decoration-success="partner_creation_status == 'created'"
                     decoration-warning="partner_creation_status == 'pending'"
                     decoration-danger="partner_creation_status == 'failed'"/>                
+                <field name="error_message" optional="show"/>
             </tree>
         </field>
     </record>

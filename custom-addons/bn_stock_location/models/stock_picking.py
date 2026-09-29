@@ -12,7 +12,7 @@ class StockPicking(models.Model):
         store=False
     )
 
-    @api.depends('partner_id')
+    @api.depends('user_id')
     def _compute_user_allowed_locations(self):
         for rec in self:
             # Clear the field

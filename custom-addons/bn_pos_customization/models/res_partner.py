@@ -19,20 +19,25 @@ class ResPartner(models.Model):
 
     @api.model
     def create_from_ui(self, partner):
-        # raise ValidationError(str(partner))
-
         if partner.get('country_code_id'):
             country_id = self.env['res.country'].search([('id', '=', int(partner.get('country_code_id')))], limit=1).id
             partner['country_id'] = country_id
 
-        partner['cnic_no'] = partner.get('cnic_no')
-
-        partner['category_id'] = [(6, 0, [
-            self.env.ref('bn_profile_management.donor_partner_category').id,
-            self.env.ref('bn_profile_management.individual_partner_category').id 
-            if partner.get('donor_type') == 'individual' 
-            else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id
-        ])]
+        # NOTE: bn_profile_management already depends on bn_pos_customization, so this
+        # module cannot declare a dependency back on it (that would be circular). The
+        # categories below are only assigned if bn_profile_management happens to be
+        # installed; look them up defensively instead of a hard env.ref().
+        category_ids = []
+        donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
+        if donor_category:
+            category_ids.append(donor_category.id)
+            individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
+            corporate_category = self.env.ref('bn_profile_management.coorporate_institute_partner_category', raise_if_not_found=False)
+            extra_category = individual_category if partner.get('donor_type') == 'individual' else corporate_category
+            if extra_category:
+                category_ids.append(extra_category.id)
+        if category_ids:
+            partner['category_id'] = [(6, 0, category_ids)]
 
         partner.pop('donor_type', None)
 

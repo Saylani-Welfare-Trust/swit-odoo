@@ -35,17 +35,23 @@ class Donation(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True)
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('import_donation') or ('New')
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('import_donation') or 'New'
+        return super().create(vals_list)
 
-        return super(Donation, self).create(vals)
-    
     def action_confirm(self):
+        for rec in self:
+            if rec.state != 'draft':
+                raise ValidationError(_('"%s" is already posted.') % rec.display_name)
         self.state = 'posted'
-    
+
     def action_draft(self):
+        for rec in self:
+            if rec.state != 'posted':
+                raise ValidationError(_('"%s" is already in Draft.') % rec.display_name)
         self.state = 'draft'
 
 
