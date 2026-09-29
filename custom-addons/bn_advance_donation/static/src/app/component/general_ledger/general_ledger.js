@@ -105,6 +105,7 @@ class GeneralLedger extends owl.Component {
         var self = this;
         var action_title = self.getActionTitle();
         try {
+            console.log('GL calling get_filter_values, advance_donation_only =', this.state.advance_donation_only, typeof this.state.advance_donation_only);
             const filtered_data = await self.orm.call(
                 "account.general.ledger",
                 "get_filter_values",
