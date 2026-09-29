@@ -2,13 +2,14 @@
 <odoo>
 
     <!-- Client action that opens the advance-donation-only General Ledger.
-         No ``params`` needed: the JS subclass forces the flag itself. -->
+         ``params`` is explicitly set to False because the JS subclass forces
+         the advance_donation_only flag itself — no params are needed. -->
     <record id="action_advance_donation_gl" model="ir.actions.client">
         <field name="name">Advance Donation Ledger</field>
         <field name="tag">adv_donation_gl</field>
+        <field name="params" eval="False"/>
     </record>
 
-    <!-- Menu entry under the existing Advance Donation top-level menu. -->
     <menuitem id="menu_advance_donation_gl"
               name="Advance Donation Ledger"
               parent="main_menu_advance_donation"
