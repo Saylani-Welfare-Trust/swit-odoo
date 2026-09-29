@@ -120,10 +120,11 @@ class RiderScheduleLine(models.TransientModel):
             'box_status': self.box_status,
             'remarks': self.remarks,
         })
-        # Moves the complaint from Draft to Process (its own required-field checks
-        # apply here). The registration itself is only closed later, when a Complain
-        # Officer resolves the complaint - not immediately on report, unreviewed.
-        complaint.action_process()
+        # Stays in Draft (the model's own default). It is only moved to Process
+        # by an explicit follow-up action - the Complain Officer's "Process"
+        # button on the complaint's own form - never advanced automatically
+        # here. The registration itself is only closed later still, when the
+        # complaint is fully resolved.
 
         # Hide button after complaint generation
         self.is_complain_generated = True
