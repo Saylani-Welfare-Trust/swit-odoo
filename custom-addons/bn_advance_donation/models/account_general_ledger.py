@@ -21,7 +21,7 @@ class AccountGeneralLedger(models.TransientModel):
         options, analytics, opening balance, currency and running balance
         all keep behaving exactly like the standard GL.
         """
-        
+        advance_donation_only = bool(advance_donation_only)
         logger.info("ADVANCE DONATION OVERRIDE HIT, advance_donation_only=%s", advance_donation_only)
 
         # 1) Ask the parent for the un-filtered result
