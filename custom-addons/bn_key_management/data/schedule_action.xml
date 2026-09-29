@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ir_cron_scheduler_hit_action_overdue" model="ir.cron">
+        <field name="name">Hit Overdue Action | BN</field>
+        <field name="model_id" ref="model_key_issuance"/>
+        <field name="state">code</field>
+        <field name="code">
+# Only keys that are actually Issued with no donation recorded yet are turned
+# Overdue - not every non-donated record regardless of status (draft/pending/
+# returned were previously affected too).
+records = env['key.issuance'].search([
+    ('state', '=', 'issued'),
+    ('donation_amount', '=', 0),
+])
+for rec in records:
+    rec.action_overdue()
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field eval="False" name="doall"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="location_option_view_tree" model="ir.ui.view">
+        <field name="name">location.option.view.tree</field>
+        <field name="model">location.option</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="location_option_action" model="ir.actions.act_window">
+        <field name="name">Location Options</field>
+        <field name="res_model">location.option</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a location option....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="master_setup_menu"
+        name="Master Setup"
+        groups="bn_master_setup.master_setup_group"
+        web_icon="bn_master_setup,static/description/icon.png"
+        sequence="100"/>
+
+    <menuitem
+        id="analytical_accounting_menu"
+        name="Analytical Accounting"
+        parent="master_setup_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="location_option_menu"
+        name="Location Option"
+        action="location_option_action"
+        parent="analytical_accounting_menu"
+        sequence="0"/>
+
+</odoo>
