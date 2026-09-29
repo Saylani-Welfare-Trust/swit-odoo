@@ -101,7 +101,7 @@ class GeneralLedger extends owl.Component {
         var self = this;
         var action_title = self.getActionTitle();
         try {
-            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method,this.state.advance_donation_only,]);
             const raw_data = filtered_data || {};
             self.state.account_data = raw_data;
             $.each(raw_data, function (index, value) {
@@ -432,7 +432,7 @@ class GeneralLedger extends owl.Component {
                 }
             }
         }
-        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method, this.state.advance_donation_only,]);
         filtered_data = filtered_data || {};
         $.each(filtered_data, function (index, value) {
             if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {

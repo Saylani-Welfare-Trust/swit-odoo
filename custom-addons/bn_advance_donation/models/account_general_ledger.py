@@ -1,4 +1,7 @@
 from odoo import models, api
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AccountGeneralLedger(models.TransientModel):
@@ -18,6 +21,9 @@ class AccountGeneralLedger(models.TransientModel):
         options, analytics, opening balance, currency and running balance
         all keep behaving exactly like the standard GL.
         """
+        
+        logger.info("ADVANCE DONATION OVERRIDE HIT, advance_donation_only=%s", advance_donation_only)
+
         # 1) Ask the parent for the un-filtered result
         result = super().get_filter_values(
             journal_ids, date_range, options, analytic_ids, method
