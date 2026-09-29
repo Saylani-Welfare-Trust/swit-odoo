@@ -4,15 +4,6 @@
     <record id="action_advance_donation_gl" model="ir.actions.client">
         <field name="name">Advance Donation Ledger</field>
         <field name="tag">adv_donation_gl</field>
-        <field name="params">{
-    "default_title": "Advance Donation Ledger",
-    "default_date_range": "month",
-    "default_advance_donation": true,
-    "default_journal_ids": [],
-    "default_account_names": [],
-    "default_options": {},
-    "default_method": {"accrual": true}
-}</field>
     </record>
 
     <menuitem id="menu_advance_donation_gl"
