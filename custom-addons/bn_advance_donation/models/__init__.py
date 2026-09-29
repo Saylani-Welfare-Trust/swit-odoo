@@ -8,4 +8,3 @@ from . import product_product
 from . import pos_session
 from . import pos_order
 from . import advance_donation_disbursement
-# from . import account_general_ledger
