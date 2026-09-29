@@ -9,7 +9,6 @@
         'account',
         'point_of_sale',
         'bn_import_donation',
-        'dynamic_accounts_report',
         # 'bn_master_setup',
     ],
     'data': [
@@ -28,12 +27,8 @@
         'views/product_template.xml',
         'views/product_product.xml',
         'views/menu.xml',
-        'views/advance_donation_gl.xml',
     ],
     'assets': {
-        'web.assets_backend': [
-            'bn_advance_donation/static/src/js/advance_donation_gl.js',
-        ],
         'point_of_sale._assets_pos': [
             'bn_advance_donation/static/src/**/*.js',
             'bn_advance_donation/static/src/**/*.xml',
