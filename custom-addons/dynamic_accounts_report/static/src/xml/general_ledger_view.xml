@@ -286,20 +286,20 @@
                     <table cellspacing="0" width="100%" class="gl_report_table">
                         <thead>
                             <tr class="o_heading">
-                                <th>Sr</th>
-                                <th>Account Code</th>
-                                <th>Account Name</th>
-                                <th>Split Account</th>
-                                <th>Location</th>
-                                <th>Date</th>
-                                <th>Trx Type</th>
-                                <th>V.No</th>
-                                <th>Ref No.</th>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Debit</th>
-                                <th>Credit</th>
-                                <th>Balance</th>
+                                <th style="text-align:left;">Sr</th>
+                                <th style="text-align:left;">Account Code</th>
+                                <th style="text-align:left;">Account Name</th>
+                                <th style="text-align:left;">Split Account</th>
+                                <th style="text-align:left;">Location</th>
+                                <th style="text-align:left;">Date</th>
+                                <th style="text-align:left;">Trx Type</th>
+                                <th style="text-align:left;">V.No</th>
+                                <th style="text-align:left;">Ref No.</th>
+                                <th style="text-align:left;">Name</th>
+                                <th style="text-align:left;">Description</th>
+                                <th style="text-align:right;padding-right:8px;">Debit</th>
+                                <th style="text-align:right;padding-right:8px;">Credit</th>
+                                <th style="text-align:right;padding-right:8px;">Balance</th>
                             </tr>
                         </thead>
                         <tbody t-ref="tbody">
@@ -308,7 +308,7 @@
 
                                     <!-- Account banner: always visible, doubles as the single-line summary -->
                                     <tr style="cursor:pointer;" t-on-click="() => this.toggleAccount(account)">
-                                        <td colspan="10" style="font-weight:bold;padding:6px;">
+                                        <td colspan="10" style="font-weight:bold;padding:6px;text-align:left;">
                                             <span class="toggle-icon" style="margin-right:6px;">
                                                 <i t-att-class="this.isAccountCollapsed(account) ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
                                             </span>
@@ -316,15 +316,15 @@
                                             <t t-else="">UNKNOWN ACCOUNTS</t>
                                         </td>
                                         <td/>
-                                        <td>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
                                             <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_debit', 0))"/>
                                         </td>
-                                        <td>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
                                             <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_credit', 0))"/>
                                         </td>
-                                        <td>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
                                             <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
                                             <t t-esc="this.formatAmount(
                                                     this.getAccountTotalValue(account, 'opening_balance', 0)
@@ -337,10 +337,10 @@
                                     <t t-if="!this.isAccountCollapsed(account)">
                                         <!-- Opening balance row -->
                                         <tr>
-                                            <td>00</td>
-                                            <td colspan="9">OPENING BALANCE</td>
+                                            <td style="text-align:left;">00</td>
+                                            <td colspan="9" style="text-align:left;">OPENING BALANCE</td>
                                             <td/><td/><td/>
-                                            <td>
+                                            <td style="text-align:right;padding-right:8px;">
                                                 <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
                                                 <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'opening_balance', 0))"/>
                                             </td>
@@ -351,31 +351,33 @@
                                         <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
                                             <t t-set="sr" t-value="sr + 1"/>
                                             <tr>
-                                                <td><t t-esc="sr"/></td>
-                                                <td><t t-esc="this.getAccountTotalValue(account, 'account_code', '')"/></td>
-                                                <td><t t-esc="this.getAccountTotalValue(account, 'account_name', '')"/></td>
-                                                <td><t t-esc="line.split_account"/></td>
-                                                <td><t t-esc="line.location"/></td>
-                                                <td><t t-esc="line.date"/></td>
-                                                <td><t t-esc="line.trx_type"/></td>
-                                                <td><t t-esc="line.move_name"/></td>
-                                                <td><t t-esc="line.ref"/></td>
-                                                <td>
+                                                <td style="text-align:left;"><t t-esc="sr"/></td>
+                                                <td style="text-align:left;"><t t-esc="this.getAccountTotalValue(account, 'account_code', '')"/></td>
+                                                <td style="text-align:left;"><t t-esc="this.getAccountTotalValue(account, 'account_name', '')"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.split_account"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.location"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.date"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.trx_type"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.move_name"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.ref"/></td>
+                                                <td style="text-align:left;">
                                                     <t t-if="line.partner_id and line.partner_id[1]"
                                                     t-esc="line.partner_id[1]"/>
                                                 </td>
-                                                <td><t t-esc="line.name"/></td>
-                                                <td>
+                                                <td style="text-align:left;"><t t-esc="line.name"/></td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
                                                     <t t-if="line.debit">
                                                         <t t-esc="this.formatAmount(line.debit)"/>
                                                     </t>
                                                 </td>
-                                                <td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
                                                     <t t-if="line.credit">
                                                         <t t-esc="this.formatAmount(line.credit)"/>
                                                     </t>
                                                 </td>
-                                                <td><t t-esc="this.formatAmount(line.running_balance)"/></td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
+                                                    <t t-esc="this.formatAmount(line.running_balance)"/>
+                                                </td>
                                             </tr>
                                         </t>
                                     </t>
