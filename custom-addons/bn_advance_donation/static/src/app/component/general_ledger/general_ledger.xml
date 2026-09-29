@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <!-- The gl_template_new template for the GeneralLedger component. -->
+    <t t-name="gl_template_new" owl="1">
+        <div class="w-100">
+            <div class="fin_report">
+                <div class="filter_view_gl">
+                    <div>
+                        <h1 style="padding:10px">
+                            <t t-if="state.title"><t t-esc="state.title"/></t>
+                            <t t-else=""><t t-esc="props.action.name"/></t>
+                        </h1>
+                    </div>
+                    <div style="margin-right:10px;margin-left:10px;margin-bottom:15px;display:flex;">
+                        <div class="sub_container_left" style="width:70%;">
+                            <div class="report_print">
+                                <button type="button" class="btn btn-info btn-report-print mr-2"
+                                        t-on-click="printPdf" style="margin-right:8px;">
+                                    Print (PDF)
+                                </button>
+                                <button type="button" class="btn btn-info btn-report-print mr-2"
+                                        t-on-click="print_xlsx">
+                                    Export (XLSX)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="search_filter_gl" style="display:flex;align-items:center;margin-left:10px;">
+                            <input type="text" class="o_searchview_input"
+                                placeholder="Search account, partner, ref, V.No..."
+                                t-att-value="state.search_query"
+                                t-on-input="onSearchInput"
+                                style="border:1px solid #ccc;border-radius:4px;padding:5px 10px;min-width:260px;"/>
+                            <span t-if="state.search_query" class="fa fa-times"
+                                style="margin-left:-24px;cursor:pointer;"
+                                t-on-click="() => { this.state.search_query=''; this.applySearch(); }"/>
+                        </div>
+                        <div class="sub_container_right">
+                            <div class="account_filter" style="">
+                                <a type="button" class="dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
+                                    <div style="display:content;">
+                                        <span>
+                                            <span class="fa fa-list-alt" title="Accounts" role="img"/>
+                                            Accounts
+                                        </span>
+                                    </div>
+                                    <t t-if="state.selected_account_list and state.selected_account_list.length">:
+                                        <t t-foreach="state.selected_account_list"
+                                        t-as="acc_key" t-key="acc_key_index">
+                                            <span><t t-esc="acc_key"/></span>
+                                            <t t-if="acc_key_index != state.selected_account_list.length - 1">, </t>
+                                        </t>
+                                    </t>
+                                </a>
+                                <ul class="dropdown-menu" role="menu"
+                                    style="max-height:420px;overflow-y:auto;min-width:320px;">
+                                    <div class="list-group">
+                                        <button class="report-filter-button"
+                                                type="button"
+                                                t-if="state.selected_account_list and state.selected_account_list.length"
+                                                t-on-click="clearAccountFilter"
+                                                style="font-weight:bold;">
+                                            Clear All
+                                        </button>
+                                        <div class="account-range-filter"
+                                            style="padding:6px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #eee;margin-bottom:4px;">
+                                            <input type="text"
+                                                class="o_input"
+                                                placeholder="From code"
+                                                t-att-value="state.account_from"
+                                                t-on-input="(ev) => this.state.account_from = ev.target.value"
+                                                t-on-click.stop="() => {}"
+                                                style="width:85px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;"/>
+                                            <span style="opacity:.6;">→</span>
+                                            <input type="text"
+                                                class="o_input"
+                                                placeholder="To code"
+                                                t-att-value="state.account_to"
+                                                t-on-input="(ev) => this.state.account_to = ev.target.value"
+                                                t-on-click.stop="() => {}"
+                                                style="width:85px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;"/>
+                                            <button class="report-filter-button"
+                                                    type="button"
+                                                    t-on-click.stop="applyAccountRange"
+                                                    style="font-weight:bold;">
+                                                Apply Range
+                                            </button>
+                                            <button class="report-filter-button"
+                                                    type="button"
+                                                    t-on-click.stop="clearAccountRange"
+                                                    style="font-size:11px;opacity:.75;">
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <t t-if="state.all_accounts">
+                                            <t t-foreach="state.all_accounts"
+                                            t-as="acc" t-key="acc_index">
+                                                <button class="report-filter-button"
+                                                        t-att-data-value="'account'"
+                                                        t-att-data-id="acc"
+                                                        type="button"
+                                                        data-bs-auto-close="outside"
+                                                        t-on-click="applyAccountFilter"
+                                                        t-att-class="state.selected_account_list.includes(acc) ? 'selected-filter' : ''">
+                                                    <t t-esc="acc"/>
+                                                </button>
+                                            </t>
+                                        </t>
+                                    </div>
+                                </ul>
+                            </div>
+                            <div class="time_range" style="">
+                                <a type="button" class="dropdown-toggle"
+                                   data-bs-toggle="dropdown">
+                                    <span class="fa fa-calendar" title="Dates"
+                                          role="img"
+                                          aria-label="Dates"/>
+                                    Date Range
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <div class="list-group">
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'month'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            This Month
+                                        </button>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'quarter'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            This Quarter
+                                        </button>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'year'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            This Year
+                                        </button>
+                                        <div role="separator"
+                                             class="dropdown-divider"/>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'last-month'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            Last month
+                                        </button>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'last-quarter'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            Last quarter
+                                        </button>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'last-year'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            Last year
+                                        </button>
+                                        <div role="separator"
+                                             class="dropdown-divider"/>
+                                        <label class="" for="date_from">Start
+                                            Date :
+                                        </label>
+                                        <div class="input-group date"
+                                             t-ref="date_from"
+                                             data-target-input="nearest">
+
+                                            <input type="date" id="end_date"
+                                                t-on-change="applyFilter"
+                                                t-ref="gl_end_date"
+                                                style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
+                                                name="end_date"/>
+                                        </div>
+
+                                        <label class="" for="date_to">End Date
+                                            :
+                                        </label>
+                                        <div class="input-group date"
+                                             t-ref="date_to"
+                                             data-target-input="nearest">
+                                            <input type="date" id="end_date"
+                                                   t-on-change="applyFilter"
+                                                   style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
+                                                   name="end_date"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="journal" style="">
+                                <a type="button" class="dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    style="display:flex;flex-wrap: wrap;align-items: center;justify-content: flex-start;min-width: 105px;">
+                                    <div style="display:content;">
+                                        <span>
+                                            <span class="fa fa-book"
+                                                  title="Journals"
+                                                  role="img"/>
+                                            Journals
+                                        </span>
+                                    </div>
+                                    <t t-if="state.selected_journal_list">:
+                                        <t t-foreach="state.selected_journal_list"
+                                           t-as="Journal_key"
+                                           t-key="Journal_key_index">
+                                            <t t-foreach="state.journals"
+                                               t-as="Journal"
+                                               t-key="Journal_index">
+                                                <t t-if="Journal['id'] == Journal_key">
+                                                    <span>
+                                                        <t t-esc="Journal['name']"/>
+                                                    </span>
+                                                </t>
+                                            </t>
+                                            <t t-if="Journal_key_index != Object.keys(state.selected_journal_list).length - 1">
+                                                ,
+                                            </t>
+                                        </t>
+                                    </t>
+                                </a>
+                                <ul class="dropdown-menu" role="menu">
+                                    <div class="list-group">
+                                        <t t-if="state.journals">
+                                            <t t-foreach="state.journals"
+                                               t-as="journal"
+                                               t-key="journal.id">
+                                                <button class="report-filter-button"
+                                                        t-att-data-value="'journal'"
+                                                        t-att-data-id="journal.id"
+                                                        aria-expanded="false"
+                                                        type="button"
+                                                        data-bs-auto-close="outside"
+                                                        t-on-click="applyFilter">
+                                                    <t t-esc="journal.name"/>
+                                                </button>
+                                            </t>
+                                        </t>
+                                    </div>
+                                </ul>
+                            </div>
+                            <!-- <div class="analytic" style="">
+                                ... commented analytic filter ...
+                            </div> -->
+
+                            <div class="option" style="">
+                                <a type="button" class="dropdown-toggle"
+                                   data-bs-toggle="dropdown">
+                                    <span class="fa fa-glass" title="Accounts"
+                                          role="img"
+                                          aria-label="Dates"/>
+                                    Options :Posted Entries ,
+                                    <t t-esc="Object.keys(state.method)[(Object.keys(state.method).length)-1]"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <div class="list-group">
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'draft'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            Include Draft Entries
+                                        </button>
+                                        <button class="report-filter-button"
+                                                type="button"
+                                                t-ref="unfoldButton"
+                                                t-on-click="unfoldAll">
+                                            Unfold All
+                                        </button>
+                                        <button class="report-filter-button"
+                                                t-att-data-value="'cash-basis'"
+                                                type="button"
+                                                t-on-click="applyFilter">
+                                            Cash basis method
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="table_view_gl" style="right:20px;height:650px;overflow-y:scroll;" t-ref="table_view_gl">
+                <div class="table_main_view">
+                    <table cellspacing="0" width="100%" class="gl_report_table">
+                        <thead>
+                            <tr class="o_heading">
+                                <th style="text-align:left;">Sr</th>
+                                <th style="text-align:left;">Account Code</th>
+                                <th style="text-align:left;">Account Name</th>
+                                <th style="text-align:left;">Split Account</th>
+                                <th style="text-align:left;">Location</th>
+                                <th style="text-align:left;">Date</th>
+                                <th style="text-align:left;">Trx Type</th>
+                                <th style="text-align:left;">V.No</th>
+                                <th style="text-align:left;">Ref No.</th>
+                                <th style="text-align:left;">Name</th>
+                                <th style="text-align:left;">Description</th>
+                                <th style="text-align:right;padding-right:8px;">Debit</th>
+                                <th style="text-align:right;padding-right:8px;">Credit</th>
+                                <th style="text-align:right;padding-right:8px;">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody t-ref="tbody">
+                            <t t-if="state.account">
+                                <t t-foreach="state.account" t-as="account" t-key="account_index">
+
+                                    <!-- Account banner: always visible, doubles as the single-line summary -->
+                                    <tr style="cursor:pointer;" t-on-click="() => this.toggleAccount(account)">
+                                        <td colspan="10" style="font-weight:bold;padding:6px;text-align:left;">
+                                            <span class="toggle-icon" style="margin-right:6px;">
+                                                <i t-att-class="this.isAccountCollapsed(account) ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                            </span>
+                                            <t t-if="account != 'false'"><t t-esc="account.toUpperCase()"/></t>
+                                            <t t-else="">UNKNOWN ACCOUNTS</t>
+                                        </td>
+                                        <td/>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_debit', 0))"/>
+                                        </td>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'total_credit', 0))"/>
+                                        </td>
+                                        <td style="text-align:right;padding-right:8px;font-weight:bold;">
+                                            <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                            <t t-esc="this.formatAmount(
+                                                    this.getAccountTotalValue(account, 'opening_balance', 0)
+                                                    + this.getAccountTotalValue(account, 'total_debit', 0)
+                                                    - this.getAccountTotalValue(account, 'total_credit', 0))"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Everything below only shows when this account is expanded -->
+                                    <t t-if="!this.isAccountCollapsed(account)">
+                                        <!-- Opening balance row -->
+                                        <tr>
+                                            <td style="text-align:left;">00</td>
+                                            <td colspan="9" style="text-align:left;">OPENING BALANCE</td>
+                                            <td/><td/><td/>
+                                            <td style="text-align:right;padding-right:8px;">
+                                                <t t-esc="this.getAccountTotalValue(account, 'currency_id', '')"/>
+                                                <t t-esc="this.formatAmount(this.getAccountTotalValue(account, 'opening_balance', 0))"/>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Transaction rows -->
+                                        <t t-set="sr" t-value="0"/>
+                                        <t t-foreach="this.getAccountData(account)" t-as="line" t-key="line_index">
+                                            <t t-set="sr" t-value="sr + 1"/>
+                                            <tr>
+                                                <td style="text-align:left;"><t t-esc="sr"/></td>
+                                                <td style="text-align:left;"><t t-esc="this.getAccountTotalValue(account, 'account_code', '')"/></td>
+                                                <td style="text-align:left;"><t t-esc="this.getAccountTotalValue(account, 'account_name', '')"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.split_account"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.location"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.date"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.trx_type"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.move_name"/></td>
+                                                <td style="text-align:left;"><t t-esc="line.ref"/></td>
+                                                <td style="text-align:left;">
+                                                    <t t-if="line.partner_id and line.partner_id[1]"
+                                                    t-esc="line.partner_id[1]"/>
+                                                </td>
+                                                <td style="text-align:left;"><t t-esc="line.name"/></td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
+                                                    <t t-if="line.debit">
+                                                        <t t-esc="this.formatAmount(line.debit)"/>
+                                                    </t>
+                                                </td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
+                                                    <t t-if="line.credit">
+                                                        <t t-esc="this.formatAmount(line.credit)"/>
+                                                    </t>
+                                                </td>
+                                                <td style="text-align:right;padding-right:8px;white-space:nowrap;">
+                                                    <t t-esc="this.formatAmount(line.running_balance)"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

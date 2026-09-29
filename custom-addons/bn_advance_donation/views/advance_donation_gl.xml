@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Client action that opens the GL component pre-filtered to advance donations -->
+    <record id="action_advance_donation_gl" model="ir.actions.client">
+        <field name="name">Advance Donation Ledger</field>
+        <field name="tag">gen_l</field>
+        <field name="params" eval="{
+            'default_title': 'Advance Donation Ledger',
+            'default_date_range': 'month',
+            'default_advance_donation': True,
+            'default_journal_ids': [],
+            'default_account_names': [],
+            'default_options': {},
+            'default_method': {'accrual': True},
+        }"/>
+    </record>
+
+    <!-- Menu entry under the existing Advance Donation top-level menu -->
+    <menuitem id="menu_advance_donation_gl"
+              name="Advance Donation Ledger"
+              parent="main_menu_advance_donation"
+              action="action_advance_donation_gl"
+              sequence="20"
+              groups="bn_advance_donation.group_adv_don_menu"/>
+
+</odoo>
