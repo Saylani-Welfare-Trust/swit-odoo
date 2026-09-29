@@ -16,7 +16,7 @@ patch(WebClient.prototype, {
 
 		banner.innerHTML = `
 		    <img class="saylani-banner-img"
-		    src="/saylani_erp_banner/static/src/img/supply_chain_banner.png?v=3"/>
+		    src="/saylani_erp_banner/static/src/img/supply_chain_banner.png?v=${Math.random()}"/>
 		`;
 			const target = document.querySelector(".o_web_client");
 
