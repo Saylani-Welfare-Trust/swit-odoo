@@ -58,13 +58,13 @@ class AccountGeneralLedger(models.TransientModel):
                 filtered[key] = value
                 continue
             if key == 'account_totals':
-                # rebuilt below
                 continue
             if isinstance(value, list):
                 kept = [
                     line for line in value
                     if isinstance(line, dict)
-                       and line.get('move_id') in allowed_move_ids
+                       and line.get('move_id')
+                       and line['move_id'][0] in allowed_move_ids
                 ]
                 if kept:
                     filtered[key] = kept
