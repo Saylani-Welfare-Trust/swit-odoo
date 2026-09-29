@@ -7,7 +7,7 @@ import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
 const actionRegistry = registry.category("actions");
 
-class GeneralLedger extends owl.Component {
+export class GeneralLedger extends owl.Component {
 
     formatAmount(value) {
         const num = Number(value || 0);
@@ -101,7 +101,7 @@ class GeneralLedger extends owl.Component {
         var self = this;
         var action_title = self.getActionTitle();
         try {
-            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method,]);
             const raw_data = filtered_data || {};
             self.state.account_data = raw_data;
             $.each(raw_data, function (index, value) {
@@ -432,7 +432,7 @@ class GeneralLedger extends owl.Component {
                 }
             }
         }
-        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
+        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method, ]);
         filtered_data = filtered_data || {};
         $.each(filtered_data, function (index, value) {
             if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
