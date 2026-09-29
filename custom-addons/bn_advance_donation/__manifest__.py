@@ -28,11 +28,14 @@
         'views/product_template.xml',
         'views/product_product.xml',
         'views/menu.xml',
-        'views/advance_donation_gl.xml',
+        # 'views/advance_donation_gl.xml',
+        'views/advance_donation_statement_action.xml',
     ],
     'assets': {
         'web.assets_backend': [
-            'bn_advance_donation/static/src/js/advance_donation_gl.js',
+            # 'bn_advance_donation/static/src/js/advance_donation_gl.js',
+            'bn_advance_donation/static/src/js/advance_donation_statement.js',
+            'bn_advance_donation/static/src/xml/advance_donation_statement.xml',
         ],
         'point_of_sale._assets_pos': [
             'bn_advance_donation/static/src/app/**/*.js',
