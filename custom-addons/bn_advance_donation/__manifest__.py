@@ -9,7 +9,7 @@
         'account',
         'point_of_sale',
         'bn_import_donation',
-        # 'dynamic_accounts_report',
+        'dynamic_accounts_report',
         # 'bn_master_setup',
     ],
     'data': [
