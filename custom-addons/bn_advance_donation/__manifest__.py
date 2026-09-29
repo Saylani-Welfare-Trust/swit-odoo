@@ -9,7 +9,7 @@
         'account',
         'point_of_sale',
         'bn_import_donation',
-        # 'dynamic_accounts_report',
+        'dynamic_accounts_report',
         # 'bn_master_setup',
     ],
     'data': [
@@ -28,7 +28,7 @@
         'views/product_template.xml',
         'views/product_product.xml',
         'views/menu.xml',
-        # 'views/advance_donation_gl.xml',
+        'views/advance_donation_gl.xml',
     ],
     'assets': {
         'point_of_sale._assets_pos': [
