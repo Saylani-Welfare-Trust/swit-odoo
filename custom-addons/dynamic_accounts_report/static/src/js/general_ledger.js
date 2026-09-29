@@ -7,7 +7,7 @@ import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
 const actionRegistry = registry.category("actions");
 
-class GeneralLedger extends owl.Component {
+export class GeneralLedger extends owl.Component {
 
     formatAmount(value) {
         const num = Number(value || 0);
