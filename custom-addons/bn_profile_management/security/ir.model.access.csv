@@ -1,8 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_record_search,access.record.search,bn_profile_management.model_record_search,base.group_user,1,1,1,1
-access_confirm_search,access.confirm.search,bn_profile_management.model_confirm_search,base.group_user,1,1,1,1
-access_microfinance_application_wizard,access.microfinance.application.wizard,bn_profile_management.model_microfinance_application_wizard,base.group_user,1,1,1,1
-access_profile_management_page,profile.management.page,bn_profile_management.model_profile_management_page,base.group_user,1,0,0,0
-access_profile_management_page_manager,profile.management.page manager,bn_profile_management.model_profile_management_page,bn_profile_management.profile_management_group,1,1,1,1
-access_area_read,area.read,model_area,base.group_user,1,0,0,0
-access_area_manage,area.manage,model_area,bn_profile_management.profile_management_group,1,1,1,1
+access_record_search,access.record.search,bn_profile_management.model_record_search,profile_management_user_group,1,1,1,1
+access_confirm_search,access.confirm.search,bn_profile_management.model_confirm_search,profile_management_user_group,1,1,1,1
+access_microfinance_application_wizard,access.microfinance.application.wizard,bn_profile_management.model_microfinance_application_wizard,profile_management_user_group,1,1,1,1
+access_profile_management_page_user,profile.management.page.user,bn_profile_management.model_profile_management_page,profile_management_user_group,1,0,0,0
+access_profile_management_page_manager,profile.management.page.manager,bn_profile_management.model_profile_management_page,profile_management_manager_group,1,1,1,0
+access_profile_management_page_admin,profile.management.page.admin,bn_profile_management.model_profile_management_page,profile_management_admin_group,1,1,1,1
+access_profile_management_page_audit,profile.management.page.audit,bn_profile_management.model_profile_management_page,profile_management_audit_group,1,0,0,0
+access_area_user,area.user,model_area,profile_management_user_group,1,0,0,0
+access_area_manager,area.manager,model_area,profile_management_manager_group,1,1,1,0
+access_area_admin,area.admin,model_area,profile_management_admin_group,1,1,1,1
+access_area_audit,area.audit,model_area,profile_management_audit_group,1,0,0,0

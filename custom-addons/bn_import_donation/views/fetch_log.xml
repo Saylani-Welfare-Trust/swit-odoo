@@ -51,7 +51,7 @@
     <menuitem
         id="fetch_all_log_menu"
         name="Fetch All Logs"
-        groups="bn_import_donation.fetch_all_log_menu_group"
+        groups="bn_import_donation.import_donation_audit_group"
         action="fetch_all_log_action"
         parent="fetch_log_menu"
         sequence="0"/>

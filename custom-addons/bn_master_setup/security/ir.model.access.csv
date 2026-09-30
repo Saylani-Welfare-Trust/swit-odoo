@@ -1,5 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_city_read,city.read,bn_master_setup.model_city,base.group_user,1,0,0,0
-access_city_manage,city.manage,bn_master_setup.model_city,bn_master_setup.master_setup_group,1,1,1,1
-access_bank_read,bank.read,bn_master_setup.model_bank,base.group_user,1,0,0,0
-access_bank_manage,bank.manage,bn_master_setup.model_bank,bn_master_setup.master_setup_group,1,1,1,1
+access_city_user,city.user,bn_master_setup.model_city,master_setup_user_group,1,0,0,0
+access_city_manager,city.manager,bn_master_setup.model_city,master_setup_manager_group,1,1,1,0
+access_city_admin,city.admin,bn_master_setup.model_city,master_setup_admin_group,1,1,1,1
+access_city_audit,city.audit,bn_master_setup.model_city,master_setup_audit_group,1,0,0,0
+access_bank_user,bank.user,bn_master_setup.model_bank,master_setup_user_group,1,0,0,0
+access_bank_manager,bank.manager,bn_master_setup.model_bank,master_setup_manager_group,1,1,1,0
+access_bank_admin,bank.admin,bn_master_setup.model_bank,master_setup_admin_group,1,1,1,1
+access_bank_audit,bank.audit,bn_master_setup.model_bank,master_setup_audit_group,1,0,0,0

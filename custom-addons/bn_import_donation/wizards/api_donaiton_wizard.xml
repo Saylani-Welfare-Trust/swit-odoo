@@ -38,7 +38,7 @@
     <menuitem
         id="fetch_donation_menu"
         name="Fetch Donation"
-        groups="bn_import_donation.manual_sync_group"
+        groups="bn_import_donation.import_donation_manager_group"
         action="api_donation_wizard_action"
         parent="api_donation_menu"
         sequence="0"/>

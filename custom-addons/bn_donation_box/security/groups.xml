@@ -4,36 +4,83 @@
     <record id="donation_box_menu_group" model="res.groups">
         <field name="name">Donation Box / Menu</field>
     </record>
-    
-    <record id="donation_box_registration_admin_group" model="res.groups">
-        <field name="name">Registration or Installation / Admin</field>
-    </record>
 
     <record id="donation_box_registration_user_group" model="res.groups">
         <field name="name">Registration or Installation / User</field>
     </record>
-    
+
     <record id="donation_box_registration_installation_approve_group" model="res.groups">
         <field name="name">Registration or Installation / Approve</field>
     </record>
-    
+
     <record id="donation_box_registration_installation_change_request_group" model="res.groups">
         <field name="name">Registration or Installation / Change Request</field>
     </record>
-    
+
+    <record id="donation_box_registration_admin_group" model="res.groups">
+        <field name="name">Registration or Installation / Admin</field>
+        <field name="implied_ids" eval="[
+            (4, ref('donation_box_registration_user_group')),
+            (4, ref('donation_box_registration_installation_approve_group')),
+            (4, ref('donation_box_registration_installation_change_request_group'))]"/>
+    </record>
+
     <record id="donation_box_request_approve_reject_group" model="res.groups">
         <field name="name">Request / Approve or Reject</field>
     </record>
-    
+
     <record id="donation_box_complain_center_resolve_group" model="res.groups">
         <field name="name">Complain Center / Resolve</field>
     </record>
-    
+
     <record id="donation_box_pos_action_group" model="res.groups">
         <field name="name">Donation Box / POS Action</field>
     </record>
-    
+
     <record id="donation_product_onhand_group" model="res.groups">
         <field name="name">Donation Products / Inventory</field>
     </record>
+
+    <!-- Standard User / Manager / Audit tiers, matching every other module.
+         Built as roll-ups over the granular groups above, so nothing that
+         already depends on those groups (server-side _bn_require_group()
+         checks, view groups= attributes) needed to change. -->
+    <record id="donation_box_user_group" model="res.groups">
+        <field name="name">Donation Box / User</field>
+        <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('donation_box_menu_group')),
+            (4, ref('donation_box_registration_user_group'))]"/>
+    </record>
+
+    <record id="donation_box_manager_group" model="res.groups">
+        <field name="name">Donation Box / Manager</field>
+        <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and POS actions.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('donation_box_user_group')),
+            (4, ref('donation_box_registration_admin_group')),
+            (4, ref('donation_box_request_approve_reject_group')),
+            (4, ref('donation_box_complain_center_resolve_group')),
+            (4, ref('donation_box_pos_action_group'))]"/>
+    </record>
+
+    <record id="donation_box_audit_group" model="res.groups">
+        <field name="name">Donation Box / Audit</field>
+        <field name="comment">Read-only oversight across Requests, Registrations and Complaints, for reporting. No create, write or delete anywhere.</field>
+        <field name="implied_ids" eval="[(4, ref('donation_box_menu_group'))]"/>
+    </record>
+
+
+    <!-- Top-level roll-up: one assignment grants every area's Admin/Approve/
+         Resolve right in this module, matching the Admin tier used everywhere
+         else - the individual area groups above remain for anyone who needs
+         a narrower role (e.g. Complain Center staff who never touch Requests). -->
+    <record id="donation_box_admin_group" model="res.groups">
+        <field name="name">Donation Box / Admin</field>
+        <field name="implied_ids" eval="[
+            (4, ref('donation_box_manager_group')),
+            (4, ref('donation_box_audit_group')),
+            (4, ref('donation_product_onhand_group'))]"/>
+    </record>
+
 </odoo>

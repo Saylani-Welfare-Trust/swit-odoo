@@ -1,9 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_analytic_account_customization" model="ir.module.category">
+        <field name="name">Analytical Account Enhancement</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="analytic_account_customization_user_group" model="res.groups">
+        <field name="name">Analytical Account Enhancement / User</field>
+        <field name="category_id" ref="module_analytic_account_customization"/>
+        <field name="comment">Can look up Location Option and Sub Zone reference data. Cannot edit it.</field>
+    </record>
+
     <record id="analytic_account_customization_manager_group" model="res.groups">
         <field name="name">Analytical Account Enhancement / Manager</field>
-        <field name="comment">Can create, edit and delete Location Options and Sub Zones.</field>
+        <field name="category_id" ref="module_analytic_account_customization"/>
+        <field name="implied_ids" eval="[(4, ref('analytic_account_customization_user_group'))]"/>
+        <field name="comment">Maintains Location Option and Sub Zone: create and edit entries.</field>
+    </record>
+
+    <record id="analytic_account_customization_audit_group" model="res.groups">
+        <field name="name">Analytical Account Enhancement / Audit</field>
+        <field name="category_id" ref="module_analytic_account_customization"/>
+        <field name="comment">Read-only oversight for reporting.</field>
+    </record>
+
+    <record id="analytic_account_customization_admin_group" model="res.groups">
+        <field name="name">Analytical Account Enhancement / Admin</field>
+        <field name="category_id" ref="module_analytic_account_customization"/>
+        <field name="implied_ids" eval="[(4, ref('analytic_account_customization_manager_group')), (4, ref('analytic_account_customization_audit_group'))]"/>
+        <field name="comment">Full control, including deleting Location Option / Sub Zone entries.</field>
     </record>
 
 </odoo>

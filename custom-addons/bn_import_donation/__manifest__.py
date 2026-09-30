@@ -19,7 +19,6 @@
         
         
         'security/group.xml',
-        'security/access_right.xml',
         'security/ir.model.access.csv',
         
         'reports/import_donation.xml',

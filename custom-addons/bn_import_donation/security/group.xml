@@ -1,48 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="import_donation_menu_group" model="res.groups">
-        <field name="name">Menu</field>
-        <field name="category_id" ref="module_import_donation"/>
-    </record>
-
-    <record id="fetch_all_log_menu_group" model="res.groups">
-        <field name="name">Fetch All Log Menu</field>
-        <field name="category_id" ref="module_import_donation"/>
-    </record>
-
-    <!-- Import Donation -->
+    <!-- One tier ladder for the whole module - covers both the manual Excel
+         import flow and the automated API donation flow, instead of two
+         separate, inconsistent group families. -->
     <record id="import_donation_user_group" model="res.groups">
-        <field name="name">Import Donation / User Access</field>
+        <field name="name">Import Donation / User</field>
         <field name="category_id" ref="module_import_donation"/>
+        <field name="comment">Day-to-day staff: run imports and API syncs, view results. Cannot approve invalid rows, confirm batches, or touch configuration.</field>
     </record>
 
-    <record id="import_donation_approve_group" model="res.groups">
-        <field name="name">Import Donation / Approve Access</field>
+    <record id="import_donation_manager_group" model="res.groups">
+        <field name="name">Import Donation / Manager</field>
         <field name="category_id" ref="module_import_donation"/>
+        <field name="implied_ids" eval="[(4, ref('import_donation_user_group'))]"/>
+        <field name="comment">Runs the operation: approves invalid rows, confirms/posts import batches, triggers manual API syncs, creates partners from API donations.</field>
+    </record>
+
+    <record id="import_donation_audit_group" model="res.groups">
+        <field name="name">Import Donation / Audit</field>
+        <field name="category_id" ref="module_import_donation"/>
+        <field name="comment">Read-only oversight across the whole module (batches, donations, API syncs, fetch history and logs) for reporting - no create, write or delete anywhere.</field>
     </record>
 
     <record id="import_donation_admin_group" model="res.groups">
-        <field name="name">Import Donation / Admin Access</field>
+        <field name="name">Import Donation / Admin</field>
         <field name="category_id" ref="module_import_donation"/>
-        <field name="implied_ids" eval="[(4, ref('import_donation_user_group')), (4, ref('import_donation_approve_group'))]"/>
-    </record>
-
-    <!-- API Donation -->
-    <record id="api_donation_user_group" model="res.groups">
-        <field name="name">API Donation / User Access</field>
-        <field name="category_id" ref="module_import_donation"/>
-    </record>
-
-    <record id="api_donation_admin_group" model="res.groups">
-        <field name="name">API Donation / Admin Access</field>
-        <field name="category_id" ref="module_import_donation"/>
-        <field name="implied_ids" eval="[(4, ref('api_donation_user_group'))]"/>
-    </record>
-    
-    <record id="manual_sync_group" model="res.groups">
-        <field name="name">Manual Sync</field>
-        <field name="category_id" ref="module_import_donation"/>
+        <field name="implied_ids" eval="[(4, ref('import_donation_manager_group')), (4, ref('import_donation_audit_group'))]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and Gateway Config / Header Type configuration.</field>
     </record>
 
 </odoo>

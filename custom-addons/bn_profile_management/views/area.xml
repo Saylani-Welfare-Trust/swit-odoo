@@ -30,7 +30,7 @@
         name="Area"
         action="area_action"
         parent="profile_management_config_menu"
-        groups="bn_profile_management.profile_management_group"
+        groups="bn_profile_management.profile_management_manager_group,bn_profile_management.profile_management_audit_group"
         sequence="1"/>
 
 </odoo>

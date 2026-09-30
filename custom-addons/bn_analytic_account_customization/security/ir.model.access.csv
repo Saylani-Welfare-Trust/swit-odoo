@@ -1,5 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_location_option_read,location.option.read,model_location_option,base.group_user,1,0,0,0
-access_location_option_manage,location.option.manage,model_location_option,analytic_account_customization_manager_group,1,1,1,1
-access_sub_zone_read,sub.zone.read,model_sub_zone,base.group_user,1,0,0,0
-access_sub_zone_manage,sub.zone.manage,model_sub_zone,analytic_account_customization_manager_group,1,1,1,1
+access_location_option_user,location.option.user,model_location_option,analytic_account_customization_user_group,1,0,0,0
+access_location_option_manager,location.option.manager,model_location_option,analytic_account_customization_manager_group,1,1,1,0
+access_location_option_admin,location.option.admin,model_location_option,analytic_account_customization_admin_group,1,1,1,1
+access_location_option_audit,location.option.audit,model_location_option,analytic_account_customization_audit_group,1,0,0,0
+access_sub_zone_user,sub.zone.user,model_sub_zone,analytic_account_customization_user_group,1,0,0,0
+access_sub_zone_manager,sub.zone.manager,model_sub_zone,analytic_account_customization_manager_group,1,1,1,0
+access_sub_zone_admin,sub.zone.admin,model_sub_zone,analytic_account_customization_admin_group,1,1,1,1
+access_sub_zone_audit,sub.zone.audit,model_sub_zone,analytic_account_customization_audit_group,1,0,0,0

@@ -28,7 +28,7 @@
         name="Sub Zone"
         action="sub_zone_action"
         parent="analytical_accounting_menu"
-        groups="analytic_account_customization_manager_group"
+        groups="analytic_account_customization_user_group,analytic_account_customization_audit_group"
         sequence="1"/>
 
 </odoo>

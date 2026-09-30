@@ -33,7 +33,7 @@
         name="Location Option"
         action="location_option_action"
         parent="analytical_accounting_menu"
-        groups="analytic_account_customization_manager_group"
+        groups="analytic_account_customization_user_group,analytic_account_customization_audit_group"
         sequence="0"/>
 
 </odoo>

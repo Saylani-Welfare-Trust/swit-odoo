@@ -1,28 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Pure menu-visibility gate for the root Profile Management app menu -
+         not a CRUD tier by itself. Every tier below implies it. -->
     <record id="profile_management_group" model="res.groups">
         <field name="name">Profile Management / Menu</field>
     </record>
 
+    <!-- Granular, single-permission groups - kept for anyone who needs finer
+         control than the roll-up tiers below offer (e.g. create-only
+         data-entry staff). -->
     <record id="profile_management_create_access_group" model="res.groups">
-        <field name="name">Profile Management / Create Access</field>
+        <field name="name">Profile Management / Create</field>
     </record>
-    
+
     <record id="profile_management_write_access_group" model="res.groups">
-        <field name="name">Profile Management / Update Access</field>
+        <field name="name">Profile Management / Write</field>
     </record>
-    
+
     <record id="profile_management_read_access_group" model="res.groups">
-        <field name="name">Profile Management / Read Access</field>
+        <field name="name">Profile Management / Read</field>
     </record>
-    
+
     <record id="profile_management_delete_access_group" model="res.groups">
-        <field name="name">Profile Management / Delete Access</field>
+        <field name="name">Profile Management / Delete</field>
     </record>
-    
+
     <record id="profile_management_edit_donor_access_group" model="res.groups">
         <field name="name">Profile Management / Edit Donor</field>
+    </record>
+
+    <!-- Roll-up tiers, matching the standard User / Manager / Admin / Audit
+         structure used across every module. Assign one of these four for
+         day-to-day role setup; the granular groups above remain available
+         for finer control. -->
+    <record id="profile_management_user_group" model="res.groups">
+        <field name="name">Profile Management / User</field>
+        <field name="comment">Day-to-day access: create, edit and read contacts. Cannot delete, and cannot change which fields/pages a profile type shows.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('profile_management_group')),
+            (4, ref('profile_management_create_access_group')),
+            (4, ref('profile_management_write_access_group')),
+            (4, ref('profile_management_read_access_group'))]"/>
+    </record>
+
+    <record id="profile_management_manager_group" model="res.groups">
+        <field name="name">Profile Management / Manager</field>
+        <field name="comment">Everything User can do, plus configuring profile types: Area, and which fields/pages each tag shows (Configuration menu).</field>
+        <field name="implied_ids" eval="[(4, ref('profile_management_user_group'))]"/>
+    </record>
+
+    <record id="profile_management_audit_group" model="res.groups">
+        <field name="name">Profile Management / Audit</field>
+        <field name="comment">Read-only oversight of contacts and profile-type configuration, for reporting. No create, write or delete anywhere.</field>
+        <field name="implied_ids" eval="[(4, ref('profile_management_group'))]"/>
+    </record>
+
+    <record id="profile_management_admin_group" model="res.groups">
+        <field name="name">Profile Management / Admin</field>
+        <field name="comment">Full control, including delete, plus everything Manager can configure.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('profile_management_manager_group')),
+            (4, ref('profile_management_audit_group')),
+            (4, ref('profile_management_delete_access_group'))]"/>
     </record>
 
 </odoo>

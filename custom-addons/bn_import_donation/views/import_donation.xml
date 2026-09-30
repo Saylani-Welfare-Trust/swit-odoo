@@ -74,7 +74,7 @@
                                     
                                     <field name="is_student" readonly="1" />
 
-                                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" groups="bn_import_donation.import_donation_approve_group" />
+                                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="reason == 'A Transaction with same ID already exist in the System.' or hide_button == True" groups="bn_import_donation.import_donation_manager_group" />
                                 </tree>
                             </field>
                         </page>
@@ -120,7 +120,7 @@
     <menuitem
         id="import_donation_root_menu"
         name="Donation (Inflows)"
-        groups="bn_import_donation.import_donation_menu_group"
+        groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group"
         web_icon="bn_import_donation,static/description/icon.png"
         sequence="6"/>
 

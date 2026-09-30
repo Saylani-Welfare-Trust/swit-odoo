@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="inventory_custom_access_group" model="res.groups">
-        <field name="name">Inventory / Custom Access</field>
-    </record>
-    
-    <record id="inventory_location_menu_group" model="res.groups">
-        <field name="name">Inventory / Location Menu</field>
+    <!-- Not a CRUD-granting tier - stock CRUD itself comes from Odoo's own
+         Inventory groups (stock.group_stock_user / stock.group_stock_manager).
+         This group only SCOPES which warehouses/locations a person who
+         already has Inventory access can see, via the record rules below,
+         and gates visibility of the Locations menu to people who have that
+         scope configured. -->
+    <record id="stock_location_user_group" model="res.groups">
+        <field name="name">Stock Location / Restricted Access</field>
+        <field name="comment">Row-level restriction: this user only sees their allowed warehouses/locations. Not a CRUD tier - it scopes which records base Inventory access already grants.</field>
     </record>
 
 </odoo>
