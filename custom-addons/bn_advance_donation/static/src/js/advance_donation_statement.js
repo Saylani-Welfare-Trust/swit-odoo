@@ -24,7 +24,7 @@ export class AdvanceDonationStatement extends Component {
             currency:  '',
             loading:   true,
             error:     null,
-            search:    '',          // search term
+            search:    '',          // search term (client side)
         });
 
         onWillStart(async () => {
@@ -83,8 +83,13 @@ export class AdvanceDonationStatement extends Component {
         this._loadData();
     }
 
+    clearDonor() {
+        this.state.donor_id = false;
+        this._loadData();
+    }
+
     // ------------------------------------------------------------------
-    //  Search
+    //  Search (client side, over the loaded lines)
     // ------------------------------------------------------------------
     onSearchInput(ev) {
         this.state.search = ev.target.value;
@@ -124,7 +129,7 @@ export class AdvanceDonationStatement extends Component {
         });
     }
 
-    /** Totals recomputed for the filtered subset (falls back to server totals). */
+    /** Totals recomputed for the filtered subset. */
     get filteredTotals() {
         const q = (this.state.search || "").trim();
         if (!q) {
