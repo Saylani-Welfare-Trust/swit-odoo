@@ -7,7 +7,7 @@
     'category': 'BytesNode/HR Expense Customization',
     'depends': [
         'hr_expense',
-        'bn_analytical_account_customization',
+        'bn_analytic_account_customization',
     ],
     'data': [
         'security/group.xml',
