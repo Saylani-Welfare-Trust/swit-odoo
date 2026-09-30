@@ -111,33 +111,33 @@ class MonthlyPlanning(models.Model):
     @api.model
     def _default_location_dest(self):
         """
-        Default Destination Location:
-        1. Get current user's employee.
-        2. Read the employee's analytical account (the 'Branch Location' field).
-        3. Find the stock.location whose analytic account matches it.
-        4. Fall back to Main Stock if nothing matches.
+        Resolve the Destination Location automatically:
+            current user  →  hr.employee (via user_id)
+                        →  hr.employee.analytic_account_id  (Branch Location)
+                        →  stock.location where analytic_account_id matches
+        Fallback: Main Stock.
         """
+        # 1) employee linked to the current user
         employee = self.env['hr.employee'].search(
             [('user_id', '=', self.env.uid)], limit=1
         )
 
-        if employee:
-            # ⚠️ CHANGE THIS to the real field name of 'Branch Location'
-            analytic = employee.analytic_account_id
-            if analytic:
-                location = self.env['stock.location'].search(
-                    [
-                        # ⚠️ CHANGE THIS to the real field on stock.location
-                        ('analytic_account_id', '=', analytic.id),
-                        ('usage', 'in', ['internal']),
-                    ],
-                    limit=1,
-                )
-                if location:
-                    return location.id
+        if employee and employee.analytic_account_id:
+            # 2) stock location tagged with the same analytic account
+            location = self.env['stock.location'].search(
+                [
+                    ('analytic_account_id', '=', employee.analytic_account_id.id),  # ← swap if custom
+                    ('usage', 'in', ['internal']),
+                ],
+                limit=1,
+            )
+            if location:
+                return location.id
 
-        # Fallback
-        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        # 3) fallback
+        fallback = self.env.ref(
+            'stock.stock_location_stock', raise_if_not_found=False
+        )
         return fallback.id if fallback else False
 
 
@@ -146,7 +146,8 @@ class MonthlyPlanning(models.Model):
         string='Destination Location',
         domain="[('usage', 'in', ['internal'])]",
         default=lambda self: self._default_location_dest(),
-        help='Auto-filled from the employee\'s analytical account.',
+        help='Auto-filled from the analytical account (Branch Location) '
+            'tagged on the employee linked to the current user.',
     )
 
     show_kitchen = fields.Boolean(
