@@ -39,11 +39,11 @@
     </record>
 
     <record id="medical_equipment_ceo_approval_group" model="res.groups">
-        <field name="name">Medical Equipment / CEO Approval</field>
+        <field name="name">Medical Equipment / Approval 1</field>
     </record>
 
     <record id="medical_equipment_cfo_approval_group" model="res.groups">
-        <field name="name">Medical Equipment / CFO Approval</field>
+        <field name="name">Medical Equipment / Approval 2</field>
     </record>
 
 </odoo>
