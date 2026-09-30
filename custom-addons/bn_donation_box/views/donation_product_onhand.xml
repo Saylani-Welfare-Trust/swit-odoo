@@ -43,6 +43,6 @@
     </record>
 
     <!-- Menu Item -->
-    <menuitem id="donation_product_onhand_menu" name="Donation Products Inventory" action="donation_product_onhand_action" parent="donation_box_root_menu" sequence="20" groups="bn_donation_box.donation_product_onhand_group" />
+    <menuitem id="donation_product_onhand_menu" name="Donation Products Inventory" action="donation_product_onhand_action" parent="donation_box_root_menu" sequence="20" groups="bn_donation_box.donation_box_manager_group,bn_donation_box.donation_box_admin_group" />
 
 </odoo>

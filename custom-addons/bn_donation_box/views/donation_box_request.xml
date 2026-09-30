@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <form>
                  <header>
-                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
-                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
+                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
                     
                     <field name="status" widget="statusbar" statusbar_visible="draft, approved, rejected"/>
                 </header>
@@ -128,7 +128,7 @@
     <menuitem
         id="donation_box_root_menu"
         name="Donation Box"
-        groups="bn_donation_box.donation_box_menu_group"
+        groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group"
         web_icon="bn_donation_box,static/description/icon.png"
         sequence="5"/>
 

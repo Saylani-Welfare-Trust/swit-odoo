@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="rider_menu_group" model="res.groups">
-        <field name="name">Rider / Menu</field>
-    </record>
-    
-    <record id="rider_shift_menu_group" model="res.groups">
-        <field name="name">Rider / Shift Menu</field>
-    </record>
-    
-    <record id="rider_shift_collection_menu_group" model="res.groups">
-        <field name="name">Rider / Shift / Collection</field>
-    </record>
-    
-    <record id="rider_schedule_menu_group" model="res.groups">
-        <field name="name">Rider / Schedule</field>
-    </record>
-
+    <!-- Distinct capability groups, kept separate since they're referenced
+         directly in server-side write() guards (rider_collection.py,
+         foreign_currency.py) - not redundant with the CRUD tiers below,
+         which is why they aren't folded away like the old menu-only groups. -->
     <record id="group_edit_rider_collection" model="res.groups">
         <field name="name">Rider Collection / Edit Amount / Notes</field>
     </record>
@@ -26,13 +14,10 @@
     </record>
 
     <!-- CRUD tiers for this module's own models, matching the User/Admin
-         convention used everywhere else - previously every model here used
-         plain base.group_user (any authenticated user) for full read/write/
-         create with no module-specific tier at all. -->
+         convention used everywhere else. -->
     <record id="rider_shift_user_group" model="res.groups">
         <field name="name">Rider Shift / User</field>
         <field name="comment">Day-to-day access to shifts, schedules and collections. Cannot delete or edit collected amounts.</field>
-        <field name="implied_ids" eval="[(4, ref('rider_menu_group'))]"/>
     </record>
 
     <record id="rider_shift_manager_group" model="res.groups">
@@ -47,7 +32,6 @@
     <record id="rider_shift_audit_group" model="res.groups">
         <field name="name">Rider Shift / Audit</field>
         <field name="comment">Read-only oversight across shifts, schedules and collections, for reporting. No create, write or delete anywhere.</field>
-        <field name="implied_ids" eval="[(4, ref('rider_menu_group'))]"/>
     </record>
 
     <record id="rider_shift_admin_group" model="res.groups">

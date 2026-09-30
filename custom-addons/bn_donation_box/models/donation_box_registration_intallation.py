@@ -17,10 +17,10 @@ status_selection = [
     ('close', 'Closed'),
 ]
 
-USER_GROUP = 'bn_donation_box.donation_box_registration_user_group'
-ADMIN_GROUP = 'bn_donation_box.donation_box_registration_admin_group'
-APPROVE_GROUP = 'bn_donation_box.donation_box_registration_installation_approve_group'
-CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_registration_installation_change_request_group'
+USER_GROUP = 'bn_donation_box.donation_box_user_group'
+ADMIN_GROUP = 'bn_donation_box.donation_box_admin_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
+CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_manager_group'
 
 DONOR_CATEGORY_XMLIDS = (
     'bn_profile_management.donor_partner_category',
