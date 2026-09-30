@@ -24,7 +24,7 @@ export class AdvanceDonationStatement extends Component {
             currency:  '',
             loading:   true,
             error:     null,
-            search:    '',          // <-- search term (client side)
+            search:    '',          // search term
         });
 
         onWillStart(async () => {
@@ -83,50 +83,51 @@ export class AdvanceDonationStatement extends Component {
         this._loadData();
     }
 
-    clearDonor() {
-        this.state.donor_id = false;
-        this._loadData();
-    }
-
     // ------------------------------------------------------------------
-    //  Search / filtering (client side, over the loaded lines)
+    //  Search
     // ------------------------------------------------------------------
-    get searchTerm() {
-        return (this.state.search || "").trim().toLowerCase();
+    onSearchInput(ev) {
+        this.state.search = ev.target.value;
     }
 
-    get isFiltered() {
-        return this.searchTerm.length > 0;
+    onSearchKeydown(ev) {
+        if (ev.key === "Escape") {
+            this.clearSearch();
+            ev.target.blur();
+        }
     }
 
-    /** Lines matching the current search term. */
+    clearSearch() {
+        this.state.search = "";
+    }
+
+    /** Lines matching the current search term (or all lines if empty). */
     get filteredLines() {
-        const q = this.searchTerm;
+        const q = (this.state.search || "").trim().toLowerCase();
         if (!q) {
             return this.state.lines;
         }
-        return this.state.lines.filter((l) => this._matches(l, q));
+        return this.state.lines.filter((l) => {
+            const hay = [
+                l.date,
+                l.reference,
+                l.partner,
+                l.type,
+                l.purpose,
+                l.beneficiary,
+                l.description,
+            ]
+                .map((v) => (v == null ? "" : String(v)))
+                .join(" ")
+                .toLowerCase();
+            return hay.includes(q);
+        });
     }
 
-    _matches(line, q) {
-        const haystack = [
-            line.date,
-            line.reference,
-            line.partner,
-            line.type,
-            line.purpose,
-            line.beneficiary,
-            line.description,
-        ]
-            .map((v) => (v === null || v === undefined ? "" : String(v)))
-            .join(" ")
-            .toLowerCase();
-        return haystack.includes(q);
-    }
-
-    /** Totals: whole range when not filtered, displayed rows when filtered. */
-    get totals() {
-        if (!this.isFiltered) {
+    /** Totals recomputed for the filtered subset (falls back to server totals). */
+    get filteredTotals() {
+        const q = (this.state.search || "").trim();
+        if (!q) {
             return {
                 in:      this.state.total_in,
                 out:     this.state.total_out,
@@ -140,17 +141,6 @@ export class AdvanceDonationStatement extends Component {
             tout += Number(l.amount_out || 0);
         }
         return { in: tin, out: tout, balance: tin - tout };
-    }
-
-    clearSearch() {
-        this.state.search = "";
-    }
-
-    onSearchKeydown(ev) {
-        if (ev.key === "Escape") {
-            this.clearSearch();
-            ev.target.blur();
-        }
     }
     // ------------------------------------------------------------------
 

@@ -4,7 +4,7 @@
     <t t-name="bn_advance_donation.AdvanceDonationStatement" owl="1">
         <div class="o_adv_donation_statement w-100">
 
-        
+            <!-- Filters bar -->
             <div class="d-flex flex-wrap align-items-end gap-3 p-3"
                  style="background:#f6f7fa;border-bottom:1px solid #e0e0e0;">
                 <div>
@@ -23,8 +23,7 @@
                 </div>
                 <div style="min-width:260px;">
                     <label class="d-block small text-muted">Donor</label>
-                    <select class="form-select"
-                            t-on-change="onDonorChange">
+                    <select class="form-select" t-on-change="onDonorChange">
                         <option value="">All donors</option>
                         <t t-foreach="state.donors" t-as="d" t-key="d.id">
                             <option t-att-value="d.id"
@@ -34,111 +33,120 @@
                         </t>
                     </select>
                 </div>
-                <div class="ms-auto d-flex gap-2">
+
+                <div class="ms-auto d-flex gap-3">
                     <div class="text-end">
                         <div class="small text-muted">Total In</div>
                         <div class="fw-bold text-success">
                             <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(state.total_in)"/>
+                            <t t-esc="formatAmount(filteredTotals.in)"/>
                         </div>
                     </div>
                     <div class="text-end">
                         <div class="small text-muted">Total Out</div>
                         <div class="fw-bold text-danger">
                             <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(state.total_out)"/>
+                            <t t-esc="formatAmount(filteredTotals.out)"/>
                         </div>
                     </div>
                     <div class="text-end">
                         <div class="small text-muted">Balance</div>
                         <div class="fw-bold">
                             <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(state.balance)"/>
+                            <t t-esc="formatAmount(filteredTotals.balance)"/>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <t t-if="state.error">
-                <div class="alert alert-danger m-3">
-                    <t t-esc="state.error"/>
+            <!-- Search box -->
+            <div class="p-3" style="background:#fff;border-bottom:1px solid #e0e0e0;">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="fa fa-search" aria-hidden="true"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control"
+                           placeholder="Search by reference, donor, purpose, beneficiary, description…"
+                           t-att-value="state.search"
+                           t-on-input="onSearchInput"
+                           t-on-keydown="onSearchKeydown"/>
+                    <button t-if="state.search"
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            t-on-click="clearSearch">
+                        Clear
+                    </button>
                 </div>
+                <div t-if="state.search" class="small text-muted mt-2">
+                    Showing
+                    <strong><t t-esc="filteredLines.length"/></strong>
+                    of
+                    <strong><t t-esc="state.lines.length"/></strong>
+                    movements
+                </div>
+            </div>
+
+            <!-- Error / Loading -->
+            <t t-if="state.error">
+                <div class="alert alert-danger m-3"><t t-esc="state.error"/></div>
             </t>
             <t t-if="state.loading">
                 <div class="text-center p-4 text-muted">Loading…</div>
             </t>
 
+            <!-- Results (cards, no table / list view) -->
             <t t-if="!state.loading and !state.error">
-                <div style="overflow:auto;max-height:70vh;">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead style="position:sticky;top:0;background:#fff;z-index:1;">
-                            <tr>
-                                <th style="text-align:left;">Date</th>
-                                <th style="text-align:left;">Reference</th>
-                                <th style="text-align:left;">Donor</th>
-                                <th style="text-align:left;">Type</th>
-                                <th style="text-align:left;">Purpose</th>
-                                <th style="text-align:left;">Beneficiary</th>
-                                <th style="text-align:left;">Description</th>
-                                <th style="text-align:right;">In</th>
-                                <th style="text-align:right;">Out</th>
-                                <th style="text-align:right;">Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-if="!state.lines.length">
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted p-4">
-                                        No movements in the selected range.
-                                    </td>
-                                </tr>
-                            </t>
-                            <t t-foreach="state.lines" t-as="l" t-key="l_index">
-                                <tr t-att-class="l.direction === 'in' ? '' : 'table-light'">
-                                    <td style="text-align:left;"><t t-esc="l.date"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.reference"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.partner"/></td>
-                                    <td style="text-align:left;">
-                                        <span t-att-class="l.direction === 'in'
-                                              ? 'badge text-bg-success'
-                                              : 'badge text-bg-warning'">
+                <div t-if="!filteredLines.length" class="text-center p-4 text-muted">
+                    <t t-if="state.search">No movements match your search.</t>
+                    <t t-else="">No movements in the selected range.</t>
+                </div>
+
+                <div t-else="" class="p-3 d-flex flex-column gap-2">
+                    <t t-foreach="filteredLines" t-as="l" t-key="l_index">
+                        <div class="border rounded p-3"
+                             t-attf-style="border-left:4px solid {{ l.direction === 'in' ? '#28a745' : '#ffc107' }};">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">
+                                        <t t-esc="l.reference"/>
+                                        <span class="ms-2 badge"
+                                              t-att-class="l.direction === 'in' ? 'text-bg-success' : 'text-bg-warning'">
                                             <t t-esc="l.type"/>
                                         </span>
-                                    </td>
-                                    <td style="text-align:left;"><t t-esc="l.purpose"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.beneficiary"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.description"/></td>
-                                    <td style="text-align:right;">
-                                        <t t-if="l.amount_in">
-                                            <t t-esc="formatAmount(l.amount_in)"/>
-                                        </t>
-                                    </td>
-                                    <td style="text-align:right;">
-                                        <t t-if="l.amount_out">
-                                            <t t-esc="formatAmount(l.amount_out)"/>
-                                        </t>
-                                    </td>
-                                    <td style="text-align:right;">
-                                        <t t-esc="formatAmount(l.balance)"/>
-                                    </td>
-                                </tr>
-                            </t>
-                        </tbody>
-                        <tfoot style="position:sticky;bottom:0;background:#fff;">
-                            <tr style="font-weight:bold;border-top:2px solid #ccc;">
-                                <td colspan="7" class="text-end">Totals</td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(state.total_in)"/>
-                                </td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(state.total_out)"/>
-                                </td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(state.balance)"/>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <t t-esc="l.date"/>
+                                        <t t-if="l.partner"> · <t t-esc="l.partner"/></t>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span t-if="l.purpose" class="me-3">
+                                            <strong>Purpose:</strong> <t t-esc="l.purpose"/>
+                                        </span>
+                                        <span t-if="l.beneficiary" class="me-3">
+                                            <strong>Beneficiary:</strong> <t t-esc="l.beneficiary"/>
+                                        </span>
+                                    </div>
+                                    <div t-if="l.description" class="small text-muted mt-1">
+                                        <t t-esc="l.description"/>
+                                    </div>
+                                </div>
+                                <div class="text-end" style="min-width:140px;">
+                                    <div t-if="l.amount_in" class="text-success fw-bold">
+                                        + <t t-esc="state.currency"/>
+                                        <t t-esc="formatAmount(l.amount_in)"/>
+                                    </div>
+                                    <div t-if="l.amount_out" class="text-danger fw-bold">
+                                        − <t t-esc="state.currency"/>
+                                        <t t-esc="formatAmount(l.amount_out)"/>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        Balance: <t t-esc="formatAmount(l.balance)"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
                 </div>
             </t>
         </div>
