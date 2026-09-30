@@ -24,6 +24,7 @@ export class AdvanceDonationStatement extends Component {
             currency:  '',
             loading:   true,
             error:     null,
+            search:    '',          // <-- search term (client side)
         });
 
         onWillStart(async () => {
@@ -86,6 +87,72 @@ export class AdvanceDonationStatement extends Component {
         this.state.donor_id = false;
         this._loadData();
     }
+
+    // ------------------------------------------------------------------
+    //  Search / filtering (client side, over the loaded lines)
+    // ------------------------------------------------------------------
+    get searchTerm() {
+        return (this.state.search || "").trim().toLowerCase();
+    }
+
+    get isFiltered() {
+        return this.searchTerm.length > 0;
+    }
+
+    /** Lines matching the current search term. */
+    get filteredLines() {
+        const q = this.searchTerm;
+        if (!q) {
+            return this.state.lines;
+        }
+        return this.state.lines.filter((l) => this._matches(l, q));
+    }
+
+    _matches(line, q) {
+        const haystack = [
+            line.date,
+            line.reference,
+            line.partner,
+            line.type,
+            line.purpose,
+            line.beneficiary,
+            line.description,
+        ]
+            .map((v) => (v === null || v === undefined ? "" : String(v)))
+            .join(" ")
+            .toLowerCase();
+        return haystack.includes(q);
+    }
+
+    /** Totals: whole range when not filtered, displayed rows when filtered. */
+    get totals() {
+        if (!this.isFiltered) {
+            return {
+                in:      this.state.total_in,
+                out:     this.state.total_out,
+                balance: this.state.balance,
+            };
+        }
+        let tin = 0;
+        let tout = 0;
+        for (const l of this.filteredLines) {
+            tin  += Number(l.amount_in  || 0);
+            tout += Number(l.amount_out || 0);
+        }
+        return { in: tin, out: tout, balance: tin - tout };
+    }
+
+    clearSearch() {
+        this.state.search = "";
+    }
+
+    onSearchKeydown(ev) {
+        if (ev.key === "Escape") {
+            this.clearSearch();
+            ev.target.blur();
+        }
+    }
+    // ------------------------------------------------------------------
 
     formatAmount(v) {
         const n = Number(v || 0);
