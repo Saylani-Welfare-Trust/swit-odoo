@@ -93,13 +93,6 @@ class MonthlyPlanning(models.Model):
             ]
             rec.enabled_tabs = ', '.join(names)
 
-    # ─── Destination location ──────────────────────────────
-    location_dest_id = fields.Many2one(
-        'stock.location',
-        string='Destination Location',
-        domain="[('usage', 'in', ['internal'])]",
-        help='Where stock will be sent when this plan is issued.',
-    )
 
     # ─── State ─────────────────────────────────────────────
     state = fields.Selection(
@@ -115,8 +108,46 @@ class MonthlyPlanning(models.Model):
     )
 
     # Default destination (Main Stock) — optional, helps new records
+    @api.model
     def _default_location_dest(self):
-        return self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        """
+        Default Destination Location:
+        1. Get current user's employee.
+        2. Read the employee's analytical account (the 'Branch Location' field).
+        3. Find the stock.location whose analytic account matches it.
+        4. Fall back to Main Stock if nothing matches.
+        """
+        employee = self.env['hr.employee'].search(
+            [('user_id', '=', self.env.uid)], limit=1
+        )
+
+        if employee:
+            # ⚠️ CHANGE THIS to the real field name of 'Branch Location'
+            analytic = employee.analytic_account_id
+            if analytic:
+                location = self.env['stock.location'].search(
+                    [
+                        # ⚠️ CHANGE THIS to the real field on stock.location
+                        ('analytic_account_id', '=', analytic.id),
+                        ('usage', 'in', ['internal']),
+                    ],
+                    limit=1,
+                )
+                if location:
+                    return location.id
+
+        # Fallback
+        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        return fallback.id if fallback else False
+
+
+    location_dest_id = fields.Many2one(
+        'stock.location',
+        string='Destination Location',
+        domain="[('usage', 'in', ['internal'])]",
+        default=lambda self: self._default_location_dest(),
+        help='Auto-filled from the employee\'s analytical account.',
+    )
 
     show_kitchen = fields.Boolean(
         related='planning_type_id.kitchen',
