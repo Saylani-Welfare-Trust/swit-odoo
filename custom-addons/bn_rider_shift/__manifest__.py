@@ -11,8 +11,8 @@
     ],
     'data': [
         'data/sequence.xml',
-        'security/ir.model.access.csv',
         'security/groups.xml',
+        'security/ir.model.access.csv',
         'views/rider_shift.xml',
         'views/rider_collection.xml',
         'views/counterfeit_notes.xml',
