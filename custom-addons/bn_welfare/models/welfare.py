@@ -1325,16 +1325,17 @@ class Welfare(models.Model):
             record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
 
     def _add_hod_lines(self):
-        """Add a disbursement line for every HOD product that is not already requested."""
+        """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
         hod_products = self.env['product.product'].search([('product_tmpl_id.is_hod', '=', True)])
         cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         for record in self:
-            new_products = hod_products - record.welfare_line_ids.product_id
+            new_products = hod_products - record.welfare_line_ids.filtered('is_hod').product_id
             if not new_products:
                 continue
             self.env['welfare.line'].create([{
                 'welfare_id': record.id,
                 'product_id': product.id,
+                'is_hod': True,
                 'disbursement_category_id': cash_category.id if cash_category else False,
                 'collection_point': 'branch',
                 # The field default is frozen at server start; POS only picks lines due this month
